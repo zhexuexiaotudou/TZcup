@@ -1,13 +1,13 @@
 {
   "kind": "tzcup_formal_vehicle_snapshot_manifest",
-  "output_inventory_sha256": "8e6e520547c0c777fe5c82d7159e1e8592c6cd162c2c92852a53074ee97e8d6e",
+  "output_inventory_sha256": "1b851ad66b5d3dc8a85d08825a1d31741e945f66d618374965ec3c3a2dc8eb0c",
   "outputs": {
     "reports/engineering/formal_competition_vehicle.urdf": {
-      "sha256": "5cf404fb15d1173fbfab614fd409e7e55a226b13c97d80b816210090a1c54194",
-      "size_bytes": 276968
+      "sha256": "34257c2ed840a6f8f25933bdf37c6130c3db397d0aa1211c561bff528bd621d1",
+      "size_bytes": 277916
     },
     "reports/engineering/formal_vehicle_component_register_report.json": {
-      "sha256": "ed9a5df5979d62002e06ad0ff1ab261183ed2cf3c2d0d222dc3012ba1a3c962e",
+      "sha256": "edeead91c4b3655f92b5a2e11d9ae1c6ec10882ce7883498b132a89fe224ea60",
       "size_bytes": 12648
     },
     "reports/engineering/formal_vehicle_layout_report.json": {
@@ -155,8 +155,8 @@
       "size_bytes": 30487
     },
     "starter_ws/src/sanitation_safety/sanitation_safety/whole_vehicle_safety_manager.py": {
-      "sha256": "48640360a6e48b1e8bad6a58e94200a0997d81d7031a9b4609af4e88467415c4",
-      "size_bytes": 54576
+      "sha256": "0483c9b8e6f91a0d32a31156d1539fbd18b99484bfa6e73dd33c5ffd0594a89c",
+      "size_bytes": 57582
     },
     "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py": {
       "sha256": "f4ed077479b1bba4a51207a90d7e35adec6a9323efde950e3b4bfc5313153977",
@@ -975,8 +975,8 @@
       "size_bytes": 24083
     },
     "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/bodywork.xacro": {
-      "sha256": "6abfb3693107cfde990bf273757cb91b28d3f4422640d74e8c16956ebd1a92ea",
-      "size_bytes": 23811
+      "sha256": "30ee05a49364553a262a38a04217e38d1fb3b848eef29e29e989b2601893c6e2",
+      "size_bytes": 24050
     },
     "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/cleaning_mechanism.xacro": {
       "sha256": "3f7eebc5f33a83f7a8b45163d91c66aa59fbc39e192251b7f88a4beef91f2592",
@@ -1003,5 +1003,5 @@
       "size_bytes": 26704
     }
   },
-  "source_inventory_sha256": "7bf2bd7c4fa2ff571c4b064ebc519914b731f573c04c0f6f0914f1f23b83ef61"
+  "source_inventory_sha256": "ce10d09a87d4b45dfb6e716194bc823564a295e55e63400c6cc0ea9d8629cd8e"
 }

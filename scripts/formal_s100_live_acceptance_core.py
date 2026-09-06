@@ -230,6 +230,7 @@ def validate_raw(
     expected_snapshot: dict[str, str],
     expected_session: dict[str, Any] | None = None,
     expected_runtime_closure: dict[str, str] | None = None,
+    dosod_bundle_root: Path | None = None,
 ) -> list[str]:
     failures: list[str] = []
 
@@ -337,6 +338,47 @@ def validate_raw(
                 model_hashes[str(row.get("role"))] = digest.lower()
             if not isinstance(row.get("byte_size"), int) or row["byte_size"] <= 0:
                 fail(f"model {row.get('role')} has invalid byte size")
+
+    # The board file inventory alone cannot prove that DOSOD HBM came through
+    # the contract-bound compile/parity/metric chain.  The live collector
+    # records the three producer receipts before the timed run; finalization
+    # consumes their mutually bound digests rather than accepting an HBM hash
+    # in isolation.
+    dosod_evidence = payload.get("dosod_hbm_evidence")
+    if not isinstance(dosod_evidence, dict) or set(dosod_evidence) != {"compile", "parity", "metric", "full_admission"}:
+        fail("DOSOD compile/parity/metric receipt chain is missing")
+    else:
+        expected_ids = {
+            "compile": ("tzcup_s100p_dosod_hbm_compile_receipt_v1", "COMPILED_NOT_BOARD_ACCEPTED"),
+            "parity": ("tzcup_dosod_hbm_x86_nash_parity_v1", "PARITY_PASSED"),
+            "metric": ("tzcup_dosod_quantized_metric_regression_v1", "REGRESSION_PASSED"),
+        }
+        for name, (report_id, status) in expected_ids.items():
+            row = dosod_evidence.get(name)
+            if not isinstance(row, dict) or row.get("report_id") != report_id or row.get("status") != status:
+                fail(f"DOSOD {name} receipt identity/status is invalid")
+                continue
+            if not isinstance(row.get("path"), str) or not isinstance(row.get("sha256"), str) or not SHA256_RE.fullmatch(row["sha256"].lower()):
+                fail(f"DOSOD {name} receipt path/digest is invalid")
+            if row.get("hbm_sha256") != model_hashes.get("dosod_hbm"):
+                fail(f"DOSOD {name} receipt does not bind the collected HBM")
+        full = dosod_evidence.get("full_admission")
+        receipt_fields = {"compile_receipt": "compile", "parity_report": "parity", "metric_report": "metric"}
+        if not isinstance(full, dict) or full.get("hbm_sha256") != model_hashes.get("dosod_hbm") or any(
+            full.get(f"{field}_sha256") != dosod_evidence.get(name, {}).get("sha256")
+            for field, name in receipt_fields.items()
+        ):
+            fail("DOSOD full admission summary is not bound to receipt triad")
+        if dosod_bundle_root is None:
+            fail("DOSOD full admission bundle is required for core validation")
+        else:
+            try:
+                from verify_dosod_compile_parity_metric_chain import verify_dosod_compile_parity_metric_chain
+                verified = verify_dosod_compile_parity_metric_chain(dosod_bundle_root, Path(str(next((row.get("path") for row in models if isinstance(row, dict) and row.get("role") == "dosod_hbm"), ""))))
+                if not isinstance(full, dict) or any(full.get(key) != verified.get(key) for key in verified):
+                    fail("DOSOD full admission bundle recheck differs from raw summary")
+            except Exception:
+                fail("DOSOD full admission bundle recheck failed")
 
     graph = payload.get("ros_graph")
     if not isinstance(graph, dict):
@@ -469,8 +511,9 @@ def build_final_report(
     raw_path: Path,
     expected_session: dict[str, Any] | None = None,
     expected_runtime_closure: dict[str, str] | None = None,
+    dosod_bundle_root: Path | None = None,
 ) -> dict[str, Any]:
-    failures = validate_raw(raw, expected_snapshot, expected_session, expected_runtime_closure)
+    failures = validate_raw(raw, expected_snapshot, expected_session, expected_runtime_closure, dosod_bundle_root)
     return {
         "schema_version": 1,
         "report_id": FINAL_REPORT_ID,
@@ -489,6 +532,7 @@ def build_final_report(
             "hardware_identity": not any("hardware" in row.lower() or "board/soc" in row.lower() for row in failures),
             "system_image": not any("system image" in row.lower() for row in failures),
             "model_hashes": not any("model" in row.lower() for row in failures),
+            "dosod_compile_parity_metric_chain": not any("dosod" in row.lower() for row in failures),
             "ros_graph": not any("ros" in row.lower() for row in failures),
             "actual_backend_and_inference": not any(
                 token in row.lower() for row in failures for token in ("backend", "inference", "live frames", "latency")

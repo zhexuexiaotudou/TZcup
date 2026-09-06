@@ -3,10 +3,15 @@
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 import sys
 
 from .generator import GenerationError, generate_episode, load_config, split_index
+from .hidden_materializer import (
+    materialize_hidden_episode,
+    require_formal_hidden_run_context,
+)
 from .io import write_episode, write_json_file
 
 
@@ -16,11 +21,22 @@ def build_parser() -> argparse.ArgumentParser:
     generate = subparsers.add_parser("generate", help="generate one deterministic episode")
     generate.add_argument("--config", required=True, type=Path)
     generate.add_argument("--profile", required=True, choices=("research", "formal"))
-    generate.add_argument("--split", required=True, choices=("train", "val", "hidden"))
+    generate.add_argument("--split", required=True, choices=("train", "val"))
     generate.add_argument("--map-index", required=True, type=int)
     generate.add_argument("--mission-index", required=True, type=int)
     generate.add_argument("--output", required=True, type=Path)
     generate.add_argument("--include-proxy", action="store_true", help="include a static 0.60 x 0.40 m planning proxy explicitly marked as not URDF")
+    hidden = subparsers.add_parser(
+        "materialize-hidden",
+        help="consume one source/session-bound formal hidden episode exactly once",
+    )
+    hidden.add_argument("--config", required=True, type=Path)
+    hidden.add_argument("--snapshot", required=True, type=Path)
+    hidden.add_argument("--session", required=True, type=Path)
+    hidden.add_argument("--freeze-producer", required=True)
+    hidden.add_argument("--map-index", required=True, type=int)
+    hidden.add_argument("--mission-index", required=True, type=int)
+    hidden.add_argument("--output", required=True, type=Path)
     index = subparsers.add_parser(
         "split-index", help="write the frozen map/mission split index"
     )
@@ -43,6 +59,26 @@ def main(argv: list[str] | None = None) -> int:
                 include_proxy=args.include_proxy,
             )
             output = write_episode(args.output, files)
+        elif args.command == "materialize-hidden":
+            run_root_value = os.environ.get("TZCUP_FORMAL_HIDDEN_RUN_ROOT")
+            if not run_root_value:
+                raise GenerationError(
+                    "materialize-hidden is a formal-runner entrypoint and requires its sealed run context"
+                )
+            run_root = require_formal_hidden_run_context(
+                run_root=Path(run_root_value), snapshot_path=args.snapshot,
+                session_path=args.session, scenario_config=args.config,
+            )
+            output = materialize_hidden_episode(
+                scenario_config=args.config,
+                snapshot_path=args.snapshot,
+                session_path=args.session,
+                run_root=run_root,
+                output=args.output,
+                map_index=args.map_index,
+                mission_index=args.mission_index,
+                freeze_producer=args.freeze_producer,
+            )
         else:
             output = write_json_file(args.output, split_index(config))
         print(output)

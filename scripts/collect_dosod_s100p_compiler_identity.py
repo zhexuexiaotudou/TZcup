@@ -156,6 +156,8 @@ def main() -> int:
         discovery=discovery,
     )
     report["collected_utc"] = datetime.now(timezone.utc).isoformat()
+    report["producer_script_path"] = str(Path(__file__).resolve())
+    report["producer_script_sha256"] = sha256_file(Path(__file__))
     report["toolchain_discovery_path"] = str(discovery_path.resolve())
     report["toolchain_discovery_sha256"] = (
         sha256_file(discovery_path) if discovery_path.is_file() else None

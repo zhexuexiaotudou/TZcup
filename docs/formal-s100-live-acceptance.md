@@ -35,6 +35,10 @@ python3 scripts/collect_formal_s100_live_runtime.py \
   --dosod-vocabulary /opt/tzcup/models/dosod/tzcup_offline_vocabulary.json \
   --edgesam-encoder-hbm /opt/tzcup/models/edgesam/edgesam_encoder_512.hbm \
   --edgesam-decoder-hbm /opt/tzcup/models/edgesam/edgesam_decoder_512.hbm \
+  --dosod-compile-receipt /opt/tzcup/evidence/dosod_compile_receipt.json \
+  --dosod-parity-report /opt/tzcup/evidence/dosod_parity_report.json \
+  --dosod-metric-report /opt/tzcup/evidence/dosod_metric_report.json \
+  --dosod-admission-bundle /opt/tzcup/evidence/dosod_admission_bundle \
   --duration-sec 1800 \
   --sample-period-sec 1
 ```
@@ -53,6 +57,7 @@ python3 scripts/validate_formal_s100_live_runtime.py \
   --snapshot reports/engineering/formal_vehicle_snapshot_manifest.json \
   --acceptance-session artifacts/formal_final_acceptance_session.json \
   --runtime-closure /path/to/final_runtime_closure_manifest.json \
+  --dosod-admission-bundle /path/to/dosod_admission_bundle \
   --output artifacts/formal_s100_live_acceptance.json
 ```
 

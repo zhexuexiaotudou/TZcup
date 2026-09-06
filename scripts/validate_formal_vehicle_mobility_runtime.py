@@ -355,6 +355,10 @@ def run(
     safety_max_linear_velocity: float = 0.45,
     exercise_estop: bool = False,
 ) -> dict[str, Any]:
+    if forward_speed <= 0.0 or forward_duration <= 0.0:
+        raise ValueError("forward speed and duration must be positive")
+    if forward_speed > safety_max_linear_velocity:
+        raise ValueError("forward speed exceeds the safety envelope")
     rclpy.init()
     node = MobilityProbe()
     try:
@@ -455,9 +459,13 @@ def run(
         }
         if exercise_estop:
             raw["estop"] = raw_estop
-        evaluation = evaluate_motion(raw)
+        evaluation = evaluate_motion(
+            raw, expected_forward_distance_m=forward_speed * forward_duration
+        )
         if exercise_estop:
-            estop_evaluation = evaluate_estop_stop(raw)
+            estop_evaluation = evaluate_estop_stop(
+                raw, minimum_pre_estop_speed_mps=forward_speed * 0.90
+            )
         evaluation["checks"].update(estop_evaluation["checks"])
         evaluation["metrics"].update(estop_evaluation["metrics"])
         evaluation["passed"] = all(evaluation["checks"].values())

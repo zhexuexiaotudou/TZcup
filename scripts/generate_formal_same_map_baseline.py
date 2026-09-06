@@ -13,6 +13,15 @@ from typing import Any
 
 import yaml
 
+from collect_formal_safety_speed_readback import (
+    CaptureError,
+    DEFAULT_CAPTURE_TIMEOUT_SEC,
+    validate_capture_order,
+    validate_capture_timeout,
+    validate_status_capture,
+    validate_topic_info_capture,
+)
+
 
 REPORT_ID = "tzcup_formal_same_map_full_coverage_baseline_v1"
 PASS_STATUS = "FORMAL_FULL_COVERAGE_BASELINE_PASSED"
@@ -145,6 +154,11 @@ def build_report(
     coverage_runtime: Path,
     session_path: Path,
     snapshot_path: Path,
+    safety_manager_readback: Path | None = None,
+    runtime_binding: Path | None = None,
+    runtime_closure: Path | None = None,
+    runtime_install: Path | None = None,
+    expected_safety_cap: float = 0.45,
 ) -> dict[str, Any]:
     episode = _json(episode_manifest)
     manifest_path = map_root / "map_lifecycle_manifest.json"
@@ -157,6 +171,100 @@ def build_report(
     coverage = _json(coverage_runtime)
     session = _json(session_path)
     snapshot = _snapshot_identity(snapshot_path)
+    safety_readback = None
+    if safety_manager_readback is not None:
+        if runtime_binding is None or runtime_closure is None or runtime_install is None:
+            raise BaselineError("safety-manager readback requires current runtime binding, closure and install")
+        safety_readback = _json(safety_manager_readback)
+        bound_runtime = _json(runtime_binding)
+        closure = _json(runtime_closure)
+        bound_session = bound_runtime.get("acceptance_session_binding")
+        bound_closure = bound_runtime.get("runtime_closure_binding")
+        if (
+            bound_runtime.get("status") != "FORMAL_RUNTIME_GATE_BOUND"
+            or not isinstance(bound_session, dict)
+            or not isinstance(bound_closure, dict)
+            or bound_session.get("session_manifest") != str(session_path.resolve())
+            or bound_session.get("session_manifest_sha256") != _sha256(session_path)
+            or bound_session.get("session_started_epoch_ns") != session.get("started_epoch_ns")
+            or bound_session.get("session_status_at_gate") != SESSION_STATUS
+            or bound_session.get("snapshot") != snapshot
+            or bound_session.get("snapshot_current_source_verified") is not True
+            or bound_closure.get("status")
+            != "FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED"
+            or bound_closure.get("manifest_sha256") != _sha256(runtime_closure)
+            or bound_closure.get("runtime_install_root") != str(runtime_install.resolve())
+            or not runtime_install.is_dir()
+            or session.get("runtime_closure_binding") != bound_closure
+        ):
+            raise BaselineError("safety-manager runtime binding does not match current inputs")
+        if safety_readback.get("schema_version") != 2:
+            raise BaselineError("safety-manager readback has an unsupported schema")
+        try:
+            capture_timeout_sec = validate_capture_timeout(
+                safety_readback.get("capture_timeout_sec")
+            )
+        except CaptureError as exc:
+            raise BaselineError(f"safety-manager capture timeout is invalid: {exc}") from exc
+        # The formal runner never accepts a caller-selected capture window.  A
+        # bounded value alone is insufficient here: otherwise a hand-written
+        # receipt could expand each fixed ROS query from the runner's five
+        # seconds to ten seconds and still pass its retained timing checks.
+        if capture_timeout_sec != DEFAULT_CAPTURE_TIMEOUT_SEC:
+            raise BaselineError(
+                "safety-manager capture timeout must equal the fixed formal runner contract"
+            )
+        if safety_readback.get("capture_status") != "PASSED":
+            raise BaselineError("safety-manager readback is not a passing live capture")
+        if safety_readback.get("runtime_gate_binding_sha256") != _sha256(runtime_binding):
+            raise BaselineError("safety-manager readback is bound to another runtime receipt")
+        if safety_readback.get("runtime_gate_binding") != bound_runtime:
+            raise BaselineError("safety-manager readback does not retain the current runtime binding")
+        producer = safety_readback.get("producer_identity")
+        producer_before = safety_readback.get("producer_capture_before")
+        status_capture = safety_readback.get("status_capture")
+        producer_capture = safety_readback.get("producer_capture")
+        if (
+            not isinstance(producer, dict)
+            or producer.get("node_name") != "whole_vehicle_safety_manager"
+            or producer.get("topic") != "/safety/status_json"
+            or producer.get("message_type") != "std_msgs/msg/String"
+            or producer.get("publisher_count") != "1"
+            or not isinstance(producer_before, dict)
+            or not isinstance(status_capture, dict)
+            or not isinstance(producer_capture, dict)
+        ):
+            raise BaselineError("safety-manager producer receipt is incomplete or unexpected")
+        try:
+            before_identity, before_window = validate_topic_info_capture(
+                producer_before, "producer-before", capture_timeout_sec
+            )
+            captured_status, status_window = validate_status_capture(
+                status_capture, capture_timeout_sec
+            )
+            after_identity, after_window = validate_topic_info_capture(
+                producer_capture, "producer-after", capture_timeout_sec
+            )
+            validate_capture_order(
+                before_window, status_window, after_window, capture_timeout_sec
+            )
+        except CaptureError as exc:
+            raise BaselineError(f"safety-manager producer receipt is invalid: {exc}") from exc
+        if before_identity != producer or after_identity != producer:
+            raise BaselineError("safety-manager retained topic-info identity differs from receipt")
+        cap = _strict_number(safety_readback, "effective_max_linear_velocity_mps", "safety_manager_readback")
+        if captured_status.get("effective_max_linear_velocity_mps") != cap:
+            raise BaselineError("safety-manager receipt cap differs from captured status")
+        if captured_status.get("operation_speed_profile") != safety_readback.get("operation_speed_profile"):
+            raise BaselineError("safety-manager receipt profile differs from captured status")
+        if captured_status.get("speed_qualification_state") != safety_readback.get("speed_qualification_state"):
+            raise BaselineError("safety-manager receipt state differs from captured status")
+        if not math.isclose(cap, expected_safety_cap, abs_tol=1.0e-12):
+            raise BaselineError("safety-manager effective cap differs from runner requirement")
+        if expected_safety_cap == 1.0 and safety_readback.get("speed_qualification_state") != "isolated_same_map_dry_coverage":
+            raise BaselineError("1.0 m/s baseline lacks isolated dry-only safety state")
+        if expected_safety_cap == 1.0 and safety_readback.get("operation_speed_profile") != "dry_cleaning_competition_candidate":
+            raise BaselineError("1.0 m/s baseline lacks dry-cleaning speed profile")
 
     if session.get("status") != SESSION_STATUS:
         raise BaselineError("formal acceptance session is not RUNNING")
@@ -285,10 +393,18 @@ def build_report(
         "session": session_path,
         "snapshot": snapshot_path,
     }
+    if safety_manager_readback is not None:
+        evidence_paths["safety_manager_readback"] = safety_manager_readback
+        evidence_paths["runtime_binding"] = runtime_binding
+        evidence_paths["runtime_closure"] = runtime_closure
     session_fresh = {
         "map_manifest", "mission_geometry", "mapping_runtime", "cleaning_runtime",
         "lifecycle_acceptance", "coverage_runtime",
     }
+    if safety_manager_readback is not None:
+        session_fresh.add("safety_manager_readback")
+        session_fresh.add("runtime_binding")
+        session_fresh.add("runtime_closure")
     evidence = {
         name: _evidence(
             path, started_ns, name, require_session_fresh=name in session_fresh
@@ -329,6 +445,7 @@ def build_report(
             "execution_over_plan_ratio": actual_distance / planned_distance,
         },
         "source_binding": {"started_epoch_ns": started_ns, **snapshot},
+        "safety_manager_speed": safety_readback,
         "evidence": evidence,
     }
 
@@ -345,6 +462,11 @@ def generate(args: argparse.Namespace) -> dict[str, Any]:
         coverage_runtime=args.coverage_runtime,
         session_path=args.session,
         snapshot_path=args.snapshot,
+        safety_manager_readback=getattr(args, "safety_manager_readback", None),
+        runtime_binding=getattr(args, "runtime_binding", None),
+        runtime_closure=getattr(args, "runtime_closure", None),
+        runtime_install=getattr(args, "runtime_install", None),
+        expected_safety_cap=getattr(args, "expected_safety_cap", 0.45),
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     pending = args.output.with_suffix(args.output.suffix + f".pending.{os.getpid()}")
@@ -366,6 +488,10 @@ def validate(input_path: Path, session_path: Path, snapshot_path: Path) -> dict[
         "episode_manifest", "map_manifest", "mission_geometry", "mapping_runtime",
         "cleaning_runtime", "lifecycle_acceptance", "coverage_runtime", "session", "snapshot",
     }
+    if stored.get("safety_manager_speed") is not None:
+        required.add("safety_manager_readback")
+        required.add("runtime_binding")
+        required.add("runtime_closure")
     if set(evidence) != required:
         raise BaselineError("baseline evidence ledger is incomplete or unexpected")
     for name, row in evidence.items():
@@ -387,6 +513,17 @@ def validate(input_path: Path, session_path: Path, snapshot_path: Path) -> dict[
         coverage_runtime=Path(evidence["coverage_runtime"]["path"]),
         session_path=session_path,
         snapshot_path=snapshot_path,
+        safety_manager_readback=(Path(evidence["safety_manager_readback"]["path"])
+            if "safety_manager_readback" in evidence else None),
+        runtime_binding=(Path(evidence["runtime_binding"]["path"])
+            if "runtime_binding" in evidence else None),
+        runtime_closure=(Path(evidence["runtime_closure"]["path"])
+            if "runtime_closure" in evidence else None),
+        runtime_install=(Path(stored["safety_manager_speed"]["runtime_gate_binding"]
+            ["runtime_closure_binding"]["runtime_install_root"])
+            if stored.get("safety_manager_speed") is not None else None),
+        expected_safety_cap=_strict_number(stored.get("safety_manager_speed", {}), "effective_max_linear_velocity_mps", "baseline.safety_manager_speed")
+            if stored.get("safety_manager_speed") is not None else 0.45,
     )
     if rebuilt != stored:
         raise BaselineError("baseline contents do not equal recomputed source evidence")
@@ -402,6 +539,11 @@ def main() -> int:
         "lifecycle_acceptance", "coverage_runtime", "session", "snapshot", "output",
     ):
         generate_parser.add_argument("--" + name.replace("_", "-"), type=Path, required=True)
+    generate_parser.add_argument("--safety-manager-readback", type=Path)
+    generate_parser.add_argument("--runtime-binding", type=Path)
+    generate_parser.add_argument("--runtime-closure", type=Path)
+    generate_parser.add_argument("--runtime-install", type=Path)
+    generate_parser.add_argument("--expected-safety-cap", type=float, default=0.45)
     validate_parser = subparsers.add_parser("validate")
     validate_parser.add_argument("--input", type=Path, required=True)
     validate_parser.add_argument("--session", type=Path, required=True)

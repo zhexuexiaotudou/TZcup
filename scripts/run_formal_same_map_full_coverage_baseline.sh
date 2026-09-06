@@ -8,6 +8,10 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "${ROOT}/scripts/run_formal_runtime_isolation.sh"
 source "${ROOT}/scripts/formal_source_bound_preflight.sh"
 OPERATION_SPEED_PROFILE="${FORMAL_OPERATION_SPEED_PROFILE:-dry_cleaning_competition_candidate}"
+REQUALIFIED_DRY_SPEED_ENABLEMENT="${FORMAL_REQUALIFIED_DRY_SPEED_ENABLEMENT:-0}"
+REQUALIFICATION_RECEIPT="${FORMAL_DRY_SPEED_REQUALIFICATION_RECEIPT:-}"
+WHOLE_VEHICLE_SAFETY_CAP="0.45"
+SPEED_QUALIFICATION_STATE="none"
 EPISODE_ROOT=""
 MAP_ROOT=""
 SESSION=""
@@ -66,6 +70,27 @@ RUNTIME_BINDING="${OUTPUT}/runtime_gate_binding.json"
 formal_source_bound_preflight \
   "${ROOT}" "${RUNTIME_WS}" "${RUNTIME_CLOSURE_MANIFEST}" \
   "${SESSION}" "${SNAPSHOT}" "${RUNTIME_BINDING}"
+
+# A 1.0 m/s launch is not a product default.  It is available only to this
+# dry-cleaning formal run after a retained final receipt proves every adjacent
+# qualification stage against this exact current source/session/runtime binding.
+case "${REQUALIFIED_DRY_SPEED_ENABLEMENT}" in
+  0) ;;
+  1)
+    [[ "${OPERATION_SPEED_PROFILE}" == "dry_cleaning_competition_candidate" ]] || {
+      echo "requalified speed is limited to the dry-cleaning candidate profile" >&2; exit 2;
+    }
+    [[ -n "${REQUALIFICATION_RECEIPT}" ]] || {
+      echo "set FORMAL_DRY_SPEED_REQUALIFICATION_RECEIPT with explicit requalified speed enablement" >&2; exit 2;
+    }
+    python3 "${ROOT}/scripts/validate_formal_dry_speed_requalification.py" \
+      --verify-final-receipt --receipt "${REQUALIFICATION_RECEIPT}" \
+      --current-runtime-binding "${RUNTIME_BINDING}"
+    WHOLE_VEHICLE_SAFETY_CAP="1.0"
+    SPEED_QUALIFICATION_STATE="isolated_same_map_dry_coverage"
+    ;;
+  *) echo "FORMAL_REQUALIFIED_DRY_SPEED_ENABLEMENT must be 0 or 1" >&2; exit 2 ;;
+esac
 
 source /opt/ros/jazzy/setup.bash
 source "${OVERLAY}/setup.bash"
@@ -144,8 +169,18 @@ formal_runtime_install_traps cleanup
   gui:=false world:="${OUTPUT}/world.sdf" world_name:="${WORLD_NAME}" episode_manifest:="${EPISODE_MANIFEST}" \
   map_artifact_dir:="${MAP_ROOT}" pedestrian_schedule:="${SCHEDULE}" \
   operation_speed_profile:="${OPERATION_SPEED_PROFILE}" \
+  max_linear_velocity:="${WHOLE_VEHICLE_SAFETY_CAP}" \
+  speed_qualification_state:="${SPEED_QUALIFICATION_STATE}" \
   start_pedestrians:=true >"${OUTPUT}/cleaning.launch.log" 2>&1 &
 LAUNCH_PID=$!; PIDS+=("${LAUNCH_PID}")
+if [[ "${REQUALIFIED_DRY_SPEED_ENABLEMENT}" == "1" ]]; then
+  # This short lease is deliberately separate from the launch: losing either
+  # this heartbeat or the live /brush_enabled dry-cleaning signal re-clamps
+  # the manager to 0.45 m/s before it can accept another base command.
+  "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 topic pub --rate 20 \
+    /safety/dry_cleaning_qualification_active std_msgs/msg/Bool '{data: true}' \
+    >"${OUTPUT}/dry_speed_qualification_heartbeat.log" 2>&1 & PIDS+=("$!")
+fi
 "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 run ros_gz_bridge parameter_bridge \
   "/world/${WORLD_NAME}/dynamic_pose/info@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V" \
   --ros-args -r "/world/${WORLD_NAME}/dynamic_pose/info:=/evaluation/formal_same_map/dynamic_pose" \
@@ -197,6 +232,24 @@ timeout 30 ros2 topic echo --once /ground_truth/odom nav_msgs/msg/Odometry \
   -p path_output_path:="${OUTPUT}/coverage_path.json" \
   -p trajectory_output_path:="${OUTPUT}/coverage_trajectory.csv" \
   >"${OUTPUT}/coverage_probe.log" 2>&1 & PROBE_PID=$!; PIDS+=("${PROBE_PID}")
+for _ in {1..60}; do
+  if "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" python3 "${ROOT}/scripts/collect_formal_safety_speed_readback.py" \
+      --output "${OUTPUT}/safety_manager_speed_readback_attempt_${_}.json" \
+      --runtime-binding "${RUNTIME_BINDING}" \
+      --snapshot "${SNAPSHOT}" --session "${SESSION}" \
+      --runtime-closure "${RUNTIME_CLOSURE_MANIFEST}" \
+      --runtime-install "${RUNTIME_INSTALL}" \
+      --expected-cap "${WHOLE_VEHICLE_SAFETY_CAP}" \
+      --expected-profile "${OPERATION_SPEED_PROFILE}" \
+      --expected-state "${SPEED_QUALIFICATION_STATE}"; then
+    SAFETY_MANAGER_READBACK="${OUTPUT}/safety_manager_speed_readback_attempt_${_}.json"
+    break
+  fi
+  sleep 1
+done
+[[ -n "${SAFETY_MANAGER_READBACK:-}" ]] || {
+  echo "live safety-manager speed readback never reached the required dry-only cap" >&2; exit 4;
+}
 deadline=$((SECONDS + TIMEOUT))
 while kill -0 "${PROBE_PID}" 2>/dev/null; do
   (( SECONDS < deadline )) || { echo "FullCoverage probe timed out" >&2; exit 4; }
@@ -219,5 +272,10 @@ bash "${ROOT}/scripts/run_formal_same_map_baseline.sh" \
   --cleaning-runtime "${OUTPUT}/cleaning_runtime.json" \
   --lifecycle-acceptance "${OUTPUT}/lifecycle_acceptance.json" \
   --coverage-runtime "${OUTPUT}/coverage_runtime.json" \
+  --safety-manager-readback "${SAFETY_MANAGER_READBACK}" \
+  --runtime-binding "${RUNTIME_BINDING}" \
+  --runtime-closure "${RUNTIME_CLOSURE_MANIFEST}" \
+  --runtime-install "${RUNTIME_INSTALL}" \
+  --expected-safety-cap "${WHOLE_VEHICLE_SAFETY_CAP}" \
   --session "${SESSION}" --snapshot "${SNAPSHOT}" --output "${FORMAL_OUTPUT}"
 echo "formal same-map FullCoverage baseline passed: ${FORMAL_OUTPUT}"

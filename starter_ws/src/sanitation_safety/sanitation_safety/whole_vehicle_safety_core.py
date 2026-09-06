@@ -271,6 +271,18 @@ class WholeVehicleSafetyCore:
             angular_z=self._clamp(angular_z, self.max_angular_velocity),
         )
 
+    def set_effective_max_linear_velocity(self, value: float) -> None:
+        """Tighten or restore the live command cap without trusting a launch arg."""
+        if not math.isfinite(value) or value <= 0.0:
+            raise ValueError("effective max linear velocity must be positive and finite")
+        self.max_linear_velocity = float(value)
+        self.requested_command = SafeCommand(
+            linear_x=self._clamp(
+                self.requested_command.linear_x, self.max_linear_velocity
+            ),
+            angular_z=self.requested_command.angular_z,
+        )
+
     def evaluate(self, now: float) -> SafetyDecision:
         """Compute the current command and the atomic actuator enable state."""
 

@@ -619,13 +619,13 @@ def test_requested_whole_vehicle_order_is_preserved() -> None:
         "water_recovery",
         "service_door",
         "charge_and_drain",
-        "manipulator",
-        "twenty_cubes",
-        "first_map",
+            "manipulator",
+            "twenty_cubes",
+            "rl_policy",
+            "first_map",
         "saved_map_reuse",
         "perception",
         "dynamic_obstacle",
-        "rl_policy",
         "single_episode",
         "multisite_product",
         "s100_live",
@@ -655,8 +655,18 @@ def test_every_gazebo_step_has_one_shared_lock_strategy() -> None:
 
 def test_commands_use_one_fresh_episode_map_rl_and_e2e_root() -> None:
     context = _context()
-    materialize, _ = orchestration._step_command("episode_materialization", context)
+    materialize, materialize_env = orchestration._step_command("episode_materialization", context)
     assert str(context.episode_root) in " ".join(materialize)
+    assert "materialize-hidden" in " ".join(materialize)
+    assert "--run-root" not in " ".join(materialize)
+    assert materialize_env["TZCUP_FORMAL_HIDDEN_RUN_ROOT"] == str(context.run_root)
+    assert "--freeze-producer" in " ".join(materialize)
+    source = (ROOT / "scripts/run_formal_final_acceptance.py").read_text(encoding="utf-8")
+    assert "commit_formal_hidden_run_context(" in source
+    assert source.count("_verify_final_hidden_consumption(context)") >= 2
+    assert "def _verify_final_multisite_hidden_consumption" in source
+    assert "for index in range(12)" in source
+    assert source.count("_verify_final_multisite_hidden_consumption(context)") >= 3
 
     first_map, first_env = orchestration._step_command("first_map", context)
     assert first_map[-1].endswith("run_formal_first_map_dynamic_prerequisite.sh")
@@ -675,6 +685,7 @@ def test_commands_use_one_fresh_episode_map_rl_and_e2e_root() -> None:
     assert "formal_stage_a_active_cleaning_train" in rendered
     assert "formal_rl_budget_contract.yaml" in rendered
     assert "--policy-seeds 7,17,29,43,61" in rendered
+    assert "--hidden-receipt-root" in rendered
 
     e2e, _ = orchestration._step_command("single_episode", context)
     rendered_e2e = " ".join(e2e)
@@ -690,6 +701,28 @@ def test_commands_use_one_fresh_episode_map_rl_and_e2e_root() -> None:
     assert str(context.run_root / "multisite_product_sites") in rendered_multisite
     assert str(context.run_root / "multisite_product_runtime") in rendered_multisite
     assert orchestration.STEP_SPECS[[row.step_id for row in orchestration.STEP_SPECS].index("multisite_product")].mode == "gazebo"
+
+
+def test_final_multisite_reverify_enumerates_all_hidden_sites_and_fails_closed(tmp_path: Path, monkeypatch) -> None:
+    context = _context(tmp_path)
+    monkeypatch.setattr(orchestration, "ROOT", tmp_path)
+    calls = []
+
+    def verified(**kwargs):
+        calls.append(kwargs)
+        return [{} for _ in range(12)]
+
+    monkeypatch.setattr(orchestration, "verify_hidden_consumption_records_from_formal_context", verified)
+    assert len(orchestration._verify_final_multisite_hidden_consumption(context)) == 12
+    assert [row["request"]["map_index"] for row in calls[0]["records"]] == list(range(12))
+    assert all("site-hidden-" in str(row["output"]) for row in calls[0]["records"])
+
+    def tampered(**kwargs):
+        raise orchestration.HiddenMaterializationError("output summary drifted")
+
+    monkeypatch.setattr(orchestration, "verify_hidden_consumption_records_from_formal_context", tampered)
+    with pytest.raises(orchestration.OrchestrationError, match="A15 hidden ledger/freeze/output"):
+        orchestration._verify_final_multisite_hidden_consumption(context)
 
 
 @pytest.mark.parametrize(

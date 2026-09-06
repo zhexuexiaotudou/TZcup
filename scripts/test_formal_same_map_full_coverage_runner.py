@@ -10,6 +10,9 @@ ROOT = Path(__file__).resolve().parents[1]
 RUNNER = (ROOT / "scripts/run_formal_same_map_full_coverage_baseline.sh").read_text(
     encoding="utf-8"
 )
+BASELINE_WRAPPER = (ROOT / "scripts/run_formal_same_map_baseline.sh").read_text(
+    encoding="utf-8"
+)
 SUPPORT = (ROOT / "scripts/formal_same_map_baseline_support.py").read_text(
     encoding="utf-8"
 )
@@ -64,6 +67,24 @@ def test_runner_is_one_hard_restart_fullcoverage_process_chain() -> None:
     assert '--runtime-binding "${RUNTIME_BINDING}"' in RUNNER[
         lifecycle_validator:lifecycle_output
     ]
+    assert "speed_qualification_state:=\"${SPEED_QUALIFICATION_STATE}\"" in RUNNER
+    assert "dry_cleaning_qualification_active" in RUNNER
+    assert "collect_formal_safety_speed_readback.py" in RUNNER
+    assert "--runtime-binding \"${RUNTIME_BINDING}\"" in RUNNER
+    assert "--snapshot \"${SNAPSHOT}\"" in RUNNER
+    assert "--session \"${SESSION}\"" in RUNNER
+    baseline_call = RUNNER[RUNNER.index('bash "${ROOT}/scripts/run_formal_same_map_baseline.sh"'):]
+    assert "--runtime-closure \"${RUNTIME_CLOSURE_MANIFEST}\"" in baseline_call
+    assert "--runtime-install \"${RUNTIME_INSTALL}\"" in baseline_call
+    for option in (
+        "--safety-manager-readback", "--runtime-binding", "--runtime-closure",
+        "--runtime-install", "--expected-safety-cap",
+    ):
+        assert option in BASELINE_WRAPPER
+    assert "SAFETY_MANAGER_READBACK RUNTIME_BINDING RUNTIME_CLOSURE RUNTIME_INSTALL EXPECTED_SAFETY_CAP" in BASELINE_WRAPPER
+    assert "if [[ -n \"${SAFETY_MANAGER_READBACK}\" ]]" not in BASELINE_WRAPPER
+    assert "safety_manager_status.raw.json" not in RUNNER
+    assert "--expected-safety-cap \"${WHOLE_VEHICLE_SAFETY_CAP}\"" in RUNNER
 
 
 def test_runner_uses_named_evaluator_pose_only_for_metrics() -> None:

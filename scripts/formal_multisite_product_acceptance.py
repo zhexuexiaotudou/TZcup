@@ -24,6 +24,11 @@ from formal_runtime_gate_binding import (
     build_binding,
     load_binding,
 )
+from sanitation_campus_scenario.hidden_materializer import (
+    commit_formal_hidden_run_context,
+    commit_hidden_configuration_freeze,
+    verify_hidden_consumption_records,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -391,6 +396,15 @@ def execute_live(
     _write_atomic(runtime_binding_path, binding)
     evidence_root.mkdir(parents=True)
     work_root.mkdir(parents=True)
+    try:
+        commit_formal_hidden_run_context(
+            run_root=work_root, snapshot_path=snapshot_path,
+            session_path=session_path, scenario_config=scenario_config,
+        )
+    except Exception as exc:
+        raise MultiSiteAcceptanceError(
+            f"cannot seal multi-site hidden runner context: {exc}"
+        ) from exc
     environment = dict(os.environ)
     environment.update({
         "FORMAL_VEHICLE_RUNTIME_WS": str(runtime_ws),
@@ -398,6 +412,7 @@ def execute_live(
         "FORMAL_ACCEPTANCE_SESSION": str(session_path),
         "FORMAL_VEHICLE_SNAPSHOT_MANIFEST": str(snapshot_path),
         "TZCUP_REPOSITORY_ROOT": str(ROOT),
+        "TZCUP_FORMAL_HIDDEN_RUN_ROOT": str(work_root),
     })
     for ordinal, site in enumerate(sites):
         generator_split = "val" if site["split"] == "validation" else site["split"]
@@ -409,12 +424,44 @@ def execute_live(
         baseline = site_root / "same_map_baseline.json"
         observation = mission_root / "multisite_live_observations.json"
         evidence = evidence_root / site["evidence_file"]
-        _run_live([
-            "ros2", "run", "sanitation_campus_scenario", "sanitation-campus-scenario", "generate",
-            "--config", str(scenario_config), "--profile", "formal", "--split", generator_split,
-            "--map-index", str(site["map_index"]), "--mission-index", str(site["mission_index"]),
-            "--output", str(episode_root),
-        ], environment)
+        if site["split"] == "hidden" and site["map_index"] == 0:
+            validation_sites = [row for row in sites if row["split"] == "validation"]
+            frozen_validation = {}
+            for validation_site in validation_sites:
+                validation_path = evidence_root / validation_site["evidence_file"]
+                _check_site(
+                    _json_object(validation_path), validation_site, contract,
+                    _snapshot_identity(snapshot_path), _session_identity(
+                        session_path, _snapshot_identity(snapshot_path)
+                    ), _closure_identity(runtime_closure_path),
+                )
+                frozen_validation[validation_path.name] = _sha256(validation_path)
+            commit_hidden_configuration_freeze(
+                run_root=work_root, snapshot_path=snapshot_path,
+                session_path=session_path, scenario_config=scenario_config,
+                producer="formal_multisite_product_acceptance",
+                frozen_configuration={
+                    "validation_sites_completed": 8,
+                    "validation_evidence_sha256": frozen_validation,
+                    "selection_source": "validation_only_before_hidden",
+                },
+            )
+        if site["split"] == "hidden":
+            _run_live([
+                "ros2", "run", "sanitation_campus_scenario", "sanitation-campus-scenario",
+                "materialize-hidden", "--config", str(scenario_config),
+                "--snapshot", str(snapshot_path), "--session", str(session_path),
+                "--freeze-producer", "formal_multisite_product_acceptance",
+                "--map-index", str(site["map_index"]),
+                "--mission-index", str(site["mission_index"]), "--output", str(episode_root),
+            ], environment)
+        else:
+            _run_live([
+                "ros2", "run", "sanitation_campus_scenario", "sanitation-campus-scenario", "generate",
+                "--config", str(scenario_config), "--profile", "formal", "--split", generator_split,
+                "--map-index", str(site["map_index"]), "--mission-index", str(site["mission_index"]),
+                "--output", str(episode_root),
+            ], environment)
         map_environment = dict(environment)
         map_environment.update({
             "FORMAL_DYNAMIC_EPISODE_ROOT": str(episode_root),
@@ -448,6 +495,8 @@ def execute_live(
         runtime_binding_path,
         runtime_overlay,
         contract_path,
+        work_root,
+        scenario_config,
     )
     _write_atomic(output, result)
     return result
@@ -507,6 +556,8 @@ def aggregate(
     evidence_root: Path, snapshot_path: Path, session_path: Path, runtime_closure_path: Path,
     runtime_binding_path: Path, runtime_overlay: Path,
     contract_path: Path = DEFAULT_CONTRACT,
+    work_root: Path | None = None,
+    scenario_config: Path = SCENARIO_CONFIG,
 ) -> dict[str, Any]:
     contract = _read_mapping(contract_path)
     snapshot = _snapshot_identity(snapshot_path)
@@ -543,6 +594,26 @@ def aggregate(
         seen_map_ids.add(checked["map_id"])
         seen_map_hashes.add(checked["map_snapshot_sha256"])
         accepted.append({"site": site, "evidence_sha256": _sha256(path), **checked})
+    hidden_consumption: list[dict[str, str]] = []
+    if work_root is not None:
+        hidden_records = [
+            {
+                "producer": "formal_hidden_episode",
+                "request": {
+                    "profile": "formal", "split": "hidden",
+                    "map_index": site["map_index"], "mission_index": site["mission_index"],
+                },
+                "output": work_root / f"site-hidden-{site['map_index']:02d}" / "episode",
+            }
+            for site in expected if site["split"] == "hidden"
+        ]
+        try:
+            hidden_consumption = verify_hidden_consumption_records(
+                run_root=work_root, snapshot_path=snapshot_path, session_path=session_path,
+                scenario_config=scenario_config, records=hidden_records,
+            )
+        except Exception as exc:
+            raise MultiSiteAcceptanceError(f"hidden consumption ledger/output summary failed closed: {exc}") from exc
     return {
         "schema_version": 1,
         "report_id": aggregate_contract["report_id"],
@@ -557,6 +628,7 @@ def aggregate(
         "acceptance_session_binding": session,
         "runtime_closure_binding": closure,
         "runtime_gate_binding": runtime_binding,
+        "hidden_consumption": hidden_consumption,
         "sites": accepted,
     }
 
@@ -646,6 +718,7 @@ def main() -> int:
             args.runtime_closure,
             args.runtime_binding,
             args.runtime_overlay,
+            args.work_root,
         )):
             raise MultiSiteAcceptanceError(
                 "aggregation requires evidence, snapshot, session, closure, binding and overlay"
@@ -660,6 +733,8 @@ def main() -> int:
                 args.runtime_binding,
                 args.runtime_overlay,
                 args.contract,
+                args.work_root,
+                args.scenario_config,
             ),
         )
         return 0

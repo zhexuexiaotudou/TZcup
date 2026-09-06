@@ -681,7 +681,7 @@ evidence_gates:
       acceptance_session_binding.snapshot: [snapshot_manifest_sha256, source_inventory_sha256]
       runtime_closure_binding: [runtime_closure_manifest_sha256, runtime_closure_sha256]
       raw_evidence: [path, sha256, collector_report_id, collector_status]
-      checks: [hardware_identity, system_image, model_hashes, ros_graph, actual_backend_and_inference, sustained_resources_and_thermal, truth_boundary, snapshot_binding, acceptance_session_binding, runtime_closure_binding]
+      checks: [hardware_identity, system_image, model_hashes, dosod_compile_parity_metric_chain, ros_graph, actual_backend_and_inference, sustained_resources_and_thermal, truth_boundary, snapshot_binding, acceptance_session_binding, runtime_closure_binding]
     snapshot_manifest_hash_field: source_binding.snapshot_manifest_sha256
     snapshot_source_hash_field: source_binding.source_inventory_sha256
     evidence_origin: external_rdk_s100_live_hardware_only
@@ -693,6 +693,7 @@ evidence_gates:
       - immutable_rdk_s100_journey6_device_tree_identity
       - board_system_image_and_runtime_inventory
       - exact_dosod_vocabulary_and_hbm_hashes
+      - canonical_dosod_compile_x86_parity_and_metric_receipt_chain
       - exact_edgesam_encoder_and_decoder_hbm_hashes
       - live_ros_node_topic_and_type_graph
       - actual_bpu_or_cpu_backend_corroborated_by_process_maps

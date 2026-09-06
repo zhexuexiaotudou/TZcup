@@ -1,5 +1,13 @@
 # 项目技术规范：智慧环卫无人清扫车仿真主线
 
+## 当前目标与验收入口
+
+A01–A21、正式 31 步编排和 26 个证据门的唯一交叉入口见
+`docs/formal-goal-acceptance-crosswalk.md` 及其机器可读配置
+`config/high_fidelity_vehicle/formal_goal_acceptance_crosswalk.json`。交叉表只负责路由，不能作为
+通过证据；组件历史 PASS、正式编排完成、比赛仿真通过、S100P 计算验收和实地产品验收必须
+分别报告，禁止互相推导。
+
 ## 正式竞赛整车 URDF/CAD 边界
 
 `formal_competition_vehicle.urdf.xacro` 是竞赛级名义整车入口，必须保持 A300、UR5e、

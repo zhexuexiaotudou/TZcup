@@ -21,14 +21,16 @@ domain="${ROS_DOMAIN_ID:-73}"
 dynamic_seed="${FORMAL_DYNAMIC_SEED:-$(date +%s%N)}"
 operation_speed_profile="${FORMAL_DYNAMIC_OPERATION_SPEED_PROFILE:-mapping_safe}"
 safety_max_linear_velocity="${FORMAL_DYNAMIC_SAFETY_MAX_LINEAR_VELOCITY:-0.45}"
-if [[ "${safety_max_linear_velocity}" != "0.45" ]]; then
+if [[ "${FORMAL_DRY_SPEED_REQUALIFICATION:-}" == "1" ]]; then
   [[ "${FORMAL_DRY_SPEED_REQUALIFICATION:-}" == "1" && -n "${FORMAL_DRY_SPEED_REQUALIFICATION_MARKER:-}" && -n "${FORMAL_DRY_SPEED_REQUALIFICATION_ROOT:-}" ]] || {
-    echo "non-default safety cap requires the requalification wrapper opt-in marker" >&2; exit 2;
+    echo "speed requalification requires the run-scoped opt-in marker" >&2; exit 2;
   }
   python3 "${repo_root}/scripts/formal_dry_speed_requalification_token.py" --validate \
     --profile "${repo_root}/config/high_fidelity_vehicle/formal_dry_speed_requalification.yaml" \
     --run-root "${FORMAL_DRY_SPEED_REQUALIFICATION_ROOT}" --token "${FORMAL_DRY_SPEED_REQUALIFICATION_MARKER}" \
     --requested-cap "${safety_max_linear_velocity}"
+elif [[ "${safety_max_linear_velocity}" != "0.45" ]]; then
+  echo "non-default safety cap requires the requalification wrapper opt-in marker" >&2; exit 2;
 fi
 
 export PYTHONPATH="${repo_root}/starter_ws/src/sanitation_formal_campus_integration${PYTHONPATH:+:${PYTHONPATH}}"

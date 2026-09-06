@@ -38,7 +38,7 @@ def _projected_delta(start: Pose2D, end: Pose2D) -> tuple[float, float, float]:
     )
 
 
-def evaluate_motion(raw: dict[str, Any]) -> dict[str, Any]:
+def evaluate_motion(raw: dict[str, Any], *, expected_forward_distance_m: float = 1.0) -> dict[str, Any]:
     """Evaluate synchronized start/forward/stopped snapshots, failing closed."""
     ground_start = Pose2D(**raw["ground_truth"]["start"])
     ground_forward = Pose2D(**raw["ground_truth"]["forward_end"])
@@ -69,13 +69,17 @@ def evaluate_motion(raw: dict[str, Any]) -> dict[str, Any]:
         float(raw["plant_odom"]["stopped_angular_velocity_rad_s"])
     )
 
+    if not math.isfinite(expected_forward_distance_m) or expected_forward_distance_m <= 0.0:
+        raise ValueError("expected forward distance must be finite and positive")
+    minimum_forward_distance = max(0.15, expected_forward_distance_m * 0.35)
+    maximum_forward_distance = expected_forward_distance_m * 1.40
     checks = {
         "joint_state_broadcaster_active": raw["joint_state_broadcaster_state"] == "active",
         "safety_command_subscription": int(raw["command_subscription_count"]) == 1,
         "safety_actuator_enable_observed": int(raw["actuator_enabled_sample_count"]) > 0,
         "all_four_wheel_joints_observed": set(raw["wheel_state"]["observed_names"]) >= set(WHEEL_JOINTS),
-        "ground_truth_forward_motion": 0.35 <= gt_forward <= 1.40,
-        "plant_odometry_forward_motion": 0.35 <= odom_forward_m <= 1.40,
+        "ground_truth_forward_motion": minimum_forward_distance <= gt_forward <= maximum_forward_distance,
+        "plant_odometry_forward_motion": minimum_forward_distance <= odom_forward_m <= maximum_forward_distance,
         "ground_truth_heading_straight": abs(gt_lateral) <= 0.12 and abs(gt_yaw) <= 0.12,
         "plant_odometry_heading_straight": abs(odom_lateral) <= 0.12 and abs(odom_yaw) <= 0.12,
         "odometry_matches_ground_truth": abs(odom_forward_m - gt_forward) <= 0.18,
@@ -113,11 +117,12 @@ def evaluate_motion(raw: dict[str, Any]) -> dict[str, Any]:
         "terminal_plant_odom_speed_mps": terminal_odom_speed,
         "terminal_plant_odom_angular_speed_rad_s": terminal_odom_angular_speed,
         "terminal_max_wheel_speed_rad_s": terminal_wheel_speed,
+        "expected_forward_distance_m": expected_forward_distance_m,
     }
     return {"checks": checks, "metrics": metrics, "passed": all(checks.values())}
 
 
-def evaluate_estop_stop(raw: dict[str, Any]) -> dict[str, Any]:
+def evaluate_estop_stop(raw: dict[str, Any], *, minimum_pre_estop_speed_mps: float = 0.98) -> dict[str, Any]:
     """Score a stop asserted while the vehicle is physically in motion.
 
     The raw records intentionally contain both the final safety-manager command
@@ -170,11 +175,13 @@ def evaluate_estop_stop(raw: dict[str, Any]) -> dict[str, Any]:
         and item.get("values", {}).get("manual_estop_active") == "true"
         for item in status_trace
     )
+    if not math.isfinite(minimum_pre_estop_speed_mps) or minimum_pre_estop_speed_mps <= 0.0:
+        raise ValueError("minimum pre-E-stop speed must be finite and positive")
     checks = {
         "estop_asserted_during_physical_motion": travel_before_trigger >= 0.15,
-        "final_safety_command_reached_one_mps_before_estop": max(
+        "final_safety_command_reached_requested_speed_before_estop": max(
             abs(float(item["linear_x_mps"])) for item in motion_commands
-        ) >= 0.98,
+        ) >= minimum_pre_estop_speed_mps,
         "final_safety_command_has_one_expected_writer_and_input_subscriber": writer.get("writers") == [writer.get("expected_sole_writer")] and int(writer.get("input_subscription_count", 0)) == 1,
         "estop_feedback_or_manual_estop_status_observed": feedback_or_status,
         "final_safety_command_zero_after_estop": all(

@@ -389,6 +389,8 @@ def main() -> int:
         "calibration": calibration_result,
         "calibration_at_least_500": calibration_result["valid_count"] >= MINIMUM_CALIBRATION_SAMPLES,
         "compile_config": config_path.name if preflight_pass else None,
+        "compile_config_sha256": sha256_file(config_path) if preflight_pass else None,
+        "calibration_manifest_sha256": contract_audit.get("calibration", {}).get("manifest_sha256"),
         "compile_config_emitted": preflight_pass,
         "compile_executed": False,
         "hbm_status": "HBM_NOT_PRODUCED",

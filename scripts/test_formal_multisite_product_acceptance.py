@@ -147,6 +147,15 @@ def test_aggregate_fails_closed_when_one_of_the_twenty_sites_is_missing(tmp_path
         )
 
 
+def test_aggregate_fails_closed_when_hidden_consumption_ledger_is_missing(tmp_path: Path) -> None:
+    evidence, snapshot, session, closure, binding, overlay, _ = _evidence_set(tmp_path)
+    with pytest.raises(multisite.MultiSiteAcceptanceError, match="ledger/output summary failed closed"):
+        multisite.aggregate(
+            evidence, snapshot, session, closure, binding, overlay, CONTRACT,
+            tmp_path / "formal-run-root", multisite.SCENARIO_CONFIG,
+        )
+
+
 def test_aggregate_rejects_runtime_binding_from_another_session_closure(tmp_path: Path) -> None:
     evidence, snapshot, session, closure, binding, overlay, _ = _evidence_set(tmp_path)
     session_payload = json.loads(session.read_text(encoding="utf-8"))
@@ -249,6 +258,10 @@ def test_live_executor_contract_is_serial_and_wires_fresh_per_site_paths() -> No
     assert "for ordinal, site in enumerate(sites):" in source
     assert 'generator_split = "val" if site["split"] == "validation"' in source
     assert '"--config", str(scenario_config), "--profile", "formal", "--split", generator_split' in source
+    assert '"materialize-hidden"' in source
+    assert "commit_formal_hidden_run_context(" in source
+    assert '"hidden-consumption-ledger"' in (ROOT / "starter_ws/src/sanitation_campus_scenario/sanitation_campus_scenario/hidden_materializer.py").read_text(encoding="utf-8")
+    assert "verify_hidden_consumption_records(" in source
     assert "sanitation-campus-scenario" in source
     assert "run_formal_first_map_dynamic_prerequisite.sh" in source
     assert "run_formal_same_map_full_coverage_baseline.sh" in source

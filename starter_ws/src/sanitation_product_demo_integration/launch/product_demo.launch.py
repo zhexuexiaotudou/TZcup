@@ -109,6 +109,14 @@ def generate_launch_description() -> LaunchDescription:
                 "operation_speed_profile",
                 default_value="dry_cleaning_competition_candidate",
             ),
+            DeclareLaunchArgument(
+                "max_linear_velocity",
+                default_value="0.45",
+                description=(
+                    "Final whole-vehicle cap. Formal runners retain 0.45 m/s "
+                    "unless a current requalification receipt explicitly allows 1.0."
+                ),
+            ),
             OpaqueFunction(function=_validate_product_inputs),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(campus_launch),
@@ -124,6 +132,9 @@ def generate_launch_description() -> LaunchDescription:
                     "cleaning_planner": "rl_dirt_priority",
                     "operation_speed_profile": LaunchConfiguration(
                         "operation_speed_profile"
+                    ),
+                    "max_linear_velocity": LaunchConfiguration(
+                        "max_linear_velocity"
                     ),
                     # The active policy and the coverage baseline are mutually
                     # exclusive command owners.  Product mode always disables

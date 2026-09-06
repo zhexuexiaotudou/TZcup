@@ -110,6 +110,95 @@ def _fixture(tmp_path: Path) -> argparse.Namespace:
     )
 
 
+def _current_runtime_binding(args: argparse.Namespace) -> tuple[Path, Path, Path]:
+    """Make a complete binding to this fixture's current session and snapshot."""
+    closure = _json(args.output.parent / "runtime_closure.json", {"closure": "current"})
+    install = args.output.parent / "runtime_install"
+    install.mkdir()
+    closure_binding = {
+        "status": "FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED",
+        "manifest_sha256": _sha(closure),
+        "runtime_install_root": str(install.resolve()),
+    }
+    session = json.loads(args.session.read_text(encoding="utf-8"))
+    session["runtime_closure_binding"] = closure_binding
+    _json(args.session, session)
+    binding = _json(args.output.parent / "runtime_binding.json", {
+        "status": "FORMAL_RUNTIME_GATE_BOUND",
+        "acceptance_session_binding": {
+            "session_manifest": str(args.session.resolve()),
+            "session_manifest_sha256": _sha(args.session),
+            "session_started_epoch_ns": session["started_epoch_ns"],
+            "session_status_at_gate": "FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING",
+            "snapshot": session["snapshot"],
+            "snapshot_current_source_verified": True,
+        },
+        "runtime_closure_binding": closure_binding,
+    })
+    return binding, closure, install
+
+
+def _safety_readback(binding: Path, *, state: str, producer: bool = True) -> dict:
+    captured = time.time_ns()
+    status = {
+        "effective_max_linear_velocity_mps": 1.0,
+        "operation_speed_profile": "dry_cleaning_competition_candidate",
+        "speed_qualification_state": state,
+    }
+    readback = {
+        "schema_version": 2,
+        "capture_timeout_sec": 5.0,
+        "capture_status": "PASSED",
+        "runtime_gate_binding_sha256": _sha(binding),
+        "runtime_gate_binding": json.loads(binding.read_text(encoding="utf-8")),
+        "producer_identity": {
+            "node_name": "whole_vehicle_safety_manager",
+            "node_namespace": "/",
+            "topic": "/safety/status_json",
+            "message_type": "std_msgs/msg/String",
+            "publisher_count": "1",
+        },
+        "producer_capture_before": {
+            "returncode": 0,
+            "command": ["ros2", "topic", "info", "/safety/status_json", "--verbose"],
+            "stdout": _topic_info(),
+            "started_epoch_ns": captured,
+            "completed_epoch_ns": captured + 1,
+        },
+        "status_capture": {
+            "returncode": 0,
+            "command": ["ros2", "topic", "echo", "--once", "--field", "data", "/safety/status_json"],
+            "stdout": json.dumps(status),
+            "started_epoch_ns": captured + 2,
+            "completed_epoch_ns": captured + 3,
+        },
+        "producer_capture": {
+            "returncode": 0,
+            "command": ["ros2", "topic", "info", "/safety/status_json", "--verbose"],
+            "stdout": _topic_info(),
+            "started_epoch_ns": captured + 4,
+            "completed_epoch_ns": captured + 5,
+        },
+        **status,
+    }
+    if not producer:
+        readback.pop("producer_capture_before")
+    return readback
+
+
+def _topic_info(*, node: str = "whole_vehicle_safety_manager", publishers: int = 1) -> str:
+    return "\n".join((
+        "Type: std_msgs/msg/String",
+        f"Publisher count: {publishers}",
+        "Subscription count: 1",
+        f"Node name: {node}",
+        "Node namespace: /",
+        "Topic type: std_msgs/msg/String",
+        "Endpoint type: PUBLISHER",
+        "",
+    ))
+
+
 def _mutate(path: Path, key: str, value) -> None:
     row = json.loads(path.read_text(encoding="utf-8"))
     row[key] = value
@@ -139,6 +228,194 @@ def test_generate_and_revalidate_complete_same_map_baseline(tmp_path: Path) -> N
         "passed": True,
     }
     assert validate(args.output, args.session, args.snapshot) == report
+
+
+def test_rejects_one_mps_readback_without_isolated_dry_state(tmp_path: Path) -> None:
+    args = _fixture(tmp_path)
+    runtime, closure, install = _current_runtime_binding(args)
+    readback = _json(tmp_path / "safety.json", _safety_readback(runtime, state="none"))
+    args.safety_manager_readback = readback
+    args.runtime_binding = runtime
+    args.runtime_closure = closure
+    args.runtime_install = install
+    args.expected_safety_cap = 1.0
+    with pytest.raises(BaselineError, match="isolated dry-only"):
+        generate(args)
+
+
+def test_rejects_safety_readback_without_collector_producer_receipt(tmp_path: Path) -> None:
+    args = _fixture(tmp_path)
+    runtime, closure, install = _current_runtime_binding(args)
+    readback = _json(
+        tmp_path / "safety.json",
+        _safety_readback(runtime, state="isolated_same_map_dry_coverage", producer=False),
+    )
+    args.safety_manager_readback = readback
+    args.runtime_binding = runtime
+    args.runtime_closure = closure
+    args.runtime_install = install
+    args.expected_safety_cap = 1.0
+    with pytest.raises(BaselineError, match="producer receipt"):
+        generate(args)
+
+
+@pytest.mark.parametrize(
+    ("mutation", "message"),
+    [
+        (lambda receipt: receipt["producer_capture_before"].pop("stdout"), "retained raw stdout"),
+        (lambda receipt: receipt["producer_capture"].update({"stdout": _topic_info(publishers=2)}), "exactly one"),
+        (lambda receipt: receipt["producer_capture"].update({"stdout": _topic_info(node="impostor")}), "unique whole_vehicle_safety_manager"),
+        (lambda receipt: receipt["producer_capture_before"].update({"completed_epoch_ns": receipt["status_capture"]["started_epoch_ns"] + 1}), "execution order"),
+        (lambda receipt: receipt["producer_capture_before"].update({"completed_epoch_ns": receipt["producer_capture_before"]["started_epoch_ns"] + 7_000_000_000}), "exceeds its bounded timeout"),
+        (lambda receipt: receipt["producer_capture"].update({"started_epoch_ns": receipt["producer_capture_before"]["completed_epoch_ns"] + 20_000_000_000, "completed_epoch_ns": receipt["producer_capture_before"]["completed_epoch_ns"] + 20_000_000_001}), "triplet exceeds its bounded timeout"),
+    ],
+)
+def test_rejects_forged_or_unordered_retained_ros_receipt(tmp_path: Path, mutation, message: str) -> None:
+    args = _fixture(tmp_path)
+    runtime, closure, install = _current_runtime_binding(args)
+    receipt = _safety_readback(runtime, state="isolated_same_map_dry_coverage")
+    mutation(receipt)
+    args.safety_manager_readback = _json(tmp_path / "safety.json", receipt)
+    args.runtime_binding = runtime
+    args.runtime_closure = closure
+    args.runtime_install = install
+    args.expected_safety_cap = 1.0
+    with pytest.raises(BaselineError, match=message):
+        generate(args)
+
+
+def test_accepts_current_revalidated_one_mps_collector_receipt(tmp_path: Path) -> None:
+    args = _fixture(tmp_path)
+    runtime, closure, install = _current_runtime_binding(args)
+    args.safety_manager_readback = _json(
+        tmp_path / "safety.json",
+        _safety_readback(runtime, state="isolated_same_map_dry_coverage"),
+    )
+    args.runtime_binding = runtime
+    args.runtime_closure = closure
+    args.runtime_install = install
+    args.expected_safety_cap = 1.0
+    assert generate(args)["status"] == PASS_STATUS
+
+
+@pytest.mark.parametrize("timeout", [0.0, -1.0, float("inf"), 10.0001])
+def test_rejects_invalid_or_unbounded_capture_timeout(tmp_path: Path, timeout: float) -> None:
+    args = _fixture(tmp_path)
+    runtime, closure, install = _current_runtime_binding(args)
+    receipt = _safety_readback(runtime, state="isolated_same_map_dry_coverage")
+    receipt["capture_timeout_sec"] = timeout
+    args.safety_manager_readback = _json(tmp_path / "safety.json", receipt)
+    args.runtime_binding = runtime
+    args.runtime_closure = closure
+    args.runtime_install = install
+    args.expected_safety_cap = 1.0
+    with pytest.raises(BaselineError, match="capture timeout is invalid"):
+        generate(args)
+
+
+@pytest.mark.parametrize("timeout", [9.0, 10.0])
+def test_rejects_bounded_but_nondefault_capture_timeout(tmp_path: Path, timeout: float) -> None:
+    args = _fixture(tmp_path)
+    runtime, closure, install = _current_runtime_binding(args)
+    receipt = _safety_readback(runtime, state="isolated_same_map_dry_coverage")
+    receipt["capture_timeout_sec"] = timeout
+    args.safety_manager_readback = _json(tmp_path / "safety.json", receipt)
+    args.runtime_binding = runtime
+    args.runtime_closure = closure
+    args.runtime_install = install
+    args.expected_safety_cap = 1.0
+    with pytest.raises(BaselineError, match="fixed formal runner contract"):
+        generate(args)
+
+
+def test_rejects_nine_second_each_and_twenty_seven_second_triplet_receipt(tmp_path: Path) -> None:
+    """A formerly-valid 9/9/9 receipt cannot widen the formal 5 s contract."""
+
+    args = _fixture(tmp_path)
+    runtime, closure, install = _current_runtime_binding(args)
+    receipt = _safety_readback(runtime, state="isolated_same_map_dry_coverage")
+    receipt["capture_timeout_sec"] = 9.0
+    started = receipt["producer_capture_before"]["started_epoch_ns"]
+    second = 1_000_000_000
+    for index, key in enumerate((
+        "producer_capture_before", "status_capture", "producer_capture",
+    )):
+        receipt[key]["started_epoch_ns"] = started + index * 9 * second
+        receipt[key]["completed_epoch_ns"] = started + (index + 1) * 9 * second
+    args.safety_manager_readback = _json(tmp_path / "safety.json", receipt)
+    args.runtime_binding = runtime
+    args.runtime_closure = closure
+    args.runtime_install = install
+    args.expected_safety_cap = 1.0
+    with pytest.raises(BaselineError, match="fixed formal runner contract"):
+        generate(args)
+
+
+def test_accepts_exact_five_second_capture_boundaries(tmp_path: Path) -> None:
+    args = _fixture(tmp_path)
+    runtime, closure, install = _current_runtime_binding(args)
+    receipt = _safety_readback(runtime, state="isolated_same_map_dry_coverage")
+    started = receipt["producer_capture_before"]["started_epoch_ns"]
+    second = 1_000_000_000
+    for index, key in enumerate((
+        "producer_capture_before", "status_capture", "producer_capture",
+    )):
+        receipt[key]["started_epoch_ns"] = started + index * 5 * second
+        receipt[key]["completed_epoch_ns"] = started + (index + 1) * 5 * second
+    args.safety_manager_readback = _json(tmp_path / "safety.json", receipt)
+    args.runtime_binding = runtime
+    args.runtime_closure = closure
+    args.runtime_install = install
+    args.expected_safety_cap = 1.0
+    assert generate(args)["status"] == PASS_STATUS
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("session_manifest_sha256", "0" * 64),
+        ("snapshot_current_source_verified", False),
+    ],
+)
+def test_rejects_handwritten_other_session_or_unverified_binding(
+    tmp_path: Path, field: str, value
+) -> None:
+    args = _fixture(tmp_path)
+    runtime, closure, install = _current_runtime_binding(args)
+    forged = json.loads(runtime.read_text(encoding="utf-8"))
+    forged["acceptance_session_binding"][field] = value
+    _json(runtime, forged)
+    args.safety_manager_readback = _json(
+        tmp_path / "safety.json",
+        _safety_readback(runtime, state="isolated_same_map_dry_coverage"),
+    )
+    args.runtime_binding = runtime
+    args.runtime_closure = closure
+    args.runtime_install = install
+    args.expected_safety_cap = 1.0
+    with pytest.raises(BaselineError, match="runtime binding does not match current inputs"):
+        generate(args)
+
+
+def test_rejects_binding_from_another_session(tmp_path: Path) -> None:
+    args = _fixture(tmp_path)
+    runtime, closure, install = _current_runtime_binding(args)
+    other_session = tmp_path / "other-session.json"
+    other_session.write_bytes(args.session.read_bytes())
+    forged = json.loads(runtime.read_text(encoding="utf-8"))
+    forged["acceptance_session_binding"]["session_manifest"] = str(other_session.resolve())
+    forged["acceptance_session_binding"]["session_manifest_sha256"] = _sha(other_session)
+    _json(runtime, forged)
+    args.safety_manager_readback = _json(
+        tmp_path / "safety.json",
+        _safety_readback(runtime, state="isolated_same_map_dry_coverage"),
+    )
+    args.runtime_binding = runtime
+    args.runtime_closure = closure
+    args.runtime_install = install
+    args.expected_safety_cap = 1.0
+    with pytest.raises(BaselineError, match="runtime binding does not match current inputs"):
+        generate(args)
 
 
 def test_rejects_mapping_that_did_not_ignore_dirt(tmp_path: Path) -> None:

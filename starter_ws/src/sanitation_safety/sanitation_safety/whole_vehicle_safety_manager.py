@@ -37,6 +37,7 @@ from .whole_vehicle_safety_core import (
 )
 from .whole_vehicle_safety_core import VelocityActuatorGate
 from .whole_vehicle_safety_core import WholeVehicleSafetyCore
+from .dry_speed_qualification_core import DrySpeedQualificationState
 
 
 ARM_STOWED_POSITIONS = {
@@ -90,6 +91,13 @@ class WholeVehicleSafetyManager(Node):
         actuator_timeout = self._float_parameter("actuator_command_timeout_sec")
         self._brush_gate = VelocityActuatorGate(3, actuator_timeout)
         self._pump_gate = VelocityActuatorGate(1, actuator_timeout)
+        self._dry_speed_qualification = DrySpeedQualificationState(
+            configured_max_linear_velocity_mps=self._float_parameter("max_linear_velocity"),
+            mission_mode=self._string_parameter("mission_mode"),
+            operation_speed_profile=self._string_parameter("operation_speed_profile"),
+            qualification_state=self._string_parameter("speed_qualification_state"),
+            heartbeat_timeout_sec=self._float_parameter("speed_qualification_heartbeat_timeout_sec"),
+        )
         self._velocity_controllers_active = False
         self._velocity_controller_state_known = False
         self._controller_state_future = None
@@ -194,6 +202,18 @@ class WholeVehicleSafetyManager(Node):
             Float64MultiArray,
             self._string_parameter("brush_command_input_topic"),
             self._on_brush_command,
+            latest_reliable_qos,
+        )
+        self.create_subscription(
+            Bool,
+            self._string_parameter("speed_qualification_active_topic"),
+            self._on_speed_qualification_active,
+            latest_reliable_qos,
+        )
+        self.create_subscription(
+            Bool,
+            self._string_parameter("dry_brush_active_topic"),
+            self._on_dry_brush_active,
             latest_reliable_qos,
         )
         self.create_subscription(
@@ -382,10 +402,17 @@ class WholeVehicleSafetyManager(Node):
         self.declare_parameter("controller_reassert_period_sec", 0.1)
         self.declare_parameter("max_linear_velocity", 0.45)
         self.declare_parameter("max_angular_velocity", 0.35)
+        self.declare_parameter("mission_mode", "")
+        self.declare_parameter("operation_speed_profile", "")
+        self.declare_parameter("speed_qualification_state", "none")
+        self.declare_parameter("speed_qualification_active_topic", "/safety/dry_cleaning_qualification_active")
+        self.declare_parameter("dry_brush_active_topic", "/brush_enabled")
+        self.declare_parameter("speed_qualification_heartbeat_timeout_sec", 0.25)
 
     def _on_command(self, message: Twist) -> None:
         with self._state_lock:
             now = self._record_input_arrival("command")
+            self._refresh_effective_max_linear_velocity_locked(now)
             self._core.set_command(
                 linear_x=float(message.linear.x),
                 angular_z=float(message.angular.z),
@@ -396,11 +423,33 @@ class WholeVehicleSafetyManager(Node):
         with self._state_lock:
             now = self._record_input_arrival("brush_command")
             self._brush_gate.set_command(message.data, now)
+            self._refresh_effective_max_linear_velocity_locked(now)
 
     def _on_pump_command(self, message: Float64MultiArray) -> None:
         with self._state_lock:
             now = self._record_input_arrival("pump_command")
             self._pump_gate.set_command(message.data, now)
+            self._refresh_effective_max_linear_velocity_locked(now)
+
+    def _on_speed_qualification_active(self, message: Bool) -> None:
+        with self._state_lock:
+            now = self._record_input_arrival("speed_qualification_active")
+            self._dry_speed_qualification.set_qualification_active(message.data, now)
+            self._refresh_effective_max_linear_velocity_locked(now)
+
+    def _on_dry_brush_active(self, message: Bool) -> None:
+        with self._state_lock:
+            now = self._record_input_arrival("dry_brush_active")
+            self._dry_speed_qualification.set_dry_brush_active(message.data, now)
+            self._refresh_effective_max_linear_velocity_locked(now)
+
+    def _refresh_effective_max_linear_velocity_locked(self, now: float) -> float:
+        cap = self._dry_speed_qualification.effective_max_linear_velocity_mps(
+            now=now,
+            pump_output=self._pump_gate.evaluate(permitted=True, now=now),
+        )
+        self._core.set_effective_max_linear_velocity(cap)
+        return cap
 
     def _on_joint_states(self, message: JointState) -> None:
         with self._state_lock:
@@ -698,6 +747,7 @@ class WholeVehicleSafetyManager(Node):
         with self._output_lock:
             now = time.monotonic()
             with self._state_lock:
+                effective_max_linear_velocity = self._refresh_effective_max_linear_velocity_locked(now)
                 decision, joint_positions = self._evaluate_locked(now)
 
             # No state lock crosses a ROS service, clock, or publisher call.
@@ -751,6 +801,9 @@ class WholeVehicleSafetyManager(Node):
                 "publish_thread_error": str(
                     runtime_metrics["publish_thread_error"]
                 ),
+                "effective_max_linear_velocity_mps": effective_max_linear_velocity,
+                "operation_speed_profile": self._string_parameter("operation_speed_profile"),
+                "speed_qualification_state": self._string_parameter("speed_qualification_state"),
             }
             # Keep the machine acceptance stream below one ordinary Ethernet
             # MTU and emit it before the larger operator DiagnosticArray.

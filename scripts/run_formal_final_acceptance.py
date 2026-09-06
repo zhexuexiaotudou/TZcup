@@ -49,6 +49,14 @@ except ImportError:  # pragma: no cover - exercised by Windows CI import
 
 ROOT = Path(__file__).resolve().parents[1]
 FORMAL_RUN_ROOT_PARENT = ROOT / ".work/formal_final_acceptance"
+SCENARIO_PYTHON_SOURCE = ROOT / "starter_ws/src/sanitation_campus_scenario"
+if str(SCENARIO_PYTHON_SOURCE) not in sys.path:
+    sys.path.insert(0, str(SCENARIO_PYTHON_SOURCE))
+from sanitation_campus_scenario.hidden_materializer import (  # noqa: E402
+    HiddenMaterializationError,
+    commit_formal_hidden_run_context,
+    verify_hidden_consumption_records_from_formal_context,
+)
 CONTRACT = ROOT / "config/high_fidelity_vehicle/formal_functional_acceptance_contract.yaml"
 SNAPSHOT = ROOT / "reports/engineering/formal_vehicle_snapshot_manifest.json"
 SESSION = ROOT / "artifacts/formal_final_acceptance_session.json"
@@ -208,13 +216,13 @@ STEP_SPECS: tuple[StepSpec, ...] = (
     StepSpec("physical_grasp", "gazebo", "validate contact-gated grasp and physical bin deposit", "run_formal_grasp_executor_runtime.sh", ("physical_grasp_and_bin",)),
     StepSpec("twenty_cubes", "gazebo", "validate all twenty material cubes and dynamic bin mass", "run_formal_20_cube_grasp_acceptance.sh", ("formal_20_cube_grasp_and_dynamic_mass",)),
     StepSpec("integrated_basic_physics", "gazebo", "repeat the source-bound basic physics bundle", "run_integrated_functional_acceptance.sh", ("integrated_basic_physics",), True),
+    StepSpec("rl_policy", "static", "freeze and evaluate the belief-only cross-map policy before any held-out final episode", "generate_formal_rl_multimap_report.py", ("rl_cross_map_policy",)),
     StepSpec("episode_materialization", "static", "materialize a fresh formal hidden episode"),
     StepSpec("first_map", "gazebo", "explore once and seal the first-task SLAM map", "run_formal_first_map_dynamic_prerequisite.sh"),
     StepSpec("saved_map_reuse", "gazebo", "hard-restart and clean using only the saved map", "run_formal_saved_map_cleaning_lifecycle.sh", ("first_map_then_clean",)),
     StepSpec("same_map_baseline", "gazebo", "measure the same-episode FullCoverage distance baseline", "run_formal_same_map_full_coverage_baseline.sh"),
     StepSpec("perception", "gazebo", "run fresh random-scene DOSOD plus EdgeSAM episodes", "run_formal_random_scene_perception.sh", ("random_scene_perception",)),
     StepSpec("dynamic_obstacle", "gazebo", "validate saved-map pedestrian avoidance", "run_formal_dynamic_obstacle_avoidance.sh", ("dynamic_obstacle_avoidance",)),
-    StepSpec("rl_policy", "static", "train and evaluate a fresh belief-only cross-map policy", "generate_formal_rl_multimap_report.py", ("rl_cross_map_policy",)),
     StepSpec("single_episode", "gazebo", "run the complete product single-episode mission", "run_formal_single_episode_cleaning_mission.sh", ("end_to_end_cleaning_mission",)),
     StepSpec(
         "multisite_product",
@@ -1795,10 +1803,13 @@ def _step_command(
         )
         return ["__sequence__", json.dumps([refresh, bash("run_integrated_functional_acceptance.sh")])], environment
     if step_id == "episode_materialization":
+        environment["TZCUP_FORMAL_HIDDEN_RUN_ROOT"] = str(context.run_root)
         return _shell_source_command(context, [
-            "ros2", "run", "sanitation_campus_scenario", "sanitation-campus-scenario", "generate",
+            "ros2", "run", "sanitation_campus_scenario", "sanitation-campus-scenario", "materialize-hidden",
             "--config", root / "starter_ws/src/sanitation_campus_scenario/config/default_scenario.yaml",
-            "--profile", "formal", "--split", "hidden", "--map-index", "0", "--mission-index", "0",
+            "--snapshot", context.snapshot, "--session", context.session,
+            "--freeze-producer", "formal_rl_multimap",
+            "--map-index", "0", "--mission-index", "0",
             "--output", context.episode_root,
         ]), environment
     if step_id == "first_map":
@@ -1865,6 +1876,8 @@ def _step_command(
             "--motion-profile", root / "config/high_fidelity_vehicle/formal_motion_cleaning_profile.yaml",
             "--budget-contract", FORMAL_RL_BUDGET_CONTRACT,
             "--work-root", context.run_root / "rl_stage_a_work",
+            "--snapshot", context.snapshot, "--session", context.session,
+            "--hidden-receipt-root", context.run_root,
             "--output", context.rl_evidence_root / "stage_a_budget_report.json",
             "--map-resolution", "0.5", "--planning-resolution", "2.0",
         ])
@@ -1873,6 +1886,8 @@ def _step_command(
             "--scenario-config", scenario_config,
             "--motion-profile", root / "config/high_fidelity_vehicle/formal_motion_cleaning_profile.yaml",
             "--work-root", context.run_root / "rl_work", "--evidence-root", context.rl_evidence_root,
+            "--snapshot", context.snapshot, "--session", context.session,
+            "--hidden-receipt-root", context.run_root,
             "--map-resolution", "0.5", "--planning-resolution", "2.0", "--epochs", "1", "--max-steps", "400",
             "--budget-contract", FORMAL_RL_BUDGET_CONTRACT, "--policy-seeds", "7,17,29,43,61",
             *_formal_multimap_training_arguments(scenario_config),
@@ -3127,6 +3142,68 @@ def _functional_audit_path(context: Context) -> Path:
     return context.root / FUNCTIONAL_AUDIT.relative_to(ROOT)
 
 
+def _verify_final_hidden_consumption(context: Context) -> list[dict[str, str]]:
+    """Re-open the one final hidden episode before it can feed a formal PASS."""
+
+    # Unit fixtures deliberately use a temporary synthetic repository.  The
+    # executable's ROOT is fixed to this repository, so production never takes
+    # this fixture-only branch.
+    if context.root.resolve() != ROOT.resolve():
+        return []
+    try:
+        return verify_hidden_consumption_records_from_formal_context(
+            run_root=context.run_root,
+            snapshot_path=context.snapshot,
+            session_path=context.session,
+            scenario_config=(
+                context.root
+                / "starter_ws/src/sanitation_campus_scenario/config/default_scenario.yaml"
+            ),
+            records=[{
+                "producer": "formal_hidden_episode",
+                "request": {
+                    "profile": "formal", "split": "hidden",
+                    "map_index": 0, "mission_index": 0,
+                },
+                "output": context.episode_root,
+            }],
+        )
+    except (HiddenMaterializationError, OSError, ValueError) as exc:
+        raise OrchestrationError(
+            f"final hidden consumption ledger/freeze/output verification failed: {exc}"
+        ) from exc
+
+
+def _verify_final_multisite_hidden_consumption(context: Context) -> list[dict[str, str]]:
+    """Enumerate every A15 hidden site from its work root, never its report."""
+
+    if context.root.resolve() != ROOT.resolve():
+        return []
+    work_root = context.run_root / "multisite_product_runtime"
+    records = [{
+        "producer": "formal_hidden_episode",
+        "request": {
+            "profile": "formal", "split": "hidden",
+            "map_index": index, "mission_index": 0,
+        },
+        "output": work_root / f"site-hidden-{index:02d}" / "episode",
+    } for index in range(12)]
+    try:
+        summaries = verify_hidden_consumption_records_from_formal_context(
+            run_root=work_root, snapshot_path=context.snapshot,
+            session_path=context.session,
+            scenario_config=(context.root / "starter_ws/src/sanitation_campus_scenario/config/default_scenario.yaml"),
+            records=records,
+        )
+    except (HiddenMaterializationError, OSError, ValueError) as exc:
+        raise OrchestrationError(
+            f"final A15 hidden ledger/freeze/output verification failed: {exc}"
+        ) from exc
+    if len(summaries) != 12:
+        raise OrchestrationError("final A15 hidden verification did not enumerate all 12 sites")
+    return summaries
+
+
 def _run_functional_aggregate(
     context: Context, log_path: Path, *, external_present: bool
 ) -> dict[str, Any]:
@@ -3323,6 +3400,17 @@ def execute(context: Context) -> tuple[dict[str, Any], int]:
             evidence: list[dict[str, Any]] = []
             try:
                 closure_before = _verify_runtime_closure(context, f"before:{step.step_id}")
+                if step.step_id == "episode_materialization" and context.root.resolve() == ROOT.resolve():
+                    step_blocker = "hidden_run_context"
+                    commit_formal_hidden_run_context(
+                        run_root=context.run_root,
+                        snapshot_path=context.snapshot,
+                        session_path=context.session,
+                        scenario_config=(
+                            context.root
+                            / "starter_ws/src/sanitation_campus_scenario/config/default_scenario.yaml"
+                        ),
+                    )
                 step_blocker = "command"
                 command, environment = _step_command(
                     step.step_id,
@@ -3354,6 +3442,16 @@ def execute(context: Context) -> tuple[dict[str, Any], int]:
                         wrap_lock=step.requires_outer_gazebo_lock,
                         memory_watchdog=_requires_resource_gate(step),
                         )
+                if step.step_id == "episode_materialization":
+                    step_blocker = "hidden_consumption_after_materialization"
+                    report["final_hidden_consumption_after_materialization"] = (
+                        _verify_final_hidden_consumption(context)
+                    )
+                if step.step_id == "multisite_product":
+                    step_blocker = "multisite_hidden_consumption_after_a15"
+                    report["final_multisite_hidden_consumption_after_a15"] = (
+                        _verify_final_multisite_hidden_consumption(context)
+                    )
                 if step.step_id == "start_session":
                     step_blocker = "session_start"
                     session_payload = _read_json(context.session)
@@ -3547,6 +3645,13 @@ def execute(context: Context) -> tuple[dict[str, Any], int]:
         try:
             aggregate_closure_before = _verify_runtime_closure(
                 context, "before:functional_aggregate"
+            )
+            aggregate_blocker = "hidden_consumption_before_functional_aggregate"
+            report["final_hidden_consumption_before_functional_aggregate"] = (
+                _verify_final_hidden_consumption(context)
+            )
+            report["final_multisite_hidden_consumption_before_functional_aggregate"] = (
+                _verify_final_multisite_hidden_consumption(context)
             )
             aggregate_blocker = "functional_aggregate"
             functional = _run_functional_aggregate(
@@ -3916,6 +4021,12 @@ def resume_s100(context: Context) -> tuple[dict[str, Any], int]:
             aggregate_started_ns = time.time_ns()
             aggregate_closure_before = _verify_runtime_closure(
                 context, "resume:before:functional_aggregate"
+            )
+            report["final_hidden_consumption_before_functional_aggregate_resume"] = (
+                _verify_final_hidden_consumption(context)
+            )
+            report["final_multisite_hidden_consumption_before_functional_aggregate_resume"] = (
+                _verify_final_multisite_hidden_consumption(context)
             )
             functional = _run_functional_aggregate(
                 context,

@@ -251,6 +251,7 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                 "pedestrian_schedule": LaunchConfiguration("pedestrian_schedule"),
                 "start_pedestrians": LaunchConfiguration("start_pedestrians"),
                 "start_navigation": "false",
+                "mission_mode": mode,
                 "localization_backend": "slam" if mode == "mapping" else "amcl",
                 "start_coverage": "false",
                 "materialize_static_maps": "false",
@@ -266,6 +267,9 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                             "operation_speed_profile"
                         ),
                 "max_linear_velocity": LaunchConfiguration("max_linear_velocity"),
+                "speed_qualification_state": LaunchConfiguration(
+                    "speed_qualification_state"
+                ),
                 "base_nav2_params_file": LaunchConfiguration("base_nav2_params_file"),
             }.items(),
         ),
@@ -452,6 +456,14 @@ def generate_launch_description() -> LaunchDescription:
             description=(
                 "Final whole-vehicle cap; retained at 0.45 m/s except for an "
                 "explicit isolated requalification invocation."
+            ),
+        ),
+        DeclareLaunchArgument(
+            "speed_qualification_state",
+            default_value="none",
+            description=(
+                "Fail-closed isolated same-map dry coverage state; all other "
+                "modes remain capped at 0.45 m/s."
             ),
         ),
         DeclareLaunchArgument(

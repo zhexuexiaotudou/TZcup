@@ -375,8 +375,13 @@ def materialize_episode(
     map_resolution_m: float = 0.50,
     planning_resolution_m: float = 1.0,
     max_steps: int = 400,
+    snapshot_path: str | Path | None = None,
+    session_path: str | Path | None = None,
+    hidden_receipt_root: str | Path | None = None,
+    freeze_receipt_path: str | Path | None = None,
 ) -> FormalEpisode:
     from sanitation_campus_scenario.generator import generate_episode, load_config
+    from sanitation_campus_scenario.hidden_materializer import materialize_hidden_episode
     from sanitation_campus_scenario.io import write_episode
     from sanitation_formal_campus_integration.campus_materializer import (
         materialize_campus_artifacts,
@@ -385,15 +390,22 @@ def materialize_episode(
     root = Path(output_root) / f"{split}-map-{map_index:03d}-mission-{mission_index:03d}"
     episode_root = root / "episode"
     maps_root = root / "maps"
-    files = generate_episode(
-        load_config(scenario_config),
-        "formal",
-        split,
-        map_index,
-        mission_index,
-        include_proxy=False,
-    )
-    write_episode(episode_root, files)
+    if split == "hidden":
+        if snapshot_path is None or session_path is None or hidden_receipt_root is None:
+            raise ValueError("hidden RL tasks require snapshot, session and hidden receipt root")
+        materialize_hidden_episode(
+            scenario_config=Path(scenario_config), snapshot_path=Path(snapshot_path),
+            session_path=Path(session_path),
+            run_root=Path(hidden_receipt_root),
+            output=episode_root, map_index=map_index, mission_index=mission_index,
+            freeze_producer="formal_rl_multimap",
+        )
+    else:
+        files = generate_episode(
+            load_config(scenario_config), "formal", split, map_index, mission_index,
+            include_proxy=False,
+        )
+        write_episode(episode_root, files)
     materialize_campus_artifacts(
         episode_root / "public/episode_manifest.json",
         episode_root / "public/world.sdf",
@@ -801,6 +813,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--motion-profile", required=True, type=Path)
     parser.add_argument("--work-root", required=True, type=Path)
     parser.add_argument("--evidence-root", required=True, type=Path)
+    parser.add_argument("--snapshot", type=Path)
+    parser.add_argument("--session", type=Path)
+    parser.add_argument("--hidden-receipt-root", type=Path)
     parser.add_argument(
         "--train",
         type=_selection,
@@ -850,8 +865,16 @@ def main(argv: Sequence[str] | None = None) -> int:
         ),
         "hidden": _require_full_map_selection("hidden", args.test, split_manifest),
     }
+    if any(value is None for value in (args.snapshot, args.session, args.hidden_receipt_root)):
+        raise ValueError("formal multi-map training requires --snapshot, --session and --hidden-receipt-root")
+    from sanitation_campus_scenario.hidden_materializer import require_canonical_formal_inputs
+    require_canonical_formal_inputs(
+        snapshot_path=args.snapshot, session_path=args.session, scenario_config=args.scenario_config,
+    )
 
-    def prepare(split: str, rows: Sequence[tuple[int, int]]) -> list[FormalEpisode]:
+    def prepare(
+        split: str, rows: Sequence[tuple[int, int]], freeze_receipt_path: Path | None = None,
+    ) -> list[FormalEpisode]:
         return [
             materialize_episode(
                 args.scenario_config,
@@ -863,6 +886,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                 map_resolution_m=args.map_resolution,
                 planning_resolution_m=args.planning_resolution,
                 max_steps=args.max_steps,
+                snapshot_path=args.snapshot,
+                session_path=args.session,
+                hidden_receipt_root=args.hidden_receipt_root,
+                freeze_receipt_path=freeze_receipt_path,
             )
             for map_index, mission_index in rows
         ]
@@ -882,10 +909,28 @@ def main(argv: Sequence[str] | None = None) -> int:
         "selection_source": "validation_only_before_hidden",
         "policy_seeds": list(policy_seeds),
     }
+    from sanitation_campus_scenario.hidden_materializer import (
+        commit_hidden_configuration_freeze, verify_hidden_consumption_records,
+    )
+    freeze_receipt = commit_hidden_configuration_freeze(
+        run_root=args.hidden_receipt_root,
+        snapshot_path=args.snapshot, session_path=args.session,
+        scenario_config=args.scenario_config, producer="formal_rl_multimap",
+        frozen_configuration=configuration_freeze,
+    )
     # Keep the final map/mission files absent until the immutable algorithm,
     # seed list and checkpoint-selection rule have been recorded.  A formal
     # run does not adapt this configuration from hidden metrics.
-    prepared["hidden"] = prepare("hidden", selections["hidden"])
+    prepared["hidden"] = prepare("hidden", selections["hidden"], freeze_receipt)
+    hidden_consumption = verify_hidden_consumption_records(
+        run_root=args.hidden_receipt_root, snapshot_path=args.snapshot, session_path=args.session,
+        scenario_config=args.scenario_config,
+        records=[{
+            "producer": "formal_hidden_episode",
+            "request": {"profile": "formal", "split": "hidden", "map_index": row[0], "mission_index": row[1]},
+            "output": args.work_root / f"hidden-map-{row[0]:03d}-mission-{row[1]:03d}" / "episode",
+        } for row in selections["hidden"]],
+    )
     for policy_seed in policy_seeds:
         run = train_and_evaluate(
             prepared["train"], prepared["validation"], prepared["hidden"],
@@ -925,6 +970,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             "policy_seeds": list(policy_seeds),
             "policy_seed_runs": seed_runs,
             "configuration_freeze": configuration_freeze,
+            "configuration_freeze_receipt_sha256": hashlib.sha256(
+                freeze_receipt.read_bytes()
+            ).hexdigest(),
+            "hidden_consumption": hidden_consumption,
         }
     _write(evidence / "q_policy.json", checkpoint)
     _write(evidence / "training_report.json", training)

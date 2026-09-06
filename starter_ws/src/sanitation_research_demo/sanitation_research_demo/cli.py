@@ -17,7 +17,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", required=True, type=Path)
     parser.add_argument("--profile", choices=("research", "formal"), default="research")
-    parser.add_argument("--split", choices=("train", "val", "hidden"), default="train")
+    parser.add_argument("--split", choices=("train", "val"), default="train")
     parser.add_argument("--map-index", type=int, default=0)
     parser.add_argument("--mission-index", type=int, default=0)
     parser.add_argument("--output", required=True, type=Path)

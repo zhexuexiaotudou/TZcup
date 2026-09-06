@@ -41,9 +41,16 @@ def test_estop_requires_pretrigger_final_speed_writer_and_feedback() -> None:
     raw = copy.deepcopy(_raw())
     raw["estop"]["final_command_trace"][0]["linear_x_mps"] = 0.45
     result = evaluate_estop_stop(raw)
-    assert result["checks"]["final_safety_command_reached_one_mps_before_estop"] is False
+    assert result["checks"]["final_safety_command_reached_requested_speed_before_estop"] is False
 
     raw = copy.deepcopy(_raw())
     raw["estop"]["final_command_writer"]["writers"] = ["/unexpected_writer"]
     result = evaluate_estop_stop(raw)
     assert result["checks"]["final_safety_command_has_one_expected_writer_and_input_subscriber"] is False
+
+
+def test_estop_uses_the_current_qualification_stage_speed() -> None:
+    raw = _raw()
+    raw["estop"]["final_command_trace"][0]["linear_x_mps"] = 0.25
+    assert evaluate_estop_stop(raw, minimum_pre_estop_speed_mps=0.225)["passed"] is True
+    assert evaluate_estop_stop(raw, minimum_pre_estop_speed_mps=0.90)["passed"] is False
