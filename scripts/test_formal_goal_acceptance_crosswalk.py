@@ -54,6 +54,7 @@ def test_crosswalk_keeps_external_and_historical_claims_fail_closed() -> None:
     by_id = {item["id"]: item for item in payload["requirements"]}
 
     assert by_id["A16"]["state"] == "HISTORICAL_COMPONENT_PASS_NOT_FORMAL_INTEGRATED"
+    assert by_id["A15"]["state"] == "CONTRACT_MAPPING_OPEN"
     assert by_id["A17"]["state"] == "BLOCKED"
     assert by_id["A18"]["state"] == "BLOCKED_EXTERNAL_INPUT_AND_ARTIFACTS"
     assert by_id["A19"]["state"] == "CONTRACT_MAPPING_OPEN"

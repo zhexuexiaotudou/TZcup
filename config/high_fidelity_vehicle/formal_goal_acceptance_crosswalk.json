@@ -140,7 +140,8 @@
       "source": ["PROJECT_SPEC.md", "docs/formal-final-acceptance-orchestration.md"],
       "step_ids": ["multisite_product"],
       "evidence_gates": ["multi_site_product_generalization"],
-      "state": "NOT_RUN_CURRENT_SNAPSHOT"
+      "state": "CONTRACT_MAPPING_OPEN",
+      "blockers": ["Validation-before-hidden ordering is implemented, but strict one-time hidden access and consumed-lock evidence are not yet enforced by a dedicated materializer."]
     },
     {
       "id": "A16",
