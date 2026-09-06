@@ -247,11 +247,19 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                 "high_bandwidth_sensor_runtime": LaunchConfiguration(
                     "high_bandwidth_sensor_runtime"
                 ),
+                # Place the vehicle before NavSat/local-EKF startup.  A later
+                # SetPose changes the GNSS world datum but not wheel/IMU odom,
+                # producing a false ~98 m GNSS-consistency failure.
+                "spawn_x": str(source_pose[0]),
+                "spawn_y": str(source_pose[1]),
+                "spawn_yaw": str(source_pose[2]),
             }.items(),
         ),
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(manipulation_launch),
         ),
+        # Dynamic pedestrian motion still uses this public-world service. Its
+        # presence does not authorize moving the vehicle after initial create.
         Node(
             package="ros_gz_bridge",
             executable="parameter_bridge",
@@ -266,33 +274,6 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                 )
             ],
             output="screen",
-        ),
-        TimerAction(
-            period=8.0,
-            actions=[
-                Node(
-                    package="sanitation_formal_campus_integration",
-                    executable="formal-spawn-initializer",
-                    output="screen",
-                    parameters=[
-                        {
-                            "use_sim_time": True,
-                            "episode_manifest_path": str(episode_manifest),
-                            "world_name": LaunchConfiguration("world_name"),
-                            "entity_name": "tzcup_formal_sanitation_vehicle",
-                            "spawn_x": ParameterValue(
-                                LaunchConfiguration("spawn_x"), value_type=float
-                            ),
-                            "spawn_y": ParameterValue(
-                                LaunchConfiguration("spawn_y"), value_type=float
-                            ),
-                            "spawn_yaw": ParameterValue(
-                                LaunchConfiguration("spawn_yaw"), value_type=float
-                            ),
-                        }
-                    ],
-                )
-            ],
         ),
         TimerAction(
             period=12.0,

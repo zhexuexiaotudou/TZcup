@@ -103,6 +103,12 @@ def generate_launch_description() -> LaunchDescription:
     )
     manipulation_sim_interfaces = LaunchConfiguration("manipulation_sim_interfaces")
     spawn_robot = LaunchConfiguration("spawn_robot")
+    # Campus mapping supplies the public episode start here so NavSat and the
+    # local wheel/IMU odom establish their origins before their first sample.
+    # Direct formal-vehicle callers retain the historical world-origin default.
+    spawn_x = LaunchConfiguration("spawn_x")
+    spawn_y = LaunchConfiguration("spawn_y")
+    spawn_yaw = LaunchConfiguration("spawn_yaw")
     world = LaunchConfiguration("world")
     model = LaunchConfiguration("model")
     default_model = PathJoinSubstitution(
@@ -670,6 +676,9 @@ def generate_launch_description() -> LaunchDescription:
                     "when a source-bound world already embeds the same formal vehicle."
                 ),
             ),
+            DeclareLaunchArgument("spawn_x", default_value="0.0"),
+            DeclareLaunchArgument("spawn_y", default_value="0.0"),
+            DeclareLaunchArgument("spawn_yaw", default_value="0.0"),
             DeclareLaunchArgument(
                 "manipulation_sim_interfaces",
                 default_value="false",
@@ -737,7 +746,10 @@ def generate_launch_description() -> LaunchDescription:
                 parameters=[{"robot_description": robot_description}],
                 # base_footprint is the wheel-ground projection; use only a
                 # 5 mm contact-settling clearance instead of lifting the car.
-                arguments=["-param", "robot_description", "-name", "tzcup_formal_sanitation_vehicle", "-z", "0.005"],
+                arguments=[
+                    "-param", "robot_description", "-name", "tzcup_formal_sanitation_vehicle",
+                    "-x", spawn_x, "-y", spawn_y, "-Y", spawn_yaw, "-z", "0.005",
+                ],
                 output="screen",
                 condition=IfCondition(spawn_robot),
             ),
