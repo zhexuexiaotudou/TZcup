@@ -6,6 +6,17 @@
 > 直接逐坐标比较，数学语义错误。R066 只修正该运行合同并显式冻结既有安全 padding，
 > 不缩小 footprint、不放宽 collision safety，也不改变车辆或清扫技术路线。
 
+> 2026-09-07 R067 addendum：合并后的 R066 fresh `a1` NON_FORMAL 现场核验在
+> 读取 Nav2 参数时 fail closed。Jazzy 的 `AsyncParameterClient.get_parameters()`
+> future 实测返回 `GetParameters_Response`，参数数组位于 `response.values`；R066
+> 误对 response 本身执行 `len()`，因此尚未进入 TF、padding 或 Point32 ULP 几何门。
+> R067 只修正这一 API 解包边界：先验证 response 非空且具有序列型 `values`，再沿用
+> R066 的 exact count、类型、有限性、一致性与 fail-closed 检查。不得捕获后默认 padding，
+> 不得放宽任一几何/安全阈值，也不得把本次 NON_FORMAL 失败追认为正式通过。完成标准是
+> 新增与 Jazzy response 形状一致的单元/构造测试、全量 CI 通过、合并后创建 fresh runtime，
+> 重新运行顶层 `formal_passed=false` 的 NON_FORMAL W1；只有其验证真实正确输出且错误样本
+> 仍被拒绝，才可另建 fresh formal runtime 进入正式 W1-W5。
+
 ## 1. 目标与治理
 
 本变更修复当前正式仿真中已经由源码和留存运行证据确认的建模合同漏洞，同时保持既定技术路线：正式车辆仍为 A300 四轮滑移转向底盘，首次建图仍使用 `200 m x 100 m`、无实体外墙的 map-frame geofence，正式控制链不得消费 Gazebo/evaluator 真值，S100P 和真实整车状态继续与 PC/Gazebo 仿真状态分开报告。
