@@ -1796,9 +1796,11 @@ def _step_command(
         return ["__sequence__", json.dumps([refresh, bash("run_integrated_functional_acceptance.sh")])], environment
     if step_id == "episode_materialization":
         return _shell_source_command(context, [
-            "ros2", "run", "sanitation_campus_scenario", "sanitation-campus-scenario", "generate",
+            "ros2", "run", "sanitation_campus_scenario", "sanitation-campus-scenario", "materialize-hidden",
             "--config", root / "starter_ws/src/sanitation_campus_scenario/config/default_scenario.yaml",
-            "--profile", "formal", "--split", "hidden", "--map-index", "0", "--mission-index", "0",
+            "--snapshot", context.snapshot, "--session", context.session,
+            "--consumed-receipt", context.run_root / "hidden-consumed-receipts" / "single-episode.json",
+            "--map-index", "0", "--mission-index", "0",
             "--output", context.episode_root,
         ]), environment
     if step_id == "first_map":
@@ -1865,6 +1867,8 @@ def _step_command(
             "--motion-profile", root / "config/high_fidelity_vehicle/formal_motion_cleaning_profile.yaml",
             "--budget-contract", FORMAL_RL_BUDGET_CONTRACT,
             "--work-root", context.run_root / "rl_stage_a_work",
+            "--snapshot", context.snapshot, "--session", context.session,
+            "--hidden-receipt-root", context.run_root / "hidden-consumed-receipts" / "rl-stage-a",
             "--output", context.rl_evidence_root / "stage_a_budget_report.json",
             "--map-resolution", "0.5", "--planning-resolution", "2.0",
         ])
@@ -1873,6 +1877,8 @@ def _step_command(
             "--scenario-config", scenario_config,
             "--motion-profile", root / "config/high_fidelity_vehicle/formal_motion_cleaning_profile.yaml",
             "--work-root", context.run_root / "rl_work", "--evidence-root", context.rl_evidence_root,
+            "--snapshot", context.snapshot, "--session", context.session,
+            "--hidden-receipt-root", context.run_root / "hidden-consumed-receipts" / "rl-multimap",
             "--map-resolution", "0.5", "--planning-resolution", "2.0", "--epochs", "1", "--max-steps", "400",
             "--budget-contract", FORMAL_RL_BUDGET_CONTRACT, "--policy-seeds", "7,17,29,43,61",
             *_formal_multimap_training_arguments(scenario_config),

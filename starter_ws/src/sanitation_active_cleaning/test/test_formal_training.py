@@ -1,3 +1,5 @@
+import hashlib
+import json
 import math
 
 import pytest
@@ -186,12 +188,30 @@ def test_cli_returns_nonzero_when_hidden_gate_is_blocked(tmp_path, monkeypatch):
         "train_and_evaluate",
         lambda *args, **kwargs: ({}, {}, {}, {"hidden_gate_passed": False}),
     )
+    snapshot = tmp_path / "snapshot.json"
+    snapshot.write_text(json.dumps({
+        "source_inventory_sha256": "a" * 64,
+        "outputs": {"reports/engineering/formal_competition_vehicle.urdf": {"sha256": "b" * 64}},
+    }))
+    identity = {
+        "snapshot_manifest_sha256": hashlib.sha256(snapshot.read_bytes()).hexdigest(),
+        "source_inventory_sha256": "a" * 64,
+        "expanded_urdf_sha256": "b" * 64,
+    }
+    session = tmp_path / "session.json"
+    session.write_text(json.dumps({
+        "status": "FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING", "started_epoch_ns": 1,
+        "snapshot": identity,
+    }))
     result = formal_training.main(
         [
             "--scenario-config", str(scenario),
             "--motion-profile", str(tmp_path / "motion.yaml"),
             "--work-root", str(tmp_path / "work"),
             "--evidence-root", str(tmp_path / "evidence"),
+            "--snapshot", str(snapshot),
+            "--session", str(session),
+            "--hidden-receipt-root", str(tmp_path / "receipts"),
         ]
     )
     assert result == 2

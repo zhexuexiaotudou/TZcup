@@ -249,6 +249,8 @@ def test_live_executor_contract_is_serial_and_wires_fresh_per_site_paths() -> No
     assert "for ordinal, site in enumerate(sites):" in source
     assert 'generator_split = "val" if site["split"] == "validation"' in source
     assert '"--config", str(scenario_config), "--profile", "formal", "--split", generator_split' in source
+    assert '"materialize-hidden"' in source
+    assert '"hidden-consumed-receipts"' in source
     assert "sanitation-campus-scenario" in source
     assert "run_formal_first_map_dynamic_prerequisite.sh" in source
     assert "run_formal_same_map_full_coverage_baseline.sh" in source

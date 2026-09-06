@@ -24,6 +24,9 @@ from formal_runtime_gate_binding import (
     build_binding,
     load_binding,
 )
+from sanitation_campus_scenario.hidden_materializer import (
+    commit_hidden_configuration_freeze,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -409,12 +412,47 @@ def execute_live(
         baseline = site_root / "same_map_baseline.json"
         observation = mission_root / "multisite_live_observations.json"
         evidence = evidence_root / site["evidence_file"]
-        _run_live([
-            "ros2", "run", "sanitation_campus_scenario", "sanitation-campus-scenario", "generate",
-            "--config", str(scenario_config), "--profile", "formal", "--split", generator_split,
-            "--map-index", str(site["map_index"]), "--mission-index", str(site["mission_index"]),
-            "--output", str(episode_root),
-        ], environment)
+        freeze_receipt = work_root / "hidden-consumed-receipts" / "validation-freeze.json"
+        if site["split"] == "hidden" and site["map_index"] == 0:
+            validation_sites = [row for row in sites if row["split"] == "validation"]
+            frozen_validation = {}
+            for validation_site in validation_sites:
+                validation_path = evidence_root / validation_site["evidence_file"]
+                _check_site(
+                    _json_object(validation_path), validation_site, contract,
+                    _snapshot_identity(snapshot_path), _session_identity(
+                        session_path, _snapshot_identity(snapshot_path)
+                    ), _closure_identity(runtime_closure_path),
+                )
+                frozen_validation[validation_path.name] = _sha256(validation_path)
+            commit_hidden_configuration_freeze(
+                receipt_path=freeze_receipt, snapshot_path=snapshot_path,
+                session_path=session_path, scenario_config=scenario_config,
+                producer="formal_multisite_product_acceptance",
+                frozen_configuration={
+                    "validation_sites_completed": 8,
+                    "validation_evidence_sha256": frozen_validation,
+                    "selection_source": "validation_only_before_hidden",
+                },
+            )
+        if site["split"] == "hidden":
+            _run_live([
+                "ros2", "run", "sanitation_campus_scenario", "sanitation-campus-scenario",
+                "materialize-hidden", "--config", str(scenario_config),
+                "--snapshot", str(snapshot_path), "--session", str(session_path),
+                "--freeze-receipt", str(freeze_receipt),
+                "--consumed-receipt", str(
+                    work_root / "hidden-consumed-receipts" / f"site-hidden-{site['map_index']:02d}.json"
+                ), "--map-index", str(site["map_index"]),
+                "--mission-index", str(site["mission_index"]), "--output", str(episode_root),
+            ], environment)
+        else:
+            _run_live([
+                "ros2", "run", "sanitation_campus_scenario", "sanitation-campus-scenario", "generate",
+                "--config", str(scenario_config), "--profile", "formal", "--split", generator_split,
+                "--map-index", str(site["map_index"]), "--mission-index", str(site["mission_index"]),
+                "--output", str(episode_root),
+            ], environment)
         map_environment = dict(environment)
         map_environment.update({
             "FORMAL_DYNAMIC_EPISODE_ROOT": str(episode_root),

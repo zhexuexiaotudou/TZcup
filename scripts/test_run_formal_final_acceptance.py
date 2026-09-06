@@ -657,6 +657,8 @@ def test_commands_use_one_fresh_episode_map_rl_and_e2e_root() -> None:
     context = _context()
     materialize, _ = orchestration._step_command("episode_materialization", context)
     assert str(context.episode_root) in " ".join(materialize)
+    assert "materialize-hidden" in " ".join(materialize)
+    assert "--consumed-receipt" in " ".join(materialize)
 
     first_map, first_env = orchestration._step_command("first_map", context)
     assert first_map[-1].endswith("run_formal_first_map_dynamic_prerequisite.sh")
@@ -675,6 +677,7 @@ def test_commands_use_one_fresh_episode_map_rl_and_e2e_root() -> None:
     assert "formal_stage_a_active_cleaning_train" in rendered
     assert "formal_rl_budget_contract.yaml" in rendered
     assert "--policy-seeds 7,17,29,43,61" in rendered
+    assert "--hidden-receipt-root" in rendered
 
     e2e, _ = orchestration._step_command("single_episode", context)
     rendered_e2e = " ".join(e2e)

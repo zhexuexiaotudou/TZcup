@@ -6,6 +6,7 @@ import pytest
 from sanitation_campus_scenario.generator import generate_episode, load_config
 from sanitation_campus_scenario.io import write_episode
 from sanitation_research_demo.harness import Bundle, build_active_task
+from sanitation_research_demo.cli import build_parser
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -39,3 +40,10 @@ def test_bundle_rejects_world_hash_mismatch(tmp_path):
     world.write_text(world.read_text(encoding="utf-8") + "\n", encoding="utf-8")
     with pytest.raises(ValueError, match="world hash mismatch"):
         Bundle.load(scenario)
+
+
+def test_research_demo_cli_cannot_preview_a_hidden_split(tmp_path):
+    with pytest.raises(SystemExit):
+        build_parser().parse_args([
+            "--config", str(CONFIG), "--split", "hidden", "--output", str(tmp_path),
+        ])
