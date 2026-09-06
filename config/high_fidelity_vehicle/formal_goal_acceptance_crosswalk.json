@@ -1,0 +1,197 @@
+{
+  "schema_version": 1,
+  "crosswalk_id": "tzcup_formal_goal_acceptance_crosswalk_v1",
+  "claim_boundary": "This file is a source-to-test routing contract, not acceptance evidence. A mapped requirement remains unpassed until its current snapshot-bound runtime evidence passes.",
+  "route": {
+    "vehicle": "Clearpath A300 skid-steer with UR5e and Robotiq 2F-85",
+    "perception": "DOSOD plus EdgeSAM",
+    "compute": "RDK S100P; BPU for DOSOD/EdgeSAM where compiled, ARM CPU for the remaining ROS 2 chain",
+    "cloud_runtime": "native ROS/Gazebo/CUDA/HBM only; nested Docker is prohibited on AutoDL",
+    "formal_runner": "scripts/run_formal_final_acceptance.py",
+    "functional_contract": "config/high_fidelity_vehicle/formal_functional_acceptance_contract.yaml"
+  },
+  "status_dimensions": {
+    "functional_system_complete": false,
+    "formal_orchestration_complete": false,
+    "competition_simulation_pass": false,
+    "simulation_product_complete": false,
+    "s100_compute_accepted": false,
+    "product_integration_ready": false,
+    "product_field_ready": false
+  },
+  "requirements": [
+    {
+      "id": "A01",
+      "title": "整车几何、外观、惯量与传感器布置",
+      "source": ["PROJECT_SPEC.md", "COMPETITION_REQUIREMENTS.md"],
+      "step_ids": ["component_register", "visual", "inertia", "sensor"],
+      "evidence_gates": ["component_register", "product_visual_acceptance", "service_visual_acceptance", "sensor_fov_and_occlusion", "inertia_cog_and_swept_volume", "sensor_runtime"],
+      "state": "NOT_RUN_CURRENT_SNAPSHOT"
+    },
+    {
+      "id": "A02",
+      "title": "服务舱门可达、可动、可锁止",
+      "source": ["COMPETITION_REQUIREMENTS.md"],
+      "step_ids": ["service_door"],
+      "evidence_gates": ["service_door_runtime"],
+      "state": "BLOCKED_PENDING_FRESH_RUNTIME"
+    },
+    {
+      "id": "A03",
+      "title": "底盘、清扫、照明、急停与辅助执行器",
+      "source": ["PROJECT_SPEC.md", "COMPETITION_REQUIREMENTS.md"],
+      "step_ids": ["chassis", "safety_interlock", "safety_power_lighting", "cleaning_positions", "cleaning_motors", "charge_and_drain"],
+      "evidence_gates": ["a300_drivetrain_runtime", "whole_vehicle_interlock", "auxiliary_power_lighting", "cleaning_actuators", "cleaning_motor_runtime", "service_interface_acceptance"],
+      "state": "NOT_RUN_CURRENT_SNAPSHOT"
+    },
+    {
+      "id": "A04",
+      "title": "机械臂、夹爪、二十方块、污物与污水物理闭环",
+      "source": ["PROJECT_SPEC.md", "COMPETITION_REQUIREMENTS.md"],
+      "step_ids": ["manipulator", "physical_grasp", "twenty_cubes", "ground_dirt", "water_recovery", "integrated_basic_physics"],
+      "evidence_gates": ["manipulator_trajectory", "physical_grasp_and_bin", "formal_20_cube_grasp_and_dynamic_mass", "ground_dirt_cleaning", "water_recovery", "integrated_basic_physics"],
+      "state": "NOT_RUN_CURRENT_SNAPSHOT"
+    },
+    {
+      "id": "A05",
+      "title": "首次建图、地图封存与重启复用",
+      "source": ["docs/closed-campus-first-map-then-clean-plan.md"],
+      "step_ids": ["episode_materialization", "first_map", "saved_map_reuse"],
+      "evidence_gates": ["first_map_then_clean"],
+      "state": "NOT_RUN_CURRENT_SNAPSHOT"
+    },
+    {
+      "id": "A06",
+      "title": "保存地图上的定位与任务生命周期",
+      "source": ["docs/closed-campus-first-map-then-clean-plan.md"],
+      "step_ids": ["saved_map_reuse"],
+      "evidence_gates": ["first_map_then_clean"],
+      "state": "NOT_RUN_CURRENT_SNAPSHOT"
+    },
+    {
+      "id": "A07",
+      "title": "覆盖规划与动态避障",
+      "source": ["COMPETITION_REQUIREMENTS.md"],
+      "step_ids": ["same_map_baseline", "dynamic_obstacle"],
+      "evidence_gates": ["dynamic_obstacle_avoidance"],
+      "state": "NOT_RUN_CURRENT_SNAPSHOT"
+    },
+    {
+      "id": "A08",
+      "title": "清扫效率与同图基线",
+      "source": ["COMPETITION_REQUIREMENTS.md"],
+      "step_ids": ["same_map_baseline", "single_episode"],
+      "evidence_gates": ["end_to_end_cleaning_mission"],
+      "state": "BLOCKED_PENDING_SPEED_REQUALIFICATION"
+    },
+    {
+      "id": "A09",
+      "title": "运动安全、急停、失能与故障闭锁",
+      "source": ["PROJECT_SPEC.md", "STAGE_GATES.md"],
+      "step_ids": ["safety_interlock", "safety_power_lighting", "dynamic_obstacle"],
+      "evidence_gates": ["whole_vehicle_interlock", "auxiliary_power_lighting", "dynamic_obstacle_avoidance"],
+      "state": "NOT_RUN_CURRENT_SNAPSHOT"
+    },
+    {
+      "id": "A10",
+      "title": "随机场景 DOSOD 加 EdgeSAM 感知",
+      "source": ["PROJECT_SPEC.md", "docs/closed-campus-first-map-then-clean-plan.md"],
+      "step_ids": ["perception"],
+      "evidence_gates": ["random_scene_perception"],
+      "state": "NOT_RUN_CURRENT_SNAPSHOT"
+    },
+    {
+      "id": "A11",
+      "title": "单回合产品在线闭环",
+      "source": ["COMPETITION_REQUIREMENTS.md"],
+      "step_ids": ["single_episode"],
+      "evidence_gates": ["end_to_end_cleaning_mission"],
+      "state": "NOT_RUN_CURRENT_SNAPSHOT"
+    },
+    {
+      "id": "A12",
+      "title": "产品级详细指标与异常归因",
+      "source": [".workspace/specifications/acceptance/TZcup_仿真产品级最终验收标准与产品准入要求.md"],
+      "step_ids": ["perception", "single_episode"],
+      "evidence_gates": ["random_scene_perception", "end_to_end_cleaning_mission"],
+      "state": "CONTRACT_MAPPING_OPEN",
+      "blockers": ["Historical product_acceptance_v1 artifacts referenced by documentation are absent from current repository history; thresholds must be represented by current formal reports before PASS."]
+    },
+    {
+      "id": "A13",
+      "title": "跨地图策略训练与评估",
+      "source": ["PROJECT_SPEC.md", "COMPETITION_REQUIREMENTS.md"],
+      "step_ids": ["rl_policy"],
+      "evidence_gates": ["rl_cross_map_policy"],
+      "state": "NOT_RUN_CURRENT_SNAPSHOT"
+    },
+    {
+      "id": "A14",
+      "title": "完整单站任务回合",
+      "source": ["COMPETITION_REQUIREMENTS.md"],
+      "step_ids": ["single_episode"],
+      "evidence_gates": ["end_to_end_cleaning_mission"],
+      "state": "NOT_RUN_CURRENT_SNAPSHOT"
+    },
+    {
+      "id": "A15",
+      "title": "八验证站点与十二隐藏站点泛化",
+      "source": ["PROJECT_SPEC.md", "docs/formal-final-acceptance-orchestration.md"],
+      "step_ids": ["multisite_product"],
+      "evidence_gates": ["multi_site_product_generalization"],
+      "state": "NOT_RUN_CURRENT_SNAPSHOT"
+    },
+    {
+      "id": "A16",
+      "title": "APP、语音与受限 LLM DSL 任务入口",
+      "source": ["PROJECT_SPEC.md", "docs/auto10-multimodal-hmi.md"],
+      "step_ids": [],
+      "evidence_gates": [],
+      "state": "HISTORICAL_COMPONENT_PASS_NOT_FORMAL_INTEGRATED",
+      "blockers": ["AUTO-10 does not prove robot execution and is not a gate in the current 26-gate formal runner."]
+    },
+    {
+      "id": "A17",
+      "title": "十八类全竞赛综合场景矩阵",
+      "source": ["docs/auto15-competition-matrix.md", "STAGE_GATES.md"],
+      "step_ids": ["multisite_product"],
+      "evidence_gates": ["multi_site_product_generalization"],
+      "state": "BLOCKED",
+      "blockers": ["AUTO-15 has a dependency/component index but no integrated formal mission result."]
+    },
+    {
+      "id": "A18",
+      "title": "资源、实时性与吞吐性能",
+      "source": ["COMPETITION_REQUIREMENTS.md", "docs/formal-s100-live-acceptance.md"],
+      "step_ids": ["perception", "single_episode", "s100_live"],
+      "evidence_gates": ["random_scene_perception", "end_to_end_cleaning_mission", "s100_live_runtime"],
+      "state": "NOT_RUN_CURRENT_SNAPSHOT"
+    },
+    {
+      "id": "A19",
+      "title": "长稳、故障注入与恢复",
+      "source": ["COMPETITION_REQUIREMENTS.md"],
+      "step_ids": ["single_episode", "multisite_product", "s100_live"],
+      "evidence_gates": ["end_to_end_cleaning_mission", "multi_site_product_generalization", "s100_live_runtime"],
+      "state": "CONTRACT_MAPPING_OPEN",
+      "blockers": ["The current 26-gate runner has no separate full-duration soak and fault-injection acceptance gate."]
+    },
+    {
+      "id": "A20",
+      "title": "冻结、密封、回放与发布可追溯性",
+      "source": ["PROJECT_SPEC.md", "docs/formal-final-acceptance-orchestration.md"],
+      "step_ids": ["freeze_snapshot", "start_session", "finalize_session", "functional_aggregate"],
+      "evidence_gates": ["component_register"],
+      "state": "NOT_RUN_CURRENT_SNAPSHOT"
+    },
+    {
+      "id": "A21",
+      "title": "S100P 真实板端 DOSOD、EdgeSAM、ROS 2 与热功耗验收",
+      "source": ["docs/s100p-board-first-execution-boundary.md", "docs/formal-s100-live-acceptance.md"],
+      "step_ids": ["s100_live"],
+      "evidence_gates": ["s100_live_runtime"],
+      "state": "BLOCKED_EXTERNAL_INPUT_AND_ARTIFACTS",
+      "blockers": ["Project DOSOD HBM, non-simulated ROS Image input, calibration/holdout corpus, and measured power evidence are not yet all available."]
+    }
+  ]
+}
