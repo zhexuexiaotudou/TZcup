@@ -7,6 +7,7 @@
     "perception": "DOSOD plus EdgeSAM",
     "compute": "RDK S100P; BPU for DOSOD/EdgeSAM where compiled, ARM CPU for the remaining ROS 2 chain",
     "cloud_runtime": "native ROS/Gazebo/CUDA/HBM only; nested Docker is prohibited on AutoDL",
+    "auto05_g3_g4_dependency": "not_on_current_31_step_or_s100_critical_path; no direct dataset, model, or HBM consumer was found; it only shares the global Gazebo runtime lock",
     "formal_runner": "scripts/run_formal_final_acceptance.py",
     "functional_contract": "config/high_fidelity_vehicle/formal_functional_acceptance_contract.yaml"
   },
@@ -165,7 +166,8 @@
       "source": ["COMPETITION_REQUIREMENTS.md", "docs/formal-s100-live-acceptance.md"],
       "step_ids": ["perception", "single_episode", "s100_live"],
       "evidence_gates": ["random_scene_perception", "end_to_end_cleaning_mission", "s100_live_runtime"],
-      "state": "NOT_RUN_CURRENT_SNAPSHOT"
+      "state": "BLOCKED_EXTERNAL_INPUT_AND_ARTIFACTS",
+      "blockers": ["The S100 performance portion requires the same real input, project HBM, holdout, thermal, and positive-power evidence as A21."]
     },
     {
       "id": "A19",
@@ -181,8 +183,9 @@
       "title": "冻结、密封、回放与发布可追溯性",
       "source": ["PROJECT_SPEC.md", "docs/formal-final-acceptance-orchestration.md"],
       "step_ids": ["freeze_snapshot", "start_session", "finalize_session", "functional_aggregate"],
-      "evidence_gates": ["component_register"],
-      "state": "NOT_RUN_CURRENT_SNAPSHOT"
+      "evidence_gates": [],
+      "state": "CONTRACT_MAPPING_OPEN",
+      "blockers": ["The current 26 functional gates have no dedicated sealing, replay, release, and rollback receipt gate; component_register is not equivalent evidence."]
     },
     {
       "id": "A21",
