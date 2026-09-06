@@ -1,5 +1,11 @@
 # 项目推进记录
 
+## 2026-09-07：R067 Jazzy 参数响应解包（源码修复完成，fresh merged runtime 未运行）
+
+- R066 合并版 fresh `a1` 的 NON_FORMAL W1 算法核验在读取 Nav2 `footprint_padding` 时 fail closed：Jazzy `AsyncParameterClient.get_parameters()` future 返回 `GetParameters_Response`，参数数组位于 `response.values`；旧 gate 误对 response 本身执行 `len()`，因此该轮尚未进入 TF、padding 或 Point32 ULP 几何门，也不构成正式 PASS。
+- R067 只修正这一 API 边界：先拒绝空 response、缺失或非序列 `values`，再沿用原有的 exact 两项、类型、有限非负、相对 frame ID、声明 padding 与双 costmap ULP 一致性检查。fake completed response 的纯单元测试覆盖成功、future 异常、空/缺失/非序列、长度 `0/1/3`、非有限/负值/类型错误、非法 frame 和 declared-padding mismatch；方法级测试还证明异常会形成带 topic 的 `last_failure_reason`。该测试不是 Jazzy live 证据。
+- 原子 `BLOCKED / passed=false` 失败报告、三态 footprint、manager/safety/ownership、TF、padding 和几何阈值均未改变。合并后仍必须建立 fresh source/runtime/closure，先重跑顶层 `formal_passed=false` 的 NON_FORMAL W1；只有真实正确输出被接受且错误样本仍拒绝后，才可使用另一 fresh runtime 进入正式 W1-W5。
+
 ## 2026-09-07：R066 frame-aware footprint readback（本地验证完成，fresh merged runtime 未运行）
 
 - R065 fresh public session 的首个 W1 override 因旧 gate 把 base-frame raw polygon 与 Nav2 在 `odom`/`map` 中发布的 padded polygon 直接逐坐标比较而 fail closed；W2/W3/W5 未运行，失败证据、cleanup 和零 survivor 证据均保留。随后明确标记为 `NON_FORMAL_DIAGNOSTIC` 的 v5 只读采样闭合：local/global raw input 均为 `1.16 x 1.35 m`，published 均为 `1.18 x 1.37 m`，两 costmap 的 `footprint_padding` 均约 `0.01 m`、inflation radius 均为 `0.55 m`；inhibit Bool 全窗 `2770/2770` 为 true。该诊断没有形成正式 PASS，不能补写 R065 验收。

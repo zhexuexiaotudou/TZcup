@@ -8,6 +8,7 @@ then reads both real Nav2 costmap outputs back after every fresh request.
 from __future__ import annotations
 
 import argparse
+from collections.abc import Sequence
 import json
 import math
 import sys
@@ -66,6 +67,34 @@ PADDING_NODE_BY_INPUT_TOPIC = {
 PADDING_PARAMETER = "footprint_padding"
 ROBOT_BASE_FRAME_PARAMETER = "robot_base_frame"
 PUBLISHED_STAMP_MAX_AGE_NS = 2_000_000_000
+
+
+def _read_footprint_padding_response(
+    future: object, declared_padding_m: float
+) -> tuple[float, str, float]:
+    """Fail closed on the Jazzy GetParameters response boundary."""
+    response = future.result()
+    if response is None:
+        raise ValueError("parameter response missing")
+    values = getattr(response, "values", None)
+    if isinstance(values, (str, bytes)) or not isinstance(values, Sequence):
+        raise ValueError("parameter response values must be a sequence")
+    if len(values) != 2:
+        raise ValueError("parameter result count")
+    value = float(values[0].value)
+    if not math.isfinite(value) or value < 0.0:
+        raise ValueError("not finite non-negative")
+    frame = values[1].value
+    if not isinstance(frame, str) or not frame or frame.startswith("/"):
+        raise ValueError("robot_base_frame is not a relative frame id")
+    declared_bound = point32_coordinate_quantization_bound(declared_padding_m, value)
+    if abs(value - declared_padding_m) > declared_bound:
+        raise ValueError(
+            "does not match declared profile padding within Point32 ULP bound"
+        )
+    return value, frame, declared_bound
+
+
 PLANAR_ZERO_ULP_BOUND = float64_zero_ulp_bound()
 
 
@@ -292,22 +321,9 @@ class DynamicFootprintRuntimeGate(Node):
                     continue
                 del pending[topic]
                 try:
-                    values = future.result()
-                    if len(values) != 2:
-                        raise ValueError("parameter result count")
-                    value = float(values[0].value)
-                    if not math.isfinite(value) or value < 0.0:
-                        raise ValueError("not finite non-negative")
-                    frame = values[1].value
-                    if not isinstance(frame, str) or not frame or frame.startswith("/"):
-                        raise ValueError("robot_base_frame is not a relative frame id")
-                    declared_bound = point32_coordinate_quantization_bound(
-                        self._declared_padding_m, value
+                    value, frame, declared_bound = _read_footprint_padding_response(
+                        future, self._declared_padding_m
                     )
-                    if abs(value - self._declared_padding_m) > declared_bound:
-                        raise ValueError(
-                            "does not match declared profile padding within Point32 ULP bound"
-                        )
                     self._padding_quantization_bound_m = max(
                         self._padding_quantization_bound_m, declared_bound
                     )
