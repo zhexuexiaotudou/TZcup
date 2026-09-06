@@ -7,13 +7,15 @@ import argparse
 import hashlib
 import json
 import math
+import os
 import re
 import time
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any
 
 from formal_runtime_gate_binding import load_binding
-from validate_formal_service_door_runtime import DOORS, evaluate
+from validate_formal_service_door_runtime import DOORS, evaluate, report_json
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -24,6 +26,134 @@ PLUGIN_DIAGNOSTIC_PREFIX = "SERVICE_DOOR_DIAGNOSTIC "
 PLUGIN_LIFECYCLE_PREFIX = "SERVICE_DOOR_LIFECYCLE "
 PHYSICAL_JOINT_STATES_TOPIC = "/formal/service_door_joint_states"
 PHYSICAL_JOINT_STATE_AUTHORITY = "GAZEBO_MODEL_JOINT_STATE_BRIDGE"
+EXPANDED_URDF_OUTPUT = "reports/engineering/formal_competition_vehicle.urdf"
+SNAPSHOT_LOGICAL_PATH = "reports/engineering/formal_vehicle_snapshot_manifest.json"
+PLUGIN_ECHO_TOLERANCE_RAD = 1.0e-6
+
+
+def _load_joint_velocity_limits(snapshot_path: Path) -> dict[str, float]:
+    """Read the eight commanded-joint velocity limits from the bound URDF."""
+
+    manifest = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    outputs = manifest.get("outputs")
+    if not isinstance(outputs, dict):
+        raise ValueError("snapshot has no outputs map")
+    output = outputs.get(EXPANDED_URDF_OUTPUT)
+    if not isinstance(output, dict):
+        raise ValueError(f"snapshot has no {EXPANDED_URDF_OUTPUT} output")
+    expected_hash = output.get("sha256")
+    if not isinstance(expected_hash, str) or not expected_hash:
+        raise ValueError("snapshot expanded URDF has no sha256")
+    urdf_path = snapshot_path.parents[2] / EXPANDED_URDF_OUTPUT
+    if not urdf_path.is_file():
+        raise ValueError(f"expanded URDF is missing: {urdf_path}")
+    actual_hash = hashlib.sha256(urdf_path.read_bytes()).hexdigest()
+    if actual_hash != expected_hash:
+        raise ValueError("expanded URDF hash differs from snapshot manifest")
+    try:
+        root = ET.fromstring(urdf_path.read_text(encoding="utf-8"))
+    except ET.ParseError as exc:
+        raise ValueError(f"expanded URDF is not valid XML: {exc}") from exc
+    expected_joints = {item for spec in DOORS.values() for item in spec[:2]}
+    velocity_limits: dict[str, float] = {}
+    for joint in root.findall("joint"):
+        name = joint.get("name")
+        if name not in expected_joints:
+            continue
+        limit = joint.find("limit")
+        value = limit.get("velocity") if limit is not None else None
+        try:
+            velocity = float(value) if value is not None else float("nan")
+        except ValueError as exc:
+            raise ValueError(f"joint {name} has non-numeric velocity limit") from exc
+        if not math.isfinite(velocity) or velocity <= 0.0:
+            raise ValueError(f"joint {name} has invalid velocity limit")
+        velocity_limits[name] = velocity
+    missing = sorted(expected_joints - set(velocity_limits))
+    if missing:
+        raise ValueError("expanded URDF lacks velocity limits for: " + ", ".join(missing))
+    return dict(sorted(velocity_limits.items()))
+
+
+def _phase_duration_from_targets(
+    previous_targets: dict[str, dict[str, float]],
+    targets: dict[str, dict[str, float]],
+    velocity_limits: dict[str, float],
+    minimum_duration_s: float,
+    settling_margin_s: float,
+) -> float:
+    """Bound simulated dwell by URDF speed and the largest commanded travel."""
+
+    if not math.isfinite(minimum_duration_s) or minimum_duration_s <= 0.0:
+        raise ValueError("minimum phase duration must be positive and finite")
+    if not math.isfinite(settling_margin_s) or settling_margin_s < 0.0:
+        raise ValueError("settling margin must be finite and non-negative")
+    required_motion_s = 0.0
+    for door, spec in DOORS.items():
+        for kind, joint in (("hinge", spec[0]), ("latch", spec[1])):
+            if door not in previous_targets or door not in targets:
+                raise ValueError(f"missing {door} service-door target")
+            previous = previous_targets[door].get(kind)
+            current = targets[door].get(kind)
+            if not isinstance(previous, (int, float)) or not isinstance(current, (int, float)):
+                raise ValueError(f"non-numeric {door} {kind} target")
+            if not math.isfinite(previous) or not math.isfinite(current):
+                raise ValueError(f"non-finite {door} {kind} target")
+            velocity = velocity_limits.get(joint)
+            if velocity is None or not math.isfinite(velocity) or velocity <= 0.0:
+                raise ValueError(f"missing usable velocity limit for {joint}")
+            required_motion_s = max(required_motion_s, abs(current - previous) / velocity)
+    return max(minimum_duration_s, required_motion_s + settling_margin_s)
+
+
+def _plugin_target_echo_status(
+    records: list[dict[str, Any]],
+    targets: dict[str, dict[str, float]],
+    baseline_counts: dict[str, dict[str, float]],
+) -> tuple[bool, dict[str, Any]]:
+    """Require each phase target to reach the plugin after the prior generation."""
+
+    latest = {
+        str(record.get("door")): record
+        for record in records
+        if isinstance(record, dict) and isinstance(record.get("door"), str)
+    }
+    observed: dict[str, Any] = {}
+    ready = True
+    for door, target in sorted(targets.items()):
+        record = latest.get(door)
+        if record is None:
+            observed[door] = {"reason": "no_plugin_diagnostic"}
+            ready = False
+            continue
+        row: dict[str, Any] = {}
+        for kind in ("hinge", "latch"):
+            count_key = f"received_{kind}_messages"
+            target_key = f"received_{kind}_target_rad"
+            count = record.get(count_key)
+            echoed_target = record.get(target_key)
+            baseline = baseline_counts.get(door, {}).get(kind, 0.0)
+            expected = target.get(kind)
+            delivered = (
+                isinstance(count, (int, float))
+                and math.isfinite(count)
+                and count > baseline
+                and isinstance(echoed_target, (int, float))
+                and math.isfinite(echoed_target)
+                and isinstance(expected, (int, float))
+                and math.isfinite(expected)
+                and math.isclose(echoed_target, expected, abs_tol=PLUGIN_ECHO_TOLERANCE_RAD)
+            )
+            row[kind] = {
+                "received_messages": count,
+                "previous_received_messages": baseline,
+                "received_target_rad": echoed_target,
+                "expected_target_rad": expected,
+                "delivered_after_previous_generation": delivered,
+            }
+            ready = ready and delivered
+        observed[door] = row
+    return ready, observed
 
 
 def _parse_plugin_diagnostics(path: Path) -> dict[str, Any]:
@@ -168,9 +298,13 @@ def run(
     plugin_diagnostic_log: Path,
     startup_timeout_s: float,
     phase_duration_s: float,
+    settling_margin_s: float,
+    minimum_fresh_samples: int,
+    gazebo_sidecar: Path,
 ) -> int:
     import rclpy
     from rclpy.node import Node
+    from rclpy.parameter import Parameter
     from sensor_msgs.msg import JointState
     from std_msgs.msg import Float64
 
@@ -178,9 +312,14 @@ def run(
 
     class Collector(Node):
         def __init__(self) -> None:
-            super().__init__("formal_service_door_runtime_collector")
+            super().__init__(
+                "formal_service_door_runtime_collector",
+                parameter_overrides=[Parameter("use_sim_time", value=True)],
+            )
             self.latest: dict[str, float] = {}
             self.active_samples: list[dict[str, Any]] | None = None
+            self.complete_sample_count = 0
+            self.complete_sample_history: list[dict[str, Any]] = []
             # `Node.publishers` is an rclpy read-only property.  Keep the
             # evaluator-owned handles under a distinct name.
             self.target_publishers = {
@@ -207,6 +346,14 @@ def run(
             if not expected_joints <= set(positions):
                 return
             self.latest = {name: float(positions[name]) for name in expected_joints}
+            self.complete_sample_count += 1
+            self.complete_sample_history.append(
+                {
+                    "received_monotonic_ns": time.monotonic_ns(),
+                    "sim_clock_ns": self.get_clock().now().nanoseconds,
+                    "positions_rad": dict(sorted(self.latest.items())),
+                }
+            )
             if self.active_samples is not None:
                 self.active_samples.append(
                     {
@@ -215,26 +362,157 @@ def run(
                     }
                 )
 
-        def phase(self, targets: dict[str, dict[str, float]], duration_s: float) -> dict[str, Any]:
+        def wait_for_fresh_complete_samples(self, count: int, timeout_s: float) -> list[dict[str, Any]]:
+            if count <= 0:
+                raise ValueError("minimum fresh sample count must be positive")
+            starting_index = len(self.complete_sample_history)
+            deadline = time.monotonic() + timeout_s
+            window: list[dict[str, Any]] = []
+            while (
+                rclpy.ok()
+                and time.monotonic() < deadline
+            ):
+                samples = self.complete_sample_history[starting_index:]
+                window = samples[-count:]
+                sim_times = [sample["sim_clock_ns"] for sample in window]
+                if len(window) == count and all(
+                    left < right for left, right in zip(sim_times, sim_times[1:])
+                ):
+                    return window
+                rclpy.spin_once(self, timeout_sec=0.1)
+            raise TimeoutError(
+                "physical service-door state stream did not produce "
+                f"{count} fresh complete samples with strictly advancing simulated time; "
+                f"last_window={window}"
+            )
+
+        @staticmethod
+        def _latest_plugin_counts(plugin_diagnostic_log: Path) -> dict[str, dict[str, float]]:
+            parsed = _parse_plugin_diagnostics(plugin_diagnostic_log)
+            if "parse_error" in parsed:
+                raise RuntimeError(
+                    "cannot establish service-door plugin echo baseline: "
+                    + str(parsed["parse_error"])
+                )
+            latest = {
+                str(record.get("door")): record
+                for record in parsed["records"]
+                if isinstance(record, dict) and isinstance(record.get("door"), str)
+            }
+            return {
+                door: {
+                    kind: float(record.get(f"received_{kind}_messages", 0.0))
+                    for kind in ("hinge", "latch")
+                }
+                for door, record in latest.items()
+            }
+
+        def phase(
+            self,
+            targets: dict[str, dict[str, float]],
+            duration_s: float,
+            wall_timeout_s: float,
+            minimum_fresh_samples: int,
+            plugin_diagnostic_log: Path,
+        ) -> dict[str, Any]:
             subscription_counts = self.target_subscription_counts()
             if not all(subscription_counts.values()):
                 raise RuntimeError(
                     "service-door evaluator targets lost ROS bridge subscribers: "
                     + json.dumps(subscription_counts, sort_keys=True)
                 )
-            self.active_samples = []
-            deadline = time.monotonic() + duration_s
-            while rclpy.ok() and time.monotonic() < deadline:
+            if not math.isfinite(duration_s) or duration_s <= 0.0:
+                raise ValueError("phase simulated duration must be positive and finite")
+            if not math.isfinite(wall_timeout_s) or wall_timeout_s <= 0.0:
+                raise ValueError("phase wall watchdog must be positive and finite")
+            wall_deadline = time.monotonic() + wall_timeout_s
+            baseline_counts = self._latest_plugin_counts(plugin_diagnostic_log)
+            phase_echo: dict[str, Any] | None = None
+            sample_history_before_echo = len(self.complete_sample_history)
+            while rclpy.ok() and time.monotonic() < wall_deadline:
                 for door, row in targets.items():
                     self.target_publishers[(door, "hinge")].publish(Float64(data=row["hinge"]))
                     self.target_publishers[(door, "latch")].publish(Float64(data=row["latch"]))
                 rclpy.spin_once(self, timeout_sec=0.05)
+                parsed = _parse_plugin_diagnostics(plugin_diagnostic_log)
+                if "parse_error" in parsed:
+                    raise RuntimeError(
+                        "service-door plugin echo parse failed: "
+                        + str(parsed["parse_error"])
+                    )
+                echo_ready, phase_echo = _plugin_target_echo_status(
+                    parsed["records"], targets, baseline_counts
+                )
+                if echo_ready:
+                    sample_history_before_echo = len(self.complete_sample_history)
+                    break
+            else:
+                phase_echo = phase_echo or {}
+            if phase_echo is None or not all(
+                item.get("hinge", {}).get("delivered_after_previous_generation")
+                and item.get("latch", {}).get("delivered_after_previous_generation")
+                for item in phase_echo.values()
+            ) or len(phase_echo) != len(DOORS):
+                raise TimeoutError(
+                    "service-door phase target was not echoed by every plugin after "
+                    "the previous delivery generation: "
+                    + json.dumps(phase_echo, sort_keys=True)
+                )
+            fresh_window: list[dict[str, Any]] = []
+            while rclpy.ok() and time.monotonic() < wall_deadline:
+                samples = self.complete_sample_history[sample_history_before_echo:]
+                fresh_window = samples[-minimum_fresh_samples:]
+                sim_times = [sample["sim_clock_ns"] for sample in fresh_window]
+                if len(fresh_window) == minimum_fresh_samples and all(
+                    left < right for left, right in zip(sim_times, sim_times[1:])
+                ):
+                    break
+                for door, row in targets.items():
+                    self.target_publishers[(door, "hinge")].publish(Float64(data=row["hinge"]))
+                    self.target_publishers[(door, "latch")].publish(Float64(data=row["latch"]))
+                rclpy.spin_once(self, timeout_sec=0.05)
+            if len(fresh_window) < minimum_fresh_samples or not all(
+                left < right
+                for left, right in zip(
+                    [sample["sim_clock_ns"] for sample in fresh_window],
+                    [sample["sim_clock_ns"] for sample in fresh_window][1:],
+                )
+            ):
+                raise TimeoutError(
+                    "service-door phase did not receive enough complete physical samples "
+                    "with advancing simulated time after the plugin echoed this phase target"
+                )
+            self.active_samples = []
+            sample_count_start = self.complete_sample_count
+            sim_start_ns = self.get_clock().now().nanoseconds
+            sim_deadline_ns = sim_start_ns + math.ceil(duration_s * 1_000_000_000)
+            sim_end_ns = sim_start_ns
+            while rclpy.ok() and sim_end_ns < sim_deadline_ns:
+                if time.monotonic() >= wall_deadline:
+                    self.active_samples = None
+                    raise TimeoutError(
+                        "ROS simulated clock did not cover the required service-door phase "
+                        f"duration before the {wall_timeout_s:g}s wall watchdog"
+                    )
+                for door, row in targets.items():
+                    self.target_publishers[(door, "hinge")].publish(Float64(data=row["hinge"]))
+                    self.target_publishers[(door, "latch")].publish(Float64(data=row["latch"]))
+                rclpy.spin_once(self, timeout_sec=0.05)
+                sim_end_ns = self.get_clock().now().nanoseconds
             samples = self.active_samples
             self.active_samples = None
             return {
                 "commanded_targets_rad": targets,
                 "ros_publisher_subscription_counts": subscription_counts,
                 "joint_state_samples": samples,
+                "simulated_duration_requested_s": duration_s,
+                "sim_clock_start_ns": sim_start_ns,
+                "sim_clock_end_ns": sim_end_ns,
+                "plugin_target_echo": phase_echo,
+                "fresh_complete_samples_after_plugin_echo": fresh_window,
+                "complete_samples_observed_during_phase": (
+                    self.complete_sample_count - sample_count_start
+                ),
             }
 
     def targets(hinge: str, latch: float) -> dict[str, dict[str, float]]:
@@ -246,14 +524,26 @@ def run(
     source_binding, acceptance_session_binding, binding = _bound_runtime_evidence(
         snapshot, session, runtime_binding
     )
+    velocity_limits = _load_joint_velocity_limits(snapshot)
 
     rclpy.init()
     node = Collector()
     phases: dict[str, Any] = {}
     raw: dict[str, Any] = {
         "source_binding": source_binding,
+        # The report is portable across host/container boundaries.  Its
+        # logical path is paired with source_binding's manifest hash; the
+        # collector passes the actual resolved path directly to evaluate().
+        "snapshot_manifest": SNAPSHOT_LOGICAL_PATH,
         "evidence_authority": PHYSICAL_JOINT_STATE_AUTHORITY,
         "physical_joint_state_topic": PHYSICAL_JOINT_STATES_TOPIC,
+        "urdf_velocity_limits_rad_per_s": velocity_limits,
+        "phase_timing_contract": {
+            "minimum_duration_s": phase_duration_s,
+            "settling_margin_s": settling_margin_s,
+            "minimum_fresh_samples": minimum_fresh_samples,
+        },
+        "gazebo_partition": os.environ.get("GZ_PARTITION"),
         "phases": phases,
     }
     try:
@@ -282,13 +572,34 @@ def run(
         raw["target_transport"] = {
             "ros_publisher_subscription_counts": target_subscription_counts,
         }
-        phases["initial_locked"] = node.phase(targets("closed", 0.0), phase_duration_s)
-        phases["locked_open_rejected"] = node.phase(targets("open", 0.0), phase_duration_s)
-        phases["unlocked"] = node.phase(targets("closed", 0.6), phase_duration_s)
-        phases["open"] = node.phase(targets("open", 0.6), phase_duration_s * 1.5)
-        phases["closed_unlocked"] = node.phase(targets("closed", 0.6), phase_duration_s * 1.5)
-        phases["transport_locked"] = node.phase(targets("closed", 0.0), phase_duration_s)
-        phases["relock_open_rejected"] = node.phase(targets("open", 0.0), phase_duration_s)
+        raw["target_transport"]["fresh_complete_samples_after_ready"] = (
+            node.wait_for_fresh_complete_samples(minimum_fresh_samples, startup_timeout_s)
+        )
+        previous_targets = targets("closed", 0.0)
+        for name, current_targets in (
+            ("initial_locked", targets("closed", 0.0)),
+            ("locked_open_rejected", targets("open", 0.0)),
+            ("unlocked", targets("closed", 0.6)),
+            ("open", targets("open", 0.6)),
+            ("closed_unlocked", targets("closed", 0.6)),
+            ("transport_locked", targets("closed", 0.0)),
+            ("relock_open_rejected", targets("open", 0.0)),
+        ):
+            duration_s = _phase_duration_from_targets(
+                previous_targets,
+                current_targets,
+                velocity_limits,
+                phase_duration_s,
+                settling_margin_s,
+            )
+            phases[name] = node.phase(
+                current_targets,
+                duration_s,
+                startup_timeout_s,
+                minimum_fresh_samples,
+                plugin_diagnostic_log,
+            )
+            previous_targets = current_targets
     except Exception as exc:
         raw["collector_error"] = str(exc)
     finally:
@@ -297,16 +608,21 @@ def run(
             rclpy.shutdown()
 
     raw["plugin_diagnostics"] = _parse_plugin_diagnostics(plugin_diagnostic_log)
-    report = evaluate(raw)
+    try:
+        raw["gazebo_joint_state_sidecar"] = json.loads(gazebo_sidecar.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raw["gazebo_joint_state_sidecar"] = {"status": "FAILED", "error": str(exc)}
+    report = evaluate(raw, snapshot)
     report["runtime_gate_binding"] = binding
     report["acceptance_session_binding"] = acceptance_session_binding
     report["runtime_closure_binding"] = binding["runtime_closure_binding"]
     if "collector_error" in raw:
         report["collector_error"] = raw["collector_error"]
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print(json.dumps(report, sort_keys=True))
-    return 0 if report["passed"] else 2
+    final_report, text = report_json(raw, report)
+    output.write_text(text, encoding="utf-8")
+    print(text, end="")
+    return 0 if final_report["passed"] else 2
 
 
 def main() -> int:
@@ -318,6 +634,9 @@ def main() -> int:
     parser.add_argument("--plugin-diagnostic-log", type=Path, required=True)
     parser.add_argument("--startup-timeout", type=float, default=30.0)
     parser.add_argument("--phase-duration", type=float, default=2.5)
+    parser.add_argument("--settling-margin", type=float, default=1.0)
+    parser.add_argument("--minimum-fresh-samples", type=int, default=5)
+    parser.add_argument("--gazebo-sidecar", type=Path, required=True)
     args = parser.parse_args()
     return run(
         args.output,
@@ -327,6 +646,9 @@ def main() -> int:
         args.plugin_diagnostic_log,
         args.startup_timeout,
         args.phase_duration,
+        args.settling_margin,
+        args.minimum_fresh_samples,
+        args.gazebo_sidecar,
     )
 
 

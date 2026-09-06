@@ -1,10 +1,30 @@
 from __future__ import annotations
 
+import ast
 from copy import deepcopy
+import hashlib
+import json
 from pathlib import Path
+import subprocess
+import sys
 
-from collect_formal_service_door_runtime import _parse_plugin_diagnostics
-from validate_formal_service_door_runtime import DOORS, FAILED_STATUS, PASSED_STATUS, evaluate
+from collect_formal_service_door_runtime import (
+    _load_joint_velocity_limits,
+    _parse_plugin_diagnostics,
+    _plugin_target_echo_status,
+    _phase_duration_from_targets,
+)
+from collect_formal_service_door_gz_sidecar import (
+    _joint_names_from_model_text,
+    _publisher_count_from_topic_info,
+)
+from validate_formal_service_door_runtime import (
+    DOORS,
+    FAILED_STATUS,
+    PASSED_STATUS,
+    evaluate,
+    report_json,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -42,8 +62,21 @@ def _phase(command, positions, timestamp_offset):
 
 
 def passing_evidence():
-    return {
-        "source_binding": {"expanded_urdf_sha256": "a" * 64},
+    snapshot = json.loads(
+        (ROOT / "reports/engineering/formal_vehicle_snapshot_manifest.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    evidence = {
+        "source_binding": {
+            "snapshot_manifest_sha256": hashlib.sha256(
+                (ROOT / "reports/engineering/formal_vehicle_snapshot_manifest.json").read_bytes()
+            ).hexdigest(),
+            "expanded_urdf_sha256": snapshot["outputs"][
+                "reports/engineering/formal_competition_vehicle.urdf"
+            ]["sha256"]
+        },
+        "snapshot_manifest": "reports/engineering/formal_vehicle_snapshot_manifest.json",
         "evidence_authority": "GAZEBO_MODEL_JOINT_STATE_BRIDGE",
         "physical_joint_state_topic": "/formal/service_door_joint_states",
         "plugin_diagnostics": {
@@ -94,6 +127,60 @@ def passing_evidence():
             "relock_open_rejected": _phase(_targets(True, 0.0), _positions(0.0, 0.0), 60),
         },
     }
+    expected_joints = {joint for spec in DOORS.values() for joint in spec[:2]}
+    limits = {joint: 0.5 if "hinge" in joint else 1.0 for joint in expected_joints}
+    evidence["urdf_velocity_limits_rad_per_s"] = limits
+    evidence["phase_timing_contract"] = {
+        "minimum_duration_s": 2.5,
+        "settling_margin_s": 1.0,
+        "minimum_fresh_samples": 5,
+    }
+    evidence["gazebo_partition"] = "tzcup_test_partition"
+    evidence["gazebo_joint_state_sidecar"] = {
+        "status": "PASSED",
+        "gz_partition": "tzcup_test_partition",
+        "gazebo_transport_topic": "/formal_vehicle/evaluation/bodywork_service/joint_states",
+        "discovered_topic": "/formal_vehicle/evaluation/bodywork_service/joint_states",
+        "topic_candidates": ["/formal_vehicle/evaluation/bodywork_service/joint_states"],
+        "message_type": "gz.msgs.Model",
+        "publisher_count": 1,
+        "observed_joint_names": sorted(expected_joints),
+        "topic_list_output": "/formal_vehicle/evaluation/bodywork_service/joint_states\n",
+        "topic_info_output": "Message Type: gz.msgs.Model\nPublishers:\n  tcp://producer\n",
+        "topic_sample_output": "".join(
+            f'joint {{\n  name: "{joint}"\n}}\n' for joint in sorted(expected_joints)
+        ),
+        "launcher_pid": 123,
+        "launcher_liveness_checks": [True, True],
+    }
+    evidence["target_transport"] = {
+        "fresh_complete_samples_after_ready": [
+            {"sim_clock_ns": index, "positions_rad": _positions(0.0, 0.0)}
+            for index in range(1, 7)
+        ]
+    }
+    for phase_index, phase_name in enumerate(evidence["phases"], start=1):
+        phase = evidence["phases"][phase_name]
+        phase["simulated_duration_requested_s"] = 4.0
+        phase["sim_clock_start_ns"] = phase_index * 10_000_000_000
+        phase["sim_clock_end_ns"] = phase["sim_clock_start_ns"] + 4_000_000_000
+        phase["plugin_target_echo"] = {
+            door: {
+                kind: {
+                    "received_messages": float(phase_index),
+                    "previous_received_messages": float(phase_index - 1),
+                    "received_target_rad": target,
+                    "delivered_after_previous_generation": True,
+                }
+                for kind, target in row.items()
+            }
+            for door, row in phase["commanded_targets_rad"].items()
+        }
+        phase["fresh_complete_samples_after_plugin_echo"] = [
+            {"sim_clock_ns": phase["sim_clock_start_ns"] + index, "positions_rad": _positions(0.0, 0.0)}
+            for index in range(1, 7)
+        ]
+    return evidence
 
 
 def test_complete_physical_sequence_passes() -> None:
@@ -126,6 +213,187 @@ def test_missing_live_joint_samples_fails_closed() -> None:
     evidence["phases"]["open"]["joint_state_samples"] = []
     report = evaluate(evidence)
     assert not report["checks"]["all_phases_have_fresh_complete_samples"]
+
+
+def test_delivery_timing_and_independent_gazebo_sidecar_fail_closed() -> None:
+    def delivery_fails(mutate) -> None:
+        evidence = passing_evidence()
+        mutate(evidence)
+        assert not evaluate(evidence)["checks"]["startup_and_phase_delivery_use_fresh_advancing_simulated_time"]
+
+    delivery_fails(lambda e: e["urdf_velocity_limits_rad_per_s"].pop(
+        "bodywork_power_service_door_hinge_joint"))
+    delivery_fails(lambda e: e["urdf_velocity_limits_rad_per_s"].update(
+        bodywork_power_service_door_hinge_joint=1.0e9))
+    delivery_fails(lambda e: e["phases"]["open"].update(
+        sim_clock_end_ns=e["phases"]["open"]["sim_clock_start_ns"] + 1))
+    delivery_fails(lambda e: e["phases"]["open"]["plugin_target_echo"]["power"]["hinge"].update(
+        delivered_after_previous_generation=False))
+    delivery_fails(lambda e: e["phases"]["open"]["fresh_complete_samples_after_plugin_echo"].__setitem__(
+        2, dict(e["phases"]["open"]["fresh_complete_samples_after_plugin_echo"][1])))
+    delivery_fails(lambda e: e["target_transport"]["fresh_complete_samples_after_ready"].__setitem__(
+        2, dict(e["target_transport"]["fresh_complete_samples_after_ready"][1])))
+
+    for key, value in (
+        ("publisher_count", 0), ("publisher_count", 2),
+        ("message_type", "gz.msgs.String"), ("observed_joint_names", []),
+        ("gz_partition", "wrong_partition"),
+    ):
+        evidence = passing_evidence()
+        evidence["gazebo_joint_state_sidecar"][key] = value
+        assert not evaluate(evidence)["checks"]["independent_gazebo_joint_state_sidecar_is_complete"]
+    evidence = passing_evidence()
+    evidence["gazebo_joint_state_sidecar"]["observed_joint_names"][-1] = (
+        evidence["gazebo_joint_state_sidecar"]["observed_joint_names"][0]
+    )
+    assert not evaluate(evidence)["checks"]["independent_gazebo_joint_state_sidecar_is_complete"]
+    evidence = passing_evidence()
+    evidence["gazebo_joint_state_sidecar"]["topic_sample_output"] += 'joint {\n  name: "extra_joint"\n}\n'
+    assert not evaluate(evidence)["checks"]["independent_gazebo_joint_state_sidecar_is_complete"]
+
+
+def test_gazebo_model_sidecar_parses_all_joint_names_and_retains_duplicates() -> None:
+    model = '''name: "formal_vehicle"
+joint {
+  name: "hinge_a"
+}
+joint {
+  name: "hinge_a"
+}
+joint {
+  name: "unexpected_joint"
+}
+'''
+    assert _joint_names_from_model_text(model) == ["hinge_a", "hinge_a", "unexpected_joint"]
+
+
+def test_gazebo_topic_info_publisher_section_requires_exactly_one_endpoint() -> None:
+    fixture = """Topic: /formal_vehicle/evaluation/bodywork_service/joint_states
+Message Type: gz.msgs.Model
+Publishers:
+  tcp://172.17.0.2:42513
+Subscribers:
+  tcp://172.17.0.2:33877
+"""
+    assert _publisher_count_from_topic_info(fixture) == 1
+    assert _publisher_count_from_topic_info(fixture.replace("Subscribers:", "  tcp://172.17.0.3:42514\nSubscribers:")) == 2
+
+
+def test_gazebo8_topic_info_counts_endpoint_rows_and_stops_at_any_section() -> None:
+    # This is the repository's Gazebo Sim 8 topic-info table shape, also used
+    # by test_run_formal_typed_cleaning_motor_diagnostic.py.
+    fixture = """Publishers [Address, Message Type]:
+foo, gz.msgs.Double_V
+Subscribers [Address, Message Type]:
+not-an-endpoint, gz.msgs.Double_V
+"""
+    assert _publisher_count_from_topic_info(fixture) == 1
+    assert _publisher_count_from_topic_info(fixture.replace(
+        "foo, gz.msgs.Double_V", "foo, gz.msgs.Double_V\nbar, gz.msgs.Double_V"
+    )) == 2
+    assert _publisher_count_from_topic_info(fixture.replace(
+        "foo, gz.msgs.Double_V", "not an endpoint"
+    )) == 0
+
+
+def test_bad_joint_position_type_or_nan_writes_failed_validator_report(tmp_path: Path) -> None:
+    for value in ("bad-position", float("nan")):
+        evidence = passing_evidence()
+        evidence["phases"]["open"]["joint_state_samples"][0]["positions_rad"][
+            "bodywork_power_service_door_hinge_joint"
+        ] = value
+        input_path = tmp_path / "evidence.json"
+        output_path = tmp_path / "report.json"
+        input_path.write_text(json.dumps(evidence, allow_nan=True), encoding="utf-8")
+        completed = subprocess.run(
+            [sys.executable, str(ROOT / "scripts/validate_formal_service_door_runtime.py"),
+             "--input", str(input_path), "--output", str(output_path)],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        serialized = output_path.read_text(encoding="utf-8")
+        report = json.loads(
+            serialized,
+            parse_constant=lambda value: (_ for _ in ()).throw(
+                AssertionError(f"non-standard JSON constant: {value}")
+            ),
+        )
+        assert completed.returncode == 2
+        assert report["status"] == FAILED_STATUS
+        assert report["passed"] is False
+        assert "NaN" not in serialized
+        assert report["phases"] == {}
+        assert report["plugin_diagnostics"] == {}
+
+
+def test_ignored_nan_metadata_downgrades_final_serializer_cli_and_collector_exit(
+    tmp_path: Path,
+) -> None:
+    evidence = passing_evidence()
+    evidence["source_binding"]["ignored_metadata"] = float("nan")
+    provisional = evaluate(evidence)
+    assert provisional["passed"] is True
+    final_report, serialized = report_json(evidence, provisional)
+    assert final_report["passed"] is False
+    assert final_report["status"] == FAILED_STATUS
+    assert "NaN" not in serialized
+
+    input_path = tmp_path / "evidence.json"
+    output_path = tmp_path / "report.json"
+    input_path.write_text(json.dumps(evidence, allow_nan=True), encoding="utf-8")
+    completed = subprocess.run(
+        [sys.executable, str(ROOT / "scripts/validate_formal_service_door_runtime.py"),
+         "--input", str(input_path), "--output", str(output_path)],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert completed.returncode == 2
+    assert json.loads(output_path.read_text(encoding="utf-8"))["passed"] is False
+
+    collector = (ROOT / "scripts/collect_formal_service_door_runtime.py").read_text(
+        encoding="utf-8"
+    )
+    assert "final_report, text = report_json(raw, report)" in collector
+    assert 'return 0 if final_report["passed"] else 2' in collector
+
+
+def test_snapshot_manifest_drift_fails_delivery_binding(tmp_path: Path) -> None:
+    evidence = passing_evidence()
+    snapshot = ROOT / evidence["snapshot_manifest"]
+    drifted = tmp_path / "reports/engineering/formal_vehicle_snapshot_manifest.json"
+    drifted.parent.mkdir(parents=True)
+    drifted.write_bytes(snapshot.read_bytes())
+    assert not evaluate(evidence, drifted)["checks"][
+        "startup_and_phase_delivery_use_fresh_advancing_simulated_time"
+    ]
+
+
+def test_snapshot_logical_path_cannot_drift_or_escape_repository() -> None:
+    evidence = passing_evidence()
+    evidence["snapshot_manifest"] = "../formal_vehicle_snapshot_manifest.json"
+    assert not evaluate(evidence)["checks"][
+        "startup_and_phase_delivery_use_fresh_advancing_simulated_time"
+    ]
+
+
+def test_runner_writes_primary_failed_report_for_startup_launcher_or_sidecar_failure() -> None:
+    runner = (ROOT / "scripts/run_formal_service_door_runtime.sh").read_text(encoding="utf-8")
+    assert "write_runner_failure_report" in runner
+    assert '"independent_gazebo_joint_state_sidecar_failed"' in runner
+    assert '"gazebo_launcher_exited_before_service_door_collector"' in runner
+    assert '"FORMAL_BODYWORK_SERVICE_DOOR_RUNTIME_FAILED"' in runner
+    assert "allow_nan=False" in runner
+
+
+def test_runner_proves_gazebo_source_before_ros_bridge_samples() -> None:
+    runner = (ROOT / "scripts/run_formal_service_door_runtime.sh").read_text(encoding="utf-8")
+    sidecar = 'collect_formal_service_door_gz_sidecar.py'
+    collector = 'collect_formal_service_door_runtime.py'
+    assert runner.index(sidecar) < runner.index(collector)
+    assert "ros2 topic list" not in runner
+    assert "physical_service_door_joint_states_topic_timeout" not in runner
 
 
 def test_missing_evaluator_bridge_subscriber_fails_closed() -> None:
@@ -282,6 +550,90 @@ def test_reused_joint_samples_across_phases_fail_freshness_gate() -> None:
     assert not report["checks"]["joint_samples_are_strictly_ordered_across_phases"]
 
 
+def test_phase_duration_covers_urdf_limited_target_travel() -> None:
+    zero = _targets(False, 0.0)
+    open_unlocked = _targets(True, 0.6)
+    velocity_limits = {
+        joint: 0.5 if "hinge" in joint else 1.0
+        for spec in DOORS.values()
+        for joint in spec[:2]
+    }
+    # The 1.2-rad hinge command at 0.5 rad/s needs 2.4 simulated seconds;
+    # the dwell cannot shrink to the former wall-clock default.
+    assert _phase_duration_from_targets(
+        zero, open_unlocked, velocity_limits, 2.5, 1.0
+    ) == 3.4
+
+
+def test_phase_duration_rejects_missing_velocity_limit() -> None:
+    zero = _targets(False, 0.0)
+    limits = {
+        joint: 0.5
+        for spec in DOORS.values()
+        for joint in spec[:2]
+        if joint != "bodywork_power_service_door_hinge_joint"
+    }
+    try:
+        _phase_duration_from_targets(zero, _targets(True, 0.6), limits, 2.5, 1.0)
+    except ValueError as exc:
+        assert "missing usable velocity limit" in str(exc)
+    else:
+        raise AssertionError("missing URDF velocity limit must fail closed")
+
+
+def test_phase_requires_a_new_plugin_target_echo_for_all_eight_commands() -> None:
+    targets = _targets(True, 0.6)
+    baseline = {door: {"hinge": 10.0, "latch": 11.0} for door in DOORS}
+    records = [
+        {
+            "door": door,
+            "received_hinge_messages": 11.0,
+            "received_latch_messages": 12.0,
+            "received_hinge_target_rad": target["hinge"],
+            "received_latch_target_rad": target["latch"],
+        }
+        for door, target in targets.items()
+    ]
+    ready, detail = _plugin_target_echo_status(records, targets, baseline)
+    assert ready is True
+    assert all(
+        item[axis]["delivered_after_previous_generation"]
+        for item in detail.values()
+        for axis in ("hinge", "latch")
+    )
+    records[-1]["received_hinge_messages"] = 10.0
+    ready, detail = _plugin_target_echo_status(records, targets, baseline)
+    assert ready is False
+    assert detail["rear_dry"]["hinge"]["delivered_after_previous_generation"] is False
+
+
+def test_runtime_path_passes_echo_and_freshness_to_every_phase() -> None:
+    tree = ast.parse(
+        (ROOT / "scripts/collect_formal_service_door_runtime.py").read_text(encoding="utf-8")
+    )
+    calls = [
+        node for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and isinstance(node.func.value, ast.Name)
+        and node.func.value.id == "node"
+        and node.func.attr == "phase"
+    ]
+    assert len(calls) == 1
+    call = calls[0]
+    assert len(call.args) == 5
+    assert isinstance(call.args[3], ast.Name) and call.args[3].id == "minimum_fresh_samples"
+    assert isinstance(call.args[4], ast.Name) and call.args[4].id == "plugin_diagnostic_log"
+
+
+def test_velocity_limits_are_loaded_from_bound_expanded_urdf() -> None:
+    limits = _load_joint_velocity_limits(
+        ROOT / "reports/engineering/formal_vehicle_snapshot_manifest.json"
+    )
+    assert set(limits) == {joint for spec in DOORS.values() for joint in spec[:2]}
+    assert all(limit > 0.0 for limit in limits.values())
+
+
 def test_joint_limit_violation_fails_closed() -> None:
     evidence = passing_evidence()
     bad = deepcopy(evidence["phases"]["open"]["joint_state_samples"][0])
@@ -304,7 +656,6 @@ def test_runner_collector_and_force_plugin_use_physical_joint_state() -> None:
     assert "formal_vehicle_sim.launch.py" in runner
     assert "collect_formal_service_door_runtime.py" in runner
     assert "service_door_evaluation_interfaces:=true" in runner
-    assert 'physical_joint_states_topic="/formal/service_door_joint_states"' in runner
     assert 'grep -Fxq /joint_states' not in runner
     assert '"service_door_evaluation_interfaces"' in launch
     assert '"service_door_evaluation_interfaces",\n                default_value="false"' in launch
@@ -325,6 +676,13 @@ def test_runner_collector_and_force_plugin_use_physical_joint_state() -> None:
     assert "session_manifest_sha256" in collector
     assert "self.target_publishers" in collector
     assert "target_subscription_counts" in collector
+    assert "use_sim_time" in collector
+    assert "wait_for_fresh_complete_samples" in collector
+    assert "_phase_duration_from_targets" in collector
+    assert "_load_joint_velocity_limits" in collector
+    assert "simulated_duration_requested_s" in collector
+    assert "plugin_target_echo" in collector
+    assert "_plugin_target_echo_status" in collector
     assert "received_hinge_messages" in plugin
     assert "effective_hinge_rad" in plugin
     assert "hinge_force_nm" in plugin
