@@ -155,7 +155,26 @@ def test_launch_is_parseable_and_keeps_safety_and_controller_ownership_explicit(
     assert 'DeclareLaunchArgument("spawn_x"' in source
     assert 'DeclareLaunchArgument("spawn_y"' in source
     assert 'DeclareLaunchArgument("spawn_yaw"' in source
+    # The public start must reach initial creation, not a delayed SetPose that
+    # leaves NavSat and local wheel/IMU odom with different origins.
+    for axis, index in (("x", 0), ("y", 1), ("yaw", 2)):
+        assert f'"spawn_{axis}": str(source_pose[{index}])' in source
+    assert 'executable="formal-spawn-initializer"' not in source
+    # The bridge remains for the independent dynamic-pedestrian driver. The
+    # absent vehicle initializer, not removal of the service, prevents a
+    # post-start vehicle teleport.
+    assert 'name="formal_campus_set_pose_bridge"' in source
+    assert 'set_pose@ros_gz_interfaces/srv/SetEntityPose' in source
     assert "ackermann" not in source.lower()
+
+    formal_vehicle_launch = (
+        ROOT / "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py"
+    ).read_text(encoding="utf-8")
+    ast.parse(formal_vehicle_launch)
+    for axis in ("x", "y", "yaw"):
+        assert f'DeclareLaunchArgument("spawn_{axis}", default_value="0.0")' in formal_vehicle_launch
+    assert '"-x", spawn_x, "-y", spawn_y, "-Y", spawn_yaw, "-z", "0.005"' in formal_vehicle_launch
+    assert '"-z", "0.005"' in formal_vehicle_launch
 
     lifecycle = (PACKAGE / "launch/formal_campus_map_lifecycle.launch.py").read_text(
         encoding="utf-8"
@@ -177,7 +196,10 @@ def test_launch_is_parseable_and_keeps_safety_and_controller_ownership_explicit(
 def test_launch_stages_dds_participants_and_bounds_controller_discovery():
     source = LAUNCH.read_text(encoding="utf-8")
     ast.parse(source)
-    for period in (8.0, 12.0, 15.0, 20.0, 45.0):
+    # The former 8 s slot performed a post-start SetPose. Creation now uses
+    # the public start pose, while the remaining DDS/controller stages stay
+    # ordered and bounded.
+    for period in (12.0, 15.0, 20.0, 45.0):
         assert f"period={period}" in source
     assert '"--controller-manager-timeout"' in source
     assert '"180"' in source

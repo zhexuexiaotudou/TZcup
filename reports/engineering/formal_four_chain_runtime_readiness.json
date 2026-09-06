@@ -1,7 +1,7 @@
 {
   "aggregate": {
     "parse_error": null,
-    "path": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-derived-bindings-r063\\scripts\\run_formal_final_acceptance.py",
+    "path": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-r064-gnss-odom-origin-fix\\scripts\\run_formal_final_acceptance.py",
     "present": true,
     "scheduled_runners": [
       "formal_acceptance_session.py",
@@ -44,12 +44,12 @@
         ],
         "classification": "MISSING",
         "fresh": false,
-        "report_path": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-derived-bindings-r063\\artifacts\\formal_a300_drivetrain_runtime.json"
+        "report_path": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-r064-gnss-odom-origin-fix\\artifacts\\formal_a300_drivetrain_runtime.json"
       },
       "source_sha256": {
         "scripts/run_formal_vehicle_mobility_runtime.sh": "019b5d228fbe61e6e2491bf8462763147931c013075f459eff83ac41ade0ce22",
         "scripts/validate_formal_vehicle_mobility_runtime.py": "26983f0f1c28f18d0e8427c664f82f21e311372c0c8a51024be3b3e79aa3f358",
-        "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py": "efacfa3d7618af2868e6ee8a6c90ced3311995b0c30a29ed92f17e021d709f7d"
+        "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py": "e5f2f89500a4bf810f8380ebb89ed177d5402fbe765b5d585fbf8f25b297b815"
       },
       "source_wiring_errors": [],
       "source_wiring_ready": true
@@ -61,12 +61,12 @@
         ],
         "classification": "MISSING",
         "fresh": false,
-        "report_path": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-derived-bindings-r063\\artifacts\\formal_ground_dirt_cleaning_final_retry\\ground_dirt_acceptance.json"
+        "report_path": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-r064-gnss-odom-origin-fix\\artifacts\\formal_ground_dirt_cleaning_final_retry\\ground_dirt_acceptance.json"
       },
       "source_sha256": {
         "scripts/run_formal_ground_dirt_cleaning_runtime.sh": "1d934f6025d3bdf3d046ebe6922cd70224841b9c429b18bd19687a815a0a584b",
         "scripts/validate_formal_ground_dirt_cleaning_runtime.py": "5bd319354843b7b9179d7f7e0d6d46cce85f369f822bbed402874b0d04ec9bf9",
-        "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py": "efacfa3d7618af2868e6ee8a6c90ced3311995b0c30a29ed92f17e021d709f7d"
+        "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py": "e5f2f89500a4bf810f8380ebb89ed177d5402fbe765b5d585fbf8f25b297b815"
       },
       "source_wiring_errors": [],
       "source_wiring_ready": true
@@ -78,7 +78,7 @@
         ],
         "classification": "MISSING",
         "fresh": false,
-        "report_path": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-derived-bindings-r063\\artifacts\\formal_grasp_executor_runtime.json"
+        "report_path": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-r064-gnss-odom-origin-fix\\artifacts\\formal_grasp_executor_runtime.json"
       },
       "source_sha256": {
         "scripts/run_formal_grasp_executor_runtime.sh": "74f97d86d51b91f80819acb9f39ccab3b94cf375cad06c71bbf08a489e575510",
@@ -96,12 +96,12 @@
         ],
         "classification": "MISSING",
         "fresh": false,
-        "report_path": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-derived-bindings-r063\\artifacts\\formal_water_recovery_acceptance.json"
+        "report_path": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-r064-gnss-odom-origin-fix\\artifacts\\formal_water_recovery_acceptance.json"
       },
       "source_sha256": {
         "scripts/finalize_formal_water_recovery_acceptance.py": "c2726450f137975919c118f42bcbc3eaea7d83e379e97904f5992f2c23f50f80",
         "scripts/run_formal_water_recovery_runtime.sh": "434d32f9654b7bf9d8f8abe6a6f0b1b3666bb73cf9547f18b8e9de639e5c092f",
-        "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py": "efacfa3d7618af2868e6ee8a6c90ced3311995b0c30a29ed92f17e021d709f7d"
+        "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py": "e5f2f89500a4bf810f8380ebb89ed177d5402fbe765b5d585fbf8f25b297b815"
       },
       "source_wiring_errors": [],
       "source_wiring_ready": true
@@ -125,10 +125,10 @@
     "identity": {
       "expanded_urdf_sha256": "34257c2ed840a6f8f25933bdf37c6130c3db397d0aa1211c561bff528bd621d1",
       "output_inventory_sha256": "1b851ad66b5d3dc8a85d08825a1d31741e945f66d618374965ec3c3a2dc8eb0c",
-      "snapshot_manifest_sha256": "ddc937de1c92d902cf2e758f985700ea6117f5992813c621ffa02871f2d07b71",
-      "source_inventory_sha256": "ce10d09a87d4b45dfb6e716194bc823564a295e55e63400c6cc0ea9d8629cd8e"
+      "snapshot_manifest_sha256": "1c8823f310b78ca422b8db9bea82c75c4b70f1ce74b09e215e9c6262b6557abc",
+      "source_inventory_sha256": "82f102b9c6b40e93aeaaf808abd3651279ba5ea879ad16aed11cca55007a446e"
     },
-    "path": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-derived-bindings-r063\\reports\\engineering\\formal_vehicle_snapshot_manifest.json"
+    "path": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-r064-gnss-odom-origin-fix\\reports\\engineering\\formal_vehicle_snapshot_manifest.json"
   },
   "status": "FORMAL_FOUR_CHAIN_RUNTIME_BLOCKED"
 }
