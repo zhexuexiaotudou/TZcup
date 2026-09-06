@@ -27,6 +27,7 @@ except ImportError:  # surfaced as a blocker in the receipt
     yaml = None
 
 from hbm_evidence_common import atomic_json, fresh_directory, load_object, normal_file, sha256_file
+from validate_dosod_s100p_hbm_compile_contract import audit_calibration
 
 
 RECEIPT_ID = "tzcup_s100p_dosod_hbm_compile_receipt_v1"
@@ -85,6 +86,14 @@ def _validate(
         blockers.append("calibration_manifest_not_frozen")
     elif len(records) < contract.get("calibration", {}).get("minimum_sample_count", 0):
         blockers.append("calibration_manifest_sample_count_insufficient")
+    # Re-run the canonical calibration audit immediately before compile.  A
+    # manifest digest alone cannot detect changed tensors, extra arrays or
+    # source/holdout overlap after preflight.
+    calibration_blockers: list[str] = []
+    calibration_audit = audit_calibration(calibration_manifest_path.parent, contract, calibration_blockers)
+    if calibration_audit.get("manifest_sha256") != sha256_file(calibration_manifest_path):
+        blockers.append("calibration_audit_manifest_identity_mismatch")
+    blockers.extend(f"calibration_reaudit:{value}" for value in calibration_blockers)
     if identity.get("identity_verified") is not True:
         blockers.append("compiler_identity_not_verified")
     toolchain = contract.get("toolchain", {})
@@ -144,6 +153,7 @@ def execute_compile(
         "returncode": None,
         "compiler": {"requested": compiler, "resolved": shutil.which(compiler), "package_versions": _package_versions()},
         "inputs": {"contract": str(contract_path.resolve()), "preflight": str(preflight_path.resolve()), "compile_config": str(config_path.resolve()), "compiler_identity": str(identity_path.resolve()), "calibration_manifest": str(calibration_manifest_path.resolve())},
+        "evidence_root": str(output.resolve()),
         "output_relative_path": None,
         "output_path": None,
         "output_sha256": None,
@@ -165,6 +175,7 @@ def execute_compile(
             "calibration_manifest_sha256": sha256_file(calibration_manifest_path),
             "model_sha256": contract.get("model", {}).get("sha256"),
         })
+        receipt["calibration_reaudit"] = calibration_audit if "calibration_audit" in locals() else None
         receipt["compiler_identity_verified"] = identity.get("identity_verified") is True
         for blocker in blockers:
             _block(receipt, blocker)
@@ -202,7 +213,11 @@ def execute_compile(
         _block(receipt, f"precompile_validation_failed:{type(exc).__name__}")
     finally:
         receipt["ended_epoch_ns"] = time.time_ns()
-        atomic_json(output / "dosod_hbm_compile_receipt.json", receipt)
+        receipt_path = output / "dosod_hbm_compile_receipt.json"
+        receipt["receipt_path"] = str(receipt_path.resolve())
+        receipt["producer_script_path"] = str(Path(__file__).resolve())
+        receipt["producer_script_sha256"] = sha256_file(Path(__file__).resolve())
+        atomic_json(receipt_path, receipt)
     return receipt
 
 

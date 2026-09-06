@@ -16,12 +16,15 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+import numpy as np
+
 SCRIPTS = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPTS))
 
 import execute_dosod_hbm_compile as compile_producer
 import run_dosod_hbm_x86_parity as parity
 import validate_dosod_quantized_metric_regression as metric_regression
+import validate_dosod_s100p_hbm_compile_contract as compile_contract
 
 
 def _sha(path: Path) -> str:
@@ -46,10 +49,17 @@ class CompileProducerTests(unittest.TestCase):
         calibration = root / "calibration_manifest.json"
         working = root / "working"
         config = root / "config.yaml"
+        sample = root / "sample.npy"
+        np.save(sample, np.zeros((1, 3, 640, 640), dtype=np.float32), allow_pickle=False)
+        record = {"relative_path": sample.name, "byte_size": sample.stat().st_size, "sha256": _sha(sample),
+                  "source_sha256": "b" * 64, "source_role": "calibration_only"}
         _write_json(contract, {"toolchain": {"oe_version": "3.7.0", "required_versions": {"hbdk4_compiler": "4.7.5", "hmct": "2.6.5", "horizon_tc_ui": "3.5.3"}},
-                               "compile_recipe": {"march": "nash-m"}, "calibration": {"minimum_sample_count": 1},
-                               "output": {"relative_path": "dosod/dosod_mlp3x_s_tzcup_rep-int16.hbm"}, "model": {"sha256": "a" * 64}})
-        _write_json(calibration, {"schema_version": 1, "status": "FROZEN", "records": [{"source_sha256": "b" * 64}]})
+                               "compile_recipe": {"march": "nash-m"}, "calibration": {"manifest_name": calibration.name, "minimum_sample_count": 1, "sample_suffix": ".npy", "dtype": "float32", "shape": [1, 3, 640, 640], "value_range": [0.0, 1.0]},
+                               "output": {"relative_path": "dosod/dosod_mlp3x_s_tzcup_rep-int16.hbm"}, "model": {"sha256": "a" * 64},
+                               "vocabulary": {"sha256": "c" * 64}, "preprocessing": {}})
+        _write_json(calibration, {"schema_version": 1, "status": "FROZEN", "model_sha256": "a" * 64, "vocabulary_sha256": "c" * 64,
+                                  "preprocessing_sha256": compile_contract.canonical_sha256({}), "records": [record],
+                                  "records_sha256": compile_contract.canonical_sha256([record]), "evaluation_holdout_source_sha256": []})
         _write_json(identity, {"identity_verified": True, "oe_version": "3.7.0", "required_versions": {"hbdk4_compiler": "4.7.5", "hmct": "2.6.5", "horizon_tc_ui": "3.5.3"},
                                "hb_compile_executable_sha256": _sha(compiler)})
         config.write_text(yaml.safe_dump({"model_parameters": {"march": "nash-m", "onnx_model": str(root / "model.onnx"), "output_model_file_prefix": "dosod_mlp3x_s_tzcup_rep-int16", "working_dir": str(working)}, "calibration_parameters": {"cal_data_dir": str(root)}}), encoding="utf-8")
@@ -165,7 +175,7 @@ class MetricRegressionTests(unittest.TestCase):
                 "metrics": {"macro_f1": 0.9, "negative_fp_per_frame": 0.01,
                             "classes": {name: {"f1": 0.9} for name in metric_regression.CLASS_ORDER}}}
 
-    def test_pass_requires_same_non_calibration_holdout_and_thresholds(self) -> None:
+    def test_handwritten_compile_receipt_cannot_pass_metric_regression(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
             hbm = root / "model.hbm"; hbm.write_bytes(b"unit-test hbm")
@@ -183,7 +193,8 @@ class MetricRegressionTests(unittest.TestCase):
             result = metric_regression.validate_regression(hbm=hbm, compile_receipt_path=compile_receipt,
                                                             calibration_manifest=calibration, holdout_manifest=holdout, parity_report_path=parity, runner_identity_path=runner_identity, evaluator_identity_path=identity, reference_report_path=reference,
                                                             quantized_report_path=quantized, thresholds_path=thresholds, output=root / "evidence")
-            self.assertEqual(result["status"], "REGRESSION_PASSED")
+            self.assertEqual(result["status"], "BLOCKED")
+            self.assertTrue(any("ValueError" in item for item in result["blockers"]))
 
     def test_calibration_overlap_is_blocked(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
@@ -250,8 +261,8 @@ class ParityManifestTests(unittest.TestCase):
                                    "command_template": parity.COMMAND_TEMPLATE,
                                    "output_map": {"scores": "scores.npy", "boxes": "boxes.npy"},
                                    "hbm_input_adapter": adapter})
-            _, output_map, _, _ = parity._validate_runner_identity(identity, {"hbm_input_adapter": adapter})
-            self.assertEqual(output_map["scores"], "scores.npy")
+            with self.assertRaisesRegex(ValueError, "official_receipt_missing"):
+                parity._validate_runner_identity(identity, {"hbm_input_adapter": adapter})
             with self.assertRaisesRegex(ValueError, "runner_identity_adapter_mismatch"):
                 parity._validate_runner_identity(identity, {"hbm_input_adapter": {"status": "VERIFIED", "command": ["other"]}})
 

@@ -126,6 +126,20 @@ def _validate_runner_identity(path: Path, holdout: dict[str, Any]) -> tuple[Path
         raise ValueError("runner_identity_output_map_invalid")
     if identity.get("hbm_input_adapter") != holdout.get("hbm_input_adapter"):
         raise ValueError("runner_identity_adapter_mismatch")
+    # The runner cannot self-attest.  Until the existing S100 live collector
+    # records an official hbrt4 inventory receipt, this lane stays blocked.
+    official = identity.get("official_runtime_receipt")
+    if not isinstance(official, dict) or not isinstance(official.get("path"), str) or not Path(official["path"]).is_absolute():
+        raise ValueError("runner_identity_official_receipt_missing")
+    receipt_path = Path(official["path"])
+    normal_file(receipt_path, "runner_official_runtime_receipt")
+    if official.get("sha256") != sha256_file(receipt_path):
+        raise ValueError("runner_identity_official_receipt_sha_mismatch")
+    official_receipt = load_object(receipt_path)
+    inventory = official_receipt.get("system", {}).get("runtime_inventory") if isinstance(official_receipt.get("system"), dict) else None
+    hbrt4 = inventory.get("hbrt4") if isinstance(inventory, dict) else None
+    if official_receipt.get("report_id") != "tzcup_formal_rdk_s100_live_runtime_raw_v1" or not isinstance(hbrt4, dict) or hbrt4.get("returncode") != 0:
+        raise ValueError("runner_identity_official_receipt_unverified")
     return executable_path, {str(key): str(value) for key, value in output_map.items()}, sha256_file(path), runner["version"]
 
 

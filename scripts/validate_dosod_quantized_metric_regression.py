@@ -25,6 +25,7 @@ METRICS_REPORT_ID = "tzcup_dosod_perception_validation_metrics_v1"
 THRESHOLDS_REPORT_ID = "tzcup_dosod_quantized_metric_thresholds_v1"
 PARITY_REPORT_ID = "tzcup_dosod_hbm_x86_nash_parity_v1"
 EVALUATOR_IDENTITY_ID = "tzcup_dosod_metric_evaluator_identity_v1"
+COMPILE_RECEIPT_ID = "tzcup_s100p_dosod_hbm_compile_receipt_v1"
 CLASS_ORDER = ["litter_cube", "fallen_leaves", "dust_or_soil", "puddle"]
 
 
@@ -133,6 +134,37 @@ def _validate_parity_report(path: Path, *, hbm_sha: str, calibration_sha: str, h
     return sources, str(runner_sha)
 
 
+def _validate_compile_receipt(path: Path, *, hbm: Path, calibration_manifest: Path) -> dict[str, Any]:
+    """Consume only a structurally complete fresh-root compile producer receipt."""
+    receipt = load_object(path)
+    if receipt.get("receipt_id") != COMPILE_RECEIPT_ID or receipt.get("status") != "COMPILED_NOT_BOARD_ACCEPTED" or receipt.get("returncode") != 0:
+        raise ValueError("compile_receipt_not_successful")
+    if receipt.get("output_created_by_this_compile") is not True:
+        raise ValueError("compile_receipt_does_not_prove_fresh_output")
+    root = receipt.get("evidence_root")
+    if not isinstance(root, str) or not Path(root).is_absolute() or Path(root).is_symlink() or Path(root).resolve() != path.parent.resolve():
+        raise ValueError("compile_receipt_evidence_root_invalid")
+    if receipt.get("receipt_path") != str(path.resolve()):
+        raise ValueError("compile_receipt_path_binding_mismatch")
+    for stream in ("stdout", "stderr"):
+        name = receipt.get(f"raw_{stream}_path")
+        digest = receipt.get(f"raw_{stream}_sha256")
+        if not isinstance(name, str) or not _digest(digest):
+            raise ValueError("compile_receipt_raw_output_identity_missing")
+        candidate = (path.parent / name).resolve()
+        if not candidate.is_relative_to(path.parent.resolve()):
+            raise ValueError("compile_receipt_raw_output_path_escape")
+        normal_file(candidate, f"compile_receipt_{stream}")
+        if sha256_file(candidate) != digest:
+            raise ValueError("compile_receipt_raw_output_identity_mismatch")
+    inputs = receipt.get("inputs")
+    if not isinstance(inputs, dict) or inputs.get("calibration_manifest_sha256") != sha256_file(calibration_manifest):
+        raise ValueError("compile_receipt_calibration_binding_mismatch")
+    if receipt.get("output_sha256") != sha256_file(hbm) or receipt.get("output_byte_size") != hbm.stat().st_size:
+        raise ValueError("compile_receipt_hbm_identity_mismatch")
+    return receipt
+
+
 def _validate_evaluator_identity(path: Path) -> tuple[str, dict[str, dict[str, Any]]]:
     identity = load_object(path)
     if identity.get("schema_version") != 1 or identity.get("report_id") != EVALUATOR_IDENTITY_ID or identity.get("status") != "VERIFIED":
@@ -140,6 +172,16 @@ def _validate_evaluator_identity(path: Path) -> tuple[str, dict[str, dict[str, A
     backends = identity.get("backends")
     if not isinstance(backends, dict) or set(backends) != {"onnx", "hbm"}:
         raise ValueError("evaluator_identity_backend_set_invalid")
+    official = identity.get("official_compiler_identity")
+    if not isinstance(official, dict) or not isinstance(official.get("path"), str) or not Path(official["path"]).is_absolute():
+        raise ValueError("evaluator_identity_official_toolchain_missing")
+    official_path = Path(official["path"])
+    normal_file(official_path, "evaluator_official_compiler_identity")
+    if official.get("sha256") != sha256_file(official_path):
+        raise ValueError("evaluator_identity_official_toolchain_sha_mismatch")
+    official_report = load_object(official_path)
+    if official_report.get("report_id") != "tzcup_dosod_s100p_live_compiler_identity_v1" or official_report.get("identity_verified") is not True:
+        raise ValueError("evaluator_identity_official_toolchain_unverified")
     bindings: dict[str, dict[str, Any]] = {}
     for backend, row in backends.items():
         if not isinstance(row, dict) or not isinstance(row.get("absolute_path"), str) or not Path(row["absolute_path"]).is_absolute():
@@ -228,11 +270,9 @@ def validate_regression(
         "checks": {}, "blockers": [], "started_epoch_ns": time.time_ns(), "ended_epoch_ns": None,
     }
     try:
-        compile_receipt = load_object(compile_receipt_path)
-        if compile_receipt.get("status") != "COMPILED_NOT_BOARD_ACCEPTED" or compile_receipt.get("returncode") != 0 or compile_receipt.get("output_created_by_this_compile") is not True:
-            raise ValueError("compile_receipt_not_successful")
-        if compile_receipt.get("output_sha256") != hbm_sha or compile_receipt.get("output_byte_size") != hbm.stat().st_size:
-            raise ValueError("compile_receipt_hbm_identity_mismatch")
+        compile_receipt = _validate_compile_receipt(
+            compile_receipt_path, hbm=hbm, calibration_manifest=calibration_manifest
+        )
         reference = load_object(reference_report_path)
         quantized = load_object(quantized_report_path)
         thresholds = load_object(thresholds_path)
