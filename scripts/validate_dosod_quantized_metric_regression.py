@@ -147,6 +147,9 @@ def _validate_compile_receipt(path: Path, *, hbm: Path, calibration_manifest: Pa
         raise ValueError("compile_receipt_evidence_root_invalid")
     if receipt.get("receipt_path") != str(path.resolve()):
         raise ValueError("compile_receipt_path_binding_mismatch")
+    producer = Path(__file__).resolve().with_name("execute_dosod_hbm_compile.py")
+    if receipt.get("producer_script_path") != str(producer) or receipt.get("producer_script_sha256") != sha256_file(producer):
+        raise ValueError("compile_receipt_producer_identity_mismatch")
     for stream in ("stdout", "stderr"):
         name = receipt.get(f"raw_{stream}_path")
         digest = receipt.get(f"raw_{stream}_sha256")
@@ -171,6 +174,12 @@ def _validate_evaluator_receipt(path: Path, *, backend: str, metrics_path: Path,
     value = load_object(path)
     if value.get("receipt_id") != EVALUATOR_RECEIPT_ID or value.get("status") != "EVALUATOR_EXECUTED" or value.get("backend") != backend:
         raise ValueError("evaluator_receipt_not_executed")
+    producer = Path(__file__).resolve().with_name("execute_dosod_quantized_metric_evaluator.py")
+    if value.get("producer_script_path") != str(producer) or value.get("producer_script_sha256") != sha256_file(producer):
+        raise ValueError("evaluator_receipt_producer_identity_mismatch")
+    canonical_contract = producer.parents[1] / "config/dosod_s100p_hbm_compile_contract.json"
+    if value.get("contract_sha256") != sha256_file(canonical_contract):
+        raise ValueError("evaluator_receipt_contract_identity_mismatch")
     if value.get("holdout_manifest_sha256") != holdout_sha or value.get("metrics_path") != str(metrics_path.resolve()) or value.get("metrics_sha256") != sha256_file(metrics_path):
         raise ValueError("evaluator_receipt_metrics_binding_mismatch")
     for stream in ("stdout", "stderr"):
@@ -197,7 +206,8 @@ def _validate_evaluator_identity(path: Path) -> tuple[str, dict[str, dict[str, A
     if official.get("sha256") != sha256_file(official_path):
         raise ValueError("evaluator_identity_official_toolchain_sha_mismatch")
     official_report = load_object(official_path)
-    if official_report.get("report_id") != "tzcup_dosod_s100p_live_compiler_identity_v1" or official_report.get("identity_verified") is not True:
+    expected_producer = Path(__file__).resolve().with_name("collect_dosod_s100p_compiler_identity.py")
+    if official_report.get("report_id") != "tzcup_dosod_s100p_live_compiler_identity_v1" or official_report.get("identity_verified") is not True or official_report.get("producer_script_path") != str(expected_producer) or official_report.get("producer_script_sha256") != sha256_file(expected_producer):
         raise ValueError("evaluator_identity_official_toolchain_unverified")
     bindings: dict[str, dict[str, Any]] = {}
     for backend, row in backends.items():

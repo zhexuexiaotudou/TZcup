@@ -138,7 +138,9 @@ def _validate_runner_identity(path: Path, holdout: dict[str, Any]) -> tuple[Path
     official_receipt = load_object(receipt_path)
     inventory = official_receipt.get("system", {}).get("runtime_inventory") if isinstance(official_receipt.get("system"), dict) else None
     hbrt4 = inventory.get("hbrt4") if isinstance(inventory, dict) else None
-    if official_receipt.get("report_id") != "tzcup_formal_rdk_s100_live_runtime_raw_v1" or not isinstance(hbrt4, dict) or hbrt4.get("returncode") != 0:
+    collector = official_receipt.get("collector")
+    expected_collector = Path(__file__).resolve().with_name("collect_formal_s100_live_runtime.py")
+    if official_receipt.get("report_id") != "tzcup_formal_rdk_s100_live_runtime_raw_v1" or not isinstance(collector, dict) or collector.get("script_path") != str(expected_collector) or collector.get("script_sha256") != sha256_file(expected_collector) or not isinstance(hbrt4, dict) or hbrt4.get("returncode") != 0:
         raise ValueError("runner_identity_official_receipt_unverified")
     return executable_path, {str(key): str(value) for key, value in output_map.items()}, sha256_file(path), runner["version"]
 

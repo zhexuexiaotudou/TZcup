@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -26,6 +27,7 @@ import execute_dosod_quantized_metric_evaluator as metric_producer
 import run_dosod_hbm_x86_parity as parity
 import validate_dosod_quantized_metric_regression as metric_regression
 import validate_dosod_s100p_hbm_compile_contract as compile_contract
+from hbm_evidence_common import normal_file
 
 
 def _sha(path: Path) -> str:
@@ -279,6 +281,17 @@ class MetricProducerTests(unittest.TestCase):
                                              holdout_root=root, output=root / "evidence")
             self.assertEqual(result["status"], "BLOCKED")
             self.assertTrue(any("ValueError" in item for item in result["blockers"]))
+
+    def test_normal_file_rejects_an_ancestor_symlink(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw); target = root / "target"; target.mkdir(); (target / "value.json").write_text("{}", encoding="utf-8")
+            linked = root / "linked"
+            try:
+                os.symlink(target, linked, target_is_directory=True)
+            except OSError as exc:
+                self.skipTest(f"symlink unavailable: {exc}")
+            with self.assertRaisesRegex(ValueError, "symlink_forbidden"):
+                normal_file(linked / "value.json", "fixture")
 
 
 if __name__ == "__main__":

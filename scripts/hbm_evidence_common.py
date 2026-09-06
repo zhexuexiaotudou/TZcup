@@ -47,8 +47,9 @@ def fresh_directory(path: Path, label: str) -> None:
 
 
 def normal_file(path: Path, label: str) -> None:
-    if path.is_symlink():
-        raise ValueError(f"{label}_symlink_forbidden")
+    for ancestor in (path, *path.parents):
+        if ancestor.is_symlink():
+            raise ValueError(f"{label}_symlink_forbidden")
     if not path.is_file():
         raise ValueError(f"{label}_missing")
 

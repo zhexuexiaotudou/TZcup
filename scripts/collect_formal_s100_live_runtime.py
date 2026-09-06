@@ -372,7 +372,7 @@ def main() -> int:
         "status": RAW_BLOCKED,
         "collection_complete": False,
         "hardware": hardware,
-        "collector": {"script_sha256": sha256_path(Path(__file__)), "pid": os.getpid()},
+        "collector": {"script_path": str(Path(__file__).resolve()), "script_sha256": sha256_path(Path(__file__)), "pid": os.getpid()},
         "truth_boundary": {"simulator_or_evaluator_truth_used": False},
     }
     if not hardware["attested"]:

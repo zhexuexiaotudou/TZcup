@@ -18,6 +18,8 @@ from hbm_evidence_common import atomic_json, fresh_directory, load_object, norma
 RECEIPT_ID = "tzcup_dosod_quantized_metric_evaluator_receipt_v1"
 METRICS_REPORT_ID = "tzcup_dosod_perception_validation_metrics_v1"
 CLASS_ORDER = ["litter_cube", "fallen_leaves", "dust_or_soil", "puddle"]
+ROOT = Path(__file__).resolve().parents[1]
+CANONICAL_CONTRACT = ROOT / "config/dosod_s100p_hbm_compile_contract.json"
 
 
 def _block(report: dict[str, Any], reason: str) -> None:
@@ -31,7 +33,7 @@ def execute(*, contract_path: Path, backend: str, holdout_manifest: Path, holdou
     fresh_directory(output, "evaluator_evidence_output")
     receipt: dict[str, Any] = {"schema_version": 1, "receipt_id": RECEIPT_ID, "status": "BLOCKED", "backend": backend,
         "evidence_root": str(output.resolve()), "contract_sha256": sha256_file(contract_path),
-        "holdout_manifest_sha256": sha256_file(holdout_manifest), "blockers": [], "started_epoch_ns": time.time_ns()}
+        "holdout_manifest_sha256": sha256_file(holdout_manifest), "producer_script_path": str(Path(__file__).resolve()), "producer_script_sha256": sha256_file(Path(__file__).resolve()), "blockers": [], "started_epoch_ns": time.time_ns()}
     try:
         contract = load_object(contract_path)
         rows = contract.get("backends")
@@ -71,6 +73,8 @@ def execute(*, contract_path: Path, backend: str, holdout_manifest: Path, holdou
 
 def main() -> int:
     p = argparse.ArgumentParser(); p.add_argument("--contract", required=True, type=Path); p.add_argument("--backend", choices=("onnx", "hbm"), required=True); p.add_argument("--holdout-manifest", required=True, type=Path); p.add_argument("--holdout-root", required=True, type=Path); p.add_argument("--output", required=True, type=Path); a = p.parse_args()
+    if a.contract.resolve() != CANONICAL_CONTRACT.resolve():
+        raise SystemExit("CLI requires the canonical DOSOD HBM compile contract")
     result = execute(contract_path=a.contract, backend=a.backend, holdout_manifest=a.holdout_manifest, holdout_root=a.holdout_root, output=a.output)
     print(json.dumps(result, indent=2)); return 0 if result["status"] == "EVALUATOR_EXECUTED" else 2
 
