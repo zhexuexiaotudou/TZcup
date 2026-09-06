@@ -44,7 +44,8 @@ def _phase(command, positions, timestamp_offset):
 def passing_evidence():
     return {
         "source_binding": {"expanded_urdf_sha256": "a" * 64},
-        "evidence_authority": "GAZEBO_SENSOR_MSGS_JOINT_STATE",
+        "evidence_authority": "GAZEBO_MODEL_JOINT_STATE_BRIDGE",
+        "physical_joint_state_topic": "/formal/service_door_joint_states",
         "plugin_diagnostics": {
             "lifecycle": [
                 {
@@ -307,7 +308,10 @@ def test_runner_collector_and_force_plugin_use_physical_joint_state() -> None:
     assert '"service_door_evaluation_interfaces",\n                default_value="false"' in launch
     assert "condition=IfCondition(service_door_evaluation_interfaces)" in launch
     assert "sensor_msgs.msg import JointState" in collector
-    assert '"/joint_states"' in collector
+    assert 'PHYSICAL_JOINT_STATES_TOPIC = "/formal/service_door_joint_states"' in collector
+    assert 'PHYSICAL_JOINT_STATE_AUTHORITY = "GAZEBO_MODEL_JOINT_STATE_BRIDGE"' in collector
+    assert "JointState, PHYSICAL_JOINT_STATES_TOPIC" in collector
+    assert 'JointState, "/joint_states"' not in collector
     assert "components::JointPosition" in plugin
     assert "components::JointForceCmd" in plugin
     assert "measuredUnlocked" in plugin
@@ -328,3 +332,6 @@ def test_runner_collector_and_force_plugin_use_physical_joint_state() -> None:
     assert "SERVICE_DOOR_LIFECYCLE" in plugin
     assert "std::cerr" in plugin
     assert "self.publishers =" not in collector
+    assert 'name="formal_service_door_physical_state_bridge"' in launch
+    assert '"/joint_states@sensor_msgs/msg/JointState[gz.msgs.Model"' in launch
+    assert '("/joint_states", "/formal/service_door_joint_states")' in launch

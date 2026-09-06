@@ -13,6 +13,7 @@ DESCRIPTION = ROOT / "starter_ws" / "src" / "sanitation_vehicle_description"
 BODYWORK = DESCRIPTION / "urdf" / "high_fidelity" / "bodywork.xacro"
 SENSORS = DESCRIPTION / "urdf" / "high_fidelity" / "sensor_suite.xacro"
 CONTROL = DESCRIPTION / "urdf" / "high_fidelity" / "control_interfaces.xacro"
+FORMAL_LAUNCH = DESCRIPTION / "launch" / "formal_vehicle_sim.launch.py"
 REGISTER = ROOT / "config" / "high_fidelity_vehicle" / "formal_vehicle_component_register.yaml"
 GENERATOR = DESCRIPTION / "cad" / "formal_vehicle" / "generate_product_bodywork_meshes.py"
 
@@ -42,8 +43,31 @@ def test_four_service_doors_are_limited_latched_mechanisms() -> None:
     assert '<axis xyz="0 0 1"/>' in bodywork
     for door in DOORS:
         assert f'name="{door}"' in bodywork
-        assert f'name="{door}_hinge_joint"' in control
-        assert f'name="{door}_latch_joint"' in control
+        assert f'<xacro:hf_state_only_joint name="{door}_hinge_joint"/>' not in control
+        assert f'<xacro:hf_state_only_joint name="{door}_latch_joint"/>' not in control
+
+
+def test_service_doors_use_a_dedicated_gazebo_physical_state_bridge() -> None:
+    control = _read(CONTROL)
+    launch = _read(FORMAL_LAUNCH)
+
+    assert 'name="formal_service_door_physical_state_bridge"' in launch
+    assert '"/joint_states@sensor_msgs/msg/JointState[gz.msgs.Model"' in launch
+    assert '("/joint_states", "/formal/service_door_joint_states")' in launch
+    assert "condition=IfCondition(service_door_evaluation_interfaces)" in launch
+    for joint in (
+        "charge_port_door_hinge_joint",
+        "charge_connector_lock_joint",
+        "emergency_stop_plunger_joint",
+        "main_power_isolator_handle_joint",
+        "main_power_contactor_armature_joint",
+        "wastewater_drain_service_cap_joint",
+        "dry_bin_lid_joint",
+        "dry_bin_latch_joint",
+        "wastewater_lid_joint",
+        "wastewater_lid_latch_joint",
+    ):
+        assert f'<xacro:hf_state_only_joint name="{joint}"' in control
 
 
 def test_service_door_cad_is_hinge_local_and_has_hardware() -> None:

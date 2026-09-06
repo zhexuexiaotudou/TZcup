@@ -334,6 +334,22 @@ def generate_launch_description() -> LaunchDescription:
         output="screen",
         condition=IfCondition(service_door_evaluation_interfaces),
     )
+    # The service-door evaluator must observe Gazebo's physical model state,
+    # not the controller-owned /joint_states aggregate.  Keep this topic
+    # dedicated so it cannot become a second writer for product joint state.
+    service_door_physical_state_bridge = Node(
+        package="ros_gz_bridge",
+        executable="parameter_bridge",
+        name="formal_service_door_physical_state_bridge",
+        arguments=[
+            "/joint_states@sensor_msgs/msg/JointState[gz.msgs.Model",
+        ],
+        remappings=[
+            ("/joint_states", "/formal/service_door_joint_states"),
+        ],
+        output="screen",
+        condition=IfCondition(service_door_evaluation_interfaces),
+    )
     squeegee_evaluation_bridge = Node(
         package="sanitation_gazebo_control",
         executable="formal_contact_evaluation_native_bridge",
@@ -784,6 +800,7 @@ def generate_launch_description() -> LaunchDescription:
             a300_drivetrain_bridge,
             formal_auxiliary_bridge,
             service_door_evaluation_bridge,
+            service_door_physical_state_bridge,
             squeegee_evaluation_bridge,
             brush_contact_evaluation_bridge,
             a300_drivetrain_adapter,

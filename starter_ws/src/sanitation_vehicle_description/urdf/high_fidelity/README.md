@@ -169,11 +169,16 @@ derive connector presence only from non-empty `ros_gz_interfaces/msg/Contacts`;
 there is no synthetic connector-present Boolean. The passive charge door,
 charge lock and drain service cap have state-only ros2_control interfaces so
 their physical joint positions reach `/joint_states` without exposing a command
-interface. The four bodywork service doors follow the same manual-service rule:
-each has a chassis-fixed hinge bracket, a mechanically limited vertical hinge
-and an independent rotary latch. Zero latch angle is the locked transport state;
-hinge and latch positions are observable but intentionally have no powered
-command interface.
+interface. The four bodywork service doors follow the same manual-service rule,
+but are intentionally excluded from `gz_ros2_control`: their evaluator-only
+bounded-force plugin must act on DART physical joints rather than state-only
+controller exports. During the opt-in service-door gate, a dedicated Gazebo
+`gz.msgs.Model` bridge publishes their measured state only on
+`/formal/service_door_joint_states`; it never writes or remaps onto the product
+`/joint_states` topic. Each door has a chassis-fixed hinge bracket, a
+mechanically limited vertical hinge and an independent rotary latch. Zero latch
+angle is the locked transport state; hinge and latch positions are observable
+but intentionally have no powered command interface.
 
 The dry-bin and wastewater-tank lids also use explicit passive service
 mechanisms rather than fixed decorative hardware. Each compartment has a
@@ -191,8 +196,9 @@ The ROS bridge for those targets is disabled by default and is enabled only by
 the dedicated service-door acceptance runner.
 It rejects hinge opening until the measured latch is beyond the unlock
 threshold and prevents latch relocking until the measured hinge is closed.
-The formal collector accepts only `/joint_states` feedback; the plugin does not
-teleport joints or add a production ros2_control command interface.
+The formal collector accepts only the dedicated
+`/formal/service_door_joint_states` Gazebo physical-state feedback; the plugin
+does not teleport joints or add a production ros2_control command interface.
 
 ## Physical emergency stop and lighting
 

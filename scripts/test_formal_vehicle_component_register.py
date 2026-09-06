@@ -766,6 +766,21 @@ def test_service_door_contract_requires_locked_zero_latches(tmp_path: Path) -> N
         validate(register_path=register)
 
 
+def test_service_door_contract_rejects_controller_registration(tmp_path: Path) -> None:
+    tree = ET.parse(DEFAULT_URDF)
+    root = tree.getroot()
+    control = root.find(".//ros2_control")
+    assert control is not None
+    joint = ET.SubElement(
+        control, "joint", {"name": "bodywork_power_service_door_hinge_joint"}
+    )
+    ET.SubElement(joint, "state_interface", {"name": "position"})
+    broken_control = tmp_path / "service-door-controller-registration.urdf"
+    tree.write(broken_control, encoding="unicode")
+    with pytest.raises(ComponentRegisterError, match="stay outside gz_ros2_control"):
+        validate(urdf_path=broken_control)
+
+
 def test_function_position_runtime_probe_includes_powered_service_valve() -> None:
     source = (
         DEFAULT_REGISTER.parents[2]

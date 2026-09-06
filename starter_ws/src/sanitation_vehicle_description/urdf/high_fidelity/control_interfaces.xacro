@@ -119,16 +119,11 @@
       <xacro:hf_state_only_joint name="wastewater_lid_joint"/>
       <xacro:hf_state_only_joint name="wastewater_lid_latch_joint"/>
       <!-- Four manually latched body service doors remain passive mechanisms.
-           Export hinge and rotary-latch state so service tooling can prove a
-           panel is unlocked/open without inventing powered door actuators. -->
-      <xacro:hf_state_only_joint name="bodywork_power_service_door_hinge_joint"/>
-      <xacro:hf_state_only_joint name="bodywork_power_service_door_latch_joint"/>
-      <xacro:hf_state_only_joint name="bodywork_compute_service_door_hinge_joint"/>
-      <xacro:hf_state_only_joint name="bodywork_compute_service_door_latch_joint"/>
-      <xacro:hf_state_only_joint name="bodywork_wet_service_door_hinge_joint"/>
-      <xacro:hf_state_only_joint name="bodywork_wet_service_door_latch_joint"/>
-      <xacro:hf_state_only_joint name="bodywork_rear_dry_service_door_hinge_joint"/>
-      <xacro:hf_state_only_joint name="bodywork_rear_dry_service_door_latch_joint"/>
+           They intentionally stay outside gz_ros2_control: DART ignores the
+           auxiliary force command on a state-only exported door joint.  The
+           evaluator obtains their measured Gazebo state on its dedicated
+           physical-state bridge; this does not expose a powered door command
+           interface to the product controller graph. -->
     </ros2_control>
   </xacro:macro>
 </robot>

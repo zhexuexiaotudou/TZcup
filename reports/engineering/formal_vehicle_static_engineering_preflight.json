@@ -239,7 +239,7 @@
       "source_snapshot_sha256": {
         "config/high_fidelity_vehicle/formal_vehicle_component_register.yaml": "688b72f49b7bd06ba6adc3d080c190f04f613b76ed05cbb69bf7a55580cff61a",
         "config/high_fidelity_vehicle/formal_vehicle_layout.yaml": "3c9c10da558c116bcbedf39a516093ca20c1e3eb590e2bb2d121ebd491cf10a9",
-        "reports/engineering/formal_competition_vehicle.urdf": "2b399eaba8de34fd55ca663a3b6b49437070c72969f5e22faf2a64a12ba27db8"
+        "reports/engineering/formal_competition_vehicle.urdf": "5cf404fb15d1173fbfab614fd409e7e55a226b13c97d80b816210090a1c54194"
       },
       "status": "STATIC_DERIVED_SNAPSHOT_BOUND_NOT_MANUFACTURING_RELEASE"
     },
@@ -4834,7 +4834,7 @@
             },
             {
               "evidence": {
-                "line": 730,
+                "line": 746,
                 "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
                 "token": "formal_vehicle_product_native_bridge"
               },
@@ -4876,7 +4876,7 @@
             },
             {
               "evidence": {
-                "line": 730,
+                "line": 746,
                 "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
                 "token": "formal_vehicle_product_native_bridge"
               },
@@ -5014,7 +5014,7 @@
             },
             {
               "evidence": {
-                "line": 730,
+                "line": 746,
                 "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
                 "token": "formal_vehicle_product_native_bridge"
               },

@@ -1357,14 +1357,13 @@ def validate(
                 item.get("name"): item for item in root.findall(".//ros2_control/joint")
             }
             for joint_name in set(expected_hinges) | expected_latches:
-                joint = ros2_control_joints.get(joint_name)
-                if (
-                    joint is None
-                    or joint.find("command_interface") is not None
-                    or joint.find("state_interface[@name='position']") is None
-                ):
+                # DART ignores the auxiliary door force on a state-only
+                # gz_ros2_control joint.  The evaluator reads these eight
+                # physical joints only through its dedicated Gazebo bridge;
+                # they must therefore have no product-controller registration.
+                if joint_name in ros2_control_joints:
                     errors.append(
-                        f"{joint_name} must be passive state-only service hardware"
+                        f"{joint_name} must stay outside gz_ros2_control service hardware"
                     )
         if position_id == "dry_deposition":
             if position.get("presence_sensor_link") != "dry_deposit_presence_sensor_link":
