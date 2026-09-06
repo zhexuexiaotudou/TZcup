@@ -78,6 +78,25 @@ def _require_regular_file(path: Path, description: str) -> None:
         raise ValueError(f"{description} must be a regular, non-symlink file")
 
 
+def _require_non_symlink_path_under(path: Path, root: Path, description: str) -> None:
+    """Reject lexical escape and every linked directory in retained evidence."""
+    root = root.absolute()
+    path = path.absolute()
+    try:
+        path.relative_to(root)
+    except ValueError as exc:
+        raise ValueError(f"{description} is outside the retained .work evidence root") from exc
+    current = path.parent
+    while True:
+        if current.is_symlink():
+            raise ValueError(f"{description} has a symlinked ancestor: {current}")
+        if current == root:
+            return
+        if current == current.parent:
+            raise ValueError(f"{description} escaped the retained .work evidence root")
+        current = current.parent
+
+
 def _runtime_binding_identity(binding: dict[str, Any]) -> dict[str, Any] | None:
     """Compare the stable gate identity, not the per-verification timestamp."""
     session = binding.get("acceptance_session_binding")
@@ -123,10 +142,11 @@ def verify_final_receipt(
     _require_regular_file(receipt_path, "final speed receipt")
     if receipt_path.name != "dry_speed_requalification.json" or receipt_path.parent.name != stage_ids[-1]:
         raise ValueError("final receipt must be the retained speed_1_00_mps stage report")
+    permitted_root = (evidence_root or ROOT / ".work").absolute()
+    _require_non_symlink_path_under(receipt_path, permitted_root, "final receipt")
     run_root = receipt_path.parent.parent.resolve()
-    permitted_root = (evidence_root or ROOT / ".work").resolve()
     try:
-        run_root.relative_to(permitted_root)
+        run_root.relative_to(permitted_root.resolve())
     except ValueError as exc:
         raise ValueError("requalification receipt is outside the retained .work evidence root") from exc
 

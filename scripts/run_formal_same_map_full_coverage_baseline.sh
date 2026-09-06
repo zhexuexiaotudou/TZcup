@@ -76,16 +76,11 @@ formal_source_bound_preflight \
 case "${REQUALIFIED_DRY_SPEED_ENABLEMENT}" in
   0) ;;
   1)
-    [[ "${OPERATION_SPEED_PROFILE}" == "dry_cleaning_competition_candidate" ]] || {
-      echo "requalified speed is limited to the dry-cleaning candidate profile" >&2; exit 2;
-    }
-    [[ -n "${REQUALIFICATION_RECEIPT}" ]] || {
-      echo "set FORMAL_DRY_SPEED_REQUALIFICATION_RECEIPT with explicit requalified speed enablement" >&2; exit 2;
-    }
-    python3 "${ROOT}/scripts/validate_formal_dry_speed_requalification.py" \
-      --verify-final-receipt --receipt "${REQUALIFICATION_RECEIPT}" \
-      --current-runtime-binding "${RUNTIME_BINDING}"
-    WHOLE_VEHICLE_SAFETY_CAP="1.0"
+    # The launch has no dry-only qualification state and no collector that
+    # proves the running safety manager's effective cap.  Do not mistake a
+    # launch argument or a retained receipt for an actual 1.0 m/s safety cap.
+    echo "requalified 1.0 m/s same-map use is BLOCKED: require dry-only safety-manager state plus live effective-cap readback" >&2
+    exit 2
     ;;
   *) echo "FORMAL_REQUALIFIED_DRY_SPEED_ENABLEMENT must be 0 or 1" >&2; exit 2 ;;
 esac

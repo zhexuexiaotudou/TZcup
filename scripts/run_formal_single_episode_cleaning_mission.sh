@@ -96,16 +96,11 @@ python3 "${ROOT}/scripts/formal_runtime_gate_binding.py" \
 case "${REQUALIFIED_DRY_SPEED_ENABLEMENT}" in
   0) ;;
   1)
-    [[ "${OPERATION_SPEED_PROFILE}" == "dry_cleaning_competition_candidate" ]] || {
-      echo "requalified speed is limited to the dry-cleaning candidate profile" >&2; exit 2;
-    }
-    [[ -n "${REQUALIFICATION_RECEIPT}" ]] || {
-      echo "set FORMAL_DRY_SPEED_REQUALIFICATION_RECEIPT with explicit requalified speed enablement" >&2; exit 2;
-    }
-    python3 "${ROOT}/scripts/validate_formal_dry_speed_requalification.py" \
-      --verify-final-receipt --receipt "${REQUALIFICATION_RECEIPT}" \
-      --current-runtime-binding "${RUNTIME_BINDING}"
-    WHOLE_VEHICLE_SAFETY_CAP="1.0"
+    # product_demo co-hosts manipulation and lacks a transition-bound
+    # dry-cleaning qualification state.  A global manager cap would also
+    # widen non-dry phases, so keep high-speed use fail-closed.
+    echo "requalified 1.0 m/s single-episode use is BLOCKED: product_demo lacks a dry-only safety-manager state and live effective-cap receipt" >&2
+    exit 2
     ;;
   *) echo "FORMAL_REQUALIFIED_DRY_SPEED_ENABLEMENT must be 0 or 1" >&2; exit 2 ;;
 esac

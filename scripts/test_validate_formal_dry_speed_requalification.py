@@ -5,6 +5,7 @@ import hashlib
 import importlib.util
 import json
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
@@ -249,3 +250,22 @@ def test_final_receipt_rejects_cross_session_and_handwritten_evidence(tmp_path: 
             receipt_path=handwritten, current_runtime_binding=current,
             evidence_root=evidence_root,
         )
+
+
+def test_final_receipt_rejects_a_symlinked_ancestor(tmp_path: Path) -> None:
+    receipt, current, evidence_root = _qualified_receipt_chain(tmp_path)
+    linked_ancestor = receipt.parent.parent
+    original_is_symlink = Path.is_symlink
+
+    def is_symlink(path: Path) -> bool:
+        return path == linked_ancestor or original_is_symlink(path)
+
+    # Windows developer-mode policy can prohibit symlink creation.  Simulate
+    # the filesystem fact at the Path boundary so this negative check runs on
+    # every supported local test host.
+    with mock.patch.object(Path, "is_symlink", is_symlink):
+        with pytest.raises(ValueError, match="symlinked ancestor"):
+            MODULE.verify_final_receipt(
+                receipt_path=receipt, current_runtime_binding=current,
+                evidence_root=evidence_root,
+            )
