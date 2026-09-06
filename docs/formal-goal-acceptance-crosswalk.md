@@ -30,7 +30,7 @@
 1. A02 服务舱门修复需要在新鲜 r062 运行根上重跑物理门。
 2. A08 的 3500 m²/h 指标与 0.45 m/s 速度上限冲突，需要分档复核并保留安全余量；不是简单改大速度常量。
 3. A12 历史文档提到的 `product_acceptance_v1` 文件在当前仓库历史中不存在，不能假装仍由旧脚本覆盖。
-4. A15 已实现 validation 先于 hidden 的顺序，但没有严格的一次性 hidden materializer/consumed-lock，不能宣称 sealed holdout 完整。
+4. A15 的一次性 hidden materializer、consumed/freeze/output-summary 账本和最终 12 站点重验合同已闭合；当前状态仅是尚未在新鲜快照上执行，不是通过。
 5. A18 的 S100 性能部分与 A21 共用外部硬缺口，不能只标成“尚未运行”。
 6. A19 当前 26 门没有独立的全时长 soak/故障注入门；必须补齐或明确由哪些正式报告等价覆盖。
 7. A20 的冻结/session 步骤存在，但当前 26 个功能门没有专用的密封、回放、发布和回滚 receipt；`component_register` 不是等价证据。
