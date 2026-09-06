@@ -7,7 +7,7 @@ repo_root="${TZCUP_REPOSITORY_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && 
 [[ "${FORMAL_DRY_SPEED_REQUALIFICATION:-}" == "1" ]] || {
   echo "Refusing speed qualification: set FORMAL_DRY_SPEED_REQUALIFICATION=1" >&2; exit 2;
 }
-run_root="${FORMAL_DRY_SPEED_REQUALIFICATION_ROOT:-${repo_root}/artifacts/formal_dry_speed_requalification}"
+run_root="${FORMAL_DRY_SPEED_REQUALIFICATION_ROOT:-${repo_root}/.work/formal_dry_speed_requalification}"
 [[ ! -e "${run_root}" ]] || { echo "Refusing stale requalification evidence: ${run_root}" >&2; exit 2; }
 mkdir -p "${run_root}"
 profile="${repo_root}/config/high_fidelity_vehicle/formal_dry_speed_requalification.yaml"

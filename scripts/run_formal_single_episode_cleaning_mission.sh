@@ -4,6 +4,10 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "${ROOT}/scripts/run_formal_runtime_isolation.sh"
+OPERATION_SPEED_PROFILE="${FORMAL_OPERATION_SPEED_PROFILE:-dry_cleaning_competition_candidate}"
+REQUALIFIED_DRY_SPEED_ENABLEMENT="${FORMAL_REQUALIFIED_DRY_SPEED_ENABLEMENT:-0}"
+REQUALIFICATION_RECEIPT="${FORMAL_DRY_SPEED_REQUALIFICATION_RECEIPT:-}"
+WHOLE_VEHICLE_SAFETY_CAP="0.45"
 EPISODE_ROOT=""
 SESSION_STATUS=""
 SAVED_MAP=""
@@ -84,6 +88,27 @@ python3 "${ROOT}/scripts/formal_runtime_gate_binding.py" \
   --closure-manifest "${RUNTIME_CLOSURE}" --session "${SESSION_STATUS}" \
   --snapshot "${ROOT}/reports/engineering/formal_vehicle_snapshot_manifest.json" \
   --output "${RUNTIME_BINDING}"
+
+# The single episode remains capped at 0.45 m/s unless an operator explicitly
+# opts into the retained, source/session/runtime-bound four-stage receipt.
+# Neither this receipt nor this switch changes wet, mapping, transport, or
+# hardware authority; measured same-map efficiency is still validated later.
+case "${REQUALIFIED_DRY_SPEED_ENABLEMENT}" in
+  0) ;;
+  1)
+    [[ "${OPERATION_SPEED_PROFILE}" == "dry_cleaning_competition_candidate" ]] || {
+      echo "requalified speed is limited to the dry-cleaning candidate profile" >&2; exit 2;
+    }
+    [[ -n "${REQUALIFICATION_RECEIPT}" ]] || {
+      echo "set FORMAL_DRY_SPEED_REQUALIFICATION_RECEIPT with explicit requalified speed enablement" >&2; exit 2;
+    }
+    python3 "${ROOT}/scripts/validate_formal_dry_speed_requalification.py" \
+      --verify-final-receipt --receipt "${REQUALIFICATION_RECEIPT}" \
+      --current-runtime-binding "${RUNTIME_BINDING}"
+    WHOLE_VEHICLE_SAFETY_CAP="1.0"
+    ;;
+  *) echo "FORMAL_REQUALIFIED_DRY_SPEED_ENABLEMENT must be 0 or 1" >&2; exit 2 ;;
+esac
 
 # A formal mission sources exactly one source-frozen overlay above the base ROS
 # distribution. Historical developer overlays must never leak into this graph.
@@ -197,7 +222,8 @@ formal_runtime_install_traps cleanup
   pedestrian_schedule:="${SCHEDULE}" start_pedestrians:=true \
   saved_map_artifact_dir:="${SAVED_MAP}" perception_artifact_root:="${PERCEPTION_ARTIFACTS}" \
   policy_checkpoint:="${POLICY_CHECKPOINT}" maximum_task_distance_m:="${MAX_DISTANCE}" \
-  episode_seed:="${EPISODE_SEED}" >"${OUTPUT}/product_demo.log" 2>&1 &
+  episode_seed:="${EPISODE_SEED}" operation_speed_profile:="${OPERATION_SPEED_PROFILE}" \
+  max_linear_velocity:="${WHOLE_VEHICLE_SAFETY_CAP}" >"${OUTPUT}/product_demo.log" 2>&1 &
 GAZEBO_LAUNCH_PID=$!
 PIDS+=("${GAZEBO_LAUNCH_PID}")
 

@@ -3,7 +3,10 @@ from __future__ import annotations
 import copy
 import hashlib
 import importlib.util
+import json
 from pathlib import Path
+
+import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -12,6 +15,12 @@ SPEC = importlib.util.spec_from_file_location("dry_speed_requalification", SCRIP
 assert SPEC and SPEC.loader
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
+PROFILE = ROOT / "config/high_fidelity_vehicle/formal_dry_speed_requalification.yaml"
+TOKEN_SCRIPT = ROOT / "scripts/formal_dry_speed_requalification_token.py"
+TOKEN_SPEC = importlib.util.spec_from_file_location("dry_speed_token_for_receipt", TOKEN_SCRIPT)
+assert TOKEN_SPEC and TOKEN_SPEC.loader
+TOKEN_MODULE = importlib.util.module_from_spec(TOKEN_SPEC)
+TOKEN_SPEC.loader.exec_module(TOKEN_MODULE)
 
 
 def _reports() -> tuple[dict, dict, dict, dict, dict, dict]:
@@ -153,3 +162,90 @@ def test_malformed_subgate_evidence_is_never_accepted() -> None:
         pass
     else:
         raise AssertionError("malformed subgate evidence unexpectedly passed")
+
+
+def _stage_reports(target: float) -> tuple[dict, dict, dict, dict, dict]:
+    mobility, interlock, dynamic, ground, current, _ = _reports()
+    mobility = copy.deepcopy(mobility)
+    interlock = copy.deepcopy(interlock)
+    dynamic = copy.deepcopy(dynamic)
+    ground = copy.deepcopy(ground)
+    mobility["command"]["forward_speed_mps"] = target
+    mobility["command"]["safety_max_linear_velocity_mps"] = target
+    mobility["metrics"]["ground_truth_forward_delta_m"] = target * mobility["command"]["forward_duration_s"]
+    interlock["safety_max_linear_velocity_mps"] = target
+    interlock["base_command_input_mps"] = target
+    dynamic["metrics"]["safety_max_linear_velocity_mps"] = target
+    dynamic["metrics"]["maximum_command_speeds_mps"]["base"] = target
+    ground["metrics"]["drive_speed_mps"] = target
+    ground["metrics"]["safety_max_linear_velocity_mps"] = target
+    return mobility, interlock, dynamic, ground, current
+
+
+def _qualified_receipt_chain(tmp_path: Path) -> tuple[Path, dict, Path]:
+    evidence_root = tmp_path / ".work"
+    run_root = evidence_root / "formal_dry_speed_requalification" / "fresh-run"
+    stages = (
+        ("speed_0_25_mps", 0.25),
+        ("speed_0_45_mps", 0.45),
+        ("speed_0_70_mps", 0.70),
+        ("speed_1_00_mps", 1.0),
+    )
+    predecessor = None
+    predecessor_sha256 = None
+    current = None
+    final_path = None
+    for stage_id, target in stages:
+        stage_root = run_root / stage_id
+        stage_root.mkdir(parents=True)
+        marker = stage_root / "requalification.opt_in.marker.json"
+        token = TOKEN_MODULE.create(
+            profile_path=PROFILE, run_root=stage_root, output=marker, stage_id=stage_id
+        )
+        mobility, interlock, dynamic, ground, current = _stage_reports(target)
+        report = MODULE.validate(
+            mobility=mobility, interlock=interlock, dynamic=dynamic, ground_dirt=ground,
+            current_runtime_binding=current, opt_in_token=token, run_root=stage_root,
+            stage_id=stage_id, predecessor=predecessor,
+            predecessor_receipt_sha256=predecessor_sha256,
+        )
+        receipt = stage_root / "dry_speed_requalification.json"
+        receipt.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        predecessor = report
+        predecessor_sha256 = hashlib.sha256(receipt.read_bytes()).hexdigest()
+        final_path = receipt
+    assert current is not None and final_path is not None
+    return final_path, current, evidence_root
+
+
+def test_final_receipt_requires_one_current_adjacent_four_stage_chain(tmp_path: Path) -> None:
+    receipt, current, evidence_root = _qualified_receipt_chain(tmp_path)
+    current = copy.deepcopy(current)
+    # A live preflight is expected to create a new verification timestamp;
+    # that must not invalidate the same source/session/closure identity.
+    current["verified_epoch_ns"] = 123456
+    verified = MODULE.verify_final_receipt(
+        receipt_path=receipt, current_runtime_binding=current, evidence_root=evidence_root
+    )
+    assert verified["authorized_isolated_dry_cleaning_cap_mps"] == 1.0
+    assert verified["final_stage"] == "speed_1_00_mps"
+
+
+def test_final_receipt_rejects_cross_session_and_handwritten_evidence(tmp_path: Path) -> None:
+    receipt, current, evidence_root = _qualified_receipt_chain(tmp_path)
+    another_session = copy.deepcopy(current)
+    another_session["acceptance_session_binding"]["session_started_epoch_ns"] = 10
+    with pytest.raises(ValueError, match="incomplete, stale, or not evidence-only"):
+        MODULE.verify_final_receipt(
+            receipt_path=receipt, current_runtime_binding=another_session,
+            evidence_root=evidence_root,
+        )
+
+    handwritten = evidence_root / "handwritten" / "speed_1_00_mps" / "dry_speed_requalification.json"
+    handwritten.parent.mkdir(parents=True)
+    handwritten.write_text(receipt.read_text(encoding="utf-8"), encoding="utf-8")
+    with pytest.raises(ValueError, match="speed_0_25_mps receipt"):
+        MODULE.verify_final_receipt(
+            receipt_path=handwritten, current_runtime_binding=current,
+            evidence_root=evidence_root,
+        )

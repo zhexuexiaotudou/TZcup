@@ -8,6 +8,9 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "${ROOT}/scripts/run_formal_runtime_isolation.sh"
 source "${ROOT}/scripts/formal_source_bound_preflight.sh"
 OPERATION_SPEED_PROFILE="${FORMAL_OPERATION_SPEED_PROFILE:-dry_cleaning_competition_candidate}"
+REQUALIFIED_DRY_SPEED_ENABLEMENT="${FORMAL_REQUALIFIED_DRY_SPEED_ENABLEMENT:-0}"
+REQUALIFICATION_RECEIPT="${FORMAL_DRY_SPEED_REQUALIFICATION_RECEIPT:-}"
+WHOLE_VEHICLE_SAFETY_CAP="0.45"
 EPISODE_ROOT=""
 MAP_ROOT=""
 SESSION=""
@@ -66,6 +69,26 @@ RUNTIME_BINDING="${OUTPUT}/runtime_gate_binding.json"
 formal_source_bound_preflight \
   "${ROOT}" "${RUNTIME_WS}" "${RUNTIME_CLOSURE_MANIFEST}" \
   "${SESSION}" "${SNAPSHOT}" "${RUNTIME_BINDING}"
+
+# A 1.0 m/s launch is not a product default.  It is available only to this
+# dry-cleaning formal run after a retained final receipt proves every adjacent
+# qualification stage against this exact current source/session/runtime binding.
+case "${REQUALIFIED_DRY_SPEED_ENABLEMENT}" in
+  0) ;;
+  1)
+    [[ "${OPERATION_SPEED_PROFILE}" == "dry_cleaning_competition_candidate" ]] || {
+      echo "requalified speed is limited to the dry-cleaning candidate profile" >&2; exit 2;
+    }
+    [[ -n "${REQUALIFICATION_RECEIPT}" ]] || {
+      echo "set FORMAL_DRY_SPEED_REQUALIFICATION_RECEIPT with explicit requalified speed enablement" >&2; exit 2;
+    }
+    python3 "${ROOT}/scripts/validate_formal_dry_speed_requalification.py" \
+      --verify-final-receipt --receipt "${REQUALIFICATION_RECEIPT}" \
+      --current-runtime-binding "${RUNTIME_BINDING}"
+    WHOLE_VEHICLE_SAFETY_CAP="1.0"
+    ;;
+  *) echo "FORMAL_REQUALIFIED_DRY_SPEED_ENABLEMENT must be 0 or 1" >&2; exit 2 ;;
+esac
 
 source /opt/ros/jazzy/setup.bash
 source "${OVERLAY}/setup.bash"
@@ -144,6 +167,7 @@ formal_runtime_install_traps cleanup
   gui:=false world:="${OUTPUT}/world.sdf" world_name:="${WORLD_NAME}" episode_manifest:="${EPISODE_MANIFEST}" \
   map_artifact_dir:="${MAP_ROOT}" pedestrian_schedule:="${SCHEDULE}" \
   operation_speed_profile:="${OPERATION_SPEED_PROFILE}" \
+  max_linear_velocity:="${WHOLE_VEHICLE_SAFETY_CAP}" \
   start_pedestrians:=true >"${OUTPUT}/cleaning.launch.log" 2>&1 &
 LAUNCH_PID=$!; PIDS+=("${LAUNCH_PID}")
 "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 run ros_gz_bridge parameter_bridge \

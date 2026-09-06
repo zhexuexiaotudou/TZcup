@@ -13,6 +13,7 @@ from typing import Any
 import yaml
 
 from formal_runtime_gate_binding import load_binding
+from formal_dry_speed_requalification_token import validate as validate_opt_in_token
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -68,6 +69,142 @@ def _stage(profile: dict[str, Any], stage_id: str) -> tuple[int, dict[str, Any]]
     raise ValueError("requested qualification stage is not declared")
 
 
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _require_regular_file(path: Path, description: str) -> None:
+    if path.is_symlink() or not path.is_file():
+        raise ValueError(f"{description} must be a regular, non-symlink file")
+
+
+def _runtime_binding_identity(binding: dict[str, Any]) -> dict[str, Any] | None:
+    """Compare the stable gate identity, not the per-verification timestamp."""
+    session = binding.get("acceptance_session_binding")
+    closure = binding.get("runtime_closure_binding")
+    if not isinstance(session, dict) or not isinstance(closure, dict):
+        return None
+    return {
+        "status": binding.get("status"),
+        "acceptance_session_binding": session,
+        "runtime_closure_binding": closure,
+    }
+
+
+def verify_final_receipt(
+    *,
+    receipt_path: Path,
+    current_runtime_binding: dict[str, Any],
+    profile_path: Path = PROFILE,
+    evidence_root: Path | None = None,
+) -> dict[str, Any]:
+    """Verify the retained, current-session four-stage receipt before 1.0 m/s use.
+
+    This is deliberately a verifier, not an enablement mechanism.  Its caller
+    still has to opt in explicitly and passes the resulting cap only to the
+    isolated formal dry-cleaning launch.
+    """
+    profile = yaml.safe_load(profile_path.read_text(encoding="utf-8"))
+    if not isinstance(profile, dict):
+        raise ValueError("requalification profile must be a mapping")
+    stages = profile.get("qualification_stages")
+    if not isinstance(stages, list) or not stages:
+        raise ValueError("requalification profile stages are missing")
+    stage_ids = [item.get("id") if isinstance(item, dict) else None for item in stages]
+    targets = [
+        _number(item.get("target_linear_speed_mps")) if isinstance(item, dict) else math.nan
+        for item in stages
+    ]
+    if stage_ids != ["speed_0_25_mps", "speed_0_45_mps", "speed_0_70_mps", "speed_1_00_mps"]:
+        raise ValueError("requalification profile does not declare the required four stages")
+    if not math.isclose(targets[-1], 1.0, abs_tol=1e-12):
+        raise ValueError("requalification profile final stage is not 1.0 m/s")
+
+    _require_regular_file(receipt_path, "final speed receipt")
+    if receipt_path.name != "dry_speed_requalification.json" or receipt_path.parent.name != stage_ids[-1]:
+        raise ValueError("final receipt must be the retained speed_1_00_mps stage report")
+    run_root = receipt_path.parent.parent.resolve()
+    permitted_root = (evidence_root or ROOT / ".work").resolve()
+    try:
+        run_root.relative_to(permitted_root)
+    except ValueError as exc:
+        raise ValueError("requalification receipt is outside the retained .work evidence root") from exc
+
+    current_session = current_runtime_binding.get("acceptance_session_binding")
+    current_closure = current_runtime_binding.get("runtime_closure_binding")
+    if (
+        current_runtime_binding.get("status") != "FORMAL_RUNTIME_GATE_BOUND"
+        or not isinstance(current_session, dict)
+        or current_session.get("session_status_at_gate")
+        != "FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING"
+        or not isinstance(current_closure, dict)
+    ):
+        raise ValueError("current formal session/runtime binding is not RUNNING and closed")
+    current_identity = _runtime_binding_identity(current_runtime_binding)
+
+    previous_receipt_sha256: str | None = None
+    final_receipt: dict[str, Any] | None = None
+    for index, (stage_id, target) in enumerate(zip(stage_ids, targets, strict=True)):
+        stage_root = run_root / stage_id
+        stage_receipt = stage_root / "dry_speed_requalification.json"
+        marker = stage_root / "requalification.opt_in.marker.json"
+        _require_regular_file(stage_receipt, f"{stage_id} receipt")
+        _require_regular_file(marker, f"{stage_id} opt-in marker")
+        report = _read(stage_receipt)
+        token = validate_opt_in_token(
+            profile_path=profile_path,
+            run_root=stage_root,
+            token_path=marker,
+            requested_cap=target,
+        )
+        checks = _checks(report)
+        evidence_marker = report.get("requalification_evidence_marker")
+        if not isinstance(evidence_marker, dict):
+            raise ValueError(f"{stage_id} receipt has no evidence-only marker")
+        if (
+            report.get("status") != PASS_STATUS
+            or report.get("passed") is not True
+            or report.get("dry_speed_safety_requalified") is not True
+            or report.get("qualification_stage_id") != stage_id
+            or not math.isclose(_number(report.get("qualification_target_speed_mps")), target, abs_tol=1e-12)
+            or report.get("competition_efficiency_eligible") is not False
+            or not checks
+            or not all(value is True for value in checks.values())
+            or report.get("source_binding") != current_session
+            or _runtime_binding_identity(report.get("runtime_gate_binding", {})) != current_identity
+            or report.get("requalification_run_root") != str(run_root)
+            or evidence_marker.get("kind") != "TZCUP_DRY_SPEED_REQUALIFICATION_EVIDENCE_ONLY"
+            or evidence_marker.get("run_scoped_opt_in_marker_nonce") != token.get("nonce")
+            or evidence_marker.get("authorizes_product_default_change") is not False
+            or evidence_marker.get("authorizes_real_hardware_operation") is not False
+        ):
+            raise ValueError(f"{stage_id} receipt is incomplete, stale, or not evidence-only")
+        if bool(evidence_marker.get("future_speed_enablement_must_fail_closed_consume_this_report")) != (index == len(stage_ids) - 1):
+            raise ValueError(f"{stage_id} receipt has an invalid enablement boundary")
+        if index:
+            if report.get("preceding_stage_receipt_sha256") != previous_receipt_sha256:
+                raise ValueError(f"{stage_id} receipt does not directly follow the preceding stage")
+        elif report.get("preceding_stage_receipt_sha256") is not None:
+            raise ValueError("first speed receipt unexpectedly has a predecessor")
+        previous_receipt_sha256 = _sha256(stage_receipt)
+        final_receipt = report
+
+    if final_receipt is None:
+        raise ValueError("final speed receipt is missing")
+    return {
+        "schema_version": 1,
+        "status": "FORMAL_DRY_SPEED_ENABLEMENT_RECEIPT_VERIFIED",
+        "final_stage": stage_ids[-1],
+        "authorized_isolated_dry_cleaning_cap_mps": targets[-1],
+        "requalification_run_root": str(run_root),
+        "source_binding": current_session,
+        "claim_boundary": (
+            "Receipt permits only an explicit isolated formal dry-cleaning speed cap; "
+            "it does not change product defaults, certify measured efficiency, or authorize hardware."
+        ),
+    }
+
+
 def validate(
     *,
     mobility: dict[str, Any],
@@ -79,6 +216,7 @@ def validate(
     run_root: Path,
     stage_id: str,
     predecessor: dict[str, Any] | None,
+    predecessor_receipt_sha256: str | None = None,
     profile_path: Path = PROFILE,
     envelopes_path: Path = ENVELOPES,
 ) -> dict[str, Any]:
@@ -153,6 +291,14 @@ def validate(
         "checks": checks,
         "blockers": [name for name, value in checks.items() if not value],
         "source_binding": common_binding,
+        # Preserve the complete binding so a later formal consumer can reject
+        # an otherwise plausible receipt from another session, source tree, or
+        # frozen runtime closure.
+        "runtime_gate_binding": current_runtime_binding,
+        "requalification_run_root": str(run_root.resolve().parent),
+        "preceding_stage_receipt_sha256": (
+            predecessor_receipt_sha256 if predecessor is not None else None
+        ),
         "requalification_evidence_marker": {
             "kind": "TZCUP_DRY_SPEED_REQUALIFICATION_EVIDENCE_ONLY",
             "run_scoped_opt_in_marker_nonce": opt_in_token.get("nonce"),
@@ -166,16 +312,34 @@ def validate(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--mobility", type=Path, required=True)
-    parser.add_argument("--interlock", type=Path, required=True)
-    parser.add_argument("--dynamic", type=Path, required=True)
-    parser.add_argument("--ground-dirt", type=Path, required=True)
+    parser.add_argument("--verify-final-receipt", action="store_true")
+    parser.add_argument("--receipt", type=Path)
+    parser.add_argument("--mobility", type=Path)
+    parser.add_argument("--interlock", type=Path)
+    parser.add_argument("--dynamic", type=Path)
+    parser.add_argument("--ground-dirt", type=Path)
     parser.add_argument("--current-runtime-binding", type=Path, required=True)
-    parser.add_argument("--token", type=Path, required=True)
-    parser.add_argument("--stage", required=True)
+    parser.add_argument("--token", type=Path)
+    parser.add_argument("--stage")
     parser.add_argument("--predecessor", type=Path)
-    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--output", type=Path)
     args = parser.parse_args()
+    if args.verify_final_receipt:
+        if args.receipt is None:
+            parser.error("--receipt is required with --verify-final-receipt")
+        try:
+            result = verify_final_receipt(
+                receipt_path=args.receipt,
+                current_runtime_binding=load_binding(args.current_runtime_binding),
+            )
+        except (OSError, UnicodeError, ValueError, TypeError, KeyError) as exc:
+            print(f"final speed receipt rejected: {exc}")
+            return 2
+        print(json.dumps(result, indent=2, sort_keys=True))
+        return 0
+    for name in ("mobility", "interlock", "dynamic", "ground_dirt", "token", "stage", "output"):
+        if getattr(args, name) is None:
+            parser.error(f"--{name.replace('_', '-')} is required when aggregating a stage")
     try:
         result = validate(
             mobility=_read(args.mobility), interlock=_read(args.interlock),
@@ -184,6 +348,7 @@ def main() -> int:
             opt_in_token=_read(args.token), run_root=args.output.parent,
             stage_id=args.stage,
             predecessor=_read(args.predecessor) if args.predecessor else None,
+            predecessor_receipt_sha256=_sha256(args.predecessor) if args.predecessor else None,
         )
     except (OSError, UnicodeError, ValueError, TypeError, KeyError) as exc:
         result = {
