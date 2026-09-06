@@ -108,11 +108,11 @@ def load_public_mission_contract(
     manifest = _read(episode_manifest)
     if manifest.get("schema_version") != 1:
         raise ValueError("public episode manifest schema_version must equal 1")
-    start_raw = manifest.get("vehicle_start_pose_map")
+    start_raw = manifest.get("vehicle_start_pose_source_world") or manifest.get("vehicle_start_pose_map")
     field_raw = manifest.get("field")
     counts_raw = manifest.get("counts")
     if not isinstance(start_raw, dict):
-        raise ValueError("public vehicle_start_pose_map is missing")
+        raise ValueError("public source-world vehicle start pose is missing")
     if not isinstance(field_raw, dict):
         raise ValueError("public field contract is missing")
     if not isinstance(counts_raw, dict):
@@ -122,7 +122,15 @@ def load_public_mission_contract(
         float(start_raw["y_m"]),
         float(start_raw.get("yaw_rad", 0.0)),
     )
-    polygon_raw = field_raw.get("geofence_polygon_m")
+    source_geofence = field_raw.get("source_world_geofence")
+    if source_geofence is not None:
+        if not isinstance(source_geofence, dict) or source_geofence.get("frame_id") != "source_world":
+            raise ValueError("public source-world geofence frame is invalid")
+        polygon_raw = source_geofence.get("polygon_m")
+    else:
+        if field_raw.get("geofence_frame") not in {"map", "source_world"}:
+            raise ValueError("legacy public geofence frame is invalid")
+        polygon_raw = field_raw.get("geofence_polygon_m")
     if not isinstance(polygon_raw, list) or len(polygon_raw) < 3:
         raise ValueError("public geofence polygon needs at least three vertices")
     source_polygon = [(float(row[0]), float(row[1])) for row in polygon_raw]
@@ -138,7 +146,25 @@ def load_public_mission_contract(
             source_start[1] + sine * point[0] + cosine * point[1],
         )
 
-    polygon = [to_local(point) for point in source_polygon]
+    expected_local_polygon = [to_local(point) for point in source_polygon]
+    local_geofence = field_raw.get("localization_map_geofence")
+    if local_geofence is not None:
+        if not isinstance(local_geofence, dict) or local_geofence.get("frame_id") != "map":
+            raise ValueError("public localization-map geofence frame is invalid")
+        local_raw = local_geofence.get("polygon_m")
+        if not isinstance(local_raw, list) or len(local_raw) != len(expected_local_polygon):
+            raise ValueError("public localization-map geofence is invalid")
+        polygon = [(float(row[0]), float(row[1])) for row in local_raw]
+        if any(
+            not math.isclose(actual_x, expected_x, abs_tol=1.0e-6)
+            or not math.isclose(actual_y, expected_y, abs_tol=1.0e-6)
+            for (actual_x, actual_y), (expected_x, expected_y) in zip(
+                polygon, expected_local_polygon
+            )
+        ):
+            raise ValueError("public localization geofence must apply the fixed-start transform exactly once")
+    else:
+        polygon = expected_local_polygon
     if not math.isfinite(nominal_leg_m) or nominal_leg_m < 5.0:
         raise ValueError("nominal dynamic acceptance leg must be at least 5 m")
     goal = (

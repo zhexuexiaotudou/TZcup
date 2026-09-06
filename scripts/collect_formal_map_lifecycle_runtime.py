@@ -2,7 +2,7 @@
 """Collect live, truth-free evidence for mapping or saved-map cleaning.
 
 The collector is an observer of the product ROS graph.  Its only publishers
-are the two operator safety commands required by the simulation safety input
+are the three operator safety commands required by the simulation safety input
 adapter; actuator commands still have to traverse collision_monitor and
 whole_vehicle_safety_manager.
 """
@@ -45,6 +45,12 @@ from sanitation_formal_campus_integration.saved_map_coverage_core import (
 )
 from sanitation_formal_campus_integration.map_lifecycle_core import (
     hard_restart_record_valid,
+)
+from sanitation_formal_campus_integration.runtime_evidence_core import (
+    COMMAND_CHAIN_RECEIPT_REORDER_TOLERANCE_S,
+    COMMAND_CHAIN_TOPICS,
+    EXPECTED_COMMAND_TOPIC_PUBLISHER,
+    first_nonzero_chain_is_ordered,
 )
 
 
@@ -229,6 +235,22 @@ class Collector(Node):
             "/base_controller/cmd_vel": 0,
         }
         self.nonzero_command_samples = dict.fromkeys(self.command_samples, 0)
+        # The evidence chain is keyed to the first *nonzero* receipt after
+        # this collector starts.  Safety's normal zero heartbeat must never be
+        # mistaken for product motion or allowed to establish this order.
+        self.first_nonzero_command_received_s: dict[str, float | None] = {
+            topic: None for topic in self.command_samples
+        }
+        self.last_nonzero_command_received_s: dict[str, float | None] = {
+            topic: None for topic in self.command_samples
+        }
+        # An active-chain sample is a status received after a nonzero safety
+        # base output that itself says the manager permits base commands.  This
+        # uses the manager's own configured freshness decision rather than a
+        # duplicate collector timeout and deliberately excludes later legal
+        # idle-stop diagnostics between frontier goals.
+        self.active_command_chain_safety_sample_count = 0
+        self.active_command_chain_command_timeout_count = 0
         self.safety_samples = 0
         self.safety_permit_samples = 0
         self.safety_base_enabled_samples = 0
@@ -306,6 +328,10 @@ class Collector(Node):
         self.command_samples[topic] += 1
         if abs(linear) > 1.0e-4 or abs(angular) > 1.0e-4:
             self.nonzero_command_samples[topic] += 1
+            received_s = time.monotonic() - self.started
+            if self.first_nonzero_command_received_s[topic] is None:
+                self.first_nonzero_command_received_s[topic] = received_s
+            self.last_nonzero_command_received_s[topic] = received_s
 
     def _cmd_nav(self, message: Twist) -> None:
         self._record_command(
@@ -395,6 +421,15 @@ class Collector(Node):
                 for item in values.get("active_reasons", "").split(",")
                 if item.strip()
             ]
+            if (
+                self.first_nonzero_command_received_s["/base_controller/cmd_vel"]
+                is not None
+                and values.get("base_command_enabled") == "true"
+            ):
+                self.active_command_chain_safety_sample_count += 1
+                self.active_command_chain_command_timeout_count += sum(
+                    reason.lower() == "command_timeout" for reason in reasons
+                )
             for reason in reasons:
                 self.safety_active_reason_counts[reason] = (
                     self.safety_active_reason_counts.get(reason, 0) + 1
@@ -469,6 +504,17 @@ class Collector(Node):
         gate_nodes = _nodes_for_endpoints(
             self.get_publishers_info_by_topic("/cmd_vel_gate")
         )
+        base_command_nodes = _nodes_for_endpoints(
+            self.get_publishers_info_by_topic("/base_controller/cmd_vel")
+        )
+        command_topic_publishers = {
+            topic: _nodes_for_endpoints(self.get_publishers_info_by_topic(topic))
+            for topic in COMMAND_CHAIN_TOPICS
+        }
+        command_chain_publishers_attributed = all(
+            command_topic_publishers[topic] == [expected]
+            for topic, expected in EXPECTED_COMMAND_TOPIC_PUBLISHER.items()
+        )
         odom_nodes = _nodes_for_endpoints(
             self.get_publishers_info_by_topic("/odom")
         )
@@ -484,9 +530,29 @@ class Collector(Node):
                 self.odom_last_xy[0] - self.odom_first_xy[0],
                 self.odom_last_xy[1] - self.odom_first_xy[1],
             )
+        command_chain_first_nonzero_s = {
+            topic: self.first_nonzero_command_received_s[topic]
+            for topic in COMMAND_CHAIN_TOPICS
+        }
+        command_chain_last_nonzero_s = {
+            topic: self.last_nonzero_command_received_s[topic]
+            for topic in COMMAND_CHAIN_TOPICS
+        }
+        command_chain_ordered = first_nonzero_chain_is_ordered(
+            command_chain_first_nonzero_s
+        )
+        command_chain_live = (
+            command_chain_ordered
+            and command_chain_publishers_attributed
+            and all(
+                self.nonzero_command_samples[topic] > 0
+                for topic in COMMAND_CHAIN_TOPICS
+            )
+        )
         common = (
-            len(collision_nodes) == 1
-            and len(gate_nodes) == 1
+            collision_nodes == ["/collision_monitor"]
+            and gate_nodes == ["/collision_monitor"]
+            and base_command_nodes == ["/whole_vehicle_safety_manager"]
             and self.map_samples > 0
             and self.odom_contract_samples > 0
             and self.safety_permit_samples > 0
@@ -551,6 +617,11 @@ class Collector(Node):
                     and odom_displacement >= 0.10
                     and self.slam_odom_failures_after_ready == 0
                     and self.lifecycle_status.get("ready") is True
+                    and command_chain_live
+                    and self.filtered_scan_samples > 0
+                    and self.collision_state_samples > 0
+                    and self.active_command_chain_safety_sample_count > 0
+                    and self.active_command_chain_command_timeout_count == 0
                 )
             )
             and (self.mode != "cleaning" or cleaning_ready)
@@ -566,6 +637,7 @@ class Collector(Node):
             "control_truth_topics_subscribed": [],
             "operator_safety_commands_published": [
                 "/formal_vehicle/simulation/command/emergency_stop",
+                "/formal_vehicle/simulation/command/emergency_stop_reset",
                 "/formal_vehicle/simulation/command/main_power",
             ],
             "robot_description_sample_count": self.robot_description_samples,
@@ -574,6 +646,10 @@ class Collector(Node):
             "collision_monitor_nodes": collision_nodes,
             "cmd_vel_gate_publisher_count": len(gate_nodes),
             "cmd_vel_gate_publishers": gate_nodes,
+            "base_command_publisher_count": len(base_command_nodes),
+            "base_command_publishers": base_command_nodes,
+            "command_topic_publishers": command_topic_publishers,
+            "command_chain_publishers_attributed": command_chain_publishers_attributed,
             # /odom and odom->base_footprint are produced by the same one
             # ros2_control base broadcaster.  The frame contract is checked on
             # every odometry sample and the transform itself is sampled below.
@@ -629,6 +705,23 @@ class Collector(Node):
             ),
             "command_topic_sample_counts": self.command_samples,
             "nonzero_command_topic_sample_counts": self.nonzero_command_samples,
+            "command_chain_first_nonzero_received_s": command_chain_first_nonzero_s,
+            "command_chain_last_nonzero_received_s": command_chain_last_nonzero_s,
+            "command_chain_first_nonzero_ordered": command_chain_ordered,
+            "command_chain_live": command_chain_live,
+            "command_chain_receipt_reorder_tolerance_s": (
+                COMMAND_CHAIN_RECEIPT_REORDER_TOLERANCE_S
+            ),
+            "active_command_chain_window_definition": (
+                "status_after_first_nonzero_base_output_with_"
+                "base_command_enabled_true"
+            ),
+            "active_command_chain_safety_sample_count": (
+                self.active_command_chain_safety_sample_count
+            ),
+            "active_command_chain_command_timeout_count": (
+                self.active_command_chain_command_timeout_count
+            ),
             "nav2_action_ready": self.nav2_ready_seen,
             "localization_backend": "amcl" if self.mode == "cleaning" else "slam_toolbox",
             "amcl_pose_sample_count": self.amcl_samples,

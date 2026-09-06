@@ -36,6 +36,9 @@ def _write_inputs(root: Path) -> tuple[Path, Path, Path]:
                     "yaw_rad": 0.0,
                 },
                 "field": {
+                    # Historical bundles called these source-world values
+                    # `map`; keep the fixture's legacy semantics explicit.
+                    "geofence_frame": "map",
                     "geofence_polygon_m": [
                         [-100.0, -50.0],
                         [100.0, -50.0],

@@ -22,6 +22,9 @@ from sanitation_formal_campus_integration.map_lifecycle_core import (
     prepare_public_lifecycle_artifacts,
     validate_saved_map_artifact,
 )
+from sanitation_formal_campus_integration.nav2_mode_config import (
+    configure_collision_monitor_sources,
+)
 from sanitation_formal_campus_integration.saved_map_coverage_core import (
     DRY_CLEANING_SPEED_PROFILE,
     FORMAL_MAX_LINEAR_SPEED_MPS,
@@ -120,6 +123,10 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
         "cmd_vel_in_topic": "/cmd_vel_smoothed",
         "cmd_vel_out_topic": "/cmd_vel_gate",
     })
+    # Mapping has no high-bandwidth 3D publisher by contract.  Narrow only
+    # that runtime's collision monitor to the live, self-filtered 2D scan;
+    # saved-map cleaning retains the formal high-bandwidth source set.
+    configure_collision_monitor_sources(nav2, mission_mode=mode)
     canonical_scan = "/scan/navigation"
     nav2["amcl"]["ros__parameters"]["scan_topic"] = canonical_scan
     nav2["collision_monitor"]["ros__parameters"]["scan"]["topic"] = canonical_scan

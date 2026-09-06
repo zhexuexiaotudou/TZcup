@@ -1,5 +1,6 @@
 import copy
 import json
+import math
 from pathlib import Path
 import xml.etree.ElementTree as ET
 
@@ -7,7 +8,9 @@ import pytest
 
 from sanitation_campus_scenario.cli import main as cli_main
 from sanitation_campus_scenario.generator import (
+    Asset,
     CUBE_MATERIAL_DENSITY_KG_M3,
+    Cube,
     DIRT_CELL_COLUMNS,
     DIRT_CELL_ROWS,
     DUST_VISUAL_COUNT,
@@ -15,10 +18,16 @@ from sanitation_campus_scenario.generator import (
     GenerationError,
     LEAF_VISUAL_COUNT,
     PUDDLE_VISUAL_COUNT,
+    Pedestrian,
+    Pose2D,
     generate_episode,
     load_config,
     render_sdf,
+    segment_clearance_to_asset,
+    segment_clearance_to_cube,
+    segment_clearance_to_pedestrian,
     split_index,
+    validate_episode_geometry,
     validate_config,
 )
 from sanitation_campus_scenario.io import write_episode
@@ -248,6 +257,65 @@ def test_pedestrian_interpolation_loops_and_rejects_bad_schedules():
         interpolate_loop(((1.0, 0.0, 0.0), (2.0, 1.0, 0.0)), 0.0)
 
 
+def test_pedestrian_clearance_is_exact_for_rotated_boxes_cylinders_and_endpoints():
+    rotated_box = Asset("rotated", "building", Pose2D(0.0, 0.0, math.pi / 4), (2.0, 1.0, 1.0))
+    cylinder = Asset("pole", "pole", Pose2D(0.0, 0.0), (0.24, 0.24, 2.0))
+    # Tangency and an endpoint touch are unsafe; reversal has identical result.
+    assert not segment_clearance_to_asset((-2.0, 0.37), (2.0, 0.37), 0.25, rotated_box)
+    assert not segment_clearance_to_asset((2.0, 0.37), (-2.0, 0.37), 0.25, rotated_box)
+    tangent = cylinder.size_m[0] / 2.0 + 0.25
+    assert not segment_clearance_to_asset((tangent, 0.0), (tangent, 0.0), 0.25, cylinder)
+    assert segment_clearance_to_asset((2.0, 2.0), (3.0, 2.0), 0.25, rotated_box)
+
+
+def test_pedestrian_path_capsules_reject_crossing_near_parallel_and_tangency():
+    radius = 0.25
+    # Intersection, near-parallel tracks, endpoint proximity and tangency are
+    # all unsafe; only strictly wider separation is accepted.
+    assert not segment_clearance_to_pedestrian(
+        (-1.0, 0.0), (1.0, 0.0), radius,
+        (0.0, -1.0), (0.0, 1.0), radius,
+    )
+    assert not segment_clearance_to_pedestrian(
+        (0.0, 0.0), (1.0, 0.0), radius,
+        (0.0, 0.49), (1.0, 0.49), radius,
+    )
+    assert not segment_clearance_to_pedestrian(
+        (0.0, 0.0), (1.0, 0.0), radius,
+        (1.49, 0.0), (2.0, 0.0), radius,
+    )
+    assert not segment_clearance_to_pedestrian(
+        (0.0, 0.0), (1.0, 0.0), radius,
+        (0.0, 0.50), (1.0, 0.50), radius,
+    )
+    assert segment_clearance_to_pedestrian(
+        (0.0, 0.0), (1.0, 0.0), radius,
+        (0.0, 0.51), (1.0, 0.51), radius,
+    )
+
+
+def test_episode_geometry_rejects_overlapping_pedestrian_paths():
+    pedestrians = [
+        Pedestrian("walker_a", 0.25, 1.7, 1.0, ((0.0, -1.0, 0.0), (1.0, 1.0, 0.0))),
+        Pedestrian("walker_b", 0.25, 1.7, 1.0, ((0.0, 0.0, -1.0), (1.0, 0.0, 1.0))),
+    ]
+    with pytest.raises(GenerationError, match="another pedestrian path"):
+        validate_episode_geometry({"width_m": 10.0, "height_m": 10.0}, [], [], pedestrians)
+
+
+def test_episode_geometry_rejects_cube_crossing_without_treating_surfaces_as_collisions():
+    cube = Cube("cube", Pose2D(0.0, 0.0, math.pi / 6), 0.03, (1.0, 0.0, 0.0, 1.0), "PP", 900.0, 0.0243)
+    pedestrian = Pedestrian("walker", 0.25, 1.7, 1.0, ((0.0, -1.0, 0.0), (1.0, 1.0, 0.0)))
+    assert not segment_clearance_to_cube((-1.0, 0.0), (1.0, 0.0), pedestrian.radius_m, cube)
+    with pytest.raises(GenerationError, match="intersects a cube"):
+        validate_episode_geometry({"width_m": 10.0, "height_m": 10.0}, [], [cube], [pedestrian])
+    with pytest.raises(GenerationError, match="leaves the geofence"):
+        validate_episode_geometry(
+            {"width_m": 1.0, "height_m": 1.0}, [], [],
+            [Pedestrian("outside", 0.25, 1.7, 1.0, ((0.0, 0.0, 0.0), (1.0, 1.0, 0.0)))],
+        )
+
+
 def test_generated_pedestrian_schedule_is_environment_only(tmp_path):
     files = generate_episode(load_config(CONFIG), "research", "hidden", 0, 0)
     path = tmp_path / "schedule.json"
@@ -426,6 +494,24 @@ def test_nonbaseline_world_uses_derived_dimensions_for_ground_geofence_and_start
         "x_m": 0.0,
         "y_m": 0.0,
         "yaw_rad": 0.0,
+    }
+    assert field["source_world_geofence"]["frame_id"] == "source_world"
+    assert field["source_world_geofence"]["polygon_m"] == field["geofence_polygon_m"]
+    assert field["geofence_frame"] == "source_world"
+    assert field["legacy_geofence"]["frame_id"] == "source_world"
+    localized = field["localization_map_geofence"]
+    assert localized["frame_id"] == "map"
+    assert localized["polygon_m"] == [
+        [-2.0, -field["height_m"] / 2.0],
+        [field["width_m"] - 2.0, -field["height_m"] / 2.0],
+        [field["width_m"] - 2.0, field["height_m"] / 2.0],
+        [-2.0, field["height_m"] / 2.0],
+    ]
+    assert manifest["map_resolution_contract"] == {
+        "static_materializer": {"value_source": "formal_campus.launch.py:map_resolution", "purpose": "public_world_static_collision_raster"},
+        "lifecycle_support_mask": {"value_source": "prepare_public_lifecycle_artifacts(resolution)", "purpose": "public_geofence_support_mask"},
+        "slam_occupancy": {"value_source": "saved_map_metadata", "maximum_accepted_resolution_value_source": "map_lifecycle_core.MAXIMUM_SAVED_MAP_RESOLUTION_M", "purpose": "runtime_lidar_slam_occupancy"},
+        "coverage_planning": {"value_source": "ProductCoverageTelemetry(raster_resolution_m)", "purpose": "saved_map_coverage_raster_planning"},
     }
     root = ET.fromstring(files["public/world.sdf"])
     plane_size = root.findtext(".//model[@name='ground_plane']/link/visual/geometry/plane/size")

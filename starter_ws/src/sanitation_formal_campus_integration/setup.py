@@ -42,6 +42,8 @@ setup(
             "sanitation_formal_campus_integration.saved_map_coverage_executor:main",
             "formal-dynamic-footprint-manager = "
             "sanitation_formal_campus_integration.dynamic_footprint_manager:main",
+            "formal-dynamic-footprint-runtime-gate = "
+            "sanitation_formal_campus_integration.dynamic_footprint_runtime_gate:main",
         ],
     },
 )

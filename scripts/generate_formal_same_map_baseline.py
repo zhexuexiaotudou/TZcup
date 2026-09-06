@@ -293,7 +293,7 @@ def build_report(
     _false(manifest, "world_truth_used_for_control", "map_manifest")
     _hashes_valid(map_root, manifest)
 
-    public_pose = episode.get("vehicle_start_pose_map")
+    public_pose = episode.get("vehicle_start_pose_source_world") or episode.get("vehicle_start_pose_map")
     if not isinstance(public_pose, dict):
         raise BaselineError("episode has no fixed vehicle_start_pose_map")
     expected_source = [

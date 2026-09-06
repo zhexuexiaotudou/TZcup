@@ -108,10 +108,17 @@ def build_active_task(bundle: Bundle) -> tuple[TaskConfig, TaskLayout]:
     public = bundle.public_manifest
     truth = bundle.truth
     field = public["field"]
-    start = public["vehicle_start_pose_map"]
-    geofence = tuple(
-        (float(point[0]), float(point[1])) for point in field["geofence_polygon_m"]
-    )
+    start = public.get("vehicle_start_pose_source_world") or public["vehicle_start_pose_map"]
+    source_geofence = field.get("source_world_geofence")
+    if source_geofence is not None:
+        if not isinstance(source_geofence, dict) or source_geofence.get("frame_id") != "source_world":
+            raise ValueError("explicit source-world geofence frame is invalid")
+        raw_geofence = source_geofence["polygon_m"]
+    else:
+        if field.get("geofence_frame") not in {"map", "source_world"}:
+            raise ValueError("legacy geofence frame is invalid")
+        raw_geofence = field["geofence_polygon_m"]
+    geofence = tuple((float(point[0]), float(point[1])) for point in raw_geofence)
     obstacles = tuple(_rotated_box(asset) for asset in truth["static_assets"])
     dirt_regions = tuple(
         (

@@ -253,6 +253,7 @@ class ProductCoverageTelemetry:
             "estimated_covered_cells": len(self._covered_cells),
             "estimated_field_cells": self._field_cells,
             "estimated_coverage_fraction": self.estimated_coverage_fraction,
+            "coverage_raster_resolution_m": self.raster_resolution_m,
             "coverage_pose_source": "amcl_pose_product_estimate",
             "operation_speed_profile": self.operation_speed_profile,
             "maximum_linear_speed_mps": self.maximum_linear_speed_mps,

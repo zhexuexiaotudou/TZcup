@@ -21,6 +21,9 @@ formal_physical_grasp_executor:
     compute_ik_service: /compute_ik
     cartesian_path_service: /compute_cartesian_path
     apply_planning_scene_service: /apply_planning_scene
+    get_planning_scene_service: /get_planning_scene
+    planning_scene_config_file: ""
+    planning_scene_ready_topic: /manipulation/planning_scene_ready
     maximum_input_age_sec: 0.50
     # The 0.24 m radial gate contains the non-overlapping 5 x 4 formal cube
     # array. Every slot is also bounded by the manifest's 0.85 m arm reach

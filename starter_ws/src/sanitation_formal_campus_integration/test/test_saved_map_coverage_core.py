@@ -67,7 +67,8 @@ def test_public_mission_requires_20000_m2_and_truth_isolation(tmp_path):
 
 def test_product_telemetry_integrates_distance_brush_and_estimated_sweep():
     telemetry = ProductCoverageTelemetry(
-        polygon=((0, 0), (200, 0), (200, 100), (0, 100))
+        polygon=((0, 0), (200, 0), (200, 100), (0, 100)),
+        raster_resolution_m=0.20,
     )
     telemetry.observe_odom(1.0, 1.0)
     telemetry.observe_map_pose(1.0, 1.0)
@@ -86,6 +87,7 @@ def test_product_telemetry_integrates_distance_brush_and_estimated_sweep():
     assert report["brush_disabled_on_exit"] is True
     assert report["estimated_covered_cells"] > 0
     assert 0.0 < report["estimated_coverage_fraction"] < 1.0
+    assert report["coverage_raster_resolution_m"] == pytest.approx(0.20)
     assert report["simulator_truth_used"] is False
 
 

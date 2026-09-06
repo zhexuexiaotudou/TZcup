@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import os
 import math
-from pathlib import Path
+import os
 import tempfile
+from pathlib import Path
 from types import SimpleNamespace
 
-from launch import LaunchDescription
+import yaml
 from launch.actions import (
     DeclareLaunchArgument,
     IncludeLaunchDescription,
@@ -27,18 +27,18 @@ from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
 
+from launch import LaunchDescription
+from sanitation_formal_campus_integration.campus_materializer import (
+    materialize_campus_artifacts,
+)
 from sanitation_formal_campus_integration.contract import (
     materialize_nav2_config,
     resolve_spawn_pose,
-)
-from sanitation_formal_campus_integration.campus_materializer import (
-    materialize_campus_artifacts,
 )
 from sanitation_formal_campus_integration.saved_map_coverage_core import (
     DRY_CLEANING_SPEED_PROFILE,
     load_formal_operation_speed_profile,
 )
-import yaml
 
 
 def _runtime_actions(context):  # type: ignore[no-untyped-def]
@@ -334,6 +334,14 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
             parameters=[{
                 "use_sim_time": True,
                 "motion_profile_file": LaunchConfiguration("motion_profile_file"),
+                # Default-off test endpoint: production launches never create
+                # it. The ROS-only footprint gate must opt in explicitly.
+                "enable_runtime_test_override": ParameterValue(
+                    LaunchConfiguration(
+                        "enable_dynamic_footprint_runtime_test_override"
+                    ),
+                    value_type=bool,
+                ),
             }],
         ),
         IncludeLaunchDescription(
@@ -502,6 +510,14 @@ def generate_launch_description() -> LaunchDescription:
             DeclareLaunchArgument("spawn_yaw", default_value="nan"),
             DeclareLaunchArgument(
                 "motion_profile_file", default_value=default_motion_profile
+            ),
+            DeclareLaunchArgument(
+                "enable_dynamic_footprint_runtime_test_override",
+                default_value="false",
+                description=(
+                    "Test-only dynamic-footprint override endpoint. Keep false "
+                    "outside the ROS-only runtime footprint gate."
+                ),
             ),
             DeclareLaunchArgument(
                 "operation_speed_profile_file",

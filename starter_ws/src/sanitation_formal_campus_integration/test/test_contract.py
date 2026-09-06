@@ -137,6 +137,18 @@ def test_spawn_pose_defaults_to_public_manifest_and_allows_explicit_override(tmp
     with pytest.raises(IntegrationContractError, match="finite"):
         resolve_spawn_pose(manifest, spawn_x=float("nan"))
 
+    manifest.write_text(
+        json.dumps(
+            {
+                "vehicle_start_pose_source_world": {"x_m": -98.0, "y_m": 1.25, "yaw_rad": 0.4},
+                "vehicle_start_pose_map": {"x_m": 999.0, "y_m": 1.25, "yaw_rad": 0.4},
+            }
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(IntegrationContractError, match="disagree"):
+        resolve_spawn_pose(manifest)
+
 
 def test_launch_is_parseable_and_keeps_safety_and_controller_ownership_explicit():
     source = LAUNCH.read_text(encoding="utf-8")

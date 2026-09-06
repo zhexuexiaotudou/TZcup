@@ -31,6 +31,13 @@ from .formal_grasp_core import (
     validate_wrist_recheck,
     verify_bin_increment,
 )
+from .planning_scene_core import (
+    PlanningSceneReadback,
+    SceneObjectReadback,
+    load_planning_scene_config,
+    next_scene_revision,
+    validate_scene_readback,
+)
 
 
 def main() -> None:
@@ -51,8 +58,9 @@ def main() -> None:
         OrientationConstraint,
         PlanningScene,
         PositionConstraint,
+        PlanningSceneComponents,
     )
-    from moveit_msgs.srv import ApplyPlanningScene, GetCartesianPath, GetPositionIK
+    from moveit_msgs.srv import ApplyPlanningScene, GetCartesianPath, GetPlanningScene, GetPositionIK
     from nav_msgs.msg import Odometry
     from rclpy.action import ActionClient
     from rclpy.executors import ExternalShutdownException, MultiThreadedExecutor
@@ -92,6 +100,8 @@ def main() -> None:
                 ("compute_ik_service", "/compute_ik"),
                 ("cartesian_path_service", "/compute_cartesian_path"),
                 ("apply_planning_scene_service", "/apply_planning_scene"),
+                ("get_planning_scene_service", "/get_planning_scene"),
+                ("planning_scene_ready_topic", "/manipulation/planning_scene_ready"),
             )
             for name, value in defaults:
                 self.declare_parameter(name, value)
@@ -111,6 +121,11 @@ def main() -> None:
             self.declare_parameter("contact_maximum_age_sec", 0.15)
             self.declare_parameter("bin_settle_timeout_sec", 12.0)
             self.declare_parameter("bin_monitor_startup_timeout_sec", 30.0)
+            self.declare_parameter("planning_scene_config_file", "")
+            scene_config_file = str(self.get_parameter("planning_scene_config_file").value)
+            if not scene_config_file:
+                raise RuntimeError("planning_scene_config_file_required")
+            self._scene_contract = load_planning_scene_config(scene_config_file)
 
             latched = QoSProfile(
                 depth=1,
@@ -156,6 +171,12 @@ def main() -> None:
                 Bool, str(self.get_parameter("grasp_state_topic").value), self._on_grasp_state, 10
             )
             self.create_subscription(
+                Bool,
+                str(self.get_parameter("planning_scene_ready_topic").value),
+                self._on_planning_scene_ready,
+                latched,
+            )
+            self.create_subscription(
                 String, str(self.get_parameter("dry_bin_status_topic").value), self._on_bin_status, 50
             )
             self.create_subscription(JointState, "/joint_states", self._on_joints, 50)
@@ -189,6 +210,10 @@ def main() -> None:
                 ApplyPlanningScene,
                 str(self.get_parameter("apply_planning_scene_service").value),
             )
+            self._get_scene = self.create_client(
+                GetPlanningScene,
+                str(self.get_parameter("get_planning_scene_service").value),
+            )
             self._tf_buffer = Buffer()
             self._tf_listener = TransformListener(self._tf_buffer, self)
             self._lock = threading.RLock()
@@ -200,6 +225,11 @@ def main() -> None:
             self._dual_contact = False
             self._dual_contact_time: float | None = None
             self._grasp_attached: bool | None = None
+            # No request may issue an arm, gripper, storage, or MoveIt scene
+            # command before the independent bootstrap has read back the
+            # configured ground.  A transient-local false after a scene reset
+            # also aborts waits before another command can be issued.
+            self._planning_scene_ready = False
             self._latest_bin: DryBinSample | None = None
             self._bin_samples: list[DryBinSample] = []
             self._joints: dict[str, float] = {}
@@ -231,6 +261,10 @@ def main() -> None:
         def _on_grasp_state(self, message: Bool) -> None:
             with self._lock:
                 self._grasp_attached = bool(message.data)
+
+        def _on_planning_scene_ready(self, message: Bool) -> None:
+            with self._lock:
+                self._planning_scene_ready = bool(message.data)
 
         def _on_bin_status(self, message: String) -> None:
             try:
@@ -290,6 +324,10 @@ def main() -> None:
         def _require_safety(self) -> None:
             if not self._safety_ok():
                 raise RuntimeError("safety_permit_missing_stale_or_inhibited")
+            with self._lock:
+                planning_scene_ready = self._planning_scene_ready
+            if not planning_scene_ready:
+                raise RuntimeError("planning_scene_not_ready_or_ground_readback_missing")
 
         def _wait_future(self, future: Any, description: str, *, check_safety: bool = True) -> Any:
             deadline = time.monotonic() + float(self.get_parameter("action_timeout_sec").value)
@@ -389,15 +427,21 @@ def main() -> None:
             raise RuntimeError(reason)
 
         def _wait_moveit_interfaces(self) -> None:
-            interfaces = (
+            action_interfaces = (
                 (self._move_group, "move_group_action_server_unavailable"),
                 (self._execute, "execute_trajectory_action_server_unavailable"),
+            )
+            service_interfaces = (
                 (self._compute_ik, "compute_ik_service_unavailable"),
                 (self._cartesian, "cartesian_path_service_unavailable"),
                 (self._apply_scene, "apply_planning_scene_service_unavailable"),
+                (self._get_scene, "get_planning_scene_service_unavailable"),
             )
-            for client, reason in interfaces:
+            for client, reason in action_interfaces:
                 if not client.wait_for_server(timeout_sec=5.0):
+                    raise RuntimeError(reason)
+            for client, reason in service_interfaces:
+                if not client.wait_for_service(timeout_sec=5.0):
                     raise RuntimeError(reason)
 
         def _validate_ik(self, pose: ToolPose, label: str) -> None:
@@ -548,8 +592,74 @@ def main() -> None:
             digest = hashlib.sha256(target_id.encode("utf-8")).hexdigest()[:16]
             return f"perceived_cube_{digest}"
 
+        def _read_scene_contract(self, label: str) -> tuple[int, str]:
+            """Read a complete scene contract; executor never bootstraps it."""
+            request = GetPlanningScene.Request()
+            request.components.components = (
+                PlanningSceneComponents.SCENE_SETTINGS
+                | PlanningSceneComponents.WORLD_OBJECT_GEOMETRY
+                | PlanningSceneComponents.ALLOWED_COLLISION_MATRIX
+            )
+            response = self._wait_future(
+                self._get_scene.call_async(request), label
+            )
+            if response is None:
+                raise RuntimeError(f"{label}_empty")
+            objects: list[SceneObjectReadback] = []
+            for item in response.scene.world.collision_objects:
+                if not item.primitives or not item.primitive_poses:
+                    continue
+                primitive, pose = item.primitives[0], item.primitive_poses[0]
+                shape = "BOX" if primitive.type == SolidPrimitive.BOX else f"UNKNOWN_{primitive.type}"
+                objects.append(
+                    SceneObjectReadback(
+                        object_id=item.id,
+                        frame_id=item.header.frame_id,
+                        shape_type=shape,
+                        dimensions_m=tuple(float(value) for value in primitive.dimensions),
+                        pose_xyz_m=(float(pose.position.x), float(pose.position.y), float(pose.position.z)),
+                        pose_xyzw=(
+                            float(pose.orientation.x), float(pose.orientation.y),
+                            float(pose.orientation.z), float(pose.orientation.w),
+                        ),
+                    )
+                )
+            pairs: list[tuple[str, str]] = []
+            acm = response.scene.allowed_collision_matrix
+            for row, first in enumerate(acm.entry_names):
+                if row >= len(acm.entry_values):
+                    continue
+                for column, enabled in enumerate(acm.entry_values[row].enabled):
+                    if enabled and column < len(acm.entry_names):
+                        pairs.append((first, acm.entry_names[column]))
+            scene_name = response.scene.name.strip()
+            if not scene_name:
+                raise RuntimeError(f"{label}_revision_missing")
+            try:
+                revision = validate_scene_readback(
+                    self._scene_contract,
+                    PlanningSceneReadback(
+                        revision=scene_name,
+                        world_objects=tuple(objects),
+                        allowed_collision_pairs=tuple(pairs),
+                    ),
+                )
+            except ValueError as exc:
+                raise RuntimeError(f"{label}_scene_contract_invalid") from exc
+            return revision, scene_name
+
         def _apply_scene_diff(self, scene: PlanningScene, label: str) -> None:
             self._require_safety()
+            # All writers own a monotonic revision rather than leaving a
+            # default empty name in cube diffs.  This preserves the bootstrap
+            # provenance instead of silently reverting it after each
+            # perceived-cube world/attached lifecycle update.
+            if not self._get_scene.wait_for_service(timeout_sec=5.0):
+                raise RuntimeError("get_planning_scene_service_unavailable")
+            current_revision, current_name = self._read_scene_contract(
+                f"{label}_get_current_planning_scene"
+            )
+            scene.name = next_scene_revision(self._scene_contract, current_name)
             scene.is_diff = True
             scene.robot_state.is_diff = True
             request = ApplyPlanningScene.Request()
@@ -557,6 +667,9 @@ def main() -> None:
             response = self._wait_future(self._apply_scene.call_async(request), label)
             if response is None or response.success is not True:
                 raise RuntimeError(f"{label}_failed")
+            advanced, _ = self._read_scene_contract(f"{label}_verify_applied_scene")
+            if advanced != current_revision + 1:
+                raise RuntimeError(f"{label}_revision_not_monotonic_after_apply")
 
         def _world_collision(self, request: GraspRequest, *, remove: bool) -> CollisionObject:
             item = CollisionObject()
@@ -1016,6 +1129,10 @@ def main() -> None:
                 KeyValue(key="busy", value=str(self._busy).lower()),
                 KeyValue(key="safety_permitted", value=str(self._safety_ok()).lower()),
                 KeyValue(key="base_motion_inhibited", value=str(self._motion_inhibited).lower()),
+                KeyValue(
+                    key="planning_scene_ready",
+                    value=str(self._planning_scene_ready).lower(),
+                ),
                 KeyValue(key="planning_backend", value="MoveGroup+GetPositionIK+GetCartesianPath"),
                 KeyValue(key="moveit_task_constructor_used", value="false"),
                 KeyValue(key="truth_used_for_control", value="false"),

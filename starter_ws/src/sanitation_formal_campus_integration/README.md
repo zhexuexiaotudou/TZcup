@@ -7,8 +7,10 @@ skid-steer platform. Nothing in this package claims physical Ackermann steering.
 The launch layer performs five bounded jobs:
 
 1. starts the unchanged formal vehicle launch in a generated campus world;
-2. places the vehicle once, before task execution, from
-   `public/episode_manifest.json#vehicle_start_pose_map`;
+2. places the vehicle once, before task execution, from the explicit
+   `public/episode_manifest.json#vehicle_start_pose_source_world` field (with
+   the deprecated `vehicle_start_pose_map` key accepted only as source-world
+   migration input);
 3. republishes formal sensors under compatibility names and sends raw physical
    wheel odometry to the local localization fusion path;
 4. routes Nav2 collision monitor output `/cmd_vel_gate` directly through
@@ -31,9 +33,15 @@ rejected; the only vehicle is the formal URDF started by
 `formal_vehicle_sim.launch.py`. Static collision geometry from the public
 world becomes the occupancy map; the formal transport footprint plus a
 safety margin becomes the keepout inflation; a wider configurable band becomes
-the speed-reduction mask. All maps share one map-frame origin, resolution and
-extent. The public geofence forms the lethal boundary, and the resolved vehicle
-start must be free in both occupancy and keepout maps.
+the speed-reduction mask. The three artifacts produced by this static
+materializer share one source-world origin, extent and configured resolution
+(default `0.10 m`). That raster is distinct from the map-lifecycle geofence
+support mask (function-argument default `0.25 m`), the lidar SLAM occupancy map
+(resolution read from saved-map/runtime metadata and accepted only at `<=0.10 m`)
+and the saved-map coverage raster (monitor default `0.25 m`). The
+public source-world geofence forms the lethal boundary after exactly one
+fixed-start transform into the localization map, and the resolved vehicle start
+must be free in both occupancy and keepout maps.
 
 Generated `walker_*` bodies are intentionally absent from all static maps even
 though their SDF bodies are declared static for environment-only SetPose
@@ -144,7 +152,11 @@ writer to the physical A300 skid-steer controller. Dirt, garbage, pedestrian
 schedules, Gazebo model names and evaluator topics are not mapping inputs.
 The command chain is explicit: Nav2 `/cmd_vel_nav` -> smoother
 `/cmd_vel_smoothed` -> collision monitor `/cmd_vel_gate` -> whole-vehicle
-safety manager -> `/base_controller/cmd_vel`. The optional legacy velocity
+safety manager -> `/base_controller/cmd_vel`. Runtime evidence requires the
+sole publishers to be `/controller_server`, `/velocity_smoother`,
+`/collision_monitor`, and `/whole_vehicle_safety_manager`, respectively, so
+an injected or stale upstream publisher cannot satisfy the live-chain gate.
+The optional legacy velocity
 gate in `slam.launch.py` is disabled by the lifecycle launch.
 On ROS 2 Jazzy, `nav2_bringup` starts the single `collision_monitor` instance
 and `lifecycle_manager_navigation` configures/activates it. The lifecycle
@@ -153,10 +165,45 @@ exactly one node and one publisher on `/cmd_vel_gate`.
 
 The static Nav2 parameter file starts conservatively with the transport
 envelope. `formal_dynamic_footprint_manager` then publishes the current
-`PolygonStamped` footprint to both costmaps: the wider brush sweep while the
+`Polygon` footprint to both costmap inputs (whose `published_footprint` outputs
+remain `PolygonStamped`): the wider brush sweep while the
 cleaning lift is at its work position, and the full arm sweep whenever the arm
 leaves its transport anchor or manipulation explicitly inhibits base motion.
 Until all arm joints are observed it fails closed with the arm envelope.
+
+After Nav2, the formal manager and the whole-vehicle safety manager are live,
+start the formal launch with
+`enable_dynamic_footprint_runtime_test_override:=true` (which passes the
+manager-specific ROS parameter `enable_runtime_test_override:=true`) and run
+the ROS-only footprint gate against that graph. The default `false` does not
+create the override subscription, so invoking this gate against a production
+graph fails closed:
+
+```bash
+FORMAL_MOTION_PROFILE="$TZCUP_REPOSITORY_ROOT/config/high_fidelity_vehicle/formal_motion_cleaning_profile.yaml"
+ros2 run sanitation_formal_campus_integration formal-dynamic-footprint-runtime-gate \
+  --motion-profile-file "$FORMAL_MOTION_PROFILE" \
+  --output /tmp/dynamic_footprint_runtime_gate.json
+```
+
+It verifies the live `Polygon` input endpoints and named local/global costmap
+publishers, then uses the manager's explicitly enabled
+`enable_runtime_test_override:=true` endpoint to request transport, cleaning
+and arm envelopes. The gate never writes `/joint_states`, actuator commands or
+a false inhibit: every request is bound to a fresh nonce, holds base motion
+inhibited, reports `runtime_test_override`, and requires fresh
+Point32-normalized local/global `published_footprint` readback from the real
+costmap nodes. On exit it clears the override back to the production mechanism
+decision while retaining inhibition. It also requires the base-motion inhibit
+topic to be consumed independently by the whole-vehicle safety manager; a
+dynamic footprint never authorizes base motion. For every override request,
+the gate also requires a fresh `/safety/status_json` sample from the unique
+root-namespace `whole_vehicle_safety_manager` publisher: its publish count
+must advance, `state` must be `BASE_COMMAND_STOPPED`, `active_reasons` must
+contain `manipulator_base_inhibit`, and `publish_thread_error` must equal the
+production health sentinel `none`. Local/global costmap endpoints must likewise
+be named `local_costmap`/`global_costmap` in namespaces `/local_costmap` and
+`/global_costmap`; the gate publishes neither `/cmd_vel` nor actuator commands.
 
 The initial public fixed start is converted to local SLAM pose `(0, 0, 0)`.
 For the sparse open-campus acceptance profile, lidar remains the occupancy and

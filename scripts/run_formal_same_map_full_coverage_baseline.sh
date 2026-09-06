@@ -123,7 +123,7 @@ if session.get('status') != 'FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING' or session
     raise SystemExit('formal session is not RUNNING on the current frozen snapshot')
 if episode.get('profile') != 'formal' or float(episode.get('field',{}).get('area_m2',0.0)) < 20000.0:
     raise SystemExit('episode is not a formal >=20000 m2 field')
-pose=episode.get('vehicle_start_pose_map',{})
+pose=episode.get('vehicle_start_pose_source_world') or episode.get('vehicle_start_pose_map',{})
 for key in ('x_m','y_m','yaw_rad'):
     if not isinstance(pose.get(key),(int,float)): raise SystemExit('episode fixed start is missing')
 print(float(pose['x_m'])); print(float(pose['y_m'])); print(float(pose['yaw_rad']))

@@ -6,6 +6,7 @@ import pytest
 import yaml
 
 from sanitation_formal_campus_integration.map_lifecycle_core import (
+    MAXIMUM_SAVED_MAP_RESOLUTION_M,
     MapLifecycleError,
     assess_grid_observation,
     goal_tangent_yaw,
@@ -67,6 +68,7 @@ def _manifest(path: Path) -> Path:
             "height_m": 100.0,
             "area_m2": 20000.0,
             "physical_boundary_walls": False,
+            "geofence_frame": "map",
             "geofence_polygon_m": [
                 [-100.0, -50.0],
                 [100.0, -50.0],
@@ -94,6 +96,46 @@ def test_contract_converts_fixed_source_start_to_local_slam_frame(tmp_path):
         (198.0, 50.0),
         (-2.0, 50.0),
     )
+
+
+def test_explicit_geofences_apply_the_fixed_start_transform_exactly_once(tmp_path):
+    path = _manifest(tmp_path / "episode.json")
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    source = payload["field"]["geofence_polygon_m"]
+    payload["field"].update(
+        source_world_geofence={"frame_id": "source_world", "polygon_m": source},
+        localization_map_geofence={
+            "frame_id": "map",
+            "polygon_m": [[-2.0, -50.0], [198.0, -50.0], [198.0, 50.0], [-2.0, 50.0]],
+            "transform": "source_world_to_localization_map_at_fixed_start",
+        },
+        legacy_geofence={"field": "geofence_polygon_m", "frame_id": "source_world", "deprecation": "use explicit fields"},
+        geofence_frame="source_world",
+    )
+    payload["vehicle_start_pose_source_world"] = payload["vehicle_start_pose_map"]
+    payload["vehicle_start_pose_localization_map"] = {"x_m": 0.0, "y_m": 0.0, "yaw_rad": 0.0}
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    contract = load_campus_map_contract(path)
+    assert contract.source_geofence == tuple(tuple(point) for point in source)
+    assert contract.geofence[0] == pytest.approx((-2.0, -50.0))
+
+    payload["field"]["localization_map_geofence"]["polygon_m"] = source
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    with pytest.raises(MapLifecycleError, match="exactly once"):
+        load_campus_map_contract(path)
+
+
+def test_legacy_geofence_rejects_missing_or_unknown_frame(tmp_path):
+    path = _manifest(tmp_path / "episode.json")
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    for invalid_frame in (None, "odom"):
+        if invalid_frame is None:
+            payload["field"].pop("geofence_frame", None)
+        else:
+            payload["field"]["geofence_frame"] = invalid_frame
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        with pytest.raises(MapLifecycleError, match="legacy geofence frame"):
+            load_campus_map_contract(path)
 
 
 def test_contract_rejects_nonbaseline_dimensions(tmp_path):
@@ -210,12 +252,32 @@ def test_support_artifacts_contain_geofence_but_no_object_truth(tmp_path):
     assert materialization["map_source"] == "slam_toolbox_lidar_odometry"
     assert materialization["world_geometry_used_for_product_map"] is False
     assert materialization["mapping_ignores_dirt"] is True
+    assert materialization["resolution_contract"] == {
+        "static_materializer": {"value_source": "formal_campus.launch.py:map_resolution", "purpose": "public_world_static_collision_raster"},
+        "lifecycle_support_mask": {"resolution_m": 0.25, "value_source": "prepare_public_lifecycle_artifacts(resolution)", "purpose": "public_geofence_support_mask"},
+        "slam_occupancy": {"value_source": "saved_map_metadata", "maximum_accepted_resolution_m": MAXIMUM_SAVED_MAP_RESOLUTION_M, "purpose": "runtime_lidar_slam_occupancy"},
+        "coverage_planning": {"value_source": "ProductCoverageTelemetry(raster_resolution_m)", "purpose": "saved_map_coverage_raster_planning"},
+    }
     assert mission["keepout_polygons"] == []
     assert mission["planning_kinematic_constraint"] == (
         "curvature_limited_reference_path_for_skid_steer"
     )
     assert mission["kinematic_model"] == "four_wheel_skid_steer"
     assert mission["physical_steering_claim"] is False
+
+
+def test_slam_resolution_contract_uses_the_validator_limit():
+    with pytest.raises(MapLifecycleError, match="formal SLAM resolution"):
+        assess_grid_observation(
+            [0],
+            width=1,
+            height=1,
+            resolution=MAXIMUM_SAVED_MAP_RESOLUTION_M + 1e-6,
+            origin_x=0.0,
+            origin_y=0.0,
+            origin_yaw=0.0,
+            geofence=((0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)),
+        )
 
 
 def test_cleaning_admission_requires_hash_valid_saved_map(tmp_path):
