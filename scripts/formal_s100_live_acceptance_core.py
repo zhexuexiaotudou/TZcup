@@ -369,7 +369,9 @@ def validate_raw(
             for field, name in receipt_fields.items()
         ):
             fail("DOSOD full admission summary is not bound to receipt triad")
-        if dosod_bundle_root is not None:
+        if dosod_bundle_root is None:
+            fail("DOSOD full admission bundle is required for core validation")
+        else:
             try:
                 from verify_dosod_compile_parity_metric_chain import verify_dosod_compile_parity_metric_chain
                 verified = verify_dosod_compile_parity_metric_chain(dosod_bundle_root, Path(str(next((row.get("path") for row in models if isinstance(row, dict) and row.get("role") == "dosod_hbm"), ""))))

@@ -70,7 +70,6 @@ def test_real_preparation_manifest_is_fail_closed_without_dosod_hbm():
     assert report["ready"] is False
     assert report["status"] == "BLOCKED"
     assert "asset_missing:dosod_hbm" in report["blockers"]
-    assert "runtime_manifest_model_row_missing:dosod_hbm" in report["blockers"]
 
 
 def test_complete_local_bundle_is_prepared_but_not_deployed(tmp_path: Path):

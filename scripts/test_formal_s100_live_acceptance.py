@@ -275,17 +275,21 @@ class FormalS100LiveAcceptanceTests(unittest.TestCase):
 
     def test_valid_live_evidence_passes_semantics_and_both_schemas(self) -> None:
         raw = self.valid_raw()
-        self.assertEqual(
-            validate_raw(raw, self.identity, self.active_session, self.closure_binding), []
-        )
+        self.assertIn("DOSOD full admission bundle is required for core validation", validate_raw(raw, self.identity, self.active_session, self.closure_binding))
         self.assertEqual(validate_schema(raw, RAW_SCHEMA), [])
         self.raw_path.write_text(json.dumps(raw), encoding="utf-8")
         report = build_final_report(
             raw, self.identity, self.raw_path, self.active_session, self.closure_binding
         )
-        self.assertEqual(report["status"], FINAL_PASSED)
-        self.assertTrue(report["passed"])
+        self.assertNotEqual(report["status"], FINAL_PASSED)
+        self.assertFalse(report["passed"])
         self.assertEqual(validate_schema(report, FINAL_SCHEMA), [])
+
+    def test_handwritten_dosod_triad_cannot_pass_without_the_real_admission_bundle(self) -> None:
+        failures = validate_raw(
+            self.valid_raw(), self.identity, self.active_session, self.closure_binding
+        )
+        self.assertIn("DOSOD full admission bundle is required for core validation", failures)
 
     def test_rejects_old_session_or_drifted_runtime_closure(self) -> None:
         raw = self.valid_raw()
@@ -304,7 +308,7 @@ class FormalS100LiveAcceptanceTests(unittest.TestCase):
         pending_identity = active_session_identity(
             self.session, self.identity, self.closure_binding
         )
-        self.assertEqual(validate_raw(raw, self.identity, pending_identity, self.closure_binding), [])
+        self.assertIn("DOSOD full admission bundle is required for core validation", validate_raw(raw, self.identity, pending_identity, self.closure_binding))
 
     def test_final_schema_rejects_pass_with_missing_or_false_admission_check(self) -> None:
         raw = self.valid_raw()
@@ -312,6 +316,8 @@ class FormalS100LiveAcceptanceTests(unittest.TestCase):
         report = build_final_report(
             raw, self.identity, self.raw_path, self.active_session, self.closure_binding
         )
+        report["passed"] = True
+        report["status"] = FINAL_PASSED
         report["checks"]["runtime_closure_binding"] = False
         self.assertTrue(validate_schema(report, FINAL_SCHEMA))
         report = build_final_report(
