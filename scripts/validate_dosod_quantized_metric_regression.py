@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from hbm_evidence_common import atomic_json, fresh_directory, load_object, normal_file, sha256_file
+from validate_dosod_s100p_hbm_compile_contract import audit_calibration
 
 
 REPORT_ID = "tzcup_dosod_quantized_metric_regression_v1"
@@ -28,6 +29,7 @@ EVALUATOR_IDENTITY_ID = "tzcup_dosod_metric_evaluator_identity_v1"
 COMPILE_RECEIPT_ID = "tzcup_s100p_dosod_hbm_compile_receipt_v1"
 EVALUATOR_RECEIPT_ID = "tzcup_dosod_quantized_metric_evaluator_receipt_v1"
 CLASS_ORDER = ["litter_cube", "fallen_leaves", "dust_or_soil", "puddle"]
+CANONICAL_CONTRACT = Path(__file__).resolve().parents[1] / "config" / "dosod_s100p_hbm_compile_contract.json"
 
 
 def _digest(value: Any) -> bool:
@@ -164,6 +166,24 @@ def _validate_compile_receipt(path: Path, *, hbm: Path, calibration_manifest: Pa
     inputs = receipt.get("inputs")
     if not isinstance(inputs, dict) or inputs.get("calibration_manifest_sha256") != sha256_file(calibration_manifest):
         raise ValueError("compile_receipt_calibration_binding_mismatch")
+    if inputs.get("contract") != str(CANONICAL_CONTRACT.resolve()) or inputs.get("contract_sha256") != sha256_file(CANONICAL_CONTRACT):
+        raise ValueError("compile_receipt_canonical_contract_mismatch")
+    for key in ("preflight", "compile_config", "compiler_identity"):
+        value, digest = inputs.get(key), inputs.get(f"{key}_sha256")
+        if not isinstance(value, str) or not Path(value).is_absolute() or not _digest(digest):
+            raise ValueError(f"compile_receipt_{key}_identity_missing")
+        artifact = Path(value)
+        normal_file(artifact, f"compile_receipt_{key}")
+        if sha256_file(artifact) != digest:
+            raise ValueError(f"compile_receipt_{key}_identity_mismatch")
+    preflight = load_object(Path(str(inputs["preflight"])))
+    contract = load_object(CANONICAL_CONTRACT)
+    if preflight.get("model_sha256") != contract.get("model", {}).get("sha256") or preflight.get("compile_config_sha256") != inputs.get("compile_config_sha256"):
+        raise ValueError("compile_receipt_preflight_contract_mismatch")
+    identity = load_object(Path(str(inputs["compiler_identity"])))
+    producer = Path(__file__).resolve().with_name("collect_dosod_s100p_compiler_identity.py")
+    if identity.get("identity_verified") is not True or identity.get("producer_script_path") != str(producer) or identity.get("producer_script_sha256") != sha256_file(producer):
+        raise ValueError("compile_receipt_compiler_identity_unverified")
     if receipt.get("output_sha256") != sha256_file(hbm) or receipt.get("output_byte_size") != hbm.stat().st_size:
         raise ValueError("compile_receipt_hbm_identity_mismatch")
     return receipt
@@ -300,6 +320,16 @@ def validate_regression(
         compile_receipt = _validate_compile_receipt(
             compile_receipt_path, hbm=hbm, calibration_manifest=calibration_manifest
         )
+        # The compile receipt proves the bytes observed before hb_compile.  A
+        # final metric PASS must re-audit those bytes, so a later tensor drift
+        # cannot ride on a valid earlier compile.
+        calibration_contract = load_object(CANONICAL_CONTRACT)
+        calibration_blockers: list[str] = []
+        calibration_audit = audit_calibration(
+            calibration_manifest.parent, calibration_contract, calibration_blockers
+        )
+        if calibration_audit.get("manifest_sha256") != sha256_file(calibration_manifest) or calibration_blockers:
+            raise ValueError("metric_calibration_reaudit_failed")
         reference = load_object(reference_report_path)
         quantized = load_object(quantized_report_path)
         thresholds = load_object(thresholds_path)

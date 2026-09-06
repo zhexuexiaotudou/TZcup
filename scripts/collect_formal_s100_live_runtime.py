@@ -36,6 +36,37 @@ def atomic_json(path: Path, payload: dict[str, Any]) -> None:
     temporary.replace(path)
 
 
+def _sha256(path: Path) -> str:
+    return sha256_path(path)
+
+
+def collect_dosod_receipt_chain(
+    compile_receipt: Path, parity_report: Path, metric_report: Path, dosod_hbm: Path
+) -> dict[str, dict[str, Any]]:
+    """Read already-produced offline evidence; this collector never produces it."""
+    paths = {"compile": compile_receipt, "parity": parity_report, "metric": metric_report}
+    documents: dict[str, dict[str, Any]] = {}
+    for name, path in paths.items():
+        if not path.is_file() or path.is_symlink():
+            raise ValueError(f"DOSOD {name} receipt is missing or linked")
+        value = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(value, dict):
+            raise ValueError(f"DOSOD {name} receipt is not an object")
+        documents[name] = value
+    hbm_sha = _sha256(dosod_hbm)
+    compile_row, parity_row, metric_row = documents["compile"], documents["parity"], documents["metric"]
+    if compile_row.get("receipt_id") != "tzcup_s100p_dosod_hbm_compile_receipt_v1" or compile_row.get("status") != "COMPILED_NOT_BOARD_ACCEPTED" or compile_row.get("output_sha256") != hbm_sha:
+        raise ValueError("DOSOD compile receipt does not bind this HBM")
+    if parity_row.get("report_id") != "tzcup_dosod_hbm_x86_nash_parity_v1" or parity_row.get("status") != "PARITY_PASSED" or parity_row.get("hbm", {}).get("sha256") != hbm_sha or parity_row.get("compile_receipt_sha256") != _sha256(compile_receipt):
+        raise ValueError("DOSOD parity receipt does not bind this compile/HBM")
+    if metric_row.get("report_id") != "tzcup_dosod_quantized_metric_regression_v1" or metric_row.get("status") != "REGRESSION_PASSED" or metric_row.get("hbm", {}).get("sha256") != hbm_sha or metric_row.get("compile_receipt_sha256") != _sha256(compile_receipt) or metric_row.get("parity_report_sha256") != _sha256(parity_report):
+        raise ValueError("DOSOD metric receipt does not bind this compile/parity/HBM")
+    return {
+        name: {"path": str(path.resolve()), "sha256": _sha256(path), "report_id": documents[name].get("report_id", documents[name].get("receipt_id")), "status": documents[name].get("status"), "hbm_sha256": hbm_sha}
+        for name, path in paths.items()
+    }
+
+
 def run_text(command: list[str], timeout: float = 30.0) -> dict[str, Any]:
     try:
         result = subprocess.run(command, capture_output=True, text=True, timeout=timeout, check=False)
@@ -357,6 +388,9 @@ def main() -> int:
     parser.add_argument("--dosod-vocabulary", type=Path)
     parser.add_argument("--edgesam-encoder-hbm", type=Path)
     parser.add_argument("--edgesam-decoder-hbm", type=Path)
+    parser.add_argument("--dosod-compile-receipt", type=Path)
+    parser.add_argument("--dosod-parity-report", type=Path)
+    parser.add_argument("--dosod-metric-report", type=Path)
     parser.add_argument("--duration-sec", type=float, default=1800.0)
     parser.add_argument("--sample-period-sec", type=float, default=1.0)
     args = parser.parse_args()
@@ -389,6 +423,9 @@ def main() -> int:
         "dosod_vocabulary": args.dosod_vocabulary,
         "edgesam_encoder_hbm": args.edgesam_encoder_hbm,
         "edgesam_decoder_hbm": args.edgesam_decoder_hbm,
+        "dosod_compile_receipt": args.dosod_compile_receipt,
+        "dosod_parity_report": args.dosod_parity_report,
+        "dosod_metric_report": args.dosod_metric_report,
     }
     missing = [name for name, path in required_paths.items() if path is None or not path.is_file()]
     if missing:
@@ -419,6 +456,10 @@ def main() -> int:
                 "edgesam_decoder_hbm",
             }
         ]
+        base["dosod_hbm_evidence"] = collect_dosod_receipt_chain(
+            args.dosod_compile_receipt, args.dosod_parity_report,
+            args.dosod_metric_report, args.dosod_hbm,
+        )
         base.update(collect_live(args.duration_sec, args.sample_period_sec))
         base["status"] = RAW_COLLECTED
         base["collection_complete"] = True

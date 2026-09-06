@@ -135,6 +135,23 @@ class FormalS100LiveAcceptanceTests(unittest.TestCase):
                 {"role": role, "path": f"/opt/models/{role}", "sha256": digest, "byte_size": 1024}
                 for role, digest in models.items()
             ],
+            "dosod_hbm_evidence": {
+                "compile": {
+                    "path": "/opt/evidence/compile.json", "sha256": "a" * 64,
+                    "report_id": "tzcup_s100p_dosod_hbm_compile_receipt_v1",
+                    "status": "COMPILED_NOT_BOARD_ACCEPTED", "hbm_sha256": models["dosod_hbm"],
+                },
+                "parity": {
+                    "path": "/opt/evidence/parity.json", "sha256": "b" * 64,
+                    "report_id": "tzcup_dosod_hbm_x86_nash_parity_v1",
+                    "status": "PARITY_PASSED", "hbm_sha256": models["dosod_hbm"],
+                },
+                "metric": {
+                    "path": "/opt/evidence/metric.json", "sha256": "c" * 64,
+                    "report_id": "tzcup_dosod_quantized_metric_regression_v1",
+                    "status": "REGRESSION_PASSED", "hbm_sha256": models["dosod_hbm"],
+                },
+            },
             "ros_graph": {
                 "nodes": ["/hobot_dosod", "/mono_edgesam", "/open_vocab_product_adapter"],
                 "topics": {
@@ -444,6 +461,12 @@ class FormalS100LiveAcceptanceTests(unittest.TestCase):
         failures = validate_raw(raw, self.identity)
         self.assertTrue(any("source binding" in row for row in failures))
         self.assertTrue(any("required ROS nodes" in row for row in failures))
+
+    def test_final_gate_rejects_hbm_hash_without_compile_parity_metric_chain(self) -> None:
+        raw = self.valid_raw()
+        del raw["dosod_hbm_evidence"]
+        failures = validate_raw(raw, self.identity, self.active_session, self.closure_binding)
+        self.assertTrue(any("compile/parity/metric" in row for row in failures))
 
     def test_collector_refuses_this_non_s100_host_and_writes_blocked_artifact(self) -> None:
         output = self.root / "blocked.json"

@@ -338,6 +338,30 @@ def validate_raw(
             if not isinstance(row.get("byte_size"), int) or row["byte_size"] <= 0:
                 fail(f"model {row.get('role')} has invalid byte size")
 
+    # The board file inventory alone cannot prove that DOSOD HBM came through
+    # the contract-bound compile/parity/metric chain.  The live collector
+    # records the three producer receipts before the timed run; finalization
+    # consumes their mutually bound digests rather than accepting an HBM hash
+    # in isolation.
+    dosod_evidence = payload.get("dosod_hbm_evidence")
+    if not isinstance(dosod_evidence, dict) or set(dosod_evidence) != {"compile", "parity", "metric"}:
+        fail("DOSOD compile/parity/metric receipt chain is missing")
+    else:
+        expected_ids = {
+            "compile": ("tzcup_s100p_dosod_hbm_compile_receipt_v1", "COMPILED_NOT_BOARD_ACCEPTED"),
+            "parity": ("tzcup_dosod_hbm_x86_nash_parity_v1", "PARITY_PASSED"),
+            "metric": ("tzcup_dosod_quantized_metric_regression_v1", "REGRESSION_PASSED"),
+        }
+        for name, (report_id, status) in expected_ids.items():
+            row = dosod_evidence.get(name)
+            if not isinstance(row, dict) or row.get("report_id") != report_id or row.get("status") != status:
+                fail(f"DOSOD {name} receipt identity/status is invalid")
+                continue
+            if not isinstance(row.get("path"), str) or not isinstance(row.get("sha256"), str) or not SHA256_RE.fullmatch(row["sha256"].lower()):
+                fail(f"DOSOD {name} receipt path/digest is invalid")
+            if row.get("hbm_sha256") != model_hashes.get("dosod_hbm"):
+                fail(f"DOSOD {name} receipt does not bind the collected HBM")
+
     graph = payload.get("ros_graph")
     if not isinstance(graph, dict):
         fail("ROS graph evidence is missing")
@@ -489,6 +513,7 @@ def build_final_report(
             "hardware_identity": not any("hardware" in row.lower() or "board/soc" in row.lower() for row in failures),
             "system_image": not any("system image" in row.lower() for row in failures),
             "model_hashes": not any("model" in row.lower() for row in failures),
+            "dosod_compile_parity_metric_chain": not any("dosod" in row.lower() for row in failures),
             "ros_graph": not any("ros" in row.lower() for row in failures),
             "actual_backend_and_inference": not any(
                 token in row.lower() for row in failures for token in ("backend", "inference", "live frames", "latency")

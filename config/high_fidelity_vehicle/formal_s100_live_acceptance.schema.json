@@ -33,11 +33,12 @@
     },
     "checks": {
       "type": "object",
-      "required": ["hardware_identity", "system_image", "model_hashes", "ros_graph", "actual_backend_and_inference", "sustained_resources_and_thermal", "truth_boundary", "snapshot_binding", "acceptance_session_binding", "runtime_closure_binding"],
+      "required": ["hardware_identity", "system_image", "model_hashes", "dosod_compile_parity_metric_chain", "ros_graph", "actual_backend_and_inference", "sustained_resources_and_thermal", "truth_boundary", "snapshot_binding", "acceptance_session_binding", "runtime_closure_binding"],
       "properties": {
         "hardware_identity": {"type": "boolean"},
         "system_image": {"type": "boolean"},
         "model_hashes": {"type": "boolean"},
+        "dosod_compile_parity_metric_chain": {"type": "boolean"},
         "ros_graph": {"type": "boolean"},
         "actual_backend_and_inference": {"type": "boolean"},
         "sustained_resources_and_thermal": {"type": "boolean"},
@@ -63,6 +64,7 @@
               "hardware_identity": {"const": true},
               "system_image": {"const": true},
               "model_hashes": {"const": true},
+              "dosod_compile_parity_metric_chain": {"const": true},
               "ros_graph": {"const": true},
               "actual_backend_and_inference": {"const": true},
               "sustained_resources_and_thermal": {"const": true},

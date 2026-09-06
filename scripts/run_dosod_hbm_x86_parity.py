@@ -29,6 +29,7 @@ REPORT_ID = "tzcup_dosod_hbm_x86_nash_parity_v1"
 OUTPUTS = {"scores", "boxes"}
 RUNNER_IDENTITY_ID = "tzcup_dosod_hbm_runner_identity_v1"
 COMMAND_TEMPLATE = ["{runner}", "--model", "{hbm}", "--input", "{input}", "--output-path", "{output}"]
+CANONICAL_CONTRACT = Path(__file__).resolve().parents[1] / "config" / "dosod_s100p_hbm_compile_contract.json"
 
 
 def _digest(value: Any) -> bool:
@@ -64,6 +65,27 @@ def _validate_compile_receipt(path: Path, hbm: Path) -> dict[str, Any]:
         raise ValueError("compile_receipt_not_successful")
     if receipt.get("output_created_by_this_compile") is not True:
         raise ValueError("compile_receipt_does_not_prove_fresh_output")
+    if receipt.get("receipt_path") != str(path.resolve()):
+        raise ValueError("compile_receipt_path_binding_mismatch")
+    root = receipt.get("evidence_root")
+    if not isinstance(root, str) or not Path(root).is_absolute() or Path(root).is_symlink() or Path(root).resolve() != path.parent.resolve():
+        raise ValueError("compile_receipt_evidence_root_invalid")
+    producer = Path(__file__).resolve().with_name("execute_dosod_hbm_compile.py")
+    if receipt.get("producer_script_path") != str(producer) or receipt.get("producer_script_sha256") != sha256_file(producer):
+        raise ValueError("compile_receipt_producer_identity_mismatch")
+    inputs = receipt.get("inputs")
+    if not isinstance(inputs, dict) or inputs.get("contract_sha256") != sha256_file(CANONICAL_CONTRACT):
+        raise ValueError("compile_receipt_canonical_contract_mismatch")
+    for stream in ("stdout", "stderr"):
+        name, digest = receipt.get(f"raw_{stream}_path"), receipt.get(f"raw_{stream}_sha256")
+        if not isinstance(name, str) or not _digest(digest):
+            raise ValueError("compile_receipt_raw_output_identity_missing")
+        candidate = (path.parent / name).resolve()
+        if not candidate.is_relative_to(path.parent.resolve()):
+            raise ValueError("compile_receipt_raw_output_path_escape")
+        normal_file(candidate, f"compile_receipt_{stream}")
+        if sha256_file(candidate) != digest:
+            raise ValueError("compile_receipt_raw_output_identity_mismatch")
     if receipt.get("output_sha256") != sha256_file(hbm) or receipt.get("output_byte_size") != hbm.stat().st_size:
         raise ValueError("compile_receipt_hbm_identity_mismatch")
     return receipt

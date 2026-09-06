@@ -38,6 +38,7 @@
       "type": "object",
       "required": ["script_sha256", "pid"],
       "properties": {
+        "script_path": {"type": "string", "minLength": 1},
         "script_sha256": {"$ref": "#/$defs/sha256"},
         "pid": {"type": "integer", "minimum": 1}
       },
@@ -74,6 +75,16 @@
         },
         "additionalProperties": false
       }
+    },
+    "dosod_hbm_evidence": {
+      "type": "object",
+      "required": ["compile", "parity", "metric"],
+      "properties": {
+        "compile": {"$ref": "#/$defs/dosodReceipt"},
+        "parity": {"$ref": "#/$defs/dosodReceipt"},
+        "metric": {"$ref": "#/$defs/dosodReceipt"}
+      },
+      "additionalProperties": false
     },
     "ros_graph": {
       "type": "object",
@@ -147,7 +158,7 @@
       "if": {"properties": {"status": {"const": "FORMAL_RDK_S100_LIVE_RUNTIME_COLLECTED"}}},
       "then": {
         "properties": {"collection_complete": {"const": true}, "blockers": {"maxItems": 0}},
-        "required": ["source_binding", "acceptance_session_binding", "runtime_closure_binding", "system_image", "models", "ros_graph", "inference_telemetry", "sustained_run", "resources", "thermal"]
+        "required": ["source_binding", "acceptance_session_binding", "runtime_closure_binding", "system_image", "models", "dosod_hbm_evidence", "ros_graph", "inference_telemetry", "sustained_run", "resources", "thermal"]
       }
     },
     {
@@ -185,6 +196,18 @@
       "properties": {
         "runtime_closure_manifest_sha256": {"$ref": "#/$defs/sha256"},
         "runtime_closure_sha256": {"$ref": "#/$defs/sha256"}
+      },
+      "additionalProperties": false
+    },
+    "dosodReceipt": {
+      "type": "object",
+      "required": ["path", "sha256", "report_id", "status", "hbm_sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "report_id": {"type": "string", "minLength": 1},
+        "status": {"type": "string", "minLength": 1},
+        "hbm_sha256": {"$ref": "#/$defs/sha256"}
       },
       "additionalProperties": false
     },

@@ -32,6 +32,7 @@ from validate_dosod_s100p_hbm_compile_contract import audit_calibration
 
 RECEIPT_ID = "tzcup_s100p_dosod_hbm_compile_receipt_v1"
 EXPECTED_PREFIX = "dosod_mlp3x_s_tzcup_rep-int16"
+CANONICAL_CONTRACT = Path(__file__).resolve().parents[1] / "config" / "dosod_s100p_hbm_compile_contract.json"
 
 
 def _package_versions() -> dict[str, str | None]:
@@ -231,6 +232,12 @@ def main() -> int:
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--compiler", default="hb_compile")
     args = parser.parse_args()
+    # A callable is deliberately left injectable for unit fixtures.  The
+    # production CLI, however, must never turn a look-alike contract into a
+    # formal compile receipt.
+    if args.contract.resolve() != CANONICAL_CONTRACT.resolve():
+        print("compile_receipt_blocked:ValueError:contract must be the repository canonical DOSOD S100P contract", file=sys.stderr)
+        return 2
     try:
         receipt = execute_compile(contract_path=args.contract, preflight_path=args.preflight_report,
                                   config_path=args.compile_config, identity_path=args.compiler_identity,
