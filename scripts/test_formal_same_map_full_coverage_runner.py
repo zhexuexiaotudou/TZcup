@@ -81,6 +81,8 @@ def test_runner_is_one_hard_restart_fullcoverage_process_chain() -> None:
         "--runtime-install", "--expected-safety-cap",
     ):
         assert option in BASELINE_WRAPPER
+    assert "SAFETY_MANAGER_READBACK RUNTIME_BINDING RUNTIME_CLOSURE RUNTIME_INSTALL EXPECTED_SAFETY_CAP" in BASELINE_WRAPPER
+    assert "if [[ -n \"${SAFETY_MANAGER_READBACK}\" ]]" not in BASELINE_WRAPPER
     assert "safety_manager_status.raw.json" not in RUNNER
     assert "--expected-safety-cap \"${WHOLE_VEHICLE_SAFETY_CAP}\"" in RUNNER
 

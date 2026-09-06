@@ -72,7 +72,18 @@ class DrySpeedQualificationState:
             and self.last_dry_brush_monotonic is not None
             and now - self.last_dry_brush_monotonic <= self.heartbeat_timeout_sec
         )
-        wet_pump_inactive = all(abs(float(value)) <= 1.0e-9 for value in pump_output)
+        # The safety manager owns exactly one pump channel.  A missing,
+        # widened, malformed, or non-finite readback is not evidence of a dry
+        # operation and must therefore preserve the 0.45 m/s default.
+        try:
+            wet_pump_inactive = len(pump_output) == 1 and all(
+                not isinstance(value, bool)
+                and math.isfinite(float(value))
+                and abs(float(value)) <= 1.0e-9
+                for value in pump_output
+            )
+        except (TypeError, ValueError):
+            wet_pump_inactive = False
         qualified = (
             self.configured_max_linear_velocity_mps == REQUALIFIED_MAX_LINEAR_VELOCITY_MPS
             and self.mission_mode == "cleaning"

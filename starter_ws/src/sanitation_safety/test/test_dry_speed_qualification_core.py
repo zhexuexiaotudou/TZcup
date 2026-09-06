@@ -48,3 +48,10 @@ def test_any_mode_wet_brush_off_or_stale_heartbeat_reverts_to_default(
     assert candidate.effective_max_linear_velocity_mps(
         now=now, pump_output=pump
     ) == DEFAULT_MAX_LINEAR_VELOCITY_MPS
+
+
+@pytest.mark.parametrize("pump", [(), (0.0, 0.0), (float("nan"),), (True,), ("zero",)])
+def test_missing_or_malformed_pump_readback_reverts_to_default(pump):
+    assert qualified_state().effective_max_linear_velocity_mps(
+        now=10.1, pump_output=pump
+    ) == DEFAULT_MAX_LINEAR_VELOCITY_MPS

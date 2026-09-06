@@ -139,6 +139,7 @@ def _current_runtime_binding(args: argparse.Namespace) -> tuple[Path, Path, Path
 
 
 def _safety_readback(binding: Path, *, state: str, producer: bool = True) -> dict:
+    captured = time.time_ns()
     status = {
         "effective_max_linear_velocity_mps": 1.0,
         "operation_speed_profile": "dry_cleaning_competition_candidate",
@@ -151,6 +152,7 @@ def _safety_readback(binding: Path, *, state: str, producer: bool = True) -> dic
         "runtime_gate_binding": json.loads(binding.read_text(encoding="utf-8")),
         "producer_identity": {
             "node_name": "whole_vehicle_safety_manager",
+            "node_namespace": "/",
             "topic": "/safety/status_json",
             "message_type": "std_msgs/msg/String",
             "publisher_count": "1",
@@ -158,21 +160,42 @@ def _safety_readback(binding: Path, *, state: str, producer: bool = True) -> dic
         "producer_capture_before": {
             "returncode": 0,
             "command": ["ros2", "topic", "info", "/safety/status_json", "--verbose"],
+            "stdout": _topic_info(),
+            "started_epoch_ns": captured,
+            "completed_epoch_ns": captured + 1,
         },
         "status_capture": {
             "returncode": 0,
             "command": ["ros2", "topic", "echo", "--once", "--field", "data", "/safety/status_json"],
             "stdout": json.dumps(status),
+            "started_epoch_ns": captured + 2,
+            "completed_epoch_ns": captured + 3,
         },
         "producer_capture": {
             "returncode": 0,
             "command": ["ros2", "topic", "info", "/safety/status_json", "--verbose"],
+            "stdout": _topic_info(),
+            "started_epoch_ns": captured + 4,
+            "completed_epoch_ns": captured + 5,
         },
         **status,
     }
     if not producer:
         readback.pop("producer_capture_before")
     return readback
+
+
+def _topic_info(*, node: str = "whole_vehicle_safety_manager", publishers: int = 1) -> str:
+    return "\n".join((
+        "Type: std_msgs/msg/String",
+        f"Publisher count: {publishers}",
+        "Subscription count: 1",
+        f"Node name: {node}",
+        "Node namespace: /",
+        "Topic type: std_msgs/msg/String",
+        "Endpoint type: PUBLISHER",
+        "",
+    ))
 
 
 def _mutate(path: Path, key: str, value) -> None:
@@ -233,6 +256,43 @@ def test_rejects_safety_readback_without_collector_producer_receipt(tmp_path: Pa
     args.expected_safety_cap = 1.0
     with pytest.raises(BaselineError, match="producer receipt"):
         generate(args)
+
+
+@pytest.mark.parametrize(
+    ("mutation", "message"),
+    [
+        (lambda receipt: receipt["producer_capture_before"].pop("stdout"), "retained raw stdout"),
+        (lambda receipt: receipt["producer_capture"].update({"stdout": _topic_info(publishers=2)}), "exactly one"),
+        (lambda receipt: receipt["producer_capture"].update({"stdout": _topic_info(node="impostor")}), "unique whole_vehicle_safety_manager"),
+        (lambda receipt: receipt["producer_capture_before"].update({"completed_epoch_ns": receipt["status_capture"]["started_epoch_ns"] + 1}), "execution order"),
+    ],
+)
+def test_rejects_forged_or_unordered_retained_ros_receipt(tmp_path: Path, mutation, message: str) -> None:
+    args = _fixture(tmp_path)
+    runtime, closure, install = _current_runtime_binding(args)
+    receipt = _safety_readback(runtime, state="isolated_same_map_dry_coverage")
+    mutation(receipt)
+    args.safety_manager_readback = _json(tmp_path / "safety.json", receipt)
+    args.runtime_binding = runtime
+    args.runtime_closure = closure
+    args.runtime_install = install
+    args.expected_safety_cap = 1.0
+    with pytest.raises(BaselineError, match=message):
+        generate(args)
+
+
+def test_accepts_current_revalidated_one_mps_collector_receipt(tmp_path: Path) -> None:
+    args = _fixture(tmp_path)
+    runtime, closure, install = _current_runtime_binding(args)
+    args.safety_manager_readback = _json(
+        tmp_path / "safety.json",
+        _safety_readback(runtime, state="isolated_same_map_dry_coverage"),
+    )
+    args.runtime_binding = runtime
+    args.runtime_closure = closure
+    args.runtime_install = install
+    args.expected_safety_cap = 1.0
+    assert generate(args)["status"] == PASS_STATUS
 
 
 @pytest.mark.parametrize(

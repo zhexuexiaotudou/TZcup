@@ -116,6 +116,75 @@ def _producer_identity(topic_info: str) -> dict[str, str]:
     }
 
 
+def _capture_window(capture: Any, label: str) -> tuple[int, int]:
+    """Return a complete capture interval, rejecting hand-written summaries."""
+
+    if not isinstance(capture, dict):
+        raise CaptureError(f"{label} capture must be an object")
+    started = capture.get("started_epoch_ns")
+    completed = capture.get("completed_epoch_ns")
+    if (
+        isinstance(started, bool)
+        or isinstance(completed, bool)
+        or not isinstance(started, int)
+        or not isinstance(completed, int)
+        or started <= 0
+        or completed < started
+    ):
+        raise CaptureError(f"{label} capture has no valid timing interval")
+    return started, completed
+
+
+def validate_topic_info_capture(capture: Any, label: str) -> tuple[dict[str, str], tuple[int, int]]:
+    """Revalidate one retained, fixed-command ROS topic-info capture."""
+
+    if not isinstance(capture, dict):
+        raise CaptureError(f"{label} capture must be an object")
+    if capture.get("command") != ["ros2", "topic", "info", STATUS_TOPIC, "--verbose"]:
+        raise CaptureError(f"{label} capture command differs from the fixed topic-info command")
+    if capture.get("returncode") != 0:
+        raise CaptureError(f"{label} topic-info capture did not succeed")
+    stdout = capture.get("stdout")
+    if not isinstance(stdout, str) or not stdout.strip():
+        raise CaptureError(f"{label} topic-info capture has no retained raw stdout")
+    return _producer_identity(stdout), _capture_window(capture, label)
+
+
+def validate_status_capture(capture: Any) -> tuple[dict[str, Any], tuple[int, int]]:
+    """Revalidate the fixed one-shot status capture and its timing interval."""
+
+    if not isinstance(capture, dict):
+        raise CaptureError("status capture must be an object")
+    if capture.get("command") != [
+        "ros2", "topic", "echo", "--once", "--field", "data", STATUS_TOPIC,
+    ]:
+        raise CaptureError("status capture command differs from the fixed topic-echo command")
+    if capture.get("returncode") != 0:
+        raise CaptureError("status capture did not succeed")
+    stdout = capture.get("stdout")
+    if not isinstance(stdout, str) or not stdout.strip():
+        raise CaptureError("status capture has no retained raw stdout")
+    try:
+        status = json.loads(stdout.strip())
+    except json.JSONDecodeError as exc:
+        raise CaptureError("status capture has invalid JSON") from exc
+    if not isinstance(status, dict):
+        raise CaptureError("status capture JSON must be an object")
+    return status, _capture_window(capture, "status")
+
+
+def validate_capture_order(
+    producer_before: tuple[int, int], status: tuple[int, int], producer_after: tuple[int, int]
+) -> None:
+    """Require topic ownership before and after the intervening status sample."""
+
+    if not (
+        producer_before[0] <= producer_before[1] <= status[0] <= status[1]
+        <= producer_after[0] <= producer_after[1]
+    ):
+        raise CaptureError("producer/status captures are not retained in execution order")
+
+
 def _snapshot_identity(path: Path) -> dict[str, str]:
     snapshot = _json(path)
     outputs = snapshot.get("outputs")
@@ -204,11 +273,14 @@ def collect(args: argparse.Namespace) -> tuple[dict[str, Any], bool]:
             raise CaptureError("live safety status capture failed")
         if producer_capture["returncode"] != 0:
             raise CaptureError("live safety producer identity capture failed")
-        status = json.loads(str(status_capture["stdout"]).strip())
-        if not isinstance(status, dict):
-            raise CaptureError("live safety status sample must be a JSON object")
-        before_identity = _producer_identity(str(producer_before["stdout"]))
-        after_identity = _producer_identity(str(producer_capture["stdout"]))
+        before_identity, before_window = validate_topic_info_capture(
+            producer_before, "producer-before"
+        )
+        status, status_window = validate_status_capture(status_capture)
+        after_identity, after_window = validate_topic_info_capture(
+            producer_capture, "producer-after"
+        )
+        validate_capture_order(before_window, status_window, after_window)
         if before_identity != after_identity:
             raise CaptureError("status producer identity changed across the capture")
         receipt["producer_identity"] = after_identity

@@ -40,26 +40,18 @@ while (($#)); do
   esac
 done
 
-for value in EPISODE_MANIFEST MAP_ROOT MAPPING_RUNTIME CLEANING_RUNTIME LIFECYCLE_ACCEPTANCE COVERAGE_RUNTIME SESSION SNAPSHOT OUTPUT; do
+for value in EPISODE_MANIFEST MAP_ROOT MAPPING_RUNTIME CLEANING_RUNTIME LIFECYCLE_ACCEPTANCE COVERAGE_RUNTIME SESSION SNAPSHOT OUTPUT SAFETY_MANAGER_READBACK RUNTIME_BINDING RUNTIME_CLOSURE RUNTIME_INSTALL EXPECTED_SAFETY_CAP; do
   [[ -n "${!value}" ]] || { echo "missing required argument for ${value}" >&2; exit 2; }
 done
 [[ ! -e "${OUTPUT}" ]] || { echo "refusing to overwrite retained baseline: ${OUTPUT}" >&2; exit 3; }
 
-SAFETY_ARGS=()
-if [[ -n "${SAFETY_MANAGER_READBACK}" ]]; then
-  for value in RUNTIME_BINDING RUNTIME_CLOSURE RUNTIME_INSTALL EXPECTED_SAFETY_CAP; do
-    [[ -n "${!value}" ]] || { echo "missing ${value} for safety-manager readback" >&2; exit 2; }
-  done
-  SAFETY_ARGS=(
-    --safety-manager-readback "${SAFETY_MANAGER_READBACK}"
-    --runtime-binding "${RUNTIME_BINDING}"
-    --runtime-closure "${RUNTIME_CLOSURE}"
-    --runtime-install "${RUNTIME_INSTALL}"
-    --expected-safety-cap "${EXPECTED_SAFETY_CAP}"
-  )
-elif [[ -n "${RUNTIME_BINDING}${RUNTIME_CLOSURE}${RUNTIME_INSTALL}${EXPECTED_SAFETY_CAP}" ]]; then
-  echo "safety runtime arguments require --safety-manager-readback" >&2; exit 2
-fi
+SAFETY_ARGS=(
+  --safety-manager-readback "${SAFETY_MANAGER_READBACK}"
+  --runtime-binding "${RUNTIME_BINDING}"
+  --runtime-closure "${RUNTIME_CLOSURE}"
+  --runtime-install "${RUNTIME_INSTALL}"
+  --expected-safety-cap "${EXPECTED_SAFETY_CAP}"
+)
 
 python3 "${ROOT}/scripts/generate_formal_same_map_baseline.py" generate \
   --episode-manifest "${EPISODE_MANIFEST}" \

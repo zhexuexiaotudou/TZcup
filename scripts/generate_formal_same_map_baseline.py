@@ -13,6 +13,13 @@ from typing import Any
 
 import yaml
 
+from collect_formal_safety_speed_readback import (
+    CaptureError,
+    validate_capture_order,
+    validate_status_capture,
+    validate_topic_info_capture,
+)
+
 
 REPORT_ID = "tzcup_formal_same_map_full_coverage_baseline_v1"
 PASS_STATUS = "FORMAL_FULL_COVERAGE_BASELINE_PASSED"
@@ -208,25 +215,23 @@ def build_report(
             or producer.get("message_type") != "std_msgs/msg/String"
             or producer.get("publisher_count") != "1"
             or not isinstance(producer_before, dict)
-            or producer_before.get("returncode") != 0
-            or producer_before.get("command")
-            != ["ros2", "topic", "info", "/safety/status_json", "--verbose"]
             or not isinstance(status_capture, dict)
-            or status_capture.get("returncode") != 0
-            or status_capture.get("command")
-            != ["ros2", "topic", "echo", "--once", "--field", "data", "/safety/status_json"]
             or not isinstance(producer_capture, dict)
-            or producer_capture.get("returncode") != 0
-            or producer_capture.get("command")
-            != ["ros2", "topic", "info", "/safety/status_json", "--verbose"]
         ):
             raise BaselineError("safety-manager producer receipt is incomplete or unexpected")
         try:
-            captured_status = json.loads(str(status_capture.get("stdout", "")))
-        except json.JSONDecodeError as exc:
-            raise BaselineError("safety-manager producer receipt has invalid status JSON") from exc
-        if not isinstance(captured_status, dict):
-            raise BaselineError("safety-manager producer receipt status is not an object")
+            before_identity, before_window = validate_topic_info_capture(
+                producer_before, "producer-before"
+            )
+            captured_status, status_window = validate_status_capture(status_capture)
+            after_identity, after_window = validate_topic_info_capture(
+                producer_capture, "producer-after"
+            )
+            validate_capture_order(before_window, status_window, after_window)
+        except CaptureError as exc:
+            raise BaselineError(f"safety-manager producer receipt is invalid: {exc}") from exc
+        if before_identity != producer or after_identity != producer:
+            raise BaselineError("safety-manager retained topic-info identity differs from receipt")
         cap = _strict_number(safety_readback, "effective_max_linear_velocity_mps", "safety_manager_readback")
         if captured_status.get("effective_max_linear_velocity_mps") != cap:
             raise BaselineError("safety-manager receipt cap differs from captured status")
