@@ -1,5 +1,11 @@
 # 项目推进记录
 
+## 2026-09-07：R065 public-only 运行证据封装（代码收口中，fresh merged runtime 未运行）
+
+- 动态路径 materializer 对 crossing 调整后的完整 walker 集合复用生成器同一 `pedestrian_paths_clear` 全路径门，防止修改后的路径重新与未修改路径相交；live evaluator 以本次 schedule 的 ID、半径和摘要为准，从 Gazebo 原生完整 `/world/<world>/pose/info` 同一帧读取 8 个 walker、仿真时间戳和 28 对实际距离。目标租卡诊断证明 Pose_V→TFMessage bridge 会丢失实体 identity/时间戳，且 `dynamic_pose/info` 不含 `static=true` walker，因此正式证据禁止依赖该桥或用 schedule 插值冒充 live truth。
+- 新 R065 public session wrapper 固定使用 public train/val 输入，在 session 启动后于 fresh run-root 生成 episode，并在任何 ROS launch 前绑定 exact source snapshot、frozen install 和 runtime closure；最终原子 receipt 按真实 schema 逐项绑定 W1 footprint、W2 MoveIt ground 与产品感知请求、W3 public/live pedestrian、W5 first-map/saved-map 证据及各自 fresh binding。W2 感知节点同时绑定 closure 中的模型制品根与 ONNX Python 根，collector 只订阅产品 target/recheck，禁止控制发布。
+- 当前状态仅为源码、公开数据和目标环境故障诊断；W3 原生 reader、W1/W2/W3/W5 组合均必须在新合并 main 的 fresh ROS 2/Gazebo runtime 中实际通过后，才能发布 `R065_PUBLIC_MODELING_PASSED`。Windows 单测、旧运行目录、旧 r064 地图或 bridge 失败现场均不能替代该运行门。
+
 ## 2026-09-07：R065 建模合同修复（静态与公开数据门已通过，Linux live 门待运行）
 
 - 动态 Nav2 footprint manager 的输入已改为 `geometry_msgs/msg/Polygon`，三个冻结 polygon 数值不变；测试 override 由 formal launch 的显式参数控制且默认关闭。ROS-only gate 不写 `/joint_states`、`cmd_vel` 或执行器话题，只在持续 base inhibit 下请求三态，并要求 local/global costmap 的实际 `published_footprint`、唯一命名 publisher 和 whole-vehicle safety manager 的 fresh `BASE_COMMAND_STOPPED + manipulator_base_inhibit` 状态共同闭合。当前只完成源码和纯 Python 合同验证，真实 ROS/Nav2 图的三态读回仍为 `PENDING`。

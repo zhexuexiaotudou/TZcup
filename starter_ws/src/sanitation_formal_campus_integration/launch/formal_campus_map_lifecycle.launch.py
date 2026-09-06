@@ -257,6 +257,9 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                 "episode_manifest": LaunchConfiguration("episode_manifest"),
                 "pedestrian_schedule": LaunchConfiguration("pedestrian_schedule"),
                 "start_pedestrians": LaunchConfiguration("start_pedestrians"),
+                "enable_dynamic_footprint_runtime_test_override": LaunchConfiguration(
+                    "enable_dynamic_footprint_runtime_test_override"
+                ),
                 "start_navigation": "false",
                 "mission_mode": mode,
                 "localization_backend": "slam" if mode == "mapping" else "amcl",
@@ -424,6 +427,13 @@ def generate_launch_description() -> LaunchDescription:
         DeclareLaunchArgument("map_artifact_dir"),
         DeclareLaunchArgument("pedestrian_schedule", default_value=""),
         DeclareLaunchArgument("start_pedestrians", default_value="true"),
+        DeclareLaunchArgument(
+            "enable_dynamic_footprint_runtime_test_override",
+            default_value="false",
+            description=(
+                "Test-only dynamic-footprint override; base motion remains inhibited"
+            ),
+        ),
         DeclareLaunchArgument("start_coverage", default_value="true"),
         DeclareLaunchArgument("coverage_evidence_dir", default_value=""),
         DeclareLaunchArgument(

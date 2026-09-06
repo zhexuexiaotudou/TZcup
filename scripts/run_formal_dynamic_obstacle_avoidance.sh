@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Fail-closed entry point for the saved-map/Nav2 dynamic-obstacle acceptance.
-set -eo pipefail
+set -euo pipefail
 
 repo_root="${TZCUP_REPOSITORY_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 source "${repo_root}/scripts/run_formal_runtime_isolation.sh"
@@ -116,8 +116,8 @@ fi
   --runtime-binding "${runtime_binding}" \
   --output "${output}" >/dev/null 2>&1 || true
 
-source /opt/ros/jazzy/setup.bash
 set +u
+source /opt/ros/jazzy/setup.bash
 source "${runtime_install}/setup.bash"
 set -u
 /usr/bin/python3 -c 'import action_msgs, diagnostic_msgs, geometry_msgs, nav2_msgs, nav_msgs, rclpy, ros_gz_interfaces, sensor_msgs, std_msgs, tf2_msgs' || {
@@ -220,6 +220,7 @@ fi
 environment_collector_args=(
   "${repo_root}/scripts/collect_formal_dynamic_environment_runtime.py"
   --timeout "$(( ${FORMAL_DYNAMIC_TIMEOUT_S:-300} + 30 ))"
+  --pedestrian-schedule "${runtime_schedule}"
   --output "${environment_telemetry}"
 )
 set +e
