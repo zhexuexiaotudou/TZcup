@@ -141,6 +141,20 @@ def test_generate_and_revalidate_complete_same_map_baseline(tmp_path: Path) -> N
     assert validate(args.output, args.session, args.snapshot) == report
 
 
+def test_rejects_one_mps_readback_without_isolated_dry_state(tmp_path: Path) -> None:
+    args = _fixture(tmp_path)
+    readback = _json(tmp_path / "safety.json", {
+        "schema_version": 1,
+        "effective_max_linear_velocity_mps": 1.0,
+        "operation_speed_profile": "dry_cleaning_competition_candidate",
+        "speed_qualification_state": "none",
+    })
+    args.safety_manager_readback = readback
+    args.expected_safety_cap = 1.0
+    with pytest.raises(BaselineError, match="isolated dry-only"):
+        generate(args)
+
+
 def test_rejects_mapping_that_did_not_ignore_dirt(tmp_path: Path) -> None:
     args = _fixture(tmp_path)
     manifest = args.map_root / "map_lifecycle_manifest.json"

@@ -64,6 +64,10 @@ def test_runner_is_one_hard_restart_fullcoverage_process_chain() -> None:
     assert '--runtime-binding "${RUNTIME_BINDING}"' in RUNNER[
         lifecycle_validator:lifecycle_output
     ]
+    assert "speed_qualification_state:=\"${SPEED_QUALIFICATION_STATE}\"" in RUNNER
+    assert "dry_cleaning_qualification_active" in RUNNER
+    assert "collect_formal_safety_speed_readback.py" in RUNNER
+    assert "--expected-safety-cap \"${WHOLE_VEHICLE_SAFETY_CAP}\"" in RUNNER
 
 
 def test_runner_uses_named_evaluator_pose_only_for_metrics() -> None:

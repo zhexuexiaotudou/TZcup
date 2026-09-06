@@ -385,6 +385,16 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                     "max_angular_velocity": ParameterValue(
                         LaunchConfiguration("max_angular_velocity"), value_type=float
                     ),
+                    # Empty/default values are deliberately not eligible for
+                    # high speed.  The lifecycle wrapper supplies the exact
+                    # dry same-map scope when it has independently qualified it.
+                    "mission_mode": LaunchConfiguration("mission_mode"),
+                    "operation_speed_profile": LaunchConfiguration(
+                        "operation_speed_profile"
+                    ),
+                    "speed_qualification_state": LaunchConfiguration(
+                        "speed_qualification_state"
+                    ),
                 }
             ],
         ),
@@ -545,8 +555,10 @@ def generate_launch_description() -> LaunchDescription:
             DeclareLaunchArgument("start_navigation", default_value="true"),
             DeclareLaunchArgument("start_coverage", default_value="true"),
             DeclareLaunchArgument("localization_backend", default_value="amcl"),
+            DeclareLaunchArgument("mission_mode", default_value=""),
             DeclareLaunchArgument("max_linear_velocity", default_value="0.45"),
             DeclareLaunchArgument("max_angular_velocity", default_value="0.35"),
+            DeclareLaunchArgument("speed_qualification_state", default_value="none"),
             OpaqueFunction(function=_runtime_actions),
         ]
     )

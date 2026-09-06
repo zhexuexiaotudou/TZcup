@@ -145,6 +145,8 @@ def build_report(
     coverage_runtime: Path,
     session_path: Path,
     snapshot_path: Path,
+    safety_manager_readback: Path | None = None,
+    expected_safety_cap: float = 0.45,
 ) -> dict[str, Any]:
     episode = _json(episode_manifest)
     manifest_path = map_root / "map_lifecycle_manifest.json"
@@ -157,6 +159,18 @@ def build_report(
     coverage = _json(coverage_runtime)
     session = _json(session_path)
     snapshot = _snapshot_identity(snapshot_path)
+    safety_readback = None
+    if safety_manager_readback is not None:
+        safety_readback = _json(safety_manager_readback)
+        if safety_readback.get("schema_version") != 1:
+            raise BaselineError("safety-manager readback has an unsupported schema")
+        cap = _strict_number(safety_readback, "effective_max_linear_velocity_mps", "safety_manager_readback")
+        if not math.isclose(cap, expected_safety_cap, abs_tol=1.0e-12):
+            raise BaselineError("safety-manager effective cap differs from runner requirement")
+        if expected_safety_cap == 1.0 and safety_readback.get("speed_qualification_state") != "isolated_same_map_dry_coverage":
+            raise BaselineError("1.0 m/s baseline lacks isolated dry-only safety state")
+        if expected_safety_cap == 1.0 and safety_readback.get("operation_speed_profile") != "dry_cleaning_competition_candidate":
+            raise BaselineError("1.0 m/s baseline lacks dry-cleaning speed profile")
 
     if session.get("status") != SESSION_STATUS:
         raise BaselineError("formal acceptance session is not RUNNING")
@@ -285,10 +299,14 @@ def build_report(
         "session": session_path,
         "snapshot": snapshot_path,
     }
+    if safety_manager_readback is not None:
+        evidence_paths["safety_manager_readback"] = safety_manager_readback
     session_fresh = {
         "map_manifest", "mission_geometry", "mapping_runtime", "cleaning_runtime",
         "lifecycle_acceptance", "coverage_runtime",
     }
+    if safety_manager_readback is not None:
+        session_fresh.add("safety_manager_readback")
     evidence = {
         name: _evidence(
             path, started_ns, name, require_session_fresh=name in session_fresh
@@ -329,6 +347,7 @@ def build_report(
             "execution_over_plan_ratio": actual_distance / planned_distance,
         },
         "source_binding": {"started_epoch_ns": started_ns, **snapshot},
+        "safety_manager_speed": safety_readback,
         "evidence": evidence,
     }
 
@@ -345,6 +364,8 @@ def generate(args: argparse.Namespace) -> dict[str, Any]:
         coverage_runtime=args.coverage_runtime,
         session_path=args.session,
         snapshot_path=args.snapshot,
+        safety_manager_readback=getattr(args, "safety_manager_readback", None),
+        expected_safety_cap=getattr(args, "expected_safety_cap", 0.45),
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     pending = args.output.with_suffix(args.output.suffix + f".pending.{os.getpid()}")
@@ -366,6 +387,8 @@ def validate(input_path: Path, session_path: Path, snapshot_path: Path) -> dict[
         "episode_manifest", "map_manifest", "mission_geometry", "mapping_runtime",
         "cleaning_runtime", "lifecycle_acceptance", "coverage_runtime", "session", "snapshot",
     }
+    if stored.get("safety_manager_speed") is not None:
+        required.add("safety_manager_readback")
     if set(evidence) != required:
         raise BaselineError("baseline evidence ledger is incomplete or unexpected")
     for name, row in evidence.items():
@@ -387,6 +410,10 @@ def validate(input_path: Path, session_path: Path, snapshot_path: Path) -> dict[
         coverage_runtime=Path(evidence["coverage_runtime"]["path"]),
         session_path=session_path,
         snapshot_path=snapshot_path,
+        safety_manager_readback=(Path(evidence["safety_manager_readback"]["path"])
+            if "safety_manager_readback" in evidence else None),
+        expected_safety_cap=_strict_number(stored.get("safety_manager_speed", {}), "effective_max_linear_velocity_mps", "baseline.safety_manager_speed")
+            if stored.get("safety_manager_speed") is not None else 0.45,
     )
     if rebuilt != stored:
         raise BaselineError("baseline contents do not equal recomputed source evidence")
@@ -402,6 +429,8 @@ def main() -> int:
         "lifecycle_acceptance", "coverage_runtime", "session", "snapshot", "output",
     ):
         generate_parser.add_argument("--" + name.replace("_", "-"), type=Path, required=True)
+    generate_parser.add_argument("--safety-manager-readback", type=Path)
+    generate_parser.add_argument("--expected-safety-cap", type=float, default=0.45)
     validate_parser = subparsers.add_parser("validate")
     validate_parser.add_argument("--input", type=Path, required=True)
     validate_parser.add_argument("--session", type=Path, required=True)
