@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "source_domain": "public_gazebo_sensor",
+  "class_ids": [
+    "litter_cube",
+    "fallen_leaves",
+    "dust_or_soil",
+    "puddle"
+  ],
+  "scene_groups": {
+    "calibration": [
+      "map-0-mission-0", "map-1-mission-17", "map-2-mission-34", "map-3-mission-51",
+      "map-4-mission-68", "map-5-mission-85", "map-6-mission-102", "map-7-mission-119",
+      "map-8-mission-136", "map-9-mission-153", "map-10-mission-170", "map-11-mission-187",
+      "map-12-mission-4", "map-13-mission-21", "map-14-mission-38", "map-15-mission-55",
+      "map-16-mission-72", "map-17-mission-89", "map-18-mission-106", "map-19-mission-123"
+    ],
+    "holdout": [
+      "map-20-mission-140", "map-21-mission-157", "map-22-mission-174", "map-23-mission-191"
+    ]
+  },
+  "execution": {
+    "per_scene_quota": 25,
+    "calibration_capacity": 500,
+    "holdout_capacity": 100,
+    "non_evidence_note": "Scene identifiers provide public train diversity only. Actual four-class visibility, background, and viewpoint coverage must be reviewed from frozen public RGB tensors before compiler admission."
+  }
+}
