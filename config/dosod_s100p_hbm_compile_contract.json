@@ -56,8 +56,8 @@
     "files": [
       {
         "relative_path": "configs/dosod/rep_dosod_mlp3x_s_100e_1x8gpus_obj365v1_goldg_train_lvis_minival.py",
-        "byte_size": 717,
-        "sha256": "7f827487334848a74c387e81dde9b3e1f115f0adf23487e46b64897b86b8f14b"
+        "byte_size": 719,
+        "sha256": "2b0d9be4b250e322413d590bbd15465efcb52cfbfe0819c857ef9da680750db7"
       },
       {
         "relative_path": "deploy/export_onnx.py",
