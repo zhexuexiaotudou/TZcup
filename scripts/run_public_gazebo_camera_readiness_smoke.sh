@@ -112,7 +112,10 @@ set +e; wait -n -p finished "$PREFLIGHT_PID" "$DEADLINE_PID"; status=$?; set -e
 left="$(remaining)" || exit 124
 set +e
 setsid timeout -k 1 "$left" bash -c '
-  set -Eeuo pipefail; for setup in "$@"; do source "$setup"; done
+  set -Eeuo pipefail
+  set +u
+  for setup in "$@"; do source "$setup"; done
+  set -u
   while IFS= read -r name; do
     case "$name" in
       PATH|PYTHONPATH|LD_LIBRARY_PATH|PKG_CONFIG_PATH|AMENT_PREFIX_PATH|CMAKE_PREFIX_PATH|COLCON_PREFIX_PATH|COLCON_CURRENT_PREFIX|ROS_DISTRO|ROS_VERSION|ROS_PYTHON_VERSION|ROS_PACKAGE_PATH|RMW_IMPLEMENTATION|GZ_SIM_RESOURCE_PATH|GZ_SIM_SYSTEM_PLUGIN_PATH|GZ_CONFIG_PATH|IGN_GAZEBO_RESOURCE_PATH|IGN_GAZEBO_SYSTEM_PLUGIN_PATH|IGN_CONFIG_PATH|GAZEBO_RESOURCE_PATH|GAZEBO_PLUGIN_PATH|GAZEBO_MODEL_PATH) [[ "$name" != *TOKEN* && "$name" != *PASSWORD* && "$name" != *SECRET* && "$name" != *CREDENTIAL* && "$name" != *AUTH* && "$name" != *KEY* ]] && declare -px "$name" ;;
