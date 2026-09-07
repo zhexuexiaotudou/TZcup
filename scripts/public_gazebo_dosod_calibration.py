@@ -41,6 +41,9 @@ YAW_SEPARATION_RAD = math.radians(15.0)
 RETRYABLE_MOBILE_REJECTIONS = frozenset({
     "mobile_nav2_action_server_missing",
     "mobile_nav2_goal_not_bt_navigator_executing",
+    "mobile_odom_source_missing",
+    "mobile_image_source_missing",
+    "mobile_camera_info_source_missing",
     "mobile_odom_or_camera_tf_missing",
     "mobile_odom_or_camera_tf_not_fresh",
     "mobile_camera_tf_source_missing",
@@ -191,6 +194,42 @@ class MobileEvidence:
     tf_translation: tuple[float, float, float] = (0.0, 0.0, 0.0)
     tf_quaternion: tuple[float, float, float, float] = (0.0, 0.0, 0.0, 1.0)
     tf_static_source_gid: str = ""
+    odom_source_node: str = ""
+    odom_source_gid: str = ""
+    image_source_node: str = ""
+    image_source_gid: str = ""
+    camera_info_source_node: str = ""
+    camera_info_source_gid: str = ""
+
+
+def _valid_endpoint_gid(value: str) -> bool:
+    return bool(re.fullmatch(r"[0-9a-f]{32}", value)) and value != "0" * 32
+
+
+def require_sole_publisher_identity(
+    infos: list[Any], *, topic: str, node_name: str, topic_type: str, missing: str
+) -> str:
+    """Return the sole expected ROS publisher GID, or fail closed."""
+
+    if not infos:
+        raise CalibrationRejected(missing)
+    if len(infos) != 1:
+        raise CalibrationRejected("mobile_sensor_source_identity_invalid")
+    source = infos[0]
+    if (
+        source.node_name != node_name
+        or source.node_namespace != "/"
+        or source.topic_type != topic_type
+        or not topic.startswith("/")
+    ):
+        raise CalibrationRejected("mobile_sensor_source_identity_invalid")
+    try:
+        gid = bytes(source.endpoint_gid).hex()
+    except (AttributeError, TypeError, ValueError) as exc:
+        raise CalibrationRejected("mobile_sensor_source_identity_invalid") from exc
+    if not _valid_endpoint_gid(gid):
+        raise CalibrationRejected("mobile_sensor_source_identity_invalid")
+    return gid
 
 
 def _angle_delta(left: float, right: float) -> float:
@@ -204,6 +243,17 @@ def require_mobile_evidence(*, image_stamp_ns: int, image_frame: str, evidence: 
         raise CalibrationRejected("mobile_nav2_action_identity_invalid")
     if evidence.action_status != 2:
         raise CalibrationRejected("mobile_nav2_goal_not_bt_navigator_executing")
+    if (
+        evidence.odom_source_node != "local_ekf"
+        or evidence.image_source_node != "formal_legacy_topic_adapter"
+        or evidence.camera_info_source_node != "formal_legacy_topic_adapter"
+        or not all(_valid_endpoint_gid(value) for value in (
+            evidence.odom_source_gid,
+            evidence.image_source_gid,
+            evidence.camera_info_source_gid,
+        ))
+    ):
+        raise CalibrationRejected("mobile_sensor_source_identity_invalid")
     if evidence.camera_frame != image_frame or evidence.odom_stamp_ns <= 0:
         raise CalibrationRejected("mobile_odom_or_camera_tf_missing")
     if image_stamp_ns - evidence.odom_stamp_ns > MOBILE_EVIDENCE_MAX_AGE_NS or evidence.odom_stamp_ns > image_stamp_ns:
@@ -454,6 +504,21 @@ def collect_live(*, output: Path, plan: dict[str, Any], contract: dict[str, Any]
     def mobile_evidence(image: Image) -> MobileEvidence:
         if latest_odom is None:
             raise CalibrationRejected("mobile_odom_or_camera_tf_missing")
+        odom_gid = require_sole_publisher_identity(
+            node.get_publishers_info_by_topic("/odom"), topic="/odom",
+            node_name="local_ekf", topic_type="nav_msgs/msg/Odometry",
+            missing="mobile_odom_source_missing",
+        )
+        image_gid = require_sole_publisher_identity(
+            node.get_publishers_info_by_topic(topic), topic=topic,
+            node_name="formal_legacy_topic_adapter", topic_type="sensor_msgs/msg/Image",
+            missing="mobile_image_source_missing",
+        )
+        camera_gid = require_sole_publisher_identity(
+            node.get_publishers_info_by_topic(camera_info_topic), topic=camera_info_topic,
+            node_name="formal_legacy_topic_adapter", topic_type="sensor_msgs/msg/CameraInfo",
+            missing="mobile_camera_info_source_missing",
+        )
         gid = action_server_gid()
         active = [goal for goal, status in action_statuses.items() if status == (2, gid)]
         if len(active) != 1:
@@ -479,7 +544,7 @@ def collect_live(*, output: Path, plan: dict[str, Any], contract: dict[str, Any]
         if len(static) != 1:
             raise CalibrationRejected("mobile_camera_tf_source_invalid")
         translation, rotation = transform.transform.translation, transform.transform.rotation
-        return MobileEvidence(active[0], 2, "bt_navigator:" + gid, odom_stamp, float(pose.position.x), float(pose.position.y), yaw, tf_stamp, str(image.header.frame_id), (float(translation.x), float(translation.y), float(translation.z)), (float(rotation.x), float(rotation.y), float(rotation.z), float(rotation.w)), bytes(static[0].endpoint_gid).hex())
+        return MobileEvidence(active[0], 2, "bt_navigator:" + gid, odom_stamp, float(pose.position.x), float(pose.position.y), yaw, tf_stamp, str(image.header.frame_id), (float(translation.x), float(translation.y), float(translation.z)), (float(rotation.x), float(rotation.y), float(rotation.z), float(rotation.w)), bytes(static[0].endpoint_gid).hex(), "local_ekf", odom_gid, "formal_legacy_topic_adapter", image_gid, "formal_legacy_topic_adapter", camera_gid)
     def consume_pair(pair: tuple[dict[str, str], Any, Any] | None) -> None:
         if pair is None:
             return

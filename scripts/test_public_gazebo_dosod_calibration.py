@@ -88,14 +88,30 @@ def test_pair_cache_accepts_both_orders_and_evicts_flooded_unmatched_frames():
     assert cache.put_image(('front',14),a,'stale') is None
 
 def evidence(**changes):
-    value=dict(goal_uuid='a'*32,action_status=2,action_server='bt_navigator:'+'b'*32,odom_stamp_ns=10_000_000_000,odom_x=0.,odom_y=0.,odom_yaw=0.,tf_stamp_ns=10_000_000_000,camera_frame='front',tf_static_source_gid='c'*32)
+    value=dict(goal_uuid='a'*32,action_status=2,action_server='bt_navigator:'+'b'*32,odom_stamp_ns=10_000_000_000,odom_x=0.,odom_y=0.,odom_yaw=0.,tf_stamp_ns=10_000_000_000,camera_frame='front',tf_static_source_gid='c'*32,odom_source_node='local_ekf',odom_source_gid='d'*32,image_source_node='formal_legacy_topic_adapter',image_source_gid='e'*32,camera_info_source_node='formal_legacy_topic_adapter',camera_info_source_gid='f'*32)
     value.update(changes); return subject.MobileEvidence(**value)
+
+class Endpoint:
+    def __init__(self, node_name='local_ekf', node_namespace='/', topic_type='nav_msgs/msg/Odometry', endpoint_gid=b'\x01'*16):
+        self.node_name=node_name; self.node_namespace=node_namespace; self.topic_type=topic_type; self.endpoint_gid=endpoint_gid
+
+def sole(infos):
+    return subject.require_sole_publisher_identity(infos,topic='/odom',node_name='local_ekf',topic_type='nav_msgs/msg/Odometry',missing='mobile_odom_source_missing')
+
+def test_sole_publisher_identity_requires_one_exact_nonzero_16_byte_endpoint():
+    assert sole([Endpoint()]) == '01'*16
+    with pytest.raises(subject.CalibrationRejected,match='mobile_odom_source_missing'): sole([])
+    with pytest.raises(subject.CalibrationRejected,match='sensor_source_identity_invalid'): sole([Endpoint(),Endpoint()])
+    for changes in ({'node_name':'wrong'},{'node_namespace':'/other'},{'topic_type':'sensor_msgs/msg/Image'},{'endpoint_gid':b'\x02'*15},{'endpoint_gid':b'\0'*16}):
+        with pytest.raises(subject.CalibrationRejected,match='sensor_source_identity_invalid'):
+            sole([Endpoint(**changes)])
 
 def test_mobile_admission_rejects_old_action_semantics_missing_tf_and_stale_odom():
     with pytest.raises(subject.CalibrationRejected,match='executing'): subject.require_mobile_evidence(image_stamp_ns=10_000_000_000,image_frame='front',evidence=evidence(action_status=4),accepted_poses=[])
     with pytest.raises(subject.CalibrationRejected,match='missing'): subject.require_mobile_evidence(image_stamp_ns=10_000_000_000,image_frame='front',evidence=evidence(camera_frame='other'),accepted_poses=[])
     with pytest.raises(subject.CalibrationRejected,match='fresh'): subject.require_mobile_evidence(image_stamp_ns=10_000_000_000,image_frame='front',evidence=evidence(odom_stamp_ns=7_999_999_999),accepted_poses=[])
     with pytest.raises(subject.CalibrationRejected,match='identity_invalid'): subject.require_mobile_evidence(image_stamp_ns=10_000_000_000,image_frame='front',evidence=evidence(action_server='bt_navigator:not-a-gid'),accepted_poses=[])
+    with pytest.raises(subject.CalibrationRejected,match='sensor_source_identity_invalid'): subject.require_mobile_evidence(image_stamp_ns=10_000_000_000,image_frame='front',evidence=evidence(odom_source_node='wrong'),accepted_poses=[])
 
 def test_mobile_admission_pose_thresholds_and_yaw_wrap_are_strict():
     accepted=[(0.,0.,-3.13)]
@@ -111,7 +127,11 @@ def test_mobile_evidence_is_frozen_in_provenance_and_selector_nonce_remains_pair
     p={"source_domain":"public_gazebo_sensor","class_ids":list(subject.CLASS_IDS),"scene_groups":{"calibration":["c"],"holdout":["h"]}}; c=contract(); c['calibration']['minimum_sample_count']=1; monkeypatch.setattr(subject,'MIN_HOLDOUT_SAMPLES',1)
     store=subject.PublicGazeboStore(tmp_path/'out',c,p,per_scene_quota=1)
     mobile=evidence(odom_stamp_ns=1,tf_stamp_ns=1); assert store.add(replace(frame('c',1,selector=True), mobile_evidence=mobile))
-    proof=json.loads((store.output/'provenance/000000.json').read_text()); assert proof['mobile_evidence']['goal_uuid']=='a'*32
+    proof=json.loads((store.output/'provenance/000000.json').read_text()); source=proof['mobile_evidence']
+    assert source['goal_uuid']=='a'*32
+    assert (source['odom_source_node'],source['odom_source_gid']) == ('local_ekf','d'*32)
+    assert (source['image_source_node'],source['image_source_gid']) == ('formal_legacy_topic_adapter','e'*32)
+    assert (source['camera_info_source_node'],source['camera_info_source_gid']) == ('formal_legacy_topic_adapter','f'*32)
 
 def test_holdout_mobile_evidence_is_frozen_in_disjoint_provenance(tmp_path, monkeypatch):
     p={"source_domain":"public_gazebo_sensor","class_ids":list(subject.CLASS_IDS),"scene_groups":{"calibration":["c"],"holdout":["h"]}}; c=contract(); c['calibration']['minimum_sample_count']=1; monkeypatch.setattr(subject,'MIN_HOLDOUT_SAMPLES',1)
@@ -119,11 +139,15 @@ def test_holdout_mobile_evidence_is_frozen_in_disjoint_provenance(tmp_path, monk
     mobile=evidence(odom_stamp_ns=2,tf_stamp_ns=2); assert not store.add(replace(frame('h',2,selector=True), mobile_evidence=mobile))
     row=store.holdout_records[0]; proof=json.loads((store.output/row['provenance']).read_text())
     assert row['source_role']=='evaluation_holdout_only'
-    assert proof['mobile_evidence']['goal_uuid']=='a'*32 and proof['stamp_ns']==2
+    source=proof['mobile_evidence']; assert source['goal_uuid']=='a'*32 and proof['stamp_ns']==2
+    assert (source['odom_source_node'],source['odom_source_gid']) == ('local_ekf','d'*32)
+    assert (source['image_source_node'],source['image_source_gid']) == ('formal_legacy_topic_adapter','e'*32)
+    assert (source['camera_info_source_node'],source['camera_info_source_gid']) == ('formal_legacy_topic_adapter','f'*32)
 
 def test_only_explicit_mobile_not_ready_rejections_are_retryable():
     assert 'mobile_odom_or_camera_tf_missing' in subject.RETRYABLE_MOBILE_REJECTIONS
     assert 'mobile_pose_not_materially_distinct' in subject.RETRYABLE_MOBILE_REJECTIONS
+    assert {'mobile_odom_source_missing','mobile_image_source_missing','mobile_camera_info_source_missing'} <= subject.RETRYABLE_MOBILE_REJECTIONS
     for fatal in ('mobile_odom_pose_invalid','mobile_odom_frame_invalid','mobile_camera_tf_invalid','mobile_camera_tf_source_invalid','mobile_nav2_action_server_not_bt_navigator','mobile_nav2_action_identity_invalid'):
         assert fatal not in subject.RETRYABLE_MOBILE_REJECTIONS
 
