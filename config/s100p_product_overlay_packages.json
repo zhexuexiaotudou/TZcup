@@ -45,6 +45,11 @@
   "evaluator_only_exec_dependencies": [
     "ros_gz_interfaces"
   ],
+  "evaluator_only_package": {
+    "name": "sanitation_perception_evaluator",
+    "package_xml_relative_path": "starter_ws/src/sanitation_perception_evaluator/package.xml",
+    "board_overlay_deployed": false
+  },
   "board_base_runtime_package_exemptions": [
     "ai_msgs",
     "cv_bridge",

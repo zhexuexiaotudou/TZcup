@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 import shutil
 
@@ -48,6 +49,16 @@ def _write(tmp_path: Path, payload: dict) -> Path:
         target = tmp_path / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy(ROOT / relative, target)
+    # This isolated fixture stubs snapshot verification; bind both declarations
+    # to its copied snapshot rather than to a generated repository snapshot
+    # whose bytes may legitimately advance independently of this unit test.
+    for binding in (
+        payload["current_snapshot"],
+        payload["evidence_paths"]["source_snapshot"],
+    ):
+        binding["sha256"] = hashlib.sha256(
+            (tmp_path / binding["path"]).read_bytes()
+        ).hexdigest()
     config = tmp_path / "readiness.yaml"
     config.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
     return config

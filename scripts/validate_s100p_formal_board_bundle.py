@@ -237,7 +237,7 @@ def _payload_role_checks(
 
 
 def _runtime_dependency_closure_checks(
-    overlay: Mapping[str, Any], package_xml: str, launch: str, blockers: list[str]
+    overlay: Mapping[str, Any], package_xml: str, evaluator_package_xml: str, launch: str, blockers: list[str]
 ) -> dict[str, bool]:
     checks: dict[str, bool] = {}
     try:
@@ -249,6 +249,11 @@ def _runtime_dependency_closure_checks(
         _append(blockers, "sanitation_perception_package_xml_unparseable")
         return {"sanitation_perception_package_xml_parseable": False}
     checks["sanitation_perception_package_xml_parseable"] = True
+    try:
+        evaluator_root = ElementTree.fromstring(evaluator_package_xml)
+        evaluator_exec = {(node.text or "").strip() for node in evaluator_root.findall("exec_depend") if (node.text or "").strip()}
+    except ElementTree.ParseError:
+        evaluator_exec = set()
     checks["sanitation_perception_exec_dependencies_exact"] = actual_exec_dependencies == SANITATION_PERCEPTION_EXEC_DEPENDENCIES
     if not checks["sanitation_perception_exec_dependencies_exact"]:
         _append(blockers, "sanitation_perception_exec_dependencies_unexpected")
@@ -267,6 +272,7 @@ def _runtime_dependency_closure_checks(
     exemptions_set, exemptions_unique = _string_set(exemptions)
     launch_base_set, launch_base_unique = _string_set(launch_base)
     evaluator_only_set, evaluator_only_unique = _string_set(overlay.get("evaluator_only_exec_dependencies"))
+    evaluator_package = overlay.get("evaluator_only_package")
     package_rows = overlay.get("packages")
     package_names = {
         row.get("name") for row in package_rows if isinstance(row, Mapping) and isinstance(row.get("name"), str)
@@ -278,7 +284,12 @@ def _runtime_dependency_closure_checks(
         provided_unique and exemptions_unique and evaluator_only_unique
         and provided_set == package_names == {"sanitation_perception", "sanitation_perception_interfaces"}
         and evaluator_only_set == EVALUATOR_ONLY_EXEC_DEPENDENCIES
-        and evaluator_only_set <= actual_exec_dependencies
+        and evaluator_only_set <= evaluator_exec
+        and not (evaluator_only_set & actual_exec_dependencies)
+        and isinstance(evaluator_package, Mapping)
+        and evaluator_package.get("name") == "sanitation_perception_evaluator"
+        and evaluator_package.get("package_xml_relative_path") == "starter_ws/src/sanitation_perception_evaluator/package.xml"
+        and evaluator_package.get("board_overlay_deployed") is False
         and not (evaluator_only_set & (provided_set | exemptions_set | launch_base_set))
         and exemptions_set == ((actual_exec_dependencies - provided_set - evaluator_only_set) | launch_base_set)
         and not (provided_set & exemptions_set)
@@ -351,11 +362,12 @@ def _semantic_checks(root: Path, payload_roles: Any, blockers: list[str]) -> dic
     profile, profile_error = _read_text(root / "starter_ws/src/sanitation_perception/config/open_vocab_s100_profile.yaml")
     package, package_error = _read_text(root / "starter_ws/src/sanitation_perception/package.xml")
     interfaces, interfaces_error = _read_text(root / "starter_ws/src/sanitation_perception_interfaces/package.xml")
+    evaluator, evaluator_error = _read_text(root / "starter_ws/src/sanitation_perception_evaluator/package.xml")
     setup, setup_error = _read_text(root / "starter_ws/src/sanitation_perception/setup.py")
     source_errors = {
         name: error for name, error in (
             ("launch", launch_error), ("profile", profile_error), ("package_xml", package_error),
-            ("interfaces_package_xml", interfaces_error), ("setup", setup_error),
+            ("interfaces_package_xml", interfaces_error), ("evaluator_package_xml", evaluator_error), ("setup", setup_error),
         ) if error
     }
     if source_errors:
@@ -364,10 +376,10 @@ def _semantic_checks(root: Path, payload_roles: Any, blockers: list[str]) -> dic
             _append(blockers, f"semantic_bound_source_{source_error}:{name}")
         checks["semantic_bound_sources_readable"] = False
         return checks
-    assert launch is not None and profile is not None and package is not None and interfaces is not None and setup is not None
+    assert launch is not None and profile is not None and package is not None and interfaces is not None and evaluator is not None and setup is not None
     checks["semantic_bound_sources_readable"] = True
     checks.update(_payload_role_checks(payload_roles, product, parameters, launch, blockers))
-    checks.update(_runtime_dependency_closure_checks(overlay, package, launch, blockers))
+    checks.update(_runtime_dependency_closure_checks(overlay, package, evaluator, launch, blockers))
     checks["launch_binds_dosod_edgesam_and_project_adapters"] = all(
         token in launch
         for token in (

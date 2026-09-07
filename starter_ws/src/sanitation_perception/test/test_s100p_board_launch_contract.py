@@ -237,7 +237,9 @@ def test_s100p_board_configs_survive_sdist_and_install_data(tmp_path: Path):
         capture_output=True,
         text=True,
     )
-    installed_config = install_root / "usr" / "share" / "sanitation_perception" / "config"
+    installed_configs = list(install_root.glob("**/share/sanitation_perception/config"))
+    assert len(installed_configs) == 1
+    installed_config = installed_configs[0]
     for name in (
         "s100p_product_overlay_packages.json",
         "s100p_product_board_launch_parameters.json",

@@ -21,6 +21,35 @@ SPEC.loader.exec_module(MODULE)
 
 
 class S100PFormalBoardBundleTests(unittest.TestCase):
+    def _closure(self, overlay: dict) -> tuple[dict, list[str]]:
+        product = (ROOT / "starter_ws/src/sanitation_perception/package.xml").read_text(encoding="utf-8")
+        evaluator = (ROOT / "starter_ws/src/sanitation_perception_evaluator/package.xml").read_text(encoding="utf-8")
+        launch = (ROOT / "starter_ws/src/sanitation_perception/launch/formal_s100p_open_vocab.launch.py").read_text(encoding="utf-8")
+        blockers: list[str] = []
+        return MODULE._runtime_dependency_closure_checks(overlay, product, evaluator, launch, blockers), blockers
+
+    def test_evaluator_only_dependency_requires_separate_nonboard_package(self) -> None:
+        overlay = json.loads((ROOT / "config/s100p_product_overlay_packages.json").read_text(encoding="utf-8"))
+        checks, _ = self._closure(overlay)
+        self.assertTrue(checks["overlay_runtime_dependency_closure_classified"])
+        for key, value in (("evaluator_only_package", {}),):
+            altered = copy.deepcopy(overlay); altered[key] = value
+            checks, blockers = self._closure(altered)
+            self.assertFalse(checks["overlay_runtime_dependency_closure_classified"])
+            self.assertIn("overlay_runtime_dependency_closure_unclassified", blockers)
+
+    def test_evaluator_dependency_cannot_pollute_product_or_board_overlay(self) -> None:
+        overlay = json.loads((ROOT / "config/s100p_product_overlay_packages.json").read_text(encoding="utf-8"))
+        for key in ("sanitation_perception_package_xml_exec_dependencies", "board_base_runtime_package_exemptions", "overlay_provided_runtime_packages"):
+            altered = copy.deepcopy(overlay); altered[key].append("ros_gz_interfaces")
+            checks, blockers = self._closure(altered)
+            if key == "sanitation_perception_package_xml_exec_dependencies":
+                self.assertFalse(checks["overlay_runtime_inventory_matches_package_xml"])
+                self.assertIn("overlay_runtime_inventory_does_not_match_package_xml", blockers)
+            else:
+                self.assertFalse(checks["overlay_runtime_dependency_closure_classified"])
+                self.assertIn("overlay_runtime_dependency_closure_unclassified", blockers)
+
     def test_current_manifest_is_copyable_but_deployment_blocked(self) -> None:
         report = MODULE.validate_manifest()
         self.assertEqual(report["status"], "BLOCKED")

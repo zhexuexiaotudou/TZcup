@@ -4387,9 +4387,9 @@
           "valid": true
         },
         "board_overlay_package_contract": {
-          "byte_size": 2195,
+          "byte_size": 2408,
           "path": "config/s100p_product_overlay_packages.json",
-          "sha256": "a1da03529ec9f1168819fee204e15142385e52c2b4934b4fb6ce1ca4d3e6bd09",
+          "sha256": "f28f3e73a2f0ec73f676e6987aaf7acf7f605b3651067a7e94bf0b480a2e953c",
           "valid": true
         },
         "dosod_edgesam_s100_profile": {
@@ -4419,7 +4419,7 @@
         "offline_predeploy_product_bundle": {
           "byte_size": 4157,
           "path": "config/s100p_product_artifact_bundle.json",
-          "sha256": "3fab776ea6209e83bf21c8a56014d51501e1874eec7126b9a09d79d0aa83ae06",
+          "sha256": "b9719f78d0947cd6a834e111ecc9b3c3a3d33f4dde8915ca13885208bd62689e",
           "valid": true
         },
         "perception_interfaces_package_manifest": {
