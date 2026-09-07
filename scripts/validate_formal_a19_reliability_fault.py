@@ -31,20 +31,34 @@ def _identity(path: Path) -> tuple[int, int, int, int, int]:
     return row.st_dev, row.st_ino, row.st_size, row.st_mtime_ns, row.st_mode
 
 
+def _normalized(path: Path) -> Path:
+    return Path(os.path.normpath(os.path.abspath(str(path))))
+
+
+def _no_symlink_ancestor(path: Path) -> None:
+    current = path
+    while True:
+        if stat.S_ISLNK(current.lstat().st_mode):
+            raise ValueError(f"symlink is forbidden: {current}")
+        if current.parent == current:
+            return
+        current = current.parent
+
+
 def _safe_file(path: Path, root: Path) -> None:
-    root, path = root.absolute(), path.absolute()
+    root, path = _normalized(root), _normalized(path)
+    if not root.is_dir():
+        raise ValueError(f"root is not a directory: {root}")
     try:
         path.relative_to(root)
     except ValueError as exc:
         raise ValueError(f"path escapes root: {path}") from exc
-    current = path
-    while True:
-        mode = current.lstat().st_mode
-        if stat.S_ISLNK(mode):
-            raise ValueError(f"symlink is forbidden: {current}")
-        if current == root:
-            break
-        current = current.parent
+    _no_symlink_ancestor(path)
+    resolved_root, resolved_path = root.resolve(strict=True), path.resolve(strict=True)
+    try:
+        resolved_path.relative_to(resolved_root)
+    except ValueError as exc:
+        raise ValueError(f"resolved path escapes root: {path}") from exc
     if not stat.S_ISREG(path.lstat().st_mode):
         raise ValueError(f"not a regular file: {path}")
 
@@ -64,14 +78,6 @@ def _stable_json(path: Path, root: Path) -> tuple[dict[str, Any], str]:
     if not isinstance(payload, dict):
         raise ValueError(f"JSON root is not an object: {path}")
     return payload, _hash(data)
-
-
-def _stable_bytes(path: Path, root: Path) -> bytes:
-    _safe_file(path, root)
-    before = _identity(path); data = path.read_bytes(); after = _identity(path)
-    if before != after:
-        raise ValueError(f"file changed while read: {path}")
-    return data
 
 
 def _require_exact(actual: Any, expected: list[str], label: str, blockers: list[str]) -> None:
@@ -136,13 +142,7 @@ def _candidate_checks(report: dict[str, Any], contract: dict[str, Any], now_ns: 
     ):
         blockers.append("raw evidence lacks regular-file SHA-256 and byte-size bindings")
     else:
-        for name, row in evidence.items():
-            try:
-                data = _stable_bytes(evidence_root / row["path"], evidence_root)
-                if len(data) != row["byte_size"] or _hash(data) != row["sha256"]:
-                    blockers.append(f"raw evidence {name} hash or byte-size mismatch")
-            except (OSError, ValueError) as exc:
-                blockers.append(f"raw evidence {name}: {exc}")
+        blockers.append("raw evidence has no canonical current-main producer schema and is not accepted")
     health = report.get("runtime_health")
     if not isinstance(health, dict) or any(health.get(name) is not True for name in contract["required_runtime_health"]):
         blockers.append("full Safety/Nav2/Watchdog health evidence is missing")
@@ -211,18 +211,20 @@ def validate(report_path: Path, snapshot_path: Path, session_path: Path, closure
 
 
 def _safe_output(path: Path, root: Path) -> None:
+    root, path = _normalized(root), _normalized(path)
+    if not root.is_dir():
+        raise ValueError(f"root is not a directory: {root}")
+    try:
+        path.parent.relative_to(root)
+    except ValueError as exc:
+        raise ValueError(f"output escapes root: {path}") from exc
+    _no_symlink_ancestor(path.parent)
+    try:
+        path.parent.resolve(strict=True).relative_to(root.resolve(strict=True))
+    except ValueError as exc:
+        raise ValueError(f"resolved output escapes root: {path}") from exc
     if path.exists() or path.is_symlink():
         raise ValueError(f"refusing to overwrite retained output: {path}")
-    # The output parent itself must be inside a non-symlink evidence root.
-    root = root.absolute()
-    path.absolute().parent.relative_to(root)
-    current = path.absolute().parent
-    while True:
-        if stat.S_ISLNK(current.lstat().st_mode):
-            raise ValueError(f"symlink is forbidden: {current}")
-        if current == root:
-            break
-        current = current.parent
 
 
 def main() -> int:

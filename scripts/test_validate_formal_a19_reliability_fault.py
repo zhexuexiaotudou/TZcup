@@ -7,7 +7,7 @@ import json
 import time
 from pathlib import Path
 
-from validate_formal_a19_reliability_fault import BLOCKED, ROOT, validate
+from validate_formal_a19_reliability_fault import BLOCKED, ROOT, _safe_output, validate
 
 
 def _write(path: Path, payload: object) -> None:
@@ -67,3 +67,27 @@ def test_future_and_pre_session_time_are_rejected(tmp_path: Path) -> None:
     result = _validate(paths)
     assert any("future" in item for item in result["blockers"])
     assert any("predates" in item for item in result["blockers"])
+
+
+def test_report_and_output_traversal_are_rejected(tmp_path: Path) -> None:
+    paths = _candidate(tmp_path); outside = tmp_path / "outside.json"; _write(outside, {})
+    result = validate(outside, paths[1], paths[2], paths[3], paths[4], repository_root=ROOT)
+    assert any("report: path escapes root" in item for item in result["blockers"])
+    try:
+        _safe_output(paths[4] / ".." / "outside.json", paths[4])
+    except ValueError as exc:
+        assert "output escapes root" in str(exc)
+    else:
+        raise AssertionError("output traversal must fail")
+
+
+def test_raw_semantic_claims_and_binding_drift_cannot_pass_without_schema(tmp_path: Path) -> None:
+    paths = _candidate(tmp_path); payload = json.loads(paths[0].read_text())
+    payload["raw_evidence"] = {name: {"path": "invented.jsonl", "sha256": "a" * 64, "byte_size": 1} for name in payload["raw_evidence"]}
+    payload["wall_clock_time_series"] = [{"wall_clock_epoch_ns": 2}, {"wall_clock_epoch_ns": 1}]
+    payload["process_exit"] = {"exit_code": 7}; payload["zero_survivor"] = {"survivor_count": 1}
+    payload["current_bindings"] = {"repository_commit": "0" * 40}
+    _write(paths[0], payload); result = _validate(paths)
+    assert result["status"] == BLOCKED
+    assert any("no canonical current-main runtime collector" in item.lower() for item in result["blockers"])
+    assert any("same-commit snapshot/session/runtime-closure" in item for item in result["blockers"])
