@@ -39,6 +39,13 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
     mode = context.perform_substitution(LaunchConfiguration("mission_mode"))
     if mode not in {"mapping", "cleaning"}:
         raise RuntimeError("mission_mode must be mapping or cleaning")
+    mapping_high_bandwidth_sensor_runtime = context.perform_substitution(
+        LaunchConfiguration("mapping_high_bandwidth_sensor_runtime")
+    )
+    if mapping_high_bandwidth_sensor_runtime not in {"true", "false"}:
+        raise RuntimeError(
+            "mapping_high_bandwidth_sensor_runtime must be true or false"
+        )
     cleaning_planner = context.perform_substitution(
         LaunchConfiguration("cleaning_planner")
     )
@@ -123,10 +130,6 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
         "cmd_vel_in_topic": "/cmd_vel_smoothed",
         "cmd_vel_out_topic": "/cmd_vel_gate",
     })
-    # Mapping has no high-bandwidth 3D publisher by contract.  Narrow only
-    # that runtime's collision monitor to the live, self-filtered 2D scan;
-    # saved-map cleaning retains the formal high-bandwidth source set.
-    configure_collision_monitor_sources(nav2, mission_mode=mode)
     canonical_scan = "/scan/navigation"
     nav2["amcl"]["ros__parameters"]["scan_topic"] = canonical_scan
     nav2["collision_monitor"]["ros__parameters"]["scan"]["topic"] = canonical_scan
@@ -134,6 +137,14 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
         nav2[costmap_name][costmap_name]["ros__parameters"][
             "obstacle_layer"
         ]["scan"]["topic"] = canonical_scan
+    # Scan-only mapping narrows all live obstacle consumers to the
+    # self-filtered 2D scan. The explicit public-mobile high-bandwidth opt-in
+    # retains and verifies MID360; saved-map cleaning retains its source set.
+    configure_collision_monitor_sources(
+        nav2,
+        mission_mode=mode,
+        high_bandwidth_sensor_runtime=mapping_high_bandwidth_sensor_runtime == "true",
+    )
     if mode == "mapping":
         # slam_toolbox initially sizes /map around laser returns.  At the
         # fixed open-boundary start, the physical base can lie just outside
@@ -267,7 +278,8 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                 "materialize_static_maps": "false",
                 "runtime_artifact_dir": str(artifact_root),
                 "high_bandwidth_sensor_runtime": (
-                    "false" if mode == "mapping" else "true"
+                    LaunchConfiguration("mapping_high_bandwidth_sensor_runtime")
+                    if mode == "mapping" else "true"
                 ),
                         "motion_profile_file": LaunchConfiguration("motion_profile_file"),
                         "operation_speed_profile_file": LaunchConfiguration(
@@ -420,6 +432,10 @@ def generate_launch_description() -> LaunchDescription:
     repository_root = EnvironmentVariable("TZCUP_REPOSITORY_ROOT", default_value=".")
     return LaunchDescription([
         DeclareLaunchArgument("mission_mode", default_value="mapping"),
+        DeclareLaunchArgument(
+            "mapping_high_bandwidth_sensor_runtime", default_value="false",
+            description="Mapping defaults to scan-only; public mobile calibration opts in explicitly.",
+        ),
         DeclareLaunchArgument("gui", default_value="true"),
         DeclareLaunchArgument("world"),
         DeclareLaunchArgument("world_name", default_value="campus_formal"),
