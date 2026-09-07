@@ -537,7 +537,7 @@ def test_static_audit_covers_each_contract_gate_exactly_once() -> None:
         "manifest_required": True,
         "merged_overlay_required": True,
         "symlink_install_allowed": False,
-        "runtime_package_count": 16,
+        "runtime_package_count": 18,
         "side_brush_surface_preflight_required": True,
         "typed_cleaning_telemetry_source_manifest_required": True,
         "water_normal_full_surface_hash_reverification_required": True,
@@ -568,6 +568,9 @@ def test_static_audit_covers_each_contract_gate_exactly_once() -> None:
             "whole_vehicle_interlock",
         ],
     }
+    assert {"opennav_coverage_msgs", "opennav_coverage"} <= set(
+        orchestration.FINAL_RUNTIME_PACKAGES
+    )
 
 
 def test_runtime_binding_gate_contract_and_retained_sidecars_have_one_authority(
@@ -2453,7 +2456,7 @@ def test_runtime_closure_verifier_binds_the_full_context(monkeypatch) -> None:
             "status": "FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED",
             "passed": True,
             "closure_sha256": "a" * 64,
-            "runtime_package_count": 16,
+            "runtime_package_count": 18,
             "side_brush_installed_xacro": "/tmp/frozen/install/vehicle.xacro",
             "side_brush_installed_xacro_sha256": "b" * 64,
             "side_brush_expanded_sdf_sha256": "c" * 64,
@@ -2484,7 +2487,7 @@ def test_runtime_closure_verifier_binds_the_full_context(monkeypatch) -> None:
         )
     ]
     assert result["phase"] == "before:test"
-    assert result["runtime_package_count"] == 16
+    assert result["runtime_package_count"] == 18
 
 
 def test_water_gate_rehashes_normal_and_full_surface_evidence_against_closure(
