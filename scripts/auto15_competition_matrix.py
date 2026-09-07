@@ -57,10 +57,13 @@ def write_json(path: Path, payload: object) -> None:
 
 
 def build_matrix(
-    state: dict, execution_evidence: dict | None = None, evidence_root: Path = ROOT
+    state: dict,
+    execution_evidence: dict | None = None,
+    evidence_root: Path = ROOT,
+    authoritative_source: Path | None = None,
 ) -> dict:
     product_contract = load_contract(DEFAULT_CONTRACT)
-    contract = validate_static_contract(product_contract)
+    contract = validate_static_contract(product_contract, authoritative_source)
     runtime_evidence = None
     if execution_evidence is not None:
         runtime_evidence = validate_auto15_execution_evidence(
@@ -70,6 +73,20 @@ def build_matrix(
     rows = []
     blocking_dependencies = []
     for scenario_id, title, dependencies in SCENARIOS:
+        scenario_evidence = (
+            runtime_evidence["scenario_evidence_counts"].get(scenario_id, {})
+            if runtime_evidence
+            else {}
+        )
+        scenario_groups = {
+            group
+            for execution, group in (
+                runtime_evidence["execution_to_mission_group"].items()
+                if runtime_evidence
+                else []
+            )
+            if execution.startswith(f"{scenario_id}:seed-")
+        }
         dep_states = {
             stage: state["stages"][stage]["status"] for stage in dependencies
         }
@@ -90,12 +107,16 @@ def build_matrix(
                 "component_evidence_status": (
                     "AVAILABLE" if not failed else "BLOCKED"
                 ),
-                "integrated_execution_status": "NOT_EXECUTED",
-                "scenario_seed_count": 0,
+                "integrated_execution_status": (
+                    "EVIDENCE_RETAINED_NOT_PRODUCT_ACCEPTED"
+                    if runtime_evidence
+                    else "NOT_EXECUTED"
+                ),
+                "scenario_seed_count": scenario_evidence.get("executions", 0),
                 "required_execution_ids": [next(execution_ids) for _ in range(contract["seed_count_per_scenario"])],
-                "formal_mission_count": 0,
-                "video_count": 0,
-                "mcap_count": 0,
+                "formal_mission_count": len(scenario_groups),
+                "video_count": scenario_evidence.get("videos", 0),
+                "mcap_count": scenario_evidence.get("mcaps", 0),
                 "first_blocking_dependency": failed[0] if failed else None,
                 "claim_boundary": (
                     "Existing stage evidence is indexed only; no AUTO-15 "
@@ -137,6 +158,7 @@ def main() -> int:
     parser.add_argument("--implementation-commit", required=True)
     parser.add_argument("--execution-evidence", type=Path)
     parser.add_argument("--evidence-root", type=Path, default=ROOT)
+    parser.add_argument("--authoritative-source", type=Path)
     args = parser.parse_args()
 
     state_path = Path(args.state).resolve()
@@ -149,7 +171,9 @@ def main() -> int:
             if args.execution_evidence
             else None
         )
-        matrix = build_matrix(state, execution_evidence, args.evidence_root)
+        matrix = build_matrix(
+            state, execution_evidence, args.evidence_root, args.authoritative_source
+        )
     except (OSError, json.JSONDecodeError, ProductAcceptanceContractError) as exc:
         parser.error(f"AUTO-15 execution evidence failed closed: {exc}")
     write_json(output / "competition_matrix.json", matrix)
@@ -168,7 +192,9 @@ def main() -> int:
         "required_seeds_per_scenario": matrix["required_seeds_per_scenario"],
         "required_unique_execution_count": matrix["required_unique_execution_count"],
         "retained_unique_execution_count": matrix["formal_video_count"],
-        "executed_seeds_per_scenario": 0,
+        "executed_seeds_per_scenario": min(
+            (row["scenario_seed_count"] for row in matrix["scenarios"]), default=0
+        ),
         "required_integrated_missions": 30,
         "executed_integrated_missions": matrix["executed_integrated_missions"],
         "formal_video_count": matrix["formal_video_count"],
@@ -201,13 +227,17 @@ def main() -> int:
         },
     ]
     write_json(output / "blocker_register.json", blockers)
-    unexecuted = [
-        "180 unique scenario/seed execution receipts (18 scenarios x 10 seeds)",
-        "30 distinct integrated formal mission groups",
-        "retained hash-verified video for every constituent execution",
-        "retained hash-verified MCAP for every constituent execution",
-        "aggregate competition metrics",
-    ]
+    unexecuted = (
+        [
+            "180 unique scenario/seed execution receipts (18 scenarios x 10 seeds)",
+            "30 distinct integrated formal mission groups",
+            "retained hash-verified video for every constituent execution",
+            "retained hash-verified MCAP for every constituent execution",
+            "aggregate competition metrics",
+        ]
+        if not matrix["runtime_execution_evidence_pass"]
+        else ["product-gate metrics and product runtime acceptance"]
+    )
     write_json(
         output / "stage_status.json",
         {
@@ -232,9 +262,10 @@ def main() -> int:
             "metrics": metrics,
             "unexecuted_items": unexecuted,
             "claim_boundary": (
-                "Static contract/cardinality validation passed, but no AUTO-15 "
-                "runtime execution receipts, videos, or MCAPs were supplied; "
-                "product runtime states remain false."
+                "Runtime receipts are evidence accounting only and do not "
+                "promote product runtime states."
+                if matrix["runtime_execution_evidence_pass"]
+                else "Static contract/cardinality validation passed, but no AUTO-15 runtime execution receipts, videos, or MCAPs were supplied; product runtime states remain false."
             ),
         },
     )

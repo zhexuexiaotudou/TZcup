@@ -4,6 +4,8 @@
   "authoritative_specification": {
     "a12_requirement_id": "A12",
     "path": "docs/a12-product-acceptance-specification.md",
+    "authoritative_source_path": ".workspace/specifications/acceptance/TZcup_仿真产品级最终验收标准与产品准入要求.md",
+    "canonical_content_sha256": "56466de739f873173bfba57789ceaa86e22aefecf3561712aa17d11c9ec3d1c4",
     "status": "VERSIONED_FIXED_BASELINE"
   },
   "claim_boundary": "Static validation proves only this declarative contract and its cardinality. It is not runtime evidence and must not promote any product runtime state.",
@@ -37,5 +39,13 @@
     "required_execution_count": 180,
     "minimum_mission_group_count": 30,
     "required_execution_evidence": ["video", "mcap"]
+  },
+  "auto15_runtime_receipt_contract": {
+    "session_report_id": "tzcup_formal_final_acceptance_session_v1",
+    "runtime_binding_status": "FORMAL_RUNTIME_GATE_BOUND",
+    "video_audit_stage": "AUTO-17",
+    "mcap_replay_schema": "tzcup.coverage_mcap_replay.v1",
+    "required_provenance_fields": ["run_root", "source_commit", "source_tree", "model_sha256", "config_sha256", "dataset_sha256", "container_digest", "dependency_lock_sha256"],
+    "required_execution_fields": ["command", "exit_code", "started_epoch_ns", "finished_epoch_ns", "replay"]
   }
 }
