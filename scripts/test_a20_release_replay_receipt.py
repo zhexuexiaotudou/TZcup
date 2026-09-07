@@ -1,9 +1,19 @@
 import json
+import os
 from pathlib import Path
 
 import pytest
 
-from a20_release_replay_receipt import BLOCKER, _output_in_root, _regular_in_root, validate_receipt
+import a20_release_replay_receipt as receipt_module
+from a20_release_replay_receipt import (
+    BLOCKER,
+    _open_bound_input,
+    _output_in_root,
+    _read_bound_json,
+    _regular_in_root,
+    _write_fresh_output,
+    validate_receipt,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -41,3 +51,53 @@ def test_cli_paths_reject_escape_symlink_and_existing_output(tmp_path: Path) -> 
         pytest.skip(f"symbolic links unavailable: {exc}")
     with pytest.raises(ValueError, match="non-symlink"):
         _regular_in_root(root, link, "receipt")
+    directory = root / "real"
+    directory.mkdir()
+    (directory / "nested.json").write_text("{}", encoding="utf-8")
+    linked_directory = root / "linked"
+    linked_directory.symlink_to(directory, target_is_directory=True)
+    with pytest.raises(ValueError, match="symbolic-link ancestor"):
+        _regular_in_root(root, linked_directory / "nested.json", "receipt")
+
+
+def test_secure_output_rejects_pending_symlink_and_commit_race(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    root = tmp_path / "root"
+    root.mkdir()
+    output = root / "result.json"
+    outside = tmp_path / "outside.json"
+    pending = root / ".result.json.pending.fixed"
+    try:
+        pending.symlink_to(outside)
+    except OSError as exc:  # pragma: no cover - Windows without symlink privilege
+        pytest.skip(f"symbolic links unavailable: {exc}")
+    with pytest.raises(FileExistsError):
+        _write_fresh_output(root, output, {"blocked": True}, token="fixed")
+    assert not outside.exists()
+    pending.unlink()
+
+    real_link = os.link
+
+    def create_target_then_link(*args, **kwargs):
+        output.write_text("attacker", encoding="utf-8")
+        return real_link(*args, **kwargs)
+
+    monkeypatch.setattr(receipt_module.os, "link", create_target_then_link)
+    with pytest.raises(ValueError, match="appeared during commit"):
+        _write_fresh_output(root, output, {"blocked": True}, token="race")
+    assert output.read_text(encoding="utf-8") == "attacker"
+
+
+@pytest.mark.skipif(os.name == "nt", reason="secure dir_fd traversal is POSIX-only")
+def test_bound_input_rejects_mutation_after_read(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    receipt = tmp_path / "receipt.json"
+    receipt.write_text('{"receipt": "before"}', encoding="utf-8")
+    descriptor, identity = _open_bound_input(tmp_path, receipt)
+    actual_fstat = os.fstat
+
+    def mutate_before_fstat(fd: int):
+        receipt.write_text('{"receipt": "after after after"}', encoding="utf-8")
+        return actual_fstat(fd)
+
+    monkeypatch.setattr(receipt_module.os, "fstat", mutate_before_fstat)
+    with pytest.raises(ValueError, match="changed while being read"):
+        _read_bound_json(descriptor, identity)
