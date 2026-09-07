@@ -32,7 +32,7 @@
 3. A12 历史文档提到的 `product_acceptance_v1` 文件在当前仓库历史中不存在，不能假装仍由旧脚本覆盖。
 4. A15 的一次性 hidden materializer、consumed/freeze/output-summary 账本和最终 12 站点重验合同已闭合；当前状态仅是尚未在新鲜快照上执行，不是通过。
 5. A18 的 S100 性能部分与 A21 共用外部硬缺口，不能只标成“尚未运行”。
-6. A19 当前 26 门没有独立的全时长 soak/故障注入门；必须补齐或明确由哪些正式报告等价覆盖。
+6. A19 已有独立的两小时长稳/故障注入合同，但尚无当前 session/runtime closure 绑定的原始遥测、日志和故障收据，保持 `BLOCKED_UNTIL_CURRENT_SESSION_RUNTIME_EVIDENCE`。
 7. A20 的冻结/session 步骤存在，但当前 26 个功能门没有专用的密封、回放、发布和回滚 receipt；`component_register` 不是等价证据。
 8. A21 仍缺项目 DOSOD HBM、真实非仿真图像/标定与 holdout 数据、真实功率测量。板卡在线本身不等于验收通过。
 

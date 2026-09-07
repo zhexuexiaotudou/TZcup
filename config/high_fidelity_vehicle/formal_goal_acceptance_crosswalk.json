@@ -172,11 +172,11 @@
     {
       "id": "A19",
       "title": "长稳、故障注入与恢复",
-      "source": ["COMPETITION_REQUIREMENTS.md"],
+      "source": ["COMPETITION_REQUIREMENTS.md", "config/high_fidelity_vehicle/formal_a19_reliability_fault_contract.json"],
       "step_ids": ["single_episode", "multisite_product", "s100_live"],
-      "evidence_gates": ["end_to_end_cleaning_mission", "multi_site_product_generalization", "s100_live_runtime"],
-      "state": "CONTRACT_MAPPING_OPEN",
-      "blockers": ["The current 26-gate runner has no separate full-duration soak and fault-injection acceptance gate."]
+      "evidence_gates": ["a19_two_hour_reliability_fault"],
+      "state": "BLOCKED_UNTIL_CURRENT_SESSION_RUNTIME_EVIDENCE",
+      "blockers": ["The A19 contract requires a current two-hour collection with bound raw telemetry, logs, fault-injection receipt, formal session, and runtime closure; none is retained yet."]
     },
     {
       "id": "A20",

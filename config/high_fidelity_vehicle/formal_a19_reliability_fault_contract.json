@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "contract_id": "tzcup_formal_a19_two_hour_reliability_fault_contract_v1",
+  "goal": "A19",
+  "title": "two-hour reliability, fault injection, and recovery",
+  "current_state": "BLOCKED_UNTIL_CURRENT_SESSION_RUNTIME_EVIDENCE",
+  "claim_boundary": "A short soak, including the retained 65-second water-safety soak, is not evidence for this contract. A PASS requires one current frozen session and runtime closure, retained raw telemetry and logs, and the recorded fault outcomes below.",
+  "authoritative_sources": [
+    "COMPETITION_REQUIREMENTS.md#故障应急，制动 ≤1 s",
+    "docs/industrialization-and-sim2real.md#准入顺序",
+    "starter_ws/src/sanitation_tasks/config/sim2real_fault_profiles.yaml"
+  ],
+  "requirements": {
+    "minimum_duration_s": 7200,
+    "minimum_coverage_ratio": 0.9,
+    "maximum_collision_count": 0,
+    "maximum_localization_p95_m": 0.2,
+    "maximum_estop_brake_latency_s": 1.0,
+    "required_fault_profiles": [
+      "transport_stress",
+      "wet_surface",
+      "degraded_drive"
+    ],
+    "required_safety_outcome": "STOPPED_SAFE",
+    "required_recovery_outcome": "RECOVERED_SAFE",
+    "required_raw_evidence": [
+      "telemetry",
+      "launch_log",
+      "fault_injection"
+    ]
+  }
+}
