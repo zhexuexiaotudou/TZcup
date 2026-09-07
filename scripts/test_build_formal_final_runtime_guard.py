@@ -97,7 +97,8 @@ def test_final_builder_copies_a_regular_project_nvidia_egl_vendor_json_into_fres
 def test_final_builder_bounds_both_builds_in_one_exact_setsid_group() -> None:
     source = _source()
     assert 'FORMAL_COLCON_PARALLEL_WORKERS:-1' in source
-    assert '[[ "${parallel_workers}" = "1" ]]' in source
+    assert "formal_final_build_validate_parallel_workers" in source
+    assert 'formal_final_build_validate_parallel_workers "${parallel_workers}" || exit $?' in source
     assert 'export CMAKE_BUILD_PARALLEL_LEVEL="${parallel_workers}"' in source
     assert 'export MAKEFLAGS="-j${parallel_workers}"' in source
     assert 'setsid bash -c \'\n' in source
@@ -111,6 +112,44 @@ def test_final_builder_bounds_both_builds_in_one_exact_setsid_group() -> None:
     assert 'formal_runtime_start_memory_watchdog "${build_pid}" "${watchdog_prefix}"' in source
     assert 'wait "${build_pid}"' in source
     assert "formal_runtime_stop_memory_watchdog" in source
+
+
+def test_final_builder_worker_admission_executes_the_bounded_matrix() -> None:
+    source = _source()
+    admission = re.search(
+        r"formal_final_build_validate_parallel_workers\(\) \{.*?\n\}",
+        source,
+        flags=re.DOTALL,
+    )
+    assert admission is not None
+    admission_source = admission.group(0).replace("\r", "")
+
+    for workers in ("1", "2"):
+        result = subprocess.run(
+            ["bash"],
+            input=(
+                f"set -e\n{admission_source}\n"
+                f"formal_final_build_validate_parallel_workers {workers}\n"
+                "printf '%s\\n' admitted\n"
+            ).encode(),
+            capture_output=True,
+            check=False,
+        )
+        assert result.returncode == 0, result.stderr.decode()
+        assert result.stdout == b"admitted\n"
+    for workers in ("0", "3", "not-an-integer"):
+        result = subprocess.run(
+            ["bash"],
+            input=(
+                f"set -e\n{admission_source}\n"
+                f"formal_final_build_validate_parallel_workers {workers}\n"
+                "printf '%s\\n' admitted\n"
+            ).encode(),
+            capture_output=True,
+            check=False,
+        )
+        assert result.returncode == 2
+        assert "must be 1 or 2" in result.stderr.decode()
 
 
 def test_final_builder_builds_exactly_the_closed_project_and_opennav_package_set() -> None:

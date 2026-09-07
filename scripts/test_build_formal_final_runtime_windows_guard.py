@@ -40,10 +40,10 @@ def test_windows_builder_keeps_workers_bounded_and_runs_the_inner_gate() -> None
     memory_probe = (ROOT / "scripts/formal_windows_memory_probe.py").read_text(
         encoding="utf-8"
     )
-    assert "[ValidateRange(1, 1)]" in source
+    assert "[ValidateRange(1, 2)]" in source
     assert "[int]$Workers = 1" in source
     assert '"FORMAL_COLCON_PARALLEL_WORKERS=$Workers"' in source
-    assert "must be exactly 1 for formal serial recovery" in shell_builder
+    assert "must be 1 or 2 for formal bounded recovery" in shell_builder
     assert '"bash", "scripts/build_formal_final_runtime.sh"' in source
     assert "formal_runtime_memory_preflight" in shell_builder
     assert "FORMAL_WINDOWS_START_MIN_COMMIT_AVAILABLE_BYTES" in memory_probe
