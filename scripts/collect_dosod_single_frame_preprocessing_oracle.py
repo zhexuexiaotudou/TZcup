@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -40,7 +41,16 @@ def _preprocess(raw: dict[str, Any]) -> np.ndarray:
 
 
 def _run(command: list[str], timeout: float) -> tuple[int | None, str, str, dict[str, Any]]:
-    return run_owned_process(command, timeout_seconds=timeout)
+    # The outer supervisor owns this PGID.  Its final TERM/KILL sweep covers
+    # ORT and every HRT child; direct CLI use keeps the standalone session.
+    return run_owned_process(command, timeout_seconds=timeout,
+                             start_new_session=os.environ.get("TZCUP_ORACLE_OUTER_SUPERVISED") != "1")
+
+
+def _command_clean(execution: dict[str, Any]) -> bool:
+    return execution.get("zero_survivor") is True or (
+        os.environ.get("TZCUP_ORACLE_OUTER_SUPERVISED") == "1"
+        and execution.get("direct_process_reaped") is True)
 
 
 def _candidate_route(contract: dict[str, Any]) -> dict[str, Any]:
@@ -93,14 +103,14 @@ def collect(*, candidate_receipt: Path, official_capture_receipt: Path, onnx_mod
         version_code, version_stdout, version_stderr, version_exec = _run([str(hrt), "--version"], 30)
         receipt["version_stdout"] = _write(output, "hrt.version.stdout.txt", version_stdout); receipt["version_stderr"] = _write(output, "hrt.version.stderr.txt", version_stderr)
         receipt["runner_executions"]["version"] = {"command": [str(hrt), "--version"], "returncode": version_code, **version_exec}
-        if version_code != 0 or version_exec.get("zero_survivor") is not True:
+        if version_code != 0 or not _command_clean(version_exec):
             raise ValueError("oracle_hrt_version_failed")
         hbm = Path(candidate["candidate_hbm"]["path"])
         info_command = [item.format(runner=str(hrt), hbm=str(hbm)) for item in MODEL_INFO_TEMPLATE]
         info_code, info_stdout, info_stderr, info_exec = _run(info_command, 30)
         receipt["model_info"] = _write(output, "hrt.model_info.stdout.txt", info_stdout); _write(output, "hrt.model_info.stderr.txt", info_stderr)
         receipt["runner_executions"]["model_info"] = {"command": info_command, "returncode": info_code, **info_exec}
-        if info_code != 0 or info_exec.get("zero_survivor") is not True:
+        if info_code != 0 or not _command_clean(info_exec):
             raise ValueError("oracle_hrt_model_info_failed")
         name = next(iter(__import__("re").findall(r"^\[model name\]:\s*(.+?)\s*$", info_stdout, flags=__import__("re").MULTILINE)), None)
         if not name:
@@ -113,7 +123,7 @@ def collect(*, candidate_receipt: Path, official_capture_receipt: Path, onnx_mod
         command = [item.format(runner=str(hrt), hbm=str(hbm), inputs=",".join(str(item["path"]) for item in files), dump_path=str(dump) + "/") for item in COMMAND_TEMPLATE]
         code, stdout, stderr, execution = _run(command, 120)
         receipt["infer_stdout"] = _write(output, "hrt.infer.stdout.txt", stdout); receipt["infer_stderr"] = _write(output, "hrt.infer.stderr.txt", stderr); receipt["infer_command"] = command; receipt["infer_execution"] = execution; receipt["runner_executions"]["infer"] = {"command": command, "returncode": code, **execution}
-        if code != 0 or execution.get("zero_survivor") is not True:
+        if code != 0 or not _command_clean(execution):
             raise ValueError("oracle_hrt_infer_failed")
         for name, binding in contract["runtime_outputs"].items():
             path = dump / _dump_filename(binding); normal_file(path, f"oracle_hbm_{name}")

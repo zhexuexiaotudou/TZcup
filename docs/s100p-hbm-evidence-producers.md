@@ -23,8 +23,30 @@ actuator, calibration capture, or receipt-synthesis behavior.
 The required order is compile-contract validator, ONNX/toolchain preflight,
 actual compile receipt, x86 or board-equivalent parity, then metric regression.
 Before the formal validator, W7 requires a retained `ORACLE_VERIFIED`
-single-frame preprocessing receipt.  A non-formal candidate HBM receipt is
-never a substitute and is rejected by the formal receipt ID checks.
+single-frame preprocessing finalizer accepted by the canonical validator. The
+ONNX preflight records its SHA-256 and the compile receipt binds its supplied
+path and SHA-256; a non-formal candidate HBM receipt is never a substitute.
+Create that finalizer only with a fresh supervisor output:
+
+```bash
+python3 scripts/run_dosod_single_frame_preprocessing_oracle_supervised.py \
+  --candidate-receipt <fresh_candidate_receipt> \
+  --official-capture-receipt <fresh_official_capture_receipt> \
+  --onnx-model .work/formal_perception_assets/dosod/dosod_mlp3x_s_tzcup_rep.onnx \
+  --hrt-model-exec <absolute_verified_oe_hrt_model_exec> \
+  --output <fresh_oracle_supervision_output>
+```
+
+The formal input is only
+`<fresh_oracle_supervision_output>/dosod_single_frame_preprocessing_oracle_supervision_receipt.json`.
+The supervisor applies the 180-second outer deadline and 9 GiB group-RSS
+watchdog; its `collector/` raw child is evidence for the finalizer, not an
+acceptable formal input itself.
+
+`<absolute_verified_oe_hrt_model_exec>` is the admitted OE/x86 bundle-built
+runner, with identity/hash/`model_info` evidence bound to this oracle contract.
+The board path `/usr/hobot/bin/hrt_model_exec` is only board-equivalent
+evidence and is not a valid substitute for this x86 oracle invocation.
 Candidate compilation reuses only the existing public-Gazebo canonical pilot
 manifest: its 25 `samples/*.npy` tensors, raw/provenance closure, and the
 hashed `public_gazebo_dosod_calibration.py` producer. The fixed bootstrap route

@@ -628,6 +628,7 @@ def run_ros_independent_tests() -> None:
         ROOT / "scripts" / "test_dosod_receipt_hardening.py",
         ROOT / "scripts" / "test_hbm_evidence_producers.py",
         ROOT / "scripts" / "test_dosod_single_frame_preprocessing_oracle.py",
+        ROOT / "scripts" / "test_dosod_oracle_watchdog.py",
         ROOT / "scripts" / "test_materialize_public_gazebo_dosod_holdout.py",
         ROOT / "scripts" / "test_parse_public_gazebo_topic_info.py",
         ROOT / "scripts" / "test_preflight_s100p_board_runtime.py",

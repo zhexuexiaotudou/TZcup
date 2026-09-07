@@ -142,6 +142,13 @@ After a fresh OE environment has been independently admitted, stage the frozen
 collector tree, then execute in order:
 
 ```bash
+python3 scripts/run_dosod_single_frame_preprocessing_oracle_supervised.py \
+  --candidate-receipt <fresh_candidate_receipt> \
+  --official-capture-receipt <fresh_official_capture_receipt> \
+  --onnx-model .work/formal_perception_assets/dosod/dosod_mlp3x_s_tzcup_rep.onnx \
+  --hrt-model-exec <absolute_verified_oe_hrt_model_exec> \
+  --output <fresh_oracle_supervision_output>
+
 python3 scripts/collect_dosod_s100p_compiler_identity.py \
   --toolchain-discovery artifacts/autonomous_auto14_20260730_evidence/toolchain_discovery.json \
   --output .work/dosod_s100p_compiler_identity.json
@@ -156,7 +163,8 @@ python3 scripts/validate_dosod_s100p_hbm_compile_contract.py \
   --artifact-root .work/formal_perception_assets \
   --upstream-root .work/perception_upstreams/dosod_pc \
   --calibration-dir <compiler_calibration_dir> \
-  --compiler-identity .work/dosod_s100p_compiler_identity.json
+  --compiler-identity .work/dosod_s100p_compiler_identity.json \
+  --preprocessing-oracle <fresh_oracle_finalizer>
 
 python3 scripts/auto14_onnx_preflight.py \
   --model .work/formal_perception_assets/dosod/dosod_mlp3x_s_tzcup_rep.onnx \
@@ -167,6 +175,7 @@ python3 scripts/auto14_onnx_preflight.py \
   --artifact-root .work/formal_perception_assets \
   --upstream-root .work/perception_upstreams/dosod_pc \
   --compiler-identity .work/dosod_s100p_compiler_identity.json \
+  --preprocessing-oracle <fresh_oracle_finalizer> \
   --march nash-m --jobs 1
 
 python3 scripts/execute_dosod_hbm_compile.py \
@@ -175,9 +184,29 @@ python3 scripts/execute_dosod_hbm_compile.py \
   --compile-config .work/dosod_s100p_compile/dosod_mlp3x_s_tzcup_rep_config.yaml \
   --compiler-identity .work/dosod_s100p_compiler_identity.json \
   --calibration-manifest <compiler_calibration_dir>/calibration_manifest.json \
+  --preprocessing-oracle <fresh_oracle_finalizer> \
   --output <fresh_compile_evidence_dir> \
   --compiler hb_compile
 ```
+
+`<fresh_oracle_finalizer>` is exactly
+`<fresh_oracle_supervision_output>/dosod_single_frame_preprocessing_oracle_supervision_receipt.json`.
+It is the outer-watchdog-supervised finalizer accepted by the canonical
+preprocessing-oracle validator. The supervisor owns one 180-second outer
+deadline and the 9 GiB group-RSS watchdog; its retained raw child under
+`<fresh_oracle_supervision_output>/collector/` is never a formal compile input.
+Each preflight and compile step revalidates only the finalizer through the
+canonical validator; the preflight records its SHA-256, and the compile receipt
+binds the supplied finalizer path and SHA-256 exactly.
+
+`<absolute_verified_oe_hrt_model_exec>` is the absolute resolved executable
+built from the admitted OE/x86 bundle. Its identity, hash, and `model_info`
+evidence must match this oracle contract. `/usr/hobot/bin/hrt_model_exec` is
+board-equivalent evidence only and must not be substituted for the OE/x86
+single-frame oracle.
+After `hb_compile` returns, the compile step revalidates the same finalizer and
+rejects any SHA-256 or canonical-validation drift while retaining the generated
+HBM only as blocked evidence.
 
 The contract locks the four-class ONNX/vocabulary/reparameterization hashes,
 float32 `[1,3,640,640]` RGB NCHW calibration tensor format, `nash-m`, RGB

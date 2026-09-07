@@ -1,5 +1,5 @@
 from __future__ import annotations
-import hashlib, importlib.util, json, sys, types
+import hashlib, importlib.util, json, shutil, sys, types
 from pathlib import Path
 import pytest
 HERE=Path(__file__).parent
@@ -87,21 +87,53 @@ def test_oracle_verified_receipt_derives_unique_bootstrap_route(tmp_path,monkeyp
  assert receipt['selected_route']=='BOOTSTRAP_SYMMETRIC_BLACK_V1'
  assert receipt['preprocessing']['route']==receipt['selected_route']
  assert receipt['preprocessing_sha256']==hashlib.sha256(json.dumps(receipt['preprocessing'],sort_keys=True,separators=(',',':')).encode()).hexdigest()
- # Do not stub validation: this checks the collector-written receipt against
- # the production validator and its re-audited upstream receipt bindings.
- assert validator.validate(Path(receipt['receipt_path']),contract_path=contract_path)['status']==validator.STATUS
+ # This collector behavior fixture deliberately bypasses only the outer
+ # supervisor; the raw verifier remains the production implementation.
+ assert validator._validate_raw(Path(receipt['receipt_path']),contract_path=contract_path)['status']==validator.STATUS
+ with pytest.raises(ValueError,match='finalizer_required'):
+  validator.validate(Path(receipt['receipt_path']),contract_path=contract_path)
 
 
 def test_oracle_rejects_legacy_symmetric_route(tmp_path,monkeypatch):
  receipt,_=_run_oracle_route_fixture(tmp_path,monkeypatch,'symmetric_black_zero_v1')
  assert receipt['status']=='BLOCKED'
  assert any('oracle_candidate_route_mismatch' in item for item in receipt['blockers'])
+
+
+def test_outer_supervision_reaudits_direct_htr_children_but_rejects_bare_raw(tmp_path,monkeypatch):
+ receipt,contract_path=_run_oracle_route_fixture(tmp_path,monkeypatch)
+ path=Path(receipt['receipt_path']); value=json.loads(path.read_text())
+ for execution in value['runner_executions'].values():
+  execution['zero_survivor']=False; execution['direct_process_reaped']=True
+ path.write_text(json.dumps(value))
+ assert validator._validate_raw(path,contract_path=contract_path,outer_supervised=True)['status']==validator.STATUS
+ with pytest.raises(ValueError,match='finalizer_required'):
+  validator.validate(path,contract_path=contract_path)
+
+
+def test_supervision_finalizer_is_the_only_canonical_oracle_receipt(tmp_path,monkeypatch):
+ receipt,contract_path=_run_oracle_route_fixture(tmp_path,monkeypatch)
+ raw_path=Path(receipt['receipt_path']); raw=json.loads(raw_path.read_text())
+ for execution in raw['runner_executions'].values():
+  execution['zero_survivor']=False; execution['direct_process_reaped']=True
+ final_root=tmp_path/'final'; child_root=final_root/'collector'; shutil.copytree(raw_path.parent,child_root)
+ child=child_root/raw_path.name; raw['receipt_path']=str(child.resolve()); child.write_text(json.dumps(raw))
+ watchdog=final_root/'memory_watchdog.json'; watchdog.write_text(json.dumps({'status':'FORMAL_MEMORY_WATCHDOG_COMPLETED','target_pgid':44,'surviving_group_processes':0,'breach_exit_code':86,'thresholds_kib':{'min_mem_available':3145728,'max_swap_used':1048576,'max_group_rss':9437184}})); log=final_root/'memory_watchdog.log'; log.write_text('watchdog')
+ stdout,stderr=final_root/'collector.stdout.txt',final_root/'collector.stderr.txt'; stdout.write_text('collector'); stderr.write_text('collector')
+ def bind(path): return {'relative_path':path.relative_to(final_root).as_posix(),'sha256':_sha(path),'byte_size':path.stat().st_size}
+ final=final_root/'dosod_single_frame_preprocessing_oracle_supervision_receipt.json'
+ value={'schema_version':1,'receipt_id':validator.SUPERVISION_ID,'status':validator.STATUS,'formal_compile':False,'board_acceptance':False,'wall_deadline_seconds':180,'child_oracle':bind(child),'collector_execution':{'pgid':44,'deadline_seconds':180,'term_grace_seconds':10,'timed_out':False,'term_sent':False,'kill_sent':False,'zero_survivor':True,'elapsed_seconds':1.0},'memory_watchdog':{'json':bind(watchdog),'log':bind(log),'returncode':0,'status':'FORMAL_MEMORY_WATCHDOG_COMPLETED','pgid':44},'collector_stdout':bind(stdout),'collector_stderr':bind(stderr),'blockers':[],'started_epoch_ns':1,'ended_epoch_ns':2,'receipt_path':str(final.resolve()),'producer_script_path':str(validator.SUPERVISOR.resolve()),'producer_script_sha256':_sha(validator.SUPERVISOR)}
+ final.write_text(json.dumps(value))
+ assert validator.validate(final,contract_path=contract_path)['status']==validator.STATUS
+ for key,mutation in (('blockers',['late blocker']),('receipt_path','wrong-path')):
+  drifted=dict(raw); drifted[key]=mutation; child.write_text(json.dumps(drifted)); value['child_oracle']=bind(child); final.write_text(json.dumps(value))
+  with pytest.raises(ValueError): validator.validate(final,contract_path=contract_path)
 def test_handwritten_capture_never_validates(tmp_path):
  p=tmp_path/'capture.json'; p.write_text(json.dumps({}))
  with pytest.raises(ValueError): validator._capture(p)
 def test_fixture_oracle_is_not_verified(tmp_path):
  p=tmp_path/'oracle.json'; p.write_text(json.dumps({'receipt_id':validator.RECEIPT_ID,'status':'TEST_FIXTURE_BLOCKED'}))
- with pytest.raises(ValueError,match='not_verified'): validator.validate(p)
+ with pytest.raises(ValueError,match='finalizer_required'): validator.validate(p)
 def test_capture_producer_is_explicit_ci_surface():
  assert (HERE/'capture_dosod_official_preprocess.py').is_file()
 
@@ -178,8 +210,10 @@ def test_candidate_success_stays_nonformal_and_uses_exact_recipe(tmp_path,monkey
   if path==pilot: return {'records':[{} for _ in range(25)]}
   return json.loads(path.read_text())
  monkeypatch.setattr(candidate,'load_object',fake_load); monkeypatch.setattr(candidate,'_pilot_binding',lambda *_:{'sha256':'a'*64}); monkeypatch.setattr(candidate,'_candidate_calibration',lambda *_:{'candidate_route':'BOOTSTRAP_SYMMETRIC_BLACK_V1','records_sha256':'b'*64}); monkeypatch.setattr(candidate.shutil,'which',lambda _:str(compiler)); monkeypatch.setattr(candidate,'validate_candidate_receipt',lambda *_ ,**__: {})
- def fake_run(command,timeout_seconds):
-  expected=work/'dosod_mlp3x_s_tzcup_rep-int16.hbm'; expected.parent.mkdir(); expected.write_bytes(b'hbm'); return 0,'ok','',{'timed_out':False,'zero_survivor':True}
+ def fake_run(command,timeout_seconds,**_):
+  expected=work/'dosod_mlp3x_s_tzcup_rep-int16.hbm'; expected.parent.mkdir(); expected.write_bytes(b'hbm')
+  watch_json,watch_log=output/'memory_watchdog.json',output/'memory_watchdog.log'; watch_json.write_text(json.dumps({'status':'FORMAL_MEMORY_WATCHDOG_COMPLETED','target_pgid':7,'surviving_group_processes':0,'breach_exit_code':86,'thresholds_kib':{'min_mem_available':3145728,'max_swap_used':1048576,'max_group_rss':9437184}})); watch_log.write_text('watchdog')
+  return 0,'ok','',{'pgid':7,'timed_out':False,'zero_survivor':True,'memory_watchdog':{'json_path':str(watch_json.resolve()),'log_path':str(watch_log.resolve()),'returncode':0,'status':'FORMAL_MEMORY_WATCHDOG_COMPLETED'}}
  monkeypatch.setattr(candidate,'run_owned_process',fake_run)
  receipt=candidate.execute(pilot_manifest=pilot,pilot_record_index=0,compiler_identity=identity,compile_config=config,model=model,vocabulary=vocab,output=output,compiler='hb_compile')
  assert receipt['status']==candidate.STATUS and receipt['formal_compile'] is False and receipt['board_acceptance'] is False
@@ -204,11 +238,12 @@ def _valid_candidate_receipt(tmp_path,monkeypatch,oracle_contract_payload=None):
  config=tmp_path/'config.yaml'; config.write_text(yaml.safe_dump(candidate._expected_compile_config(model=model,work=output/'candidate_work',calibration=pilot.parent/'samples',recipe=recipe)))
  for path,data in zip(logs,('stdout','stderr')): path.write_text(data)
  hbm=output/'candidate_work'/'dosod_mlp3x_s_tzcup_rep-int16.hbm'; hbm.parent.mkdir(); hbm.write_bytes(b'hbm')
+ watchdog_json,watchdog_log=output/'memory_watchdog.json',output/'memory_watchdog.log'; watchdog_json.write_text(json.dumps({'status':'FORMAL_MEMORY_WATCHDOG_COMPLETED','target_pgid':7,'surviving_group_processes':0,'breach_exit_code':86,'thresholds_kib':{'min_mem_available':3145728,'max_swap_used':1048576,'max_group_rss':9437184}})); watchdog_log.write_text('watchdog')
  producer=tmp_path/'public_gazebo_dosod_calibration.py'; producer.write_text('producer')
  raw_binding={'path':str(raw.resolve()),'sha256':_sha(raw),'byte_size':raw.stat().st_size,'width':848,'height':480,'step':2544,'encoding':'rgb8','frame_id':'camera','stamp_ns':1,'pilot_manifest_path':str(pilot.resolve()),'pilot_manifest_sha256':_sha(pilot),'pilot_record_sha256':'b'*64,'pilot_record_index':0}
  monkeypatch.setattr(candidate,'CANONICAL_COMPILE_CONTRACT',compile_contract); monkeypatch.setattr(candidate,'CANONICAL_ORACLE_CONTRACT',oracle_contract); monkeypatch.setattr(candidate,'PILOT_PRODUCER',producer); monkeypatch.setattr(candidate,'_pilot_binding',lambda *_:raw_binding); monkeypatch.setattr(candidate,'_candidate_calibration',lambda _,contract:{'candidate_route':contract['candidate_routes'][0]['route_id'],'records_sha256':'a'*64})
  receipt=output/'dosod_nonformal_oracle_candidate_compile_receipt.json'
- value={'schema_version':1,'receipt_id':candidate.RECEIPT_ID,'status':candidate.STATUS,'formal_compile':False,'board_acceptance':False,'receipt_path':str(receipt.resolve()),'producer_script_path':str(Path(candidate.__file__).resolve()),'producer_script_sha256':_sha(Path(candidate.__file__)),'blockers':[],'returncode':0,'canonical_compile_contract_sha256':_sha(compile_contract),'canonical_oracle_contract_sha256':_sha(oracle_contract),'pilot_producer_script_path':str(producer.resolve()),'pilot_producer_script_sha256':_sha(producer),'pilot_raw':raw_binding,'pilot_manifest_sha256':_sha(pilot),'pilot_record_count':25,'pilot_records_sha256':'a'*64,'candidate_calibration_records_sha256':'a'*64,'candidate_route':'BOOTSTRAP_SYMMETRIC_BLACK_V1','model_path':str(model.resolve()),'model_sha256':_sha(model),'vocabulary_path':str(vocabulary.resolve()),'vocabulary_sha256':_sha(vocabulary),'compiler_identity_path':str(identity.resolve()),'compiler_identity_sha256':_sha(identity),'compile_config_path':str(config.resolve()),'compile_config_sha256':_sha(config),'expected_hbm_path':str(hbm.resolve()),'command':[str(compiler.resolve()),'-c',str(config.resolve())],'execution':{'deadline_seconds':3600,'term_grace_seconds':10,'timed_out':False,'zero_survivor':True},'raw_stdout_path':logs[0].name,'raw_stdout_sha256':_sha(logs[0]),'raw_stderr_path':logs[1].name,'raw_stderr_sha256':_sha(logs[1]),'candidate_hbm':{'path':str(hbm.resolve()),'sha256':_sha(hbm),'byte_size':hbm.stat().st_size}}
+ value={'schema_version':1,'receipt_id':candidate.RECEIPT_ID,'status':candidate.STATUS,'formal_compile':False,'board_acceptance':False,'receipt_path':str(receipt.resolve()),'producer_script_path':str(Path(candidate.__file__).resolve()),'producer_script_sha256':_sha(Path(candidate.__file__)),'blockers':[],'returncode':0,'canonical_compile_contract_sha256':_sha(compile_contract),'canonical_oracle_contract_sha256':_sha(oracle_contract),'pilot_producer_script_path':str(producer.resolve()),'pilot_producer_script_sha256':_sha(producer),'pilot_raw':raw_binding,'pilot_manifest_sha256':_sha(pilot),'pilot_record_count':25,'pilot_records_sha256':'a'*64,'candidate_calibration_records_sha256':'a'*64,'candidate_route':'BOOTSTRAP_SYMMETRIC_BLACK_V1','model_path':str(model.resolve()),'model_sha256':_sha(model),'vocabulary_path':str(vocabulary.resolve()),'vocabulary_sha256':_sha(vocabulary),'compiler_identity_path':str(identity.resolve()),'compiler_identity_sha256':_sha(identity),'compile_config_path':str(config.resolve()),'compile_config_sha256':_sha(config),'expected_hbm_path':str(hbm.resolve()),'command':[str(compiler.resolve()),'-c',str(config.resolve())],'execution':{'pgid':7,'deadline_seconds':3600,'term_grace_seconds':10,'timed_out':False,'zero_survivor':True},'memory_watchdog':{'json':{'relative_path':watchdog_json.name,'sha256':_sha(watchdog_json),'byte_size':watchdog_json.stat().st_size},'log':{'relative_path':watchdog_log.name,'sha256':_sha(watchdog_log),'byte_size':watchdog_log.stat().st_size},'returncode':0,'status':'FORMAL_MEMORY_WATCHDOG_COMPLETED','pgid':7},'raw_stdout_path':logs[0].name,'raw_stdout_sha256':_sha(logs[0]),'raw_stderr_path':logs[1].name,'raw_stderr_sha256':_sha(logs[1]),'candidate_hbm':{'path':str(hbm.resolve()),'sha256':_sha(hbm),'byte_size':hbm.stat().st_size}}
  receipt.write_text(json.dumps(value)); return receipt,value,{'pilot':pilot,'config':config,'identity':identity,'stdout':logs[0],'hbm':hbm,'oracle_contract':oracle_contract}
 
 
