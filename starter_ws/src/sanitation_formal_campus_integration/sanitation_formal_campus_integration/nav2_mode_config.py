@@ -36,6 +36,10 @@ def configure_collision_monitor_sources(
         raise Nav2ModeConfigError("collision_monitor scan source must remain enabled")
     if mission_mode != "mapping":
         return
+    if scan.get("topic") != "/scan/navigation" or scan.get("type") != "scan":
+        raise Nav2ModeConfigError(
+            "mapping collision_monitor requires the canonical enabled scan source"
+        )
     costmap_layers: list[tuple[str, dict[str, Any]]] = []
     for costmap_name in ("local_costmap", "global_costmap"):
         try:
@@ -61,7 +65,13 @@ def configure_collision_monitor_sources(
             layer.pop("mid360", None)
     else:
         mid360 = parameters.get("mid360")
-        if "mid360" not in sources or not isinstance(mid360, dict) or mid360.get("enabled") is not True:
+        if (
+            "mid360" not in sources
+            or not isinstance(mid360, dict)
+            or mid360.get("topic") != "/sensors/lidar_3d/points"
+            or mid360.get("type") != "pointcloud"
+            or mid360.get("enabled") is not True
+        ):
             raise Nav2ModeConfigError(
                 "high-bandwidth mapping requires an enabled mid360 source"
             )

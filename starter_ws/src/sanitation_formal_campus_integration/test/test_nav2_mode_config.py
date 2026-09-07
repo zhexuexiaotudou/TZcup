@@ -46,9 +46,14 @@ def _nav2() -> dict:
         "collision_monitor": {
             "ros__parameters": {
                 "observation_sources": ["scan", "mid360"],
-                "scan": {"topic": "/scan/navigation", "enabled": True},
+                "scan": {
+                    "topic": "/scan/navigation",
+                    "type": "scan",
+                    "enabled": True,
+                },
                 "mid360": {
                     "topic": "/sensors/lidar_3d/points",
+                    "type": "pointcloud",
                     "enabled": True,
                 },
             }
@@ -77,6 +82,12 @@ def test_scan_only_mapping_removes_unavailable_mid360_from_collision_monitor():
         layer = nav2[costmap_name][costmap_name]["ros__parameters"]["obstacle_layer"]
         assert layer["observation_sources"] == "scan"
         assert "mid360" not in layer
+    broken = _nav2()
+    broken["collision_monitor"]["ros__parameters"]["scan"]["type"] = "pointcloud"
+    with pytest.raises(Nav2ModeConfigError, match="canonical enabled scan"):
+        configure_collision_monitor_sources(
+            broken, mission_mode="mapping", high_bandwidth_sensor_runtime=False
+        )
 
 
 def test_high_bandwidth_mapping_retains_and_requires_mid360_collision_source():
@@ -90,6 +101,12 @@ def test_high_bandwidth_mapping_retains_and_requires_mid360_collision_source():
     assert nav2 == expected
     broken = _nav2()
     broken["collision_monitor"]["ros__parameters"]["mid360"]["enabled"] = False
+    with pytest.raises(Nav2ModeConfigError, match="enabled mid360"):
+        configure_collision_monitor_sources(
+            broken, mission_mode="mapping", high_bandwidth_sensor_runtime=True
+        )
+    broken = _nav2()
+    broken["collision_monitor"]["ros__parameters"]["mid360"]["type"] = "scan"
     with pytest.raises(Nav2ModeConfigError, match="enabled mid360"):
         configure_collision_monitor_sources(
             broken, mission_mode="mapping", high_bandwidth_sensor_runtime=True
