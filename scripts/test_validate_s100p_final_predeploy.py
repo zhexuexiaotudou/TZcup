@@ -184,6 +184,22 @@ def test_complete_synthetic_receipt_chain_requires_exact_single_identity(
     assert report["status"] == "PREDEPLOY_READY_NOT_DEPLOYED"
     assert report["ready_to_deploy"] is True
     assert all(report["checks"].values())
+    for name, filename in MODULE.RECEIPTS.items():
+        detail = report["receipt_requirements"]["receipts"][name]
+        assert detail["present"] is True
+        assert detail["sha256"] == MODULE._sha256(paths["receipts"] / filename)
+        assert detail["byte_size"] == (paths["receipts"] / filename).stat().st_size
+    model = report["receipt_requirements"]["receipts"]["model_payload"]
+    assert model["present"] is True
+    assert model["sha256"] == MODULE._sha256(paths["receipts"] / MODULE.RECEIPTS["model_payload"])
+    assert model["byte_size"] == (paths["receipts"] / MODULE.RECEIPTS["model_payload"]).stat().st_size
+    handoff = report["board_handoff_binding"]
+    assert handoff["session_sha256"] == _sha256(paths["session"])
+    assert handoff["session_byte_size"] == paths["session"].stat().st_size
+    assert handoff["runtime_closure_binding"] == {
+        "runtime_closure_manifest_sha256": "a" * 64,
+        "runtime_closure_sha256": "b" * 64,
+    }
 
 
 def test_blocked_offline_audit_cannot_be_bypassed_by_complete_receipts(

@@ -18,6 +18,7 @@ import pathlib
 import platform
 import shlex
 import shutil
+import stat
 import subprocess
 from typing import Any
 
@@ -76,6 +77,7 @@ DEFAULT_MODEL_DIRECTORIES = (
 MODEL_SUFFIXES = (".hbm", ".bin", ".onnx", ".yaml", ".yml")
 
 DEVICE_PATTERNS = (
+    "/dev/bpu_core*",
     "/dev/video*",
     "/dev/media*",
     "/dev/ttyUSB*",
@@ -84,6 +86,26 @@ DEVICE_PATTERNS = (
     "/dev/i2c-*",
     "/dev/spidev*",
 )
+
+
+def _bpu_devices() -> dict[str, dict[str, Any]]:
+    """Record device-node facts without opening, writing, or resolving them."""
+
+    rows: dict[str, dict[str, Any]] = {}
+    for raw in sorted(glob.glob("/dev/bpu_core*")):
+        path = pathlib.Path(raw)
+        try:
+            mode = path.lstat().st_mode
+        except OSError as exc:
+            rows[raw] = {"status": "ABSENT", "error": str(exc)}
+            continue
+        rows[raw] = {
+            "status": "PRESENT" if stat.S_ISCHR(mode) and not path.is_symlink() else "INVALID",
+            "is_symlink": path.is_symlink(),
+            "is_character_device": stat.S_ISCHR(mode),
+        }
+    rows.setdefault("/dev/bpu_core0", {"status": "ABSENT", "is_symlink": None, "is_character_device": False})
+    return rows
 
 
 def _read_text(path: str) -> dict[str, Any]:
@@ -266,6 +288,8 @@ def collect(*, overlay_paths: list[str] | None = None, model_paths: list[str] | 
             "meminfo": _read_text("/proc/meminfo"),
         },
         "devices": devices,
+        "bpu_device_nodes": _bpu_devices(),
+        "bpu_module_evidence": commands["loaded_modules"],
         "system_image": {path: _read_text(path) for path in SYSTEM_IMAGE_PATHS},
         "tros_ros_setup_files": _tros_setups(),
         "installed_relevant_dpkg": _relevant_dpkg(),

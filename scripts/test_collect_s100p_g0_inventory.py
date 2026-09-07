@@ -25,6 +25,8 @@ def test_inventory_is_explicitly_read_only(monkeypatch):
     assert report["safety"]["can_gpio_or_actuator_access_attempted"] is False
     assert report["ros_graph_read_only"]["ros2cli_daemon_disabled"] is True
     assert report["bpu_runtime_and_tools"]["hb_runtime"]["status"] == "ABSENT"
+    assert report["bpu_device_nodes"]["/dev/bpu_core0"]["status"] == "ABSENT"
+    assert report["bpu_module_evidence"] == {"status": "OK", "command": ["lsmod"]}
 
 
 def test_command_allowlist_has_no_mutating_tools():
@@ -80,3 +82,10 @@ def test_model_inventory_only_hashes_explicit_files_or_direct_model_directory_en
     assert len(present) == 1
     assert present[0]["path"] == str(model.resolve())
     assert len(present[0]["sha256"]) == 64
+
+
+def test_bpu_device_inventory_requires_a_nonlink_character_device(monkeypatch):
+    monkeypatch.setattr(MODULE.glob, "glob", lambda _pattern: ["/dev/bpu_core0"])
+    monkeypatch.setattr(MODULE.pathlib.Path, "is_symlink", lambda _self: False)
+    monkeypatch.setattr(MODULE.pathlib.Path, "lstat", lambda _self: type("S", (), {"st_mode": __import__("stat").S_IFCHR})())
+    assert MODULE._bpu_devices()["/dev/bpu_core0"]["status"] == "PRESENT"

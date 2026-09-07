@@ -168,6 +168,9 @@ def _validate_session_identity(
         )
         if not checks["acceptance_session_present_and_running"]:
             _append(blockers, "acceptance_session_not_current_running_closure_bound")
+        else:
+            details["session_sha256"] = _sha256(session_path)
+            details["session_byte_size"] = session_path.stat().st_size
 
     binding, binding_error = _load_object(runtime_binding_path)
     if binding_error:
@@ -202,6 +205,14 @@ def _validate_session_identity(
             )
         if not checks["pc_session_runtime_closure_identity_exact"]:
             _append(blockers, "pc_session_runtime_closure_identity_mismatch_or_legacy_binding")
+        elif isinstance(closure_binding, Mapping):
+            manifest_sha = closure_binding.get("manifest_sha256")
+            closure_sha = closure_binding.get("closure_sha256")
+            if _is_digest(manifest_sha) and _is_digest(closure_sha):
+                details["runtime_closure_binding"] = {
+                    "runtime_closure_manifest_sha256": manifest_sha,
+                    "runtime_closure_sha256": closure_sha,
+                }
     details["snapshot_identity"] = snapshot_identity
     return checks, details
 
@@ -244,7 +255,12 @@ def _validate_receipts(
     for name, filename in RECEIPTS.items():
         path = receipt_root / filename
         receipt, error = _load_object(path)
-        details["receipts"][name] = {"path": str(path), "present": error is None}
+        details["receipts"][name] = {
+            "path": str(path),
+            "present": error is None,
+            "sha256": _sha256(path) if error is None else None,
+            "byte_size": path.stat().st_size if error is None else None,
+        }
         if error:
             _append(blockers, f"{name}_receipt_{error}")
             continue
@@ -448,6 +464,11 @@ def validate_final_predeploy(
         "checks": checks,
         "blockers": blockers,
         "pc_session_runtime_identity": identity,
+        "board_handoff_binding": {
+            "session_sha256": identity.get("session_sha256"),
+            "session_byte_size": identity.get("session_byte_size"),
+            "runtime_closure_binding": identity.get("runtime_closure_binding"),
+        },
         "receipt_requirements": receipt_details,
         "board_bundle": {
             "status": board_report.get("status"),
