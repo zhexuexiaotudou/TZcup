@@ -110,17 +110,58 @@ def _complete_synthetic_inputs(tmp_path: Path) -> dict[str, Path]:
         for index, (key, path) in enumerate(MODULE.EXPECTED_PAYLOAD_PATHS.items(), start=1)
     }
     dosod = payloads["dosod_hbm"]
+    calibration = tmp_path / "calibration_manifest.json"
+    _write(calibration, {"schema_version": 1, "status": "FROZEN", "records": []})
     _write(
         receipt_root / MODULE.RECEIPTS["dosod_hbm_compile"],
-        _synthetic_receipt(
-            "tzcup_s100p_dosod_hbm_compile_receipt_v1", binding, closure,
-            output_relative_path=dosod["target_relative_path"], output_sha256=dosod["sha256"],
-            output_byte_size=dosod["byte_size"], compiler_identity_verified=True,
-        ),
+        {
+            "schema_version": 1,
+            "receipt_id": MODULE.OFFLINE_COMPILE_RECEIPT_ID,
+            "status": MODULE.OFFLINE_COMPILE_STATUS,
+            "returncode": 0,
+            "output_created_by_this_compile": True,
+            "compiler_identity_verified": True,
+            "output_relative_path": dosod["target_relative_path"],
+            "output_sha256": dosod["sha256"],
+            "output_byte_size": dosod["byte_size"],
+            "inputs": {
+                "contract_sha256": MODULE._sha256(MODULE.DEFAULT_HBM_CONTRACT),
+                "preflight_sha256": "b" * 64,
+                "compile_config_sha256": "c" * 64,
+                "compiler_identity_sha256": "d" * 64,
+                "calibration_manifest": str(calibration),
+                "calibration_manifest_sha256": _sha256(calibration),
+                "calibration_records_sha256": "a" * 64,
+                "calibration_sample_count": 1,
+                "model_sha256": "e" * 64,
+            },
+            "calibration_reaudit": {
+                "manifest_sha256": _sha256(calibration),
+                "records_sha256": "a" * 64,
+                "sample_count": 1,
+            },
+            "compiler": {"requested": {"name": "hb_mapper"}, "resolved": {"path": "/opt/tros/bin/hb_mapper"}, "package_versions": {"hobot": "1.0"}},
+            "producer": {"path": "scripts/execute_dosod_hbm_compile.py", "sha256": "f" * 64},
+            "raw_logs": {"stdout": {"path": "logs/stdout.log", "sha256": "1" * 64}, "stderr": {"path": "logs/stderr.log", "sha256": "2" * 64}},
+            "execution": {"deadline_seconds": 3600, "term_grace_seconds": 10, "start_new_session": True, "pgid": 123, "timed_out": False, "term_sent": False, "kill_sent": False, "zero_survivor": True, "elapsed_seconds": 2.0},
+            "blockers": [],
+        },
     )
     _write(
         receipt_root / MODULE.RECEIPTS["model_payload"],
-        _synthetic_receipt("tzcup_s100p_model_payload_receipt_v1", binding, closure, payloads=payloads),
+        _synthetic_receipt(
+            "tzcup_s100p_model_payload_receipt_v1", binding, closure,
+            payloads=payloads,
+            offline_compile_receipt_sha256=_sha256(receipt_root / MODULE.RECEIPTS["dosod_hbm_compile"]),
+            candidate_stage="/opt/tzcup/stages/release-1",
+            board_identity={
+                "model": "RDK S100P", "model_sha256": "1" * 64,
+                "compatible": "drobot,s100-rdk", "compatible_sha256": "2" * 64, "architecture": "aarch64",
+                "bpu_device": {"path": "/dev/bpu_core0", "st_mode": 8192, "st_rdev_major": 1, "st_rdev_minor": 2, "st_ino": 3, "is_character_device": True, "is_symlink": False},
+                "required_modules": ["bpu_cores", "bpu_framework"],
+            },
+            stage_root="/opt/tzcup/stages/release-1",
+        ),
     )
     _write(
         receipt_root / MODULE.RECEIPTS["overlay_build"],
@@ -133,7 +174,17 @@ def _complete_synthetic_inputs(tmp_path: Path) -> dict[str, Path]:
         receipt_root / MODULE.RECEIPTS["runtime_dependencies"],
         _synthetic_receipt(
             "tzcup_s100p_runtime_dependencies_receipt_v1", binding, closure,
-            packages={name: {"version": "1.0"} for name in MODULE.EXPECTED_DEPENDENCIES},
+            sourced_shell_id="tros-humble-sourced-shell",
+            packages={name: {"version": "1.0", "prefix": "/opt/tros/humble", "executables": [name]} for name in MODULE.EXPECTED_DEPENDENCIES},
+            providers={name: {
+                "dpkg_owner": name, "dpkg_version": version, "architecture": "arm64",
+                "upstream_tag": tag, "upstream_commit": commit, "binary_identical_to_upstream": False,
+            } for name, (version, tag, commit) in MODULE.OFFICIAL_TROS_PACKAGES.items()},
+            python_imports={name: {
+                "version": MODULE.PYTHON_ABI_VERSIONS.get(name, "1.0"),
+                "module_path": f"/opt/tros/humble/lib/python3.10/site-packages/{name}",
+                "sourced_shell_id": "tros-humble-sourced-shell",
+            } for name in MODULE.PYTHON_IMPORTS},
         ),
     )
     _write(
@@ -167,6 +218,28 @@ def test_audit_is_blocked_with_explicitly_missing_session_and_receipts(
     assert "optional_input_policy_valid" in MODULE.REQUIRED_OFFLINE_STATIC_CHECKS
 
 
+def test_board_runtime_dependencies_exclude_the_pc_evaluator_only_ros_gz_package() -> None:
+    assert "ros_gz_interfaces" not in MODULE.EXPECTED_DEPENDENCIES
+    assert {"hobot_dosod", "mono_edgesam"} <= MODULE.EXPECTED_DEPENDENCIES
+
+
+def test_runtime_dependency_receipt_requires_tagged_provider_and_same_shell_python_abi(tmp_path: Path, monkeypatch) -> None:
+    paths = _complete_synthetic_inputs(tmp_path)
+    monkeypatch.setattr(MODULE, "audit_calibration", lambda *_args: {})
+    receipt_path = paths["receipts"] / MODULE.RECEIPTS["runtime_dependencies"]
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    receipt["providers"]["hobot_dosod"]["upstream_commit"] = "0" * 64
+    receipt["python_imports"]["numpy"]["sourced_shell_id"] = "other-shell"
+    _write(receipt_path, receipt)
+    report = MODULE.validate_final_predeploy(
+        board_manifest_path=paths["board"], snapshot_path=paths["snapshot"],
+        acceptance_session_path=paths["session"], runtime_binding_path=paths["binding"],
+        receipt_root=paths["receipts"],
+    )
+    assert report["checks"]["runtime_dependencies_receipt_valid"] is False
+    assert "runtime_dependencies_receipt_incomplete" in report["blockers"]
+
+
 def test_complete_synthetic_receipt_chain_requires_exact_single_identity(
     tmp_path: Path, monkeypatch
 ) -> None:
@@ -176,6 +249,7 @@ def test_complete_synthetic_receipt_chain_requires_exact_single_identity(
         "validate_offline_predeploy",
         lambda *args, **kwargs: _synthetic_offline_report(ready=True, blockers=[]),
     )
+    monkeypatch.setattr(MODULE, "audit_calibration", lambda *_args: {})
     report = MODULE.validate_final_predeploy(
         board_manifest_path=paths["board"], snapshot_path=paths["snapshot"],
         acceptance_session_path=paths["session"], runtime_binding_path=paths["binding"],
@@ -240,6 +314,54 @@ def test_receipt_closure_drift_blocks_the_whole_predeploy_decision(tmp_path: Pat
     assert report["status"] == "BLOCKED"
     assert report["checks"]["model_payload_receipt_valid"] is False
     assert "model_payload_receipt_identity_or_status_invalid" in report["blockers"]
+
+
+def test_offline_compile_receipt_rejects_board_identity_or_hbm_drift(tmp_path: Path, monkeypatch) -> None:
+    paths = _complete_synthetic_inputs(tmp_path)
+    monkeypatch.setattr(MODULE, "audit_calibration", lambda *_args: {})
+    compile_path = paths["receipts"] / MODULE.RECEIPTS["dosod_hbm_compile"]
+    receipt = json.loads(compile_path.read_text(encoding="utf-8"))
+    receipt["board_interaction_performed"] = True
+    _write(compile_path, receipt)
+    report = MODULE.validate_final_predeploy(
+        board_manifest_path=paths["board"], snapshot_path=paths["snapshot"],
+        acceptance_session_path=paths["session"], runtime_binding_path=paths["binding"],
+        receipt_root=paths["receipts"],
+    )
+    assert report["checks"]["dosod_hbm_compile_receipt_valid"] is False
+    assert "dosod_hbm_compile_receipt_not_canonical_offline_evidence" in report["blockers"]
+
+
+def test_model_payload_receipt_requires_retained_s100p_stage_identity(tmp_path: Path, monkeypatch) -> None:
+    paths = _complete_synthetic_inputs(tmp_path)
+    monkeypatch.setattr(MODULE, "audit_calibration", lambda *_args: {})
+    payload_path = paths["receipts"] / MODULE.RECEIPTS["model_payload"]
+    payload = json.loads(payload_path.read_text(encoding="utf-8"))
+    payload["candidate_stage"] = "/opt/tzcup/elsewhere/release-1"
+    _write(payload_path, payload)
+    report = MODULE.validate_final_predeploy(
+        board_manifest_path=paths["board"], snapshot_path=paths["snapshot"],
+        acceptance_session_path=paths["session"], runtime_binding_path=paths["binding"],
+        receipt_root=paths["receipts"],
+    )
+    assert report["checks"]["model_payload_receipt_valid"] is False
+    assert "model_payload_receipt_incomplete_or_not_bound_to_dosod_compile" in report["blockers"]
+
+
+def test_offline_compile_receipt_requires_reaudited_calibration_identity(tmp_path: Path, monkeypatch) -> None:
+    paths = _complete_synthetic_inputs(tmp_path)
+    monkeypatch.setattr(MODULE, "audit_calibration", lambda *_args: {})
+    compile_path = paths["receipts"] / MODULE.RECEIPTS["dosod_hbm_compile"]
+    receipt = json.loads(compile_path.read_text(encoding="utf-8"))
+    receipt["calibration_reaudit"]["records_sha256"] = "not-a-digest"
+    _write(compile_path, receipt)
+    report = MODULE.validate_final_predeploy(
+        board_manifest_path=paths["board"], snapshot_path=paths["snapshot"],
+        acceptance_session_path=paths["session"], runtime_binding_path=paths["binding"],
+        receipt_root=paths["receipts"],
+    )
+    assert report["checks"]["dosod_hbm_compile_receipt_valid"] is False
+    assert "dosod_hbm_compile_receipt_not_canonical_offline_evidence" in report["blockers"]
 
 
 def test_board_bundle_digest_drift_cannot_be_bypassed_by_complete_receipts(tmp_path: Path) -> None:

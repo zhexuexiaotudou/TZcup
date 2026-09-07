@@ -16,6 +16,8 @@ from math import isfinite
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Iterable, Mapping, Sequence
+from collections import OrderedDict
+import time
 
 
 FROZEN_CLASS_IDS = frozenset(
@@ -27,6 +29,14 @@ FROZEN_CLASS_ORDER = (
     "fallen_leaves",
     "dust_or_soil",
     "puddle",
+)
+S100P_POSTPROCESS_THRESHOLDS = MappingProxyType(
+    {
+        "litter_cube": 0.005,
+        "fallen_leaves": 0.0025,
+        "dust_or_soil": 0.002,
+        "puddle": 0.003,
+    }
 )
 FORMAL_S100P_MARCH = "nash-m"
 FORMAL_S100P_BOARD = "RDK S100P"
@@ -55,6 +65,155 @@ BOARD_ARTIFACT_SPECS = {
 
 class S100PProductAdapterError(ValueError):
     """An upstream board message cannot safely become a product observation."""
+
+
+class ExactStampRgbdCache:
+    """Bounded source-frame cache consumed exactly once by a DOSOD stamp."""
+
+    def __init__(self, limit: int) -> None:
+        if isinstance(limit, bool) or not isinstance(limit, int) or limit < 1:
+            raise S100PProductAdapterError("RGB-D cache limit must be positive")
+        self._limit = limit
+        self._rgb: OrderedDict[int, Any] = OrderedDict()
+        self._depth: OrderedDict[int, Any] = OrderedDict()
+        self._camera_info: OrderedDict[int, Any] = OrderedDict()
+        self._consumed: OrderedDict[int, None] = OrderedDict()
+        self._consumed_frontier: int | None = None
+
+    def _put(self, table: OrderedDict[int, Any], stamp_ns: int, value: Any) -> None:
+        stamp = _stamp_ns(stamp_ns, "source stamp")
+        if stamp in self._consumed or (
+            self._consumed_frontier is not None
+            and stamp <= self._consumed_frontier
+            and not any(stamp in cached for cached in (self._rgb, self._depth, self._camera_info))
+        ):
+            raise S100PProductAdapterError("source stamp is at or before the consumed frontier")
+        table[stamp] = value
+        table.move_to_end(stamp)
+        while len(table) > self._limit:
+            table.popitem(last=False)
+
+    def put_rgb(self, stamp_ns: int, value: Any) -> None:
+        self._put(self._rgb, stamp_ns, value)
+
+    def put_depth(self, stamp_ns: int, value: Any) -> None:
+        self._put(self._depth, stamp_ns, value)
+
+    def put_camera_info(self, stamp_ns: int, value: Any) -> None:
+        self._put(self._camera_info, stamp_ns, value)
+
+    def consume(self, stamp_ns: int) -> tuple[Any, Any, Any]:
+        stamp = _stamp_ns(stamp_ns, "DOSOD stamp")
+        values = (self._rgb.get(stamp), self._depth.get(stamp), self._camera_info.get(stamp))
+        if any(value is None for value in values):
+            raise S100PProductAdapterError("DOSOD stamp has no exact RGB-D/CameraInfo source tuple")
+        self._rgb.pop(stamp)
+        self._depth.pop(stamp)
+        self._camera_info.pop(stamp)
+        self._consumed[stamp] = None
+        self._consumed_frontier = max(stamp, self._consumed_frontier or stamp)
+        self._consumed.move_to_end(stamp)
+        while len(self._consumed) > self._limit:
+            self._consumed.popitem(last=False)
+        return values
+
+    def has_exact(self, stamp_ns: int) -> bool:
+        stamp = _stamp_ns(stamp_ns, "DOSOD stamp")
+        return all(
+            table.get(stamp) is not None
+            for table in (self._rgb, self._depth, self._camera_info)
+        )
+
+
+class PendingDosodCache:
+    """Bounded raw-DOSOD waitlist for exact RGB-D/CameraInfo arrival races."""
+
+    def __init__(self, limit: int, max_age_ns: int) -> None:
+        if isinstance(limit, bool) or not isinstance(limit, int) or limit < 1:
+            raise S100PProductAdapterError("pending DOSOD limit must be positive")
+        if isinstance(max_age_ns, bool) or not isinstance(max_age_ns, int) or max_age_ns < 1:
+            raise S100PProductAdapterError("pending DOSOD age must be positive")
+        self._limit = limit
+        self._max_age_ns = max_age_ns
+        self._rows: OrderedDict[int, tuple[Any, int]] = OrderedDict()
+        self._terminal: OrderedDict[int, None] = OrderedDict()
+        self._terminal_frontier: int | None = None
+
+    def put(self, stamp_ns: int, value: Any, *, now_ns: int | None = None) -> tuple[int, ...]:
+        stamp = _stamp_ns(stamp_ns, "DOSOD stamp")
+        if stamp <= 0:
+            raise S100PProductAdapterError("DOSOD stamp must be positive")
+        if stamp in self._rows or stamp in self._terminal or (
+            self._terminal_frontier is not None and stamp <= self._terminal_frontier
+        ):
+            raise S100PProductAdapterError("duplicate DOSOD stamp")
+        now = time.monotonic_ns() if now_ns is None else _stamp_ns(now_ns, "monotonic time")
+        self._rows[stamp] = (value, now)
+        evicted: list[int] = []
+        while len(self._rows) > self._limit:
+            evicted.append(self._rows.popitem(last=False)[0])
+        return tuple(evicted)
+
+    def expire(self, now_ns: int | None = None) -> tuple[int, ...]:
+        reference = time.monotonic_ns() if now_ns is None else _stamp_ns(now_ns, "monotonic time")
+        expired = tuple(
+            stamp for stamp, (_, inserted_ns) in self._rows.items()
+            if reference > inserted_ns and reference - inserted_ns > self._max_age_ns
+        )
+        for stamp in expired:
+            self._rows.pop(stamp)
+            self._remember_terminal(stamp)
+        return expired
+
+    def _remember_terminal(self, stamp: int) -> None:
+        self._terminal[stamp] = None
+        self._terminal_frontier = max(stamp, self._terminal_frontier or stamp)
+        self._terminal.move_to_end(stamp)
+        while len(self._terminal) > self._limit:
+            self._terminal.popitem(last=False)
+
+    def take_if_ready(
+        self, stamp_ns: int, source_cache: ExactStampRgbdCache
+    ) -> tuple[Any, tuple[Any, Any, Any]] | None:
+        stamp = _stamp_ns(stamp_ns, "DOSOD stamp")
+        row = self._rows.get(stamp)
+        if row is None or not source_cache.has_exact(stamp):
+            return None
+        self._rows.pop(stamp)
+        self._remember_terminal(stamp)
+        return row[0], source_cache.consume(stamp)
+
+
+class PendingEdgeSamCache:
+    """Bounded DOSOD-to-EdgeSAM handoff consumed on either terminal outcome."""
+
+    def __init__(self, limit: int) -> None:
+        if isinstance(limit, bool) or not isinstance(limit, int) or limit < 1:
+            raise S100PProductAdapterError("pending frame limit must be positive")
+        self._limit = limit
+        self._rows: OrderedDict[int, Any] = OrderedDict()
+
+    def put(self, stamp_ns: int, value: Any) -> None:
+        stamp = _stamp_ns(stamp_ns, "DOSOD stamp")
+        if stamp in self._rows:
+            raise S100PProductAdapterError("DOSOD stamp is already pending")
+        self._rows[stamp] = value
+        while len(self._rows) > self._limit:
+            self._rows.popitem(last=False)
+
+    def consume(self, stamp_ns: int) -> Any:
+        stamp = _stamp_ns(stamp_ns, "EdgeSAM stamp")
+        try:
+            return self._rows.pop(stamp)
+        except KeyError as exc:
+            raise S100PProductAdapterError("EdgeSAM stamp has no pending DOSOD frame") from exc
+
+
+def requires_edgesam_handoff(batch: "EdgeSamPromptBatch") -> bool:
+    """Only a nonempty validated prompt batch may remain pending for EdgeSAM."""
+    if not isinstance(batch, EdgeSamPromptBatch):
+        raise S100PProductAdapterError("EdgeSAM handoff requires an EdgeSamPromptBatch")
+    return bool(batch.prompts)
 
 
 @dataclass(frozen=True)
@@ -364,6 +523,133 @@ def detections_from_ai_like(
             )
             source_index += 1
     return tuple(detections)
+
+
+def filter_s100p_product_detections(
+    detections: Iterable[Detection],
+) -> tuple[Detection, ...]:
+    """Apply the frozen project class gates after official DOSOD postprocess."""
+    rows = tuple(detections)
+    if any(not isinstance(row, Detection) for row in rows):
+        raise S100PProductAdapterError("detections must contain Detection values only")
+    if any(row.class_id not in S100P_POSTPROCESS_THRESHOLDS for row in rows):
+        raise S100PProductAdapterError("detection class is outside the frozen S100P domain")
+    return tuple(
+        row for row in rows
+        if row.confidence >= S100P_POSTPROCESS_THRESHOLDS[row.class_id]
+    )
+
+
+def validate_dosod_source_rois(
+    detections: Iterable[Detection], *, source_width: int = 848, source_height: int = 480
+) -> tuple[Detection, ...]:
+    """Accept only official DOSOD ROIs already expressed in the source image."""
+    width = _positive_int(source_width, "source width")
+    height = _positive_int(source_height, "source height")
+    rows = tuple(detections)
+    for row in rows:
+        if not isinstance(row, Detection):
+            raise S100PProductAdapterError("detections must contain Detection values only")
+        x1, y1, x2, y2 = row.roi.xyxy
+        if (
+            not all(isfinite(value) for value in (x1, y1, x2, y2))
+            or x1 < 0.0
+            or y1 < 0.0
+            or x2 > width
+            or y2 > height
+            or x2 <= x1
+            or y2 <= y1
+        ):
+            raise S100PProductAdapterError("DOSOD ROI is outside the 848x480 source frame")
+    return rows
+
+
+def validate_exact_rgbd_projection_binding(
+    *,
+    rgb_stamp_ns: int,
+    rgb_frame_id: str,
+    rgb_width: int,
+    rgb_height: int,
+    depth_stamp_ns: int,
+    depth_frame_id: str,
+    depth_width: int,
+    depth_height: int,
+    depth_encoding: str,
+    camera_info_stamp_ns: int,
+    camera_info_frame_id: str,
+    camera_info_width: int,
+    camera_info_height: int,
+    camera_k: Sequence[Any],
+) -> None:
+    """Reject any RGB-D/CameraInfo tuple not bound to one source frame."""
+    stamp = _stamp_ns(rgb_stamp_ns, "RGB stamp")
+    frame_id = _nonempty_string(rgb_frame_id, "RGB frame id")
+    width = _positive_int(rgb_width, "RGB width")
+    height = _positive_int(rgb_height, "RGB height")
+    if (
+        _stamp_ns(depth_stamp_ns, "depth stamp") != stamp
+        or _nonempty_string(depth_frame_id, "depth frame id") != frame_id
+        or _positive_int(depth_width, "depth width") != width
+        or _positive_int(depth_height, "depth height") != height
+        or depth_encoding not in {"16UC1", "32FC1"}
+    ):
+        raise S100PProductAdapterError("depth is not exactly bound to the RGB frame")
+    if (
+        _stamp_ns(camera_info_stamp_ns, "CameraInfo stamp") != stamp
+        or _nonempty_string(camera_info_frame_id, "CameraInfo frame id") != frame_id
+        or _positive_int(camera_info_width, "CameraInfo width") != width
+        or _positive_int(camera_info_height, "CameraInfo height") != height
+        or not isinstance(camera_k, Sequence)
+        or isinstance(camera_k, (str, bytes))
+        or len(camera_k) != 9
+    ):
+        raise S100PProductAdapterError("CameraInfo is not exactly bound to the RGB frame")
+    values = tuple(_finite_number(value, "CameraInfo.K") for value in camera_k)
+    if values[0] <= 0.0 or values[4] <= 0.0:
+        raise S100PProductAdapterError("CameraInfo focal lengths must be positive")
+
+
+def validate_public_map_binding(
+    *,
+    frame_id: str,
+    expected_frame_id: str,
+    width: int,
+    height: int,
+    resolution: float,
+    origin_values: Sequence[Any],
+    data_length: int,
+) -> None:
+    """Validate the complete public OccupancyGrid geometry before projection."""
+    if _nonempty_string(frame_id, "map frame") != _nonempty_string(expected_frame_id, "expected map frame"):
+        raise S100PProductAdapterError("public occupancy grid frame is not the configured map frame")
+    cells = _positive_int(width, "map width") * _positive_int(height, "map height")
+    if _finite_number(resolution, "map resolution") <= 0.0:
+        raise S100PProductAdapterError("map resolution must be positive and finite")
+    if not isinstance(origin_values, Sequence) or isinstance(origin_values, (str, bytes)) or len(origin_values) != 7:
+        raise S100PProductAdapterError("map origin must contain seven finite pose values")
+    tuple(_finite_number(value, "map origin") for value in origin_values)
+    if isinstance(data_length, bool) or not isinstance(data_length, int) or data_length != cells:
+        raise S100PProductAdapterError("map data length does not match width times height")
+
+
+def validate_exact_tf_binding(
+    *, image_stamp_ns: int, transform_stamp_ns: int, max_age_s: float
+) -> str:
+    """Validate exact-time dynamic TF or explicitly stamped-zero static TF."""
+    image_stamp = _stamp_ns(image_stamp_ns, "RGB stamp")
+    if image_stamp <= 0:
+        raise S100PProductAdapterError("RGB stamp must be positive")
+    transform_stamp = _stamp_ns(transform_stamp_ns, "TF stamp")
+    maximum = _finite_number(max_age_s, "TF max age")
+    if maximum < 0.0 or maximum > 0.75:
+        raise S100PProductAdapterError("TF max age must be within the frozen [0, 0.75] seconds")
+    if transform_stamp == 0:
+        return "static"
+    if transform_stamp > image_stamp:
+        raise S100PProductAdapterError("map TF is from the future of the RGB frame")
+    if (image_stamp - transform_stamp) * 1.0e-9 > maximum:
+        raise S100PProductAdapterError("map TF is stale for the RGB frame")
+    return "dynamic"
 
 
 def ground_dirt_prompt_batch(

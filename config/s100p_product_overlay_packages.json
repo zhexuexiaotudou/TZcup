@@ -42,6 +42,9 @@
     "sanitation_perception",
     "sanitation_perception_interfaces"
   ],
+  "evaluator_only_exec_dependencies": [
+    "ros_gz_interfaces"
+  ],
   "board_base_runtime_package_exemptions": [
     "ai_msgs",
     "cv_bridge",

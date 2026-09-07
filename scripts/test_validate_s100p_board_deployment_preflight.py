@@ -16,6 +16,7 @@ SPEC.loader.exec_module(MODULE)
 class Stat:
     def __init__(self, mode, dev=1):
         self.st_mode, self.st_dev = mode, dev
+        self.st_rdev, self.st_ino = 258, 3
 
 
 def _digest(path):
@@ -70,7 +71,27 @@ def _fixture(tmp_path):
         payloads[role] = {"target_relative_path": relative, "sha256": _digest(tmp_path / source_relative),
                           "byte_size": len((role * index).encode())}
         handoff_payloads[role] = _entry(tmp_path, source_relative)
-    model_receipt = {"schema_version": 1, "receipt_id": MODULE.MODEL_RECEIPT_ID, "status": "VERIFIED", "payloads": payloads}
+    compile_path = _write(tmp_path, "handoff/offline_compile.json", json.dumps({
+        "schema_version": 1, "receipt_id": MODULE.OFFLINE_COMPILE_RECEIPT_ID,
+        "status": "COMPILED_NOT_BOARD_ACCEPTED", "returncode": 0,
+        "output_created_by_this_compile": True, "compiler_identity_verified": True,
+        "output_relative_path": MODULE.EXPECTED_PAYLOAD_PATHS["dosod_hbm"],
+        "output_sha256": payloads["dosod_hbm"]["sha256"],
+        "output_byte_size": payloads["dosod_hbm"]["byte_size"],
+    }, sort_keys=True))
+    model_receipt = {
+        "schema_version": 1, "receipt_id": MODULE.MODEL_RECEIPT_ID,
+        "status": "VERIFIED", "board_interaction_performed": True,
+        "offline_compile_receipt_sha256": _digest(compile_path), "payloads": payloads,
+        "candidate_stage": "/opt/tzcup/stages/v1",
+        "board_identity": {
+            "model": "D-Robotics RDK S100P V1P0", "model_sha256": _digest(tmp_path / "proc/device-tree/model"),
+            "compatible": "drobot,s100-rdk", "compatible_sha256": _digest(tmp_path / "proc/device-tree/compatible"), "architecture": "aarch64",
+            "bpu_device": {"path": "/dev/bpu_core0", "st_mode": 8192, "st_rdev_major": 0, "st_rdev_minor": 0, "st_ino": 3, "is_character_device": True, "is_symlink": False},
+            "required_modules": ["bpu_cores", "bpu_framework"],
+        },
+        "stage_root": "/opt/tzcup/stages/v1",
+    }
     model_path = _write(tmp_path, "handoff/model_payload.json", json.dumps(model_receipt, sort_keys=True))
     final_identity = {"session_sha256": _digest(session_path), "session_byte_size": session_path.stat().st_size,
                       "runtime_closure_binding": closure_binding}
@@ -82,6 +103,7 @@ def _fixture(tmp_path):
                                                                      "byte_size": model_path.stat().st_size}}}}
     _write(tmp_path, "handoff/final.json", json.dumps(final, sort_keys=True))
     entries = {"final_predeploy": _entry(tmp_path, "handoff/final.json"),
+               "offline_compile_receipt": _entry(tmp_path, "handoff/offline_compile.json"),
                "model_payload_receipt": _entry(tmp_path, "handoff/model_payload.json"),
                "acceptance_session": _entry(tmp_path, "handoff/session.json"),
                "runtime_closure": _entry(tmp_path, "handoff/closure.json"), "payloads": handoff_payloads}
@@ -147,6 +169,35 @@ def test_board_local_model_receipt_hash_drift_blocks(tmp_path):
                              candidate="/opt/tzcup/stages/v1", retained_old="/opt/tzcup/rollback/v0", stat_path=_stat,
                              disk_usage=lambda _: type("D", (), {"free": 10**12})(), platform_machine=lambda: "aarch64")
     assert "board_handoff_model_payload_receipt_digest_or_size_mismatch" in result["blockers"]
+
+
+def test_recorded_model_payload_board_identity_drift_blocks(tmp_path):
+    _fixture(tmp_path)
+    receipt_path = tmp_path / "handoff/model_payload.json"
+    receipt = json.loads(receipt_path.read_text())
+    receipt["board_identity"]["compatible_sha256"] = "f" * 64
+    receipt_path.write_text(json.dumps(receipt, sort_keys=True))
+    _refresh_manifest_entry(tmp_path, "model_payload_receipt")
+    final_path = tmp_path / "handoff/final.json"
+    final = json.loads(final_path.read_text())
+    final["receipt_requirements"]["receipts"]["model_payload"].update(
+        {"sha256": _digest(receipt_path), "byte_size": receipt_path.stat().st_size}
+    )
+    final_path.write_text(json.dumps(final, sort_keys=True))
+    _refresh_manifest_entry(tmp_path, "final_predeploy")
+    result = _run(tmp_path, handoff_manifest=Path("handoff/manifest.json"))
+    assert result["checks"]["model_payload_board_identity_revalidated"] is False
+    assert "model_payload_recorded_board_identity_drift_or_incomplete" in result["blockers"]
+
+
+def test_offline_compile_receipt_hbm_drift_or_board_claim_blocks(tmp_path):
+    _fixture(tmp_path)
+    compile_path = tmp_path / "handoff/offline_compile.json"
+    receipt = json.loads(compile_path.read_text())
+    receipt["board_interaction_performed"] = True
+    compile_path.write_text(json.dumps(receipt, sort_keys=True))
+    result = _run(tmp_path, handoff_manifest=Path("handoff/manifest.json"))
+    assert "board_handoff_offline_compile_receipt_invalid_or_unbound" in result["blockers"]
 
 
 def test_existing_candidate_cross_filesystem_and_space_block(tmp_path):

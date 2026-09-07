@@ -19,7 +19,7 @@ from typing import Any, Mapping
 import validate_s100p_formal_board_bundle as board_bundle
 import validate_s100p_mechanical_electrical_evidence as mechanical_electrical
 import validate_s100p_offline_predeploy as offline_predeploy
-from validate_dosod_s100p_hbm_compile_contract import validate_contract_shape
+from validate_dosod_s100p_hbm_compile_contract import audit_calibration, validate_contract_shape
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -46,9 +46,25 @@ EXPECTED_PAYLOAD_PATHS = {
     "edgesam_decoder_hbm": "edgesam/edgesam_decoder_512.hbm",
 }
 EXPECTED_OVERLAY_PACKAGES = {"sanitation_perception", "sanitation_perception_interfaces"}
-EXPECTED_DEPENDENCIES = set(board_bundle.SANITATION_PERCEPTION_EXEC_DEPENDENCIES) | {
+EXPECTED_DEPENDENCIES = (
+    set(board_bundle.SANITATION_PERCEPTION_EXEC_DEPENDENCIES)
+    - board_bundle.EVALUATOR_ONLY_EXEC_DEPENDENCIES
+) | {
     "hobot_dosod", "mono_edgesam"
 }
+OFFLINE_COMPILE_RECEIPT_ID = "tzcup_s100p_dosod_hbm_compile_receipt_v1"
+OFFLINE_COMPILE_STATUS = "COMPILED_NOT_BOARD_ACCEPTED"
+EXPECTED_S100P_STAGE_PARENT = "/opt/tzcup/stages"
+OFFICIAL_TROS_PACKAGES = {
+    "hobot_dosod": ("1.0.0", "tros_1.0.0", "c949d69898926054ac3be5793fdd4a482da685c9"),
+    "mono_edgesam": ("0.2.0", "tros_0.2.0", "dc083c6ce603e6c0f1c80b5fe44743e48b943cfa"),
+    "dnn_node": ("2.5.9", "tros_2.5.9", "01eae3a4ef0b3ba0a2365c3f1e2280db09a983f9"),
+}
+PYTHON_ABI_VERSIONS = {
+    "numpy": "1.21.5", "yaml": "5.4.1", "cv_bridge": "3.2.1", "rclpy": "3.3.17",
+    "tf2_ros": "0.25.16", "vision_msgs": "4.1.1",
+}
+PYTHON_IMPORTS = set(PYTHON_ABI_VERSIONS) | {"ai_msgs", "sensor_msgs", "cv2", "sanitation_perception"}
 REQUIRED_BOARD_STATIC_CHECKS = {
     "manifest_parseable", "manifest_identity_valid", "copy_boundary_fail_closed",
     "snapshot_binding_declared", "formal_snapshot_file_matches_declaration",
@@ -95,6 +111,30 @@ def _load_object(path: Path) -> tuple[dict[str, Any] | None, str | None]:
 
 def _is_digest(value: Any) -> bool:
     return isinstance(value, str) and len(value) == 64 and all(char in "0123456789abcdef" for char in value)
+
+
+def _valid_board_payload_bridge(receipt: Mapping[str, Any]) -> bool:
+    """Require the producer's retained board identity and canonical stage facts."""
+    identity = receipt.get("board_identity")
+    candidate = receipt.get("candidate_stage")
+    prefix = EXPECTED_S100P_STAGE_PARENT + "/"
+    candidate_ok = (
+        isinstance(candidate, str) and candidate.startswith(prefix)
+        and bool(candidate[len(prefix):]) and "/" not in candidate[len(prefix):]
+    )
+    device = identity.get("bpu_device") if isinstance(identity, Mapping) else None
+    return (
+        candidate_ok and receipt.get("stage_root") == candidate and isinstance(identity, Mapping)
+        and "rdk s100p" in str(identity.get("model", "")).lower()
+        and "drobot,s100-rdk" in str(identity.get("compatible", "")).lower()
+        and _is_digest(identity.get("model_sha256")) and _is_digest(identity.get("compatible_sha256"))
+        and identity.get("architecture") == "aarch64"
+        and isinstance(device, Mapping) and device.get("path") == "/dev/bpu_core0"
+        and isinstance(device.get("st_mode"), int) and device.get("is_character_device") is True
+        and device.get("is_symlink") is False
+        and all(isinstance(device.get(key), int) and device[key] >= 0 for key in ("st_rdev_major", "st_rdev_minor", "st_ino"))
+        and identity.get("required_modules") == ["bpu_cores", "bpu_framework"]
+    )
 
 
 def _identity_from_snapshot(snapshot_path: Path, blockers: list[str]) -> dict[str, Any] | None:
@@ -221,6 +261,12 @@ def _validate_receipt_identity(
     receipt: Mapping[str, Any], session: Mapping[str, Any], closure: Mapping[str, Any]
 ) -> bool:
     binding = receipt.get("acceptance_session_binding")
+    canonical_closure = {
+        "runtime_closure_manifest_sha256": closure.get("manifest_sha256"),
+        "runtime_closure_sha256": closure.get("closure_sha256"),
+    }
+    session_status = binding.get("session_status_at_gate") if isinstance(binding, Mapping) else None
+    session_status = session_status if session_status is not None else binding.get("session_status_at_collection") if isinstance(binding, Mapping) else None
     return (
         receipt.get("schema_version") == 1
         and receipt.get("status") == "VERIFIED"
@@ -229,12 +275,122 @@ def _validate_receipt_identity(
         and binding.get("session_manifest_sha256") == session.get("session_manifest_sha256")
         and binding.get("session_started_epoch_ns") == session.get("session_started_epoch_ns")
         and binding.get("snapshot") == session.get("snapshot")
-        and receipt.get("runtime_closure_binding") == closure
+        and session_status == session.get("session_status_at_gate")
+        and receipt.get("runtime_closure_binding") in (closure, canonical_closure)
     )
 
 
+def _validate_offline_compile_receipt(
+    receipt: Mapping[str, Any], *, hbm_contract_path: Path, blockers: list[str]
+) -> bool:
+    """Validate the compiler's non-board receipt without a session binding."""
+    output = hbm_contract_path
+    contract, error = _load_object(hbm_contract_path)
+    if error or contract is None:
+        _append(blockers, "dosod_hbm_compile_contract_unavailable_for_receipt")
+        return False
+    expected_output = contract.get("output", {}).get("relative_path")
+    inputs = receipt.get("inputs")
+    calibration_path = inputs.get("calibration_manifest") if isinstance(inputs, Mapping) else None
+    reaudit = receipt.get("calibration_reaudit")
+    compiler = receipt.get("compiler")
+    producer = receipt.get("producer")
+    raw_logs = receipt.get("raw_logs")
+    execution = receipt.get("execution")
+    valid = (
+        receipt.get("schema_version") == 1
+        and receipt.get("receipt_id") == OFFLINE_COMPILE_RECEIPT_ID
+        and receipt.get("status") == OFFLINE_COMPILE_STATUS
+        and receipt.get("returncode") == 0
+        and receipt.get("output_created_by_this_compile") is True
+        and receipt.get("compiler_identity_verified") is True
+        and receipt.get("output_relative_path") == expected_output
+        and _is_digest(receipt.get("output_sha256"))
+        and isinstance(receipt.get("output_byte_size"), int)
+        and receipt["output_byte_size"] > 0
+        and receipt.get("board_interaction_performed") in (None, False)
+        and receipt.get("acceptance_session_binding") is None
+        and receipt.get("runtime_closure_binding") is None
+        and isinstance(inputs, Mapping)
+        and inputs.get("contract_sha256") == _sha256(output)
+        and isinstance(calibration_path, str)
+        and all(_is_digest(inputs.get(name)) for name in (
+            "preflight_sha256", "compile_config_sha256", "compiler_identity_sha256",
+            "calibration_manifest_sha256", "calibration_records_sha256", "model_sha256",
+        ))
+        and isinstance(inputs.get("calibration_sample_count"), int)
+        and inputs["calibration_sample_count"] > 0
+        and isinstance(reaudit, Mapping)
+        and reaudit.get("manifest_sha256") == inputs.get("calibration_manifest_sha256")
+        and reaudit.get("records_sha256") == inputs.get("calibration_records_sha256")
+        and reaudit.get("sample_count") == inputs.get("calibration_sample_count")
+        and isinstance(compiler, Mapping)
+        and isinstance(compiler.get("requested"), Mapping)
+        and isinstance(compiler.get("resolved"), Mapping)
+        and isinstance(compiler.get("package_versions"), Mapping)
+        and isinstance(producer, Mapping) and isinstance(producer.get("path"), str) and bool(producer["path"])
+        and _is_digest(producer.get("sha256"))
+        and isinstance(raw_logs, Mapping)
+        and all(isinstance(raw_logs.get(name), Mapping) and isinstance(raw_logs[name].get("path"), str)
+                and bool(raw_logs[name]["path"]) and _is_digest(raw_logs[name].get("sha256"))
+                for name in ("stdout", "stderr"))
+        and isinstance(execution, Mapping)
+        and execution.get("deadline_seconds") == 3600 and execution.get("term_grace_seconds") == 10
+        and execution.get("start_new_session") is True and isinstance(execution.get("pgid"), int)
+        and execution.get("timed_out") is False and execution.get("term_sent") is False
+        and execution.get("kill_sent") is False and execution.get("zero_survivor") is True
+        and isinstance(execution.get("elapsed_seconds"), (int, float)) and execution["elapsed_seconds"] >= 0
+        and receipt.get("blockers") == []
+    )
+    if not valid:
+        _append(blockers, "dosod_hbm_compile_receipt_not_canonical_offline_evidence")
+        return False
+    calibration = Path(calibration_path)
+    if not calibration.is_file() or inputs.get("calibration_manifest_sha256") != _sha256(calibration):
+        _append(blockers, "dosod_hbm_compile_receipt_calibration_manifest_drift")
+        return False
+    audit_blockers: list[str] = []
+    audit_calibration(calibration.parent, contract, audit_blockers)
+    if audit_blockers:
+        _append(blockers, "dosod_hbm_compile_receipt_calibration_reaudit_failed")
+        return False
+    return True
+
+
+def _valid_runtime_dependencies(receipt: Mapping[str, Any]) -> bool:
+    packages = receipt.get("packages")
+    providers = receipt.get("providers")
+    imports = receipt.get("python_imports")
+    shell = receipt.get("sourced_shell_id")
+    if not (isinstance(shell, str) and shell and isinstance(packages, Mapping)
+            and isinstance(providers, Mapping) and isinstance(imports, Mapping)
+            and set(packages) == EXPECTED_DEPENDENCIES and set(providers) == set(OFFICIAL_TROS_PACKAGES)
+            and set(imports) == PYTHON_IMPORTS):
+        return False
+    if not all(isinstance(row, Mapping) and isinstance(row.get("version"), str) and row["version"]
+               and isinstance(row.get("prefix"), str) and row["prefix"].startswith("/")
+               and isinstance(row.get("executables"), list) and row["executables"]
+               for row in packages.values()):
+        return False
+    for name, (version, tag, commit) in OFFICIAL_TROS_PACKAGES.items():
+        row = providers[name]
+        if not (isinstance(row, Mapping) and row.get("dpkg_owner") == name
+                and row.get("dpkg_version") == version and row.get("architecture") == "arm64"
+                and row.get("upstream_tag") == tag and row.get("upstream_commit") == commit
+                and row.get("binary_identical_to_upstream") is False):
+            return False
+    for name, row in imports.items():
+        if not (isinstance(row, Mapping) and row.get("sourced_shell_id") == shell
+                and isinstance(row.get("module_path"), str) and row["module_path"].startswith("/")):
+            return False
+        expected = PYTHON_ABI_VERSIONS.get(name)
+        if expected is not None and row.get("version") != expected:
+            return False
+    return True
+
+
 def _validate_receipts(
-    receipt_root: Path, runtime_binding_path: Path, blockers: list[str]
+    receipt_root: Path, runtime_binding_path: Path, hbm_contract_path: Path, blockers: list[str]
 ) -> tuple[dict[str, bool], dict[str, Any]]:
     checks = {f"{name}_receipt_valid": False for name in RECEIPTS}
     details: dict[str, Any] = {"receipt_root": str(receipt_root), "receipts": {}}
@@ -265,7 +421,12 @@ def _validate_receipts(
             _append(blockers, f"{name}_receipt_{error}")
             continue
         assert receipt is not None
-        if not _validate_receipt_identity(receipt, session, closure):
+        if name == "dosod_hbm_compile":
+            if not _validate_offline_compile_receipt(
+                receipt, hbm_contract_path=hbm_contract_path, blockers=blockers
+            ):
+                continue
+        elif not _validate_receipt_identity(receipt, session, closure):
             _append(blockers, f"{name}_receipt_identity_or_status_invalid")
             continue
         loaded[name] = receipt
@@ -273,7 +434,8 @@ def _validate_receipts(
     compile_receipt = loaded.get("dosod_hbm_compile")
     if compile_receipt is not None:
         valid = (
-            compile_receipt.get("receipt_id") == "tzcup_s100p_dosod_hbm_compile_receipt_v1"
+            compile_receipt.get("receipt_id") == OFFLINE_COMPILE_RECEIPT_ID
+            and compile_receipt.get("status") == OFFLINE_COMPILE_STATUS
             and compile_receipt.get("output_relative_path") == EXPECTED_PAYLOAD_PATHS["dosod_hbm"]
             and _is_digest(compile_receipt.get("output_sha256"))
             and isinstance(compile_receipt.get("output_byte_size"), int)
@@ -287,7 +449,11 @@ def _validate_receipts(
     payload_receipt = loaded.get("model_payload")
     if payload_receipt is not None:
         payloads = payload_receipt.get("payloads")
-        valid = payload_receipt.get("receipt_id") == "tzcup_s100p_model_payload_receipt_v1" and isinstance(payloads, Mapping)
+        valid = (
+            payload_receipt.get("receipt_id") == "tzcup_s100p_model_payload_receipt_v1"
+            and isinstance(payloads, Mapping)
+            and _valid_board_payload_bridge(payload_receipt)
+        )
         if valid:
             valid = set(payloads) == set(EXPECTED_PAYLOAD_PATHS) and all(
                 isinstance(payloads.get(name), Mapping)
@@ -302,6 +468,8 @@ def _validate_receipts(
             valid = (
                 dosod.get("sha256") == compile_receipt.get("output_sha256")
                 and dosod.get("byte_size") == compile_receipt.get("output_byte_size")
+                and payload_receipt.get("offline_compile_receipt_sha256")
+                == details["receipts"]["dosod_hbm_compile"]["sha256"]
             )
         checks["model_payload_receipt_valid"] = bool(valid)
         if not valid:
@@ -324,13 +492,8 @@ def _validate_receipts(
 
     dependency_receipt = loaded.get("runtime_dependencies")
     if dependency_receipt is not None:
-        packages = dependency_receipt.get("packages")
-        valid = dependency_receipt.get("receipt_id") == "tzcup_s100p_runtime_dependencies_receipt_v1" and isinstance(packages, Mapping)
-        if valid:
-            valid = set(packages) == EXPECTED_DEPENDENCIES and all(
-                isinstance(packages[name], Mapping) and isinstance(packages[name].get("version"), str) and bool(packages[name]["version"])
-                for name in EXPECTED_DEPENDENCIES
-            )
+        valid = (dependency_receipt.get("receipt_id") == "tzcup_s100p_runtime_dependencies_receipt_v1"
+                 and _valid_runtime_dependencies(dependency_receipt))
         checks["runtime_dependencies_receipt_valid"] = bool(valid)
         if not valid:
             _append(blockers, "runtime_dependencies_receipt_incomplete")
@@ -417,7 +580,9 @@ def validate_final_predeploy(
         runtime_binding_path=runtime_binding_path,
         blockers=blockers,
     )
-    receipt_checks, receipt_details = _validate_receipts(receipt_root, runtime_binding_path, blockers)
+    receipt_checks, receipt_details = _validate_receipts(
+        receipt_root, runtime_binding_path, hbm_contract_path, blockers
+    )
     board_checks = board_report.get("checks")
     offline_checks = offline_report.get("checks")
     checks: dict[str, bool] = {

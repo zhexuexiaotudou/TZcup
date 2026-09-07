@@ -63,6 +63,7 @@ SANITATION_PERCEPTION_EXEC_DEPENDENCIES = {
     "python3-yaml", "rclpy", "sanitation_perception_interfaces",
     "sensor_msgs", "std_msgs", "tf2_ros", "vision_msgs",
 }
+EVALUATOR_ONLY_EXEC_DEPENDENCIES = {"ros_gz_interfaces"}
 MANDATORY_BLOCKERS = {
     "project_dosod_hbm_missing_or_unhashed",
     "required_board_model_payloads_not_all_receipted",
@@ -265,6 +266,7 @@ def _runtime_dependency_closure_checks(
     provided_set, provided_unique = _string_set(provided)
     exemptions_set, exemptions_unique = _string_set(exemptions)
     launch_base_set, launch_base_unique = _string_set(launch_base)
+    evaluator_only_set, evaluator_only_unique = _string_set(overlay.get("evaluator_only_exec_dependencies"))
     package_rows = overlay.get("packages")
     package_names = {
         row.get("name") for row in package_rows if isinstance(row, Mapping) and isinstance(row.get("name"), str)
@@ -273,9 +275,12 @@ def _runtime_dependency_closure_checks(
         declared_exec_unique and declared_exec_set == actual_exec_dependencies
     )
     checks["overlay_runtime_dependency_closure_classified"] = (
-        provided_unique and exemptions_unique
+        provided_unique and exemptions_unique and evaluator_only_unique
         and provided_set == package_names == {"sanitation_perception", "sanitation_perception_interfaces"}
-        and exemptions_set == ((actual_exec_dependencies - provided_set) | launch_base_set)
+        and evaluator_only_set == EVALUATOR_ONLY_EXEC_DEPENDENCIES
+        and evaluator_only_set <= actual_exec_dependencies
+        and not (evaluator_only_set & (provided_set | exemptions_set | launch_base_set))
+        and exemptions_set == ((actual_exec_dependencies - provided_set - evaluator_only_set) | launch_base_set)
         and not (provided_set & exemptions_set)
     )
     checks["launch_required_base_packages_explicitly_exempted"] = (

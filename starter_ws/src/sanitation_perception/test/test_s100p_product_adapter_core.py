@@ -13,12 +13,22 @@ from sanitation_perception.s100p_product_adapter import _perf_latency_ms
 from sanitation_perception.s100p_product_adapter_core import (
     Detection,
     EdgeSamPromptBatch,
+    ExactStampRgbdCache,
+    PendingDosodCache,
+    PendingEdgeSamCache,
     Roi,
+    S100P_POSTPROCESS_THRESHOLDS,
     S100PProductAdapterError,
     decode_edgesam_label_features,
     detections_from_ai_like,
     ground_dirt_prompt_batch,
+    filter_s100p_product_detections,
     load_verified_board_artifact_contract,
+    requires_edgesam_handoff,
+    validate_exact_rgbd_projection_binding,
+    validate_exact_tf_binding,
+    validate_dosod_source_rois,
+    validate_public_map_binding,
 )
 
 
@@ -130,6 +140,162 @@ def test_flatten_ai_like_targets_converts_target_or_roi_class_and_validates_geom
     ]
     with pytest.raises(S100PProductAdapterError, match="positive"):
         detections_from_ai_like([{"type": "puddle", "rois": [_roi(1, 2, 0, 4, 0.8)]}])
+
+
+def test_s100p_postprocess_uses_the_frozen_per_class_thresholds():
+    assert dict(S100P_POSTPROCESS_THRESHOLDS) == {
+        "litter_cube": 0.005,
+        "fallen_leaves": 0.0025,
+        "dust_or_soil": 0.002,
+        "puddle": 0.003,
+    }
+    detections = tuple(
+        Detection(class_id, threshold, Roi(0, 0, 1, 1), index)
+        for index, (class_id, threshold) in enumerate(S100P_POSTPROCESS_THRESHOLDS.items())
+    )
+    below = Detection("puddle", 0.0029, Roi(0, 0, 1, 1), 9)
+    assert filter_s100p_product_detections((*detections, below)) == detections
+    with pytest.raises(S100PProductAdapterError, match="frozen S100P domain"):
+        filter_s100p_product_detections((Detection("unknown", 0.9, Roi(0, 0, 1, 1), 10),))
+
+
+def test_projection_inputs_require_one_exact_rgb_depth_camerainfo_frame():
+    valid = {
+        "rgb_stamp_ns": 42,
+        "rgb_frame_id": "front_camera_optical",
+        "rgb_width": 4,
+        "rgb_height": 2,
+        "depth_stamp_ns": 42,
+        "depth_frame_id": "front_camera_optical",
+        "depth_width": 4,
+        "depth_height": 2,
+        "depth_encoding": "16UC1",
+        "camera_info_stamp_ns": 42,
+        "camera_info_frame_id": "front_camera_optical",
+        "camera_info_width": 4,
+        "camera_info_height": 2,
+        "camera_k": (1.0, 0.0, 2.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0),
+    }
+    assert validate_exact_rgbd_projection_binding(**valid) is None
+    for update in (
+        {"depth_stamp_ns": 43},
+        {"depth_frame_id": "other_optical"},
+        {"depth_encoding": "rgb8"},
+        {"camera_info_stamp_ns": 43},
+        {"camera_info_frame_id": "other_optical"},
+        {"camera_info_width": 5},
+        {"camera_k": (0.0,) * 9},
+        {"camera_k": (1.0,) * 8},
+    ):
+        with pytest.raises(S100PProductAdapterError):
+            validate_exact_rgbd_projection_binding(**(valid | update))
+
+
+def test_dosod_rois_are_already_bound_to_the_original_848x480_source_frame():
+    source = Detection("puddle", 0.8, Roi(0.0, 0.0, 84.8, 84.8), 0)
+    assert validate_dosod_source_rois((source,)) == (source,)
+    with pytest.raises(S100PProductAdapterError, match="848x480"):
+        validate_dosod_source_rois((Detection("puddle", 0.8, Roi(800, 0, 64, 64), 0),))
+
+
+def test_exact_stamp_rgbd_cache_preserves_n_until_dosod_n_then_consumes_it_once():
+    cache = ExactStampRgbdCache(3)
+    for stamp in (100, 200, 300):
+        cache.put_rgb(stamp, f"rgb-{stamp}")
+        cache.put_depth(stamp, f"depth-{stamp}")
+        cache.put_camera_info(stamp, f"info-{stamp}")
+    assert cache.consume(100) == ("rgb-100", "depth-100", "info-100")
+    with pytest.raises(S100PProductAdapterError, match="no exact"):
+        cache.consume(100)
+
+
+def test_pending_edgesam_handoff_is_consumed_on_terminal_attempt_and_replay_fails():
+    pending = PendingEdgeSamCache(2)
+    pending.put(100, "frame-100")
+    assert pending.consume(100) == "frame-100"
+    with pytest.raises(S100PProductAdapterError, match="no pending"):
+        pending.consume(100)
+    pending.put(200, "frame-200")
+    assert pending.consume(200) == "frame-200"  # terminal failure also consumes
+
+
+def test_empty_ground_prompt_batch_is_terminal_and_never_requires_edgesam_pending_state():
+    batch = EdgeSamPromptBatch(stamp_ns=100, image_width=848, image_height=480, prompts=())
+    assert not requires_edgesam_handoff(batch)
+
+
+def test_pending_dosod_waits_for_exact_late_depth_and_info_then_rejects_replay_expiry_and_eviction():
+    sources = ExactStampRgbdCache(3)
+    pending = PendingDosodCache(limit=1, max_age_ns=50)
+    sources.put_rgb(100, "rgb-n")
+    pending.put(100, "dosod-n", now_ns=1_000)
+    assert pending.take_if_ready(100, sources) is None
+    sources.put_depth(100, "depth-n")
+    sources.put_camera_info(100, "info-n")
+    assert pending.take_if_ready(100, sources) == (
+        "dosod-n", ("rgb-n", "depth-n", "info-n")
+    )
+    assert pending.take_if_ready(100, sources) is None
+    pending.put(200, "dosod-200", now_ns=1_000)
+    assert pending.put(300, "dosod-300", now_ns=1_001) == (200,)
+    assert pending.expire(1_052) == (300,)
+
+
+def test_exact_join_frontier_blocks_history_eviction_replay_but_allows_staged_out_of_order_stamp():
+    sources = ExactStampRgbdCache(2)
+    pending = PendingDosodCache(limit=2, max_age_ns=100)
+    for stamp in (1000, 900):
+        sources.put_rgb(stamp, f"rgb-{stamp}")
+        sources.put_depth(stamp, f"depth-{stamp}")
+        sources.put_camera_info(stamp, f"info-{stamp}")
+        pending.put(stamp, f"dosod-{stamp}", now_ns=10)
+    assert pending.take_if_ready(1000, sources) == (
+        "dosod-1000", ("rgb-1000", "depth-1000", "info-1000")
+    )
+    for put in (sources.put_rgb, sources.put_depth, sources.put_camera_info):
+        with pytest.raises(S100PProductAdapterError, match="consumed frontier"):
+            put(1000, "late-replay")
+    with pytest.raises(S100PProductAdapterError, match="duplicate DOSOD"):
+        pending.put(1000, "dosod-replay", now_ns=11)
+    assert pending.take_if_ready(900, sources) == (
+        "dosod-900", ("rgb-900", "depth-900", "info-900")
+    )
+
+
+def test_consumed_frontier_rejects_replay_after_bounded_history_evicts_it():
+    sources = ExactStampRgbdCache(2)
+    pending = PendingDosodCache(limit=2, max_age_ns=100)
+    for stamp in (1000, 2000, 3000):
+        sources.put_rgb(stamp, f"rgb-{stamp}")
+        sources.put_depth(stamp, f"depth-{stamp}")
+        sources.put_camera_info(stamp, f"info-{stamp}")
+        pending.put(stamp, f"dosod-{stamp}", now_ns=stamp)
+        assert pending.take_if_ready(stamp, sources) == (
+            f"dosod-{stamp}", (f"rgb-{stamp}", f"depth-{stamp}", f"info-{stamp}")
+        )
+    for put in (sources.put_rgb, sources.put_depth, sources.put_camera_info):
+        with pytest.raises(S100PProductAdapterError, match="consumed frontier"):
+            put(1000, "replayed-source")
+    with pytest.raises(S100PProductAdapterError, match="duplicate DOSOD"):
+        pending.put(1000, "replayed-dosod", now_ns=3_001)
+
+
+def test_public_map_and_exact_tf_bindings_are_strict_and_static_tf_is_explicit():
+    valid = dict(
+        frame_id="map", expected_frame_id="map", width=2, height=3,
+        resolution=0.05, origin_values=(0, 0, 0, 0, 0, 0, 1), data_length=6,
+    )
+    assert validate_public_map_binding(**valid) is None
+    for change in ({"frame_id": "odom"}, {"data_length": 5}, {"resolution": 0.0}, {"origin_values": (0, 0, 0, 0, 0, 0, float("nan"))}):
+        with pytest.raises(S100PProductAdapterError):
+            validate_public_map_binding(**(valid | change))
+    assert validate_exact_tf_binding(image_stamp_ns=2_000_000_000, transform_stamp_ns=0, max_age_s=0.75) == "static"
+    assert validate_exact_tf_binding(image_stamp_ns=2_000_000_000, transform_stamp_ns=1_250_000_000, max_age_s=0.75) == "dynamic"
+    for transform_stamp in (2_000_000_001, 1_249_999_999):
+        with pytest.raises(S100PProductAdapterError):
+            validate_exact_tf_binding(image_stamp_ns=2_000_000_000, transform_stamp_ns=transform_stamp, max_age_s=0.75)
+    with pytest.raises(S100PProductAdapterError, match="0.75"):
+        validate_exact_tf_binding(image_stamp_ns=2_000_000_000, transform_stamp_ns=2_000_000_000, max_age_s=0.751)
 
 
 def test_verified_board_vocabulary_maps_real_hobot_dosod_emitted_labels(tmp_path):
@@ -324,3 +490,10 @@ def test_perf_latency_accepts_only_positive_predict_infer_metric():
     assert _perf_latency_ms(message) == 11.5
     message.perfs = [SimpleNamespace(type="dosod_preprocess", time_ms_duration=2.0)]
     assert _perf_latency_ms(message) is None
+
+
+def test_pending_dosod_expiry_timer_uses_steady_clock_not_ros_sim_time():
+    adapter = Path(__file__).parents[1] / "sanitation_perception" / "s100p_product_adapter.py"
+    source = adapter.read_text(encoding="utf-8")
+    assert "from rclpy.clock import Clock, ClockType" in source
+    assert "clock=Clock(clock_type=ClockType.STEADY_TIME)" in source

@@ -9,9 +9,9 @@ diagnostic and withholds that product output.
 
 from __future__ import annotations
 
-from collections import OrderedDict
 import json
 import math
+import time
 from typing import Any
 
 import numpy as np
@@ -20,11 +20,24 @@ from .product_projection import CameraIntrinsics, PublicGrid, project_rgbd_obser
 from .s100p_product_adapter_core import (
     Detection,
     EdgeSamPromptBatch,
+    ExactStampRgbdCache,
+    PendingDosodCache,
+    PendingEdgeSamCache,
     S100PProductAdapterError,
     decode_edgesam_label_features,
     detections_from_ai_like,
+    filter_s100p_product_detections,
     ground_dirt_prompt_batch,
     load_verified_board_artifact_contract,
+    requires_edgesam_handoff,
+    validate_dosod_source_rois,
+    validate_exact_rgbd_projection_binding,
+    validate_exact_tf_binding,
+    validate_public_map_binding,
+)
+from .rgb_to_nv12_adapter import (
+    S100P_SOURCE_HEIGHT,
+    S100P_SOURCE_WIDTH,
 )
 from .tracking import TargetTracker
 
@@ -109,6 +122,7 @@ def main() -> None:
     from cv_bridge import CvBridge
     from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
     from nav_msgs.msg import OccupancyGrid
+    from rclpy.clock import Clock, ClockType
     from rclpy.duration import Duration
     from rclpy.executors import ExternalShutdownException
     from rclpy.node import Node
@@ -152,10 +166,11 @@ def main() -> None:
             }
             for name, value in defaults.items():
                 self.declare_parameter(name, value)
-            self.declare_parameter("depth_max_age_s", 0.5)
             self.declare_parameter("tf_max_age_s", 0.75)
             self.declare_parameter("sample_stride", 4)
-            self.declare_parameter("pending_frame_limit", 16)
+            self.declare_parameter("pending_frame_limit", 32)
+            self.declare_parameter("pending_dosod_max_age_s", 3.0)
+            self.declare_parameter("rgb_frame_cache_limit", 96)
             self.declare_parameter("edgesam_capture_width", 512)
             self.declare_parameter("edgesam_capture_height", 288)
 
@@ -189,10 +204,17 @@ def main() -> None:
             self._bridge = CvBridge()
             self._tf_buffer = Buffer(cache_time=Duration(seconds=10.0))
             self._tf_listener = TransformListener(self._tf_buffer, self)
-            self._images: OrderedDict[int, Image] = OrderedDict()
-            self._pending: OrderedDict[int, dict[str, Any]] = OrderedDict()
-            self._depth: Image | None = None
-            self._camera_info: CameraInfo | None = None
+            self._source_cache = ExactStampRgbdCache(
+                int(self.get_parameter("rgb_frame_cache_limit").value)
+            )
+            self._pending_dosod = PendingDosodCache(
+                int(self.get_parameter("pending_frame_limit").value),
+                int(float(self.get_parameter("pending_dosod_max_age_s").value) * 1_000_000_000),
+            )
+            self._pending = PendingEdgeSamCache(
+                int(self.get_parameter("pending_frame_limit").value)
+            )
+            self._last_cache_reject_ns: dict[str, int] = {}
             self._map: OccupancyGrid | None = None
             self._tracker = TargetTracker(
                 confirmation_observations=2,
@@ -200,6 +222,9 @@ def main() -> None:
                 maximum_covariance_trace=0.15,
                 lost_timeout_s=3600.0,
             )
+            self._last_success_diagnostic_ns = 0
+            self._dosod_raw_frames = self._product_box_frames = self._product_target_frames = 0
+            self._reject_reasons: dict[str, int] = {}
 
             transient = QoSProfile(
                 history=HistoryPolicy.KEEP_LAST,
@@ -253,32 +278,90 @@ def main() -> None:
             self.create_subscription(
                 PerceptionTargets, topic("edgesam_raw_topic"), self._on_edgesam, 10
             )
+            self.create_timer(
+                0.5,
+                self._expire_pending_dosod,
+                clock=Clock(clock_type=ClockType.STEADY_TIME),
+            )
             self._adapter_diagnostic(0, "ready_waiting_for_real_board_inputs", {})
-
-        def _bounded_put(self, table: OrderedDict, key: int, value: Any) -> None:
-            table[key] = value
-            table.move_to_end(key)
-            limit = int(self.get_parameter("pending_frame_limit").value)
-            while len(table) > limit:
-                table.popitem(last=False)
 
         def _on_rgb(self, message: Image) -> None:
             stamp = _stamp_ns(message.header.stamp)
-            if (
-                stamp > 0
-                and message.width > 0
-                and message.height > 0
-                and message.header.frame_id
-            ):
-                self._bounded_put(self._images, stamp, message)
+            if (int(message.width), int(message.height)) != (S100P_SOURCE_WIDTH, S100P_SOURCE_HEIGHT) or not message.header.frame_id:
+                self._adapter_diagnostic(2, "selected_rgb_shape_or_frame_invalid_fail_closed", {"source_stamp_ns": stamp})
+                return
+            self._cache_source("rgb", stamp, message)
 
         def _on_depth(self, message: Image) -> None:
-            self._depth = message
+            stamp = _stamp_ns(message.header.stamp)
+            self._cache_source("depth", stamp, message)
 
         def _on_camera_info(self, message: CameraInfo) -> None:
-            self._camera_info = message
+            stamp = _stamp_ns(message.header.stamp)
+            self._cache_source("camera_info", stamp, message)
+
+        def _record_reject(self, reason: str) -> None:
+            self._reject_reasons[reason] = self._reject_reasons.get(reason, 0) + 1
+
+        def _cache_source(self, kind: str, stamp: int, message: Any) -> None:
+            try:
+                if kind == "rgb":
+                    self._source_cache.put_rgb(stamp, message)
+                elif kind == "depth":
+                    self._source_cache.put_depth(stamp, message)
+                else:
+                    self._source_cache.put_camera_info(stamp, message)
+            except S100PProductAdapterError as exc:
+                self._record_reject("source_stamp_replayed")
+                now = time.monotonic_ns()
+                previous = self._last_cache_reject_ns.get(kind, 0)
+                if now - previous >= 1_000_000_000:
+                    self._last_cache_reject_ns[kind] = now
+                    self._adapter_diagnostic(
+                        2, "source_stamp_replayed_fail_closed",
+                        {"source_stamp_ns": stamp, "source_kind": kind, "error": str(exc)},
+                    )
+                return
+            self._try_exact_join(stamp)
+
+        def _try_exact_join(self, stamp: int) -> None:
+            self._expire_pending_dosod()
+            joined = self._pending_dosod.take_if_ready(stamp, self._source_cache)
+            if joined is not None:
+                message, (image, depth_message, camera_info) = joined
+                self._process_dosod(message, image, depth_message, camera_info)
+
+        def _expire_pending_dosod(self) -> None:
+            for stale_stamp in self._pending_dosod.expire(time.monotonic_ns()):
+                self._record_reject("dosod_wait_expired")
+                self._adapter_diagnostic(
+                    2, "dosod_exact_join_expired_fail_closed", {"source_stamp_ns": stale_stamp}
+                )
 
         def _on_map(self, message: OccupancyGrid) -> None:
+            origin = message.info.origin
+            try:
+                validate_public_map_binding(
+                    frame_id=str(message.header.frame_id),
+                    expected_frame_id=str(self.get_parameter("map_frame").value),
+                    width=int(message.info.width),
+                    height=int(message.info.height),
+                    resolution=float(message.info.resolution),
+                    origin_values=(
+                        origin.position.x,
+                        origin.position.y,
+                        origin.position.z,
+                        origin.orientation.x,
+                        origin.orientation.y,
+                        origin.orientation.z,
+                        origin.orientation.w,
+                    ),
+                    data_length=len(message.data),
+                )
+            except S100PProductAdapterError as exc:
+                self._map = None
+                self._adapter_diagnostic(2, "public_map_invalid_fail_closed", {"error": str(exc)})
+                return
             self._map = message
 
         def _detection_message(
@@ -325,18 +408,53 @@ def main() -> None:
             latency = _perf_latency_ms(message)
             self._inference_diagnostic("dosod", latency, latency is not None)
             stamp = _stamp_ns(message.header.stamp)
-            image = self._images.get(stamp)
-            if stamp <= 0 or image is None:
+            self._dosod_raw_frames += 1
+            try:
+                evicted = self._pending_dosod.put(stamp, message, now_ns=time.monotonic_ns())
+                for stale_stamp in evicted:
+                    self._record_reject("dosod_wait_capacity_evicted")
+                    self._adapter_diagnostic(
+                        2, "dosod_exact_join_capacity_evicted_fail_closed", {"source_stamp_ns": stale_stamp}
+                    )
+                self._try_exact_join(stamp)
+            except Exception as exc:
+                self._record_reject("dosod_wait_rejected")
                 self._adapter_diagnostic(
                     2,
-                    "dosod_image_stamp_unmatched_fail_closed",
-                    {"source_stamp_ns": stamp},
+                    "dosod_exact_join_rejected_fail_closed",
+                    {"source_stamp_ns": stamp, "error": str(exc)},
                 )
-                return
+
+        def _process_dosod(
+            self, message: PerceptionTargets, image: Image, depth_message: Image, camera_info: CameraInfo
+        ) -> None:
+            stamp = _stamp_ns(message.header.stamp)
             try:
+                validate_exact_rgbd_projection_binding(
+                    rgb_stamp_ns=stamp,
+                    rgb_frame_id=str(image.header.frame_id),
+                    rgb_width=int(image.width),
+                    rgb_height=int(image.height),
+                    depth_stamp_ns=_stamp_ns(depth_message.header.stamp),
+                    depth_frame_id=str(depth_message.header.frame_id),
+                    depth_width=int(depth_message.width),
+                    depth_height=int(depth_message.height),
+                    depth_encoding=str(depth_message.encoding),
+                    camera_info_stamp_ns=_stamp_ns(camera_info.header.stamp),
+                    camera_info_frame_id=str(camera_info.header.frame_id),
+                    camera_info_width=int(camera_info.width),
+                    camera_info_height=int(camera_info.height),
+                    camera_k=camera_info.k,
+                )
                 detections = detections_from_ai_like(
                     _ai_like_targets(message),
                     emitted_label_to_class_id=self._dosod_emitted_label_map,
+                )
+                detections = filter_s100p_product_detections(detections)
+                detections = validate_dosod_source_rois(
+                    detections,
+                    source_width=S100P_SOURCE_WIDTH,
+                    source_height=S100P_SOURCE_HEIGHT,
                 )
                 product = self._detection_message(image.header, detections)
                 self._box_publisher.publish(product)
@@ -347,13 +465,20 @@ def main() -> None:
                     image_width=int(image.width),
                     image_height=int(image.height),
                 )
-                self._bounded_put(
-                    self._pending,
-                    stamp,
-                    {"detections": detections, "batch": batch, "image": image},
-                )
-                if batch.prompts:
+                pending = {
+                    "detections": detections,
+                    "batch": batch,
+                    "image": image,
+                    "depth": depth_message,
+                    "camera_info": camera_info,
+                }
+                if requires_edgesam_handoff(batch):
+                    self._pending.put(stamp, pending)
                     self._prompt_publisher.publish(self._prompt_message(message, batch))
+                else:
+                    self._adapter_diagnostic(
+                        0, "dosod_no_edgesam_prompt_terminal", {"source_stamp_ns": stamp}
+                    )
                 self._adapter_diagnostic(
                     0,
                     "dosod_product_and_prompts_published",
@@ -363,10 +488,11 @@ def main() -> None:
                         "prompt_count": len(batch.prompts),
                     },
                 )
+                self._product_box_frames += 1
                 if any(row.class_id == "litter_cube" for row in detections):
                     try:
                         self._publish_projected_products(
-                            self._pending[stamp],
+                            pending,
                             None,
                             publish_mask=False,
                             publish_targets=True,
@@ -378,6 +504,7 @@ def main() -> None:
                             {"source_stamp_ns": stamp, "error": str(exc)},
                         )
             except Exception as exc:
+                self._record_reject("dosod_processing_failed")
                 self._adapter_diagnostic(
                     2,
                     "dosod_product_failed_closed",
@@ -413,12 +540,16 @@ def main() -> None:
             latency = _perf_latency_ms(message)
             self._inference_diagnostic("edgesam", latency, latency is not None)
             stamp = _stamp_ns(message.header.stamp)
-            pending = self._pending.get(stamp)
-            if stamp <= 0 or pending is None:
+            try:
+                if stamp <= 0:
+                    raise S100PProductAdapterError("EdgeSAM stamp is invalid")
+                pending = self._pending.consume(stamp)
+            except S100PProductAdapterError as exc:
+                self._record_reject("edgesam_unmatched_or_replayed")
                 self._adapter_diagnostic(
                     2,
                     "edgesam_prompt_stamp_unmatched_fail_closed",
-                    {"source_stamp_ns": stamp},
+                    {"source_stamp_ns": stamp, "error": str(exc)},
                 )
                 return
             try:
@@ -463,6 +594,7 @@ def main() -> None:
                     pending, decoded, publish_mask=True, publish_targets=False
                 )
             except Exception as exc:
+                self._record_reject("edgesam_terminal_failure")
                 self._adapter_diagnostic(
                     2,
                     "edgesam_product_failed_closed",
@@ -478,26 +610,41 @@ def main() -> None:
             publish_targets: bool,
         ) -> None:
             image = pending["image"]
-            depth_message = self._depth
-            info = self._camera_info
+            depth_message = pending["depth"]
+            info = pending["camera_info"]
             grid_message = self._map
             if depth_message is None or info is None or grid_message is None:
                 raise S100PProductAdapterError(
                     "RGB-D, CameraInfo or public map is missing"
                 )
             image_stamp = _stamp_ns(image.header.stamp)
-            depth_age = abs(image_stamp - _stamp_ns(depth_message.header.stamp)) * 1.0e-9
-            if depth_age > float(self.get_parameter("depth_max_age_s").value):
-                raise S100PProductAdapterError("depth is stale for the EdgeSAM frame")
+            validate_exact_rgbd_projection_binding(
+                rgb_stamp_ns=image_stamp,
+                rgb_frame_id=str(image.header.frame_id),
+                rgb_width=int(image.width),
+                rgb_height=int(image.height),
+                depth_stamp_ns=_stamp_ns(depth_message.header.stamp),
+                depth_frame_id=str(depth_message.header.frame_id),
+                depth_width=int(depth_message.width),
+                depth_height=int(depth_message.height),
+                depth_encoding=str(depth_message.encoding),
+                camera_info_stamp_ns=_stamp_ns(info.header.stamp),
+                camera_info_frame_id=str(info.header.frame_id),
+                camera_info_width=int(info.width),
+                camera_info_height=int(info.height),
+                camera_k=info.k,
+            )
             transform = self._tf_buffer.lookup_transform(
                 str(self.get_parameter("map_frame").value),
                 str(image.header.frame_id),
-                Time(),
+                Time.from_msg(image.header.stamp),
                 timeout=Duration(seconds=0.20),
             )
-            tf_age = abs(image_stamp - _stamp_ns(transform.header.stamp)) * 1.0e-9
-            if tf_age > float(self.get_parameter("tf_max_age_s").value):
-                raise S100PProductAdapterError("map TF is stale for the EdgeSAM frame")
+            validate_exact_tf_binding(
+                image_stamp_ns=image_stamp,
+                transform_stamp_ns=_stamp_ns(transform.header.stamp),
+                max_age_s=float(self.get_parameter("tf_max_age_s").value),
+            )
             depth = self._bridge.imgmsg_to_cv2(
                 depth_message, desired_encoding="passthrough"
             )
@@ -584,7 +731,7 @@ def main() -> None:
                 targets = GarbageTargetArray()
                 targets.header.stamp = image.header.stamp
                 targets.header.frame_id = str(self.get_parameter("map_frame").value)
-                targets.registry_sha256 = "formal_dosod_edgesam_frozen_vocabulary_v1"
+                targets.registry_sha256 = self._model_hashes["vocabulary"]
                 tracker_input = []
                 for row in projected:
                     detection = detections[row.detection_index]
@@ -633,6 +780,7 @@ def main() -> None:
                     targets.targets.append(target)
                 self._target_publisher.publish(targets)
                 target_count = len(targets.targets)
+                self._product_target_frames += 1
             self._adapter_diagnostic(
                 0,
                 "map_products_published",
@@ -663,7 +811,9 @@ def main() -> None:
             array = DiagnosticArray()
             array.header.stamp = self.get_clock().now().to_msg()
             status = DiagnosticStatus()
-            status.level = bytes([level])
+            # diagnostic_msgs/DiagnosticStatus.level is ROS uint8, represented
+            # by an integer in rclpy (not a one-byte ``bytes`` payload).
+            status.level = int(level)
             status.name = name
             status.hardware_id = "RDK_S100P_Journey_6P"
             status.message = message
@@ -677,12 +827,21 @@ def main() -> None:
         def _adapter_diagnostic(
             self, level: int, message: str, values: dict[str, Any]
         ) -> None:
+            stamp = values.get("source_stamp_ns")
+            if level == 0 and isinstance(stamp, int):
+                if stamp - self._last_success_diagnostic_ns < 1_000_000_000:
+                    return
+                self._last_success_diagnostic_ns = stamp
             self._publish_diagnostic(
                 "formal_open_vocab_perception/product_adapter",
                 level,
                 message,
                 {
                     **values,
+                    "dosod_raw_frames": self._dosod_raw_frames,
+                    "product_box_frames": self._product_box_frames,
+                    "product_target_frames": self._product_target_frames,
+                    "reject_reasons": self._reject_reasons,
                     "fail_closed": level >= 2,
                     "ground_truth_input_used": False,
                 },

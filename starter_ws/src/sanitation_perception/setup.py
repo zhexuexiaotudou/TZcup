@@ -19,7 +19,7 @@ setup(
     install_requires=[
         "setuptools",
         "PyYAML",
-        "numpy>=1.24,<2",
+        "numpy>=1.21.5,<2",
     ],
     zip_safe=True,
     maintainer="Sanitation Vehicle Team",
