@@ -76,8 +76,10 @@ class Image:
 class CameraInfo:
  header=Header(); width=2; height=2; k=[1,0,0,0,1,0,0,0,1]
 EOF
-printf 'export PATH=%q:"$PATH"\nexport PYTHONPATH=%q${PYTHONPATH:+:$PYTHONPATH}\n' "$fixture/repo/bin" "$fixture/repo/fakepy" >"$fixture/repo/input/stage1.bash"
+printf 'export AMENT_TRACE_SETUP_FILES="$AMENT_TRACE_SETUP_FILES:fixture-stage1"\nexport PATH=%q:"$PATH"\nexport PYTHONPATH=%q${PYTHONPATH:+:$PYTHONPATH}\n' "$fixture/repo/bin" "$fixture/repo/fakepy" >"$fixture/repo/input/stage1.bash"
 printf 'export ROS_DISTRO=fake\nexport ROS_DOMAIN_ID=99\nexport GZ_PARTITION=setup-must-not-win\n' >"$fixture/repo/input/ros-setup.bash"; printf 'export AMENT_PREFIX_PATH=/fixture-runtime\n' >"$fixture/repo/input/runtime.bash"; printf 'export GZ_SIM_RESOURCE_PATH=/fixture-campus\n' >"$fixture/repo/input/campus.bash"; : >"$fixture/repo/input/world.sdf"; : >"$fixture/repo/input/episode_manifest.json"
+printf 'return 7\n' >"$fixture/repo/input/failing-setup.bash"
+printf 'if then\n' >"$fixture/repo/input/malformed-setup.bash"
 printf '.work/\n__pycache__/\n' >"$fixture/repo/.gitignore"; git -C "$fixture/repo" init -q; git -C "$fixture/repo" config user.email fixture@example.invalid; git -C "$fixture/repo" config user.name fixture; git -C "$fixture/repo" add .; git -C "$fixture/repo" commit -qm fixture
 set +e; FAKE_MODE=gid_switch PYTHONPATH="$fixture/repo/fakepy" /usr/bin/python3 "$fixture/repo/scripts/public_gazebo_camera_pair_readiness.py" --image-topic /camera/color/image_raw --camera-info-topic /camera/color/camera_info --timeout .05 --output "$fixture/epoch.json"; epoch_rc=$?; set -e
 [[ "$epoch_rc" == 2 ]]; python3 - "$fixture/epoch.json" <<'PY'
@@ -85,14 +87,16 @@ import json,sys
 d=json.load(open(sys.argv[1])); assert d['status']=='BLOCKED' and d['exact_fresh_pair_count']==0
 PY
 run_case() {
- local name="$1" mode="$2" expected="$3" total="${4:-5}" state rootdir rc
+ local name="$1" mode="$2" expected="$3" total="${4:-5}" stage1_setup="${5:-$fixture/repo/input/stage1.bash}" state rootdir rc
  state="$fixture/repo/.work/$name-state"; rootdir="$fixture/repo/.work/$name-root"
  mkdir -p "$state" "$rootdir"; set +e
- SECRET_SENTINEL=do-not-persist GZ_FUEL_PASSWORD=fuel-secret ROS_AUTH_TOKEN=ros-secret PUBLIC_GAZEBO_CALIBRATION_IMAGE_TOPIC=/wrong FAKE_STATE="$state" FAKE_MODE="$mode" PATH="$fixture/repo/bin:$PATH" PYTHONPATH="$fixture/repo/fakepy" PUBLIC_GAZEBO_CAMERA_SMOKE_OUTPUT="$rootdir" PUBLIC_GAZEBO_CAMERA_SMOKE_LOCK="$fixture/repo/.work/locks/$name.lock" PUBLIC_GAZEBO_CAMERA_SMOKE_TOTAL_TIMEOUT_SEC="$total" PUBLIC_GAZEBO_CAMERA_SMOKE_ROS_SETUP="$fixture/repo/input/ros-setup.bash" PUBLIC_GAZEBO_CAMERA_SMOKE_STAGE1_SETUP="$fixture/repo/input/stage1.bash" PUBLIC_GAZEBO_CAMERA_SMOKE_RUNTIME_SETUP="$fixture/repo/input/runtime.bash" PUBLIC_GAZEBO_CAMERA_SMOKE_CAMPUS_SETUP="$fixture/repo/input/campus.bash" PUBLIC_GAZEBO_CAMERA_SMOKE_WORLD="$fixture/repo/input/world.sdf" PUBLIC_GAZEBO_CAMERA_SMOKE_MANIFEST="$fixture/repo/input/episode_manifest.json" ROS_DOMAIN_ID=81 timeout -k 1 12s bash "$fixture/repo/scripts/run_public_gazebo_camera_readiness_smoke.sh" >"$fixture/$name.out" 2>"$fixture/$name.err"
+ SECRET_SENTINEL=do-not-persist GZ_FUEL_PASSWORD=fuel-secret ROS_AUTH_TOKEN=ros-secret PUBLIC_GAZEBO_CALIBRATION_IMAGE_TOPIC=/wrong FAKE_STATE="$state" FAKE_MODE="$mode" PATH="$fixture/repo/bin:$PATH" PYTHONPATH="$fixture/repo/fakepy" PUBLIC_GAZEBO_CAMERA_SMOKE_OUTPUT="$rootdir" PUBLIC_GAZEBO_CAMERA_SMOKE_LOCK="$fixture/repo/.work/locks/$name.lock" PUBLIC_GAZEBO_CAMERA_SMOKE_TOTAL_TIMEOUT_SEC="$total" PUBLIC_GAZEBO_CAMERA_SMOKE_ROS_SETUP="$fixture/repo/input/ros-setup.bash" PUBLIC_GAZEBO_CAMERA_SMOKE_STAGE1_SETUP="$stage1_setup" PUBLIC_GAZEBO_CAMERA_SMOKE_RUNTIME_SETUP="$fixture/repo/input/runtime.bash" PUBLIC_GAZEBO_CAMERA_SMOKE_CAMPUS_SETUP="$fixture/repo/input/campus.bash" PUBLIC_GAZEBO_CAMERA_SMOKE_WORLD="$fixture/repo/input/world.sdf" PUBLIC_GAZEBO_CAMERA_SMOKE_MANIFEST="$fixture/repo/input/episode_manifest.json" ROS_DOMAIN_ID=81 env -u AMENT_TRACE_SETUP_FILES timeout -k 1 12s bash "$fixture/repo/scripts/run_public_gazebo_camera_readiness_smoke.sh" >"$fixture/$name.out" 2>"$fixture/$name.err"
  rc=$?; set -e; [[ "$rc" == "$expected" ]] || { cat "$fixture/$name.err" >&2; return 1; }
  if [[ -s "$state/launch.pid" ]]; then ! kill -0 -- "-$(<"$state/launch.pid")" 2>/dev/null || { echo "surviving exact fixture group: $name" >&2; return 1; }; fi
 }
 run_case oom oom 86; [[ ! -e "$fixture/repo/.work/oom-state/launch.pid" ]]
+run_case failing_setup ok 125 5 "$fixture/repo/input/failing-setup.bash"; [[ ! -e "$fixture/repo/.work/failing_setup-state/launch.pid" ]]
+run_case malformed_setup ok 125 5 "$fixture/repo/input/malformed-setup.bash"; [[ ! -e "$fixture/repo/.work/malformed_setup-state/launch.pid" ]]
 run_case clean ok 0; [[ -f "$fixture/repo/.work/clean-state/launch.term" ]]; ! grep -R -E -q 'SECRET_SENTINEL|do-not-persist|fuel-secret|ros-secret' "$fixture/repo/.work/clean-root"; grep -qx 'declare -x ROS_DISTRO="fake"' "$fixture/repo/.work/clean-root/setup_environment.sh"; grep -qx 'declare -x AMENT_PREFIX_PATH="/fixture-runtime"' "$fixture/repo/.work/clean-root/setup_environment.sh"; grep -qx 'declare -x GZ_SIM_RESOURCE_PATH="/fixture-campus"' "$fixture/repo/.work/clean-root/setup_environment.sh"
 python3 - "$fixture/repo/.work/clean-root/public_gazebo_camera_readiness_smoke_receipt.json" <<'PY'
 import json,sys
