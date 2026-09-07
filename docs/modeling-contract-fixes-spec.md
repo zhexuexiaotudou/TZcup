@@ -17,6 +17,20 @@
 > 重新运行顶层 `formal_passed=false` 的 NON_FORMAL W1；只有其验证真实正确输出且错误样本
 > 仍被拒绝，才可另建 fresh formal runtime 进入正式 W1-W5。
 
+> 2026-09-07 R068 addendum：R067 的 Windows fake 把 Jazzy `ParameterValue`
+> 错当作具有 `.value` 的泛化对象，因而没有覆盖真实 `type`、`double_value` 与
+> `string_value` schema；a2 的只读 Jazzy smoke 证实该路径在任何 W1 图启动前
+> 已抛出 `AttributeError`。R067 的该 fake 不得再作为 API 正确性证据，相关
+> NON_FORMAL 启动保持禁用。R068 必须复用 `rclpy.parameter.parameter_value_to_python`
+> 解码真实值，随后严格拒绝 bool/非数值、非有限或负 padding，以及非相对字符串
+> frame；未知 type、字段损坏或 future 异常一律 fail closed。gate 自身必须以
+> `use_sim_time=true` 构造，使 fresh Gazebo stamp 与同一 ROS clock 比较；不得
+> 由 runner 注入伪参数或改变 2 s freshness、ULP、TF、safety、truth 或 hidden
+> 边界。真实 Jazzy 无图 smoke 需证明无 `/clock` 时为 0、隔离测试域的 Clock
+> 消息到达后时钟前进；这只验证 API/clock 接口，不能构成 formal 或 NON_FORMAL
+> 产品 PASS。修复合并后仍须建立 fresh source/runtime/closure，再由新的授权
+> 诊断入口运行一次 NON_FORMAL W1。
+
 ## 1. 目标与治理
 
 本变更修复当前正式仿真中已经由源码和留存运行证据确认的建模合同漏洞，同时保持既定技术路线：正式车辆仍为 A300 四轮滑移转向底盘，首次建图仍使用 `200 m x 100 m`、无实体外墙的 map-frame geofence，正式控制链不得消费 Gazebo/evaluator 真值，S100P 和真实整车状态继续与 PC/Gazebo 仿真状态分开报告。

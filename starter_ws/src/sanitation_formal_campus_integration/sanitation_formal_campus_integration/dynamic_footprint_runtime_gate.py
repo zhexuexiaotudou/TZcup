@@ -11,6 +11,7 @@ import argparse
 from collections.abc import Sequence
 import json
 import math
+from numbers import Real
 import sys
 import time
 import uuid
@@ -19,6 +20,7 @@ from pathlib import Path
 import rclpy
 from geometry_msgs.msg import Polygon, PolygonStamped
 from rclpy.node import Node
+from rclpy.parameter import Parameter, parameter_value_to_python
 from rclpy.parameter_client import AsyncParameterClient
 from rclpy.time import Time
 from std_msgs.msg import Bool, String
@@ -81,10 +83,16 @@ def _read_footprint_padding_response(
         raise ValueError("parameter response values must be a sequence")
     if len(values) != 2:
         raise ValueError("parameter result count")
-    value = float(values[0].value)
+    try:
+        padding_value = parameter_value_to_python(values[0])
+        frame = parameter_value_to_python(values[1])
+    except Exception as error:
+        raise ValueError("parameter value conversion") from error
+    if isinstance(padding_value, bool) or not isinstance(padding_value, Real):
+        raise ValueError("footprint_padding is not a non-bool numeric value")
+    value = float(padding_value)
     if not math.isfinite(value) or value < 0.0:
         raise ValueError("not finite non-negative")
-    frame = values[1].value
     if not isinstance(frame, str) or not frame or frame.startswith("/"):
         raise ValueError("robot_base_frame is not a relative frame id")
     declared_bound = point32_coordinate_quantization_bound(declared_padding_m, value)
@@ -102,7 +110,10 @@ class DynamicFootprintRuntimeGate(Node):
     """Fail closed unless the graph proves a fresh, inhibited exact readback."""
 
     def __init__(self, profile_path: Path, timeout_sec: float) -> None:
-        super().__init__("formal_dynamic_footprint_runtime_gate")
+        super().__init__(
+            "formal_dynamic_footprint_runtime_gate",
+            parameter_overrides=[Parameter("use_sim_time", value=True)],
+        )
         self._footprints = load_footprints(profile_path)
         self._declared_padding_m = load_nav2_footprint_padding(profile_path)
         self._profile_base_frame = load_profile_base_frame(profile_path)
