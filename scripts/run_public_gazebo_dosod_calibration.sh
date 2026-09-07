@@ -3,6 +3,7 @@
 set -Eeuo pipefail
 
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
+source "$ROOT/scripts/run_formal_runtime_isolation.sh"
 : "${PUBLIC_GAZEBO_CALIBRATION_PLAN:?approved public scene plan is required}"
 : "${PUBLIC_GAZEBO_CALIBRATION_OUTPUT:?new run root is required}"
 : "${PUBLIC_GAZEBO_CALIBRATION_LOCK:?shared Gazebo lock path is required}"
@@ -90,6 +91,7 @@ source "$PUBLIC_GAZEBO_CALIBRATION_RUNTIME_SETUP"
 source "$PUBLIC_GAZEBO_CALIBRATION_CAMPUS_SETUP"
 set -u
 
+formal_runtime_configure_networking
 python3 "$ROOT/scripts/public_gazebo_dosod_calibration.py" \
   --scene-plan "$PUBLIC_GAZEBO_CALIBRATION_PLAN" \
   --contract "$ROOT/config/dosod_s100p_hbm_compile_contract.json" \
