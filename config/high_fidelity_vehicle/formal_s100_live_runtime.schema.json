@@ -47,6 +47,7 @@
     "source_binding": {"$ref": "#/$defs/sourceBinding"},
     "acceptance_session_binding": {"$ref": "#/$defs/acceptanceSessionBinding"},
     "runtime_closure_binding": {"$ref": "#/$defs/runtimeClosureBinding"},
+    "short_diagnostic_binding": {"$ref": "#/$defs/shortDiagnosticBinding"},
     "system_image": {
       "type": "object",
       "required": ["os_release", "os_release_sha256", "kernel_release", "kernel_version", "runtime_inventory"],
@@ -159,7 +160,7 @@
       "if": {"properties": {"status": {"const": "FORMAL_RDK_S100_LIVE_RUNTIME_COLLECTED"}}},
       "then": {
         "properties": {"collection_complete": {"const": true}, "blockers": {"maxItems": 0}},
-        "required": ["source_binding", "acceptance_session_binding", "runtime_closure_binding", "system_image", "models", "dosod_hbm_evidence", "ros_graph", "inference_telemetry", "sustained_run", "resources", "thermal"]
+        "required": ["source_binding", "acceptance_session_binding", "runtime_closure_binding", "short_diagnostic_binding", "system_image", "models", "dosod_hbm_evidence", "ros_graph", "inference_telemetry", "sustained_run", "resources", "thermal"]
       }
     },
     {
@@ -197,6 +198,17 @@
       "properties": {
         "runtime_closure_manifest_sha256": {"$ref": "#/$defs/sha256"},
         "runtime_closure_sha256": {"$ref": "#/$defs/sha256"}
+      },
+      "additionalProperties": false
+    },
+    "shortDiagnosticBinding": {
+      "type": "object",
+      "required": ["path", "sha256", "receipt", "admitted_epoch_ns"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "receipt": {"type": "object"},
+        "admitted_epoch_ns": {"type": "integer", "minimum": 1}
       },
       "additionalProperties": false
     },

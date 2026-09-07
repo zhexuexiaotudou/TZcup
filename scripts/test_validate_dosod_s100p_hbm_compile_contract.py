@@ -190,28 +190,37 @@ def test_real_contract_has_exact_official_upstream_file_bindings() -> None:
     assert contract["upstream"]["files"] == EXPECTED_UPSTREAM_FILES
 
 
-def test_ready_fixture_emits_plan_but_never_hbm(tmp_path, monkeypatch) -> None:
+def test_ready_fixture_without_real_oracle_is_blocked(tmp_path, monkeypatch) -> None:
     contract, repository, artifacts, upstream, calibration, identity = _build_ready_fixture(
         tmp_path, monkeypatch
     )
     report = subject.audit_compile_inputs(
         contract, repository, artifacts, upstream, calibration, identity
     )
-    assert report["status"] == "READY_FOR_ONNX_TOOLCHAIN_PREFLIGHT"
-    assert report["blockers"] == []
-    assert len(report["compile_plan_sha256"]) == 64
+    assert report["status"] == "BLOCKED"
+    assert "preprocessing_oracle_missing" in report["blockers"]
+    assert report["compile_plan_sha256"] is None
     assert report["hbm_status"] == "HBM_NOT_PRODUCED"
     assert report["compile_executed"] is False
     assert not (artifacts / subject.EXPECTED_OUTPUT_RELATIVE_PATH).exists()
+
+
+def test_candidate_receipt_cannot_satisfy_formal_oracle(tmp_path, monkeypatch) -> None:
+    contract, repository, artifacts, upstream, calibration, identity = _build_ready_fixture(tmp_path, monkeypatch)
+    candidate = tmp_path / "candidate.json"
+    candidate.write_text(json.dumps({"receipt_id": "tzcup_dosod_nonformal_oracle_candidate_compile_receipt_v1", "status": "NON_FORMAL_ORACLE_CANDIDATE_COMPILED"}), encoding="utf-8")
+    report = subject.audit_compile_inputs(contract, repository, artifacts, upstream, calibration, identity, candidate)
+    assert report["status"] == "BLOCKED"
+    assert any(item.startswith("preprocessing_oracle_invalid:") for item in report["blockers"])
 
 
 def test_missing_live_compiler_identity_blocks(tmp_path, monkeypatch) -> None:
     contract, repository, artifacts, upstream, calibration, _ = _build_ready_fixture(
         tmp_path, monkeypatch
     )
-    report = subject.audit_compile_inputs(
-        contract, repository, artifacts, upstream, calibration, None
-    )
+    oracle = tmp_path / "trusted-oracle.json"; oracle.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(subject, "_validate_preprocessing_oracle", lambda _: {"model_sha256": subject.EXPECTED_MODEL_SHA256, "vocabulary_sha256": subject.EXPECTED_VOCABULARY_SHA256})
+    report = subject.audit_compile_inputs(contract, repository, artifacts, upstream, calibration, None, oracle)
     assert report["status"] == "BLOCKED"
     assert "live_compiler_identity_missing" in report["blockers"]
     assert report["compile_plan_sha256"] is None
@@ -222,9 +231,9 @@ def test_unregistered_calibration_tensor_blocks(tmp_path, monkeypatch) -> None:
         tmp_path, monkeypatch
     )
     np.save(calibration / "unregistered.npy", np.zeros((1, 3, 2, 2), dtype=np.float32))
-    report = subject.audit_compile_inputs(
-        contract, repository, artifacts, upstream, calibration, identity
-    )
+    oracle = tmp_path / "trusted-oracle.json"; oracle.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(subject, "_validate_preprocessing_oracle", lambda _: {"model_sha256": subject.EXPECTED_MODEL_SHA256, "vocabulary_sha256": subject.EXPECTED_VOCABULARY_SHA256})
+    report = subject.audit_compile_inputs(contract, repository, artifacts, upstream, calibration, identity, oracle)
     assert "calibration_directory_manifest_set_mismatch" in report["blockers"]
 
 

@@ -33,7 +33,7 @@
     },
     "checks": {
       "type": "object",
-      "required": ["hardware_identity", "system_image", "model_hashes", "dosod_compile_parity_metric_chain", "ros_graph", "actual_backend_and_inference", "sustained_resources_and_thermal", "truth_boundary", "snapshot_binding", "acceptance_session_binding", "runtime_closure_binding"],
+      "required": ["hardware_identity", "system_image", "model_hashes", "dosod_compile_parity_metric_chain", "ros_graph", "actual_backend_and_inference", "sustained_resources_and_thermal", "truth_boundary", "snapshot_binding", "acceptance_session_binding", "runtime_closure_binding", "short_diagnostic"],
       "properties": {
         "hardware_identity": {"type": "boolean"},
         "system_image": {"type": "boolean"},
@@ -45,7 +45,8 @@
         "truth_boundary": {"type": "boolean"},
         "snapshot_binding": {"type": "boolean"},
         "acceptance_session_binding": {"type": "boolean"},
-        "runtime_closure_binding": {"type": "boolean"}
+        "runtime_closure_binding": {"type": "boolean"},
+        "short_diagnostic": {"type": "boolean"}
       },
       "additionalProperties": false
     },
@@ -71,7 +72,8 @@
               "truth_boundary": {"const": true},
               "snapshot_binding": {"const": true},
               "acceptance_session_binding": {"const": true},
-              "runtime_closure_binding": {"const": true}
+              "runtime_closure_binding": {"const": true},
+              "short_diagnostic": {"const": true}
             }
           }
         }

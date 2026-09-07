@@ -5,8 +5,12 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
+import os
 import platform
 import re
+import stat
+import time
 from pathlib import Path
 from typing import Any
 
@@ -20,13 +24,50 @@ FINAL_BLOCKED = "FORMAL_RDK_S100_LIVE_PRODUCT_RUNTIME_BLOCKED"
 TARGET_BOARD = "RDK S100P"
 TARGET_SOC = "Journey 6P"
 
+SHORT_DIAGNOSTIC_REPORT_ID = "tzcup_formal_rdk_s100_short_diagnostic_v1"
+SHORT_DIAGNOSTIC_PASSED = "FORMAL_RDK_S100_SHORT_DIAGNOSTIC_PASSED"
+SHORT_DIAGNOSTIC_BLOCKED = "FORMAL_RDK_S100_SHORT_DIAGNOSTIC_BLOCKED"
+# This is deliberately a fixed, bounded admission probe, not a substitute for
+# the formal 1800-second duration gate.
+SHORT_DIAGNOSTIC_DURATION_SEC = 30.0
+SHORT_DIAGNOSTIC_MAX_AGE_SEC = 300.0
+SHORT_STREAM_MAX_AGE_NS = 2_000_000_000
+TROS_SETUP_PATHS = ("/opt/tros/humble/setup.bash", "/opt/tros/jazzy/setup.bash")
+HRT_MODEL_EXEC_PATH = "/usr/hobot/bin/hrt_model_exec"
+SHORT_DIAGNOSTIC_COLLECTOR_PATH = str(
+    Path(__file__).with_name("collect_formal_s100_live_runtime.py").resolve()
+)
+REQUIRED_SHORT_NODES = {
+    "rgb_to_nv12_adapter": "rgb_to_nv12_adapter",
+    "hobot_dosod": "hobot_dosod",
+    "mono_edgesam": "mono_edgesam",
+    "open_vocab_product_adapter": "open_vocab_product_adapter",
+}
+REQUIRED_SHORT_INPUT_TOPICS = {
+    "rgb": ("/sensors/front_rgbd/depth/image_rect_raw/image", "sensor_msgs/msg/Image"),
+    "depth": ("/sensors/front_rgbd/depth/image_rect_raw/depth_image", "sensor_msgs/msg/Image"),
+    "camera_info": ("/sensors/front_rgbd/depth/image_rect_raw/camera_info", "sensor_msgs/msg/CameraInfo"),
+    "map": ("/map", "nav_msgs/msg/OccupancyGrid"),
+    "tf": ("/tf", "tf2_msgs/msg/TFMessage"),
+}
+REQUIRED_SHORT_OUTPUT_TOPICS = {
+    "dosod": ("/perception/open_vocab/dosod_raw", "ai_msgs/msg/PerceptionTargets"),
+    "edgesam": ("/perception/open_vocab/edgesam_raw", "ai_msgs/msg/PerceptionTargets"),
+}
+REQUIRED_SHORT_PROJECT_OUTPUTS = {
+    "boxes": ("/perception/garbage/detections_2d", "vision_msgs/msg/Detection2DArray"),
+    "targets": ("/perception/garbage/targets", "sanitation_perception_interfaces/msg/GarbageTargetArray"),
+}
+TROS_ABI_IMPORTS = ("numpy", "cv2", "yaml", "rclpy", "cv_bridge", "ai_msgs", "sensor_msgs", "tf2_ros", "vision_msgs")
+REQUIRED_SHORT_DIAGNOSTIC_COMPONENTS = {"rgb_to_nv12_adapter", "open_vocab_product_adapter"}
+
 REQUIRED_MODEL_ROLES = {
     "dosod_hbm",
     "dosod_vocabulary",
     "edgesam_encoder_hbm",
     "edgesam_decoder_hbm",
 }
-REQUIRED_NODES = {"hobot_dosod", "mono_edgesam", "open_vocab_product_adapter"}
+REQUIRED_NODES = set(REQUIRED_SHORT_NODES)
 REQUIRED_TOPICS = {
     "/perception/garbage/detections_2d": "vision_msgs/msg/Detection2DArray",
     "/perception/ground_dirt/masks": "sensor_msgs/msg/Image",
@@ -37,6 +78,43 @@ REQUIRED_TOPICS = {
 }
 PROHIBITED_TRUTH_TOKENS = ("ground_truth", "evaluator", "/world/", "model_states")
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+
+
+def _valid_digest(value: Any) -> bool:
+    return isinstance(value, str) and bool(SHA256_RE.fullmatch(value.lower()))
+
+
+def path_identity(path: Path) -> dict[str, Any]:
+    """Record a resolved regular file without accepting symlinks."""
+    try:
+        mode = path.lstat().st_mode
+    except OSError as exc:
+        return {"path": str(path), "present": False, "error": str(exc)}
+    if stat.S_ISLNK(mode) or not stat.S_ISREG(mode):
+        return {
+            "path": str(path), "present": False, "is_symlink": stat.S_ISLNK(mode),
+            "is_regular_file": stat.S_ISREG(mode),
+        }
+    return {
+        "path": str(path), "present": True, "is_symlink": False,
+        "is_regular_file": True, "sha256": sha256_path(path), "byte_size": path.stat().st_size,
+    }
+
+
+def regular_nonlink_with_safe_ancestors(path: Path) -> bool:
+    """Reject a receipt reached through a symlinked file or ancestor."""
+    try:
+        candidate = path.absolute()
+        while True:
+            mode = candidate.lstat().st_mode
+            if stat.S_ISLNK(mode):
+                return False
+            if candidate.parent == candidate:
+                break
+            candidate = candidate.parent
+        return stat.S_ISREG(path.lstat().st_mode)
+    except OSError:
+        return False
 
 
 def sha256_path(path: Path) -> str:
@@ -219,6 +297,215 @@ def probe_hardware(root: Path = Path("/"), *, machine: str | None = None) -> dic
     }
 
 
+def validate_short_diagnostic(
+    payload: dict[str, Any],
+    expected_snapshot: dict[str, str],
+    expected_session: dict[str, Any],
+    expected_runtime_closure: dict[str, str],
+    *,
+    now_epoch_ns: int | None = None,
+) -> list[str]:
+    """Validate the bounded board admission probe independently of the 1800s run."""
+    failures: list[str] = []
+
+    def fail(message: str) -> None:
+        if message not in failures:
+            failures.append(message)
+
+    if payload.get("schema_version") != 1 or payload.get("report_id") != SHORT_DIAGNOSTIC_REPORT_ID:
+        fail("short diagnostic identity/schema is invalid")
+    if payload.get("status") != SHORT_DIAGNOSTIC_PASSED or payload.get("completed") is not True:
+        fail("short diagnostic did not pass")
+    if payload.get("blockers") != []:
+        fail("short diagnostic has blockers")
+    duration = _number(payload.get("duration_sec"))
+    if duration is None or duration < SHORT_DIAGNOSTIC_DURATION_SEC:
+        fail("short diagnostic duration is below the fixed admission interval")
+    collected = payload.get("collected_epoch_ns")
+    if not isinstance(collected, int) or collected <= 0:
+        fail("short diagnostic collection timestamp is invalid")
+    elif now_epoch_ns is not None and (
+        collected > now_epoch_ns or now_epoch_ns - collected > int(SHORT_DIAGNOSTIC_MAX_AGE_SEC * 1_000_000_000)
+    ):
+        fail("short diagnostic is not fresh for this formal run")
+    if payload.get("source_binding") != expected_snapshot:
+        fail("short diagnostic source binding does not match frozen snapshot")
+    short_session = payload.get("acceptance_session_binding")
+    if not isinstance(short_session, dict) or any(
+        short_session.get(key) != expected_session.get(key)
+        for key in ("session_started_epoch_ns", "snapshot")
+    ) or (
+        "session_manifest_sha256" in expected_session
+        and short_session.get("session_manifest_sha256") != expected_session.get("session_manifest_sha256")
+    ):
+        fail("short diagnostic acceptance-session binding does not match active session")
+    if payload.get("runtime_closure_binding") != expected_runtime_closure:
+        fail("short diagnostic runtime-closure binding does not match active closure")
+
+    hardware = payload.get("hardware")
+    if not isinstance(hardware, dict) or hardware.get("attested") is not True:
+        fail("short diagnostic board hardware is not attested")
+    collector = payload.get("collector")
+    try:
+        collector_sha = sha256_path(Path(SHORT_DIAGNOSTIC_COLLECTOR_PATH))
+    except OSError:
+        collector_sha = None
+    if not isinstance(collector, dict) or collector.get("script_path") != SHORT_DIAGNOSTIC_COLLECTOR_PATH or collector.get("script_sha256") != collector_sha or not isinstance(collector.get("pid"), int) or collector["pid"] <= 0:
+        fail("short diagnostic collector identity does not bind the current producer")
+    bpu = payload.get("bpu_device")
+    if not isinstance(bpu, dict) or bpu.get("path") != "/dev/bpu_core0" or bpu.get("is_character_device") is not True or bpu.get("is_symlink") is not False:
+        fail("short diagnostic bpu_core0 is not a nonlink character device")
+    hrt = payload.get("hrt_model_exec")
+    if not isinstance(hrt, dict) or hrt.get("path") != HRT_MODEL_EXEC_PATH or hrt.get("present") is not True or hrt.get("is_symlink") is not False or not _valid_digest(hrt.get("sha256")) or not isinstance(hrt.get("version"), dict) or hrt["version"].get("returncode") != 0:
+        fail("short diagnostic hrt_model_exec is not the canonical regular executable")
+
+    tros = payload.get("tros_abi")
+    if not isinstance(tros, dict):
+        fail("short diagnostic TROS ABI evidence is missing")
+    else:
+        setup = tros.get("setup")
+        imports = tros.get("imports")
+        if not isinstance(setup, dict) or setup.get("path") not in TROS_SETUP_PATHS or setup.get("present") is not True or setup.get("is_symlink") is not False or not _valid_digest(setup.get("sha256")):
+            fail("short diagnostic TROS setup is not an allowlisted regular file")
+        if not isinstance(tros.get("python_executable"), str) or not tros["python_executable"].startswith("/") or not isinstance(tros.get("python_version"), str) or not tros["python_version"]:
+            fail("short diagnostic TROS Python identity is invalid")
+        if not isinstance(imports, dict) or set(imports) != set(TROS_ABI_IMPORTS):
+            fail("short diagnostic TROS ABI import set is invalid")
+        elif any(
+            not isinstance(row, dict)
+            or not isinstance(row.get("module_path"), str)
+            or not row["module_path"].startswith("/")
+            or not isinstance(row.get("package_metadata"), dict)
+            or row["package_metadata"].get("method") not in {"importlib.metadata", "ament_package_xml", "dpkg_query"}
+            or not isinstance(row["package_metadata"].get("version"), str)
+            or not row["package_metadata"]["version"]
+            or not isinstance(row["package_metadata"].get("path"), str)
+            or not row["package_metadata"]["path"].startswith("/")
+            for row in imports.values()
+        ):
+            fail("short diagnostic TROS ABI import version/path is invalid")
+
+    nodes = payload.get("nodes")
+    processes = payload.get("processes")
+    if not isinstance(nodes, dict) or set(nodes) != set(REQUIRED_SHORT_NODES):
+        fail("short diagnostic does not have exactly the four required ROS nodes")
+    elif any(not isinstance(row, dict) or row.get("count") != 1 or not isinstance(row.get("name"), str) or not row["name"].startswith("/") for row in nodes.values()):
+        fail("short diagnostic ROS node identity is not unique")
+    if not isinstance(processes, dict) or set(processes) != set(REQUIRED_SHORT_NODES):
+        fail("short diagnostic does not have exactly the four required processes")
+    elif any(not isinstance(row, dict) or not isinstance(row.get("pid"), int) or row["pid"] <= 0 or not _valid_digest(row.get("cmdline_sha256")) for row in processes.values()):
+        fail("short diagnostic process identity is invalid")
+
+    inputs = payload.get("inputs")
+    clock = payload.get("clock")
+    if not isinstance(inputs, dict) or set(inputs) != set(REQUIRED_SHORT_INPUT_TOPICS):
+        fail("short diagnostic input set is invalid")
+    else:
+        for role, (topic, type_name) in REQUIRED_SHORT_INPUT_TOPICS.items():
+            row = inputs.get(role)
+            if not isinstance(row, dict) or row.get("topic") != topic or row.get("type") != type_name or not isinstance(row.get("count"), int) or row["count"] <= 0 or not isinstance(row.get("last_stamp_ns"), int) or row["last_stamp_ns"] <= 0:
+                fail(f"short diagnostic input {role} is missing, stale, or wrong typed")
+            elif role != "map" and isinstance(clock, dict) and isinstance(clock.get("stamps_ns"), list) and clock["stamps_ns"]:
+                last_clock = clock["stamps_ns"][-1]
+                if row["last_stamp_ns"] > last_clock or last_clock - row["last_stamp_ns"] > SHORT_STREAM_MAX_AGE_NS:
+                    fail(f"short diagnostic input {role} is not fresh against clock")
+            elif role == "map" and row.get("freshness_policy") != "static_map_allowed":
+                fail("short diagnostic map freshness policy is not explicit")
+    if not isinstance(clock, dict) or clock.get("topic") != "/clock" or clock.get("type") != "rosgraph_msgs/msg/Clock" or not isinstance(clock.get("stamps_ns"), list) or len(clock["stamps_ns"]) < 2 or not all(isinstance(value, int) and value > 0 for value in clock["stamps_ns"]) or clock["stamps_ns"][-1] <= clock["stamps_ns"][0]:
+        fail("short diagnostic clock did not advance")
+    if isinstance(inputs, dict):
+        camera_info = inputs.get("camera_info")
+        k = camera_info.get("k") if isinstance(camera_info, dict) else None
+        if not isinstance(camera_info, dict) or not isinstance(camera_info.get("width"), int) or camera_info["width"] <= 0 or not isinstance(camera_info.get("height"), int) or camera_info["height"] <= 0 or not isinstance(camera_info.get("frames_by_stamp"), dict) or not camera_info["frames_by_stamp"].get(str(camera_info.get("last_stamp_ns")), "") or not isinstance(k, list) or len(k) != 9 or not all(isinstance(value, (int, float)) and math.isfinite(value) for value in k):
+            fail("short diagnostic CameraInfo intrinsics/dimensions/frame are invalid")
+        tf_row = inputs.get("tf")
+        if not isinstance(tf_row, dict) or not isinstance(tf_row.get("transform_stamps_ns"), list) or not tf_row["transform_stamps_ns"]:
+            fail("short diagnostic TFMessage has no transform stamps")
+    outputs = payload.get("outputs")
+    if not isinstance(outputs, dict) or set(outputs) != set(REQUIRED_SHORT_OUTPUT_TOPICS):
+        fail("short diagnostic output set is invalid")
+    else:
+        for role, (topic, type_name) in REQUIRED_SHORT_OUTPUT_TOPICS.items():
+            row = outputs.get(role)
+            if not isinstance(row, dict) or row.get("topic") != topic or row.get("type") != type_name or not isinstance(row.get("count"), int) or row["count"] <= 0 or not isinstance(row.get("stamps_ns"), list):
+                fail(f"short diagnostic output {role} is missing, stale, or wrong typed")
+            elif isinstance(clock, dict) and isinstance(clock.get("stamps_ns"), list) and clock["stamps_ns"]:
+                last = row["stamps_ns"][-1] if row["stamps_ns"] else 0
+                last_clock = clock["stamps_ns"][-1]
+                if not isinstance(last, int) or last <= 0 or last > last_clock or last_clock - last > SHORT_STREAM_MAX_AGE_NS:
+                    fail(f"short diagnostic output {role} is not fresh against clock")
+        dosod = outputs.get("dosod")
+        if not isinstance(dosod, dict) or not isinstance(dosod.get("nonempty_count"), int) or dosod["nonempty_count"] <= 0:
+            fail("short diagnostic DOSOD raw output is empty")
+    models = payload.get("models")
+    short_model_rows: dict[str, dict[str, Any]] = {}
+    if not isinstance(models, list) or {row.get("role") for row in models if isinstance(row, dict)} != REQUIRED_MODEL_ROLES:
+        fail("short diagnostic model inventory does not contain exactly the four required roles")
+    else:
+        for row in models:
+            if not isinstance(row, dict) or not isinstance(row.get("role"), str) or not isinstance(row.get("path"), str) or not row["path"].startswith("/") or not _valid_digest(row.get("sha256")) or not isinstance(row.get("byte_size"), int) or row["byte_size"] <= 0:
+                fail("short diagnostic model inventory has an invalid path, digest, or size")
+                continue
+            short_model_rows[row["role"]] = row
+    model_info = payload.get("dosod_model_info")
+    expected_argv = [HRT_MODEL_EXEC_PATH, "model_info", f"--model_file={short_model_rows.get('dosod_hbm', {}).get('path', '')}"]
+    model_stdout = model_info.get("stdout") if isinstance(model_info, dict) else None
+    model_stderr = model_info.get("stderr") if isinstance(model_info, dict) else None
+    try:
+        from collect_formal_s100_live_runtime import parse_dosod_model_info
+        parsed_shapes = parse_dosod_model_info(model_stdout) if isinstance(model_stdout, str) else {}
+    except ImportError:
+        parsed_shapes = {}
+    if not isinstance(model_info, dict) or model_info.get("argv") != expected_argv or model_info.get("returncode") != 0 or not isinstance(model_stdout, str) or not isinstance(model_stderr, str) or hashlib.sha256(model_stdout.encode("utf-8")).hexdigest() != model_info.get("stdout_sha256") or hashlib.sha256(model_stderr.encode("utf-8")).hexdigest() != model_info.get("stderr_sha256") or parsed_shapes != {"scores": [1, 8400, 4], "boxes": [1, 8400, 4]} or model_info.get("output_shapes") != parsed_shapes or model_info.get("observed_class_count") != 4:
+        fail("short diagnostic DOSOD model_info did not observe exact scores/boxes [1,8400,4]")
+    chain = payload.get("same_stamp_chain")
+    required_stamp_roles = ["rgb", "depth", "camera_info", "dosod", "edgesam", "boxes", "targets"]
+    if not isinstance(chain, dict) or not isinstance(chain.get("stamp_ns"), int) or chain["stamp_ns"] <= 0 or chain.get("roles") != required_stamp_roles:
+        fail("short diagnostic same-stamp chain is invalid")
+    elif isinstance(inputs, dict) and isinstance(outputs, dict):
+        stamp = chain["stamp_ns"]
+        project = payload.get("project_outputs")
+        if any(stamp not in inputs.get(role, {}).get("stamps_ns", []) for role in ("rgb", "depth", "camera_info")) or any(stamp not in outputs.get(role, {}).get("stamps_ns", []) for role in REQUIRED_SHORT_OUTPUT_TOPICS) or not isinstance(project, dict) or any(stamp not in project.get(role, {}).get("stamps_ns", []) for role in REQUIRED_SHORT_PROJECT_OUTPUTS):
+            fail("short diagnostic same-stamp chain was not observed")
+    project_outputs = payload.get("project_outputs")
+    if not isinstance(project_outputs, dict) or set(project_outputs) != set(REQUIRED_SHORT_PROJECT_OUTPUTS):
+        fail("short diagnostic project boxes/targets output set is invalid")
+    else:
+        for role, (topic, type_name) in REQUIRED_SHORT_PROJECT_OUTPUTS.items():
+            row = project_outputs.get(role)
+            if not isinstance(row, dict) or row.get("topic") != topic or row.get("type") != type_name or not isinstance(row.get("count"), int) or row["count"] <= 0 or not isinstance(row.get("nonempty_count"), int) or row["nonempty_count"] <= 0 or not isinstance(row.get("stamps_ns"), list):
+                fail(f"short diagnostic project {role} output is missing or empty")
+    tf_binding = payload.get("tf_exact_binding")
+    if not isinstance(tf_binding, dict) or tf_binding.get("map_frame") != "map" or not isinstance(tf_binding.get("camera_frame"), str) or not tf_binding["camera_frame"] or tf_binding.get("source_stamp_ns") != (chain or {}).get("stamp_ns") or tf_binding.get("transform_stamp_ns") != (chain or {}).get("stamp_ns") or tf_binding.get("lookup_succeeded") is not True:
+        fail("short diagnostic map-to-camera TF was not resolved at the exact RGB stamp")
+    diagnostics = payload.get("diagnostics")
+    if not isinstance(diagnostics, dict) or diagnostics.get("topic") != "/perception/open_vocab/diagnostics" or diagnostics.get("type") != "diagnostic_msgs/msg/DiagnosticArray" or not isinstance(diagnostics.get("count"), int) or diagnostics["count"] <= 0 or diagnostics.get("errors") != 0 or set(diagnostics.get("healthy_components", [])) != REQUIRED_SHORT_DIAGNOSTIC_COMPONENTS:
+        fail("short diagnostic real diagnostics are incomplete or unhealthy")
+    return failures
+
+
+def short_diagnostic_binding(
+    path: Path,
+    expected_snapshot: dict[str, str],
+    expected_session: dict[str, Any],
+    expected_runtime_closure: dict[str, str],
+) -> dict[str, Any]:
+    """Load a retained independent diagnostic receipt for a formal live run."""
+    if not regular_nonlink_with_safe_ancestors(path):
+        raise ValueError("short diagnostic receipt is linked or not a regular file")
+    payload = json_object(path)
+    failures = validate_short_diagnostic(
+        payload, expected_snapshot, expected_session, expected_runtime_closure,
+        now_epoch_ns=time.time_ns(),
+    )
+    if failures:
+        raise ValueError("short diagnostic receipt is not admissible: " + "; ".join(failures))
+    return {
+        "path": str(path.resolve()), "sha256": sha256_path(path), "receipt": payload,
+        "admitted_epoch_ns": time.time_ns(),
+    }
+
+
 def _number(value: Any) -> float | None:
     if isinstance(value, (int, float)) and not isinstance(value, bool):
         return float(value)
@@ -300,6 +587,28 @@ def validate_raw(
         if expected_runtime_closure is not None and closure != expected_runtime_closure:
             fail("runtime-closure binding does not match the active frozen closure")
 
+    short = payload.get("short_diagnostic_binding")
+    if not isinstance(short, dict) or not isinstance(short.get("path"), str) or not _valid_digest(short.get("sha256")) or not isinstance(short.get("receipt"), dict) or not isinstance(short.get("admitted_epoch_ns"), int) or short["admitted_epoch_ns"] <= 0:
+        fail("short diagnostic receipt binding is missing or invalid")
+    elif expected_session is None or expected_runtime_closure is None:
+        fail("short diagnostic cannot be verified without session and runtime closure")
+    else:
+        short_path = Path(short["path"])
+        if not regular_nonlink_with_safe_ancestors(short_path):
+            fail("short diagnostic receipt path is linked, unsafe, or missing")
+        else:
+            try:
+                retained = json_object(short_path)
+                if sha256_path(short_path) != short["sha256"] or retained != short["receipt"]:
+                    fail("short diagnostic receipt path/hash/content drifted after admission")
+            except (OSError, ValueError, json.JSONDecodeError):
+                fail("short diagnostic receipt could not be reread after admission")
+        for detail in validate_short_diagnostic(
+            short["receipt"], expected_snapshot, expected_session, expected_runtime_closure,
+            now_epoch_ns=short["admitted_epoch_ns"],
+        ):
+            fail(f"short diagnostic: {detail}")
+
     system = payload.get("system_image")
     if not isinstance(system, dict):
         fail("system image evidence is missing")
@@ -313,11 +622,11 @@ def validate_raw(
         runtime_inventory = system.get("runtime_inventory")
         if isinstance(runtime_inventory, dict):
             ros = runtime_inventory.get("ros2")
-            bpu_rows = [runtime_inventory.get("hbrt4"), runtime_inventory.get("hrt_model_exec")]
             if not isinstance(ros, dict) or ros.get("returncode") != 0:
                 fail("ROS 2 runtime inventory command failed")
-            if not any(isinstance(row, dict) and row.get("returncode") == 0 for row in bpu_rows):
-                fail("no Journey 6 BPU runtime executable was identified")
+            hrt = runtime_inventory.get("hrt_model_exec")
+            if not isinstance(hrt, dict) or hrt.get("returncode") != 0:
+                fail("canonical Journey 6 hrt_model_exec inventory command failed")
 
     models = payload.get("models")
     model_hashes: dict[str, str] = {}
@@ -338,6 +647,22 @@ def validate_raw(
                 model_hashes[str(row.get("role"))] = digest.lower()
             if not isinstance(row.get("byte_size"), int) or row["byte_size"] <= 0:
                 fail(f"model {row.get('role')} has invalid byte size")
+
+    if isinstance(short, dict) and isinstance(short.get("receipt"), dict) and isinstance(models, list):
+        short_models = short["receipt"].get("models")
+        full_model_rows = {
+            row.get("role"): row for row in models
+            if isinstance(row, dict) and isinstance(row.get("role"), str)
+        }
+        bound_short_rows = {
+            row.get("role"): row for row in short_models
+            if isinstance(row, dict) and isinstance(row.get("role"), str)
+        } if isinstance(short_models, list) else {}
+        if set(bound_short_rows) != REQUIRED_MODEL_ROLES or any(
+            bound_short_rows[role].get(field) != full_model_rows.get(role, {}).get(field)
+            for role in REQUIRED_MODEL_ROLES for field in ("path", "sha256", "byte_size")
+        ):
+            fail("short diagnostic model bindings do not match the formal model inventory")
 
     # The board file inventory alone cannot prove that DOSOD HBM came through
     # the contract-bound compile/parity/metric chain.  The live collector
@@ -548,6 +873,7 @@ def build_final_report(
             "runtime_closure_binding": not any(
                 "runtime-closure" in row.lower() for row in failures
             ),
+            "short_diagnostic": not any("short diagnostic" in row.lower() for row in failures),
         },
         "blockers": failures,
         "claim_boundary": (

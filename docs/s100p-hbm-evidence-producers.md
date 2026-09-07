@@ -22,6 +22,16 @@ actuator, calibration capture, or receipt-synthesis behavior.
 
 The required order is compile-contract validator, ONNX/toolchain preflight,
 actual compile receipt, x86 or board-equivalent parity, then metric regression.
+Before the formal validator, W7 requires a retained `ORACLE_VERIFIED`
+single-frame preprocessing receipt.  A non-formal candidate HBM receipt is
+never a substitute and is rejected by the formal receipt ID checks.
+Candidate compilation reuses only the existing public-Gazebo canonical pilot
+manifest: its 25 `samples/*.npy` tensors, raw/provenance closure, and the
+hashed `public_gazebo_dosod_calibration.py` producer. The fixed bootstrap route
+is `BOOTSTRAP_SYMMETRIC_BLACK_V1`, never a final selection. The candidate YAML
+must match the canonical model/input/calibration/compiler recipe exactly and
+point `cal_data_dir` at that manifest's `samples` directory; a hand-written
+calibration folder cannot unlock compilation.
 Every producer requires a previously nonexistent, non-symlink evidence root;
 the compiler also rejects a pre-existing or symlinked working directory and
 expected HBM, so an older HBM can never be relabelled as this run's output.

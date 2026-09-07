@@ -5,10 +5,12 @@
 ## 证据链
 
 1. 板上采集器固定读取 `/proc/device-tree/model`、`/proc/device-tree/compatible`、`/etc/os-release`、内核与 Horizon/D-Robotics 运行时版本，计算模型/词表 SHA-256。2026-08-30 接入的真板签名为 model `D-Robotics RDK S100P V1P0`、compatible `drobot,s100-rdk`、架构 `aarch64`；后者是平台族 token，并不会重复写出 `journey6p`，因此必须与明确的 S100P model 组合判定，不能单独放行普通 ARM64 设备。
-2. DOSOD、EdgeSAM 和产品 adapter 必须在采集前由正式启动方式运行。采集器不会替项目启动、替换或降级任何节点。
-3. 采集器保存 ROS 节点、话题、类型和逐节点 `ros2 node info`，持续采样 `/proc` 内存/进程映射与 `/sys/class/thermal` 温度。
-4. 离线 validator 同时校验 raw schema、语义门槛、冻结 snapshot、当前 acceptance session 和 frozen runtime closure；只有全部满足才生成合同接受的 `FORMAL_RDK_S100_LIVE_PRODUCT_RUNTIME_PASSED`。采集时记录的 session 起始时间和 snapshot 必须与恢复时的同一 session 一致；session 从 `RUNNING` 进入 S100-pending 时状态文件可以改变，但不得借此复用另一 session。
-5. JSON 和 SHA-256 链可发现修改，但不是 TPM 或远程密码学证明；如需对抗主动伪造，应另加受管设备密钥/TPM 签名。
+2. DOSOD、EdgeSAM、`rgb_to_nv12_adapter` 和产品 adapter 必须在采集前由正式启动方式运行。采集器不会替项目启动、替换或降级任何节点。
+3. 在正式 1800 秒采集前，必须先生成一份**独立、保留、最多五分钟新鲜**的 30 秒 short-diagnostic receipt。它逐机验证四个唯一 ROS 节点与对应 PID/cmdline hash、RGB/depth/CameraInfo/map/TF 的类型和新鲜计数、`/clock` 两次严格推进、RGB+depth+CameraInfo+DOSOD+EdgeSAM+project boxes+targets 的同一 exact-stamp 链、同 stamp 的 `map→camera` TF lookup，以及非空 project boxes/targets。DiagnosticArray 只强制项目 `rgb_to_nv12_adapter` 和 product adapter；官方 DOSOD/EdgeSAM 由其唯一进程与 raw outputs 证明。它还要求同一 TROS shell 的 `numpy/cv2/yaml` 和 ROS ABI imports 的可验证 package metadata、`/dev/bpu_core0` 非链接字符设备和唯一绝对 regular `/usr/hobot/bin/hrt_model_exec`。旧 `hbrt4` 命令不再是可接受替代。short 还以四个 regular/nonlink 模型输入的路径、size、SHA-256 绑定一次官方 `hrt_model_exec model_info --model_file=<dosod-hbm>`；receipt 原样保留有界 stdout/stderr 并重算散列，只接受明确的 `scores` 和 `boxes` 两个 `[1,8400,4]` 输出。因此 observed class count=4 来自该次实际 HBM 检查，而非静态 profile；任何命令、路径、解析或输出失败都保持 BLOCKED。
+4. 正式 collector 只接收该 receipt 的 path/SHA-256/内嵌内容并重新验证以上所有短诊断门；它不能把正式 raw JSON 自己声明为短诊断。短诊断不包含或替代 1800 秒、温度、内存和持续吞吐门。
+5. 采集器保存 ROS 节点、话题、类型和逐节点 `ros2 node info`，持续采样 `/proc` 内存/进程映射与 `/sys/class/thermal` 温度。
+6. 离线 validator 同时校验 raw schema、语义门槛、冻结 snapshot、当前 acceptance session 和 frozen runtime closure；只有全部满足才生成合同接受的 `FORMAL_RDK_S100_LIVE_PRODUCT_RUNTIME_PASSED`。采集时记录的 session 起始时间和 snapshot 必须与恢复时的同一 session 一致；session 从 `RUNNING` 进入 S100-pending 时状态文件可以改变，但不得借此复用另一 session。
+7. JSON 和 SHA-256 链可发现修改，但不是 TPM 或远程密码学证明；如需对抗主动伪造，应另加受管设备密钥/TPM 签名。
 
 ## 产品 diagnostics 合同
 
@@ -23,7 +25,22 @@
 
 ## 真板命令
 
-在与冻结 snapshot 相同的代码检出中、source ROS 环境并启动正式产品节点后运行（路径必须替换成板上真实文件）：
+在与冻结 snapshot 相同的代码检出中、source ROS 环境并启动正式产品节点后，先生成 short receipt（路径必须替换成板上真实文件）：
+
+```bash
+python3 scripts/collect_formal_s100_live_runtime.py \
+  --short-diagnostic-only \
+  --output artifacts/s100-live/short-diagnostic.json \
+  --snapshot reports/engineering/formal_vehicle_snapshot_manifest.json \
+  --acceptance-session /opt/tzcup/evidence/formal_final_acceptance_session.json \
+  --runtime-closure /opt/tzcup/evidence/final_runtime_closure_manifest.json \
+  --dosod-hbm /opt/tzcup/models/dosod/dosod_mlp3x_s_tzcup_rep-int16.hbm \
+  --dosod-vocabulary /opt/tzcup/models/dosod/tzcup_offline_vocabulary.json \
+  --edgesam-encoder-hbm /opt/tzcup/models/edgesam/edgesam_encoder_512.hbm \
+  --edgesam-decoder-hbm /opt/tzcup/models/edgesam/edgesam_decoder_512.hbm
+```
+
+仅当 short receipt 成功且仍新鲜时运行正式 1800 秒采集：
 
 ```bash
 python3 scripts/collect_formal_s100_live_runtime.py \
@@ -39,6 +56,7 @@ python3 scripts/collect_formal_s100_live_runtime.py \
   --dosod-parity-report /opt/tzcup/evidence/dosod_parity_report.json \
   --dosod-metric-report /opt/tzcup/evidence/dosod_metric_report.json \
   --dosod-admission-bundle /opt/tzcup/evidence/dosod_admission_bundle \
+  --short-diagnostic artifacts/s100-live/short-diagnostic.json \
   --duration-sec 1800 \
   --sample-period-sec 1
 ```
