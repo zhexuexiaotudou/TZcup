@@ -1,5 +1,10 @@
 # 项目推进记录
 
+## 2026-09-07：W2 单次只读 map TF 就绪门（源码完成，fresh W2 runtime 待验）
+
+- W2 旧 runner 把持续 `tf2_echo` 的非超时返回当作就绪，不能证明 exact `map -> base_footprint`、仿真时钟、非零 stamp 或 freshness，故 timeout `124` 与任意控制台文本均不再具有正向语义。新 helper 只使用一次 `rclpy` Buffer/TransformListener，要求 advancing `use_sim_time` clock、strict frame、nonzero/nonfuture/fresh stamp，并原子写 PASS/BLOCKED JSON；它不创建 TF publisher、执行器/控制接口、truth 或控制命令。
+- 隔离的 R068 Noble/Jazzy guest schema smoke（domain 227、Cyclone localhost）证明 valid dynamic TF helper rc=0、clock-only/no-TF helper rc=4 且 BLOCKED，观察到的 `/tf` publisher 仅为 fixture；leaf 与 ancestor symlink 报告路径均拒绝且外部目标未改。该 fixture 未启动 Gazebo、MoveIt 或 W2，不能作为 W2 runtime/formal PASS。合并后必须从 fresh source/runtime/closure 重新执行 W2。
+
 ## 2026-09-07：W1 正式 runner 的物理 operator 安全前置（源码修复，fresh runtime 待验）
 
 - R068 fresh NON_FORMAL W1 在 footprint override 前持续收到 `1778/1778` 个 `INHIBITED` safety 状态，原因始终包含 `manual_estop`、`safety_relay_disabled`、`traction_not_permitted` 和 `manipulator_base_inhibit`；因此未进入 frame-aware polygon 比较，不能把该轮归因为 padding/ULP 失败，也不能放宽 gate 接受 `INHIBITED`。

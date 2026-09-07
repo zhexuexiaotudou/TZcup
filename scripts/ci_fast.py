@@ -599,6 +599,7 @@ def run_ros_independent_tests() -> None:
         ROOT / "scripts" / "test_formal_dynamic_peer_gate.py",
         ROOT / "scripts" / "test_prepare_formal_dynamic_runtime_world.py",
         ROOT / "scripts" / "test_publish_r065_public_modeling_receipt.py",
+        ROOT / "scripts" / "test_r065_w2_tf_readiness.py",
         ROOT / "scripts" / "test_run_r065_w1_w2_live_runners.py",
         ROOT / "scripts" / "test_formal_functional_acceptance_contract.py",
         ROOT / "scripts" / "test_formal_acceptance_session.py",
