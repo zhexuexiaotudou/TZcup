@@ -31,6 +31,29 @@ formal_runtime_max_dds_unicast_port() {
   echo $((7400 + 250 * domain + 11 + 2 * FORMAL_RUNTIME_MAX_AUTO_PARTICIPANT_INDEX))
 }
 
+formal_runtime_configure_networking() {
+  export ROS2CLI_DISABLE_DAEMON=1
+  # This is a formal single-host acceptance boundary, not a user-selectable
+  # networking profile.  Do not inherit a caller's wider discovery/interface
+  # settings into a high-bandwidth Gazebo run.
+  export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+  export ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST
+  unset ROS_LOCALHOST_ONLY ROS_STATIC_PEERS
+  # Gazebo Transport has its own discovery/data plane and does not inherit the
+  # CycloneDDS loopback policy below.  High-bandwidth camera/lidar topics must
+  # never select the WSL virtual Ethernet adapter: on affected Windows hosts
+  # that path can grow NDIS Nbuf/Nnbl/Nnbf nonpaged-pool allocations until the
+  # machine exhausts commit.  Formal acceptance is single-host, so pin both
+  # current and legacy Gazebo Transport interface variables to loopback.
+  export GZ_IP=127.0.0.1
+  export IGN_IP=127.0.0.1
+  unset GZ_RELAY IGN_RELAY
+  local helper_dir repo_root
+  helper_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+  repo_root="$(cd -- "${helper_dir}/.." && pwd)"
+  export CYCLONEDDS_URI="file://${repo_root}/config/cyclonedds_localhost.xml"
+}
+
 formal_runtime_configure() {
   local base_domain="$1"
   local domain_count="${2:-1}"
@@ -58,26 +81,7 @@ formal_runtime_configure() {
     }
   done
 
-  export ROS2CLI_DISABLE_DAEMON=1
-  # This is a formal single-host acceptance boundary, not a user-selectable
-  # networking profile.  Do not inherit a caller's wider discovery/interface
-  # settings into a high-bandwidth Gazebo run.
-  export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-  export ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST
-  unset ROS_LOCALHOST_ONLY ROS_STATIC_PEERS
-  # Gazebo Transport has its own discovery/data plane and does not inherit the
-  # CycloneDDS loopback policy below.  High-bandwidth camera/lidar topics must
-  # never select the WSL virtual Ethernet adapter: on affected Windows hosts
-  # that path can grow NDIS Nbuf/Nnbl/Nnbf nonpaged-pool allocations until the
-  # machine exhausts commit.  Formal acceptance is single-host, so pin both
-  # current and legacy Gazebo Transport interface variables to loopback.
-  export GZ_IP=127.0.0.1
-  export IGN_IP=127.0.0.1
-  unset GZ_RELAY IGN_RELAY
-  local helper_dir repo_root
-  helper_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-  repo_root="$(cd -- "${helper_dir}/.." && pwd)"
-  export CYCLONEDDS_URI="file://${repo_root}/config/cyclonedds_localhost.xml"
+  formal_runtime_configure_networking
   FORMAL_RUNTIME_LOCK_FILE="${FORMAL_GAZEBO_LOCK_FILE:-/tmp/tzcup_formal_gazebo.lock}"
   export FORMAL_RUNTIME_LOCK_FILE
   exec 9>"${FORMAL_RUNTIME_LOCK_FILE}"
