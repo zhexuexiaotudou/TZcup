@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Run R065 W1 against an isolated, real formal map-lifecycle ROS graph.
 #
-# This runner intentionally has no actuator, action, or joint-state writer.
-# The installed runtime gate is the only test participant that publishes, and
-# it can only assert base-motion inhibition plus the manager's opt-in endpoint.
+# This runner intentionally has no actuator, action, cmd_vel, joint-state, or
+# evaluator-truth writer.  It sustains only the physical simulation operator
+# inputs and base-motion inhibition required to reach a fail-safe stopped state.
 set -Eeuo pipefail
 
 repo_root="${TZCUP_REPOSITORY_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)}"
@@ -51,6 +51,7 @@ source /opt/ros/jazzy/setup.bash
 set -u
 source "${repo_root}/scripts/run_formal_runtime_isolation.sh"
 source "${repo_root}/scripts/formal_source_bound_preflight.sh"
+source "${repo_root}/scripts/formal_w1_operator_safety.sh"
 formal_runtime_register_evidence_paths \
   "${runtime_root}" "${output}" "${runtime_binding}" "${cleanup_evidence}"
 
@@ -77,11 +78,14 @@ formal_runtime_configure "${ROS_DOMAIN_ID}"
 export GZ_PARTITION="tzcup_r065_w1_${ROS_DOMAIN_ID}_$$"
 
 launch_pid=""
+formal_w1_operator_init "${runtime_root}"
 cleanup() {
-  local cleanup_status=0
+  local cleanup_status=0 operator_cleanup_status=0
+  formal_w1_operator_teardown || operator_cleanup_status=$?
   formal_runtime_cleanup_groups "${GZ_PARTITION}" "${launch_pid}" || cleanup_status=$?
-  printf 'primary_error=%s\ncleanup_status=%s\nros_domain_id=%s\ngz_partition=%s\n' \
-    "${primary_error:-none}" "${cleanup_status}" "${ROS_DOMAIN_ID}" "${GZ_PARTITION}" \
+  [[ "${operator_cleanup_status}" -eq 0 ]] || cleanup_status="${operator_cleanup_status}"
+  printf 'primary_error=%s\noperator_cleanup_status=%s\ncleanup_status=%s\nros_domain_id=%s\ngz_partition=%s\n' \
+    "${primary_error:-none}" "${operator_cleanup_status}" "${cleanup_status}" "${ROS_DOMAIN_ID}" "${GZ_PARTITION}" \
     >"${cleanup_evidence}"
   return "${cleanup_status}"
 }
@@ -123,6 +127,11 @@ done
   echo "R065 W1 timed out waiting for footprint and safety production nodes" >&2
   exit 3
 }
+
+# Keep base motion inhibited first, then supply the three physical simulation
+# operator heartbeats.  The gate starts only after a fresh safety sequence has
+# advanced to BASE_COMMAND_STOPPED for manipulator_base_inhibit.
+formal_w1_operator_start_and_release
 
 "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 run sanitation_formal_campus_integration \
   formal-dynamic-footprint-runtime-gate \
