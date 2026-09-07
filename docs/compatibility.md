@@ -46,3 +46,20 @@ AUTO-02 在同一镜像和专用 overlay 中进一步完成 5/5 冷启动、五�
 - OpenNav Coverage `jazzy-v2` 存在并锁定；
 - `v1.2.1-devel` 不存在，不再作为自动回退；
 - `main` 存在，但未选用。
+
+## 正式合并运行时的 OpenNav 闭合
+
+`sanitation_coverage` 的正式 manifest 只运行 `opennav_coverage`，并直接
+导入 `opennav_coverage_msgs`。因此 merged formal runtime 只构建和验证这两个
+OpenNav 包；`opennav_coverage_bt`、`opennav_coverage_navigator`、
+`opennav_row_coverage` 与 demo 不因同一上游 checkout 而自动进入运行时。
+
+构建必须通过 `FORMAL_OPENNAV_COVERAGE_SOURCE_BUNDLE` 提供完整、离线的官方
+patched bundle，并同时提供其固定 SHA-256。构建器在 fresh runtime 的
+`src/opennav_coverage/` 内检出固定 base、patched commit/tree、patch/diff 和
+bundle provenance；closure 也验证嵌套来源、两个 ament marker 和 source/install
+bindings。不得以独立 underlay 或额外 `AMENT_PREFIX_PATH` 代替这个闭合。
+
+Fields2Cover 保持系统依赖：closure 绑定 `ros-jazzy-fields2cover` 的 Debian
+身份、唯一 `Fields2CoverConfig.cmake` 与 headers inventory，而不复制其系统库到
+formal runtime。

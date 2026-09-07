@@ -149,6 +149,7 @@ def require_project_files() -> None:
         ROOT / "config" / "high_fidelity_vehicle" / "cleaning_actuator_motor_realism_contract.yaml",
         ROOT / "config" / "high_fidelity_vehicle" / "formal_vehicle_component_register.yaml",
         ROOT / "scripts" / "formal_final_runtime_closure.py",
+        ROOT / "scripts" / "materialize_formal_opennav_source.py",
         ROOT / "scripts" / "build_formal_final_runtime.sh",
         ROOT / "scripts" / "build_formal_final_runtime_windows.ps1",
         ROOT / "scripts" / "prepare_formal_runtime_source_cache_hygiene.ps1",
