@@ -60,6 +60,83 @@ def require_empty_output(output: Path) -> None:
         raise CalibrationRejected("output_must_be_fresh_empty_nonlink_directory")
 
 
+def validate_pilot_manifest(pilot_manifest: Path, *, plan: dict[str, Any], contract: dict[str, Any]) -> dict[str, Any]:
+    if _unsafe(pilot_manifest) or not pilot_manifest.is_file():
+        raise CalibrationRejected("pilot_review_receipt_or_manifest_missing")
+    try: value = json.loads(pilot_manifest.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc: raise CalibrationRejected("pilot_manifest_invalid") from exc
+    if not isinstance(value, dict) or value.get("status") != "NON_FORMAL_PILOT_CAPTURED" or value.get("formal_passed") is not False or value.get("pilot_scene") != "map-0-mission-0" or value.get("record_count") != 25 or value.get("per_scene_quota") != 25 or value.get("plan_sha256") != canonical_sha256(plan) or value.get("preprocessing_sha256") != canonical_sha256(contract["preprocessing"]):
+        raise CalibrationRejected("pilot_manifest_invalid")
+    records = value.get("records")
+    if not isinstance(records, list) or len(records) != 25 or value.get("record_sha256") != canonical_sha256(records):
+        raise CalibrationRejected("pilot_manifest_invalid")
+    seen_source: set[str] = set(); seen_tensor: set[str] = set(); accepted_poses: list[tuple[float, float, float]] = []
+    for row in records:
+        relative = row.get("relative_path") if isinstance(row, dict) else None
+        if not isinstance(relative, str) or relative != f"samples/{len(seen_source):06d}.npy" or "\\" in relative or row.get("scene_id") != "map-0-mission-0" or row.get("source_role") != "calibration_only" or not re.fullmatch(r"[0-9a-f]{64}", str(row.get("source_sha256", ""))) or not re.fullmatch(r"[0-9a-f]{64}", str(row.get("sha256", ""))) or not re.fullmatch(r"[0-9a-f]{32}", str(row.get("generation_nonce", ""))) or not re.fullmatch(r"[0-9a-f]{64}", str(row.get("episode_manifest_sha256", ""))):
+            raise CalibrationRejected("pilot_manifest_invalid")
+        sample = pilot_manifest.parent / relative
+        if _unsafe(sample) or not sample.is_file() or sample.stat().st_size != row.get("byte_size") or sha256_file(sample) != row["sha256"] or row["source_sha256"] in seen_source or row["sha256"] in seen_tensor:
+            raise CalibrationRejected("pilot_manifest_invalid")
+        try: tensor = np.load(sample, allow_pickle=False)
+        except (OSError, ValueError) as exc: raise CalibrationRejected("pilot_manifest_invalid") from exc
+        if tensor.dtype != np.float32 or tensor.shape != (1, 3, 640, 640) or not np.isfinite(tensor).all() or np.any(tensor < 0.0) or np.any(tensor > 1.0):
+            raise CalibrationRejected("pilot_manifest_invalid")
+        proof = pilot_manifest.parent / f"provenance/{len(seen_source):06d}.json"
+        if row.get("provenance") != f"provenance/{len(seen_source):06d}.json" or _unsafe(proof) or not proof.is_file() or proof.stat().st_size != row.get("provenance_byte_size") or sha256_file(proof) != row.get("provenance_sha256"):
+            raise CalibrationRejected("pilot_manifest_invalid")
+        try: proof_value = json.loads(proof.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc: raise CalibrationRejected("pilot_manifest_invalid") from exc
+        stamp = proof_value.get("stamp_ns") if isinstance(proof_value, dict) else None
+        if not isinstance(proof_value, dict) or any(proof_value.get(key) != row.get(key) for key in ("scene_id", "source_sha256", "generation_nonce", "episode_manifest_sha256")) or proof_value.get("source_domain") != "public_gazebo_sensor" or proof_value.get("topic") != FORMAL_RGB_TOPIC or not isinstance(stamp, int) or isinstance(stamp, bool) or stamp <= 0:
+            raise CalibrationRejected("pilot_manifest_invalid")
+        evidence = proof_value.get("mobile_evidence")
+        if not isinstance(evidence, dict): raise CalibrationRejected("pilot_manifest_invalid")
+        try:
+            mobile = MobileEvidence(**evidence)
+            require_mobile_evidence(image_stamp_ns=proof_value["stamp_ns"], image_frame=str(proof_value.get("frame_id", "")), evidence=mobile, accepted_poses=accepted_poses)
+        except (TypeError, CalibrationRejected) as exc: raise CalibrationRejected("pilot_manifest_invalid") from exc
+        accepted_poses.append((mobile.odom_x, mobile.odom_y, mobile.odom_yaw))
+        seen_source.add(row["source_sha256"]); seen_tensor.add(row["sha256"])
+    sheet = value.get("contact_sheet")
+    if not isinstance(sheet, dict) or sheet.get("relative_path") != "pilot_contact_sheet.png" or sheet.get("record_sha256") != value["record_sha256"] or sheet.get("scene_id") != "map-0-mission-0" or sheet.get("record_count") != 25:
+        raise CalibrationRejected("pilot_manifest_invalid")
+    contact = pilot_manifest.parent / sheet["relative_path"]
+    if _unsafe(contact) or not contact.is_file() or contact.stat().st_size != sheet.get("byte_size") or sha256_file(contact) != sheet.get("sha256"):
+        raise CalibrationRejected("pilot_manifest_invalid")
+    try:
+        from PIL import Image
+        with Image.open(contact) as image: image.verify()
+        with Image.open(contact) as image:
+            if image.size != (800, 800): raise ValueError("contact_sheet_size")
+    except (ImportError, OSError, ValueError) as exc: raise CalibrationRejected("pilot_manifest_invalid") from exc
+    return value
+
+
+def require_full_review_receipt(receipt: Path | None, pilot_manifest: Path | None, *, plan: dict[str, Any], contract: dict[str, Any]) -> dict[str, str]:
+    """Do not expand a pilot into the full public set without visible-RGB review."""
+    if receipt is None or pilot_manifest is None or any(_unsafe(path) or not path.is_file() for path in (receipt, pilot_manifest)):
+        raise CalibrationRejected("pilot_review_receipt_or_manifest_missing")
+    try:
+        review = json.loads(receipt.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise CalibrationRejected("pilot_review_receipt_invalid") from exc
+    if not isinstance(review, dict): raise CalibrationRejected("pilot_review_receipt_invalid")
+    pilot = validate_pilot_manifest(pilot_manifest, plan=plan, contract=contract)
+    visible = review.get("visible_classes")
+    sheet = pilot["contact_sheet"]
+    if review.get("status") != "APPROVED" or review.get("pilot_manifest_sha256") != sha256_file(pilot_manifest) or review.get("contact_sheet_sha256") != sheet["sha256"] or review.get("record_sha256") != pilot["record_sha256"]:
+        raise CalibrationRejected("pilot_review_receipt_invalid")
+    if not isinstance(visible, dict) or set(visible) != set(CLASS_IDS) or not all(isinstance(visible[name], int) and not isinstance(visible[name], bool) and 0 < visible[name] <= 25 for name in CLASS_IDS):
+        raise CalibrationRejected("pilot_review_four_class_visibility_not_approved")
+    if not all(review.get(key) is True for key in ("background_review_passed", "material_view_review_passed")):
+        raise CalibrationRejected("pilot_review_background_or_view_not_approved")
+    reviews = review.get("reviews")
+    if not isinstance(reviews, list) or not any(isinstance(item, dict) and item.get("type") in {"manual", "agent"} and item.get("passed") is True and isinstance(item.get("reviewer"), str) and item["reviewer"].strip() for item in reviews):
+        raise CalibrationRejected("pilot_review_reviewer_not_explicit")
+    return {"review_receipt_sha256": sha256_file(receipt), "pilot_manifest_sha256": sha256_file(pilot_manifest), "contact_sheet_sha256": sheet["sha256"], "record_sha256": pilot["record_sha256"]}
+
+
 def load_scene_plan(path: Path) -> dict[str, Any]:
     value = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(value, dict) or value.get("source_domain") != "public_gazebo_sensor":
@@ -321,12 +398,15 @@ class FreshPairCache:
 
 
 class PublicGazeboStore:
-    def __init__(self, output: Path, contract: dict[str, Any], plan: dict[str, Any], *, per_scene_quota: int = 1) -> None:
+    def __init__(self, output: Path, contract: dict[str, Any], plan: dict[str, Any], *, per_scene_quota: int = 1, pilot_scene: str | None = None) -> None:
         if not isinstance(per_scene_quota, int) or isinstance(per_scene_quota, bool) or per_scene_quota < 1:
             raise CalibrationRejected("per_scene_quota_invalid")
         require_empty_output(output); self.output, self.contract, self.plan = output, contract, plan
         self.per_scene_quota = per_scene_quota
         self.calibration_scenes = set(plan["scene_groups"]["calibration"]); self.holdout_scenes = set(plan["scene_groups"]["holdout"])
+        if pilot_scene is not None and (pilot_scene != plan["scene_groups"]["calibration"][0] or pilot_scene != "map-0-mission-0" or per_scene_quota != 25):
+            raise CalibrationRejected("pilot_scene_or_quota_not_canonical")
+        self.pilot_scene = pilot_scene
         self.records: list[dict[str, Any]] = []
         self.holdout_sources: set[str] = set()
         self.holdout_records: list[dict[str, Any]] = []
@@ -342,6 +422,10 @@ class PublicGazeboStore:
     def add(self, frame: Frame) -> bool:
         if any(token in frame.topic.lower() for token in FORBIDDEN) or frame.scene_id not in self.calibration_scenes | self.holdout_scenes:
             raise CalibrationRejected("frame_topic_or_scene_not_public_plan")
+        if self.pilot_scene is not None and frame.scene_id != self.pilot_scene:
+            raise CalibrationRejected("pilot_frame_not_canonical_scene")
+        if self.pilot_scene is not None and frame.mobile_evidence is None:
+            raise CalibrationRejected("pilot_mobile_evidence_required")
         validate_camera(image_frame=frame.frame_id, image_stamp_ns=frame.stamp_ns, width=frame.width, height=frame.height, camera=frame.camera)
         if frame.mobile_evidence is not None:
             require_mobile_evidence(image_stamp_ns=frame.stamp_ns, image_frame=frame.frame_id, evidence=frame.mobile_evidence, accepted_poses=self.accepted_poses.get(frame.scene_id, []))
@@ -395,14 +479,17 @@ class PublicGazeboStore:
         if tensor_sha in self.tensors: sample.unlink(); self.duplicate_tensor_count += 1; return False
         self.tensors.add(tensor_sha)
         provenance = {"source_domain": "public_gazebo_sensor", "scene_id": frame.scene_id, "topic": frame.topic, "frame_id": frame.frame_id, "stamp_ns": frame.stamp_ns, "encoding": frame.encoding, "camera": frame.camera, "source_sha256": source, "generation_nonce": frame.generation_nonce, "episode_manifest_sha256": frame.episode_manifest_sha256, "mobile_evidence": asdict(frame.mobile_evidence) if frame.mobile_evidence else None}
-        atomic_write_json(self.output / "provenance" / f"{name}.json", provenance)
-        self.records.append({"relative_path": f"samples/{name}.npy", "byte_size": sample.stat().st_size, "sha256": tensor_sha, "source_sha256": source, "source_role": "calibration_only", "scene_id": frame.scene_id, "generation_nonce": frame.generation_nonce, "episode_manifest_sha256": frame.episode_manifest_sha256, "provenance": f"provenance/{name}.json"})
+        provenance_file = self.output / "provenance" / f"{name}.json"
+        atomic_write_json(provenance_file, provenance)
+        self.records.append({"relative_path": f"samples/{name}.npy", "byte_size": sample.stat().st_size, "sha256": tensor_sha, "source_sha256": source, "source_role": "calibration_only", "scene_id": frame.scene_id, "generation_nonce": frame.generation_nonce, "episode_manifest_sha256": frame.episode_manifest_sha256, "provenance": f"provenance/{name}.json", "provenance_sha256": sha256_file(provenance_file), "provenance_byte_size": provenance_file.stat().st_size})
         counts[frame.scene_id] = counts.get(frame.scene_id, 0) + 1
         if frame.mobile_evidence is not None:
             self.accepted_poses.setdefault(frame.scene_id, []).append((frame.mobile_evidence.odom_x, frame.mobile_evidence.odom_y, frame.mobile_evidence.odom_yaw))
         return True
 
     def collection_complete(self) -> bool:
+        if self.pilot_scene is not None:
+            return len(self.records) == self.per_scene_quota and not self.holdout_records
         return (
             all(self.calibration_scene_counts.get(scene, 0) >= self.per_scene_quota for scene in self.calibration_scenes)
             and all(self.holdout_scene_counts.get(scene, 0) >= self.per_scene_quota for scene in self.holdout_scenes)
@@ -414,9 +501,10 @@ class PublicGazeboStore:
 
     def progress(self) -> dict[str, Any]:
         return {
-            "status": "COLLECTING",
+            "status": "NON_FORMAL_PILOT_COLLECTING" if self.pilot_scene else "COLLECTING",
             "formal_passed": False,
             "per_scene_quota": self.per_scene_quota,
+            "pilot_scene": self.pilot_scene,
             "calibration_records": len(self.records),
             "holdout_source_count": len(self.holdout_sources),
             "duplicate_source_count": self.duplicate_source_count,
@@ -429,6 +517,40 @@ class PublicGazeboStore:
         }
 
     def freeze(self) -> Path:
+        if self.pilot_scene is not None:
+            bindings_valid = all(re.fullmatch(r"[0-9a-f]{32}", str(row.get("generation_nonce", ""))) and re.fullmatch(r"[0-9a-f]{64}", str(row.get("episode_manifest_sha256", ""))) for row in self.records)
+            if not self.collection_complete() or not bindings_valid or any(row["scene_id"] != self.pilot_scene for row in self.records):
+                raise CalibrationRejected("pilot_capture_below_canonical_quota")
+            record_sha256 = canonical_sha256(self.records)
+            try:
+                from PIL import Image
+            except ImportError as exc:
+                raise CalibrationRejected("pilot_contact_sheet_renderer_unavailable") from exc
+            tiles = []
+            for row in self.records:
+                sample = self.output / row["relative_path"]
+                if sample.is_symlink() or not sample.is_file() or sample.stat().st_size != row["byte_size"] or sha256_file(sample) != row["sha256"]:
+                    raise CalibrationRejected("pilot_sample_drift")
+                tensor = np.load(sample, allow_pickle=False)
+                if tensor.dtype != np.float32 or tensor.shape != (1, 3, 640, 640) or not np.isfinite(tensor).all() or np.any(tensor < 0.0) or np.any(tensor > 1.0):
+                    raise CalibrationRejected("pilot_tensor_invalid")
+                rgb = np.clip(np.transpose(tensor[0], (1, 2, 0)) * 255.0, 0, 255).astype(np.uint8)
+                tile = Image.fromarray(rgb, "RGB"); tile.thumbnail((160, 160)); tiles.append(tile)
+            sheet = Image.new("RGB", (160 * 5, 160 * 5))
+            for index, tile in enumerate(tiles): sheet.paste(tile, ((index % 5) * 160, (index // 5) * 160))
+            contact_sheet = self.output / "pilot_contact_sheet.png"
+            pending = contact_sheet.with_name(f".{contact_sheet.name}.pending.{os.getpid()}")
+            sheet.save(pending, format="PNG"); os.replace(pending, contact_sheet)
+            value = {"schema_version": 1, "status": "NON_FORMAL_PILOT_CAPTURED", "formal_passed": False,
+                     "source_domain": "public_gazebo_sensor", "pilot_scene": self.pilot_scene,
+                     "plan_sha256": canonical_sha256(self.plan), "preprocessing_sha256": canonical_sha256(self.contract["preprocessing"]),
+                     "record_count": len(self.records), "per_scene_quota": self.per_scene_quota,
+                     "record_sha256": record_sha256, "duplicate_source_count": self.duplicate_source_count,
+                     "duplicate_tensor_count": self.duplicate_tensor_count, "records": self.records,
+                     "contact_sheet": {"relative_path": contact_sheet.name, "sha256": sha256_file(contact_sheet),
+                                       "byte_size": contact_sheet.stat().st_size, "record_sha256": record_sha256,
+                                       "scene_id": self.pilot_scene, "record_count": len(self.records)}}
+            target = self.output / "pilot_manifest.json"; atomic_write_json(target, value); return target
         minimum = self.contract["calibration"]["minimum_sample_count"]
         bindings = [*self.records, *self.holdout_records]
         bindings_valid = all(
@@ -456,7 +578,7 @@ def frame_from_ros(*, scene_id: str, topic: str, image: Any, camera_info: Any, g
     return Frame(scene_id, topic, str(image.header.frame_id), stamp, bytes(image.data), int(image.width), int(image.height), int(image.step), str(image.encoding), camera, generation_nonce, episode_manifest_sha256, mobile_evidence)
 
 
-def collect_live(*, output: Path, plan: dict[str, Any], contract: dict[str, Any], topic: str, camera_info_topic: str, timeout_s: float, selector_path: Path, per_scene_quota: int, progress_path: Path) -> Path:
+def collect_live(*, output: Path, plan: dict[str, Any], contract: dict[str, Any], topic: str, camera_info_topic: str, timeout_s: float, selector_path: Path, per_scene_quota: int, progress_path: Path, pilot_scene: str | None = None, review_receipt: Path | None = None, pilot_manifest: Path | None = None, review_validated: bool = False) -> Path:
     """Attach read-only to one already-running public Gazebo camera scene.
 
     A lock-owning runner is responsible for advancing between public scene IDs;
@@ -467,7 +589,10 @@ def collect_live(*, output: Path, plan: dict[str, Any], contract: dict[str, Any]
         raise CalibrationRejected("live_topic_or_timeout_invalid")
     if selector_path.is_symlink() or (selector_path.exists() and not selector_path.is_file()):
         raise CalibrationRejected("scene_selector_not_regular_nonlink")
-    require_collection_capacity(plan=plan, contract=contract, per_scene_quota=per_scene_quota)
+    if pilot_scene is None:
+        require_collection_capacity(plan=plan, contract=contract, per_scene_quota=per_scene_quota)
+        if not review_validated:
+            require_full_review_receipt(review_receipt, pilot_manifest, plan=plan, contract=contract)
     require_formal_camera_topic_pair(image_topic=topic, camera_info_topic=camera_info_topic)
     import rclpy
     from rclpy.parameter import Parameter
@@ -478,7 +603,7 @@ def collect_live(*, output: Path, plan: dict[str, Any], contract: dict[str, Any]
     from tf2_ros import Buffer, TransformException, TransformListener
     rclpy.init(); node = rclpy.create_node("public_gazebo_dosod_calibration_collector", parameter_overrides=[Parameter("use_sim_time", Parameter.Type.BOOL, True)])
     pairs = FreshPairCache()
-    store = PublicGazeboStore(output, contract, plan, per_scene_quota=per_scene_quota)
+    store = PublicGazeboStore(output, contract, plan, per_scene_quota=per_scene_quota, pilot_scene=pilot_scene)
     selector_nonce: str | None = None
     errors: list[str] = []
     latest_odom: Any | None = None
@@ -650,6 +775,10 @@ def main() -> int:
     parser.add_argument("--scene-selector", type=Path)
     parser.add_argument("--per-scene-quota", type=int)
     parser.add_argument("--progress-output", type=Path)
+    parser.add_argument("--pilot-scene")
+    parser.add_argument("--review-receipt", type=Path)
+    parser.add_argument("--pilot-manifest", type=Path)
+    parser.add_argument("--validate-pilot-manifest", type=Path)
     parser.add_argument("--write-scene-selector", action="store_true")
     parser.add_argument("--deactivate-scene-selector", action="store_true")
     parser.add_argument("--episode-manifest", type=Path)
@@ -668,9 +797,24 @@ def main() -> int:
         print(json.dumps(select_scene_from_manifest(selector=args.scene_selector, scene_id=args.scene_id, episode_manifest=args.episode_manifest), sort_keys=True))
         return 0
     live = (args.live_output, args.image_topic, args.camera_info_topic, args.timeout_sec, args.scene_selector, args.per_scene_quota, args.progress_output)
+    if args.review_receipt is not None or args.pilot_manifest is not None:
+        if args.review_receipt is None or args.pilot_manifest is None:
+            parser.error("review preflight requires --review-receipt and --pilot-manifest")
+        if not any(value is not None for value in live):
+            value = require_full_review_receipt(args.review_receipt, args.pilot_manifest, plan=plan, contract=contract)
+            print(json.dumps({"status": "NON_FORMAL_REVIEW_APPROVED", "formal_passed": False, **value}, sort_keys=True))
+            return 0
+    if args.validate_pilot_manifest is not None:
+        value = validate_pilot_manifest(args.validate_pilot_manifest, plan=plan, contract=contract)
+        print(json.dumps({"status": value["status"], "pilot_manifest_sha256": sha256_file(args.validate_pilot_manifest), "record_sha256": value["record_sha256"]}, sort_keys=True))
+        return 0
     if any(value is not None for value in live):
         if any(value is None for value in live): parser.error("all live arguments are required together")
-        print(collect_live(output=args.live_output, plan=plan, contract=contract, topic=args.image_topic, camera_info_topic=args.camera_info_topic, timeout_s=args.timeout_sec, selector_path=args.scene_selector, per_scene_quota=args.per_scene_quota, progress_path=args.progress_output))
+        review_validated = False
+        if args.pilot_scene is None:
+            require_full_review_receipt(args.review_receipt, args.pilot_manifest, plan=plan, contract=contract)
+            review_validated = True
+        print(collect_live(output=args.live_output, plan=plan, contract=contract, topic=args.image_topic, camera_info_topic=args.camera_info_topic, timeout_s=args.timeout_sec, selector_path=args.scene_selector, per_scene_quota=args.per_scene_quota, progress_path=args.progress_output, pilot_scene=args.pilot_scene, review_receipt=args.review_receipt, pilot_manifest=args.pilot_manifest, review_validated=review_validated))
         return 0
     print(json.dumps({"report_id": "tzcup_public_gazebo_dosod_calibration_preflight", "status": "NON_FORMAL_PREPARED", "formal_passed": False, "calibration_scenes": len(plan["scene_groups"]["calibration"]), "holdout_scenes": len(plan["scene_groups"]["holdout"]), "preprocessing_sha256": canonical_sha256(contract["preprocessing"])}, sort_keys=True))
     return 0

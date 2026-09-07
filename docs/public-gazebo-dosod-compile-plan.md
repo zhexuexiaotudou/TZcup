@@ -36,8 +36,11 @@ requires a fresh empty run root, a shared lock path, frozen setup files, a
 whole-run timeout, and an isolated `ROS_DOMAIN_ID`; see
 [`scripts/run_public_gazebo_dosod_calibration.sh`](../scripts/run_public_gazebo_dosod_calibration.sh).
 
-Before committing to all 24 scenes, run one approved public-train scene as a
-real first-scene check. Its 25 accepted frames must have distinct source and
+Before committing to all 24 scenes, run the explicit `pilot` mode on the fixed
+first calibration scene `map-0-mission-0` with quota exactly 25. It writes only
+`pilot_manifest.json` and `pilot_contact_sheet.png`, with status
+`NON_FORMAL_PILOT_CAPTURED` and `formal_passed=false`; it never writes
+`calibration_manifest.json` or a full `FROZEN` result. Its 25 accepted frames must have distinct source and
 tensor hashes, valid fresh Image/CameraInfo pairings, and a public-RGB contact
 sheet review that demonstrates material scene/view change. Sensor noise or
 timestamp-only changes do not establish viewpoint coverage. A stationary view
@@ -47,8 +50,10 @@ noise or altering tensors.
 After collection, inspect only the frozen public RGB tensors and their public
 provenance/scene records. Produce a review receipt with per-class visible-frame
 counts for `litter_cube`, `fallen_leaves`, `dust_or_soil`, and `puddle`, plus
-the scene/background and viewpoint buckets actually observed. It must identify
-the reviewed tensor paths and manifest SHA. `class_ids` in a plan or manifest is
+the scene/background and viewpoint buckets actually observed. The full collector
+requires an explicit approved receipt bound by SHA-256 to `pilot_manifest.json`:
+all four class counts must be positive, background and material-view review must
+be true, and at least one named manual or agent reviewer must explicitly approve. `class_ids` in a plan or manifest is
 not visibility evidence. A zero count, unknown class, missing provenance, or
 unreviewed tensor blocks compiler admission. No evaluator, ground-truth, hidden
 file, replay, or control topic may supply this review.

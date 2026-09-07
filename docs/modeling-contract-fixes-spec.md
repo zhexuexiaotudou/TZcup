@@ -205,3 +205,19 @@ existing first-map lifecycle frontier -> Nav2 sequence; it does not claim an
 OpenNav coverage collection.  A later coverage phase must reuse the existing
 OpenNav -> Nav2/FollowPath lifecycle and remain running until quota, terminal
 task state or bounded deadline.
+
+### Public mobile pilot and expansion gate
+
+The only pilot is the canonical first calibration scene `map-0-mission-0` with
+exactly 25 accepted records. It reuses the selector, action, odom, TF,
+pose-diversity, source-hash and tensor-hash gates, but produces
+`pilot_manifest.json` and a record-hash-bound RGB contact sheet with
+`status=NON_FORMAL_PILOT_CAPTURED` and `formal_passed=false`. It is never a
+calibration manifest, FROZEN dataset, navigation PASS, or compiler input.
+
+Full public collection is blocked until a separate review receipt matches that
+pilot manifest SHA-256 and explicitly approves all four visible classes,
+background coverage, and material viewpoints with at least one named manual or
+agent reviewer that explicitly approves. Missing receipt, SHA drift, unknown/zero class, or a failed review
+field blocks expansion. Review remains public RGB/provenance only: it must not
+consume truth, evaluator, hidden data, replay, or a control topic.
