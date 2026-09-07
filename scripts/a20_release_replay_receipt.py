@@ -49,6 +49,8 @@ def _regular_in_root(root: Path, candidate: Path, label: str) -> Path:
         relative = candidate.relative_to(root)
     except ValueError as exc:
         raise ValueError(f"{label} escapes repository root") from exc
+    if ".." in relative.parts:
+        raise ValueError(f"{label} escapes repository root")
     current = root
     for part in relative.parts:
         current /= part
@@ -63,9 +65,11 @@ def _output_in_root(root: Path, output: Path) -> Path:
     if not output.is_absolute():
         raise ValueError("output must be absolute")
     try:
-        output.relative_to(root)
+        relative = output.relative_to(root)
     except ValueError as exc:
         raise ValueError("output escapes repository root") from exc
+    if ".." in relative.parts:
+        raise ValueError("output escapes repository root")
     parent = output.parent
     if not parent.is_dir() or parent.is_symlink():
         raise ValueError("output parent must be an existing non-symlink directory")

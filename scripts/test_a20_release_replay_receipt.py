@@ -30,6 +30,8 @@ def test_cli_paths_reject_escape_symlink_and_existing_output(tmp_path: Path) -> 
 
     with pytest.raises(ValueError, match="escapes"):
         _regular_in_root(root, tmp_path / "outside.json", "receipt")
+    with pytest.raises(ValueError, match="escapes"):
+        _regular_in_root(root, root / ".." / "outside.json", "receipt")
     with pytest.raises(ValueError, match="fresh"):
         _output_in_root(root, receipt)
     try:
