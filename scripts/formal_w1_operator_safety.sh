@@ -136,13 +136,44 @@ formal_w1_operator_wait_status() {
 }
 
 formal_w1_operator_require_sole_physical_publishers() {
-  local topic info
-  for topic in "$FORMAL_W1_OPERATOR_ESTOP" "$FORMAL_W1_OPERATOR_ESTOP_RESET" "$FORMAL_W1_OPERATOR_MAIN_POWER"; do
-    info="$FORMAL_W1_OPERATOR_ROOT/operator-$(basename "$topic").topic-info.txt"
-    [[ ! -e "$info" && ! -L "$info" ]] || return 98
-    ros2 topic info --verbose "$topic" >"$info" 2>&1
-    grep -Eq '^Publisher count: 1$' "$info" || return 3
+  local topic info count variable pid attempt=0 all_ready
+  local timeout_seconds="${R065_W1_OPERATOR_PUBLISHER_DISCOVERY_TIMEOUT_SECONDS:-10}"
+  local poll_seconds="${R065_W1_OPERATOR_PUBLISHER_DISCOVERY_POLL_SECONDS:-0.25}"
+  [[ "$timeout_seconds" =~ ^[1-9][0-9]*$ ]] || return 98
+  (( timeout_seconds <= 60 )) || return 98
+  [[ "$poll_seconds" =~ ^[0-9]+([.][0-9]+)?$ ]] || return 98
+  awk -v value="$poll_seconds" 'BEGIN { exit !(value > 0 && value <= 5) }' || return 98
+  local deadline=$((SECONDS + timeout_seconds))
+  while (( SECONDS < deadline )); do
+    attempt=$((attempt + 1))
+    all_ready=true
+    for topic in "$FORMAL_W1_OPERATOR_ESTOP" "$FORMAL_W1_OPERATOR_ESTOP_RESET" "$FORMAL_W1_OPERATOR_MAIN_POWER"; do
+      case "$topic" in
+        "$FORMAL_W1_OPERATOR_ESTOP") variable=FORMAL_W1_OPERATOR_ESTOP_FALSE_PID ;;
+        "$FORMAL_W1_OPERATOR_ESTOP_RESET") variable=FORMAL_W1_OPERATOR_RESET_PID ;;
+        "$FORMAL_W1_OPERATOR_MAIN_POWER") variable=FORMAL_W1_OPERATOR_POWER_PID ;;
+        *) return 98 ;;
+      esac
+      pid="${!variable}"
+      [[ "$pid" =~ ^[0-9]+$ && "$pid" -gt 1 ]] || return 3
+      kill -0 "$pid" 2>/dev/null || return 3
+      info="$FORMAL_W1_OPERATOR_ROOT/operator-$(basename "$topic").topic-info.$attempt.txt"
+      [[ ! -e "$info" && ! -L "$info" ]] || return 98
+      local remaining=$((deadline - SECONDS))
+      (( remaining > 0 )) || return 3
+      timeout --signal=TERM --kill-after=1s "${remaining}s" ros2 topic info --verbose "$topic" >"$info" 2>&1 || return 3
+      kill -0 "$pid" 2>/dev/null || return 3
+      count="$(awk '/^Publisher count: [0-9]+$/ { seen += 1; value = $3 } END { if (seen == 1) print value; else exit 1 }' "$info")" || return 3
+      case "$count" in
+        0) all_ready=false ;;
+        1) ;;
+        *) return 3 ;;
+      esac
+    done
+    [[ "$all_ready" == true ]] && return 0
+    sleep "$poll_seconds"
   done
+  return 3
 }
 
 formal_w1_operator_start_and_release() {

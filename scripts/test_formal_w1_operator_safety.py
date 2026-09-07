@@ -68,7 +68,10 @@ def test_operator_sequence_is_fail_closed_and_has_no_control_or_truth_writer() -
     assert 'ros2 topic pub --rate "$FORMAL_W1_OPERATOR_RATE_HZ"' in operator
     assert "FORMAL_W1_OPERATOR_RATE_HZ=10" in operator
     assert "formal_w1_operator_require_sole_physical_publishers" in operator
-    assert "Publisher count: 1" in operator
+    assert "R065_W1_OPERATOR_PUBLISHER_DISCOVERY_TIMEOUT_SECONDS" in operator
+    assert 'operator-$(basename "$topic").topic-info.$attempt.txt' in operator
+    assert 'kill -0 "$pid"' in operator
+    assert 'timeout --signal=TERM --kill-after=1s "${remaining}s" ros2 topic info' in operator
     assert (
         "formal_w1_operator_wait_status post-release BASE_COMMAND_STOPPED "
         "manipulator_base_inhibit" in operator
