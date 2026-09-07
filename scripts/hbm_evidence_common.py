@@ -9,6 +9,9 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import signal
+import subprocess
+import time
 from pathlib import Path
 from typing import Any
 
@@ -60,3 +63,31 @@ def path_under(root: Path, candidate: str, label: str) -> Path:
         raise ValueError(f"{label}_path_escape")
     normal_file(path, label)
     return path
+
+
+def run_owned_process(command: list[str], *, timeout_seconds: float) -> tuple[int | None, str, str, dict[str, Any]]:
+    """Run exactly one POSIX session and make timeout cleanup observable."""
+    if os.name != "posix":
+        raise ValueError("posix_process_group_supervision_required")
+    started = time.monotonic()
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, start_new_session=True)
+    pgid = os.getpgid(process.pid)
+    details: dict[str, Any] = {"pgid": pgid, "deadline_seconds": timeout_seconds, "term_grace_seconds": 10,
+                               "timed_out": False, "term_sent": False, "kill_sent": False, "zero_survivor": False}
+    try:
+        stdout, stderr = process.communicate(timeout=timeout_seconds)
+    except subprocess.TimeoutExpired:
+        details["timed_out"] = details["term_sent"] = True
+        os.killpg(pgid, signal.SIGTERM)
+        try:
+            stdout, stderr = process.communicate(timeout=10)
+        except subprocess.TimeoutExpired:
+            details["kill_sent"] = True
+            os.killpg(pgid, signal.SIGKILL)
+            stdout, stderr = process.communicate()
+    try:
+        os.killpg(pgid, 0)
+    except ProcessLookupError:
+        details["zero_survivor"] = True
+    details["elapsed_seconds"] = time.monotonic() - started
+    return process.returncode, stdout or "", stderr or "", details

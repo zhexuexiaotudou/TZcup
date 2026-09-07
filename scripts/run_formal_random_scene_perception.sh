@@ -213,7 +213,7 @@ PY
   fi
 
   if timeout 15 python3 -c \
-    'from sanitation_perception_interfaces.msg import GarbageTargetArray; from sanitation_perception.formal_random_scene_evaluator import _project_cube; print("IMPORT sanitation_perception_interfaces OK"); print("IMPORT sanitation_perception OK")'; then
+    'from sanitation_perception_interfaces.msg import GarbageTargetArray; from sanitation_perception_evaluator.formal_random_scene_evaluator import _project_cube; print("IMPORT sanitation_perception_interfaces OK"); print("IMPORT evaluator-only package OK")'; then
     :
   else
     echo "FAIL perception_runtime_imports"
@@ -324,7 +324,7 @@ for ((index=0; index<episode_count; index++)); do
       starter_ws/src/sanitation_perception/sanitation_perception/product_projection.py \
       starter_ws/src/sanitation_perception/sanitation_perception/dosod_ros_adapter.py \
       starter_ws/src/sanitation_perception/sanitation_perception/edgesam_ros_adapter.py \
-      starter_ws/src/sanitation_perception/sanitation_perception/formal_random_scene_evaluator.py \
+      starter_ws/src/sanitation_perception_evaluator/sanitation_perception_evaluator/formal_random_scene_evaluator.py \
       starter_ws/src/sanitation_perception/config/formal_random_scene_acceptance.yaml \
       starter_ws/src/sanitation_campus_scenario/sanitation_campus_scenario/generator.py \
       scripts/wait_for_ros_graph.py \
@@ -345,7 +345,7 @@ for ((index=0; index<episode_count; index++)); do
   done
 
   set +e
-  ros2 run sanitation_perception formal_random_scene_perception_evaluator --ros-args \
+  ros2 run sanitation_perception_evaluator formal_random_scene_perception_evaluator --ros-args \
     -p use_sim_time:=true \
     -p truth_path:="${episode_root}/scenario/evaluator/ground_truth.json" \
     -p public_manifest_path:="${episode_root}/scenario/public/episode_manifest.json" \

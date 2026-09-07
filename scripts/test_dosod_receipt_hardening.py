@@ -48,6 +48,16 @@ def test_parity_rejects_compile_receipt_without_canonical_contract(tmp_path: Pat
         parity._validate_compile_receipt(receipt, hbm)
 
 
+def test_parity_accepts_a_copied_compile_evidence_directory_without_rewriting_origin(tmp_path: Path) -> None:
+    hbm = tmp_path / "model.hbm"; hbm.write_bytes(b"hbm")
+    receipt = _compile_receipt(tmp_path, hbm)
+    value = json.loads(receipt.read_text(encoding="utf-8"))
+    value["evidence_root"] = "/remote/oe37/compile-evidence"
+    value["receipt_path"] = "/remote/oe37/compile-evidence/dosod_hbm_compile_receipt.json"
+    receipt.write_text(json.dumps(value), encoding="utf-8")
+    assert parity._validate_compile_receipt(receipt, hbm)["output_sha256"] == _sha(hbm)
+
+
 def test_production_compile_cli_rejects_noncanonical_contract_before_execution(tmp_path: Path) -> None:
     other = tmp_path / "lookalike.json"; other.write_text("{}", encoding="utf-8")
     command = [

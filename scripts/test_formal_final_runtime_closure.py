@@ -642,7 +642,7 @@ def test_record_and_verify_complete_non_symlink_merged_closure(tmp_path: Path) -
     assert recorded["closure"]["merged_overlay"]["mode"] == "merged_copy_install"
     verified = closure.verify_manifest(manifest, repository, runtime, models, onnx)
     assert verified["passed"] is True
-    assert verified["runtime_package_count"] == 18
+    assert verified["runtime_package_count"] == 19
     assert verified["gazebo_plugin_count"] == 12
     assert "libDryBinMonitorSystem.so" in recorded["closure"]["gazebo_plugins"]
     assert recorded["closure"]["gazebo_plugins"]["libDryBinMonitorSystem.so"]["sha256"] == closure._sha256(

@@ -60,3 +60,29 @@ runtime_boundary:
     for the upstream platform family; the evidence flag remains false until the
     formal product nodes and selected EdgeSAM-512 project artifacts run on the
     connected S100P.
+board_short_diagnostic_contract:
+  source_selector_hz: 2.0
+  selector_basis: source_header_stamp_only
+  required_nv12_outputs:
+    dosod: {width: 848, height: 480, encoding: nv12, packed: true}
+    edgesam: {width: 848, height: 480, encoding: nv12, packed: true}
+  required_same_stamp_chain: [rgb, dosod, edgesam]
+  required_processing_counters: [selected_frames, dosod_raw_frames, product_box_frames, product_target_frames, reject_reasons]
+  official_preprocessing_contract:
+    dosod: {owner: hobot_dosod, operation: GetNV12Pyramid, source_dimensions: [848, 480]}
+    edgesam: {owner: mono_edgesam, operation: ResizeNV12Img, source_dimensions: [848, 480], network_dimensions: [512, 288]}
+  dosod_raw_output_shape: [1, 8400, 4]
+  vocabulary_class_count: 4
+  diagnostics_observation:
+    topic: /perception/open_vocab/diagnostics
+    must_subscribe_and_receive: true
+    node_liveness_only_is_insufficient: true
+    nodes:
+      formal_open_vocab_perception/rgb_to_nv12_adapter:
+        required_healthy_level: 0
+        required_error_propagation_level: 2
+      formal_open_vocab_perception/product_adapter:
+        required_healthy_level: 0
+        required_error_propagation_level: 2
+  log_policy: {hobot_dosod: warn, mono_edgesam: warn, project_success_max_hz: 1.0, project_errors_unthrottled: true}
+  status: blocked_until_real_board_runtime

@@ -19,7 +19,7 @@ setup(
     install_requires=[
         "setuptools",
         "PyYAML",
-        "numpy>=1.24,<2",
+        "numpy>=1.21.5,<2",
     ],
     zip_safe=True,
     maintainer="Sanitation Vehicle Team",
@@ -35,7 +35,6 @@ setup(
             "pc_open_vocab_product_adapter = sanitation_perception.pc_open_vocab_adapter:main",
             "open_vocab_product_adapter = sanitation_perception.s100p_product_adapter:main",
             "rgb_to_nv12_adapter = sanitation_perception.rgb_to_nv12_adapter:main",
-            "formal_random_scene_perception_evaluator = sanitation_perception.formal_random_scene_evaluator:main",
         ],
     },
 )

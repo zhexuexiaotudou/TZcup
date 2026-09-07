@@ -1,12 +1,16 @@
 import math
 from pathlib import Path
+import sys
 from types import SimpleNamespace
 
 import numpy as np
 import pytest
 import yaml
 
-from sanitation_perception.formal_random_scene_evaluator import (
+EVALUATOR_PACKAGE = Path(__file__).resolve().parents[2] / "sanitation_perception_evaluator"
+sys.path.insert(0, str(EVALUATOR_PACKAGE))
+
+from sanitation_perception_evaluator.formal_random_scene_evaluator import (
     _camera_from_map_at_staging,
     _lookup_pose_pair_with_retry,
     _pose2d_error,
@@ -19,7 +23,7 @@ ROOT = PACKAGE.parents[2]
 
 
 def test_live_evaluator_is_truth_isolated_and_requires_real_camera_topics():
-    source = (PACKAGE / "sanitation_perception/formal_random_scene_evaluator.py").read_text(encoding="utf-8")
+    source = (EVALUATOR_PACKAGE / "sanitation_perception_evaluator/formal_random_scene_evaluator.py").read_text(encoding="utf-8")
     assert "load_evaluator_truth" in source
     assert "SetEntityPose" in source
     assert "synthetic" not in source.lower()
@@ -253,11 +257,22 @@ def test_acceptance_config_freezes_thresholds_and_claim_boundaries():
 
 
 def test_console_entry_and_runtime_dependency_are_declared():
-    setup = (PACKAGE / "setup.py").read_text(encoding="utf-8")
-    package_xml = (PACKAGE / "package.xml").read_text(encoding="utf-8")
+    setup = (EVALUATOR_PACKAGE / "setup.py").read_text(encoding="utf-8")
+    package_xml = (EVALUATOR_PACKAGE / "package.xml").read_text(encoding="utf-8")
+    product_xml = (PACKAGE / "package.xml").read_text(encoding="utf-8")
     pc_requirements = (PACKAGE / "requirements-pc.txt").read_text(encoding="utf-8")
     assert "formal_random_scene_perception_evaluator" in setup
     assert "<exec_depend>ros_gz_interfaces</exec_depend>" in package_xml
+    assert "ros_gz_interfaces" not in product_xml
     assert "opencv-python-headless" in pc_requirements
-    assert "<exec_depend>python3-opencv</exec_depend>" in package_xml
+    assert "<exec_depend>python3-opencv</exec_depend>" in product_xml
     assert "Python 3.10-3.12" in pc_requirements
+
+
+def test_product_python_tree_cannot_import_or_name_evaluator_only_gazebo_runtime():
+    product_python = PACKAGE / "sanitation_perception"
+    assert not (product_python / "formal_random_scene_evaluator.py").exists()
+    for path in product_python.glob("*.py"):
+        source = path.read_text(encoding="utf-8")
+        assert "ros_gz_interfaces" not in source
+        assert "sanitation_perception_evaluator" not in source

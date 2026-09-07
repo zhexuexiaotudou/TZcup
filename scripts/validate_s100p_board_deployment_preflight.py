@@ -24,6 +24,7 @@ TROS_SETUPS = ("/opt/tros/humble/setup.bash", "/opt/tros/jazzy/setup.bash")
 FINAL_REPORT_ID = "tzcup_s100p_final_predeploy_audit_v1"
 FINAL_BOUNDARY = "local_read_only_audit_no_board_copy_ssh_install_node_start_data_collection_or_receipt_generation"
 MODEL_RECEIPT_ID = "tzcup_s100p_model_payload_receipt_v1"
+OFFLINE_COMPILE_RECEIPT_ID = "tzcup_s100p_dosod_hbm_compile_receipt_v1"
 EXPECTED_PAYLOAD_PATHS = {
     "dosod_hbm": "dosod/dosod_mlp3x_s_tzcup_rep-int16.hbm",
     "dosod_vocabulary": "dosod/tzcup_offline_vocabulary.json",
@@ -113,6 +114,21 @@ def _read(path: Path) -> str:
         return ""
 
 
+def _device_tree_fact(root: Path, path: Path) -> tuple[str, str] | None:
+    if not _nonlink_ancestors(root, path) or not _regular_nonlink(path):
+        return None
+    try:
+        raw = path.read_bytes()
+    except OSError:
+        return None
+    return raw.replace(b"\0", b" ").decode("utf-8", errors="replace").strip(), _sha256(path)
+
+
+def _device_major_minor(value: int) -> tuple[int, int]:
+    major, minor = getattr(os, "major", None), getattr(os, "minor", None)
+    return (int(major(value)), int(minor(value))) if callable(major) and callable(minor) else (0, 0)
+
+
 def _verified_entry(root: Path, entry: Any) -> tuple[Path | None, str | None]:
     if not isinstance(entry, Mapping):
         return None, "invalid_entry"
@@ -167,24 +183,70 @@ def _direct_child(path: str, parent: str) -> bool:
     return path.startswith(prefix) and bool(path[len(prefix):]) and "/" not in path[len(prefix):]
 
 
-def _validate_model_receipt(receipt: Any) -> tuple[bool, Mapping[str, Any] | None, int]:
+def _valid_model_board_bridge(receipt: Mapping[str, Any]) -> bool:
+    identity = receipt.get("board_identity")
+    candidate = receipt.get("candidate_stage")
+    device = identity.get("bpu_device") if isinstance(identity, Mapping) else None
+    return (
+        isinstance(candidate, str) and _direct_child(candidate, "/opt/tzcup/stages")
+        and receipt.get("stage_root") == candidate
+        and isinstance(identity, Mapping)
+        and "rdk s100p" in str(identity.get("model", "")).lower()
+        and "drobot,s100-rdk" in str(identity.get("compatible", "")).lower()
+        and _is_digest(identity.get("model_sha256")) and _is_digest(identity.get("compatible_sha256"))
+        and identity.get("architecture") == EXPECTED_ARCHITECTURE
+        and isinstance(device, Mapping) and device.get("path") == EXPECTED_BPU_DEVICE
+        and isinstance(device.get("st_mode"), int) and device.get("is_character_device") is True
+        and device.get("is_symlink") is False
+        and all(isinstance(device.get(key), int) and device[key] >= 0 for key in ("st_rdev_major", "st_rdev_minor", "st_ino"))
+        and identity.get("required_modules") == ["bpu_cores", "bpu_framework"]
+    )
+
+
+def _validate_model_receipt(receipt: Any) -> tuple[bool, Mapping[str, Any] | None, int, str | None]:
     if not isinstance(receipt, Mapping) or receipt.get("schema_version") != 1:
-        return False, None, 0
+        return False, None, 0, None
     payloads = receipt.get("payloads")
-    if receipt.get("receipt_id") != MODEL_RECEIPT_ID or receipt.get("status") != "VERIFIED" or not isinstance(payloads, Mapping):
-        return False, None, 0
+    compile_sha = receipt.get("offline_compile_receipt_sha256")
+    if (
+        receipt.get("receipt_id") != MODEL_RECEIPT_ID
+        or receipt.get("status") != "VERIFIED"
+        or receipt.get("board_interaction_performed") is not True
+        or not isinstance(payloads, Mapping)
+        or not _is_digest(compile_sha)
+        or not _valid_model_board_bridge(receipt)
+    ):
+        return False, None, 0, None
     if set(payloads) != set(EXPECTED_PAYLOAD_PATHS):
-        return False, None, 0
+        return False, None, 0, None
     total = 0
     for name, expected in EXPECTED_PAYLOAD_PATHS.items():
         row = payloads.get(name)
         if not isinstance(row, Mapping) or row.get("target_relative_path") != expected:
-            return False, None, 0
+            return False, None, 0, None
         size = row.get("byte_size")
         if not isinstance(size, int) or size <= 0 or not _is_digest(row.get("sha256")):
-            return False, None, 0
+            return False, None, 0, None
         total += size
-    return True, payloads, total
+    return True, payloads, total, compile_sha
+
+
+def _validate_offline_compile_receipt(receipt: Any, dosod_payload: Mapping[str, Any]) -> bool:
+    return (
+        isinstance(receipt, Mapping)
+        and receipt.get("schema_version") == 1
+        and receipt.get("receipt_id") == OFFLINE_COMPILE_RECEIPT_ID
+        and receipt.get("status") == "COMPILED_NOT_BOARD_ACCEPTED"
+        and receipt.get("board_interaction_performed") in (None, False)
+        and receipt.get("acceptance_session_binding") is None
+        and receipt.get("runtime_closure_binding") is None
+        and receipt.get("returncode") == 0
+        and receipt.get("output_created_by_this_compile") is True
+        and receipt.get("compiler_identity_verified") is True
+        and receipt.get("output_relative_path") == EXPECTED_PAYLOAD_PATHS["dosod_hbm"]
+        and receipt.get("output_sha256") == dosod_payload.get("sha256")
+        and receipt.get("output_byte_size") == dosod_payload.get("byte_size")
+    )
 
 
 def _validate_handoff(root: Path, manifest_path: Path) -> tuple[dict[str, Path], Mapping[str, Any] | None, list[str]]:
@@ -195,11 +257,17 @@ def _validate_handoff(root: Path, manifest_path: Path) -> tuple[dict[str, Path],
     entries = manifest.get("entries") if isinstance(manifest, Mapping) else None
     if not isinstance(manifest, Mapping) or manifest.get("schema_version") != 1 or not isinstance(entries, Mapping):
         return {}, None, ["board_handoff_manifest_invalid"]
-    required = {"final_predeploy", "model_payload_receipt", "acceptance_session", "runtime_closure", "payloads"}
+    required = {
+        "final_predeploy", "offline_compile_receipt", "model_payload_receipt",
+        "acceptance_session", "runtime_closure", "payloads",
+    }
     if set(entries) != required or not isinstance(entries.get("payloads"), Mapping):
         return {}, None, ["board_handoff_manifest_roles_invalid"]
     verified: dict[str, Path] = {}
-    for role in ("final_predeploy", "model_payload_receipt", "acceptance_session", "runtime_closure"):
+    for role in (
+        "final_predeploy", "offline_compile_receipt", "model_payload_receipt",
+        "acceptance_session", "runtime_closure",
+    ):
         path, error = _verified_entry(root, entries[role])
         if error:
             _append(blockers, f"board_handoff_{role}_{error}")
@@ -263,7 +331,10 @@ def validate(*, handoff_manifest: Path, board_root: Path, candidate: str, retain
     if not session_ok:
         _append(blockers, "board_handoff_session_or_runtime_closure_binding_mismatch")
     model_receipt_path = verified.get("model_payload_receipt")
-    receipt_valid, receipt_payloads, payload_bytes = _validate_model_receipt(_json(model_receipt_path) if model_receipt_path else None)
+    model_receipt = _json(model_receipt_path) if model_receipt_path else None
+    receipt_valid, receipt_payloads, payload_bytes, compile_sha = _validate_model_receipt(
+        model_receipt
+    )
     if not receipt_valid:
         _append(blockers, "board_local_model_payload_receipt_invalid")
         payload_bytes = 0
@@ -280,13 +351,28 @@ def validate(*, handoff_manifest: Path, board_root: Path, candidate: str, retain
             if not isinstance(handoff, Mapping) or (handoff.get("sha256") != receipt_row.get("sha256")
                     or handoff.get("byte_size") != receipt_row.get("byte_size")):
                 _append(blockers, f"board_handoff_payload_{role}_does_not_match_model_receipt")
+    compile_receipt_path = verified.get("offline_compile_receipt")
+    compile_receipt = _json(compile_receipt_path) if compile_receipt_path else None
+    compile_valid = (
+        receipt_valid
+        and compile_receipt_path is not None
+        and compile_sha == _sha256(compile_receipt_path)
+        and isinstance(receipt_payloads, Mapping)
+        and _validate_offline_compile_receipt(compile_receipt, receipt_payloads["dosod_hbm"])
+    )
+    if not compile_valid:
+        _append(blockers, "board_handoff_offline_compile_receipt_invalid_or_unbound")
 
-    model, compatible = _read(_inside(root, "/proc/device-tree/model")), _read(_inside(root, "/proc/device-tree/compatible"))
+    model_fact = _device_tree_fact(root, _inside(root, "/proc/device-tree/model"))
+    compatible_fact = _device_tree_fact(root, _inside(root, "/proc/device-tree/compatible"))
+    model = model_fact[0].lower() if model_fact else ""
+    compatible = compatible_fact[0].lower() if compatible_fact else ""
     identity_ok = (EXPECTED_MODEL_TOKEN in model and EXPECTED_COMPATIBLE_TOKEN in compatible
                    and platform_machine().strip().lower() == EXPECTED_ARCHITECTURE)
     if not identity_ok:
         _append(blockers, "board_identity_not_exact_s100p_aarch64")
-    bpu_ok = _character_nonlink(_inside(root, EXPECTED_BPU_DEVICE), stat_path)
+    bpu_path = _inside(root, EXPECTED_BPU_DEVICE)
+    bpu_ok = _character_nonlink(bpu_path, stat_path)
     if not bpu_ok:
         _append(blockers, "bpu_core0_not_nonlink_character_device")
     setup_ok = any(_regular_nonlink(_inside(root, item)) for item in TROS_SETUPS)
@@ -296,6 +382,26 @@ def validate(*, handoff_manifest: Path, board_root: Path, candidate: str, retain
     runtime_ok = "bpu_cores " in modules and "bpu_framework " in modules
     if not runtime_ok:
         _append(blockers, "required_bpu_modules_not_observed")
+    recorded_board_identity_ok = False
+    if receipt_valid and isinstance(model_receipt, Mapping) and model_fact and compatible_fact:
+        recorded = model_receipt.get("board_identity")
+        device = recorded.get("bpu_device") if isinstance(recorded, Mapping) else None
+        try:
+            observed_device = stat_path(bpu_path)
+            observed_major, observed_minor = _device_major_minor(observed_device.st_rdev)
+            recorded_board_identity_ok = (
+                isinstance(recorded, Mapping)
+                and recorded.get("model") == model_fact[0] and recorded.get("model_sha256") == model_fact[1]
+                and recorded.get("compatible") == compatible_fact[0] and recorded.get("compatible_sha256") == compatible_fact[1]
+                and recorded.get("architecture") == platform_machine().strip().lower()
+                and isinstance(device, Mapping) and device.get("st_mode") == observed_device.st_mode
+                and device.get("st_rdev_major") == observed_major and device.get("st_rdev_minor") == observed_minor
+                and device.get("st_ino") == observed_device.st_ino
+            )
+        except OSError:
+            recorded_board_identity_ok = False
+    if not recorded_board_identity_ok:
+        _append(blockers, "model_payload_recorded_board_identity_drift_or_incomplete")
 
     try:
         active_path = _inside(root, active)
@@ -349,7 +455,9 @@ def validate(*, handoff_manifest: Path, board_root: Path, candidate: str, retain
         "handoff_session_and_runtime_closure_bound": session_ok,
         "model_payload_receipt_bound_to_final_predeploy": matching_embedded_receipt,
         "model_payload_receipt_schema_valid": receipt_valid,
+        "offline_compile_receipt_revalidated": compile_valid,
         "s100p_aarch64": identity_ok, "bpu_core0_nonlink_character_device": bpu_ok,
+        "model_payload_board_identity_revalidated": recorded_board_identity_ok,
         "tros_setup_regular_nonlink": setup_ok, "bpu_modules_observed": runtime_ok,
         "active_nonlink_directory": active_ok, "candidate_target_fresh_absent": candidate_absent,
         "retained_old_target_fresh_absent": retained_old_absent,

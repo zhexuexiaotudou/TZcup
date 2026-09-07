@@ -3,6 +3,8 @@
 set -Eeuo pipefail
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
 source "$ROOT/scripts/run_formal_runtime_isolation.sh"
+source "$ROOT/scripts/public_gazebo_mobile_readiness.sh"
+export PUBLIC_GAZEBO_CALIBRATION_PARSER="$ROOT/scripts/parse_public_gazebo_topic_info.py"
 : "${PUBLIC_GAZEBO_CALIBRATION_PLAN:?}" "${PUBLIC_GAZEBO_CALIBRATION_OUTPUT:?}"
 : "${PUBLIC_GAZEBO_CALIBRATION_LOCK:?}" "${PUBLIC_GAZEBO_CALIBRATION_TIMEOUT_SEC:?}"
 : "${PUBLIC_GAZEBO_CALIBRATION_PER_SCENE_QUOTA:?}" "${PUBLIC_GAZEBO_CALIBRATION_STAGE1_SETUP:?}"
@@ -32,13 +34,47 @@ collector_pid=""; launch_pid=""; operator_pid=""; stop_estop_pid=""
 scene_operator_started=false; scene_stop_attempted=false; scene_stop_verified=false
 RUNNER_EXIT_CODE=0
 VALIDATION_SNAPSHOT=""
+GENERATOR_DEADLINE_SEC=60
+READINESS_DEADLINE_SEC=60
+FINAL_VALIDATION_DEADLINE_SEC=120
+COLLECTOR_DEADLINE_SEC="$PUBLIC_GAZEBO_CALIBRATION_TIMEOUT_SEC"
+deadline_run() {
+  # Each short operation owns a fresh session.  TERM waits ten seconds before
+  # KILL and the caller receives failure unless that exact group is gone.
+  local limit="$1" log="$2"; shift 2
+  setsid "$@" >"$log" 2>&1 & local pid=$! elapsed=0
+  while kill -0 "$pid" 2>/dev/null && (( elapsed < limit )); do sleep 1; ((elapsed+=1)); done
+  if kill -0 "$pid" 2>/dev/null; then
+    kill -TERM -- "-$pid" 2>/dev/null || true; sleep 10
+    kill -0 -- "-$pid" 2>/dev/null && kill -KILL -- "-$pid" 2>/dev/null || true
+    wait "$pid" 2>/dev/null || true
+    ! kill -0 -- "-$pid" 2>/dev/null || return 125
+    return 124
+  fi
+  local rc=0
+  wait "$pid" || rc=$?
+  # A leader exiting first is not cleanup: any exact child still in its
+  # private PGID turns this operation into a fail-closed cleanup failure.
+  if kill -0 -- "-$pid" 2>/dev/null; then
+    kill -TERM -- "-$pid" 2>/dev/null || true; sleep 10
+    kill -0 -- "-$pid" 2>/dev/null && kill -KILL -- "-$pid" 2>/dev/null || true
+    ! kill -0 -- "-$pid" 2>/dev/null || return 125
+    return 125
+  fi
+  return "$rc"
+}
+require_mapping_readiness() {
+  local expected=""
+  if [[ "${FORMAL_ORCHESTRATED_STEP_SESSION:-0}" == 1 ]]; then expected="$(ps -o pgid= -p "$$" | tr -d '[:space:]')"; fi
+  public_mobile_mapping_readiness "$launch_pid" "$1" "$READINESS_DEADLINE_SEC" "$expected"
+}
 write_receipt() { python3 - "$RECEIPT" "$1" "$2" "$PRIMARY_ERROR" "$3" "$MODE" "$DATASET" "$EXPECTED_MANIFEST" "${PUBLIC_GAZEBO_CALIBRATION_REVIEW_RECEIPT:-}" "${PUBLIC_GAZEBO_CALIBRATION_PILOT_MANIFEST:-}" "${VALIDATION_SNAPSHOT:-}" <<'PY'
 import hashlib,json,os,sys
 from pathlib import Path
 p,status,code,error,zero,mode,dataset,expected,review,pilot,snapshot=(Path(sys.argv[1]),sys.argv[2],sys.argv[3],sys.argv[4],sys.argv[5],sys.argv[6],Path(sys.argv[7]),sys.argv[8],sys.argv[9],sys.argv[10],sys.argv[11])
 def digest(path): return hashlib.sha256(path.read_bytes()).hexdigest()
 def regular(path): return path.is_file() and not path.is_symlink()
-v={'report_id':'tzcup_public_mobile_gazebo_dosod_calibration_runner_v1','status':status,'formal_passed':False,'classification':'NON_FORMAL','exit_code':int(code),'primary_error':error,'zero_survivor_check':zero=='true','mode':mode}
+v={'report_id':'tzcup_public_mobile_gazebo_dosod_calibration_runner_v1','status':status,'formal_passed':False,'classification':'NON_FORMAL','exit_code':int(code),'primary_error':error,'zero_survivor_check':zero=='true','mode':mode,'budgets_sec':{'whole_runner':int(os.environ['PUBLIC_GAZEBO_CALIBRATION_TIMEOUT_SEC']),'collector':int(os.environ['PUBLIC_GAZEBO_CALIBRATION_TIMEOUT_SEC']),'scene_generator':60,'readiness':60,'final_validation':120,'term_grace':10}}
 invalid=False
 if status in {'NON_FORMAL_PILOT_CAPTURED','NON_FORMAL_CALIBRATION_FROZEN'}:
  try:
@@ -138,7 +174,7 @@ started=false
 while IFS=$'\t' read -r role scene; do
   [[ "$scene" =~ ^map-([0-9]+)-mission-([0-9]+)$ ]] || { RUNNER_EXIT_CODE=2; exit 2; }
   scene_root="$RUN_ROOT/scenes/$scene"; mkdir -p "$scene_root"
-  ros2 run sanitation_campus_scenario sanitation-campus-scenario generate --config "$ROOT/starter_ws/src/sanitation_campus_scenario/config/default_scenario.yaml" --profile formal --split train --map-index "${BASH_REMATCH[1]}" --mission-index "${BASH_REMATCH[2]}" --output "$scene_root/episode"
+  deadline_run "$GENERATOR_DEADLINE_SEC" "$scene_root/generator.log" ros2 run sanitation_campus_scenario sanitation-campus-scenario generate --config "$ROOT/starter_ws/src/sanitation_campus_scenario/config/default_scenario.yaml" --profile formal --split train --map-index "${BASH_REMATCH[1]}" --mission-index "${BASH_REMATCH[2]}" --output "$scene_root/episode" || { rc=$?; PRIMARY_ERROR=scene_generator_deadline_or_failure; RUNNER_EXIT_CODE=$rc; exit "$RUNNER_EXIT_CODE"; }
   manifest="$scene_root/episode/public/episode_manifest.json"
   scene_operator_started=false; scene_stop_attempted=false; scene_stop_verified=false
   python3 "$ROOT/scripts/public_gazebo_dosod_calibration.py" --scene-plan "$PUBLIC_GAZEBO_CALIBRATION_PLAN" --contract "$ROOT/config/dosod_s100p_hbm_compile_contract.json" --write-scene-selector --scene-selector "$SELECTOR" --scene-id "$scene" --episode-manifest "$manifest" >"$scene_root/selector.json"
@@ -148,9 +184,8 @@ while IFS=$'\t' read -r role scene; do
     "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" python3 "$ROOT/scripts/public_gazebo_dosod_calibration.py" --scene-plan "$PUBLIC_GAZEBO_CALIBRATION_PLAN" --contract "$ROOT/config/dosod_s100p_hbm_compile_contract.json" "${collector_args[@]}" 9>&- >"$RUN_ROOT/collector.stdout" 2>"$RUN_ROOT/collector.stderr" & collector_pid=$!; started=true
   fi
   GZ_PARTITION="tzcup_public_mobile_${ROS_DOMAIN_ID}_$$_${scene}"; export GZ_PARTITION
-  "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 launch sanitation_formal_campus_integration formal_campus_map_lifecycle.launch.py mission_mode:=mapping gui:=false mapping_high_bandwidth_sensor_runtime:=true world:="$scene_root/episode/public/world.sdf" episode_manifest:="$manifest" map_artifact_dir:="$scene_root/runtime" pedestrian_schedule:="$scene_root/episode/environment/pedestrian_schedule.json" start_pedestrians:=false start_coverage:=false >"$scene_root/mapping.launch.log" 2>&1 & launch_pid=$!
-  sleep 30
-  if ! kill -0 "$launch_pid" 2>/dev/null; then if wait "$launch_pid"; then rc=0; else rc=$?; fi; echo "BLOCKED: mapping launch exited before operator rc=$rc" >&2; RUNNER_EXIT_CODE=4; exit 4; fi
+  "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 launch sanitation_formal_campus_integration formal_campus_map_lifecycle.launch.py mission_mode:=mapping gui:=false mapping_high_bandwidth_sensor_runtime:=true enable_training_gt:=true world:="$scene_root/episode/public/world.sdf" episode_manifest:="$manifest" map_artifact_dir:="$scene_root/runtime" pedestrian_schedule:="$scene_root/episode/environment/pedestrian_schedule.json" start_pedestrians:=false start_coverage:=false >"$scene_root/mapping.launch.log" 2>&1 & launch_pid=$!
+  if ! require_mapping_readiness "$scene_root/readiness"; then echo "BLOCKED: mapping readiness timed out or GT/RGB contract missing" >&2; RUNNER_EXIT_CODE=4; exit 4; fi
   "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" python3 "$ROOT/scripts/collect_formal_map_lifecycle_runtime.py" --mode mapping --map-root "$scene_root/runtime" --timeout "$PUBLIC_GAZEBO_CALIBRATION_TIMEOUT_SEC" --output "$scene_root/mapping_runtime.json" >"$scene_root/operator.log" 2>&1 & operator_pid=$!
   scene_operator_started=true
   while kill -0 "$launch_pid" 2>/dev/null && kill -0 "$collector_pid" 2>/dev/null && kill -0 "$operator_pid" 2>/dev/null && (( SECONDS < whole_deadline )); do python3 - "$PROGRESS" "$scene" "$PUBLIC_GAZEBO_CALIBRATION_PER_SCENE_QUOTA" <<'PY' && break || true
@@ -194,9 +229,9 @@ PY
 done < <(scene_rows)
 if [[ -n "$collector_pid" ]]; then wait "$collector_pid"; collector_pid=""; fi
 if [[ "$MODE" == pilot ]]; then
-  python3 "$ROOT/scripts/public_gazebo_dosod_calibration.py" --scene-plan "$PUBLIC_GAZEBO_CALIBRATION_PLAN" --contract "$ROOT/config/dosod_s100p_hbm_compile_contract.json" --validate-pilot-manifest "$DATASET/pilot_manifest.json" >"$RUN_ROOT/pilot_manifest_validation.json"
+  deadline_run "$FINAL_VALIDATION_DEADLINE_SEC" "$RUN_ROOT/pilot_manifest_validation.json" python3 "$ROOT/scripts/public_gazebo_dosod_calibration.py" --scene-plan "$PUBLIC_GAZEBO_CALIBRATION_PLAN" --contract "$ROOT/config/dosod_s100p_hbm_compile_contract.json" --validate-pilot-manifest "$DATASET/pilot_manifest.json"
 else
   VALIDATION_SNAPSHOT="$RUN_ROOT/full_review_validation.json"
-  python3 "$ROOT/scripts/public_gazebo_dosod_calibration.py" --scene-plan "$PUBLIC_GAZEBO_CALIBRATION_PLAN" --contract "$ROOT/config/dosod_s100p_hbm_compile_contract.json" --review-receipt "$PUBLIC_GAZEBO_CALIBRATION_REVIEW_RECEIPT" --pilot-manifest "$PUBLIC_GAZEBO_CALIBRATION_PILOT_MANIFEST" >"$VALIDATION_SNAPSHOT"
+  deadline_run "$FINAL_VALIDATION_DEADLINE_SEC" "$VALIDATION_SNAPSHOT" python3 "$ROOT/scripts/public_gazebo_dosod_calibration.py" --scene-plan "$PUBLIC_GAZEBO_CALIBRATION_PLAN" --contract "$ROOT/config/dosod_s100p_hbm_compile_contract.json" --review-receipt "$PUBLIC_GAZEBO_CALIBRATION_REVIEW_RECEIPT" --pilot-manifest "$PUBLIC_GAZEBO_CALIBRATION_PILOT_MANIFEST"
 fi
 DESIRED_STATE="$([[ "$MODE" == pilot ]] && echo NON_FORMAL_PILOT_CAPTURED || echo NON_FORMAL_CALIBRATION_FROZEN)"

@@ -58,6 +58,7 @@ def generate_launch_description() -> LaunchDescription:
     high_bandwidth_sensor_runtime = LaunchConfiguration(
         "high_bandwidth_sensor_runtime"
     )
+    enable_training_gt = LaunchConfiguration("enable_training_gt")
     start_high_bandwidth_sensor_bridges = LaunchConfiguration(
         "start_high_bandwidth_sensor_bridges"
     )
@@ -165,6 +166,8 @@ def generate_launch_description() -> LaunchDescription:
             bodywork_visible,
             " high_bandwidth_sensor_runtime:=",
             high_bandwidth_sensor_runtime,
+            " enable_training_gt:=",
+            enable_training_gt,
             " service_door_evaluation_interfaces:=",
             service_door_evaluation_interfaces,
             " initial_estop_latched:=",
@@ -510,6 +513,10 @@ def generate_launch_description() -> LaunchDescription:
             SetEnvironmentVariable("GZ_SIM_SYSTEM_PLUGIN_PATH", system_plugin_path),
             DeclareLaunchArgument("gui", default_value="true"),
             DeclareLaunchArgument(
+                "enable_training_gt", default_value="false",
+                description="NON_FORMAL evaluator-only front D435 semantic/instance sensors.",
+            ),
+            DeclareLaunchArgument(
                 "headless_rendering",
                 default_value="false",
                 description=(
@@ -788,6 +795,27 @@ def generate_launch_description() -> LaunchDescription:
                 ],
                 output="screen",
                 condition=IfCondition(high_bandwidth_bridges_enabled),
+            ),
+            # A single lazy GZ-to-ROS bridge exists only for NON_FORMAL public
+            # evidence capture.  The default formal graph creates neither
+            # endpoint nor a control-plane subscription to GT.
+            Node(
+                package="ros_gz_bridge",
+                executable="parameter_bridge",
+                name="formal_vehicle_training_gt_bridge",
+                parameters=[
+                    {
+                        "config_file": PathJoinSubstitution(
+                            [
+                                FindPackageShare("sanitation_vehicle_description"),
+                                "config",
+                                "formal_training_gt_bridge.yaml",
+                            ]
+                        )
+                    }
+                ],
+                output="screen",
+                condition=IfCondition(enable_training_gt),
             ),
             # ros_gz_bridge parameter_bridge discovers the image endpoints but
             # did not forward these 1600x1000 frames in the pinned Jazzy stack.

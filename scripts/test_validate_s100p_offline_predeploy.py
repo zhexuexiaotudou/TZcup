@@ -31,6 +31,20 @@ def test_empty_artifact_root_is_fail_closed_without_board_contact(tmp_path: Path
     assert report["checks"]["launch_source_contract_valid"] is True
 
 
+def test_evaluator_only_dependency_cannot_be_reclassified_as_board_base(tmp_path: Path):
+    overlay = json.loads(
+        (ROOT / "config" / "s100p_product_overlay_packages.json").read_text(encoding="utf-8")
+    )
+    overlay["board_base_runtime_package_exemptions"].append("ros_gz_interfaces")
+    path = tmp_path / "overlay.json"
+    path.write_text(json.dumps(overlay), encoding="utf-8")
+    checks: dict[str, bool] = {}
+    blockers: list[str] = []
+    MODULE._validate_overlay(overlay, ROOT, checks, blockers)
+    assert checks["overlay_runtime_package_set_valid"] is False
+    assert "overlay_required_runtime_packages_invalid" in blockers
+
+
 def test_historical_g0_and_missing_optional_smoke_are_explicitly_nonformal_references():
     report = MODULE.validate_offline_predeploy()
     assert report["checks"]["historical_g0_identity_valid"] is True

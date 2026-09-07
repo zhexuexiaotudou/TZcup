@@ -21,8 +21,25 @@ def test_plan_rejects_overlap(tmp_path):
     with pytest.raises(subject.CalibrationRejected,match='disjoint'): subject.load_scene_plan(f)
 def test_store_records_public_hashes_and_rejects_truth(tmp_path):
     s=subject.PublicGazeboStore(tmp_path/'out',contract(),plan()); assert s.add(frame('c')); assert not s.add(frame('h',2))
-    row=s.records[0]; assert row['source_role']=='calibration_only'; assert (s.output/row['provenance']).is_file(); assert len(row['sha256'])==64
+    row=s.records[0]; raw=s.output/row['raw_sensor']['relative_path']; assert row['source_role']=='calibration_only'; assert (s.output/row['provenance']).is_file(); assert len(row['sha256'])==64
+    assert raw.read_bytes()==frame('c').data and row['raw_sensor']['sha256']==row['source_sha256'] and row['raw_sensor']['byte_size']==len(frame('c').data)
+    holdout=s.holdout_records[0]; assert (s.output/holdout['raw_sensor']['relative_path']).read_bytes()==frame('h',2).data
     with pytest.raises(subject.CalibrationRejected,match='public_plan'): s.add(frame('c',3,'/ground_truth/image'))
+
+def test_raw_sensor_drift_missing_and_symlink_are_rejected(tmp_path):
+    s=subject.PublicGazeboStore(tmp_path/'out',contract(),plan()); assert s.add(frame('c',1)); row=s.records[0]; raw=s.output/row['raw_sensor']['relative_path']
+    raw.write_bytes(b'drift')
+    with pytest.raises(subject.CalibrationRejected,match='raw_sensor_record_drift'): s._verify_raw_sensor(row)
+    raw.unlink()
+    with pytest.raises(subject.CalibrationRejected,match='raw_sensor_record_drift'): s._verify_raw_sensor(row)
+    target=s.output/'replacement.bin'; target.write_bytes(frame('c',1).data)
+    try: os.symlink(target,raw)
+    except OSError as exc: pytest.skip(f'symlink privilege unavailable: {exc}')
+    with pytest.raises(subject.CalibrationRejected,match='raw_sensor_record_drift'): s._verify_raw_sensor(row)
+    raw.unlink(); raw.parent.rmdir()
+    outside=tmp_path/'outside'; outside.mkdir(); (outside/raw.name).write_bytes(frame('c',1).data)
+    os.symlink(outside,raw.parent,target_is_directory=True)
+    with pytest.raises(subject.CalibrationRejected,match='raw_sensor_record_drift'): s._verify_raw_sensor(row)
 def test_camera_mismatch_and_fresh_output_fail_closed(tmp_path):
     s=subject.PublicGazeboStore(tmp_path/'out',contract(),plan()); bad=frame('c'); bad=subject.Frame(bad.scene_id,bad.topic,bad.frame_id,bad.stamp_ns,bad.data,bad.width,bad.height,bad.step,bad.encoding,{"frame_id":"other","stamp_ns":1,"width":2,"height":2,"k":[1.,0.,1.,0.,1.,1.,0.,0.,1.]})
     with pytest.raises(subject.CalibrationRejected,match='camera_info'): s.add(bad)
@@ -40,6 +57,7 @@ def test_canonical_pilot_writes_only_hash_bound_non_formal_manifest_and_contact_
     assert manifest['record_count']==25 and manifest['pilot_scene']=='map-0-mission-0'
     assert (s.output/manifest['contact_sheet']['relative_path']).is_file()
     assert manifest['contact_sheet']['record_sha256']==manifest['record_sha256']
+    assert all((s.output/row['raw_sensor']['relative_path']).is_file() for row in manifest['records'])
     assert not (s.output/'calibration_manifest.json').exists()
     with pytest.raises(subject.CalibrationRejected,match='canonical'): subject.PublicGazeboStore(tmp_path/'bad',contract(),p,per_scene_quota=24,pilot_scene='map-0-mission-0')
 def test_full_collection_review_receipt_is_hash_bound_and_requires_visible_classes(tmp_path):
@@ -102,6 +120,26 @@ def test_ros_pair_conversion_is_exact():
     class Info: header=Header(); width=2; height=2; k=[1.,0.,1.,0.,1.,1.,0.,0.,1.]
     row=subject.frame_from_ros(scene_id='c',topic='/camera/color/image_raw',image=Image(),camera_info=Info())
     assert row.stamp_ns==2_000_000_003 and row.camera['frame_id']=='front'
+
+def test_gt_join_is_exact_stamp_selector_and_one_deep():
+    cache=subject.FreshEvidenceCache()
+    selector=selection()
+    assert cache.limit == 1
+    key=('front', 7)
+    for role in ('rgb','camera','semantic'):
+        assert cache.put(role,key,selector,role) is None
+    pair=cache.put('instance',key,selector,'instance')
+    assert pair == (selector,'rgb','camera','semantic','instance')
+    assert cache.put('rgb',('front',8),selector,'new') is None
+    assert cache.put('camera',('front',7),selector,'old') is None
+    assert len(cache.rows) == 1 and set(cache.rows) == {('front',7)}
+
+def test_gt_join_rejects_selector_mismatch_without_emitting_pair():
+    cache=subject.FreshEvidenceCache()
+    key=('front', 7)
+    for role in ('rgb','camera','semantic'):
+        assert cache.put(role,key,selection('1'),role) is None
+    assert cache.put('instance',key,selection('2'),'instance') is None
 def test_selector_atomic_nonlink_and_schema(tmp_path):
     p=tmp_path/'selector.json'; value={'state':'ACTIVE','scene_id':'c','episode_manifest_sha256':'a'*64,'generation_nonce':'1'*32}
     subject.atomic_scene_selector(p,value); assert subject.load_scene_selector(p)==value

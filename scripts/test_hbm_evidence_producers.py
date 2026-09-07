@@ -151,7 +151,12 @@ class MetricRegressionTests(unittest.TestCase):
         _write_json(runner_identity, {"schema_version": 1, "report_id": parity.RUNNER_IDENTITY_ID, "status": "VERIFIED",
                                       "runner": {"absolute_path": str(runner.resolve()), "sha256": _sha(runner), "version": "fixture"},
                                       "command_template": parity.COMMAND_TEMPLATE,
-                                      "output_map": {"scores": "scores.npy", "boxes": "boxes.npy"},
+                                      "model_name": "dosod",
+                                      "inputs": [{"index": 0, "name": "images_y", "shape": [1, 640, 640, 1], "dtype": "HB_DNN_TENSOR_TYPE_U8", "aligned_byte_size": -1}, {"index": 1, "name": "images_uv", "shape": [1, 320, 320, 2], "dtype": "HB_DNN_TENSOR_TYPE_U8", "aligned_byte_size": -1}],
+                                      "output_map": {
+                                          "scores": {"index": 0, "name": "scores", "shape": [1, 8400, 4], "dtype": "HB_DNN_TENSOR_TYPE_F32"},
+                                          "boxes": {"index": 1, "name": "boxes", "shape": [1, 8400, 4], "dtype": "HB_DNN_TENSOR_TYPE_F32"},
+                                      },
                                       "hbm_input_adapter": adapter})
         runner_sha = _sha(runner_identity)
         parity_report = root / "parity.json"
@@ -253,7 +258,7 @@ class ParityManifestTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "holdout_calibration_source_overlap"):
                 parity._holdout_records(manifest, {"a" * 64})
 
-    def test_runner_identity_requires_exact_adapter_and_executable_hash(self) -> None:
+    def test_runner_identity_uses_hrt_model_exec_contract_without_board_receipt(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
             runner = root / "runner"; runner.write_bytes(b"runner")
@@ -262,12 +267,53 @@ class ParityManifestTests(unittest.TestCase):
             _write_json(identity, {"schema_version": 1, "report_id": parity.RUNNER_IDENTITY_ID, "status": "VERIFIED",
                                    "runner": {"absolute_path": str(runner.resolve()), "sha256": _sha(runner), "version": "fixture"},
                                    "command_template": parity.COMMAND_TEMPLATE,
-                                   "output_map": {"scores": "scores.npy", "boxes": "boxes.npy"},
+                                   "model_name": "dosod",
+                                   "inputs": [{"index": 0, "name": "images_y", "shape": [1, 640, 640, 1], "dtype": "HB_DNN_TENSOR_TYPE_U8", "aligned_byte_size": -1}, {"index": 1, "name": "images_uv", "shape": [1, 320, 320, 2], "dtype": "HB_DNN_TENSOR_TYPE_U8", "aligned_byte_size": -1}],
+                                   "output_map": {
+                                       "scores": {"index": 0, "name": "scores", "shape": [1, 8400, 4], "dtype": "HB_DNN_TENSOR_TYPE_F32"},
+                                       "boxes": {"index": 1, "name": "boxes", "shape": [1, 8400, 4], "dtype": "HB_DNN_TENSOR_TYPE_F32"},
+                                   },
                                    "hbm_input_adapter": adapter})
-            with self.assertRaisesRegex(ValueError, "official_receipt_missing"):
-                parity._validate_runner_identity(identity, {"hbm_input_adapter": adapter})
+            runner_path, model_name, input_binding, outputs, _, _ = parity._validate_runner_identity(identity, {"hbm_input_adapter": adapter})
+            self.assertEqual(runner_path, runner)
+            self.assertEqual(model_name, "dosod")
+            self.assertEqual(sum(__import__("math").prod(item["shape"]) for item in input_binding), 614400)
+            self.assertEqual(outputs["scores"]["index"], 0)
             with self.assertRaisesRegex(ValueError, "runner_identity_adapter_mismatch"):
                 parity._validate_runner_identity(identity, {"hbm_input_adapter": {"status": "VERIFIED", "command": ["other"]}})
+
+    def test_model_info_binds_output_index_name_shape_and_dtype(self) -> None:
+        output_map = {
+            "scores": {"index": 0, "name": "scores", "shape": [1, 8400, 4], "dtype": "HB_DNN_TENSOR_TYPE_F32"},
+            "boxes": {"index": 1, "name": "boxes", "shape": [1, 8400, 4], "dtype": "HB_DNN_TENSOR_TYPE_F32"},
+        }
+        stdout = """[model name]: dosod
+input[0]:
+name: images_y
+valid shape: (1,640,640,1)
+aligned byte size: -1
+tensor type: HB_DNN_TENSOR_TYPE_U8
+input[1]:
+name: images_uv
+valid shape: (1,320,320,2)
+aligned byte size: -1
+tensor type: HB_DNN_TENSOR_TYPE_U8
+output[0]:
+name: scores
+valid shape: (1,8400,4)
+aligned byte size: 134400
+tensor type: HB_DNN_TENSOR_TYPE_F32
+output[1]:
+name: boxes
+valid shape: (1,8400,4)
+aligned byte size: 134400
+tensor type: HB_DNN_TENSOR_TYPE_F32
+"""
+        input_binding = [{"index": 0, "name": "images_y", "shape": [1, 640, 640, 1], "dtype": "HB_DNN_TENSOR_TYPE_U8", "aligned_byte_size": -1}, {"index": 1, "name": "images_uv", "shape": [1, 320, 320, 2], "dtype": "HB_DNN_TENSOR_TYPE_U8", "aligned_byte_size": -1}]
+        self.assertEqual(parity._validate_model_info(stdout, "dosod", input_binding, output_map)["output"][1]["name"], "boxes")
+        output_map["boxes"]["dtype"] = "HB_DNN_TENSOR_TYPE_S16"
+        with self.assertRaisesRegex(ValueError, "output_binding_mismatch:boxes"):
+            parity._validate_model_info(stdout, "dosod", input_binding, output_map)
 
 
 class MetricProducerTests(unittest.TestCase):

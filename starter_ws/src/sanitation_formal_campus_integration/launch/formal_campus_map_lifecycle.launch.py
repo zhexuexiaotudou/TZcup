@@ -281,6 +281,7 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                     LaunchConfiguration("mapping_high_bandwidth_sensor_runtime")
                     if mode == "mapping" else "true"
                 ),
+                "enable_training_gt": LaunchConfiguration("enable_training_gt"),
                         "motion_profile_file": LaunchConfiguration("motion_profile_file"),
                         "operation_speed_profile_file": LaunchConfiguration(
                             "operation_speed_profile_file"
@@ -436,6 +437,7 @@ def generate_launch_description() -> LaunchDescription:
             "mapping_high_bandwidth_sensor_runtime", default_value="false",
             description="Mapping defaults to scan-only; public mobile calibration opts in explicitly.",
         ),
+        DeclareLaunchArgument("enable_training_gt", default_value="false"),
         DeclareLaunchArgument("gui", default_value="true"),
         DeclareLaunchArgument("world"),
         DeclareLaunchArgument("world_name", default_value="campus_formal"),

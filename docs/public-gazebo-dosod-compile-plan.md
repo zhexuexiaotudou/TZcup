@@ -1,5 +1,15 @@
 # Public Gazebo DOSOD calibration to S100P compile handoff
 
+## W6 evidence boundary (draft)
+
+The W6 evaluation contract is an explicit `DRAFT_BLOCKED_UNTIL_PUBLIC_500_PLUS_100_EVIDENCE`, not a
+competition or product acceptance result.  It permits only a NON_FORMAL engineering-model gate after a
+source-disjoint public 500/100 corpus, exact sidecar labels, an identified official input adapter, and
+separate raw/behaviour evaluator receipts.  The current local utilities deliberately block capture until a
+ten-frame native Gazebo-to-ROS probe records the GT topic/type/frame/stamp/rate/dimensions/encoding and
+publisher identity; the `hrt_model_exec` executable/CLI/output binding likewise remains an external
+pre-compile prerequisite.  Neither missing fact is replaced by a fallback byte layout or by `hbrt4`.
+
 This is an executable, fail-closed preparation specification. The scripts in
 this change do not themselves launch Gazebo, install OpenExplorer, invoke
 `hb_compile`, copy to a board, SSH, or control a robot. The current user goal
@@ -85,6 +95,19 @@ tree. A failure leaves the compiler stage `BLOCKED`; a successful staging
 receipt is still not an OE compile or board acceptance.
 
 ## Exact future compile queue
+
+### Preprocess sensitivity is a live-oracle blocker
+
+A local CPU ONNX Runtime 1.24.4 synthetic probe (fixed 848x480 input; model
+SHA-256 prefix `30e4...e516`) found that preprocessing choice is material:
+symmetrical-black versus centre-114 produced scores cosine/nRMSE
+`0.714642`/`0.699508` and boxes cosine/nRMSE/MAE `0.996771`/`0.080315`/`14.015`
+model pixels; the top-left RGB-zero proxy produced `0.303557`/`1.215239` and
+`0.994137`/`0.108312`/`24.539`, respectively. This synthetic result proves
+sensitivity only. It is neither an accuracy result nor a preprocessing-route
+decision: the official hobotcv/NV12/color-range/HBM single-frame oracle remains
+required. Raw sensor bytes and their source metadata are retained so every
+derived preprocessing candidate can be recomputed after that oracle is frozen.
 
 All paths below are bindings, not a command to execute from this local
 worktree. Before protected remote compilation, read-only verify the selected

@@ -20,6 +20,7 @@
   <xacro:arg name="wastewater_load_mass_kg" default="0.0"/>
   <xacro:arg name="bodywork_visible" default="true"/>
   <xacro:arg name="high_bandwidth_sensor_runtime" default="true"/>
+  <xacro:arg name="enable_training_gt" default="false"/>
   <xacro:arg name="service_acceptance_interfaces" default="false"/>
   <xacro:arg name="service_door_evaluation_interfaces" default="false"/>
   <xacro:arg name="initial_estop_latched" default="true"/>
@@ -41,7 +42,8 @@
        that authority. -->
   <xacro:hf_manipulator_stack parent="arm_mount_link" use_sim="$(arg use_sim)"/>
   <xacro:hf_sensor_suite mast_parent="sensor_mast_link" base_parent="base_link" wrist_parent="tool0"
-                         high_bandwidth_runtime="$(arg high_bandwidth_sensor_runtime)"/>
+                         high_bandwidth_runtime="$(arg high_bandwidth_sensor_runtime)"
+                         enable_training_gt="$(arg enable_training_gt)"/>
   <xacro:high_fidelity_cleaning_mechanism parent="base_link" origin_xyz="0 0 0" origin_rpy="0 0 0"/>
   <xacro:high_fidelity_storage_system
       parent="payload_deck_link"

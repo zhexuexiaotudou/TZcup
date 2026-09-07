@@ -11,7 +11,7 @@ def test_mapping_high_bandwidth_default_is_opt_in_and_cleaning_stays_true():
 
 def test_public_mobile_runner_reuses_lifecycle_operator_and_remains_read_only():
     source = (ROOT / "scripts/run_public_mobile_gazebo_dosod_calibration.sh").read_text(encoding="utf-8")
-    for required in ("formal_campus_map_lifecycle.launch.py", "mission_mode:=mapping", "mapping_high_bandwidth_sensor_runtime:=true", "sleep 30", "emergency_stop", "collect_formal_map_lifecycle_runtime.py", "--write-scene-selector", "--deactivate-scene-selector", "formal_runtime_cleanup_groups"):
+    for required in ("formal_campus_map_lifecycle.launch.py", "mission_mode:=mapping", "mapping_high_bandwidth_sensor_runtime:=true", "READINESS_DEADLINE_SEC=60", "require_mapping_readiness", "emergency_stop", "collect_formal_map_lifecycle_runtime.py", "--write-scene-selector", "--deactivate-scene-selector", "formal_runtime_cleanup_groups"):
         assert required in source
     for forbidden in ("cmd_vel", "send_goal", "cancel_goal", "SetEntityPose", "ground_truth", "evaluator", "hidden"):
         assert forbidden not in source

@@ -16,7 +16,8 @@ def generate_launch_description() -> LaunchDescription:
     front_rgb_topic = LaunchConfiguration("front_rgb_topic")
     front_depth_topic = LaunchConfiguration("front_depth_topic")
     front_camera_info_topic = LaunchConfiguration("front_camera_info_topic")
-    front_nv12_topic = LaunchConfiguration("front_nv12_topic")
+    front_dosod_nv12_topic = LaunchConfiguration("front_dosod_nv12_topic")
+    front_edgesam_nv12_topic = LaunchConfiguration("front_edgesam_nv12_topic")
     map_topic = LaunchConfiguration("map_topic")
     dosod_model_path = LaunchConfiguration("dosod_model_path")
     dosod_vocabulary_path = LaunchConfiguration("dosod_vocabulary_path")
@@ -52,9 +53,14 @@ def generate_launch_description() -> LaunchDescription:
                 description="Formal ROS sensor_msgs/CameraInfo topic.",
             ),
             DeclareLaunchArgument(
-                "front_nv12_topic",
-                default_value="/perception/open_vocab/front_nv12",
-                description="Validated NV12 sensor_msgs/Image topic consumed only by mono_edgesam.",
+                "front_dosod_nv12_topic",
+                default_value="/perception/open_vocab/front_dosod_nv12",
+                description="Selected original 848x480 packed NV12 input; official hobot_dosod owns pyramid preprocessing.",
+            ),
+            DeclareLaunchArgument(
+                "front_edgesam_nv12_topic",
+                default_value="/perception/open_vocab/front_edgesam_nv12",
+                description="Selected original 848x480 packed NV12 input; official mono_edgesam ResizeNV12 produces its 512x288 network input.",
             ),
             DeclareLaunchArgument("map_topic", default_value="/map"),
             DeclareLaunchArgument(
@@ -123,7 +129,8 @@ def generate_launch_description() -> LaunchDescription:
                 parameters=[
                     {
                         "input_topic": front_rgb_topic,
-                        "output_topic": front_nv12_topic,
+                        "dosod_output_topic": front_dosod_nv12_topic,
+                        "edgesam_output_topic": front_edgesam_nv12_topic,
                         "diagnostics_topic": diagnostics_topic,
                     }
                 ],
@@ -133,17 +140,21 @@ def generate_launch_description() -> LaunchDescription:
                 executable="hobot_dosod",
                 name="hobot_dosod",
                 output="screen",
+                arguments=["--ros-args", "--log-level", "warn"],
                 parameters=[
                     {
                         "feed_type": 1,
                         "is_shared_mem_sub": 0,
-                        "ros_img_sub_topic_name": front_nv12_topic,
+                        "ros_img_sub_topic_name": front_dosod_nv12_topic,
                         "ai_msg_pub_topic_name": dosod_targets_topic,
                         "model_file_name": dosod_model_path,
                         "vocabulary_file_name": dosod_vocabulary_path,
                         "roi": False,
                         "trigger_mode": 0,
                         "class_mode": 0,
+                        "score_threshold": 0.002,
+                        "iou_threshold": 0.65,
+                        "nms_top_k": 300,
                     }
                 ],
             ),
@@ -152,16 +163,20 @@ def generate_launch_description() -> LaunchDescription:
                 executable="mono_edgesam",
                 name="mono_edgesam",
                 output="screen",
+                arguments=["--ros-args", "--log-level", "warn"],
                 parameters=[
                     {
                         "feed_type": 1,
                         "is_regular_box": 0,
+                        "is_padding_seg": 0,
                         "is_shared_mem_sub": 0,
-                        "ros_img_sub_topic_name": front_nv12_topic,
+                        "ros_img_sub_topic_name": front_edgesam_nv12_topic,
                         "ai_msg_sub_topic_name": edgesam_prompts_topic,
                         "ai_msg_pub_topic_name": edgesam_targets_topic,
                         "encoder_model_file_name": edgesam_encoder_model_path,
                         "decoder_model_file_name": edgesam_decoder_model_path,
+                        "is_sync_mode": 0,
+                        "cache_len_limit": 8,
                     }
                 ],
             ),

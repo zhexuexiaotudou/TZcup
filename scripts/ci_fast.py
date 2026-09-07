@@ -442,6 +442,7 @@ def run_ros_independent_tests() -> None:
     tasks_package = SOURCE_ROOT / "sanitation_tasks"
     gnss_package = SOURCE_ROOT / "sanitation_gnss_sim"
     perception_package = SOURCE_ROOT / "sanitation_perception"
+    perception_evaluator_package = SOURCE_ROOT / "sanitation_perception_evaluator"
     dataset_package = SOURCE_ROOT / "sanitation_dataset"
     ground_truth_package = SOURCE_ROOT / "sanitation_ground_truth"
     spot_cleaning_package = SOURCE_ROOT / "sanitation_spot_cleaning"
@@ -462,6 +463,7 @@ def run_ros_independent_tests() -> None:
     sys.path.insert(0, str(tasks_package))
     sys.path.insert(0, str(gnss_package))
     sys.path.insert(0, str(perception_package))
+    sys.path.insert(0, str(perception_evaluator_package))
     sys.path.insert(0, str(dataset_package))
     sys.path.insert(0, str(ground_truth_package))
     sys.path.insert(0, str(spot_cleaning_package))
@@ -497,6 +499,11 @@ def run_ros_independent_tests() -> None:
         perception_package / "test" / "test_j6_runtime.py",
         perception_package / "test" / "test_open_vocab.py",
         perception_package / "test" / "test_formal_contract.py",
+        perception_package / "test" / "test_formal_pc_adapters.py",
+        perception_package / "test" / "test_formal_random_scene_evaluator_contract.py",
+        perception_package / "test" / "test_rgb_to_nv12_adapter.py",
+        perception_package / "test" / "test_s100p_board_launch_contract.py",
+        perception_package / "test" / "test_s100p_product_adapter_core.py",
         dataset_package / "test" / "test_synthetic.py",
         ground_truth_package / "test" / "test_visibility.py",
         spot_cleaning_package / "test" / "test_coordinator.py",
@@ -617,6 +624,20 @@ def run_ros_independent_tests() -> None:
         ROOT / "scripts" / "test_public_mobile_calibration_contract.py",
         ROOT / "scripts" / "test_public_mobile_runner_lifecycle.py",
         ROOT / "scripts" / "test_public_mobile_pilot.py",
+        ROOT / "scripts" / "test_build_formal_final_runtime_guard.py",
+        ROOT / "scripts" / "test_dosod_receipt_hardening.py",
+        ROOT / "scripts" / "test_hbm_evidence_producers.py",
+        ROOT / "scripts" / "test_materialize_public_gazebo_dosod_holdout.py",
+        ROOT / "scripts" / "test_parse_public_gazebo_topic_info.py",
+        ROOT / "scripts" / "test_preflight_s100p_board_runtime.py",
+        ROOT / "scripts" / "test_probe_public_gazebo_gt_transport.py",
+        ROOT / "scripts" / "test_produce_s100p_model_payload_receipt.py",
+        ROOT / "scripts" / "test_public_gazebo_dosod_ground_truth_contract.py",
+        ROOT / "scripts" / "test_public_gazebo_dosod_gt_sidecar.py",
+        ROOT / "scripts" / "test_public_gazebo_dosod_metrics.py",
+        ROOT / "scripts" / "test_public_gazebo_mobile_readiness_matrix.py",
+        ROOT / "scripts" / "test_rescore_formal_random_scene_perception_offline.py",
+        ROOT / "scripts" / "test_validate_public_gazebo_dosod_evaluation_contract.py",
         ROOT / "scripts" / "test_formal_functional_acceptance_contract.py",
         ROOT / "scripts" / "test_formal_acceptance_session.py",
         ROOT / "scripts" / "test_validate_formal_map_lifecycle_runtime.py",
