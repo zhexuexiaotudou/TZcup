@@ -35,7 +35,17 @@ PUBLIC_GAZEBO_CALIBRATION_PLAN=config/public_gazebo_dosod_train_scene_plan.json
 PUBLIC_GAZEBO_CALIBRATION_IMAGE_TOPIC=/camera/color/image_raw
 PUBLIC_GAZEBO_CALIBRATION_CAMERA_INFO_TOPIC=/camera/color/camera_info
 PUBLIC_GAZEBO_CALIBRATION_PER_SCENE_QUOTA=25
+PUBLIC_GAZEBO_CALIBRATION_TOTAL_TIMEOUT_SEC=<approved_whole_run_wall_deadline>
 ```
+
+The runner writes the existing Windows/WSL memory preflight only after its
+fresh-root admission and starts the collector in a dedicated `setsid` PGID.
+For each scene, the existing formal memory watchdog binds to the separate
+campus/Gazebo `setsid` PGID, which is the memory-bearing group. The caller must
+provide the explicit whole-run deadline above. Deadline expiry terminates the
+collector/materializer PGIDs and the active campus PGID plus its exact
+partition with TERM-to-KILL; any survivor is recorded fail-closed. The
+formal-campus child remains the sole owner of the shared Gazebo lock.
 
 The pair is authorized by
 `formal_campus_integration.yaml`: native
