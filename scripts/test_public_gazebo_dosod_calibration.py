@@ -1,5 +1,5 @@
 from __future__ import annotations
-import importlib.util, json, subprocess, sys
+import importlib.util, json, os, subprocess, sys
 from dataclasses import replace
 from pathlib import Path
 import numpy as np
@@ -30,6 +30,34 @@ def test_camera_mismatch_and_fresh_output_fail_closed(tmp_path):
 def test_freeze_requires_500_and_100_holdout(tmp_path):
     s=subject.PublicGazeboStore(tmp_path/'out',contract(),plan())
     with pytest.raises(subject.CalibrationRejected,match='below_minimum'): s.freeze()
+def test_canonical_pilot_writes_only_hash_bound_non_formal_manifest_and_contact_sheet(tmp_path):
+    p={"source_domain":"public_gazebo_sensor","class_ids":list(subject.CLASS_IDS),"scene_groups":{"calibration":["map-0-mission-0","c"],"holdout":["h"]}}
+    s=subject.PublicGazeboStore(tmp_path/'out',contract(),p,per_scene_quota=25,pilot_scene='map-0-mission-0')
+    with pytest.raises(subject.CalibrationRejected,match='pilot_mobile_evidence_required'): s.add(frame('map-0-mission-0',1,selector=True))
+    for n in range(1,26): assert s.add(replace(frame('map-0-mission-0',n,selector=True), mobile_evidence=evidence(odom_x=n*.5,odom_stamp_ns=n,tf_stamp_ns=n)))
+    manifest=json.loads(s.freeze().read_text())
+    assert manifest['status']=='NON_FORMAL_PILOT_CAPTURED' and manifest['formal_passed'] is False
+    assert manifest['record_count']==25 and manifest['pilot_scene']=='map-0-mission-0'
+    assert (s.output/manifest['contact_sheet']['relative_path']).is_file()
+    assert manifest['contact_sheet']['record_sha256']==manifest['record_sha256']
+    assert not (s.output/'calibration_manifest.json').exists()
+    with pytest.raises(subject.CalibrationRejected,match='canonical'): subject.PublicGazeboStore(tmp_path/'bad',contract(),p,per_scene_quota=24,pilot_scene='map-0-mission-0')
+def test_full_collection_review_receipt_is_hash_bound_and_requires_visible_classes(tmp_path):
+    p={"source_domain":"public_gazebo_sensor","class_ids":list(subject.CLASS_IDS),"scene_groups":{"calibration":["map-0-mission-0"],"holdout":["h"]}}
+    s=subject.PublicGazeboStore(tmp_path/'out',contract(),p,per_scene_quota=25,pilot_scene='map-0-mission-0')
+    for n in range(1,26): assert s.add(replace(frame('map-0-mission-0',n,selector=True), mobile_evidence=evidence(odom_x=n*.5,odom_stamp_ns=n,tf_stamp_ns=n)))
+    pilot=s.freeze(); manifest=json.loads(pilot.read_text())
+    review=tmp_path/'review.json'; review.write_text(json.dumps({'status':'APPROVED','pilot_manifest_sha256':subject.sha256_file(pilot),'contact_sheet_sha256':manifest['contact_sheet']['sha256'],'record_sha256':manifest['record_sha256'],'visible_classes':{name:1 for name in subject.CLASS_IDS},'background_review_passed':True,'material_view_review_passed':True,'reviews':[{'type':'agent','passed':True,'reviewer':'reviewer'}]}))
+    subject.require_full_review_receipt(review,pilot,plan=p,contract=contract())
+    review.write_text(json.dumps({'status':'APPROVED','pilot_manifest_sha256':'0'*64,'contact_sheet_sha256':manifest['contact_sheet']['sha256'],'record_sha256':manifest['record_sha256'],'visible_classes':{name:1 for name in subject.CLASS_IDS},'background_review_passed':True,'material_view_review_passed':True,'reviews':[{'type':'agent','passed':True,'reviewer':'reviewer'}]}))
+    with pytest.raises(subject.CalibrationRejected,match='receipt_invalid'): subject.require_full_review_receipt(review,pilot,plan=p,contract=contract())
+def test_review_receipt_rejects_a_symlinked_ancestor(tmp_path):
+    target=tmp_path/'target'; target.mkdir(); (target/'review.json').write_text('{}'); (target/'pilot_manifest.json').write_text('{}')
+    linked=tmp_path/'linked'
+    try: os.symlink(target,linked,target_is_directory=True)
+    except OSError as exc: pytest.skip(f'symlink privilege unavailable: {exc}')
+    with pytest.raises(subject.CalibrationRejected,match='missing'):
+        subject.require_full_review_receipt(linked/'review.json',linked/'pilot_manifest.json',plan=plan(),contract=contract())
 def test_capacity_rejects_before_live_collection():
     with pytest.raises(subject.CalibrationRejected,match='calibration_scene_plan_capacity'):
         subject.require_collection_capacity(plan=plan(),contract=contract(),per_scene_quota=1)
@@ -51,6 +79,22 @@ def test_cli_is_preflight_only(tmp_path):
     p=tmp_path/'plan.json'; p.write_text(json.dumps(plan())); c=tmp_path/'contract.json'; c.write_text(json.dumps(contract()))
     out=subprocess.check_output([sys.executable,str(HERE/'public_gazebo_dosod_calibration.py'),'--scene-plan',str(p),'--contract',str(c)],text=True)
     value=json.loads(out); assert value['status']=='NON_FORMAL_PREPARED' and value['formal_passed'] is False
+def test_cli_full_live_validates_review_then_calls_collector_once_and_review_only_never_collects(monkeypatch, tmp_path):
+    p, c = plan(), contract(); called=[]
+    monkeypatch.setattr(subject,'load_scene_plan',lambda _:p); monkeypatch.setattr(subject,'load_contract',lambda _:c)
+    monkeypatch.setattr(subject,'require_full_review_receipt',lambda *args,**kwargs: (called.append('review'),{})[1])
+    monkeypatch.setattr(subject,'collect_live',lambda **kwargs: called.append(kwargs) or tmp_path/'done')
+    common=['prog','--scene-plan','p','--contract','c','--review-receipt','r','--pilot-manifest','m']
+    monkeypatch.setattr(sys,'argv',common+['--live-output','o','--image-topic','/camera/color/image_raw','--camera-info-topic','/camera/color/camera_info','--timeout-sec','1','--scene-selector','s','--per-scene-quota','25','--progress-output','q'])
+    assert subject.main()==0 and called[0]=='review' and len(called)==2 and called[1]['review_validated'] is True
+    called.clear(); monkeypatch.setattr(sys,'argv',common)
+    assert subject.main()==0 and called==['review']
+def test_cli_invalid_full_review_fails_before_collector(monkeypatch):
+    monkeypatch.setattr(subject,'load_scene_plan',lambda _:plan()); monkeypatch.setattr(subject,'load_contract',lambda _:contract())
+    monkeypatch.setattr(subject,'require_full_review_receipt',lambda *args,**kwargs: (_ for _ in ()).throw(subject.CalibrationRejected('bad_review')))
+    monkeypatch.setattr(subject,'collect_live',lambda **kwargs: pytest.fail('collector must not start'))
+    monkeypatch.setattr(sys,'argv',['prog','--scene-plan','p','--contract','c','--review-receipt','r','--pilot-manifest','m','--live-output','o','--image-topic','/camera/color/image_raw','--camera-info-topic','/camera/color/camera_info','--timeout-sec','1','--scene-selector','s','--per-scene-quota','25','--progress-output','q'])
+    with pytest.raises(subject.CalibrationRejected,match='bad_review'): subject.main()
 def test_ros_pair_conversion_is_exact():
     class Stamp: sec=2; nanosec=3
     class Header: frame_id='front'; stamp=Stamp()

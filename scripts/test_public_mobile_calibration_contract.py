@@ -25,6 +25,17 @@ def test_public_mobile_runner_reuses_lifecycle_operator_and_remains_read_only():
     assert source.count("stop_verified") >= 3
 
 
+def test_public_mobile_runner_has_explicit_non_formal_fixed_scene_pilot_and_full_review_gate():
+    source = (ROOT / "scripts/run_public_mobile_gazebo_dosod_calibration.sh").read_text(encoding="utf-8")
+    assert 'MODE="${PUBLIC_GAZEBO_CALIBRATION_MODE:-full}"' in source
+    assert 'PILOT_SCENE="map-0-mission-0"' in source
+    assert 'pilot quota must be 25' in source
+    assert 'PUBLIC_GAZEBO_CALIBRATION_REVIEW_RECEIPT' in source
+    assert 'PUBLIC_GAZEBO_CALIBRATION_PILOT_MANIFEST' in source
+    assert 'NON_FORMAL_PILOT_CAPTURED' in source
+    assert 'preflight_args+=(--review-receipt' in source
+
+
 def test_mapping_mobile_rgb_opt_in_retains_the_live_mid360_safety_source():
     source = (ROOT / "starter_ws/src/sanitation_formal_campus_integration/sanitation_formal_campus_integration/nav2_mode_config.py").read_text(encoding="utf-8")
     assert "high_bandwidth_sensor_runtime: bool" in source
