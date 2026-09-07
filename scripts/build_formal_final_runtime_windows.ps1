@@ -4,7 +4,7 @@ param(
     [Parameter(Mandatory = $true)]
     [ValidatePattern('^/[^\r\n]*$')]
     [string]$RuntimeWs,
-    [ValidateRange(1, 1)]
+    [ValidateRange(1, 2)]
     [int]$Workers = 1,
     [ValidateRange(13421772800, [UInt64]::MaxValue)]
     [UInt64]$ColdMinCommitAvailableBytes = 13421772800,

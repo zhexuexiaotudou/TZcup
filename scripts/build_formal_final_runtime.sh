@@ -29,10 +29,16 @@ parallel_workers="${FORMAL_COLCON_PARALLEL_WORKERS:-1}"
 min_linux_mem_available_kib="${FORMAL_FINAL_BUILD_MIN_MEM_AVAILABLE_KIB:-4194304}"
 max_linux_swap_used_kib="${FORMAL_FINAL_BUILD_MAX_SWAP_USED_KIB:-1048576}"
 build_pid=""
-[[ "${parallel_workers}" = "1" ]] || {
-  echo "FORMAL_COLCON_PARALLEL_WORKERS must be exactly 1 for formal serial recovery" >&2
-  exit 2
+formal_final_build_validate_parallel_workers() {
+  case "$1" in
+  1|2) return 0 ;;
+  *)
+    echo "FORMAL_COLCON_PARALLEL_WORKERS must be 1 or 2 for formal bounded recovery" >&2
+    return 2
+    ;;
+  esac
 }
+formal_final_build_validate_parallel_workers "${parallel_workers}" || exit $?
 for value in "${min_linux_mem_available_kib}" "${max_linux_swap_used_kib}"; do
   [[ "${value}" =~ ^[0-9]+$ ]] || {
     echo "formal final build Linux memory thresholds must be unsigned KiB integers" >&2
