@@ -1,5 +1,24 @@
 # 项目推进记录
 
+## 2026-09-07：R068 Jazzy ParameterValue 与 sim-time readback（本地与无图 schema smoke 完成，fresh runtime 待建）
+
+- R067 的 Windows fake 使用了不存在的 `.value` 属性，因此漏检真实 Jazzy
+  `GetParameters.Response.values` 的 `ParameterValue(type, double_value,
+  string_value)` schema；a2 frozen source 的只读 Jazzy smoke 在 W1/ROS 图启动前
+  于该访问处 fail closed。R067 fake 不能再充当 API 正确性证据，原 NON_FORMAL
+  W1 启动保持禁用。
+- R068 复用仓库既有的 `rclpy.parameter.parameter_value_to_python` 先解码
+  ParameterValue，然后严格要求 padding 为非 bool、有限、非负实数，并继续要求
+  frame 为非空相对字符串；future、未知 type、缺字段及类型错误均保持 BLOCKED。
+  Point32 ULP 一致性、2 s freshness、TF、manager/safety、control/truth/hidden
+  边界均未放宽。
+- 独立 Jazzy 无图 smoke 以 a2 frozen ROS/runtime closure 环境验证了真实消息
+  schema 和候选解码；gate 自身声明 `use_sim_time=true` 后，在无 `/clock` 时
+  ROS time 为 0，隔离 domain 的测试 Clock 消息到达后时钟前进。该检查没有修改
+  a2、启动 W1、Gazebo 或任何 formal/NON_FORMAL 产品 gate，不能作为运行通过。
+- 合并后仍需 fresh source/runtime/closure；只有新授权的 fresh NON_FORMAL W1
+  真实验证正确和错误 Nav2 输出后，才可进入另一 fresh formal W1-W5 会话。
+
 ## 2026-09-07：R067 Jazzy 参数响应解包（源码修复完成，fresh merged runtime 未运行）
 
 - R066 合并版 fresh `a1` 的 NON_FORMAL W1 算法核验在读取 Nav2 `footprint_padding` 时 fail closed：Jazzy `AsyncParameterClient.get_parameters()` future 返回 `GetParameters_Response`，参数数组位于 `response.values`；旧 gate 误对 response 本身执行 `len()`，因此该轮尚未进入 TF、padding 或 Point32 ULP 几何门，也不构成正式 PASS。

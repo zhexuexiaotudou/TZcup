@@ -179,6 +179,12 @@ def test_frame_aware_padded_readback_rejects_wrong_padding_order_mirror_and_shea
 
 def test_published_stamp_requires_nonzero_advancing_nonfuture_ros_time() -> None:
     assert fresh_nonzero_stamp(101, 100, 101) == (True, "ok")
+    # Gazebo simulation time shares this small, non-wall-clock epoch with the
+    # received header stamp; the gate must compare it against its ROS clock.
+    assert fresh_nonzero_stamp(11_999_000_000, 11_998_000_000, 12_000_000_000) == (
+        True,
+        "ok",
+    )
     assert fresh_nonzero_stamp(0, 0, 101)[0] is False
     assert fresh_nonzero_stamp(100, 100, 101)[0] is False
     assert fresh_nonzero_stamp(102, 100, 101)[0] is False
