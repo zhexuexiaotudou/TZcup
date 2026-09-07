@@ -75,7 +75,8 @@ def test_formal_launch_separates_mapping_and_saved_map_cleaning():
     assert '"height": 30' in source
     assert 'if plugin != "static_layer"' in source
     assert '"support_artifacts_prepared": True' in source
-    assert '"false" if mode == "mapping" else "true"' in source
+    assert 'LaunchConfiguration("mapping_high_bandwidth_sensor_runtime")\n                    if mode == "mapping" else "true"' in source
+    assert 'DeclareLaunchArgument(\n            "mapping_high_bandwidth_sensor_runtime", default_value="false",\n            description="Mapping defaults to scan-only; public mobile calibration opts in explicitly.",' in source
     assert 'package="nav2_collision_monitor"' not in source
     assert "Jazzy nav2_bringup above owns collision_monitor" in source
     # The canonical vehicle launch owns the two raw bumper bridges.  The map
