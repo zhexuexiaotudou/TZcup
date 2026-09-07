@@ -424,6 +424,15 @@ formal_runtime_stop_memory_watchdog() {
   wait "${FORMAL_RUNTIME_MEMORY_WATCHDOG_PID}" 2>/dev/null
   result=$?
   set -e
+  formal_runtime_record_memory_watchdog_exit "${FORMAL_RUNTIME_MEMORY_WATCHDOG_PID}" "${result}"
+}
+
+# Record a watchdog already reaped by a caller using `wait -n -p`.  This keeps
+# the guard result authoritative without a second, lossy wait of that child.
+formal_runtime_record_memory_watchdog_exit() {
+  local pid="$1" result="$2"
+  [[ "${pid}" == "${FORMAL_RUNTIME_MEMORY_WATCHDOG_PID}" ]] || return 2
+  [[ "${result}" =~ ^[0-9]+$ ]] || return 2
   FORMAL_RUNTIME_MEMORY_WATCHDOG_PID=""
   if (( result == FORMAL_RUNTIME_MEMORY_BREACH_EXIT_CODE )); then
     FORMAL_RUNTIME_MEMORY_WATCHDOG_RESULT="${FORMAL_RUNTIME_MEMORY_BREACH_EXIT_CODE}"
@@ -468,6 +477,7 @@ formal_runtime_quarantine_evidence() {
 formal_runtime_exit_trap() {
   local status="$1"
   trap - EXIT INT TERM
+  FORMAL_RUNTIME_EXIT_STATUS="${status}"
   if ! "${FORMAL_RUNTIME_CLEANUP_FUNCTION}"; then
     echo "formal runtime cleanup failed closed" >&2
     formal_runtime_quarantine_evidence
