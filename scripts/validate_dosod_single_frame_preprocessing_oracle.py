@@ -134,7 +134,8 @@ def validate(path: Path, *, contract_path: Path = CONTRACT) -> dict[str, Any]:
     if receipt.get("candidate_hbm_sha256") != candidate["candidate_hbm"]["sha256"]:
         raise ValueError("oracle_candidate_hbm_mismatch")
     model_info = _bound(root, receipt.get("model_info"), "oracle_model_info").read_text(encoding="utf-8")
-    expected_inputs = [{**row, "aligned_byte_size": -1} for row in contract["runtime_inputs"]]
+    expected_inputs = [{key: row[key] for key in ("index", "name", "shape", "dtype")} | {"aligned_byte_size": -1}
+                       for row in contract["runtime_inputs"]]
     observed = _validate_model_info(model_info, receipt.get("model_name"), expected_inputs, contract["runtime_outputs"])
     if observed["input"] != {row["index"]: row for row in expected_inputs}:
         raise ValueError("oracle_model_info_input_mismatch")

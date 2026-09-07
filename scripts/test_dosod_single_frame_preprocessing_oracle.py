@@ -1,20 +1,101 @@
 from __future__ import annotations
-import hashlib, importlib.util, json, sys
+import hashlib, importlib.util, json, sys, types
 from pathlib import Path
 import pytest
 HERE=Path(__file__).parent
 def mod(n):
  s=importlib.util.spec_from_file_location(n,HERE/f'{n}.py'); m=importlib.util.module_from_spec(s); assert s.loader; sys.modules[n]=m; s.loader.exec_module(m); return m
-validator=mod('validate_dosod_single_frame_preprocessing_oracle')
 candidate=mod('execute_dosod_nonformal_oracle_candidate_compile')
+validator=mod('validate_dosod_single_frame_preprocessing_oracle')
 parity=mod('run_dosod_hbm_x86_parity')
 metric=mod('validate_dosod_quantized_metric_regression')
 capture=mod('capture_dosod_official_preprocess')
 predeploy=mod('validate_s100p_final_predeploy')
+collector=mod('collect_dosod_single_frame_preprocessing_oracle')
 
 
 def _sha(path: Path) -> str:
  return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _oracle_route_contract(model: Path, vocabulary: Path, route_id: str = 'BOOTSTRAP_SYMMETRIC_BLACK_V1', official_identity: dict | None = None) -> dict:
+ return {'model_sha256':_sha(model),'vocabulary_sha256':_sha(vocabulary),'preprocessing_status':'CANDIDATE_UNVERIFIED','selected_route':None,'candidate_routes':[{'route_id':route_id,'preprocessing':{'layout':'NCHW','route':route_id}}], 'runtime_inputs':[{'index':0,'name':'images_y','shape':[1,640,640,1],'dtype':'HB_DNN_TENSOR_TYPE_U8','byte_size':409600},{'index':1,'name':'images_uv','shape':[1,320,320,2],'dtype':'HB_DNN_TENSOR_TYPE_U8','byte_size':204800}], 'official_preprocess_identity':official_identity or {'status':'UNAVAILABLE_BLOCKED'}, 'runtime_outputs':{'scores':{'index':0,'name':'scores','shape':[1,8400,4],'dtype':'HB_DNN_TENSOR_TYPE_F32'},'boxes':{'index':1,'name':'boxes','shape':[1,8400,4],'dtype':'HB_DNN_TENSOR_TYPE_F32'}},'raw_output_thresholds':{'scores':{'cosine_min':.99,'normalized_rmse_max':.02},'boxes':{'cosine_min':.99,'normalized_rmse_max':.02}}}
+
+
+def _model_info() -> str:
+ return '''[model name]: fixture
+input[0]:
+name: images_y
+valid shape: (1, 640, 640, 1)
+tensor type: HB_DNN_TENSOR_TYPE_U8
+aligned byte size: -1
+input[1]:
+name: images_uv
+valid shape: (1, 320, 320, 2)
+tensor type: HB_DNN_TENSOR_TYPE_U8
+aligned byte size: -1
+output[0]:
+name: scores
+valid shape: (1, 8400, 4)
+tensor type: HB_DNN_TENSOR_TYPE_F32
+output[1]:
+name: boxes
+valid shape: (1, 8400, 4)
+tensor type: HB_DNN_TENSOR_TYPE_F32
+'''
+
+
+def _capture_receipt(tmp_path, raw: dict, model: Path) -> tuple[Path, dict]:
+ y,uv=tmp_path/'images_y.bin',tmp_path/'images_uv.bin'; y.write_bytes(b'y'*409600); uv.write_bytes(b'u'*204800)
+ binary,source,dpkg,stdout,stderr=[tmp_path/name for name in ('official_adapter','official_source','official.dpkg.txt','official.stdout.txt','official.stderr.txt')]
+ binary.write_bytes(b'official binary'); source.write_bytes(b'official source'); dpkg.write_text('pkg\t1.0\t/usr/bin/official',encoding='utf-8'); stdout.write_text('official stdout',encoding='utf-8'); stderr.write_text('official stderr',encoding='utf-8')
+ identity={'status':'VERIFIED','binary_path':str(binary.resolve()),'binary_sha256':_sha(binary),'source_path':str(source.resolve()),'source_sha256':_sha(source),'source_revision':'rev1','dpkg_package':'pkg','dpkg_version':'1.0','dpkg_path_role':'/usr/bin/official'}
+ def bound(path): return {'path':str(path.resolve()),'sha256':_sha(path),'byte_size':path.stat().st_size}
+ capture_path=tmp_path/'official_capture.json'
+ value={'receipt_id':'tzcup_dosod_official_preprocess_capture_receipt_v1','status':'OFFICIAL_PREPROCESS_CAPTURED','test_fixture':False,'raw_sensor':{key:raw[key] for key in ('path','sha256','byte_size','width','height','step','encoding','frame_id','stamp_ns')},'official_preprocessor':{'binary':bound(binary),'source':bound(source),'dpkg':bound(dpkg),'stdout':bound(stdout),'stderr':bound(stderr),'command':[str(binary.resolve()),'--capture'],'returncode':0,'identity':{'package':'pkg','version':'1.0','path_role':'/usr/bin/official','source_revision':'rev1','dpkg_returncode':0},'execution_host':{'system':'test','machine':'x86_64'},'zero_survivor':True},'inputs':[{'role':'images_y',**bound(y)},{'role':'images_uv',**bound(uv)}],'producer_script_path':str((HERE/'capture_dosod_official_preprocess.py').resolve()),'producer_script_sha256':_sha(HERE/'capture_dosod_official_preprocess.py'),'started_epoch_ns':1,'ended_epoch_ns':2,'blockers':[]}
+ capture_path.write_text(json.dumps(value),encoding='utf-8'); return capture_path,identity
+
+
+def _run_oracle_route_fixture(tmp_path,monkeypatch,candidate_route='BOOTSTRAP_SYMMETRIC_BLACK_V1'):
+ # This is a collector behavior fixture: upstream candidate/capture receipts
+ # are re-audited by their production validators; only process/ONNX calls are faked.
+ contract_seed={'candidate_routes':[{'route_id':'BOOTSTRAP_SYMMETRIC_BLACK_V1','preprocessing':{'layout':'NCHW','route':'BOOTSTRAP_SYMMETRIC_BLACK_V1'}}]}
+ candidate_path,value,paths=_valid_candidate_receipt(tmp_path,monkeypatch,oracle_contract_payload=contract_seed)
+ model=Path(value['model_path']); vocabulary=Path(value['vocabulary_path']); capture_path,identity=_capture_receipt(tmp_path,value['pilot_raw'],model)
+ candidate_contract=paths['oracle_contract']; candidate_contract.write_text(json.dumps(_oracle_route_contract(model,vocabulary,candidate_route,identity)),encoding='utf-8')
+ value['canonical_oracle_contract_sha256']=_sha(candidate_contract); value['candidate_route']=candidate_route; candidate_path.write_text(json.dumps(value),encoding='utf-8')
+ contract_path=tmp_path/'collector-contract.json'; contract_path.write_text(json.dumps(_oracle_route_contract(model,vocabulary,official_identity=identity)),encoding='utf-8')
+ hrt=tmp_path/'hrt_model_exec'; hrt.write_bytes(b'hrt')
+ monkeypatch.setattr(collector,'CONTRACT',contract_path); monkeypatch.setattr(collector,'_preprocess',lambda *_:__import__('numpy').zeros((1,3,640,640),dtype=__import__('numpy').float32))
+ class Session:
+  def run(self,*_): return [__import__('numpy').zeros((1,8400,4),dtype=__import__('numpy').float32)]*2
+ monkeypatch.setitem(sys.modules,'onnxruntime',types.SimpleNamespace(InferenceSession=lambda *_a,**_k:Session(),CPUExecutionProvider='CPUExecutionProvider'))
+ def fake_run(command,timeout):
+  if 'model_info' in command: return 0,_model_info(),'fixture stderr\n',{'zero_survivor':True,'timed_out':False}
+  if 'infer' in command:
+   dump=Path(next(item.split('=',1)[1] for item in command if item.startswith('--dump_path='))); dump.mkdir(exist_ok=True)
+   for index,name in enumerate(('scores','boxes')): __import__('numpy').save(dump/f'model_infer_output_{index}_{name}.npy',__import__('numpy').zeros((1,8400,4),dtype=__import__('numpy').float32))
+  return 0,'fixture version\n','fixture stderr\n',{'zero_survivor':True,'timed_out':False}
+ monkeypatch.setattr(collector,'_run',fake_run)
+ receipt=collector.collect(candidate_receipt=candidate_path,official_capture_receipt=capture_path,onnx_model=model,hrt=hrt,output=tmp_path/'out')
+ return receipt, contract_path
+
+
+def test_oracle_verified_receipt_derives_unique_bootstrap_route(tmp_path,monkeypatch):
+ receipt,contract_path=_run_oracle_route_fixture(tmp_path,monkeypatch)
+ assert receipt['status']==collector.STATUS
+ assert receipt['selected_route']=='BOOTSTRAP_SYMMETRIC_BLACK_V1'
+ assert receipt['preprocessing']['route']==receipt['selected_route']
+ assert receipt['preprocessing_sha256']==hashlib.sha256(json.dumps(receipt['preprocessing'],sort_keys=True,separators=(',',':')).encode()).hexdigest()
+ # Do not stub validation: this checks the collector-written receipt against
+ # the production validator and its re-audited upstream receipt bindings.
+ assert validator.validate(Path(receipt['receipt_path']),contract_path=contract_path)['status']==validator.STATUS
+
+
+def test_oracle_rejects_legacy_symmetric_route(tmp_path,monkeypatch):
+ receipt,_=_run_oracle_route_fixture(tmp_path,monkeypatch,'symmetric_black_zero_v1')
+ assert receipt['status']=='BLOCKED'
+ assert any('oracle_candidate_route_mismatch' in item for item in receipt['blockers'])
 def test_handwritten_capture_never_validates(tmp_path):
  p=tmp_path/'capture.json'; p.write_text(json.dumps({}))
  with pytest.raises(ValueError): validator._capture(p)
@@ -112,23 +193,23 @@ def test_real_candidate_cli_stays_blocked_without_canonical_pilot_closure(tmp_pa
  assert receipt['status']=='BLOCKED' and any('candidate_calibration_pilot_closure_invalid' in item for item in receipt['blockers'])
 
 
-def _valid_candidate_receipt(tmp_path,monkeypatch):
+def _valid_candidate_receipt(tmp_path,monkeypatch,oracle_contract_payload=None):
  import yaml
  output=tmp_path/'candidate-output'; output.mkdir(); model=tmp_path/'model.onnx'; vocabulary=tmp_path/'vocab.json'; compiler=tmp_path/'hb_compile'; identity=tmp_path/'identity.json'; pilot=tmp_path/'pilot_manifest.json'; raw=tmp_path/'raw.rgb'; logs=[output/'hb_compile.stdout.txt',output/'hb_compile.stderr.txt']
  for path,data in ((model,b'model'),(vocabulary,b'vocab'),(compiler,b'compiler'),(raw,b'r'*1221120)): path.write_bytes(data)
  pilot.write_text(json.dumps({'record_sha256':'a'*64})); (pilot.parent/'samples').mkdir(exist_ok=True)
  recipe={'march':'nash-m','input_name':'images','input_type_train':'rgb','input_layout_train':'NCHW','input_shape':'1x3x640x640','input_batch':1,'norm_type':'data_scale','scale_value':0.003921568627451,'input_layout_rt':'NHWC','input_type_rt':'nv12','cal_data_type':'float32','preprocess_on':False,'calibration_type':'max','max_percentile':0.99995,'optimization':'set_all_nodes_int16;','compile_mode':'latency','optimize_level':'O2','jobs_default':1,'output_model_file_prefix':'dosod_mlp3x_s_tzcup_rep-int16'}
- compile_contract=tmp_path/'compile-contract.json'; oracle_contract=tmp_path/'oracle-contract.json'; compile_contract.write_text(json.dumps({'model':{'sha256':_sha(model)},'vocabulary':{'sha256':_sha(vocabulary)},'toolchain':{'required_versions':{'x':'1'}},'compile_recipe':recipe})); oracle_contract.write_text('{}')
+ compile_contract=tmp_path/'compile-contract.json'; oracle_contract=tmp_path/'oracle-contract.json'; compile_contract.write_text(json.dumps({'model':{'sha256':_sha(model)},'vocabulary':{'sha256':_sha(vocabulary)},'toolchain':{'required_versions':{'x':'1'}},'compile_recipe':recipe})); oracle_contract.write_text(json.dumps(oracle_contract_payload or {'candidate_routes':[{'route_id':'BOOTSTRAP_SYMMETRIC_BLACK_V1'}]}))
  identity.write_text(json.dumps({'identity_verified':True,'hb_compile_probe_returncode':0,'required_versions':{'x':'1'},'hb_compile_executable':str(compiler.resolve()),'hb_compile_executable_sha256':_sha(compiler)}))
  config=tmp_path/'config.yaml'; config.write_text(yaml.safe_dump(candidate._expected_compile_config(model=model,work=output/'candidate_work',calibration=pilot.parent/'samples',recipe=recipe)))
  for path,data in zip(logs,('stdout','stderr')): path.write_text(data)
  hbm=output/'candidate_work'/'dosod_mlp3x_s_tzcup_rep-int16.hbm'; hbm.parent.mkdir(); hbm.write_bytes(b'hbm')
  producer=tmp_path/'public_gazebo_dosod_calibration.py'; producer.write_text('producer')
  raw_binding={'path':str(raw.resolve()),'sha256':_sha(raw),'byte_size':raw.stat().st_size,'width':848,'height':480,'step':2544,'encoding':'rgb8','frame_id':'camera','stamp_ns':1,'pilot_manifest_path':str(pilot.resolve()),'pilot_manifest_sha256':_sha(pilot),'pilot_record_sha256':'b'*64,'pilot_record_index':0}
- monkeypatch.setattr(candidate,'CANONICAL_COMPILE_CONTRACT',compile_contract); monkeypatch.setattr(candidate,'CANONICAL_ORACLE_CONTRACT',oracle_contract); monkeypatch.setattr(candidate,'PILOT_PRODUCER',producer); monkeypatch.setattr(candidate,'_pilot_binding',lambda *_:raw_binding); monkeypatch.setattr(candidate,'_candidate_calibration',lambda *_:{'candidate_route':'BOOTSTRAP_SYMMETRIC_BLACK_V1','records_sha256':'a'*64})
+ monkeypatch.setattr(candidate,'CANONICAL_COMPILE_CONTRACT',compile_contract); monkeypatch.setattr(candidate,'CANONICAL_ORACLE_CONTRACT',oracle_contract); monkeypatch.setattr(candidate,'PILOT_PRODUCER',producer); monkeypatch.setattr(candidate,'_pilot_binding',lambda *_:raw_binding); monkeypatch.setattr(candidate,'_candidate_calibration',lambda _,contract:{'candidate_route':contract['candidate_routes'][0]['route_id'],'records_sha256':'a'*64})
  receipt=output/'dosod_nonformal_oracle_candidate_compile_receipt.json'
  value={'schema_version':1,'receipt_id':candidate.RECEIPT_ID,'status':candidate.STATUS,'formal_compile':False,'board_acceptance':False,'receipt_path':str(receipt.resolve()),'producer_script_path':str(Path(candidate.__file__).resolve()),'producer_script_sha256':_sha(Path(candidate.__file__)),'blockers':[],'returncode':0,'canonical_compile_contract_sha256':_sha(compile_contract),'canonical_oracle_contract_sha256':_sha(oracle_contract),'pilot_producer_script_path':str(producer.resolve()),'pilot_producer_script_sha256':_sha(producer),'pilot_raw':raw_binding,'pilot_manifest_sha256':_sha(pilot),'pilot_record_count':25,'pilot_records_sha256':'a'*64,'candidate_calibration_records_sha256':'a'*64,'candidate_route':'BOOTSTRAP_SYMMETRIC_BLACK_V1','model_path':str(model.resolve()),'model_sha256':_sha(model),'vocabulary_path':str(vocabulary.resolve()),'vocabulary_sha256':_sha(vocabulary),'compiler_identity_path':str(identity.resolve()),'compiler_identity_sha256':_sha(identity),'compile_config_path':str(config.resolve()),'compile_config_sha256':_sha(config),'expected_hbm_path':str(hbm.resolve()),'command':[str(compiler.resolve()),'-c',str(config.resolve())],'execution':{'deadline_seconds':3600,'term_grace_seconds':10,'timed_out':False,'zero_survivor':True},'raw_stdout_path':logs[0].name,'raw_stdout_sha256':_sha(logs[0]),'raw_stderr_path':logs[1].name,'raw_stderr_sha256':_sha(logs[1]),'candidate_hbm':{'path':str(hbm.resolve()),'sha256':_sha(hbm),'byte_size':hbm.stat().st_size}}
- receipt.write_text(json.dumps(value)); return receipt,value,{'pilot':pilot,'config':config,'identity':identity,'stdout':logs[0],'hbm':hbm}
+ receipt.write_text(json.dumps(value)); return receipt,value,{'pilot':pilot,'config':config,'identity':identity,'stdout':logs[0],'hbm':hbm,'oracle_contract':oracle_contract}
 
 
 def test_candidate_validator_accepts_complete_reauditable_baseline(tmp_path,monkeypatch):

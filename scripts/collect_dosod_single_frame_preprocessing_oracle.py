@@ -43,20 +43,38 @@ def _run(command: list[str], timeout: float) -> tuple[int | None, str, str, dict
     return run_owned_process(command, timeout_seconds=timeout)
 
 
+def _candidate_route(contract: dict[str, Any]) -> dict[str, Any]:
+    routes = contract.get("candidate_routes")
+    if (contract.get("preprocessing_status") != "CANDIDATE_UNVERIFIED"
+            or contract.get("selected_route") is not None
+            or not isinstance(routes, list) or len(routes) != 1
+            or not isinstance(routes[0], dict)
+            or not isinstance(routes[0].get("route_id"), str) or not routes[0]["route_id"]
+            or not isinstance(routes[0].get("preprocessing"), dict)):
+        raise ValueError("oracle_candidate_route_contract_invalid")
+    return routes[0]
+
+
 def collect(*, candidate_receipt: Path, official_capture_receipt: Path, onnx_model: Path, hrt: Path, output: Path, fixture: bool = False) -> dict[str, Any]:
     normal_file(candidate_receipt, "candidate_receipt"); normal_file(official_capture_receipt, "official_capture_receipt"); normal_file(onnx_model, "onnx_model"); normal_file(hrt, "hrt_model_exec")
     fresh_directory(output, "oracle_evidence_output")
     contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
     receipt: dict[str, Any] = {"schema_version": 1, "receipt_id": RECEIPT_ID, "status": "BLOCKED", "formal_compile": False, "board_acceptance": False, "test_fixture": fixture,
         "contract_sha256": sha256_file(CONTRACT), "model_sha256": contract["model_sha256"], "vocabulary_sha256": contract["vocabulary_sha256"],
-        "selected_route": "symmetric_black_zero_v1", "preprocessing": contract["candidate_routes"][0]["preprocessing"], "preprocessing_sha256": hashlib.sha256(json.dumps(contract["candidate_routes"][0]["preprocessing"], sort_keys=True, separators=(",", ":")).encode()).hexdigest(), "candidate": {"path": str(candidate_receipt.resolve()), "sha256": sha256_file(candidate_receipt)}, "official_capture": {"path": str(official_capture_receipt.resolve()), "sha256": sha256_file(official_capture_receipt)},
+        "selected_route": None, "preprocessing": None, "preprocessing_sha256": None, "candidate": {"path": str(candidate_receipt.resolve()), "sha256": sha256_file(candidate_receipt)}, "official_capture": {"path": str(official_capture_receipt.resolve()), "sha256": sha256_file(official_capture_receipt)},
         "candidate_hbm_sha256": None, "onnx_model": {"path": str(onnx_model.resolve()), "sha256": sha256_file(onnx_model), "byte_size": onnx_model.stat().st_size}, "model_name": None, "hrt_runner": {"path": str(hrt.resolve()), "sha256": sha256_file(hrt)}, "runner_executions": {}, "version_stdout": None, "version_stderr": None, "model_info": None, "infer_stdout": None, "infer_stderr": None, "onnx_input": None, "onnx_outputs": {}, "hbm_outputs": {}, "raw_metrics": {}, "blockers": [], "started_epoch_ns": time.time_ns(), "ended_epoch_ns": None}
     try:
         if fixture:
             raise ValueError("test_fixture_cli_forbidden")
+        route = _candidate_route(contract)
+        receipt["selected_route"] = route["route_id"]
+        receipt["preprocessing"] = route["preprocessing"]
+        receipt["preprocessing_sha256"] = hashlib.sha256(json.dumps(route["preprocessing"], sort_keys=True, separators=(",", ":")).encode()).hexdigest()
         if receipt["onnx_model"]["sha256"] != contract["model_sha256"]:
             raise ValueError("oracle_onnx_model_contract_mismatch")
         capture = _capture(official_capture_receipt); candidate = _candidate(candidate_receipt, capture["raw_sensor"]["sha256"])
+        if candidate.get("candidate_route") != route["route_id"]:
+            raise ValueError("oracle_candidate_route_mismatch")
         receipt["candidate_hbm_sha256"] = candidate["candidate_hbm"]["sha256"]
         tensor = _preprocess(capture["raw_sensor"])
         if tensor.shape != (1, 3, 640, 640) or tensor.dtype != np.float32 or not np.isfinite(tensor).all():
@@ -88,7 +106,8 @@ def collect(*, candidate_receipt: Path, official_capture_receipt: Path, onnx_mod
         if not name:
             raise ValueError("oracle_model_name_missing")
         receipt["model_name"] = name
-        expected_inputs = [{**row, "aligned_byte_size": -1} for row in contract["runtime_inputs"]]
+        expected_inputs = [{key: row[key] for key in ("index", "name", "shape", "dtype")} | {"aligned_byte_size": -1}
+                           for row in contract["runtime_inputs"]]
         _validate_model_info(info_stdout, name, expected_inputs, contract["runtime_outputs"])
         files = capture["inputs"]; dump = output / "hbm_dump"; dump.mkdir()
         command = [item.format(runner=str(hrt), hbm=str(hbm), inputs=",".join(str(item["path"]) for item in files), dump_path=str(dump) + "/") for item in COMMAND_TEMPLATE]
