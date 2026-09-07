@@ -12,6 +12,28 @@ import validate_dosod_s100p_hbm_compile_contract as subject
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 REAL_CONTRACT = REPOSITORY_ROOT / "config" / "dosod_s100p_hbm_compile_contract.json"
+EXPECTED_UPSTREAM_FILES = [
+    {
+        "relative_path": "configs/dosod/rep_dosod_mlp3x_s_100e_1x8gpus_obj365v1_goldg_train_lvis_minival.py",
+        "byte_size": 719,
+        "sha256": "2b0d9be4b250e322413d590bbd15465efcb52cfbfe0819c857ef9da680750db7",
+    },
+    {
+        "relative_path": "deploy/export_onnx.py",
+        "byte_size": 7959,
+        "sha256": "b7e97403f8828471b28a4dc94e0e4805bd561288f96c0dfa32f0e59b89d9c70b",
+    },
+    {
+        "relative_path": "ai_toolchain/s100/con_DOSOD_S.yaml",
+        "byte_size": 874,
+        "sha256": "5d1248c8e0afb43c5ab2beac41ef67dffe04e7c48b54fb66fbcd357962a574a0",
+    },
+    {
+        "relative_path": "ai_toolchain/s100/gen_calibration_data_s100.py",
+        "byte_size": 1620,
+        "sha256": "f876c3b38effb66d78812db8ccbe0f69b794e08408f23a2ad9e953e3c2724dda",
+    },
+]
 
 
 def _sha(path: Path) -> str:
@@ -160,6 +182,12 @@ def test_real_contract_has_exact_frozen_shape() -> None:
     blockers: list[str] = []
     subject.validate_contract_shape(json.loads(REAL_CONTRACT.read_text(encoding="utf-8")), blockers)
     assert blockers == []
+
+
+def test_real_contract_has_exact_official_upstream_file_bindings() -> None:
+    contract = json.loads(REAL_CONTRACT.read_text(encoding="utf-8"))
+    assert contract["upstream"]["repository_revision"] == "c50129b5badf6ed7bb85e692ab493d8bdb58da6a"
+    assert contract["upstream"]["files"] == EXPECTED_UPSTREAM_FILES
 
 
 def test_ready_fixture_emits_plan_but_never_hbm(tmp_path, monkeypatch) -> None:
