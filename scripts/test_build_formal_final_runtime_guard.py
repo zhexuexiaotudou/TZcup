@@ -113,14 +113,19 @@ def test_final_builder_bounds_both_builds_in_one_exact_setsid_group() -> None:
     assert "formal_runtime_stop_memory_watchdog" in source
 
 
-def test_final_builder_builds_exactly_the_closed_sixteen_package_set() -> None:
+def test_final_builder_builds_exactly_the_closed_project_and_opennav_package_set() -> None:
     source = _source()
     child = source.split("setsid bash -c '", 1)[1].split(
         "' formal-final-build", 1
     )[0]
-    selected = re.findall(r"\bsanitation_[a-z0-9_]+", child)
+    selected_block = child.split("--packages-up-to", 1)[1].split("\n'", 1)[0]
+    selected = re.findall(r"\b(?:sanitation|opennav)_[a-z0-9_]+", selected_block)
     assert selected == list(closure.FINAL_RUNTIME_PACKAGES)
-    assert len(selected) == 16
+    assert len(selected) == 18
+    assert "opennav_coverage_bt" not in selected
+    assert "opennav_coverage_navigator" not in selected
+    assert "opennav_row_coverage" not in selected
+    assert "opennav_coverage_demo" not in selected
     assert "r53" not in source.lower()
 
 

@@ -43,12 +43,24 @@ done
   echo "FORMAL_FINAL_RUNTIME_WS must be an absolute path other than /" >&2
   exit 2
 }
+opennav_bundle="${FORMAL_OPENNAV_COVERAGE_SOURCE_BUNDLE:-}"
+opennav_bundle_sha256="${FORMAL_OPENNAV_COVERAGE_SOURCE_BUNDLE_SHA256:-}"
+[[ "${opennav_bundle}" = /* && -f "${opennav_bundle}" && ! -L "${opennav_bundle}" ]] || {
+  echo "FORMAL_OPENNAV_COVERAGE_SOURCE_BUNDLE must name a regular absolute offline bundle" >&2
+  exit 2
+}
+[[ "${opennav_bundle_sha256}" = "a6b70fdc3e50a86118d3263fb05042c4e20ea294675bff17b53417c9c6309629" ]] || {
+  echo "FORMAL_OPENNAV_COVERAGE_SOURCE_BUNDLE_SHA256 does not match the pinned OpenNav bundle" >&2
+  exit 2
+}
 export CMAKE_BUILD_PARALLEL_LEVEL="${parallel_workers}"
 export MAKEFLAGS="-j${parallel_workers}"
 vendor_work_root="${runtime_ws}/vendor/gz_transport13_eintr_build"
 vendor_build_report="${runtime_ws}/gz_transport13_eintr_vendor_build_report.json"
 vendor_runtime_report="${runtime_ws}/gz_transport13_eintr_runtime_binding_report.json"
 frozen_source_root="${runtime_ws}/src"
+opennav_provenance_report="${runtime_ws}/opennav_coverage_source_provenance.json"
+fields2cover_binding_report="${runtime_ws}/fields2cover_system_binding.json"
 egl_vendor_source="${repo_root}/scripts/runtime_assets/egl_vendor.d/10_nvidia.json"
 egl_vendor_runtime_dir="${runtime_ws}/egl_vendor.d"
 egl_vendor_runtime_json="${egl_vendor_runtime_dir}/10_nvidia.json"
@@ -70,6 +82,8 @@ for path in \
   "${runtime_ws}/install" \
   "${runtime_ws}/log" \
   "${frozen_source_root}" \
+  "${opennav_provenance_report}" \
+  "${fields2cover_binding_report}" \
   "${egl_vendor_runtime_dir}" \
   "${egl_vendor_runtime_json}" \
   "${install_symlinks_report}" \
@@ -202,6 +216,9 @@ vendor_work_root="$3"
 vendor_build_report="$4"
 parallel_workers="$5"
 frozen_source_root="$6"
+opennav_bundle="$7"
+opennav_provenance_report="$8"
+fields2cover_binding_report="$9"
 python3 - "${repo_root}/starter_ws/src" "${frozen_source_root}" <<'PY'
 import hashlib
 import os
@@ -263,6 +280,12 @@ frozen_inventory = regular_inventory(frozen, "frozen runtime source tree")
 if frozen_inventory != source_inventory:
     raise SystemExit("frozen runtime source tree differs from starter_ws/src")
 PY
+python3 "${repo_root}/scripts/materialize_formal_opennav_source.py" \
+  --bundle "${opennav_bundle}" \
+  --destination "${frozen_source_root}/opennav_coverage" \
+  --report "${opennav_provenance_report}"
+python3 "${repo_root}/scripts/formal_final_runtime_closure.py" \
+  fields2cover-system --output "${fields2cover_binding_report}"
 bash "${repo_root}/scripts/build_gz_transport13_eintr_vendor.sh" \
   --work-root "${vendor_work_root}" \
   --install-prefix "${runtime_ws}/install" \
@@ -295,8 +318,9 @@ exec colcon --log-base "${runtime_ws}/log" build --merge-install \
     sanitation_gazebo_control sanitation_localization sanitation_manipulation \
     sanitation_navigation sanitation_perception sanitation_perception_interfaces \
     sanitation_power_system sanitation_product_demo_integration sanitation_safety \
-    sanitation_service_acceptance sanitation_vehicle_description
-' formal-final-build "${repo_root}" "${runtime_ws}" "${vendor_work_root}" "${vendor_build_report}" "${parallel_workers}" "${frozen_source_root}" &
+    sanitation_service_acceptance sanitation_vehicle_description \
+    opennav_coverage_msgs opennav_coverage
+' formal-final-build "${repo_root}" "${runtime_ws}" "${vendor_work_root}" "${vendor_build_report}" "${parallel_workers}" "${frozen_source_root}" "${opennav_bundle}" "${opennav_provenance_report}" "${fields2cover_binding_report}" &
 build_pid=$!
 
 set +e
