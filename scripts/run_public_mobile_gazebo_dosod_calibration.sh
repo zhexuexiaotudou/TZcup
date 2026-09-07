@@ -50,13 +50,23 @@ setsid sleep "$PUBLIC_GAZEBO_CALIBRATION_TOTAL_TIMEOUT_SEC" & DEADLINE_PID=$!
 # Even an early setup/admission failure must not leave the absolute-deadline
 # session behind. The full isolation trap replaces this once it is installed.
 early_deadline_exit() {
-  local rc=$?
+  local rc="${1:-$?}"
   trap - EXIT INT TERM
+  # Setup starts before the full isolation trap exists.  Contain its exact
+  # private PGID here as well as the deadline PGID, including TERM->KILL.
+  if [[ -n "${SETUP_PID:-}" ]]; then
+    kill -TERM -- "-$SETUP_PID" 2>/dev/null || true
+    for _ in {1..40}; do kill -0 -- "-$SETUP_PID" 2>/dev/null || break; sleep .25; done
+    kill -0 -- "-$SETUP_PID" 2>/dev/null && kill -KILL -- "-$SETUP_PID" 2>/dev/null || true
+    wait "$SETUP_PID" 2>/dev/null || true
+  fi
   [[ -n "${DEADLINE_PID:-}" ]] && kill -TERM -- "-$DEADLINE_PID" 2>/dev/null || true
   [[ -n "${DEADLINE_PID:-}" ]] && wait "$DEADLINE_PID" 2>/dev/null || true
   exit "$rc"
 }
-trap early_deadline_exit EXIT INT TERM
+trap early_deadline_exit EXIT
+trap 'early_deadline_exit 130' INT
+trap 'early_deadline_exit 143' TERM
 REQUESTED_ROS_DOMAIN_ID="$ROS_DOMAIN_ID"
 DATASET="$RUN_ROOT/dataset"; SELECTOR="$RUN_ROOT/scene_selector.json"; PROGRESS="$RUN_ROOT/collector_progress.json"; SCENE_RUNTIME_INDEX="$RUN_ROOT/scene_runtime_index.json"
 RECEIPT="$RUN_ROOT/public_mobile_gazebo_dosod_calibration_receipt.json"; PRIMARY_ERROR=""; DESIRED_STATE="BLOCKED"
@@ -71,26 +81,50 @@ COLLECTOR_DEADLINE_SEC="$PUBLIC_GAZEBO_CALIBRATION_TIMEOUT_SEC"
 QUOTA_PID=""; WATCHDOG_PID=""; GZ_PGID=""; PREFLIGHT_PID=""; PREFLIGHT_PGID=""; READINESS_PID=""; FINAL_ORACLE_PID=""; FINAL_BINDING_SHA256=""; SETUP_PID=""; STOP_PID=""
 export FORMAL_MEMORY_WATCHDOG_ENABLED=1 FORMAL_MEMORY_MAX_GROUP_RSS_KIB=9437184
 remaining_seconds() { local remaining=$((DEADLINE_EPOCH - SECONDS)); (( remaining > 0 )) && printf '%s\n' "$remaining"; }
+revalidate_final_inputs() {
+  local variable value
+  for variable in PUBLIC_GAZEBO_CALIBRATION_PLAN PUBLIC_GAZEBO_CALIBRATION_STAGE1_SETUP PUBLIC_GAZEBO_CALIBRATION_RUNTIME_SETUP PUBLIC_GAZEBO_CALIBRATION_CAMPUS_SETUP; do
+    value="$(real_regular "${!variable}")" || return 1
+    [[ "$value" == "${!variable}" ]] && within_root "$value" || return 1
+  done
+  [[ "$PUBLIC_GAZEBO_CALIBRATION_PLAN" == "$CANONICAL_PLAN" ]] || return 1
+  if [[ "$MODE" == full ]]; then
+    for variable in PUBLIC_GAZEBO_CALIBRATION_REVIEW_RECEIPT PUBLIC_GAZEBO_CALIBRATION_PILOT_MANIFEST PUBLIC_GAZEBO_CALIBRATION_PREPROCESSING_ORACLE; do
+      value="$(real_regular "${!variable}")" || return 1
+      [[ "$value" == "${!variable}" ]] && within_root "$value" || return 1
+    done
+  fi
+}
+require_final_oracle_reserve() {
+  local available
+  available="$(remaining_seconds)" || return 124
+  (( available >= FINAL_VALIDATION_DEADLINE_SEC )) || return 124
+  printf '%s\n' "$FINAL_VALIDATION_DEADLINE_SEC"
+}
 deadline_run() {
   # Each short operation owns a fresh session.  TERM waits ten seconds before
   # KILL and the caller receives failure unless that exact group is gone.
   local limit="$1" log="$2" finished rc=0; shift 2
   remaining_seconds >/dev/null || return 124
   setsid timeout -k 10 "$limit" "$@" >"$log" 2>&1 & local pid=$!
+  [[ "${CURRENT_PHASE:-}" == setup ]] && SETUP_PID="$pid"
   set +e; wait -n -p finished "$pid" "$DEADLINE_PID"; rc=$?; set -e
   if [[ "$finished" == "$DEADLINE_PID" ]]; then
     stop_private_group "$pid" || return 125
+    [[ "${CURRENT_PHASE:-}" == setup ]] && SETUP_PID=""
     return 124
   fi
-  [[ "$finished" == "$pid" ]] || return 125
+  [[ "$finished" == "$pid" ]] || { [[ "${CURRENT_PHASE:-}" == setup ]] && SETUP_PID=""; return 125; }
   # A leader exiting first is not cleanup: any exact child still in its
   # private PGID turns this operation into a fail-closed cleanup failure.
   if kill -0 -- "-$pid" 2>/dev/null; then
     kill -TERM -- "-$pid" 2>/dev/null || true; sleep 10
     kill -0 -- "-$pid" 2>/dev/null && kill -KILL -- "-$pid" 2>/dev/null || true
     ! kill -0 -- "-$pid" 2>/dev/null || return 125
+    [[ "${CURRENT_PHASE:-}" == setup ]] && SETUP_PID=""
     return 125
   fi
+  [[ "${CURRENT_PHASE:-}" == setup ]] && SETUP_PID=""
   return "$rc"
 }
 stop_private_group() {
@@ -107,8 +141,8 @@ stop_deadline() { [[ -n "$DEADLINE_PID" ]] && stop_private_group "$DEADLINE_PID"
 # Setup files are executable inputs.  Source them in a private, deadline-bound
 # child and import only a serialized allow-list after validating its syntax.
 SETUP_SNAPSHOT="$RUN_ROOT/setup_environment.sh"
-remaining_seconds >/dev/null || exit 124
-setsid timeout -k 10 "$(remaining_seconds)" bash -c '
+CURRENT_PHASE=setup
+deadline_run "$(remaining_seconds)" "$SETUP_SNAPSHOT" bash -c '
   set -Eeuo pipefail
   for setup in "$@"; do source "$setup"; done
   while IFS= read -r name; do
@@ -116,11 +150,8 @@ setsid timeout -k 10 "$(remaining_seconds)" bash -c '
       PATH|PYTHONPATH|LD_LIBRARY_PATH|PKG_CONFIG_PATH|AMENT_PREFIX_PATH|CMAKE_PREFIX_PATH|COLCON_PREFIX_PATH|COLCON_CURRENT_PREFIX|ROS_DISTRO|ROS_VERSION|ROS_PYTHON_VERSION|ROS_PACKAGE_PATH|RMW_IMPLEMENTATION|GZ_SIM_RESOURCE_PATH|GZ_SIM_SYSTEM_PLUGIN_PATH|GZ_CONFIG_PATH|IGN_GAZEBO_RESOURCE_PATH|IGN_GAZEBO_SYSTEM_PLUGIN_PATH|IGN_CONFIG_PATH|GAZEBO_RESOURCE_PATH|GAZEBO_PLUGIN_PATH) declare -px "$name" ;;
     esac
   done < <(compgen -v)
-' bash /opt/ros/jazzy/setup.bash "$PUBLIC_GAZEBO_CALIBRATION_STAGE1_SETUP" "$PUBLIC_GAZEBO_CALIBRATION_RUNTIME_SETUP" "$PUBLIC_GAZEBO_CALIBRATION_CAMPUS_SETUP" >"$SETUP_SNAPSHOT" & SETUP_PID=$!
-set +e; wait -n -p finished "$SETUP_PID" "$DEADLINE_PID"; setup_status=$?; set -e
-if [[ "$finished" != "$SETUP_PID" ]]; then stop_private_group "$SETUP_PID" || exit 125; exit 124; fi
-SETUP_PID=""
-(( setup_status == 0 )) || { [[ "$setup_status" == 124 || "$setup_status" == 137 ]] && exit 124; exit 125; }
+' bash /opt/ros/jazzy/setup.bash "$PUBLIC_GAZEBO_CALIBRATION_STAGE1_SETUP" "$PUBLIC_GAZEBO_CALIBRATION_RUNTIME_SETUP" "$PUBLIC_GAZEBO_CALIBRATION_CAMPUS_SETUP" || { RUNNER_EXIT_CODE=$?; CURRENT_PHASE=""; exit "$RUNNER_EXIT_CODE"; }
+CURRENT_PHASE=""
 deadline_run "$(remaining_seconds)" "$RUN_ROOT/setup_snapshot_validation.log" python3 -c 'import re,sys; raw=open(sys.argv[1],"rb").read(); lines=raw.decode("utf-8").splitlines(); safe=re.compile(r"declare -x [A-Za-z_][A-Za-z0-9_]*(?:=\"(?:[^\"\\\\\n]|\\\\.)*\")?$"); raise SystemExit(0 if raw and b"\0" not in raw and b"$\x27" not in raw and all(safe.fullmatch(x) for x in lines) else 2)' "$SETUP_SNAPSHOT" || { RUNNER_EXIT_CODE=$?; exit "$RUNNER_EXIT_CODE"; }
 source "$SETUP_SNAPSHOT"
 ROS_DOMAIN_ID="$REQUESTED_ROS_DOMAIN_ID"; export ROS_DOMAIN_ID
@@ -283,6 +314,7 @@ cleanup() {
   formal_runtime_stop_memory_watchdog || cleanup_failed=1
   if formal_runtime_memory_watchdog_tripped; then receipt_code="$FORMAL_RUNTIME_MEMORY_BREACH_EXIT_CODE"
   elif (( FORMAL_RUNTIME_MEMORY_WATCHDOG_RESULT != 0 )); then receipt_code=125; fi
+  revalidate_final_inputs || { cleanup_failed=1; PRIMARY_ERROR=binding_or_git_drift; }
   FINAL_BINDING_SHA256="$(binding_digest)"; export FINAL_BINDING_SHA256 PREFLIGHT_PID PREFLIGHT_PGID
   FINAL_GIT_HEAD="$(git -C "$ROOT" rev-parse HEAD)"; FINAL_GIT_TREE="$(git -C "$ROOT" rev-parse 'HEAD^{tree}')"; FINAL_GIT_STATUS="$(git -C "$ROOT" status --porcelain=v1)"
   export FINAL_GIT_HEAD FINAL_GIT_TREE FINAL_GIT_STATUS ADMISSION_GIT_HEAD ADMISSION_GIT_TREE GIT_STATUS_AT_ADMISSION
@@ -397,12 +429,14 @@ else
   remaining_seconds >/dev/null && (( $(remaining_seconds) >= FINAL_VALIDATION_DEADLINE_SEC )) || { RUNNER_EXIT_CODE=124; exit 124; }
   deadline_run "$FINAL_VALIDATION_DEADLINE_SEC" "$VALIDATION_SNAPSHOT" python3 "$ROOT/scripts/public_gazebo_dosod_calibration.py" --scene-plan "$PUBLIC_GAZEBO_CALIBRATION_PLAN" --contract "$ROOT/config/dosod_s100p_hbm_compile_contract.json" --review-receipt "$PUBLIC_GAZEBO_CALIBRATION_REVIEW_RECEIPT" --pilot-manifest "$PUBLIC_GAZEBO_CALIBRATION_PILOT_MANIFEST" || { RUNNER_EXIT_CODE=$?; exit "$RUNNER_EXIT_CODE"; }
   ORACLE_FINAL_SUMMARY="$RUN_ROOT/preprocessing_oracle_final_validation.json"; export ORACLE_FINAL_SUMMARY
-  final_oracle_budget="$(remaining_seconds)" || { RUNNER_EXIT_CODE=124; exit 124; }
-  (( final_oracle_budget > FINAL_VALIDATION_DEADLINE_SEC )) && final_oracle_budget="$FINAL_VALIDATION_DEADLINE_SEC"
+  # Reserve the full 120-second oracle window after the review itself; do not
+  # start an oracle that can only be killed by the outer deadline.
+  final_oracle_budget="$(require_final_oracle_reserve)" || { RUNNER_EXIT_CODE=124; exit 124; }
   setsid timeout -k 10 "$final_oracle_budget" python3 "$ROOT/scripts/validate_dosod_single_frame_preprocessing_oracle.py" --receipt "$PUBLIC_GAZEBO_CALIBRATION_PREPROCESSING_ORACLE" >"$ORACLE_FINAL_SUMMARY" & FINAL_ORACLE_PID=$!
   set +e; wait -n -p finished "$FINAL_ORACLE_PID" "$DEADLINE_PID"; final_oracle_status=$?; set -e
   [[ "$finished" == "$FINAL_ORACLE_PID" && "$final_oracle_status" == 0 ]] || { RUNNER_EXIT_CODE=124; [[ "$finished" == "$FINAL_ORACLE_PID" ]] && RUNNER_EXIT_CODE=125; exit "$RUNNER_EXIT_CODE"; }
 fi
+revalidate_final_inputs || { PRIMARY_ERROR=binding_or_git_drift; RUNNER_EXIT_CODE=125; exit 125; }
 FINAL_BINDING_SHA256="$(binding_digest)"; FINAL_GIT_HEAD="$(git -C "$ROOT" rev-parse HEAD)"; FINAL_GIT_TREE="$(git -C "$ROOT" rev-parse 'HEAD^{tree}')"; FINAL_GIT_STATUS="$(git -C "$ROOT" status --porcelain=v1)"
 export FINAL_BINDING_SHA256 FINAL_GIT_HEAD FINAL_GIT_TREE FINAL_GIT_STATUS ADMISSION_GIT_HEAD ADMISSION_GIT_TREE GIT_STATUS_AT_ADMISSION
 [[ "$FINAL_BINDING_SHA256" == "$ADMISSION_BINDING_SHA256" && "$FINAL_GIT_HEAD" == "$ADMISSION_GIT_HEAD" && "$FINAL_GIT_TREE" == "$ADMISSION_GIT_TREE" && "$FINAL_GIT_STATUS" == "$GIT_STATUS_AT_ADMISSION" ]] || { PRIMARY_ERROR=binding_or_git_drift; RUNNER_EXIT_CODE=125; exit 125; }
