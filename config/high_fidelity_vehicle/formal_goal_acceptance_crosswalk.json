@@ -186,8 +186,8 @@
       "evidence_gates": [],
       "receipt_contract": "config/high_fidelity_vehicle/a20_release_replay_receipt_contract.json",
       "receipt_validator": "scripts/a20_release_replay_receipt.py",
-      "state": "NOT_RUN_CURRENT_SNAPSHOT",
-      "blockers": ["A fresh completed formal session, five distinct product MCAP replay reports, release artifact/SBOM hashes, and a verified rollback exercise are required before an A20 receipt can be valid."]
+      "state": "BLOCKED",
+      "blockers": ["The repository has no canonical formal product MCAP replay producer that recomputes coverage, localization, session, and runtime-closure bindings. Stage-specific AUTO-02/AUTO-03 and coverage-only replay reports, embedded JSON, and historical AUTO-16 artifacts are not A20 evidence."]
     },
     {
       "id": "A21",

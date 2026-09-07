@@ -33,7 +33,7 @@
 4. A15 的一次性 hidden materializer、consumed/freeze/output-summary 账本和最终 12 站点重验合同已闭合；当前状态仅是尚未在新鲜快照上执行，不是通过。
 5. A18 的 S100 性能部分与 A21 共用外部硬缺口，不能只标成“尚未运行”。
 6. A19 当前 26 门没有独立的全时长 soak/故障注入门；必须补齐或明确由哪些正式报告等价覆盖。
-7. A20 现有独立的密封、回放、发布和回滚 receipt 合同；仍须由当前快照的真实记录满足，静态校验不会提升任何 release/runtime 或产品 PASS。
+7. A20 的 receipt 入口现 fail-closed：仓库尚无能从 MCAP 重算正式产品 coverage、localization、session 和 closure 绑定的 canonical producer。AUTO-02/AUTO-03、coverage-only 和历史 AUTO-16 报告均不可替代，故 A20 保持 BLOCKED。
 8. A21 仍缺项目 DOSOD HBM、真实非仿真图像/标定与 holdout 数据、真实功率测量。板卡在线本身不等于验收通过。
 
 AUTO-05 G3/G4 不在当前 31 步或 S100 关键路径：未发现正式感知 runner、冻结模型或 HBM

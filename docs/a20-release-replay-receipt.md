@@ -1,33 +1,23 @@
 # A20 冻结、回放、发布与回滚回执
 
 机器可读合同是
-[`config/high_fidelity_vehicle/a20_release_replay_receipt_contract.json`](../config/high_fidelity_vehicle/a20_release_replay_receipt_contract.json)，
-静态校验入口是 `scripts/a20_release_replay_receipt.py`。它不取代正式运行编排，也不修改
-AUTO-16 的历史状态文件。
+[`config/high_fidelity_vehicle/a20_release_replay_receipt_contract.json`](../config/high_fidelity_vehicle/a20_release_replay_receipt_contract.json)。
+当前 A20 **BLOCKED**，不是静态 PASS：仓库没有一个 canonical formal-product MCAP
+replay producer 能同时从 bag 重算 coverage、localization（关键指标误差不超过 1%）、
+session/snapshot 与 runtime-closure binding。
 
-一份 A20 receipt 必须同时提供：
+现有 `auto02_replay_audit.py`、`auto03_replay_audit.py` 与
+`coverage_mcap_replay_audit.py` 分别只覆盖历史 AUTO-02、AUTO-03 或 coverage 任务；它们不能
+证明完整正式产品链。因此 A20 validator 对任何 receipt（包括五个手写 hash、嵌入 JSON、旧
+AUTO-16 release/SBOM 或历史回放报告）均返回 `A20_RECEIPT_STATIC_BLOCKED`。这避免将缺失的
+真实 artifacts、Gazebo runtime 或 release/rollback 演练伪装成通过。
 
-- `formal_acceptance_session.py` 产生且已 `FORMAL_FINAL_ACCEPTANCE_SESSION_COMPLETE`
-  的 sealed final session，以及该 session 的三项 frozen snapshot identity；
-- `formal_final_runtime_closure.py verify` 的当前
-  `FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED` record，且 digest 与 sealed session 的
-  `runtime_closure_binding` 一致；
-- source、model、config、dataset、dependency 五项 SHA-256；五个以上不同的 product
-  MCAP bag SHA-256，且每一项均绑定上述 hashes、snapshot 与 closure，并携带
-  `coverage_mcap_replay_audit.py` 的完整 passing audit；
-- 已记录的 main release commit、ZIP SHA-256、SBOM SHA-256，以及按
-  [`docs/rollback.md`](rollback.md) 执行并验证的精确 rollback commit 和验证报告 SHA-256。
+未来解除阻断前，必须新增并独立验证一个 producer，至少要求五个不同的、非符号链接、仓库
+受控路径内的真实 MCAP；每个 bag 都要由 canonical audit 实际读取并重算上述完整链。然后
+receipt 才能绑定当前 snapshot/session/closure、source/model/config/dataset/dependency、ZIP、
+SHA256SUMS、SBOM、容器/许可/依赖锁以及按 [`docs/rollback.md`](rollback.md) 真实演练的 rollback
+报告。该 producer 还必须拒绝 historical AUTO-16 reuse、路径逸出、符号链接与 read/write TOCTOU。
 
-例如，在所有真实记录已经由正式流程保留后：
-
-```bash
-python3 scripts/a20_release_replay_receipt.py \
-  --receipt /external-evidence/a20_receipt.json \
-  --output /external-evidence/a20_receipt_validation.json
-```
-
-同一个 bag digest 重复出现、少于五个 product replay、任一输入 hash 缺失、session 未封存、
-closure 已漂移，或 rollback exercise 未验证，都会返回非零。校验器只检查提供 JSON 的一致性；
-即使返回 `A20_RECEIPT_STATIC_VALID`，也明确输出 `release_runtime_pass: false`。因此它不能证明
-ZIP 当前存在、Gazebo 实际运行过，或任何产品/竞赛门已经通过；这些结论仍由原始 artifact、CI 和
-正式 runtime 验收分别给出。
+CLI 目前仅为上述未完成 contract 保留安全的 fail-closed 边界：repository root、receipt 和 output
+必须为绝对、仓库内、非符号链接路径；output 必须尚不存在，并以原子文件写入。它仍会以非零
+退出，直到 canonical producer 可用。

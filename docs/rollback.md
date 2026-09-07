@@ -25,7 +25,7 @@
 
 ## A20 回执
 
-只有实际完成上述回滚步骤并保留验证报告 SHA-256 的演练，才可在
-[`A20 release/replay receipt`](a20-release-replay-receipt.md) 中写为
-`ROLLBACK_EXERCISE_VERIFIED`。声明一个 rollback commit、静态 JSON 校验成功或重用历史
-日志都不构成已验证回滚。
+只有实际完成上述回滚步骤并保留验证报告 SHA-256 的演练，才可成为未来
+[`A20 release/replay receipt`](a20-release-replay-receipt.md) 的候选输入。当前 A20 没有
+canonical complete product replay producer，仍保持 BLOCKED；声明一个 rollback commit、静态 JSON
+校验成功或重用历史日志都不构成已验证回滚。
