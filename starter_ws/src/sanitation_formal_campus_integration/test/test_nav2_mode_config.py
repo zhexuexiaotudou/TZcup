@@ -1,11 +1,32 @@
 from copy import deepcopy
+from pathlib import Path
 
 import pytest
+import yaml
 
 from sanitation_formal_campus_integration.nav2_mode_config import (
     Nav2ModeConfigError,
     configure_collision_monitor_sources,
 )
+
+
+PACKAGE = Path(__file__).resolve().parents[1]
+
+
+def _actual_nav2_with_canonical_scan() -> dict:
+    nav2 = yaml.safe_load(
+        (PACKAGE.parent / "sanitation_navigation" / "config" / "nav2.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    canonical_scan = "/scan/navigation"
+    nav2["amcl"]["ros__parameters"]["scan_topic"] = canonical_scan
+    nav2["collision_monitor"]["ros__parameters"]["scan"]["topic"] = canonical_scan
+    for costmap_name in ("local_costmap", "global_costmap"):
+        nav2[costmap_name][costmap_name]["ros__parameters"]["obstacle_layer"][
+            "scan"
+        ]["topic"] = canonical_scan
+    return nav2
 
 
 def _obstacle_layer() -> dict:
@@ -92,6 +113,28 @@ def test_high_bandwidth_mapping_retains_and_requires_mid360_collision_source():
             configure_collision_monitor_sources(
                 broken, mission_mode="mapping", high_bandwidth_sensor_runtime=True
             )
+
+
+def test_actual_nav2_config_supports_high_bandwidth_and_scan_only_mapping():
+    high_bandwidth = _actual_nav2_with_canonical_scan()
+    configure_collision_monitor_sources(
+        high_bandwidth, mission_mode="mapping", high_bandwidth_sensor_runtime=True
+    )
+    scan_only = _actual_nav2_with_canonical_scan()
+    configure_collision_monitor_sources(
+        scan_only, mission_mode="mapping", high_bandwidth_sensor_runtime=False
+    )
+    for costmap_name in ("local_costmap", "global_costmap"):
+        high_layer = high_bandwidth[costmap_name][costmap_name]["ros__parameters"][
+            "obstacle_layer"
+        ]
+        assert high_layer["observation_sources"] == "scan mid360"
+        assert high_layer["mid360"]["topic"] == "/sensors/lidar_3d/points"
+        scan_layer = scan_only[costmap_name][costmap_name]["ros__parameters"][
+            "obstacle_layer"
+        ]
+        assert scan_layer["observation_sources"] == "scan"
+        assert "mid360" not in scan_layer
 
 
 @pytest.mark.parametrize("high_bandwidth_sensor_runtime", (False, True))
