@@ -8,7 +8,7 @@ from typing import Any
 
 import numpy as np
 
-from hbm_evidence_common import load_object, normal_file, path_under, sha256_file
+from hbm_evidence_common import MEMORY_WATCHDOG_THRESHOLDS, load_object, normal_file, path_under, sha256_file
 from run_dosod_hbm_x86_parity import _dump_filename, _validate_model_info, raw_parity_metrics
 from execute_dosod_nonformal_oracle_candidate_compile import validate_candidate_receipt
 
@@ -18,6 +18,8 @@ CAPTURE_PRODUCER = ROOT / "scripts" / "capture_dosod_official_preprocess.py"
 RECEIPT_ID = "tzcup_dosod_single_frame_preprocessing_oracle_receipt_v1"
 STATUS = "ORACLE_VERIFIED"
 CANDIDATE_ID = "tzcup_dosod_nonformal_oracle_candidate_compile_receipt_v1"
+SUPERVISION_ID = "tzcup_dosod_single_frame_preprocessing_oracle_supervision_receipt_v1"
+SUPERVISOR = ROOT / "scripts" / "run_dosod_single_frame_preprocessing_oracle_supervised.py"
 
 
 def _digest(value: Any) -> bool:
@@ -89,10 +91,10 @@ def _capture(path: Path) -> dict[str, Any]:
     return value
 
 
-def validate(path: Path, *, contract_path: Path = CONTRACT) -> dict[str, Any]:
+def _validate_raw(path: Path, *, contract_path: Path = CONTRACT, outer_supervised: bool = False) -> dict[str, Any]:
     normal_file(path, "oracle_receipt"); normal_file(contract_path, "oracle_contract")
     receipt, contract = load_object(path), load_object(contract_path)
-    if receipt.get("receipt_id") != RECEIPT_ID or receipt.get("status") != STATUS or receipt.get("formal_compile") is not False or receipt.get("board_acceptance") is not False or receipt.get("test_fixture") is not False:
+    if receipt.get("receipt_id") != RECEIPT_ID or receipt.get("status") != STATUS or receipt.get("formal_compile") is not False or receipt.get("board_acceptance") is not False or receipt.get("test_fixture") is not False or receipt.get("blockers") != [] or receipt.get("receipt_path") != str(path.resolve()):
         raise ValueError("oracle_receipt_not_verified")
     producer = ROOT / "scripts" / "collect_dosod_single_frame_preprocessing_oracle.py"
     if receipt.get("producer_script_path") != str(producer.resolve()) or receipt.get("producer_script_sha256") != sha256_file(producer):
@@ -152,7 +154,10 @@ def validate(path: Path, *, contract_path: Path = CONTRACT) -> dict[str, Any]:
         raise ValueError("oracle_runner_execution_missing")
     for role, expected_prefix in (("version", [str(runner_path), "--version"]), ("model_info", [str(runner_path), "model_info"]), ("infer", [str(runner_path), "infer"])):
         execution = executions[role]
-        if not isinstance(execution, dict) or execution.get("returncode") != 0 or execution.get("command", [])[:len(expected_prefix)] != expected_prefix or execution.get("zero_survivor") is not True:
+        if not isinstance(execution, dict) or execution.get("returncode") != 0 or execution.get("command", [])[:len(expected_prefix)] != expected_prefix:
+            raise ValueError(f"oracle_runner_execution_invalid:{role}")
+        cleaned = (execution.get("direct_process_reaped") is True and execution.get("zero_survivor") is False) if outer_supervised else execution.get("zero_survivor") is True
+        if not cleaned:
             raise ValueError(f"oracle_runner_execution_invalid:{role}")
     metrics = receipt.get("raw_metrics")
     if not isinstance(metrics, dict) or set(metrics) != {"scores", "boxes"}:
@@ -169,6 +174,53 @@ def validate(path: Path, *, contract_path: Path = CONTRACT) -> dict[str, Any]:
     if tensor.dtype != np.float32 or tensor.shape != (1, 3, 640, 640) or not np.isfinite(tensor).all() or tensor.min() < 0 or tensor.max() > 1:
         raise ValueError("oracle_onnx_input_invalid")
     return receipt
+
+
+def _supervision_file(root: Path, item: Any, label: str) -> Path:
+    if not isinstance(item, dict) or set(item) != {"relative_path", "sha256", "byte_size"} or not _digest(item.get("sha256")) or not isinstance(item.get("byte_size"), int) or item["byte_size"] < 0:
+        raise ValueError(f"{label}_binding_invalid")
+    path = path_under(root, item["relative_path"], label)
+    if path.stat().st_size != item["byte_size"] or sha256_file(path) != item["sha256"]:
+        raise ValueError(f"{label}_binding_drift")
+    return path
+
+
+def validate(path: Path, *, contract_path: Path = CONTRACT) -> dict[str, Any]:
+    """Accept only the outer supervisor; raw collector receipts are non-canonical."""
+    normal_file(path, "oracle_supervision_receipt"); normal_file(contract_path, "oracle_contract")
+    receipt = load_object(path)
+    if (receipt.get("receipt_id") != SUPERVISION_ID or receipt.get("status") != STATUS
+            or receipt.get("formal_compile") is not False or receipt.get("board_acceptance") is not False
+            or receipt.get("wall_deadline_seconds") != 180 or receipt.get("blockers") != []
+            or receipt.get("receipt_path") != str(path.resolve())):
+        raise ValueError("oracle_supervision_finalizer_required")
+    started, ended = receipt.get("started_epoch_ns"), receipt.get("ended_epoch_ns")
+    if (not isinstance(started, int) or isinstance(started, bool) or started <= 0
+            or not isinstance(ended, int) or isinstance(ended, bool) or ended < started):
+        raise ValueError("oracle_supervision_timing_invalid")
+    if receipt.get("producer_script_path") != str(SUPERVISOR.resolve()) or receipt.get("producer_script_sha256") != sha256_file(SUPERVISOR):
+        raise ValueError("oracle_supervision_producer_identity_invalid")
+    root = path.parent
+    execution = receipt.get("collector_execution")
+    if not isinstance(execution, dict) or set(execution) != {"pgid", "deadline_seconds", "term_grace_seconds", "timed_out", "term_sent", "kill_sent", "zero_survivor", "elapsed_seconds"} or not isinstance(execution["pgid"], int) or execution["pgid"] <= 1 or execution["deadline_seconds"] != 180 or execution["term_grace_seconds"] != 10 or execution["timed_out"] is not False or execution["zero_survivor"] is not True:
+        raise ValueError("oracle_supervision_execution_invalid")
+    watchdog = receipt.get("memory_watchdog")
+    if not isinstance(watchdog, dict) or set(watchdog) != {"json", "log", "returncode", "status", "pgid"}:
+        raise ValueError("oracle_supervision_watchdog_invalid")
+    report = load_object(_supervision_file(root, watchdog["json"], "oracle_supervision_watchdog_json"))
+    _supervision_file(root, watchdog["log"], "oracle_supervision_watchdog_log")
+    if (watchdog["returncode"] != 0 or watchdog["status"] != "FORMAL_MEMORY_WATCHDOG_COMPLETED"
+            or watchdog["pgid"] != execution["pgid"] or report.get("status") != watchdog["status"]
+            or report.get("target_pgid") != watchdog["pgid"] or report.get("surviving_group_processes") != 0
+            or report.get("breach_exit_code") != 86
+            or report.get("thresholds_kib") != MEMORY_WATCHDOG_THRESHOLDS):
+        raise ValueError("oracle_supervision_watchdog_failed")
+    _supervision_file(root, receipt.get("collector_stdout"), "oracle_supervision_stdout")
+    _supervision_file(root, receipt.get("collector_stderr"), "oracle_supervision_stderr")
+    child = _supervision_file(root, receipt.get("child_oracle"), "oracle_supervision_child")
+    if child.parent != (root / "collector").resolve():
+        raise ValueError("oracle_supervision_child_path_invalid")
+    return _validate_raw(child, contract_path=contract_path, outer_supervised=True)
 
 
 def main() -> int:

@@ -160,6 +160,7 @@ def main() -> int:
     parser.add_argument("--artifact-root", required=True)
     parser.add_argument("--upstream-root", required=True)
     parser.add_argument("--compiler-identity", required=True)
+    parser.add_argument("--preprocessing-oracle", required=True)
     parser.add_argument("--march", default=FORMAL_MARCH)
     parser.add_argument("--jobs", type=int, default=1)
     parser.add_argument("--allow-blocked-exit-zero", action="store_true")
@@ -178,6 +179,7 @@ def main() -> int:
         Path(args.upstream_root),
         calibration,
         Path(args.compiler_identity),
+        Path(args.preprocessing_oracle),
     )
     expected_model_path = (Path(args.artifact_root).resolve() / contract["model"]["relative_path"]).resolve()
     entry_blockers: list[str] = []
@@ -207,6 +209,7 @@ def main() -> int:
             "contract_audit_status": contract_audit.get("status"),
             "contract_sha256": contract_audit.get("contract_sha256"),
             "compile_plan_sha256": contract_audit.get("compile_plan_sha256"),
+            "preprocessing_oracle_sha256": (contract_audit.get("compile_plan") or {}).get("preprocessing_oracle_sha256"),
             "blockers": blockers,
             "compile_config": None,
             "compile_config_emitted": False,
@@ -229,6 +232,7 @@ def main() -> int:
             "contract_audit_status": contract_audit.get("status"),
             "contract_sha256": contract_audit.get("contract_sha256"),
             "compile_plan_sha256": contract_audit.get("compile_plan_sha256"),
+            "preprocessing_oracle_sha256": (contract_audit.get("compile_plan") or {}).get("preprocessing_oracle_sha256"),
             "blockers": [f"onnx_module_unavailable:{type(exc).__name__}"],
             "compile_config": None,
             "compile_config_emitted": False,
@@ -377,6 +381,7 @@ def main() -> int:
         "contract_audit_status": contract_audit["status"],
         "contract_sha256": contract_audit["contract_sha256"],
         "compile_plan_sha256": contract_audit["compile_plan_sha256"],
+        "preprocessing_oracle_sha256": (contract_audit.get("compile_plan") or {}).get("preprocessing_oracle_sha256"),
         "formal_mapper_profile": {
             "march": args.march,
             "expected_march": FORMAL_MARCH,

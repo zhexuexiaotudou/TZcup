@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import sys
 import time
@@ -16,7 +17,7 @@ from typing import Any
 
 import numpy as np
 
-from hbm_evidence_common import atomic_json, fresh_directory, load_object, normal_file, run_owned_process, sha256_file
+from hbm_evidence_common import MEMORY_WATCHDOG_THRESHOLDS, atomic_json, fresh_directory, load_object, memory_watchdog_evidence, normal_file, require_completed_memory_watchdog, run_owned_process, sha256_file
 from public_gazebo_dosod_calibration import canonical_sha256, load_scene_plan, validate_pilot_manifest
 
 RECEIPT_ID = "tzcup_dosod_nonformal_oracle_candidate_compile_receipt_v1"
@@ -25,6 +26,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CANONICAL_ORACLE_CONTRACT = ROOT / "config" / "dosod_single_frame_preprocessing_oracle_contract.json"
 CANONICAL_COMPILE_CONTRACT = ROOT / "config" / "dosod_s100p_hbm_compile_contract.json"
 PILOT_PRODUCER = ROOT / "scripts" / "public_gazebo_dosod_calibration.py"
+MEMORY_WATCHDOG = ROOT / "scripts" / "formal_memory_watchdog.sh"
 
 
 def _block(receipt: dict[str, Any], reason: str) -> None:
@@ -163,6 +165,24 @@ def validate_candidate_receipt(receipt_path: Path, *, expected_raw_sha256: str |
         if not path.is_relative_to(root): raise ValueError("candidate_receipt_log_path_escape")
         normal_file(path, f"candidate_{name}")
         if sha256_file(path) != digest: raise ValueError("candidate_receipt_log_drift")
+    watchdog = value.get("memory_watchdog")
+    if not isinstance(watchdog, dict) or set(watchdog) != {"json", "log", "returncode", "status", "pgid"}:
+        raise ValueError("candidate_receipt_memory_watchdog_invalid")
+    for label in ("json", "log"):
+        item = watchdog[label]
+        if not isinstance(item, dict) or set(item) != {"relative_path", "sha256", "byte_size"}:
+            raise ValueError("candidate_receipt_memory_watchdog_invalid")
+        path = (root / item["relative_path"]).resolve()
+        if not path.is_relative_to(root): raise ValueError("candidate_receipt_memory_watchdog_path_escape")
+        normal_file(path, f"candidate_memory_watchdog_{label}")
+        if path.stat().st_size != item["byte_size"] or sha256_file(path) != item["sha256"]:
+            raise ValueError("candidate_receipt_memory_watchdog_drift")
+    report = load_object(root / watchdog["json"]["relative_path"])
+    if (watchdog["returncode"] != 0 or watchdog["status"] != "FORMAL_MEMORY_WATCHDOG_COMPLETED"
+            or report.get("status") != watchdog["status"] or report.get("target_pgid") != watchdog["pgid"]
+            or report.get("surviving_group_processes") != 0 or report.get("breach_exit_code") != 86
+            or report.get("thresholds_kib") != MEMORY_WATCHDOG_THRESHOLDS):
+        raise ValueError("candidate_receipt_memory_watchdog_failed")
     hbm = value.get("candidate_hbm")
     if not isinstance(hbm, dict) or hbm.get("path") != str(expected_hbm.resolve()) or value.get("expected_hbm_path") != str(expected_hbm.resolve()):
         raise ValueError("candidate_receipt_hbm_path_invalid")
@@ -178,7 +198,7 @@ def execute(*, pilot_manifest: Path, pilot_record_index: int, compiler_identity:
     receipt: dict[str, Any] = {"schema_version": 1, "receipt_id": RECEIPT_ID, "status": "BLOCKED", "formal_compile": False, "board_acceptance": False,
         "claim_boundary": "non-formal candidate only; never formal compile, parity, metric, dataset, or board evidence", "started_epoch_ns": time.time_ns(), "ended_epoch_ns": None,
         "candidate_hbm": None, "command": None, "returncode": None, "blockers": [], "raw_stdout_path": "hb_compile.stdout.txt", "raw_stderr_path": "hb_compile.stderr.txt",
-        "raw_stdout_sha256": None, "raw_stderr_sha256": None, "execution": None}
+        "raw_stdout_sha256": None, "raw_stderr_sha256": None, "execution": None, "memory_watchdog": None}
     try:
         raw = _pilot_binding(pilot_manifest, pilot_record_index)
         oracle_contract = load_object(CANONICAL_ORACLE_CONTRACT)
@@ -201,10 +221,18 @@ def execute(*, pilot_manifest: Path, pilot_record_index: int, compiler_identity:
             raise ValueError("candidate_compile_config_binding_invalid")
         command = [str(Path(executable).resolve()), "-c", str(compile_config.resolve())]
         receipt.update({"pilot_raw": raw, "pilot_manifest_sha256":sha256_file(pilot_manifest), "pilot_records_sha256":canonical_sha256(load_object(pilot_manifest)["records"]), "pilot_record_count":25, "pilot_producer_script_path":str(PILOT_PRODUCER.resolve()), "pilot_producer_script_sha256":sha256_file(PILOT_PRODUCER), "candidate_route":calibration["candidate_route"], "candidate_calibration_records_sha256":calibration["records_sha256"], "canonical_compile_contract_sha256": sha256_file(CANONICAL_COMPILE_CONTRACT), "canonical_oracle_contract_sha256": sha256_file(CANONICAL_ORACLE_CONTRACT), "model_path":str(model.resolve()), "model_sha256": sha256_file(model), "vocabulary_path":str(vocabulary.resolve()), "vocabulary_sha256": sha256_file(vocabulary), "compiler_identity_path": str(compiler_identity.resolve()), "compiler_identity_sha256": sha256_file(compiler_identity), "compile_config_path": str(compile_config.resolve()), "compile_config_sha256": sha256_file(compile_config), "expected_hbm_path": str(expected_hbm.resolve()), "command": command})
-        code, stdout, stderr, execution = run_owned_process(command, timeout_seconds=3600)
+        code, stdout, stderr, execution = run_owned_process(command, timeout_seconds=3600,
+                                                             memory_watchdog={"script": MEMORY_WATCHDOG,
+                                                                              "json": output / "memory_watchdog.json",
+                                                                              "log": output / "memory_watchdog.log"},
+                                                             environment={**os.environ, "FORMAL_NATIVE_LINUX_RUNTIME": "1",
+                                                                          "FORMAL_MEMORY_MIN_AVAILABLE_KIB": "3145728",
+                                                                          "FORMAL_MEMORY_MAX_SWAP_USED_KIB": "1048576",
+                                                                          "FORMAL_MEMORY_MAX_GROUP_RSS_KIB": "9437184"})
         (output / receipt["raw_stdout_path"]).write_text(stdout, encoding="utf-8")
         (output / receipt["raw_stderr_path"]).write_text(stderr, encoding="utf-8")
-        receipt.update({"returncode": code, "execution": execution, "raw_stdout_sha256": sha256_file(output / receipt["raw_stdout_path"]), "raw_stderr_sha256": sha256_file(output / receipt["raw_stderr_path"])})
+        receipt.update({"returncode": code, "execution": execution, "memory_watchdog": memory_watchdog_evidence(output, execution), "raw_stdout_sha256": sha256_file(output / receipt["raw_stdout_path"]), "raw_stderr_sha256": sha256_file(output / receipt["raw_stderr_path"])})
+        require_completed_memory_watchdog(output, receipt["memory_watchdog"], "candidate_memory_watchdog")
         if code != 0 or execution.get("timed_out") or execution.get("zero_survivor") is not True:
             raise ValueError("candidate_compile_execution_failed")
         normal_file(expected_hbm, "candidate_hbm")

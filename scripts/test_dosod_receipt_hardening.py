@@ -64,7 +64,8 @@ def test_production_compile_cli_rejects_noncanonical_contract_before_execution(t
         sys.executable, str(ROOT / "scripts" / "execute_dosod_hbm_compile.py"),
         "--contract", str(other), "--preflight-report", str(other),
         "--compile-config", str(other), "--compiler-identity", str(other),
-        "--calibration-manifest", str(other), "--output", str(tmp_path / "out"),
+        "--calibration-manifest", str(other), "--preprocessing-oracle", str(other),
+        "--output", str(tmp_path / "out"),
     ]
     result = subprocess.run(command, capture_output=True, text=True, check=False)
     assert result.returncode == 2

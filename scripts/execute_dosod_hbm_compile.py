@@ -11,6 +11,7 @@ contract, and a matching live compiler identity.  The emitted receipt is a
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib.metadata
 import json
 import os
@@ -29,6 +30,7 @@ except ImportError:  # surfaced as a blocker in the receipt
 
 from hbm_evidence_common import atomic_json, fresh_directory, load_object, normal_file, sha256_file
 from validate_dosod_s100p_hbm_compile_contract import audit_calibration
+from validate_dosod_single_frame_preprocessing_oracle import validate as validate_preprocessing_oracle
 
 
 RECEIPT_ID = "tzcup_s100p_dosod_hbm_compile_receipt_v1"
@@ -57,6 +59,20 @@ def _write_text(path: Path, value: str) -> str:
 def _block(receipt: dict[str, Any], reason: str) -> None:
     if reason not in receipt["blockers"]:
         receipt["blockers"].append(reason)
+
+
+def _oracle_validation_snapshot(path: Path) -> dict[str, str]:
+    """Bind a canonical validation result without knowing its receipt schema."""
+    before_sha = sha256_file(path)
+    validated = validate_preprocessing_oracle(path)
+    after_sha = sha256_file(path)
+    if after_sha != before_sha:
+        raise ValueError("preprocessing_oracle_changed_during_validation")
+    result = json.dumps(validated, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return {
+        "finalizer_sha256": after_sha,
+        "canonical_result_sha256": hashlib.sha256(result).hexdigest(),
+    }
 
 
 def _run_compiler(
@@ -109,20 +125,22 @@ def _run_compiler(
 
 def _validate(
     *, contract_path: Path, preflight_path: Path, config_path: Path,
-    identity_path: Path, calibration_manifest_path: Path, compiler: str,
-) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], Path | None, list[str], dict[str, Any]]:
+    identity_path: Path, calibration_manifest_path: Path,
+    preprocessing_oracle_path: Path, compiler: str,
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], Path | None, list[str], dict[str, Any], dict[str, str]]:
     blockers: list[str] = []
+    oracle_snapshot = {"finalizer_sha256": sha256_file(preprocessing_oracle_path), "canonical_result_sha256": ""}
     contract = load_object(contract_path)
     preflight = load_object(preflight_path)
     identity = load_object(identity_path)
     calibration_manifest = load_object(calibration_manifest_path)
     if yaml is None:
         blockers.append("pyyaml_unavailable")
-        return contract, preflight, identity, None, blockers, {"manifest_sha256": None, "records_sha256": None, "sample_count": 0}
+        return contract, preflight, identity, None, blockers, {"manifest_sha256": None, "records_sha256": None, "sample_count": 0}, oracle_snapshot
     config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
     if not isinstance(config, dict):
         blockers.append("compile_config_not_object")
-        return contract, preflight, identity, None, blockers, {"manifest_sha256": None, "records_sha256": None, "sample_count": 0}
+        return contract, preflight, identity, None, blockers, {"manifest_sha256": None, "records_sha256": None, "sample_count": 0}, oracle_snapshot
     if preflight.get("preflight_pass") is not True or preflight.get("compile_config_emitted") is not True:
         blockers.append("preflight_not_passed")
     if preflight.get("compile_executed") is not False or preflight.get("hbm_status") != "HBM_NOT_PRODUCED":
@@ -133,6 +151,14 @@ def _validate(
         blockers.append("preflight_compile_config_identity_mismatch")
     if preflight.get("calibration_manifest_sha256") != sha256_file(calibration_manifest_path):
         blockers.append("preflight_calibration_manifest_identity_mismatch")
+    try:
+        # The canonical validator owns the finalizer/child-receipt schema.
+        # This consumer binds only the finalizer file it was given.
+        oracle_snapshot = _oracle_validation_snapshot(preprocessing_oracle_path)
+    except Exception as exc:
+        blockers.append(f"preprocessing_oracle_invalid:{type(exc).__name__}")
+    if preflight.get("preprocessing_oracle_sha256") != oracle_snapshot["finalizer_sha256"]:
+        blockers.append("preflight_preprocessing_oracle_sha256_mismatch")
     records = calibration_manifest.get("records")
     if calibration_manifest.get("schema_version") != 1 or calibration_manifest.get("status") != "FROZEN" or not isinstance(records, list):
         blockers.append("calibration_manifest_not_frozen")
@@ -161,7 +187,7 @@ def _validate(
     model_parameters = config.get("model_parameters")
     if not isinstance(model_parameters, dict):
         blockers.append("compile_config_model_parameters_missing")
-        return contract, preflight, identity, None, blockers, calibration_audit
+        return contract, preflight, identity, None, blockers, calibration_audit, oracle_snapshot
     if model_parameters.get("march") != contract.get("compile_recipe", {}).get("march"):
         blockers.append("compile_config_march_mismatch")
     if model_parameters.get("onnx_model") != preflight.get("model_path"):
@@ -171,26 +197,28 @@ def _validate(
     working_dir = model_parameters.get("working_dir")
     if not isinstance(working_dir, str) or not working_dir:
         blockers.append("compile_config_working_dir_missing")
-        return contract, preflight, identity, None, blockers, calibration_audit
+        return contract, preflight, identity, None, blockers, calibration_audit, oracle_snapshot
     expected_output = Path(working_dir) / f"{EXPECTED_PREFIX}.hbm"
     if expected_output.parent.is_symlink() or expected_output.parent.exists():
         blockers.append("compile_working_directory_preexisted")
     calibration_parameters = config.get("calibration_parameters")
     if not isinstance(calibration_parameters, dict) or calibration_parameters.get("cal_data_dir") != str(calibration_manifest_path.parent.resolve()):
         blockers.append("compile_config_calibration_path_mismatch")
-    return contract, preflight, identity, expected_output, blockers, calibration_audit
+    return contract, preflight, identity, expected_output, blockers, calibration_audit, oracle_snapshot
 
 
 def execute_compile(
     *, contract_path: Path, preflight_path: Path, config_path: Path,
-    identity_path: Path, calibration_manifest_path: Path, output: Path, compiler: str = "hb_compile",
+    identity_path: Path, calibration_manifest_path: Path,
+    preprocessing_oracle_path: Path, output: Path, compiler: str = "hb_compile",
     runner: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run,
 ) -> dict[str, Any]:
     """Run the real compiler once; dependency injection is for unit tests only."""
 
     for path, label in ((contract_path, "contract"), (preflight_path, "preflight"),
                         (config_path, "compile_config"), (identity_path, "compiler_identity"),
-                        (calibration_manifest_path, "calibration_manifest")):
+                        (calibration_manifest_path, "calibration_manifest"),
+                        (preprocessing_oracle_path, "preprocessing_oracle")):
         normal_file(path, label)
     fresh_directory(output, "evidence_output")
     started_ns = time.time_ns()
@@ -204,7 +232,7 @@ def execute_compile(
         "command": None,
         "returncode": None,
         "compiler": {"requested": compiler, "resolved": shutil.which(compiler), "package_versions": _package_versions()},
-        "inputs": {"contract": str(contract_path.resolve()), "preflight": str(preflight_path.resolve()), "compile_config": str(config_path.resolve()), "compiler_identity": str(identity_path.resolve()), "calibration_manifest": str(calibration_manifest_path.resolve())},
+        "inputs": {"contract": str(contract_path.resolve()), "preflight": str(preflight_path.resolve()), "compile_config": str(config_path.resolve()), "compiler_identity": str(identity_path.resolve()), "calibration_manifest": str(calibration_manifest_path.resolve()), "preprocessing_oracle_finalizer": {"path": str(preprocessing_oracle_path.resolve()), "sha256": sha256_file(preprocessing_oracle_path)}},
         "evidence_root": str(output.resolve()),
         "output_relative_path": None,
         "output_path": None,
@@ -216,15 +244,17 @@ def execute_compile(
         "raw_stderr_path": "hb_compile.stderr.txt",
         "raw_stdout_sha256": None,
         "raw_stderr_sha256": None,
+        "preprocessing_oracle_validation": {"precompile": None, "postcompile": None},
         "execution": {"deadline_seconds": COMPILE_DEADLINE_SECONDS, "term_grace_seconds": TERM_GRACE_SECONDS,
                       "start_new_session": None, "pgid": None, "timed_out": False, "term_sent": False,
                       "kill_sent": False, "zero_survivor": None, "elapsed_seconds": None},
         "blockers": [],
     }
     try:
-        contract, preflight, identity, expected_hbm, blockers, calibration_audit = _validate(
+        contract, preflight, identity, expected_hbm, blockers, calibration_audit, precompile_oracle = _validate(
             contract_path=contract_path, preflight_path=preflight_path, config_path=config_path,
-            identity_path=identity_path, calibration_manifest_path=calibration_manifest_path, compiler=compiler,
+            identity_path=identity_path, calibration_manifest_path=calibration_manifest_path,
+            preprocessing_oracle_path=preprocessing_oracle_path, compiler=compiler,
         )
         receipt["inputs"].update({
             "contract_sha256": sha256_file(contract_path), "preflight_sha256": sha256_file(preflight_path),
@@ -235,6 +265,7 @@ def execute_compile(
             "model_sha256": contract.get("model", {}).get("sha256"),
         })
         receipt["calibration_reaudit"] = calibration_audit
+        receipt["preprocessing_oracle_validation"]["precompile"] = precompile_oracle
         receipt["compiler_identity_verified"] = identity.get("identity_verified") is True
         for blocker in blockers:
             _block(receipt, blocker)
@@ -261,6 +292,15 @@ def execute_compile(
             except OSError as exc:
                 stdout, stderr = "", f"{type(exc).__name__}:{exc}"
                 _block(receipt, "hb_compile_invocation_failed")
+            try:
+                postcompile_oracle = _oracle_validation_snapshot(preprocessing_oracle_path)
+                receipt["preprocessing_oracle_validation"]["postcompile"] = postcompile_oracle
+                if postcompile_oracle["finalizer_sha256"] != precompile_oracle["finalizer_sha256"]:
+                    _block(receipt, "preprocessing_oracle_sha256_changed_during_compile")
+                if postcompile_oracle["canonical_result_sha256"] != precompile_oracle["canonical_result_sha256"]:
+                    _block(receipt, "preprocessing_oracle_validation_changed_during_compile")
+            except Exception as exc:
+                _block(receipt, f"preprocessing_oracle_postcompile_invalid:{type(exc).__name__}")
             receipt["raw_stdout_sha256"] = _write_text(output / receipt["raw_stdout_path"], stdout)
             receipt["raw_stderr_sha256"] = _write_text(output / receipt["raw_stderr_path"], stderr)
             if receipt["returncode"] != 0:
@@ -294,6 +334,7 @@ def main() -> int:
     parser.add_argument("--compile-config", required=True, type=Path)
     parser.add_argument("--compiler-identity", required=True, type=Path)
     parser.add_argument("--calibration-manifest", required=True, type=Path)
+    parser.add_argument("--preprocessing-oracle", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--compiler", default="hb_compile")
     args = parser.parse_args()
@@ -306,7 +347,8 @@ def main() -> int:
     try:
         receipt = execute_compile(contract_path=args.contract, preflight_path=args.preflight_report,
                                   config_path=args.compile_config, identity_path=args.compiler_identity,
-                                  calibration_manifest_path=args.calibration_manifest, output=args.output,
+                                  calibration_manifest_path=args.calibration_manifest,
+                                  preprocessing_oracle_path=args.preprocessing_oracle, output=args.output,
                                   compiler=args.compiler)
     except Exception as exc:
         print(f"compile_receipt_blocked:{type(exc).__name__}:{exc}", file=sys.stderr)

@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import json
+import sys
+
 import numpy as np
 
+import auto14_onnx_preflight as preflight
 from auto14_onnx_preflight import calibration_inventory, validate_onnx_contract
 
 
@@ -81,3 +85,34 @@ def test_coco80_or_nms_graph_cannot_pass_four_class_contract() -> None:
         "onnx_forbidden_operator_present",
         "onnx_custom_operator_domain_forbidden",
     ]
+
+
+def test_preflight_passes_required_oracle_to_canonical_audit_and_reports_its_sha(tmp_path, monkeypatch, capsys) -> None:
+    oracle = tmp_path / "outer-watchdog-finalizer.json"
+    expected_sha = "a" * 64
+    observed: dict[str, object] = {}
+
+    def audit(*args):
+        observed["oracle"] = args[-1]
+        return {
+            "status": "BLOCKED", "blockers": ["fixture_blocked"],
+            "contract_sha256": "b" * 64, "compile_plan_sha256": None,
+            "compile_plan": {"preprocessing_oracle_sha256": expected_sha},
+        }
+
+    monkeypatch.setattr(preflight, "audit_compile_inputs", audit)
+    monkeypatch.setattr(preflight, "load_json", lambda _path: {
+        "model": {"relative_path": "model.onnx"},
+        "compile_recipe": {"jobs_allowed_range": [1, 1], "march": preflight.FORMAL_MARCH},
+    })
+    monkeypatch.setattr(sys, "argv", [
+        "auto14_onnx_preflight.py", "--model", str(tmp_path / "model.onnx"),
+        "--calibration-dir", str(tmp_path / "calibration"), "--output-dir", str(tmp_path / "out"),
+        "--model-name", preflight.FORMAL_MODEL_NAME, "--artifact-root", str(tmp_path / "assets"),
+        "--upstream-root", str(tmp_path / "upstream"), "--compiler-identity", str(tmp_path / "identity.json"),
+        "--preprocessing-oracle", str(oracle),
+    ])
+    assert preflight.main() == 2
+    report = json.loads(capsys.readouterr().out)
+    assert observed["oracle"] == oracle
+    assert report["preprocessing_oracle_sha256"] == expected_sha

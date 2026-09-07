@@ -114,3 +114,16 @@ def test_handoff_spec_refuses_metadata_only_visibility_claims():
     assert "No evaluator, ground-truth, hidden" in text
     assert "Sensor noise or\ntimestamp-only changes" in text
     assert "does authorize the later protected remote verification/compilation" in text
+
+
+def test_compile_handoff_commands_bind_the_same_preprocessing_oracle_finalizer():
+    text = (ROOT / "docs/public-gazebo-dosod-compile-plan.md").read_text(encoding="utf-8")
+    assert text.count("--preprocessing-oracle <fresh_oracle_finalizer>") == 3
+    assert "run_dosod_single_frame_preprocessing_oracle_supervised.py" in text
+    assert text.count("--candidate-receipt <fresh_candidate_receipt>") == 1
+    assert text.count("--official-capture-receipt <fresh_official_capture_receipt>") == 1
+    assert text.count("--onnx-model .work/formal_perception_assets/dosod/dosod_mlp3x_s_tzcup_rep.onnx") == 1
+    assert text.count("--hrt-model-exec <absolute_verified_oe_hrt_model_exec>") == 1
+    assert "board-equivalent evidence only" in text
+    assert "dosod_single_frame_preprocessing_oracle_supervision_receipt.json" in text
+    assert "raw child under" in text
