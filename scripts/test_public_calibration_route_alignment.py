@@ -45,7 +45,7 @@ def test_mobile_has_one_route_with_fixed_modes_quotas_and_resource_guards() -> N
         'stop_private_group',
         'formal_runtime_cleanup_groups',
         'binding_digest',
-        'binding_drift',
+        'binding_or_git_drift',
         'zero_survivor_check',
         'CANONICAL_PLAN="$(real_regular "$ROOT/config/public_gazebo_dosod_train_scene_plan.json")"',
         'pilot collector and total deadlines must be at least 900 seconds',

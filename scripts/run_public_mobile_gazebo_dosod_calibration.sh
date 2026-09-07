@@ -42,7 +42,8 @@ CANONICAL_PLAN_SHA256="$(sha256sum "$CANONICAL_PLAN" | awk '{print $1}')"
 if [[ "$MODE" == full ]]; then for variable in PUBLIC_GAZEBO_CALIBRATION_REVIEW_RECEIPT PUBLIC_GAZEBO_CALIBRATION_PILOT_MANIFEST PUBLIC_GAZEBO_CALIBRATION_PREPROCESSING_ORACLE; do value="$(real_regular "${!variable}")" || { echo "BLOCKED: full input missing or unsafe: ${!variable}" >&2; exit 2; }; within_root "$value" || { echo "BLOCKED: full input must be inside worktree: $value" >&2; exit 2; }; printf -v "$variable" '%s' "$value"; done; fi
 git -C "$ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo 'BLOCKED: worktree must be a git repository' >&2; exit 2; }
 GIT_STATUS_AT_ADMISSION="$(git -C "$ROOT" status --porcelain=v1)"; [[ -z "$GIT_STATUS_AT_ADMISSION" ]] || { echo 'BLOCKED: worktree must be clean' >&2; exit 2; }
-binding_digest() { local -a bindings=("$ROOT/scripts/run_public_mobile_gazebo_dosod_calibration.sh" "$ROOT/scripts/public_gazebo_dosod_calibration.py" "$ROOT/scripts/public_gazebo_mobile_readiness.sh" "$PUBLIC_GAZEBO_CALIBRATION_PLAN" "$PUBLIC_GAZEBO_CALIBRATION_STAGE1_SETUP" "$PUBLIC_GAZEBO_CALIBRATION_RUNTIME_SETUP" "$PUBLIC_GAZEBO_CALIBRATION_CAMPUS_SETUP"); [[ "$MODE" == full ]] && bindings+=("$PUBLIC_GAZEBO_CALIBRATION_REVIEW_RECEIPT" "$PUBLIC_GAZEBO_CALIBRATION_PILOT_MANIFEST" "$PUBLIC_GAZEBO_CALIBRATION_PREPROCESSING_ORACLE"); sha256sum "${bindings[@]}" | sha256sum | awk '{print $1}'; }
+ADMISSION_GIT_HEAD="$(git -C "$ROOT" rev-parse HEAD)"; ADMISSION_GIT_TREE="$(git -C "$ROOT" rev-parse 'HEAD^{tree}')"
+binding_digest() { local -a bindings=("$ROOT/scripts/run_public_mobile_gazebo_dosod_calibration.sh" "$ROOT/scripts/public_gazebo_dosod_calibration.py" "$ROOT/scripts/public_gazebo_mobile_readiness.sh" "$ROOT/scripts/run_formal_runtime_isolation.sh" "$ROOT/starter_ws/src/sanitation_formal_campus_integration/launch/formal_campus_map_lifecycle.launch.py" "$ROOT/starter_ws/src/sanitation_campus_scenario/config/default_scenario.yaml" "$PUBLIC_GAZEBO_CALIBRATION_PLAN" "$PUBLIC_GAZEBO_CALIBRATION_STAGE1_SETUP" "$PUBLIC_GAZEBO_CALIBRATION_RUNTIME_SETUP" "$PUBLIC_GAZEBO_CALIBRATION_CAMPUS_SETUP"); [[ "$MODE" == full ]] && bindings+=("$PUBLIC_GAZEBO_CALIBRATION_REVIEW_RECEIPT" "$PUBLIC_GAZEBO_CALIBRATION_PILOT_MANIFEST" "$PUBLIC_GAZEBO_CALIBRATION_PREPROCESSING_ORACLE"); sha256sum "${bindings[@]}" | sha256sum | awk '{print $1}'; }
 ADMISSION_BINDING_SHA256="$(binding_digest)"; export ADMISSION_BINDING_SHA256 CANONICAL_PLAN_SHA256
 DEADLINE_EPOCH=$((SECONDS + PUBLIC_GAZEBO_CALIBRATION_TOTAL_TIMEOUT_SEC))
 DEADLINE_PID=""
@@ -160,7 +161,7 @@ def ident(path): return {'path':str(path.relative_to(root)),'sha256':digest(path
 roles={} if not strict else {'plan':Path(os.environ['PUBLIC_GAZEBO_CALIBRATION_PLAN']),'stage1_setup':Path(os.environ['PUBLIC_GAZEBO_CALIBRATION_STAGE1_SETUP']),'runtime_setup':Path(os.environ['PUBLIC_GAZEBO_CALIBRATION_RUNTIME_SETUP']),'campus_setup':Path(os.environ['PUBLIC_GAZEBO_CALIBRATION_CAMPUS_SETUP'])}
 scene_index=p.parent/'scene_runtime_index.json'
 scenes=[] if not regular(scene_index) else json.loads(scene_index.read_text())
-v={'report_id':'tzcup_public_mobile_gazebo_dosod_calibration_runner_v1','status':status,'formal_passed':False,'classification':'NON_FORMAL','exit_code':int(code),'primary_error':error,'zero_survivor_check':zero=='true','mode':mode,'budgets_sec':{'whole_runner':int(os.environ.get('PUBLIC_GAZEBO_CALIBRATION_TOTAL_TIMEOUT_SEC',os.environ['PUBLIC_GAZEBO_CALIBRATION_TIMEOUT_SEC'])),'collector':int(os.environ['PUBLIC_GAZEBO_CALIBRATION_TIMEOUT_SEC']),'scene_generator':60,'readiness':60,'final_validation':120,'term_grace':10},'memory_watchdog_max_group_rss_kib':9437184,'bindings':{'admission_sha256':os.environ.get('ADMISSION_BINDING_SHA256'),'final_sha256':os.environ.get('FINAL_BINDING_SHA256'),'unchanged':os.environ.get('ADMISSION_BINDING_SHA256')==os.environ.get('FINAL_BINDING_SHA256'),'canonical_plan_sha256':os.environ.get('CANONICAL_PLAN_SHA256'),'inputs':{name:ident(path) for name,path in roles.items()}},'git':None if not strict else {'head':__import__('subprocess').check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip(),'tree':__import__('subprocess').check_output(['git','rev-parse','HEAD^{tree}'],cwd=root,text=True).strip()},'preflight':{'pid':int(os.environ.get('PREFLIGHT_PID','0') or 0),'pgid':int(os.environ.get('PREFLIGHT_PGID','0') or 0)},'scene_runtime':scenes}
+v={'report_id':'tzcup_public_mobile_gazebo_dosod_calibration_runner_v1','status':status,'formal_passed':False,'classification':'NON_FORMAL','exit_code':int(code),'primary_error':error,'zero_survivor_check':zero=='true','mode':mode,'budgets_sec':{'whole_runner':int(os.environ.get('PUBLIC_GAZEBO_CALIBRATION_TOTAL_TIMEOUT_SEC',os.environ['PUBLIC_GAZEBO_CALIBRATION_TIMEOUT_SEC'])),'collector':int(os.environ['PUBLIC_GAZEBO_CALIBRATION_TIMEOUT_SEC']),'scene_generator':60,'readiness':60,'final_validation':120,'term_grace':10},'memory_watchdog_max_group_rss_kib':9437184,'bindings':{'admission_sha256':os.environ.get('ADMISSION_BINDING_SHA256'),'final_sha256':os.environ.get('FINAL_BINDING_SHA256'),'unchanged':os.environ.get('ADMISSION_BINDING_SHA256')==os.environ.get('FINAL_BINDING_SHA256'),'canonical_plan_sha256':os.environ.get('CANONICAL_PLAN_SHA256'),'inputs':{name:ident(path) for name,path in roles.items()}},'git':None if not strict else {'admission_head':os.environ.get('ADMISSION_GIT_HEAD'),'admission_tree':os.environ.get('ADMISSION_GIT_TREE'),'admission_clean':os.environ.get('GIT_STATUS_AT_ADMISSION')=='','final_head':os.environ.get('FINAL_GIT_HEAD'),'final_tree':os.environ.get('FINAL_GIT_TREE'),'final_clean':os.environ.get('FINAL_GIT_STATUS')=='','unchanged':os.environ.get('ADMISSION_GIT_HEAD')==os.environ.get('FINAL_GIT_HEAD') and os.environ.get('ADMISSION_GIT_TREE')==os.environ.get('FINAL_GIT_TREE')},'preflight':{'pid':int(os.environ.get('PREFLIGHT_PID','0') or 0),'pgid':int(os.environ.get('PREFLIGHT_PGID','0') or 0)},'scene_runtime':scenes}
 invalid=False
 if status in {'NON_FORMAL_PILOT_CAPTURED','NON_FORMAL_CALIBRATION_FROZEN'}:
  try:
@@ -235,8 +236,16 @@ cleanup() {
   done
   launch_pid=""; operator_pid=""; collector_pid=""; READINESS_PID=""; FINAL_ORACLE_PID=""
   stop_estop_publisher || cleanup_failed=1
+  # The watchdog result is authoritative and must be frozen before receipt
+  # emission, so the receipt and the outer isolation trap use identical rc
+  # precedence: breach 86, unexpected watchdog 125, then original failure.
+  formal_runtime_stop_memory_watchdog || cleanup_failed=1
+  if formal_runtime_memory_watchdog_tripped; then receipt_code="$FORMAL_RUNTIME_MEMORY_BREACH_EXIT_CODE"
+  elif (( FORMAL_RUNTIME_MEMORY_WATCHDOG_RESULT != 0 )); then receipt_code=125; fi
   FINAL_BINDING_SHA256="$(binding_digest)"; export FINAL_BINDING_SHA256 PREFLIGHT_PID PREFLIGHT_PGID
-  [[ "$FINAL_BINDING_SHA256" == "$ADMISSION_BINDING_SHA256" ]] || { cleanup_failed=1; PRIMARY_ERROR=binding_drift; }
+  FINAL_GIT_HEAD="$(git -C "$ROOT" rev-parse HEAD)"; FINAL_GIT_TREE="$(git -C "$ROOT" rev-parse 'HEAD^{tree}')"; FINAL_GIT_STATUS="$(git -C "$ROOT" status --porcelain=v1)"
+  export FINAL_GIT_HEAD FINAL_GIT_TREE FINAL_GIT_STATUS ADMISSION_GIT_HEAD ADMISSION_GIT_TREE GIT_STATUS_AT_ADMISSION
+  [[ "$FINAL_BINDING_SHA256" == "$ADMISSION_BINDING_SHA256" && "$FINAL_GIT_HEAD" == "$ADMISSION_GIT_HEAD" && "$FINAL_GIT_TREE" == "$ADMISSION_GIT_TREE" && "$FINAL_GIT_STATUS" == "$GIT_STATUS_AT_ADMISSION" ]] || { cleanup_failed=1; PRIMARY_ERROR=binding_or_git_drift; }
   if [[ "$survivor" != true || "$cleanup_failed" != 0 ]]; then cleanup_failed=1; state=BLOCKED; receipt_code=125; fi
   write_receipt "$state" "$receipt_code" "$survivor" || cleanup_failed=1
   (( cleanup_failed == 0 ))
@@ -323,9 +332,13 @@ while IFS=$'\t' read -r role scene; do
   esac
   python3 "$ROOT/scripts/public_gazebo_dosod_calibration.py" --scene-plan "$PUBLIC_GAZEBO_CALIBRATION_PLAN" --contract "$ROOT/config/dosod_s100p_hbm_compile_contract.json" --deactivate-scene-selector --scene-selector "$SELECTOR" >"$scene_root/selector_inactive.json"
   if ! stop_verified; then PRIMARY_ERROR=verified_stop_failed; RUNNER_EXIT_CODE=4; exit 4; fi
-  formal_runtime_cleanup_groups "${GZ_PARTITION}" "$operator_pid" "$launch_pid"
+  formal_runtime_cleanup_groups "${GZ_PARTITION}" "$operator_pid" "$launch_pid" || { PRIMARY_ERROR=scene_group_cleanup_failed; RUNNER_EXIT_CODE=125; exit 125; }
   launch_pid=""; operator_pid=""
-  formal_runtime_stop_memory_watchdog || { PRIMARY_ERROR=memory_watchdog_cleanup_failed; RUNNER_EXIT_CODE=125; exit 125; }; WATCHDOG_PID=""
+  # Do not TERM a healthy watcher after its target PGID is gone: wait for its
+  # natural COMPLETED evidence, racing the one absolute deadline.
+  set +e; wait -n -p finished "$WATCHDOG_PID" "$DEADLINE_PID"; watchdog_status=$?; set -e
+  [[ "$finished" == "$WATCHDOG_PID" && "$watchdog_status" == 0 ]] || { RUNNER_EXIT_CODE=124; [[ "$finished" == "$WATCHDOG_PID" ]] && RUNNER_EXIT_CODE=125; exit "$RUNNER_EXIT_CODE"; }
+  formal_runtime_record_memory_watchdog_exit "$WATCHDOG_PID" "$watchdog_status" || { RUNNER_EXIT_CODE=125; exit 125; }; WATCHDOG_PID=""
   record_scene_runtime || { PRIMARY_ERROR=scene_watchdog_evidence_invalid; RUNNER_EXIT_CODE=125; exit 125; }
   if ! stop_estop_publisher; then PRIMARY_ERROR=stop_estop_cleanup_failed; RUNNER_EXIT_CODE=4; exit 4; fi
   scene_operator_started=false; scene_stop_attempted=false; scene_stop_verified=false
