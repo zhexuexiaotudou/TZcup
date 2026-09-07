@@ -58,7 +58,9 @@ def _regular_in_root(root: Path, candidate: Path, label: str) -> Path:
         current /= part
         if current.exists() and current.is_symlink():
             raise ValueError(f"{label} has a symbolic-link ancestor")
-    if not candidate.is_file() or candidate.is_symlink():
+    if candidate.is_symlink():
+        raise ValueError(f"{label} is a symbolic-link")
+    if not candidate.is_file():
         raise ValueError(f"{label} must be a regular non-symlink file")
     return candidate
 
@@ -95,13 +97,19 @@ def _identity(value: os.stat_result) -> tuple[int, int, int, int, int]:
     )
 
 
-def _open_directory(root: Path, parts: tuple[str, ...]) -> int:
+def _open_root_directory(root: Path) -> int:
     flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
-    expected = os.stat(root, follow_symlinks=False)
     descriptor = os.open(root, flags)
+    if not stat.S_ISDIR(os.fstat(descriptor).st_mode):
+        os.close(descriptor)
+        raise ValueError("repository root is not a directory")
+    return descriptor
+
+
+def _open_directory(root_descriptor: int, parts: tuple[str, ...]) -> int:
+    flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+    descriptor = os.dup(root_descriptor)
     try:
-        if _identity(os.fstat(descriptor))[:2] != _identity(expected)[:2]:
-            raise ValueError("repository root changed before secure open")
         for part in parts:
             child = os.open(part, flags, dir_fd=descriptor)
             os.close(descriptor)
@@ -114,21 +122,18 @@ def _open_directory(root: Path, parts: tuple[str, ...]) -> int:
         raise
 
 
-def _open_bound_input(root: Path, path: Path) -> tuple[int, tuple[int, int, int, int, int]]:
+def _open_bound_input(root: Path, root_descriptor: int, path: Path) -> tuple[int, tuple[int, int, int, int, int]]:
     relative = path.relative_to(root)
-    directory = _open_directory(root, relative.parts[:-1])
+    directory = _open_directory(root_descriptor, relative.parts[:-1])
     try:
-        expected = os.stat(relative.name, dir_fd=directory, follow_symlinks=False)
         flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
         descriptor = os.open(relative.name, flags, dir_fd=directory)
     finally:
         os.close(directory)
-    if not stat.S_ISREG(expected.st_mode):
-        raise ValueError("receipt must be a regular file")
     try:
         actual = os.fstat(descriptor)
-        if not stat.S_ISREG(actual.st_mode) or _identity(actual)[:2] != _identity(expected)[:2]:
-            raise ValueError("receipt changed before secure open")
+        if not stat.S_ISREG(actual.st_mode):
+            raise ValueError("receipt must be a regular file")
         return descriptor, _identity(actual)
     except Exception:
         os.close(descriptor)
@@ -154,12 +159,14 @@ def _read_bound_json(descriptor: int, expected: tuple[int, int, int, int, int]) 
     return payload, digest.hexdigest()
 
 
-def _write_fresh_output(root: Path, path: Path, payload: dict[str, Any], *, token: str | None = None) -> None:
+def _write_fresh_output(root: Path, root_descriptor: int, path: Path, payload: dict[str, Any], *, token: str | None = None) -> None:
     """Atomically publish without following a pending link or replacing output."""
 
     relative = path.relative_to(root)
-    directory = _open_directory(root, relative.parts[:-1])
+    directory = _open_directory(root_descriptor, relative.parts[:-1])
     temporary = f".{path.name}.pending.{token or secrets.token_hex(16)}"
+    owned_temporary = False
+    owned_identity: tuple[int, int] | None = None
     try:
         try:
             os.stat(path.name, dir_fd=directory, follow_symlinks=False)
@@ -173,6 +180,7 @@ def _write_fresh_output(root: Path, path: Path, payload: dict[str, Any], *, toke
             0o600,
             dir_fd=directory,
         )
+        owned_temporary = True
         try:
             data = (json.dumps(payload, indent=2, sort_keys=True) + "\n").encode("utf-8")
             written = 0
@@ -180,6 +188,7 @@ def _write_fresh_output(root: Path, path: Path, payload: dict[str, Any], *, toke
                 written += os.write(descriptor, data[written:])
             os.fsync(descriptor)
             expected_file = _identity(os.fstat(descriptor))[:2]
+            owned_identity = expected_file
         finally:
             os.close(descriptor)
         try:
@@ -196,10 +205,13 @@ def _write_fresh_output(root: Path, path: Path, payload: dict[str, Any], *, toke
         if not stat.S_ISREG(committed.st_mode) or _identity(committed)[:2] != expected_file:
             raise ValueError("output commit identity mismatch")
     finally:
-        try:
-            os.unlink(temporary, dir_fd=directory)
-        except FileNotFoundError:
-            pass
+        if owned_temporary:
+            try:
+                current = os.stat(temporary, dir_fd=directory, follow_symlinks=False)
+                if stat.S_ISREG(current.st_mode) and _identity(current)[:2] == owned_identity:
+                    os.unlink(temporary, dir_fd=directory)
+            except FileNotFoundError:
+                pass
         os.close(directory)
 
 
@@ -213,13 +225,17 @@ def main() -> int:
         if not args.repository_root.is_absolute() or args.repository_root.is_symlink():
             raise ValueError("repository root must be absolute and non-symlink")
         root = args.repository_root.resolve(strict=True)
-        receipt_path = _regular_in_root(root, args.receipt, "receipt")
-        output = _output_in_root(root, args.output)
-        descriptor, identity = _open_bound_input(root, receipt_path)
-        receipt, receipt_sha256 = _read_bound_json(descriptor, identity)
-        report = validate_receipt(receipt)
-        report["receipt_sha256"] = receipt_sha256
-        _write_fresh_output(root, output, report)
+        root_descriptor = _open_root_directory(root)
+        try:
+            receipt_path = _regular_in_root(root, args.receipt, "receipt")
+            output = _output_in_root(root, args.output)
+            descriptor, identity = _open_bound_input(root, root_descriptor, receipt_path)
+            receipt, receipt_sha256 = _read_bound_json(descriptor, identity)
+            report = validate_receipt(receipt)
+            report["receipt_sha256"] = receipt_sha256
+            _write_fresh_output(root, root_descriptor, output, report)
+        finally:
+            os.close(root_descriptor)
     except (OSError, UnicodeError, json.JSONDecodeError, ValueError) as exc:
         print(json.dumps({"status": "A20_RECEIPT_STATIC_BLOCKED", "error": str(exc)}, indent=2))
     return 2

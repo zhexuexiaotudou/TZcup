@@ -8,6 +8,7 @@ import a20_release_replay_receipt as receipt_module
 from a20_release_replay_receipt import (
     BLOCKER,
     _open_bound_input,
+    _open_root_directory,
     _output_in_root,
     _read_bound_json,
     _regular_in_root,
@@ -49,7 +50,7 @@ def test_cli_paths_reject_escape_symlink_and_existing_output(tmp_path: Path) -> 
         link.symlink_to(receipt)
     except OSError as exc:  # pragma: no cover - Windows without symlink privilege
         pytest.skip(f"symbolic links unavailable: {exc}")
-    with pytest.raises(ValueError, match="non-symlink"):
+    with pytest.raises(ValueError, match="symbolic-link"):
         _regular_in_root(root, link, "receipt")
     directory = root / "real"
     directory.mkdir()
@@ -70,9 +71,14 @@ def test_secure_output_rejects_pending_symlink_and_commit_race(tmp_path: Path, m
         pending.symlink_to(outside)
     except OSError as exc:  # pragma: no cover - Windows without symlink privilege
         pytest.skip(f"symbolic links unavailable: {exc}")
-    with pytest.raises(FileExistsError):
-        _write_fresh_output(root, output, {"blocked": True}, token="fixed")
+    root_descriptor = _open_root_directory(root)
+    try:
+        with pytest.raises(FileExistsError):
+            _write_fresh_output(root, root_descriptor, output, {"blocked": True}, token="fixed")
+    finally:
+        os.close(root_descriptor)
     assert not outside.exists()
+    assert pending.is_symlink()
     pending.unlink()
 
     real_link = os.link
@@ -82,8 +88,12 @@ def test_secure_output_rejects_pending_symlink_and_commit_race(tmp_path: Path, m
         return real_link(*args, **kwargs)
 
     monkeypatch.setattr(receipt_module.os, "link", create_target_then_link)
-    with pytest.raises(ValueError, match="appeared during commit"):
-        _write_fresh_output(root, output, {"blocked": True}, token="race")
+    root_descriptor = _open_root_directory(root)
+    try:
+        with pytest.raises(ValueError, match="appeared during commit"):
+            _write_fresh_output(root, root_descriptor, output, {"blocked": True}, token="race")
+    finally:
+        os.close(root_descriptor)
     assert output.read_text(encoding="utf-8") == "attacker"
 
 
@@ -91,7 +101,11 @@ def test_secure_output_rejects_pending_symlink_and_commit_race(tmp_path: Path, m
 def test_bound_input_rejects_mutation_after_read(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     receipt = tmp_path / "receipt.json"
     receipt.write_text('{"receipt": "before"}', encoding="utf-8")
-    descriptor, identity = _open_bound_input(tmp_path, receipt)
+    root_descriptor = _open_root_directory(tmp_path)
+    try:
+        descriptor, identity = _open_bound_input(tmp_path, root_descriptor, receipt)
+    finally:
+        os.close(root_descriptor)
     actual_fstat = os.fstat
 
     def mutate_before_fstat(fd: int):
