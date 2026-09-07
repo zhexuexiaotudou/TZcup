@@ -48,7 +48,40 @@ FINAL_RUNTIME_PACKAGES: tuple[str, ...] = (
     "sanitation_safety",
     "sanitation_service_acceptance",
     "sanitation_vehicle_description",
+    # sanitation_coverage launches this server and imports the interfaces below.
+    # BT/navigator/row/demo are deliberately excluded: the formal launch and
+    # package manifest do not select them.
+    "opennav_coverage_msgs",
+    "opennav_coverage",
 )
+
+OPENNAV_COVERAGE_PACKAGES: tuple[str, ...] = (
+    "opennav_coverage_msgs",
+    "opennav_coverage",
+)
+OPENNAV_COVERAGE_SOURCE_DIRECTORY = Path("opennav_coverage")
+OPENNAV_COVERAGE_PROVENANCE_REPORT = Path("opennav_coverage_source_provenance.json")
+OPENNAV_COVERAGE_BASE_COMMIT = "224118081c4c8de651f1db621053ab873b08f13d"
+OPENNAV_COVERAGE_BASE_TREE = "dbb7402ad1e62b621f1e3a5323ab2a3826127298"
+OPENNAV_COVERAGE_PATCH_SHA256 = (
+    "c101a9bfa3078139566fe8577f63a4cc525bde71d8fb3f244fdc2beb846af0b1"
+)
+OPENNAV_COVERAGE_PATCH_PATH = Path(
+    "patches/upstream/opennav_coverage/2241180-test-path-fixed-seed.patch"
+)
+OPENNAV_COVERAGE_PATCHED_COMMIT = "52cf7f6bf5f8c61ebb95055b7d829a2595c16d62"
+OPENNAV_COVERAGE_PATCHED_TREE = "c131854aee6868e12a1748af690eed5d3712d517"
+OPENNAV_COVERAGE_PATCHED_DIFF_SHA256 = (
+    "020ff2ba8b51a0d905a4bac3b1f75c9ac62eb20d9c4dea93ad1ea74c7b4ef592"
+)
+OPENNAV_COVERAGE_BUNDLE_SHA256 = (
+    "a6b70fdc3e50a86118d3263fb05042c4e20ea294675bff17b53417c9c6309629"
+)
+
+FIELDS2COVER_DEBIAN_PACKAGE = "ros-jazzy-fields2cover"
+FIELDS2COVER_PREFIX = Path("/opt/ros/jazzy")
+FIELDS2COVER_LIBRARY = "libFields2Cover.so"
+FIELDS2COVER_SYSTEM_BINDING_REPORT = Path("fields2cover_system_binding.json")
 
 GAZEBO_PLUGIN_LIBRARIES: tuple[str, ...] = (
     "libA300DrivetrainPlantSystem.so",
@@ -510,6 +543,191 @@ def _inventory(files: Iterable[Path], base: Path) -> dict[str, dict[str, Any]]:
     return rows
 
 
+def _package_source_root(runtime_ws: Path, package: str) -> Path:
+    """Return the frozen source root for one selected package.
+
+    Project packages remain direct children of ``src``.  OpenNav is one
+    verified upstream checkout which legitimately contains several ROS
+    packages, so keeping that checkout nested prevents a synthetic copy of
+    upstream source from masquerading as project-owned source.
+    """
+
+    if package in OPENNAV_COVERAGE_PACKAGES:
+        return runtime_ws / "src" / OPENNAV_COVERAGE_SOURCE_DIRECTORY / package
+    return runtime_ws / "src" / package
+
+
+def _package_inventory_key(package: str, source: Path, runtime_ws: Path) -> str:
+    relative = source.relative_to(runtime_ws / "src")
+    if package in OPENNAV_COVERAGE_PACKAGES:
+        return (Path("upstream") / relative).as_posix()
+    return (Path("starter_ws/src") / relative).as_posix()
+
+
+def _opennav_coverage_provenance_identity(runtime_ws: Path) -> dict[str, Any]:
+    report_path = runtime_ws / OPENNAV_COVERAGE_PROVENANCE_REPORT
+    _assert_regular(report_path, "OpenNav Coverage source provenance report")
+    report = _read_json(report_path)
+    expected = {
+        "schema_version": 1,
+        "repository": "opennav_coverage",
+        "base_commit": OPENNAV_COVERAGE_BASE_COMMIT,
+        "base_tree": OPENNAV_COVERAGE_BASE_TREE,
+        "patch_sha256": OPENNAV_COVERAGE_PATCH_SHA256,
+        "patched_commit": OPENNAV_COVERAGE_PATCHED_COMMIT,
+        "patched_tree": OPENNAV_COVERAGE_PATCHED_TREE,
+        "patched_diff_sha256": OPENNAV_COVERAGE_PATCHED_DIFF_SHA256,
+        "bundle_sha256": OPENNAV_COVERAGE_BUNDLE_SHA256,
+        "working_tree_clean": True,
+    }
+    for key, value in expected.items():
+        if report.get(key) != value:
+            raise ClosureError(
+                "OpenNav Coverage provenance drifted: "
+                f"{key}={report.get(key)!r}, expected {value!r}"
+            )
+    source_root = runtime_ws / "src" / OPENNAV_COVERAGE_SOURCE_DIRECTORY
+    if source_root.is_symlink() or not source_root.is_dir():
+        raise ClosureError("frozen OpenNav Coverage source checkout is missing or linked")
+    head = _identity_command(
+        ["git", "-C", str(source_root), "rev-parse", "HEAD"],
+        "frozen OpenNav Coverage patched commit",
+    )
+    tree = _identity_command(
+        ["git", "-C", str(source_root), "rev-parse", "HEAD^{tree}"],
+        "frozen OpenNav Coverage patched tree",
+    )
+    clean = _identity_command(
+        ["git", "-C", str(source_root), "status", "--porcelain"],
+        "frozen OpenNav Coverage working tree",
+    )
+    if head != OPENNAV_COVERAGE_PATCHED_COMMIT or tree != OPENNAV_COVERAGE_PATCHED_TREE:
+        raise ClosureError("frozen OpenNav Coverage checkout does not match patched identity")
+    if clean:
+        raise ClosureError("frozen OpenNav Coverage checkout is not clean")
+    return {
+        "report": OPENNAV_COVERAGE_PROVENANCE_REPORT.as_posix(),
+        "report_sha256": _sha256(report_path),
+        "source_directory": (Path("src") / OPENNAV_COVERAGE_SOURCE_DIRECTORY).as_posix(),
+        **expected,
+    }
+
+
+def _fields2cover_system_identity() -> dict[str, Any]:
+    """Bind the system CMake config and headers without copying system libraries."""
+
+    prefix = FIELDS2COVER_PREFIX
+    config_candidates = sorted(prefix.glob("lib/*/cmake/Fields2Cover/Fields2CoverConfig.cmake"))
+    if len(config_candidates) != 1:
+        raise ClosureError(
+            "Fields2Cover must expose exactly one system CMake Config: "
+            f"{[str(path) for path in config_candidates]}"
+        )
+    config = config_candidates[0]
+    _assert_regular(config, "Fields2Cover system CMake Config")
+    target_files = sorted(config.parent.glob("Fields2CoverTargets*.cmake"))
+    if not target_files:
+        raise ClosureError("Fields2Cover CMake Config has no target definition")
+    for target in target_files:
+        _assert_regular(target, "Fields2Cover CMake target definition")
+    if not any(FIELDS2COVER_LIBRARY in target.read_text(encoding="utf-8") for target in target_files):
+        raise ClosureError("Fields2Cover CMake targets do not reference the canonical library")
+    target_inventory = _inventory(target_files, prefix)
+    include_directory = prefix / "include/fields2cover"
+    headers = _regular_files(include_directory, "Fields2Cover system headers")
+    header_inventory = _inventory(headers, prefix)
+    library_candidates = sorted(prefix.glob(f"lib/*/{FIELDS2COVER_LIBRARY}"))
+    if len(library_candidates) != 1:
+        raise ClosureError(
+            "Fields2Cover must expose exactly one declared system library: "
+            f"{[str(path) for path in library_candidates]}"
+        )
+    declared_library = library_candidates[0]
+    try:
+        resolved_library = declared_library.resolve(strict=True)
+        resolved_library.relative_to(prefix.resolve())
+    except (OSError, ValueError) as exc:
+        raise ClosureError("Fields2Cover system library escapes its ROS prefix") from exc
+    _assert_regular(resolved_library, "Fields2Cover resolved system library")
+    package_output = _identity_command(
+        [
+            "dpkg-query",
+            "-W",
+            "-f=${db:Status-Abbrev}\\t${binary:Package}\\t${Version}\\t${Architecture}\\n",
+            FIELDS2COVER_DEBIAN_PACKAGE,
+        ],
+        "Fields2Cover Debian package identity",
+    )
+    rows = [row for row in package_output.splitlines() if row.strip()]
+    if len(rows) != 1:
+        raise ClosureError("Fields2Cover Debian package identity is ambiguous")
+    fields = rows[0].split("\t")
+    if len(fields) != 4:
+        raise ClosureError("Fields2Cover Debian package identity has invalid fields")
+    status, binary_package, version, architecture = (field.strip() for field in fields)
+    dpkg_architecture = _identity_command(
+        ["dpkg", "--print-architecture"], "host Debian architecture"
+    )
+    if (
+        not status.startswith("ii")
+        or binary_package.split(":", 1)[0] != FIELDS2COVER_DEBIAN_PACKAGE
+        or not version
+        or not architecture
+        or architecture != dpkg_architecture
+    ):
+        raise ClosureError("Fields2Cover Debian package is not installed as expected")
+    for path, label in (
+        (config, "CMake Config"),
+        (include_directory, "header directory"),
+        (declared_library, "declared library"),
+        (resolved_library, "resolved library"),
+    ):
+        owner = _identity_command(
+            ["dpkg-query", "-S", str(path)], f"Fields2Cover {label} ownership"
+        )
+        owners = {line.rsplit(": ", 1)[0].split(":", 1)[0] for line in owner.splitlines() if ": " in line}
+        if owners != {FIELDS2COVER_DEBIAN_PACKAGE}:
+            raise ClosureError(f"Fields2Cover {label} has unexpected Debian ownership: {sorted(owners)}")
+    return {
+        "debian_package": FIELDS2COVER_DEBIAN_PACKAGE,
+        "debian_status": status,
+        "debian_binary_package": binary_package,
+        "debian_version": version,
+        "debian_architecture": architecture,
+        "dpkg_architecture": dpkg_architecture,
+        "cmake_config": {
+            "path": str(config),
+            "sha256": _sha256(config),
+            "size_bytes": config.stat().st_size,
+        },
+        "cmake_targets": target_inventory,
+        "cmake_targets_sha256": _json_digest(target_inventory),
+        "headers": header_inventory,
+        "headers_sha256": _json_digest(header_inventory),
+        "library": {
+            "declared_path": str(declared_library),
+            "resolved_path": str(resolved_library),
+            "sha256": _sha256(resolved_library),
+            "size_bytes": resolved_library.stat().st_size,
+        },
+        "libraries_copied_into_runtime": False,
+    }
+
+
+def _fields2cover_system_runtime_binding(runtime_ws: Path) -> dict[str, Any]:
+    report_path = runtime_ws / FIELDS2COVER_SYSTEM_BINDING_REPORT
+    _assert_regular(report_path, "Fields2Cover system binding report")
+    recorded = _read_json(report_path)
+    current = _fields2cover_system_identity()
+    if recorded != current:
+        raise ClosureError("Fields2Cover system binding drifted after formal build")
+    return {
+        **current,
+        "binding_report": FIELDS2COVER_SYSTEM_BINDING_REPORT.as_posix(),
+        "binding_report_sha256": _sha256(report_path),
+    }
+
+
 def _source_inventory(
     repository_root: Path, packages: Sequence[str]
 ) -> dict[str, dict[str, Any]]:
@@ -517,8 +735,13 @@ def _source_inventory(
         repository_root / "scripts",
         repository_root / "config/high_fidelity_vehicle",
         repository_root / "patches/upstream/gz_transport13",
+        repository_root / OPENNAV_COVERAGE_PATCH_PATH.parent,
     ]
-    roots.extend(repository_root / "starter_ws/src" / package for package in packages)
+    roots.extend(
+        repository_root / "starter_ws/src" / package
+        for package in packages
+        if package not in OPENNAV_COVERAGE_PACKAGES
+    )
     files: list[Path] = []
     for root in roots:
         files.extend(_regular_files(root, "final runtime source closure"))
@@ -532,6 +755,10 @@ def _source_inventory(
             "required final runtime source closure is incomplete: "
             + ", ".join(missing)
         )
+    patch = repository_root / OPENNAV_COVERAGE_PATCH_PATH
+    _assert_regular(patch, "OpenNav Coverage deterministic patch")
+    if _sha256(patch) != OPENNAV_COVERAGE_PATCH_SHA256:
+        raise ClosureError("OpenNav Coverage deterministic patch hash drifted")
     return inventory
 
 
@@ -543,6 +770,14 @@ def _frozen_source_inventory(
     repository_files: list[Path] = []
     frozen_files: list[Path] = []
     for package in packages:
+        if package in OPENNAV_COVERAGE_PACKAGES:
+            frozen_files.extend(
+                _regular_files(
+                    _package_source_root(runtime_ws, package),
+                    f"frozen upstream source package {package}",
+                )
+            )
+            continue
         repository_files.extend(
             _regular_files(
                 repository_source_root / package,
@@ -551,13 +786,18 @@ def _frozen_source_inventory(
         )
         frozen_files.extend(
             _regular_files(
-                frozen_source_root / package,
+                _package_source_root(runtime_ws, package),
                 f"frozen source package {package}",
             )
         )
     repository_inventory = _inventory(repository_files, repository_source_root)
     frozen_inventory = _inventory(frozen_files, frozen_source_root)
-    if frozen_inventory != repository_inventory:
+    project_frozen_inventory = {
+        key: value
+        for key, value in frozen_inventory.items()
+        if not key.startswith(f"{OPENNAV_COVERAGE_SOURCE_DIRECTORY.as_posix()}/")
+    }
+    if project_frozen_inventory != repository_inventory:
         raise ClosureError(
             "frozen runtime src differs from repository starter_ws/src"
         )
@@ -911,7 +1151,7 @@ def _build_markers(
 ) -> dict[str, dict[str, Any]]:
     rows: dict[str, dict[str, Any]] = {}
     for package in packages:
-        source_root = runtime_ws / "src" / package
+        source_root = _package_source_root(runtime_ws, package)
         source_files = _regular_files(source_root, f"frozen source package {package}")
         latest_source_ns = max(path.stat().st_mtime_ns for path in source_files)
         marker = runtime_ws / "build" / package / "colcon_build.rc"
@@ -971,9 +1211,7 @@ def _source_install_bindings(
             raise ClosureError(
                 f"installed runtime file is stale for {package}: {source} != {installed}"
             )
-        key = (
-            Path("starter_ws/src") / source.relative_to(frozen_source_root)
-        ).as_posix()
+        key = _package_inventory_key(package, source, runtime_ws)
         bindings[key] = {
             "package": package,
             "installed": installed.relative_to(install_root).as_posix(),
@@ -981,7 +1219,7 @@ def _source_install_bindings(
         }
 
     for package in packages:
-        source_package = frozen_source_root / package
+        source_package = _package_source_root(runtime_ws, package)
         install_share = install_root / "share" / package
         bind(package, source_package / "package.xml", install_share / "package.xml")
         for directory_name in SOURCE_SHARE_DIRECTORIES:
@@ -1216,6 +1454,7 @@ def capture_closure(
     frozen_source = _frozen_source_inventory(
         repository_root, runtime_ws, package_rows
     )
+    opennav_coverage = _opennav_coverage_provenance_identity(runtime_ws)
     typed_cleaning_telemetry_source = {
         path: source[path] for path in TYPED_CLEANING_TELEMETRY_SOURCE_PATHS
     }
@@ -1239,6 +1478,7 @@ def capture_closure(
     )
     windows_cold_start_evidence = _windows_cold_start_evidence_identity(runtime_ws)
     ros_gz_image_system_runtime = _ros_gz_image_system_identity()
+    fields2cover_system_runtime = _fields2cover_system_runtime_binding(runtime_ws)
     nvidia_egl_runtime = _nvidia_egl_runtime_identity(runtime_ws)
     return {
         "repository_root": str(repository_root),
@@ -1252,6 +1492,8 @@ def capture_closure(
         "frozen_source_root": str((runtime_ws / "src").resolve()),
         "frozen_source_inventory": frozen_source,
         "frozen_source_inventory_sha256": _json_digest(frozen_source),
+        "opennav_coverage": opennav_coverage,
+        "opennav_coverage_sha256": _json_digest(opennav_coverage),
         "typed_cleaning_telemetry_source": typed_cleaning_telemetry_source,
         "typed_cleaning_telemetry_source_sha256": _json_digest(
             typed_cleaning_telemetry_source
@@ -1284,6 +1526,10 @@ def capture_closure(
         "ros_gz_image_system_runtime_sha256": _json_digest(
             ros_gz_image_system_runtime
         ),
+        "fields2cover_system_runtime": fields2cover_system_runtime,
+        "fields2cover_system_runtime_sha256": _json_digest(
+            fields2cover_system_runtime
+        ),
         "nvidia_egl_runtime": nvidia_egl_runtime,
         "nvidia_egl_runtime_sha256": _json_digest(nvidia_egl_runtime),
     }
@@ -1307,7 +1553,7 @@ def record_manifest(
     )
     recorded_ns = time.time_ns()
     manifest = {
-        "schema_version": 7,
+        "schema_version": 8,
         "kind": "tzcup_formal_final_runtime_closure",
         "runtime_contract_revision": FORMAL_RUNTIME_CONTRACT_REVISION,
         "status": "FORMAL_FINAL_RUNTIME_CLOSURE_FROZEN",
@@ -1330,7 +1576,7 @@ def verify_manifest(
     _assert_regular(manifest_path, "final runtime closure manifest")
     manifest = _read_json(manifest_path)
     if (
-        manifest.get("schema_version") != 7
+        manifest.get("schema_version") != 8
         or manifest.get("kind") != "tzcup_formal_final_runtime_closure"
         or manifest.get("status") != "FORMAL_FINAL_RUNTIME_CLOSURE_FROZEN"
     ):
@@ -1376,6 +1622,12 @@ def verify_manifest(
         "frozen_source_file_count": len(stored["frozen_source_inventory"]),
         "frozen_source_inventory_sha256": stored[
             "frozen_source_inventory_sha256"
+        ],
+        "opennav_coverage_patched_commit": stored["opennav_coverage"][
+            "patched_commit"
+        ],
+        "opennav_coverage_bundle_sha256": stored["opennav_coverage"][
+            "bundle_sha256"
         ],
         "typed_cleaning_telemetry_source_count": len(
             stored["typed_cleaning_telemetry_source"]
@@ -1445,6 +1697,12 @@ def verify_manifest(
         "ros_gz_image_debian_version": stored[
             "ros_gz_image_system_runtime"
         ]["debian_version"],
+        "fields2cover_debian_version": stored["fields2cover_system_runtime"][
+            "debian_version"
+        ],
+        "fields2cover_headers_sha256": stored["fields2cover_system_runtime"][
+            "headers_sha256"
+        ],
         "nvidia_egl_runtime_bound": stored["nvidia_egl_runtime"]["bound"],
         "nvidia_egl_runtime": stored["nvidia_egl_runtime"],
     }
@@ -1500,6 +1758,8 @@ def build_parser() -> argparse.ArgumentParser:
     recorded.add_argument("--repository-root", type=Path, required=True)
     recorded.add_argument("--install-root", type=Path, required=True)
     recorded.add_argument("--manifest", type=Path, required=True)
+    fields2cover = subparsers.add_parser("fields2cover-system")
+    fields2cover.add_argument("--output", type=Path, required=True)
     return parser
 
 
@@ -1522,12 +1782,15 @@ def main() -> int:
                 args.perception_artifacts,
                 args.onnx_pythonpath,
             )
-        else:
+        elif args.command == "verify-recorded":
             value = verify_recorded_manifest(
                 args.manifest,
                 args.repository_root,
                 args.install_root,
             )
+        else:
+            value = _fields2cover_system_identity()
+            _atomic_json(args.output, value)
     except (ClosureError, OSError, ValueError) as exc:
         print(json.dumps({"status": "FORMAL_FINAL_RUNTIME_CLOSURE_BLOCKED", "error": str(exc)}, indent=2))
         return 2

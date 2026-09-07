@@ -10,10 +10,56 @@ from pathlib import Path
 import pytest
 
 import formal_final_runtime_closure as closure
+import materialize_formal_opennav_source as materializer
 
 
 _REAL_ROS_GZ_IMAGE_SYSTEM_IDENTITY = closure._ros_gz_image_system_identity
 _REAL_NVIDIA_EGL_RUNTIME_IDENTITY = closure._nvidia_egl_runtime_identity
+_REAL_FIELDS2COVER_SYSTEM_IDENTITY = closure._fields2cover_system_identity
+
+
+@pytest.fixture(autouse=True)
+def _fake_opennav_coverage_provenance(monkeypatch):
+    identity = {
+        "report": closure.OPENNAV_COVERAGE_PROVENANCE_REPORT.as_posix(),
+        "report_sha256": "6" * 64,
+        "source_directory": "src/opennav_coverage",
+        "schema_version": 1,
+        "repository": "opennav_coverage",
+        "base_commit": closure.OPENNAV_COVERAGE_BASE_COMMIT,
+        "base_tree": closure.OPENNAV_COVERAGE_BASE_TREE,
+        "patch_sha256": closure.OPENNAV_COVERAGE_PATCH_SHA256,
+        "patched_commit": closure.OPENNAV_COVERAGE_PATCHED_COMMIT,
+        "patched_tree": closure.OPENNAV_COVERAGE_PATCHED_TREE,
+        "patched_diff_sha256": closure.OPENNAV_COVERAGE_PATCHED_DIFF_SHA256,
+        "bundle_sha256": closure.OPENNAV_COVERAGE_BUNDLE_SHA256,
+        "working_tree_clean": True,
+    }
+    monkeypatch.setattr(
+        closure, "_opennav_coverage_provenance_identity", lambda runtime: dict(identity)
+    )
+    return identity
+
+
+@pytest.fixture(autouse=True)
+def _fake_fields2cover_system_identity(monkeypatch):
+    identity = {
+        "debian_package": closure.FIELDS2COVER_DEBIAN_PACKAGE,
+        "debian_status": "ii",
+        "debian_binary_package": closure.FIELDS2COVER_DEBIAN_PACKAGE,
+        "debian_version": "2.0.0-1noble",
+        "debian_architecture": "amd64",
+        "cmake_config": {"path": "/opt/ros/jazzy/lib/test/cmake/Fields2Cover/Fields2CoverConfig.cmake", "sha256": "7" * 64, "size_bytes": 1},
+        "headers": {"include/fields2cover/fake.hpp": {"sha256": "8" * 64, "size_bytes": 1}},
+        "headers_sha256": "9" * 64,
+        "cmake_targets": {"lib/test/cmake/Fields2Cover/Fields2CoverTargets.cmake": {"sha256": "a" * 64, "size_bytes": 1}},
+        "cmake_targets_sha256": "b" * 64,
+        "library": {"declared_path": "/opt/ros/jazzy/lib/test/libFields2Cover.so", "resolved_path": "/opt/ros/jazzy/lib/test/libFields2Cover.so.2.0.0", "sha256": "c" * 64, "size_bytes": 1},
+        "dpkg_architecture": "amd64",
+        "libraries_copied_into_runtime": False,
+    }
+    monkeypatch.setattr(closure, "_fields2cover_system_identity", lambda: dict(identity))
+    return identity
 
 
 @pytest.fixture(autouse=True)
@@ -181,6 +227,12 @@ def _fake_closure(tmp_path: Path) -> tuple[Path, Path, Path, Path, Path]:
         _write(repository / relative, f"frozen typed source: {relative}\n")
     for relative in closure.GZ_TRANSPORT13_VENDOR_SOURCE_PATHS:
         _write(repository / relative, f"frozen vendor source: {relative}\n")
+    _write(
+        repository / closure.OPENNAV_COVERAGE_PATCH_PATH,
+        (
+            Path(__file__).resolve().parents[1] / closure.OPENNAV_COVERAGE_PATCH_PATH
+        ).read_bytes(),
+    )
     vendor_manifest_path = repository / "patches/upstream/gz_transport13/manifest.json"
     vendor_patch_path = (
         repository
@@ -225,8 +277,13 @@ def _fake_closure(tmp_path: Path) -> tuple[Path, Path, Path, Path, Path]:
         ).read_bytes(),
     )
     for package in closure.FINAL_RUNTIME_PACKAGES:
+        source_root = (
+            repository / "test_upstream" / package
+            if package in closure.OPENNAV_COVERAGE_PACKAGES
+            else repository / "starter_ws/src" / package
+        )
         source_xml = _write(
-            repository / "starter_ws/src" / package / "package.xml",
+            source_root / "package.xml",
             f"<package><name>{package}</name></package>\n",
         )
         _write(
@@ -238,6 +295,21 @@ def _fake_closure(tmp_path: Path) -> tuple[Path, Path, Path, Path, Path]:
         marker_ns = source_xml.stat().st_mtime_ns + 10_000_000
         os.utime(marker, ns=(marker_ns, marker_ns))
     shutil.copytree(repository / "starter_ws/src", runtime / "src")
+    for package in closure.OPENNAV_COVERAGE_PACKAGES:
+        source = repository / "test_upstream" / package / "package.xml"
+        _write(
+            runtime / "src/opennav_coverage" / package / "package.xml",
+            source.read_bytes(),
+        )
+        marker = runtime / "build" / package / "colcon_build.rc"
+        marker_ns = (
+            runtime / "src/opennav_coverage" / package / "package.xml"
+        ).stat().st_mtime_ns + 10_000_000
+        os.utime(marker, ns=(marker_ns, marker_ns))
+    _write(
+        runtime / closure.FIELDS2COVER_SYSTEM_BINDING_REPORT,
+        json.dumps(closure._fields2cover_system_identity()),
+    )
     _write(runtime / closure.INSTALL_SYMLINK_REPORT, "")
     for plugin in closure.GAZEBO_PLUGIN_LIBRARIES:
         _write(install / "lib" / plugin, f"binary:{plugin}".encode())
@@ -521,10 +593,44 @@ def test_nvidia_egl_runtime_identity_rejects_empty_canonical_library(
         _REAL_NVIDIA_EGL_RUNTIME_IDENTITY(runtime)
 
 
+def test_fields2cover_binding_rejects_library_drift(tmp_path: Path, monkeypatch) -> None:
+    prefix = tmp_path / "opt/ros/jazzy"
+    config = _write(
+        prefix / "lib/test/cmake/Fields2Cover/Fields2CoverConfig.cmake", "include targets\n"
+    )
+    _write(
+        config.parent / "Fields2CoverTargets.cmake",
+        "IMPORTED_LOCATION libFields2Cover.so\n",
+    )
+    _write(prefix / "include/fields2cover/fake.hpp", "#pragma once\n")
+    library = _write(prefix / "lib/test/libFields2Cover.so", b"before")
+    runtime = tmp_path / "runtime"
+
+    def identity_command(arguments, label):
+        del label
+        if arguments == ["dpkg", "--print-architecture"]:
+            return "amd64"
+        if "-W" in arguments:
+            return "ii \tros-jazzy-fields2cover\t2.0.0-1noble\tamd64"
+        if "-S" in arguments:
+            return f"ros-jazzy-fields2cover: {arguments[-1]}"
+        raise AssertionError(arguments)
+
+    monkeypatch.setattr(closure, "FIELDS2COVER_PREFIX", prefix)
+    monkeypatch.setattr(closure, "_identity_command", identity_command)
+    identity = _REAL_FIELDS2COVER_SYSTEM_IDENTITY()
+    assert identity["library"]["sha256"] == closure._sha256(library)
+    _write(runtime / closure.FIELDS2COVER_SYSTEM_BINDING_REPORT, json.dumps(identity))
+    library.write_bytes(b"after")
+
+    with pytest.raises(closure.ClosureError, match="Fields2Cover system binding drifted"):
+        closure._fields2cover_system_runtime_binding(runtime)
+
+
 def test_record_and_verify_complete_non_symlink_merged_closure(tmp_path: Path) -> None:
     repository, runtime, models, onnx, manifest = _fake_closure(tmp_path)
     recorded = closure.record_manifest(repository, runtime, models, onnx, manifest)
-    assert recorded["schema_version"] == 7
+    assert recorded["schema_version"] == 8
     assert (
         recorded["runtime_contract_revision"]
         == "gripper_effort_mimic_nvidia_egl_runtime_v1"
@@ -536,7 +642,7 @@ def test_record_and_verify_complete_non_symlink_merged_closure(tmp_path: Path) -
     assert recorded["closure"]["merged_overlay"]["mode"] == "merged_copy_install"
     verified = closure.verify_manifest(manifest, repository, runtime, models, onnx)
     assert verified["passed"] is True
-    assert verified["runtime_package_count"] == 16
+    assert verified["runtime_package_count"] == 18
     assert verified["gazebo_plugin_count"] == 12
     assert "libDryBinMonitorSystem.so" in recorded["closure"]["gazebo_plugins"]
     assert recorded["closure"]["gazebo_plugins"]["libDryBinMonitorSystem.so"]["sha256"] == closure._sha256(
@@ -830,7 +936,7 @@ def test_runtime_package_set_is_closed_over_internal_exec_dependencies() -> None
     packages = set(closure.FINAL_RUNTIME_PACKAGES)
     missing = set()
     dependency_tags = {"depend", "exec_depend", "build_depend", "build_export_depend"}
-    for package in packages:
+    for package in packages - set(closure.OPENNAV_COVERAGE_PACKAGES):
         root = ET.parse(
             repository / "starter_ws/src" / package / "package.xml"
         ).getroot()
@@ -840,6 +946,23 @@ def test_runtime_package_set_is_closed_over_internal_exec_dependencies() -> None
                 if dependency not in packages:
                     missing.add((package, dependency))
     assert missing == set()
+
+
+def test_opennav_materializer_rejects_bad_bundle_bytes_before_clone(tmp_path: Path) -> None:
+    bundle = _write(tmp_path / "bad.bundle", b"not a git bundle")
+    with pytest.raises(materializer.MaterializeError, match="SHA-256"):
+        materializer.materialize(
+            bundle, tmp_path / "fresh/src/opennav_coverage", tmp_path / "report.json"
+        )
+
+
+def test_opennav_materializer_rejects_stale_destination_before_git(tmp_path: Path, monkeypatch) -> None:
+    bundle = _write(tmp_path / "pinned.bundle", b"fixture")
+    destination = tmp_path / "runtime/src/opennav_coverage"
+    destination.mkdir(parents=True)
+    monkeypatch.setattr(materializer, "_sha256", lambda path: materializer.BUNDLE_SHA256)
+    with pytest.raises(materializer.MaterializeError, match="not fresh"):
+        materializer.materialize(bundle, destination, tmp_path / "report.json")
 
 
 def test_final_runtime_builder_materializes_all_preflight_inputs() -> None:
