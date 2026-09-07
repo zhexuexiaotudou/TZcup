@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "contract_id": "tzcup_a20_release_replay_receipt_v1",
+  "minimum_distinct_product_replay_bags": 5,
+  "required_input_hashes": ["source", "model", "config", "dataset", "dependency"],
+  "required_identities": {
+    "formal_session_report_id": "tzcup_formal_final_acceptance_session_v1",
+    "formal_session_status": "FORMAL_FINAL_ACCEPTANCE_SESSION_COMPLETE",
+    "runtime_closure_status": "FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED",
+    "rollback_status": "ROLLBACK_EXERCISE_VERIFIED"
+  },
+  "claim_boundary": "A static receipt validates only supplied record consistency. It must not claim release artifact existence, runtime execution, or product acceptance."
+}

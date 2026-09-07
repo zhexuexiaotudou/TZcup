@@ -59,7 +59,8 @@ def test_crosswalk_keeps_external_and_historical_claims_fail_closed() -> None:
     assert by_id["A17"]["state"] == "BLOCKED"
     assert by_id["A18"]["state"] == "BLOCKED_EXTERNAL_INPUT_AND_ARTIFACTS"
     assert by_id["A19"]["state"] == "CONTRACT_MAPPING_OPEN"
-    assert by_id["A20"]["state"] == "CONTRACT_MAPPING_OPEN"
+    assert by_id["A20"]["state"] == "NOT_RUN_CURRENT_SNAPSHOT"
     assert by_id["A20"]["evidence_gates"] == []
+    assert by_id["A20"]["receipt_validator"] == "scripts/a20_release_replay_receipt.py"
     assert by_id["A21"]["state"] == "BLOCKED_EXTERNAL_INPUT_AND_ARTIFACTS"
     assert by_id["A21"]["evidence_gates"] == ["s100_live_runtime"]

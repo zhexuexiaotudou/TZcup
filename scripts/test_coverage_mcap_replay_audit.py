@@ -1,4 +1,8 @@
-from coverage_mcap_replay_audit import REQUIRED_TOPICS, summarize_replay
+from coverage_mcap_replay_audit import (
+    REQUIRED_TOPICS,
+    summarize_replay,
+    validate_product_replay_reports,
+)
 
 
 def test_replay_requires_topics_timeline_brush_transitions_and_real_play():
@@ -30,3 +34,17 @@ def test_replay_fails_when_ros2_bag_play_did_not_complete():
 
     assert report["gates"]["ros2_bag_play_succeeded"] is False
     assert report["pass"] is False
+
+
+def test_product_replay_receipts_require_five_distinct_passing_bags():
+    audit = {"schema": "tzcup.coverage_mcap_replay.v1", "pass": True, "gates": {"play": True}}
+    replays = [
+        {"bag_sha256": f"{index:x}" * 64, "product_replay": True, "audit": audit}
+        for index in range(5)
+    ]
+
+    assert validate_product_replay_reports(replays)["passed"] is True
+    replays[-1]["bag_sha256"] = replays[0]["bag_sha256"]
+    assert validate_product_replay_reports(replays)["passed"] is False
+    replays[-1]["bag_sha256"] = "z" * 64
+    assert validate_product_replay_reports(replays)["passed"] is False

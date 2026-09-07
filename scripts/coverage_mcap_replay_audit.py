@@ -78,6 +78,54 @@ def summarize_replay(
     }
 
 
+def validate_product_replay_reports(replays: list[dict]) -> dict:
+    """Validate the static A20 product-replay portion without reading MCAP.
+
+    ``summarize_replay`` remains the only MCAP reader.  A20 consumes its
+    retained reports and deliberately requires distinct bag digests so one
+    successful replay cannot be copied to satisfy a product sample count.
+    """
+
+    failures: list[str] = []
+    bag_hashes: set[str] = set()
+    for index, replay in enumerate(replays):
+        if not isinstance(replay, dict):
+            failures.append(f"replays[{index}] is not an object")
+            continue
+        bag_hash = replay.get("bag_sha256")
+        if (
+            not isinstance(bag_hash, str)
+            or len(bag_hash) != 64
+            or any(character not in "0123456789abcdef" for character in bag_hash)
+        ):
+            failures.append(f"replays[{index}] has no bag SHA-256")
+        else:
+            bag_hashes.add(bag_hash)
+        if replay.get("product_replay") is not True:
+            failures.append(f"replays[{index}] is not a product replay")
+        audit = replay.get("audit")
+        if not isinstance(audit, dict):
+            failures.append(f"replays[{index}] has no replay audit")
+            continue
+        gates = audit.get("gates")
+        if (
+            audit.get("schema") != "tzcup.coverage_mcap_replay.v1"
+            or audit.get("pass") is not True
+            or not isinstance(gates, dict)
+            or not gates
+            or any(value is not True for value in gates.values())
+        ):
+            failures.append(f"replays[{index}] replay audit is not passing")
+    if len(bag_hashes) < 5:
+        failures.append("fewer than five distinct product replay bags")
+    return {
+        "replay_count": len(replays),
+        "distinct_bag_count": len(bag_hashes),
+        "failures": failures,
+        "passed": not failures,
+    }
+
+
 def read_bag(path: Path):
     import rosbag2_py
     from rclpy.serialization import deserialize_message

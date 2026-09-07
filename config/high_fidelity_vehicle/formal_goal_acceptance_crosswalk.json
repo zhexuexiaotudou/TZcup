@@ -181,11 +181,13 @@
     {
       "id": "A20",
       "title": "冻结、密封、回放与发布可追溯性",
-      "source": ["PROJECT_SPEC.md", "docs/formal-final-acceptance-orchestration.md"],
+      "source": ["PROJECT_SPEC.md", "docs/formal-final-acceptance-orchestration.md", "docs/a20-release-replay-receipt.md"],
       "step_ids": ["freeze_snapshot", "start_session", "finalize_session", "functional_aggregate"],
       "evidence_gates": [],
-      "state": "CONTRACT_MAPPING_OPEN",
-      "blockers": ["The current 26 functional gates have no dedicated sealing, replay, release, and rollback receipt gate; component_register is not equivalent evidence."]
+      "receipt_contract": "config/high_fidelity_vehicle/a20_release_replay_receipt_contract.json",
+      "receipt_validator": "scripts/a20_release_replay_receipt.py",
+      "state": "NOT_RUN_CURRENT_SNAPSHOT",
+      "blockers": ["A fresh completed formal session, five distinct product MCAP replay reports, release artifact/SBOM hashes, and a verified rollback exercise are required before an A20 receipt can be valid."]
     },
     {
       "id": "A21",
