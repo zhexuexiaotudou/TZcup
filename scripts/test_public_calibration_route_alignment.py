@@ -47,9 +47,16 @@ def test_mobile_has_one_route_with_fixed_modes_quotas_and_resource_guards() -> N
         'binding_digest',
         'binding_drift',
         'zero_survivor_check',
+        'CANONICAL_PLAN="$(real_regular "$ROOT/config/public_gazebo_dosod_train_scene_plan.json")"',
+        'pilot collector and total deadlines must be at least 900 seconds',
+        'full collector and total deadlines must be at least 14400 seconds',
+        'PREFLIGHT_PGID',
+        'record_scene_runtime',
+        'preprocessing_oracle_final_validation_sha256',
     ):
         assert required in source
     assert source.index('validate_dosod_single_frame_preprocessing_oracle.py') < source.index('ros2 launch sanitation_formal_campus_integration')
+    assert source.count('validate_dosod_single_frame_preprocessing_oracle.py') == 2
 
 
 def test_deadline_helper_uses_term_then_kill_for_an_exact_private_group() -> None:

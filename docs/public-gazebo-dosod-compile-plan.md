@@ -45,6 +45,11 @@ materializer, launch, or cleanup body of its own. The mobile runner admits only
 a fresh empty run directory and regular inputs below its own clean Git
 worktree, and only a lock below that worktree's `.work/locks`. It records an
 admission/final SHA-256 binding over the runner and all supplied inputs.
+The supplied plan must be the exact regular file
+`config/public_gazebo_dosod_train_scene_plan.json`, including its admission
+digest; a look-alike 20/4 plan is not accepted. Pilot collector and total
+budgets are each at least 900 seconds; full collector and total budgets are
+each at least 14,400 seconds.
 
 The runner uses the existing `run_formal_runtime_isolation.sh` preflight,
 domain/lock setup, exact-PGID cleanup, and `wait -n` supervision. Each Gazebo
@@ -52,6 +57,11 @@ launch owns a 9 GiB (`9437184` KiB) exact-PGID watchdog. The explicit total
 deadline races the preflight, collector, launch/operator, quota waiter, and
 watchdog; expiry and all cleanup use TERM then KILL and a non-zero survivor
 check fails closed. This is a resource boundary, not a successful Gazebo run.
+Success receipts retain matching admission/final bindings, Git head/tree,
+per-role plan/setup identities, and each scene's actual Gazebo PGID plus its
+completed watchdog JSON/log bindings. Before writing `FROZEN`, full mode runs
+the canonical oracle validator again in the last bounded 120-second finalizer
+window and binds that final validation output.
 
 The pair is authorized by
 `formal_campus_integration.yaml`: native

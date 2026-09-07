@@ -38,7 +38,7 @@ def _run_cleanup_fixture(*, stop_rc: int) -> tuple[int, list[str]]:
         "stop_private_group(){ return 0; }; stop_deadline(){ return 0; }; binding_digest(){ printf fixture; }\n"
         "kill_checks=0; kill(){ if [[ \"$1\" == -0 && \"$2\" == 777 ]]; then ((kill_checks+=1)); (( kill_checks == 1 )); else command kill \"$@\"; fi; }\n"
         "RUN_ROOT=\"$(cd -- \"$(dirname -- \"${BASH_SOURCE[0]}\")\" && pwd -P)\"; SELECTOR=\"$RUN_ROOT/no-selector\"; DESIRED_STATE=BLOCKED; RUNNER_EXIT_CODE=4\n"
-        "launch_pid=777; operator_pid=999999; collector_pid=''; stop_estop_pid=''; QUOTA_PID=''; DEADLINE_PID=''; ADMISSION_BINDING_SHA256=fixture\n"
+        "launch_pid=777; operator_pid=999999; collector_pid=''; stop_estop_pid=''; QUOTA_PID=''; DEADLINE_PID=''; PREFLIGHT_PID=''; READINESS_PID=''; FINAL_ORACLE_PID=''; ADMISSION_BINDING_SHA256=fixture\n"
         "scene_operator_started=true; scene_stop_attempted=false; scene_stop_verified=false\n"
         + cleanup
         + "\nset +e\ncleanup\nrc=$?\nset -e\nprintf '%s\\n' \"$rc\" \"${events[*]}\"\n"
