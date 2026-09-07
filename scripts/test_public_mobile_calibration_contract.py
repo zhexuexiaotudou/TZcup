@@ -30,5 +30,5 @@ def test_mapping_mobile_rgb_opt_in_retains_the_live_mid360_safety_source():
     assert "high_bandwidth_sensor_runtime: bool" in source
     assert 'parameters["observation_sources"] = ["scan"]' in source
     assert 'parameters.pop("mid360", None)' in source
-    assert 'elif mission_mode == "mapping":' in source
+    assert 'if mission_mode != "mapping":' in source
     assert '"high-bandwidth mapping requires an enabled mid360 source"' in source

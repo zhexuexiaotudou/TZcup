@@ -34,14 +34,49 @@ def configure_collision_monitor_sources(
     scan = parameters.get("scan")
     if not isinstance(scan, dict) or scan.get("enabled") is not True:
         raise Nav2ModeConfigError("collision_monitor scan source must remain enabled")
-    if mission_mode == "mapping" and not high_bandwidth_sensor_runtime:
+    if mission_mode != "mapping":
+        return
+    costmap_layers: list[tuple[str, dict[str, Any]]] = []
+    for costmap_name in ("local_costmap", "global_costmap"):
+        try:
+            layer = nav2[costmap_name][costmap_name]["ros__parameters"][
+                "obstacle_layer"
+            ]
+        except (KeyError, TypeError) as exc:
+            raise Nav2ModeConfigError(
+                f"{costmap_name} obstacle_layer parameters are required"
+            ) from exc
+        if not isinstance(layer, dict):
+            raise Nav2ModeConfigError(
+                f"{costmap_name} obstacle_layer parameters must be a mapping"
+            )
+        costmap_layers.append((costmap_name, layer))
+    if not high_bandwidth_sensor_runtime:
         # Do not merely disable the dead source: removing it prevents Nav2
         # from waiting on a 3D topic omitted by scan-only mapping.
         parameters["observation_sources"] = ["scan"]
         parameters.pop("mid360", None)
-    elif mission_mode == "mapping":
+        for _, layer in costmap_layers:
+            layer["observation_sources"] = "scan"
+            layer.pop("mid360", None)
+    else:
         mid360 = parameters.get("mid360")
         if "mid360" not in sources or not isinstance(mid360, dict) or mid360.get("enabled") is not True:
             raise Nav2ModeConfigError(
                 "high-bandwidth mapping requires an enabled mid360 source"
             )
+        for costmap_name, layer in costmap_layers:
+            scan_source, mid360_source = layer.get("scan"), layer.get("mid360")
+            if (
+                layer.get("enabled") is not True
+                or layer.get("observation_sources") != "scan mid360"
+                or not isinstance(scan_source, dict)
+                or scan_source.get("topic") != "/scan/navigation"
+                or scan_source.get("data_type") != "LaserScan"
+                or not isinstance(mid360_source, dict)
+                or mid360_source.get("topic") != "/sensors/lidar_3d/points"
+                or mid360_source.get("data_type") != "PointCloud2"
+            ):
+                raise Nav2ModeConfigError(
+                    f"high-bandwidth mapping requires valid {costmap_name} obstacle sources"
+                )

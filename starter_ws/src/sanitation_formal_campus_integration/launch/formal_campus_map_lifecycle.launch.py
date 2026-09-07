@@ -130,14 +130,6 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
         "cmd_vel_in_topic": "/cmd_vel_smoothed",
         "cmd_vel_out_topic": "/cmd_vel_gate",
     })
-    # Scan-only mapping narrows collision monitoring to the self-filtered 2D
-    # scan. The explicit public-mobile high-bandwidth opt-in retains and
-    # verifies MID360; saved-map cleaning retains its formal source set.
-    configure_collision_monitor_sources(
-        nav2,
-        mission_mode=mode,
-        high_bandwidth_sensor_runtime=mapping_high_bandwidth_sensor_runtime == "true",
-    )
     canonical_scan = "/scan/navigation"
     nav2["amcl"]["ros__parameters"]["scan_topic"] = canonical_scan
     nav2["collision_monitor"]["ros__parameters"]["scan"]["topic"] = canonical_scan
@@ -145,6 +137,14 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
         nav2[costmap_name][costmap_name]["ros__parameters"][
             "obstacle_layer"
         ]["scan"]["topic"] = canonical_scan
+    # Scan-only mapping narrows all live obstacle consumers to the
+    # self-filtered 2D scan. The explicit public-mobile high-bandwidth opt-in
+    # retains and verifies MID360; saved-map cleaning retains its source set.
+    configure_collision_monitor_sources(
+        nav2,
+        mission_mode=mode,
+        high_bandwidth_sensor_runtime=mapping_high_bandwidth_sensor_runtime == "true",
+    )
     if mode == "mapping":
         # slam_toolbox initially sizes /map around laser returns.  At the
         # fixed open-boundary start, the physical base can lie just outside

@@ -8,8 +8,20 @@ from sanitation_formal_campus_integration.nav2_mode_config import (
 )
 
 
-def _nav2() -> dict:
+def _obstacle_layer() -> dict:
     return {
+        "enabled": True,
+        "observation_sources": "scan mid360",
+        "scan": {"topic": "/scan/navigation", "data_type": "LaserScan"},
+        "mid360": {
+            "topic": "/sensors/lidar_3d/points",
+            "data_type": "PointCloud2",
+        },
+    }
+
+
+def _nav2() -> dict:
+    nav2 = {
         "collision_monitor": {
             "ros__parameters": {
                 "observation_sources": ["scan", "mid360"],
@@ -21,6 +33,11 @@ def _nav2() -> dict:
             }
         }
     }
+    for costmap_name in ("local_costmap", "global_costmap"):
+        nav2[costmap_name] = {
+            costmap_name: {"ros__parameters": {"obstacle_layer": _obstacle_layer()}}
+        }
+    return nav2
 
 
 def test_scan_only_mapping_removes_unavailable_mid360_from_collision_monitor():
@@ -35,6 +52,10 @@ def test_scan_only_mapping_removes_unavailable_mid360_from_collision_monitor():
     assert parameters["scan"]["topic"] == "/scan/navigation"
     assert parameters["scan"]["enabled"] is True
     assert "mid360" not in parameters
+    for costmap_name in ("local_costmap", "global_costmap"):
+        layer = nav2[costmap_name][costmap_name]["ros__parameters"]["obstacle_layer"]
+        assert layer["observation_sources"] == "scan"
+        assert "mid360" not in layer
 
 
 def test_high_bandwidth_mapping_retains_and_requires_mid360_collision_source():
@@ -58,6 +79,19 @@ def test_high_bandwidth_mapping_retains_and_requires_mid360_collision_source():
         configure_collision_monitor_sources(
             missing, mission_mode="mapping", high_bandwidth_sensor_runtime=True
         )
+    for costmap_name in ("local_costmap", "global_costmap"):
+        missing = _nav2()
+        del missing[costmap_name][costmap_name]["ros__parameters"]["obstacle_layer"]["mid360"]
+        with pytest.raises(Nav2ModeConfigError, match=f"valid {costmap_name}"):
+            configure_collision_monitor_sources(
+                missing, mission_mode="mapping", high_bandwidth_sensor_runtime=True
+            )
+        broken = _nav2()
+        broken[costmap_name][costmap_name]["ros__parameters"]["obstacle_layer"]["mid360"]["data_type"] = "LaserScan"
+        with pytest.raises(Nav2ModeConfigError, match=f"valid {costmap_name}"):
+            configure_collision_monitor_sources(
+                broken, mission_mode="mapping", high_bandwidth_sensor_runtime=True
+            )
 
 
 @pytest.mark.parametrize("high_bandwidth_sensor_runtime", (False, True))
