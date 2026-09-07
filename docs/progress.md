@@ -1,5 +1,11 @@
 # 项目推进记录
 
+## 2026-09-07：W1 正式 runner 的物理 operator 安全前置（源码修复，fresh runtime 待验）
+
+- R068 fresh NON_FORMAL W1 在 footprint override 前持续收到 `1778/1778` 个 `INHIBITED` safety 状态，原因始终包含 `manual_estop`、`safety_relay_disabled`、`traction_not_permitted` 和 `manipulator_base_inhibit`；因此未进入 frame-aware polygon 比较，不能把该轮归因为 padding/ULP 失败，也不能放宽 gate 接受 `INHIBITED`。
+- 正式 runner 现复用已验证的最小物理 operator 时序：先持续 base inhibit 并读回 fresh inhibit 状态，再以 10 Hz 发布急停释放、复位和主电源三路 Bool 心跳；只有 fresh `BASE_COMMAND_STOPPED + manipulator_base_inhibit` 才运行 W1 gate。退出先停止会竞争的 release/reset publisher，再重置物理急停并读回 fresh `INHIBITED + manual_estop`，随后清除全部 operator/inhibit publisher。该 helper 不发布 `cmd_vel`、关节/执行器命令或 evaluator truth。
+- 当前仅完成源码和 fake-ROS Bash 生命周期回归；必须合并后建立 fresh runtime，在真实 Jazzy/Gazebo 图中验证 operator 状态传播、三态 frame-aware footprint 和零 survivor，才能形成正式 W1 PASS。
+
 ## 2026-09-07：R068 Jazzy ParameterValue 与 sim-time readback（本地与无图 schema smoke 完成，fresh runtime 待建）
 
 - R067 的 Windows fake 使用了不存在的 `.value` 属性，因此漏检真实 Jazzy
