@@ -1,5 +1,6 @@
 from __future__ import annotations
 import importlib.util, json, subprocess, sys
+from dataclasses import replace
 from pathlib import Path
 import numpy as np
 import pytest
@@ -45,6 +46,7 @@ def test_per_scene_quota_and_frozen_selector_provenance(tmp_path, monkeypatch):
     assert manifest['records'][0]['generation_nonce']=='1'*32
     assert manifest['holdout_records'][0]['episode_manifest_sha256']=='a'*64
     assert (s.output/manifest['holdout_records'][0]['relative_path']).is_file()
+    assert (s.output/manifest['holdout_records'][0]['provenance']).is_file()
 def test_cli_is_preflight_only(tmp_path):
     p=tmp_path/'plan.json'; p.write_text(json.dumps(plan())); c=tmp_path/'contract.json'; c.write_text(json.dumps(contract()))
     out=subprocess.check_output([sys.executable,str(HERE/'public_gazebo_dosod_calibration.py'),'--scene-plan',str(p),'--contract',str(c)],text=True)
@@ -84,3 +86,48 @@ def test_pair_cache_accepts_both_orders_and_evicts_flooded_unmatched_frames():
     assert len(cache.images)==2 and len(cache.infos)==0
     b=selection('2'); assert cache.put_info(('front',14),b,'info') is None
     assert cache.put_image(('front',14),a,'stale') is None
+
+def evidence(**changes):
+    value=dict(goal_uuid='a'*32,action_status=2,action_server='bt_navigator:'+'b'*32,odom_stamp_ns=10_000_000_000,odom_x=0.,odom_y=0.,odom_yaw=0.,tf_stamp_ns=10_000_000_000,camera_frame='front',tf_static_source_gid='c'*32)
+    value.update(changes); return subject.MobileEvidence(**value)
+
+def test_mobile_admission_rejects_old_action_semantics_missing_tf_and_stale_odom():
+    with pytest.raises(subject.CalibrationRejected,match='executing'): subject.require_mobile_evidence(image_stamp_ns=10_000_000_000,image_frame='front',evidence=evidence(action_status=4),accepted_poses=[])
+    with pytest.raises(subject.CalibrationRejected,match='missing'): subject.require_mobile_evidence(image_stamp_ns=10_000_000_000,image_frame='front',evidence=evidence(camera_frame='other'),accepted_poses=[])
+    with pytest.raises(subject.CalibrationRejected,match='fresh'): subject.require_mobile_evidence(image_stamp_ns=10_000_000_000,image_frame='front',evidence=evidence(odom_stamp_ns=7_999_999_999),accepted_poses=[])
+    with pytest.raises(subject.CalibrationRejected,match='identity_invalid'): subject.require_mobile_evidence(image_stamp_ns=10_000_000_000,image_frame='front',evidence=evidence(action_server='bt_navigator:not-a-gid'),accepted_poses=[])
+
+def test_mobile_admission_pose_thresholds_and_yaw_wrap_are_strict():
+    accepted=[(0.,0.,-3.13)]
+    with pytest.raises(subject.CalibrationRejected,match='distinct'): subject.require_mobile_evidence(image_stamp_ns=10_000_000_000,image_frame='front',evidence=evidence(odom_x=.49,odom_yaw=3.13),accepted_poses=accepted)
+    subject.require_mobile_evidence(image_stamp_ns=10_000_000_000,image_frame='front',evidence=evidence(odom_x=.5,odom_yaw=3.13),accepted_poses=accepted)
+    subject.require_mobile_evidence(image_stamp_ns=10_000_000_000,image_frame='front',evidence=evidence(odom_x=0.,odom_yaw=-3.13+subject.YAW_SEPARATION_RAD),accepted_poses=accepted)
+
+def test_mobile_admission_allows_static_tf_stamp_zero_but_validates_extrinsics():
+    subject.require_mobile_evidence(image_stamp_ns=10_000_000_000,image_frame='front',evidence=evidence(tf_stamp_ns=0),accepted_poses=[])
+    with pytest.raises(subject.CalibrationRejected,match='camera_tf_invalid'): subject.require_mobile_evidence(image_stamp_ns=10_000_000_000,image_frame='front',evidence=evidence(tf_quaternion=(0.,0.,0.,0.)),accepted_poses=[])
+
+def test_mobile_evidence_is_frozen_in_provenance_and_selector_nonce_remains_pair_boundary(tmp_path, monkeypatch):
+    p={"source_domain":"public_gazebo_sensor","class_ids":list(subject.CLASS_IDS),"scene_groups":{"calibration":["c"],"holdout":["h"]}}; c=contract(); c['calibration']['minimum_sample_count']=1; monkeypatch.setattr(subject,'MIN_HOLDOUT_SAMPLES',1)
+    store=subject.PublicGazeboStore(tmp_path/'out',c,p,per_scene_quota=1)
+    mobile=evidence(odom_stamp_ns=1,tf_stamp_ns=1); assert store.add(replace(frame('c',1,selector=True), mobile_evidence=mobile))
+    proof=json.loads((store.output/'provenance/000000.json').read_text()); assert proof['mobile_evidence']['goal_uuid']=='a'*32
+
+def test_holdout_mobile_evidence_is_frozen_in_disjoint_provenance(tmp_path, monkeypatch):
+    p={"source_domain":"public_gazebo_sensor","class_ids":list(subject.CLASS_IDS),"scene_groups":{"calibration":["c"],"holdout":["h"]}}; c=contract(); c['calibration']['minimum_sample_count']=1; monkeypatch.setattr(subject,'MIN_HOLDOUT_SAMPLES',1)
+    store=subject.PublicGazeboStore(tmp_path/'out',c,p,per_scene_quota=1)
+    mobile=evidence(odom_stamp_ns=2,tf_stamp_ns=2); assert not store.add(replace(frame('h',2,selector=True), mobile_evidence=mobile))
+    row=store.holdout_records[0]; proof=json.loads((store.output/row['provenance']).read_text())
+    assert row['source_role']=='evaluation_holdout_only'
+    assert proof['mobile_evidence']['goal_uuid']=='a'*32 and proof['stamp_ns']==2
+
+def test_only_explicit_mobile_not_ready_rejections_are_retryable():
+    assert 'mobile_odom_or_camera_tf_missing' in subject.RETRYABLE_MOBILE_REJECTIONS
+    assert 'mobile_pose_not_materially_distinct' in subject.RETRYABLE_MOBILE_REJECTIONS
+    for fatal in ('mobile_odom_pose_invalid','mobile_odom_frame_invalid','mobile_camera_tf_invalid','mobile_camera_tf_source_invalid','mobile_nav2_action_server_not_bt_navigator','mobile_nav2_action_identity_invalid'):
+        assert fatal not in subject.RETRYABLE_MOBILE_REJECTIONS
+
+def test_mobile_rejection_reason_counts_are_bounded_progress_evidence(tmp_path):
+    store=subject.PublicGazeboStore(tmp_path/'out',contract(),plan())
+    store.reject_mobile('mobile_odom_or_camera_tf_missing'); store.reject_mobile('mobile_odom_or_camera_tf_missing'); store.reject_mobile('mobile_pose_not_materially_distinct')
+    assert store.progress()['mobile_rejection_reasons']=={'mobile_odom_or_camera_tf_missing':2,'mobile_pose_not_materially_distinct':1}

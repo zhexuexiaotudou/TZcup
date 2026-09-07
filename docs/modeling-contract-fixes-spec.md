@@ -173,3 +173,35 @@ fresh R065 public session 在第一个 `transport_stowed` override 对旧 exact 
 - Sol：W4、跨模块集成、全量 CI、PR/CI/部署、证据汇总；根据槽位分批调度 Terra。
 
 W1、W2、W3 文件域独立，可并行实现；Sol 在合并前负责处理测试与配置交叉。任何 Terra 不得直接改变本 Spec 的赛题/实物边界。
+
+## R070 public mobile camera calibration addendum
+
+This is a `NON_FORMAL` public-train data-collection contract, not a navigation
+or perception PASS.  The collector is read-only: it must never send/cancel a
+goal, publish velocity, alter camera extrinsics/noise, use SetPose, consume
+truth/evaluator topics, or access hidden scenes.  It accepts only the existing
+production front-RGBD alias and its exact `CameraInfo` pair.
+
+The public selector binds every accepted frame to one train episode manifest.
+On every selector nonce change the collector drops pending image/info, action
+and pose state.  Admission requires selector `ACTIVE`, a live `bt_navigator`
+`NavigateToPose` UUID in `EXECUTING`, a fresh non-future `/odom`, and a fresh
+`base_footprint -> camera optical` lookup at the image stamp.  A latched static
+camera-extrinsic segment may retain ROS stamp zero, but its unique
+`robot_state_publisher` GID remains bound in the evidence.  Action status is a
+state observation, not a periodic-heartbeat freshness proxy; the action-server
+identity must be checked separately.
+
+Content hashes remain anti-duplication only.  A candidate must also differ
+from each accepted pose in its scene by at least one frozen physical criterion:
+`0.5 m` translation or `15 deg` yaw (including correct wrap-around semantics).
+Both train and holdout provenance retain the selector/episode binding, action
+UUID/status, odom pose, camera TF stamp and exact camera pair.  Train and holdout must remain disjoint
+by scene, source hash and tensor hash.  Plan class IDs and frame counts are not
+proof of four-class, scene/background or viewpoint visibility; expansion to
+500+100 requires retained production RGB contact sheets and product-observation
+evidence for each class.  This first public-mobile increment covers only the
+existing first-map lifecycle frontier -> Nav2 sequence; it does not claim an
+OpenNav coverage collection.  A later coverage phase must reuse the existing
+OpenNav -> Nav2/FollowPath lifecycle and remain running until quota, terminal
+task state or bounded deadline.

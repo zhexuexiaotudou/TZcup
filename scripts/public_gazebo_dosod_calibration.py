@@ -16,7 +16,7 @@ import math
 import os
 import re
 import secrets
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
@@ -35,6 +35,17 @@ FORMAL_CAMPUS_CONFIG = Path(__file__).resolve().parents[1] / "starter_ws/src/san
 FORMAL_RGB_TOPIC = "/camera/color/image_raw"
 FORMAL_CAMERA_INFO_TOPIC = "/camera/color/camera_info"
 PAIR_CACHE_LIMIT = 64
+MOBILE_EVIDENCE_MAX_AGE_NS = 2_000_000_000
+POSE_SEPARATION_M = 0.5
+YAW_SEPARATION_RAD = math.radians(15.0)
+RETRYABLE_MOBILE_REJECTIONS = frozenset({
+    "mobile_nav2_action_server_missing",
+    "mobile_nav2_goal_not_bt_navigator_executing",
+    "mobile_odom_or_camera_tf_missing",
+    "mobile_odom_or_camera_tf_not_fresh",
+    "mobile_camera_tf_source_missing",
+    "mobile_pose_not_materially_distinct",
+})
 
 
 def _unsafe(path: Path) -> bool:
@@ -161,6 +172,52 @@ def validate_camera(*, image_frame: str, image_stamp_ns: int, width: int, height
 class Frame:
     scene_id: str; topic: str; frame_id: str; stamp_ns: int; data: bytes; width: int; height: int; step: int; encoding: str; camera: dict[str, Any]
     generation_nonce: str = ""; episode_manifest_sha256: str = ""
+    mobile_evidence: MobileEvidence | None = None
+
+
+@dataclass(frozen=True)
+class MobileEvidence:
+    """Read-only proof that a production Nav2 goal moved this camera view."""
+
+    goal_uuid: str
+    action_status: int
+    action_server: str
+    odom_stamp_ns: int
+    odom_x: float
+    odom_y: float
+    odom_yaw: float
+    tf_stamp_ns: int
+    camera_frame: str
+    tf_translation: tuple[float, float, float] = (0.0, 0.0, 0.0)
+    tf_quaternion: tuple[float, float, float, float] = (0.0, 0.0, 0.0, 1.0)
+    tf_static_source_gid: str = ""
+
+
+def _angle_delta(left: float, right: float) -> float:
+    return abs((left - right + math.pi) % (2.0 * math.pi) - math.pi)
+
+
+def require_mobile_evidence(*, image_stamp_ns: int, image_frame: str, evidence: MobileEvidence, accepted_poses: list[tuple[float, float, float]]) -> None:
+    """Fail closed unless an active bt_navigator goal and a new physical view exist."""
+
+    if not re.fullmatch(r"bt_navigator:[0-9a-f]{2,}", evidence.action_server) or not re.fullmatch(r"[0-9a-f]{32}", evidence.goal_uuid):
+        raise CalibrationRejected("mobile_nav2_action_identity_invalid")
+    if evidence.action_status != 2:
+        raise CalibrationRejected("mobile_nav2_goal_not_bt_navigator_executing")
+    if evidence.camera_frame != image_frame or evidence.odom_stamp_ns <= 0:
+        raise CalibrationRejected("mobile_odom_or_camera_tf_missing")
+    if image_stamp_ns - evidence.odom_stamp_ns > MOBILE_EVIDENCE_MAX_AGE_NS or evidence.odom_stamp_ns > image_stamp_ns:
+        raise CalibrationRejected("mobile_odom_or_camera_tf_not_fresh")
+    if evidence.tf_stamp_ns and (image_stamp_ns - evidence.tf_stamp_ns > MOBILE_EVIDENCE_MAX_AGE_NS or evidence.tf_stamp_ns > image_stamp_ns):
+        raise CalibrationRejected("mobile_odom_or_camera_tf_not_fresh")
+    if not re.fullmatch(r"[0-9a-f]{2,}", evidence.tf_static_source_gid) or not all(math.isfinite(value) for value in (*evidence.tf_translation, *evidence.tf_quaternion)):
+        raise CalibrationRejected("mobile_camera_tf_invalid")
+    if abs(math.sqrt(sum(value * value for value in evidence.tf_quaternion)) - 1.0) > 1e-3:
+        raise CalibrationRejected("mobile_camera_tf_invalid")
+    if not all(math.isfinite(value) for value in (evidence.odom_x, evidence.odom_y, evidence.odom_yaw)):
+        raise CalibrationRejected("mobile_odom_pose_invalid")
+    if any(math.hypot(evidence.odom_x - x, evidence.odom_y - y) < POSE_SEPARATION_M and _angle_delta(evidence.odom_yaw, yaw) < YAW_SEPARATION_RAD for x, y, yaw in accepted_poses):
+        raise CalibrationRejected("mobile_pose_not_materially_distinct")
 
 
 class FreshPairCache:
@@ -220,13 +277,18 @@ class PublicGazeboStore:
         self.holdout_scene_counts: dict[str, int] = {}
         self.calibration_scene_counts: dict[str, int] = {}
         self.sources: set[str] = set(); self.tensors: set[str] = set(); self.tensor_contents: set[str] = set()
+        self.accepted_poses: dict[str, list[tuple[float, float, float]]] = {}
         self.duplicate_source_count = 0; self.duplicate_tensor_count = 0
+        self.mobile_rejection_count = 0
+        self.mobile_rejection_reasons: dict[str, int] = {}
         output.mkdir(parents=True); (output / "samples").mkdir(); (output / "holdout_samples").mkdir(); (output / "provenance").mkdir()
 
     def add(self, frame: Frame) -> bool:
         if any(token in frame.topic.lower() for token in FORBIDDEN) or frame.scene_id not in self.calibration_scenes | self.holdout_scenes:
             raise CalibrationRejected("frame_topic_or_scene_not_public_plan")
         validate_camera(image_frame=frame.frame_id, image_stamp_ns=frame.stamp_ns, width=frame.width, height=frame.height, camera=frame.camera)
+        if frame.mobile_evidence is not None:
+            require_mobile_evidence(image_stamp_ns=frame.stamp_ns, image_frame=frame.frame_id, evidence=frame.mobile_evidence, accepted_poses=self.accepted_poses.get(frame.scene_id, []))
         counts = self.holdout_scene_counts if frame.scene_id in self.holdout_scenes else self.calibration_scene_counts
         if counts.get(frame.scene_id, 0) >= self.per_scene_quota:
             return False
@@ -252,16 +314,23 @@ class PublicGazeboStore:
             os.replace(pending, sample)
             tensor_sha = sha256_file(sample)
             self.holdout_sources.add(source)
+            provenance = {"source_domain": "public_gazebo_sensor", "scene_id": frame.scene_id, "topic": frame.topic, "frame_id": frame.frame_id, "stamp_ns": frame.stamp_ns, "encoding": frame.encoding, "camera": frame.camera, "source_sha256": source, "generation_nonce": frame.generation_nonce, "episode_manifest_sha256": frame.episode_manifest_sha256, "mobile_evidence": asdict(frame.mobile_evidence) if frame.mobile_evidence else None}
+            provenance_path = f"provenance/{name}.json"
+            atomic_write_json(self.output / provenance_path, provenance)
             self.holdout_records.append({
                 "scene_id": frame.scene_id,
                 "source_sha256": source,
+                "source_role": "evaluation_holdout_only",
                 "generation_nonce": frame.generation_nonce,
                 "episode_manifest_sha256": frame.episode_manifest_sha256,
                 "relative_path": f"holdout_samples/{name}.npy",
                 "byte_size": sample.stat().st_size,
                 "sha256": tensor_sha,
+                "provenance": provenance_path,
             })
             counts[frame.scene_id] = counts.get(frame.scene_id, 0) + 1
+            if frame.mobile_evidence is not None:
+                self.accepted_poses.setdefault(frame.scene_id, []).append((frame.mobile_evidence.odom_x, frame.mobile_evidence.odom_y, frame.mobile_evidence.odom_yaw))
             return False
         name = f"{len(self.records):06d}"; sample = self.output / "samples" / f"{name}.npy"
         pending = sample.with_name(f".{sample.name}.pending.{os.getpid()}")
@@ -269,10 +338,12 @@ class PublicGazeboStore:
         os.replace(pending, sample); tensor_sha = sha256_file(sample)
         if tensor_sha in self.tensors: sample.unlink(); self.duplicate_tensor_count += 1; return False
         self.tensors.add(tensor_sha)
-        provenance = {"source_domain": "public_gazebo_sensor", "scene_id": frame.scene_id, "topic": frame.topic, "frame_id": frame.frame_id, "stamp_ns": frame.stamp_ns, "encoding": frame.encoding, "camera": frame.camera, "source_sha256": source, "generation_nonce": frame.generation_nonce, "episode_manifest_sha256": frame.episode_manifest_sha256}
+        provenance = {"source_domain": "public_gazebo_sensor", "scene_id": frame.scene_id, "topic": frame.topic, "frame_id": frame.frame_id, "stamp_ns": frame.stamp_ns, "encoding": frame.encoding, "camera": frame.camera, "source_sha256": source, "generation_nonce": frame.generation_nonce, "episode_manifest_sha256": frame.episode_manifest_sha256, "mobile_evidence": asdict(frame.mobile_evidence) if frame.mobile_evidence else None}
         atomic_write_json(self.output / "provenance" / f"{name}.json", provenance)
         self.records.append({"relative_path": f"samples/{name}.npy", "byte_size": sample.stat().st_size, "sha256": tensor_sha, "source_sha256": source, "source_role": "calibration_only", "scene_id": frame.scene_id, "generation_nonce": frame.generation_nonce, "episode_manifest_sha256": frame.episode_manifest_sha256, "provenance": f"provenance/{name}.json"})
         counts[frame.scene_id] = counts.get(frame.scene_id, 0) + 1
+        if frame.mobile_evidence is not None:
+            self.accepted_poses.setdefault(frame.scene_id, []).append((frame.mobile_evidence.odom_x, frame.mobile_evidence.odom_y, frame.mobile_evidence.odom_yaw))
         return True
 
     def collection_complete(self) -> bool:
@@ -280,6 +351,10 @@ class PublicGazeboStore:
             all(self.calibration_scene_counts.get(scene, 0) >= self.per_scene_quota for scene in self.calibration_scenes)
             and all(self.holdout_scene_counts.get(scene, 0) >= self.per_scene_quota for scene in self.holdout_scenes)
         )
+
+    def reject_mobile(self, reason: str) -> None:
+        self.mobile_rejection_count += 1
+        self.mobile_rejection_reasons[reason] = self.mobile_rejection_reasons.get(reason, 0) + 1
 
     def progress(self) -> dict[str, Any]:
         return {
@@ -290,6 +365,8 @@ class PublicGazeboStore:
             "holdout_source_count": len(self.holdout_sources),
             "duplicate_source_count": self.duplicate_source_count,
             "duplicate_tensor_count": self.duplicate_tensor_count,
+            "mobile_rejection_count": self.mobile_rejection_count,
+            "mobile_rejection_reasons": dict(sorted(self.mobile_rejection_reasons.items())),
             "calibration_scene_counts": dict(sorted(self.calibration_scene_counts.items())),
             "holdout_scene_counts": dict(sorted(self.holdout_scene_counts.items())),
             "collection_complete": self.collection_complete(),
@@ -315,12 +392,12 @@ class PublicGazeboStore:
         atomic_write_json(target, value); return target
 
 
-def frame_from_ros(*, scene_id: str, topic: str, image: Any, camera_info: Any, generation_nonce: str = "", episode_manifest_sha256: str = "") -> Frame:
+def frame_from_ros(*, scene_id: str, topic: str, image: Any, camera_info: Any, generation_nonce: str = "", episode_manifest_sha256: str = "", mobile_evidence: MobileEvidence | None = None) -> Frame:
     """Convert only an exactly paired ROS Image/CameraInfo pair to ``Frame``."""
     stamp = int(image.header.stamp.sec) * 1_000_000_000 + int(image.header.stamp.nanosec)
     camera_stamp = int(camera_info.header.stamp.sec) * 1_000_000_000 + int(camera_info.header.stamp.nanosec)
     camera = {"frame_id": str(camera_info.header.frame_id), "stamp_ns": camera_stamp, "width": int(camera_info.width), "height": int(camera_info.height), "k": [float(x) for x in camera_info.k]}
-    return Frame(scene_id, topic, str(image.header.frame_id), stamp, bytes(image.data), int(image.width), int(image.height), int(image.step), str(image.encoding), camera, generation_nonce, episode_manifest_sha256)
+    return Frame(scene_id, topic, str(image.header.frame_id), stamp, bytes(image.data), int(image.width), int(image.height), int(image.step), str(image.encoding), camera, generation_nonce, episode_manifest_sha256, mobile_evidence)
 
 
 def collect_live(*, output: Path, plan: dict[str, Any], contract: dict[str, Any], topic: str, camera_info_topic: str, timeout_s: float, selector_path: Path, per_scene_quota: int, progress_path: Path) -> Path:
@@ -337,32 +414,85 @@ def collect_live(*, output: Path, plan: dict[str, Any], contract: dict[str, Any]
     require_collection_capacity(plan=plan, contract=contract, per_scene_quota=per_scene_quota)
     require_formal_camera_topic_pair(image_topic=topic, camera_info_topic=camera_info_topic)
     import rclpy
-    from rclpy.qos import qos_profile_sensor_data
+    from rclpy.parameter import Parameter
+    from action_msgs.msg import GoalStatusArray
+    from nav_msgs.msg import Odometry
+    from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy, qos_profile_sensor_data
     from sensor_msgs.msg import CameraInfo, Image
-    rclpy.init(); node = rclpy.create_node("public_gazebo_dosod_calibration_collector")
+    from tf2_ros import Buffer, TransformException, TransformListener
+    rclpy.init(); node = rclpy.create_node("public_gazebo_dosod_calibration_collector", parameter_overrides=[Parameter("use_sim_time", Parameter.Type.BOOL, True)])
     pairs = FreshPairCache()
     store = PublicGazeboStore(output, contract, plan, per_scene_quota=per_scene_quota)
     selector_nonce: str | None = None
     errors: list[str] = []
+    latest_odom: Any | None = None
+    action_statuses: dict[str, tuple[int, str]] = {}
+    tf_buffer = Buffer(); tf_listener = TransformListener(tf_buffer, node, spin_thread=False)
+    action_qos = QoSProfile(depth=1, reliability=ReliabilityPolicy.RELIABLE, durability=DurabilityPolicy.TRANSIENT_LOCAL)
     def selection() -> tuple[dict[str, str], bool]:
-        nonlocal selector_nonce
+        nonlocal selector_nonce, latest_odom
         selected = load_scene_selector(selector_path)
         changed = selected["generation_nonce"] != selector_nonce
         if changed:
             selector_nonce = selected["generation_nonce"]
             pairs.reset()
+            action_statuses.clear()
+            latest_odom = None
         return selected, changed
     def save_progress() -> None:
         atomic_write_json(progress_path, store.progress())
+    def action_server_gid() -> str:
+        servers = node.get_publishers_info_by_topic("/navigate_to_pose/_action/status")
+        if not servers:
+            raise CalibrationRejected("mobile_nav2_action_server_missing")
+        if len(servers) != 1 or servers[0].node_name != "bt_navigator" or servers[0].node_namespace != "/" or servers[0].topic_type != "action_msgs/msg/GoalStatusArray":
+            raise CalibrationRejected("mobile_nav2_action_server_not_bt_navigator")
+        gid = bytes(servers[0].endpoint_gid).hex()
+        if not re.fullmatch(r"[0-9a-f]{2,}", gid):
+            raise CalibrationRejected("mobile_nav2_action_server_gid_invalid")
+        return gid
+    def mobile_evidence(image: Image) -> MobileEvidence:
+        if latest_odom is None:
+            raise CalibrationRejected("mobile_odom_or_camera_tf_missing")
+        gid = action_server_gid()
+        active = [goal for goal, status in action_statuses.items() if status == (2, gid)]
+        if len(active) != 1:
+            raise CalibrationRejected("mobile_nav2_goal_not_bt_navigator_executing")
+        try:
+            from rclpy.time import Time
+            transform = tf_buffer.lookup_transform("base_footprint", str(image.header.frame_id), Time.from_msg(image.header.stamp))
+        except TransformException as exc:
+            raise CalibrationRejected("mobile_odom_or_camera_tf_missing") from exc
+        if latest_odom.header.frame_id != "odom" or latest_odom.child_frame_id != "base_footprint":
+            raise CalibrationRejected("mobile_odom_frame_invalid")
+        pose = latest_odom.pose.pose
+        q = pose.orientation
+        norm = math.sqrt(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w)
+        if not all(math.isfinite(value) for value in (pose.position.x, pose.position.y, q.x, q.y, q.z, q.w)) or norm == 0.0 or abs(norm - 1.0) > 1e-3:
+            raise CalibrationRejected("mobile_odom_pose_invalid")
+        yaw = math.atan2(2.0 * (q.w * q.z + q.x * q.y), 1.0 - 2.0 * (q.y * q.y + q.z * q.z))
+        odom_stamp = int(latest_odom.header.stamp.sec) * 1_000_000_000 + int(latest_odom.header.stamp.nanosec)
+        tf_stamp = int(transform.header.stamp.sec) * 1_000_000_000 + int(transform.header.stamp.nanosec)
+        static = [item for item in node.get_publishers_info_by_topic("/tf_static") if item.node_name == "robot_state_publisher"]
+        if not static:
+            raise CalibrationRejected("mobile_camera_tf_source_missing")
+        if len(static) != 1:
+            raise CalibrationRejected("mobile_camera_tf_source_invalid")
+        translation, rotation = transform.transform.translation, transform.transform.rotation
+        return MobileEvidence(active[0], 2, "bt_navigator:" + gid, odom_stamp, float(pose.position.x), float(pose.position.y), yaw, tf_stamp, str(image.header.frame_id), (float(translation.x), float(translation.y), float(translation.z)), (float(rotation.x), float(rotation.y), float(rotation.z), float(rotation.w)), bytes(static[0].endpoint_gid).hex())
     def consume_pair(pair: tuple[dict[str, str], Any, Any] | None) -> None:
         if pair is None:
             return
         selected, image_message, info_message = pair
         try:
-            store.add(frame_from_ros(scene_id=selected["scene_id"], topic=topic, image=image_message, camera_info=info_message, generation_nonce=selected["generation_nonce"], episode_manifest_sha256=selected["episode_manifest_sha256"]))
+            store.add(frame_from_ros(scene_id=selected["scene_id"], topic=topic, image=image_message, camera_info=info_message, generation_nonce=selected["generation_nonce"], episode_manifest_sha256=selected["episode_manifest_sha256"], mobile_evidence=mobile_evidence(image_message)))
             save_progress()
         except CalibrationRejected as exc:
-            errors.append(str(exc))
+            if str(exc) in RETRYABLE_MOBILE_REJECTIONS:
+                store.reject_mobile(str(exc))
+                save_progress()
+            else:
+                errors.append(str(exc))
     def on_info(message: CameraInfo) -> None:
         try:
             selected, _ = selection()
@@ -383,9 +513,33 @@ def collect_live(*, output: Path, plan: dict[str, Any], contract: dict[str, Any]
             return
         key = (str(message.header.frame_id), int(message.header.stamp.sec) * 1_000_000_000 + int(message.header.stamp.nanosec))
         consume_pair(pairs.put_image(key, selected, message))
+    def on_odom(message: Odometry) -> None:
+        nonlocal latest_odom
+        try:
+            selected, _ = selection()
+        except CalibrationRejected as exc:
+            errors.append(str(exc)); return
+        if selected["state"] != "ACTIVE": return
+        latest_odom = message
+    def on_action_status(message: GoalStatusArray) -> None:
+        try:
+            selected, _ = selection()
+        except CalibrationRejected as exc:
+            errors.append(str(exc)); return
+        if selected["state"] != "ACTIVE": return
+        try:
+            gid = action_server_gid()
+        except CalibrationRejected:
+            return
+        action_statuses.clear()
+        for item in message.status_list:
+            goal = bytes(item.goal_info.goal_id.uuid).hex()
+            action_statuses[goal] = (int(item.status), gid)
     try:
-        node.create_subscription(CameraInfo, topic.rsplit("/", 1)[0] + "/camera_info", on_info, qos_profile_sensor_data)
+        node.create_subscription(CameraInfo, camera_info_topic, on_info, qos_profile_sensor_data)
         node.create_subscription(Image, topic, on_image, qos_profile_sensor_data)
+        node.create_subscription(Odometry, "/odom", on_odom, qos_profile_sensor_data)
+        node.create_subscription(GoalStatusArray, "/navigate_to_pose/_action/status", on_action_status, action_qos)
         save_progress()
         deadline = __import__("time").monotonic() + timeout_s
         while __import__("time").monotonic() < deadline and not store.collection_complete():

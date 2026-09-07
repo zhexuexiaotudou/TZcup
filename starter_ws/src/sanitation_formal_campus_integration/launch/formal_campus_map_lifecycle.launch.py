@@ -267,7 +267,8 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                 "materialize_static_maps": "false",
                 "runtime_artifact_dir": str(artifact_root),
                 "high_bandwidth_sensor_runtime": (
-                    "false" if mode == "mapping" else "true"
+                    LaunchConfiguration("mapping_high_bandwidth_sensor_runtime")
+                    if mode == "mapping" else "true"
                 ),
                         "motion_profile_file": LaunchConfiguration("motion_profile_file"),
                         "operation_speed_profile_file": LaunchConfiguration(
@@ -420,6 +421,10 @@ def generate_launch_description() -> LaunchDescription:
     repository_root = EnvironmentVariable("TZCUP_REPOSITORY_ROOT", default_value=".")
     return LaunchDescription([
         DeclareLaunchArgument("mission_mode", default_value="mapping"),
+        DeclareLaunchArgument(
+            "mapping_high_bandwidth_sensor_runtime", default_value="false",
+            description="Mapping defaults to scan-only; public mobile calibration opts in explicitly.",
+        ),
         DeclareLaunchArgument("gui", default_value="true"),
         DeclareLaunchArgument("world"),
         DeclareLaunchArgument("world_name", default_value="campus_formal"),
