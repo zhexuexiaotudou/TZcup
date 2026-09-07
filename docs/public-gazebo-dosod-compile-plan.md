@@ -98,6 +98,22 @@ receipt is still not an OE compile or board acceptance.
 
 ### Preprocess sensitivity is a live-oracle blocker
 
+The W7 state machine is `RAW_BOUND -> NON_FORMAL_ORACLE_CANDIDATE_COMPILED ->
+OFFICIAL_PREPROCESS_CAPTURED -> ORACLE_VERIFIED -> DATASET_FROZEN_500_100 ->
+FORMAL_HBM_COMPILED`.  The candidate receipt is explicitly non-formal and is
+rejected by formal compile, parity, metric and S100 admission consumers.  The
+official-capture producer only seals externally generated official Y/UV and
+identity/log evidence; it never generates, approximates or simulates Y/UV.
+Until a real official capture, the oracle remains `BLOCKED`; test fixtures can
+only be `TEST_FIXTURE_BLOCKED`.
+
+Candidate calibration reuses the existing public-Gazebo pilot collector's
+canonical 25 `samples/*.npy` tensors and its raw/provenance/contact closure;
+there is no new materializer and no synthetic tensor substitute. Its fixed
+`BOOTSTRAP_SYMMETRIC_BLACK_V1` route is non-final. The candidate only runs when
+that closure and the current canonical collector producer identity re-audit;
+its exact `cal_data_dir` is the pilot `samples` directory.
+
 A local CPU ONNX Runtime 1.24.4 synthetic probe (fixed 848x480 input; model
 SHA-256 prefix `30e4...e516`) found that preprocessing choice is material:
 symmetrical-black versus centre-114 produced scores cosine/nRMSE

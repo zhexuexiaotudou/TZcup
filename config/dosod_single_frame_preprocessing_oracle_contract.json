@@ -1,0 +1,39 @@
+{
+  "$schema": "https://tzcup.local/schema/dosod-single-frame-preprocessing-oracle-v1.json",
+  "schema_version": 1,
+  "contract_id": "tzcup_dosod_single_frame_preprocessing_oracle_v1",
+  "status": "BLOCKED_UNTIL_REAL_OFFICIAL_CAPTURE_AND_CANDIDATE_HBM",
+  "operation_boundary": "non_formal_oracle_only_no_board_copy_ssh_node_start_or_dataset_freeze",
+  "model_sha256": "30e4da2516b7a18cc3dbb4b20572e99f07c28a0c08111055a8c14265a992e516",
+  "vocabulary_sha256": "c5b10ba0e26ee28cdbf5192775e7d2ddb3f5852e515f59a074b38b7ed69d7ffd",
+  "preprocessing_status": "CANDIDATE_UNVERIFIED",
+  "selected_route": null,
+  "candidate_routes": [{
+    "route_id": "BOOTSTRAP_SYMMETRIC_BLACK_V1",
+    "preprocessing": {"source_color_space": "RGB", "square_padding": "symmetric_black_zero_short_axis_floor_leading_remainder_trailing", "resize": {"height": 640, "width": 640, "interpolation": "bilinear"}, "tensor_dtype": "float32", "tensor_layout": "NCHW", "tensor_shape": [1, 3, 640, 640], "value_scale": 0.003921568627451, "value_range": [0.0, 1.0], "mean": [], "standard_deviation": []}
+  }],
+  "runtime_inputs": [
+    {"index": 0, "name": "images_y", "shape": [1, 640, 640, 1], "dtype": "HB_DNN_TENSOR_TYPE_U8", "byte_size": 409600},
+    {"index": 1, "name": "images_uv", "shape": [1, 320, 320, 2], "dtype": "HB_DNN_TENSOR_TYPE_U8", "byte_size": 204800}
+  ],
+  "official_preprocess_identity": {
+    "status": "UNAVAILABLE_BLOCKED",
+    "binary_path": null,
+    "binary_sha256": null,
+    "source_path": null,
+    "source_sha256": null,
+    "source_revision": null,
+    "dpkg_package": null,
+    "dpkg_version": null,
+    "dpkg_path_role": null
+  },
+  "runtime_outputs": {
+    "scores": {"index": 0, "name": "scores", "shape": [1, 8400, 4], "dtype": "HB_DNN_TENSOR_TYPE_F32"},
+    "boxes": {"index": 1, "name": "boxes", "shape": [1, 8400, 4], "dtype": "HB_DNN_TENSOR_TYPE_F32"}
+  },
+  "raw_output_thresholds": {
+    "scores": {"cosine_min": 0.99, "normalized_rmse_max": 0.02},
+    "boxes": {"cosine_min": 0.99, "normalized_rmse_max": 0.02}
+  },
+  "deadlines_sec": {"candidate_compile": 3600, "oracle": 180, "term_grace": 10}
+}

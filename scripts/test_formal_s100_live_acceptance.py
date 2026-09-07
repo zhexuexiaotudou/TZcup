@@ -2,14 +2,19 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
+import os
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 
 import yaml
+
+import collect_formal_s100_live_runtime as collector
 
 from formal_s100_live_acceptance_core import (
     FINAL_BLOCKED,
@@ -17,6 +22,16 @@ from formal_s100_live_acceptance_core import (
     RAW_BLOCKED,
     RAW_COLLECTED,
     RAW_REPORT_ID,
+    HRT_MODEL_EXEC_PATH,
+    REQUIRED_SHORT_INPUT_TOPICS,
+    REQUIRED_SHORT_NODES,
+    REQUIRED_SHORT_DIAGNOSTIC_COMPONENTS,
+    REQUIRED_SHORT_OUTPUT_TOPICS,
+    REQUIRED_SHORT_PROJECT_OUTPUTS,
+    SHORT_DIAGNOSTIC_PASSED,
+    SHORT_DIAGNOSTIC_REPORT_ID,
+    SHORT_DIAGNOSTIC_COLLECTOR_PATH,
+    TROS_ABI_IMPORTS,
     acceptance_session_binding,
     active_session_identity,
     build_final_report,
@@ -24,6 +39,7 @@ from formal_s100_live_acceptance_core import (
     runtime_closure_binding,
     sha256_path,
     snapshot_identity,
+    validate_short_diagnostic,
     validate_raw,
 )
 from validate_formal_s100_live_runtime import validate_schema
@@ -88,6 +104,62 @@ class FormalS100LiveAcceptanceTests(unittest.TestCase):
     def tearDown(self) -> None:
         self.temporary.cleanup()
 
+    def valid_short_diagnostic(self) -> dict:
+        stamp = 4_000_000_000
+        return {
+            "schema_version": 1,
+            "report_id": SHORT_DIAGNOSTIC_REPORT_ID,
+            "status": SHORT_DIAGNOSTIC_PASSED,
+            "completed": True,
+            "collected_epoch_ns": time.time_ns(),
+            "duration_sec": 30.0,
+            "source_binding": dict(self.identity),
+            "acceptance_session_binding": dict(self.session_binding),
+            "runtime_closure_binding": dict(self.closure_binding),
+            "hardware": {"attested": True},
+            "collector": {
+                "script_path": SHORT_DIAGNOSTIC_COLLECTOR_PATH,
+                "script_sha256": sha256_path(ROOT / "scripts/collect_formal_s100_live_runtime.py"),
+                "pid": 42,
+            },
+            "bpu_device": {"path": "/dev/bpu_core0", "is_character_device": True, "is_symlink": False},
+            "hrt_model_exec": {"path": HRT_MODEL_EXEC_PATH, "present": True, "is_symlink": False, "sha256": "a" * 64, "version": {"returncode": 0}},
+            "tros_abi": {
+                "setup": {"path": "/opt/tros/humble/setup.bash", "present": True, "is_symlink": False, "sha256": "b" * 64},
+                "python_executable": "/usr/bin/python3", "python_version": "3.10.12",
+                "imports": {name: {"module_path": f"/opt/tros/humble/lib/python3.10/site-packages/{name}/__init__.py", "package_metadata": {"method": "importlib.metadata", "version": "1.0", "path": f"/opt/tros/humble/lib/python3.10/site-packages/{name}-1.0.dist-info/METADATA"}} for name in TROS_ABI_IMPORTS},
+            },
+            "nodes": {role: {"name": f"/{name}", "count": 1} for role, name in REQUIRED_SHORT_NODES.items()},
+            "processes": {role: {"pid": index + 10, "cmdline_sha256": "c" * 64} for index, role in enumerate(REQUIRED_SHORT_NODES)},
+            "inputs": {role: {"topic": topic, "type": type_name, "count": 2, "last_stamp_ns": stamp, "stamps_ns": [stamp], "frames_by_stamp": {str(stamp): "front_camera_link"}, **({"freshness_policy": "static_map_allowed"} if role == "map" else {}), **({"width": 848, "height": 480, "k": [1.0] * 9} if role == "camera_info" else {}), **({"transform_stamps_ns": [stamp]} if role == "tf" else {})} for role, (topic, type_name) in REQUIRED_SHORT_INPUT_TOPICS.items()},
+            "clock": {"topic": "/clock", "type": "rosgraph_msgs/msg/Clock", "stamps_ns": [stamp - 1, stamp]},
+            "outputs": {role: {"topic": topic, "type": type_name, "count": 2, "nonempty_count": 1, "stamps_ns": [stamp]} for role, (topic, type_name) in REQUIRED_SHORT_OUTPUT_TOPICS.items()},
+            "models": [
+                {"role": role, "path": f"/opt/models/{role}", "sha256": digest, "byte_size": 1024}
+                for role, digest in {
+                    "dosod_hbm": "2" * 64,
+                    "dosod_vocabulary": "3" * 64,
+                    "edgesam_encoder_hbm": "4" * 64,
+                    "edgesam_decoder_hbm": "5" * 64,
+                }.items()
+            ],
+            "dosod_model_info": {
+                "argv": [HRT_MODEL_EXEC_PATH, "model_info", "--model_file=/opt/models/dosod_hbm"],
+                "returncode": 0,
+                "stdout": "scores: float32 [1, 8400, 4]\nboxes: float32 [1, 8400, 4]\n",
+                "stderr": "",
+                "stdout_sha256": hashlib.sha256(b"scores: float32 [1, 8400, 4]\nboxes: float32 [1, 8400, 4]\n").hexdigest(),
+                "stderr_sha256": hashlib.sha256(b"").hexdigest(),
+                "output_shapes": {"scores": [1, 8400, 4], "boxes": [1, 8400, 4]},
+                "observed_class_count": 4,
+            },
+            "same_stamp_chain": {"roles": ["rgb", "depth", "camera_info", "dosod", "edgesam", "boxes", "targets"], "stamp_ns": stamp},
+            "project_outputs": {role: {"topic": topic, "type": type_name, "count": 2, "nonempty_count": 1, "stamps_ns": [stamp]} for role, (topic, type_name) in REQUIRED_SHORT_PROJECT_OUTPUTS.items()},
+            "tf_exact_binding": {"map_frame": "map", "camera_frame": "front_camera_link", "source_stamp_ns": stamp, "transform_stamp_ns": stamp, "lookup_succeeded": True},
+            "diagnostics": {"topic": "/perception/open_vocab/diagnostics", "type": "diagnostic_msgs/msg/DiagnosticArray", "count": 4, "errors": 0, "healthy_components": sorted(REQUIRED_SHORT_DIAGNOSTIC_COMPONENTS)},
+            "blockers": [],
+        }
+
     def valid_raw(self) -> dict:
         models = {
             "dosod_hbm": "2" * 64,
@@ -95,6 +167,9 @@ class FormalS100LiveAcceptanceTests(unittest.TestCase):
             "edgesam_encoder_hbm": "4" * 64,
             "edgesam_decoder_hbm": "5" * 64,
         }
+        short_path = self.root / "short-diagnostic.json"
+        short_receipt = self.valid_short_diagnostic()
+        short_path.write_text(json.dumps(short_receipt, sort_keys=True), encoding="utf-8")
         return {
             "schema_version": 1,
             "report_id": RAW_REPORT_ID,
@@ -119,6 +194,7 @@ class FormalS100LiveAcceptanceTests(unittest.TestCase):
             "source_binding": dict(self.identity),
             "acceptance_session_binding": dict(self.session_binding),
             "runtime_closure_binding": dict(self.closure_binding),
+            "short_diagnostic_binding": {"path": str(short_path), "sha256": sha256_path(short_path), "receipt": short_receipt, "admitted_epoch_ns": time.time_ns()},
             "system_image": {
                 "os_release": {"ID": "ubuntu", "VERSION_ID": "22.04", "IMAGE_ID": "rdk-s100-4.1"},
                 "os_release_sha256": "9" * 64,
@@ -127,8 +203,7 @@ class FormalS100LiveAcceptanceTests(unittest.TestCase):
                 "uname": {"returncode": 0},
                 "runtime_inventory": {
                     "ros2": {"returncode": 0},
-                    "hbrt4": {"returncode": 0},
-                    "hrt_model_exec": {"returncode": 127},
+                    "hrt_model_exec": {"returncode": 0},
                 },
             },
             "models": [
@@ -158,7 +233,7 @@ class FormalS100LiveAcceptanceTests(unittest.TestCase):
                 },
             },
             "ros_graph": {
-                "nodes": ["/hobot_dosod", "/mono_edgesam", "/open_vocab_product_adapter"],
+                "nodes": ["/rgb_to_nv12_adapter", "/hobot_dosod", "/mono_edgesam", "/open_vocab_product_adapter"],
                 "topics": {
                     "/perception/garbage/detections_2d": ["vision_msgs/msg/Detection2DArray"],
                     "/perception/ground_dirt/masks": ["sensor_msgs/msg/Image"],
@@ -225,6 +300,120 @@ class FormalS100LiveAcceptanceTests(unittest.TestCase):
             "truth_boundary": {"simulator_or_evaluator_truth_used": False},
             "blockers": [],
         }
+
+    def test_short_diagnostic_is_independent_fresh_and_complete(self) -> None:
+        diagnostic = self.valid_short_diagnostic()
+        self.assertEqual(
+            validate_short_diagnostic(
+                diagnostic, self.identity, self.session_binding, self.closure_binding,
+                now_epoch_ns=time.time_ns(),
+            ),
+            [],
+        )
+        mutations = {
+            "legacy hbrt cannot substitute": lambda row: row["hrt_model_exec"].__setitem__("path", "/usr/bin/hbrt4-run-model"),
+            "foreign collector cannot self-attest": lambda row: row["collector"].__setitem__("script_sha256", "0" * 64),
+            "unverifiable TROS import": lambda row: row["tros_abi"]["imports"]["rclpy"]["package_metadata"].__setitem__("path", "relative/METADATA"),
+            "duplicate product node": lambda row: row["nodes"]["open_vocab_product_adapter"].__setitem__("count", 2),
+            "missing depth freshness": lambda row: row["inputs"]["depth"].__setitem__("count", 0),
+            "clock does not advance": lambda row: row["clock"].__setitem__("stamps_ns", [1, 1]),
+            "same stamp chain missing": lambda row: row["outputs"]["dosod"].__setitem__("stamps_ns", [3]),
+            "unobserved DOSOD class axis": lambda row: row["dosod_model_info"].__setitem__("observed_class_count", None),
+            "handwritten DOSOD model_info shape": lambda row: (row["dosod_model_info"].__setitem__("stdout", "scores [1, 8400, 2]\nboxes [1, 8400, 4]\n"), row["dosod_model_info"].__setitem__("stdout_sha256", hashlib.sha256(row["dosod_model_info"]["stdout"].encode("utf-8")).hexdigest())),
+            "project output wrong source stamp": lambda row: row["project_outputs"]["boxes"].__setitem__("stamps_ns", [3]),
+            "empty project targets": lambda row: row["project_outputs"]["targets"].__setitem__("nonempty_count", 0),
+            "diagnostic error": lambda row: row["diagnostics"].__setitem__("errors", 1),
+            "stale receipt": lambda row: row.__setitem__("collected_epoch_ns", 1),
+        }
+        for label, mutate in mutations.items():
+            with self.subTest(label=label):
+                candidate = self.valid_short_diagnostic()
+                mutate(candidate)
+                self.assertTrue(
+                    validate_short_diagnostic(
+                        candidate, self.identity, self.session_binding, self.closure_binding,
+                        now_epoch_ns=time.time_ns(),
+                    )
+                )
+
+    def test_short_diagnostic_model_info_is_parsed_from_fake_official_output(self) -> None:
+        stdout = """model outputs:
+scores: float32 [1, 8400, 4]
+boxes: float32 [1, 8400, 4]
+"""
+        self.assertEqual(
+            collector.parse_dosod_model_info(stdout),
+            {"scores": [1, 8400, 4], "boxes": [1, 8400, 4]},
+        )
+        self.assertEqual(collector.parse_dosod_model_info("scores [1,8400,4]\nunknown [1,8400,4]"), {"scores": [1, 8400, 4]})
+        hbm = self.root / "dosod.hbm"
+        hbm.write_bytes(b"fake-hbm")
+        original = collector.run_text
+        try:
+            collector.run_text = lambda command, timeout=30.0: {
+                "command": command, "returncode": 0, "stdout": stdout, "stderr": "",
+            }
+            observed = collector.dosod_model_info(hbm)
+        finally:
+            collector.run_text = original
+        self.assertEqual(observed["argv"], [HRT_MODEL_EXEC_PATH, "model_info", f"--model_file={hbm}"])
+        self.assertEqual(observed["output_shapes"], {"scores": [1, 8400, 4], "boxes": [1, 8400, 4]})
+        self.assertEqual(observed["observed_class_count"], 4)
+
+    def test_short_diagnostic_model_inputs_reject_symlinked_ancestor(self) -> None:
+        model_paths = {}
+        for role in ("dosod_hbm", "dosod_vocabulary", "edgesam_encoder_hbm", "edgesam_decoder_hbm"):
+            path = self.root / role
+            path.write_bytes(role.encode("utf-8"))
+            model_paths[role] = path
+        self.assertEqual(collector.unsafe_required_model_inputs(model_paths), [])
+        linked_parent = self.root / "linked-models"
+        try:
+            os.symlink(self.root, linked_parent, target_is_directory=True)
+        except OSError as exc:
+            self.skipTest(f"test filesystem does not permit symlink fixture: {exc}")
+        model_paths["dosod_hbm"] = linked_parent / "dosod_hbm"
+        self.assertEqual(collector.unsafe_required_model_inputs(model_paths), ["dosod_hbm"])
+
+    def test_formal_raw_requires_a_bound_short_diagnostic(self) -> None:
+        raw = self.valid_raw()
+        del raw["short_diagnostic_binding"]
+        failures = validate_raw(raw, self.identity, self.active_session, self.closure_binding)
+        self.assertTrue(any("short diagnostic" in failure for failure in failures))
+
+    def test_formal_raw_rereads_the_admitted_short_receipt(self) -> None:
+        raw = self.valid_raw()
+        receipt_path = Path(raw["short_diagnostic_binding"]["path"])
+        retained = json.loads(receipt_path.read_text(encoding="utf-8"))
+        retained["diagnostics"]["errors"] = 1
+        receipt_path.write_text(json.dumps(retained, sort_keys=True), encoding="utf-8")
+        failures = validate_raw(raw, self.identity, self.active_session, self.closure_binding)
+        self.assertTrue(any("drifted" in failure for failure in failures))
+
+    def test_formal_raw_rejects_short_receipt_under_symlinked_ancestor(self) -> None:
+        raw = self.valid_raw()
+        receipt_path = Path(raw["short_diagnostic_binding"]["path"])
+        linked_parent = self.root / "linked"
+        try:
+            os.symlink(self.root, linked_parent, target_is_directory=True)
+        except OSError as exc:
+            self.skipTest(f"test filesystem does not permit symlink fixture: {exc}")
+        linked_receipt = linked_parent / receipt_path.name
+        raw["short_diagnostic_binding"]["path"] = str(linked_receipt)
+        raw["short_diagnostic_binding"]["sha256"] = sha256_path(linked_receipt)
+        failures = validate_raw(raw, self.identity, self.active_session, self.closure_binding)
+        self.assertTrue(any("linked, unsafe, or missing" in failure for failure in failures))
+
+    def test_formal_raw_uses_admission_time_not_1800_second_end_time(self) -> None:
+        raw = self.valid_raw()
+        receipt_path = Path(raw["short_diagnostic_binding"]["path"])
+        receipt = raw["short_diagnostic_binding"]["receipt"]
+        receipt["collected_epoch_ns"] = time.time_ns() - 1_000_000_000_000
+        raw["short_diagnostic_binding"]["admitted_epoch_ns"] = receipt["collected_epoch_ns"] + 60_000_000_000
+        receipt_path.write_text(json.dumps(receipt, sort_keys=True), encoding="utf-8")
+        raw["short_diagnostic_binding"]["sha256"] = sha256_path(receipt_path)
+        failures = validate_raw(raw, self.identity, self.active_session, self.closure_binding)
+        self.assertFalse(any("short diagnostic" in failure for failure in failures))
 
     def test_device_tree_attestation_requires_architecture_sku_and_soc(self) -> None:
         model = self.root / "proc/device-tree/model"

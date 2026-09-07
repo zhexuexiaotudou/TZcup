@@ -441,6 +441,12 @@ def audit_calibration(
     }
 
 
+def _validate_preprocessing_oracle(path: Path) -> dict[str, Any]:
+    """Kept as a seam so old compile/calibration gates remain independently testable."""
+    from validate_dosod_single_frame_preprocessing_oracle import validate
+    return validate(path)
+
+
 def audit_compile_inputs(
     contract_path: Path,
     repository_root: Path,
@@ -448,6 +454,7 @@ def audit_compile_inputs(
     upstream_root: Path,
     calibration_dir: Path,
     compiler_identity_path: Path | None,
+    preprocessing_oracle_path: Path | None = None,
 ) -> dict[str, Any]:
     blockers: list[str] = []
     try:
@@ -462,6 +469,17 @@ def audit_compile_inputs(
             "compile_plan_sha256": None,
         }
     validate_contract_shape(contract, blockers)
+    oracle_sha = None
+    if preprocessing_oracle_path is None:
+        _block(blockers, "preprocessing_oracle_missing")
+    else:
+        try:
+            oracle = _validate_preprocessing_oracle(preprocessing_oracle_path)
+            if oracle.get("model_sha256") != EXPECTED_MODEL_SHA256 or oracle.get("vocabulary_sha256") != EXPECTED_VOCABULARY_SHA256:
+                raise ValueError("oracle_model_or_vocabulary_mismatch")
+            oracle_sha = sha256_file(preprocessing_oracle_path)
+        except Exception as exc:
+            _block(blockers, f"preprocessing_oracle_invalid:{type(exc).__name__}")
     if not isinstance(contract, dict):
         contract = {}
     model_path = None
@@ -518,6 +536,7 @@ def audit_compile_inputs(
             "toolchain_discovery_sha256": contract["toolchain"]["discovery_report"]["sha256"],
             "compile_recipe": contract["compile_recipe"],
             "expected_output": contract["output"]["relative_path"],
+            "preprocessing_oracle_sha256": oracle_sha,
         }
         plan_sha = canonical_sha256(plan_payload)
     return {
@@ -554,6 +573,7 @@ def main() -> int:
     parser.add_argument("--upstream-root", required=True)
     parser.add_argument("--calibration-dir", required=True)
     parser.add_argument("--compiler-identity")
+    parser.add_argument("--preprocessing-oracle")
     parser.add_argument("--allow-blocked-exit-zero", action="store_true")
     args = parser.parse_args()
     report = audit_compile_inputs(
@@ -563,6 +583,7 @@ def main() -> int:
         Path(args.upstream_root),
         Path(args.calibration_dir),
         Path(args.compiler_identity) if args.compiler_identity else None,
+        Path(args.preprocessing_oracle) if args.preprocessing_oracle else None,
     )
     print(json.dumps(report, indent=2, ensure_ascii=False))
     if report["status"] == "READY_FOR_ONNX_TOOLCHAIN_PREFLIGHT":
