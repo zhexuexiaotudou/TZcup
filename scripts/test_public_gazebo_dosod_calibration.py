@@ -36,6 +36,10 @@ def test_raw_sensor_drift_missing_and_symlink_are_rejected(tmp_path):
     try: os.symlink(target,raw)
     except OSError as exc: pytest.skip(f'symlink privilege unavailable: {exc}')
     with pytest.raises(subject.CalibrationRejected,match='raw_sensor_record_drift'): s._verify_raw_sensor(row)
+    raw.unlink(); raw.parent.rmdir()
+    outside=tmp_path/'outside'; outside.mkdir(); (outside/raw.name).write_bytes(frame('c',1).data)
+    os.symlink(outside,raw.parent,target_is_directory=True)
+    with pytest.raises(subject.CalibrationRejected,match='raw_sensor_record_drift'): s._verify_raw_sensor(row)
 def test_camera_mismatch_and_fresh_output_fail_closed(tmp_path):
     s=subject.PublicGazeboStore(tmp_path/'out',contract(),plan()); bad=frame('c'); bad=subject.Frame(bad.scene_id,bad.topic,bad.frame_id,bad.stamp_ns,bad.data,bad.width,bad.height,bad.step,bad.encoding,{"frame_id":"other","stamp_ns":1,"width":2,"height":2,"k":[1.,0.,1.,0.,1.,1.,0.,0.,1.]})
     with pytest.raises(subject.CalibrationRejected,match='camera_info'): s.add(bad)

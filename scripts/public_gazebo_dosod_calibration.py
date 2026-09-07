@@ -468,8 +468,9 @@ class PublicGazeboStore:
         raw = row.get("raw_sensor")
         if not isinstance(raw, dict) or set(raw) != {"relative_path", "sha256", "byte_size", "width", "height", "step", "encoding", "frame_id", "stamp_ns"}:
             raise CalibrationRejected("raw_sensor_record_invalid")
-        candidate = (self.output / str(raw["relative_path"])).resolve()
-        if not candidate.is_relative_to(self.output.resolve()) or candidate.is_symlink() or not candidate.is_file() or candidate.stat().st_size != raw["byte_size"] or sha256_file(candidate) != raw["sha256"] or raw["sha256"] != row.get("source_sha256"):
+        requested = self.output / str(raw["relative_path"])
+        candidate = requested.resolve()
+        if _unsafe(requested) or not candidate.is_relative_to(self.output.resolve()) or not candidate.is_file() or candidate.stat().st_size != raw["byte_size"] or sha256_file(candidate) != raw["sha256"] or raw["sha256"] != row.get("source_sha256"):
             raise CalibrationRejected("raw_sensor_record_drift")
 
     def add(self, frame: Frame) -> bool:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 import tempfile
@@ -10,13 +11,26 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 WORK = ROOT / ".work"
-BASH_ROOT = "/mnt/f" + str(ROOT)[2:].replace("\\", "/")
+
+
+def _bash(path: Path) -> str:
+    """Map a Windows worktree into WSL, while leaving native POSIX paths intact."""
+    if os.name != "nt":
+        return path.as_posix()
+    drive = path.drive.rstrip(":").lower()
+    if len(drive) != 1 or not drive.isalpha():
+        raise ValueError(f"expected a drive-qualified Windows path: {path}")
+    return f"/mnt/{drive}" + str(path)[2:].replace("\\", "/")
+
+
+BASH_ROOT = _bash(ROOT)
 LIB = f"{BASH_ROOT}/scripts/public_gazebo_mobile_readiness.sh"
 PARSER = f"{BASH_ROOT}/scripts/parse_public_gazebo_topic_info.py"
 
 
-def _bash(path: Path) -> str:
-    return "/mnt/f" + str(path)[2:].replace("\\", "/")
+def test_bash_path_keeps_native_posix_paths(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(os, "name", "posix")
+    assert _bash(Path("/home/runner/work/TZcup/TZcup")) == "/home/runner/work/TZcup/TZcup"
 
 
 def _run(script_path: Path) -> subprocess.CompletedProcess[str]:

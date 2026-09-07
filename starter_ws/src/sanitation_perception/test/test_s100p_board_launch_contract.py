@@ -198,15 +198,26 @@ def test_s100p_packaged_board_configs_match_the_authoritative_root_records():
 
 def test_s100p_board_configs_survive_sdist_and_install_data(tmp_path: Path):
     """Exercise the install path that a board overlay receives, not source text."""
+    def run_packaging(command: list[str], *, cwd: Path) -> None:
+        result = subprocess.run(
+            command,
+            cwd=cwd,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0, (
+            f"packaging command failed: {command!r}\n"
+            f"stdout:\n{result.stdout}\n"
+            f"stderr:\n{result.stderr}"
+        )
+
     source = tmp_path / "sanitation_perception"
     shutil.copytree(PACKAGE, source)
     dist = tmp_path / "dist"
-    subprocess.run(
+    run_packaging(
         [sys.executable, "setup.py", "sdist", "--dist-dir", str(dist)],
         cwd=source,
-        check=True,
-        capture_output=True,
-        text=True,
     )
     archive = dist / "sanitation_perception-0.1.0.tar.gz"
     with tarfile.open(archive) as bundle:
@@ -219,7 +230,7 @@ def test_s100p_board_configs_survive_sdist_and_install_data(tmp_path: Path):
         bundle.extractall(tmp_path / "unpacked", filter="data")
     unpacked = tmp_path / "unpacked" / "sanitation_perception-0.1.0"
     install_root = tmp_path / "installed"
-    subprocess.run(
+    run_packaging(
         [
             sys.executable,
             "setup.py",
@@ -233,9 +244,6 @@ def test_s100p_board_configs_survive_sdist_and_install_data(tmp_path: Path):
             str(tmp_path / "installed-files.txt"),
         ],
         cwd=unpacked,
-        check=True,
-        capture_output=True,
-        text=True,
     )
     installed_configs = list(install_root.glob("**/share/sanitation_perception/config"))
     assert len(installed_configs) == 1

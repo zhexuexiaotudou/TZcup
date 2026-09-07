@@ -79,6 +79,7 @@ def _fixture(tmp_path):
         "output_sha256": payloads["dosod_hbm"]["sha256"],
         "output_byte_size": payloads["dosod_hbm"]["byte_size"],
     }, sort_keys=True))
+    bpu_major, bpu_minor = MODULE._device_major_minor(258)
     model_receipt = {
         "schema_version": 1, "receipt_id": MODULE.MODEL_RECEIPT_ID,
         "status": "VERIFIED", "board_interaction_performed": True,
@@ -87,7 +88,7 @@ def _fixture(tmp_path):
         "board_identity": {
             "model": "D-Robotics RDK S100P V1P0", "model_sha256": _digest(tmp_path / "proc/device-tree/model"),
             "compatible": "drobot,s100-rdk", "compatible_sha256": _digest(tmp_path / "proc/device-tree/compatible"), "architecture": "aarch64",
-            "bpu_device": {"path": "/dev/bpu_core0", "st_mode": 8192, "st_rdev_major": 0, "st_rdev_minor": 0, "st_ino": 3, "is_character_device": True, "is_symlink": False},
+            "bpu_device": {"path": "/dev/bpu_core0", "st_mode": 8192, "st_rdev_major": bpu_major, "st_rdev_minor": bpu_minor, "st_ino": 3, "is_character_device": True, "is_symlink": False},
             "required_modules": ["bpu_cores", "bpu_framework"],
         },
         "stage_root": "/opt/tzcup/stages/v1",
