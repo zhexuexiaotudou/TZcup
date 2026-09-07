@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "contract_id": "tzcup_product_acceptance_contract_v1",
+  "authoritative_specification": {
+    "a12_requirement_id": "A12",
+    "path": "docs/a12-product-acceptance-specification.md",
+    "status": "VERSIONED_FIXED_BASELINE"
+  },
+  "claim_boundary": "Static validation proves only this declarative contract and its cardinality. It is not runtime evidence and must not promote any product runtime state.",
+  "product_runtime_states": {
+    "simulation_product_complete": false,
+    "product_integration_ready": false,
+    "product_field_ready": false
+  },
+  "auto15_execution_accounting": {
+    "scenario_ids": [
+      "mapping",
+      "full_coverage",
+      "timed_trajectory",
+      "discrete_pick",
+      "leaf_pile",
+      "puddle",
+      "spot_cleaning",
+      "dynamic_avoidance",
+      "narrow_corridor",
+      "boundary_protection",
+      "emergency_stop",
+      "app",
+      "speech",
+      "llm_dsl",
+      "bin_full",
+      "recovery_replay",
+      "efficiency",
+      "j6_runtime"
+    ],
+    "seeds": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+    "required_execution_count": 180,
+    "minimum_mission_group_count": 30,
+    "required_execution_evidence": ["video", "mcap"]
+  }
+}

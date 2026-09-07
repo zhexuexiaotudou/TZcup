@@ -112,11 +112,11 @@
     {
       "id": "A12",
       "title": "产品级详细指标与异常归因",
-      "source": [".workspace/specifications/acceptance/TZcup_仿真产品级最终验收标准与产品准入要求.md"],
+      "source": ["docs/a12-product-acceptance-specification.md", "config/high_fidelity_vehicle/product_acceptance_contract.json"],
       "step_ids": ["perception", "single_episode"],
       "evidence_gates": ["random_scene_perception", "end_to_end_cleaning_mission"],
       "state": "CONTRACT_MAPPING_OPEN",
-      "blockers": ["Historical product_acceptance_v1 artifacts referenced by documentation are absent from current repository history; thresholds must be represented by current formal reports before PASS."]
+      "blockers": ["The authoritative fixed product-acceptance specification and static AUTO-15 cardinality contract are versioned, but current runtime reports do not cover its product gates; static contract PASS cannot promote a product runtime state."]
     },
     {
       "id": "A13",
