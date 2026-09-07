@@ -16,6 +16,7 @@
     "receipt_id": "tzcup_a19_canonical_runtime_receipt_v1",
     "required_commit_binding": true,
     "available_on_current_main": false,
+    "future_producer_required_semantics": ["chronological wall-clock time series with continuity and cadence", "launch command and zero exit code", "zero-survivor process receipt", "fault injection parameters and timestamped STOPPED then RECOVERED state sequence", "same-commit snapshot/session/runtime-closure binding"],
     "blocker": "No canonical current-main runtime collector produces a receipt with full-product time series, command/exit/zero-survivor evidence, all 18 injected faults, and formal session/runtime-closure bindings. Hand-authored JSON can never pass A19."
   },
   "required_pipeline_components": ["Coverage", "Perception", "Tracking", "DynamicTrashMap", "Spot Cleaning", "Post-Clean Verification"],

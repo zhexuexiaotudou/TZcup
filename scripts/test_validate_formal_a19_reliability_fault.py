@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""Adversarial fixtures: current main must never manufacture an A19 PASS."""
+"""Focused negative tests for the current A19 producer boundary."""
 
 from __future__ import annotations
 
 import json
-import time
 from pathlib import Path
 
 from validate_formal_a19_reliability_fault import BLOCKED, ROOT, _safe_output, validate
@@ -14,80 +13,46 @@ def _write(path: Path, payload: object) -> None:
     path.write_text(json.dumps(payload), encoding="utf-8")
 
 
-def _record(fault_id: str, stamp: int) -> dict:
-    event = [{"state": "STOPPED", "wall_clock_epoch_ns": stamp}]
-    return {"fault_id": fault_id, "safety_state_events": event, "recovery_state_events": [{"state": "RECOVERED", "wall_clock_epoch_ns": stamp + 1}], "perception_health_events": [{"state": "DEGRADED", "wall_clock_epoch_ns": stamp}], "safety_nav_operational": True, "unsafe_pending_clean_outcome": "CANCELLED"}
-
-
 def _candidate(tmp_path: Path) -> tuple[Path, Path, Path, Path, Path]:
     evidence = tmp_path / "evidence"; evidence.mkdir()
-    now = time.time_ns(); start = now - 7_201_000_000_000
-    report = {"profiles": ["nominal", "transport_stress", "wet_surface", "degraded_drive"], "faults": [_record(name, start + 1) for name in ("rgb_freeze", "depth_freeze", "timestamp_skew", "camera_info_mismatch", "tf_unavailable", "invalid_depth", "proposal_flood", "proposal_dropout", "classifier_exception", "classifier_timeout", "action_verifier_failure", "reobserve_timeout", "cuda_provider_failure", "model_hash_mismatch", "corrupt_model", "sustained_slow_inference", "nav2_path_unavailable", "dynamic_obstacle_blocks_observation")], "stability_metrics": {"crash_count": 0, "deadlock_count": 0, "memory_growth_ratio": 0.05, "queue_growth_count": 0, "unexpected_model_reload_count": 0, "persistent_tf_failure_count": 0, "unrecoverable_watchdog_event_count": 0, "unsafe_cleaning_action_count": 0, "localization_xy_rmse_m": 0.05, "localization_xy_p95_m": 0.05, "estop_brake_latency_s": 1.0, "pipeline_components": ["Coverage", "Perception", "Tracking", "DynamicTrashMap", "Spot Cleaning", "Post-Clean Verification"]}, "wall_clock_collection": {"started_epoch_ns": start, "ended_epoch_ns": now}, "raw_evidence": {name: {} for name in ("wall_clock_time_series", "launch_command", "process_exit", "zero_survivor", "fault_injection_receipt")}}
-    report_path = evidence / "report.json"; _write(report_path, report)
-    snapshot = evidence / "snapshot.json"; _write(snapshot, {"source_inventory_sha256": "a" * 64})
-    session = evidence / "session.json"; _write(session, {"started_epoch_ns": start - 1})
-    closure = evidence / "closure.json"; _write(closure, {"closure_sha256": "b" * 64})
-    return report_path, snapshot, session, closure, evidence
+    paths = tuple(evidence / name for name in ("report.json", "snapshot.json", "session.json", "closure.json"))
+    for path in paths: _write(path, {})
+    return *paths, evidence
 
 
 def _validate(paths: tuple[Path, Path, Path, Path, Path]) -> dict:
-    return validate(*paths, repository_root=ROOT)
+    return validate(*paths, repository_root=ROOT, evidence_parent=paths[-1].parent)
 
 
-def test_complete_hand_authored_static_claim_is_still_blocked(tmp_path: Path) -> None:
+def test_contract_preserves_all_product_standard_a19_requirements() -> None:
+    contract = json.loads((ROOT / "config/high_fidelity_vehicle/formal_a19_reliability_fault_contract.json").read_text(encoding="utf-8"))
+    assert contract["required_profiles"] == ["nominal", "transport_stress", "wet_surface", "degraded_drive"]
+    assert len(contract["required_faults"]) == 18
+    assert contract["stability_gates"]["maximum_localization_xy_p95_m"] == 0.05
+    assert contract["canonical_producer"]["available_on_current_main"] is False
+
+
+def test_hand_authored_json_is_blocked_without_a_canonical_producer(tmp_path: Path) -> None:
     result = _validate(_candidate(tmp_path))
     assert result["status"] == BLOCKED and not result["passed"]
     assert any("canonical current-main runtime collector" in item for item in result["blockers"])
+    assert any("future canonical producer must parse" in item for item in result["blockers"])
 
 
-def test_duplicate_or_unknown_profile_is_rejected(tmp_path: Path) -> None:
-    paths = _candidate(tmp_path); payload = json.loads(paths[0].read_text()); payload["profiles"] = ["nominal", "nominal", "wet_surface", "unknown"]; _write(paths[0], payload)
-    assert any("profiles must be" in item for item in _validate(paths)["blockers"])
+def test_evidence_root_with_parent_traversal_is_rejected_before_normalization(tmp_path: Path) -> None:
+    paths = _candidate(tmp_path); outside = tmp_path / "outside"; outside.mkdir()
+    result = validate(paths[0], paths[1], paths[2], paths[3], paths[4] / ".." / "outside", repository_root=ROOT, evidence_parent=tmp_path)
+    assert result["status"] == BLOCKED
+    assert any("parent traversal is forbidden" in item for item in result["blockers"])
 
 
-def test_missing_one_of_the_eighteen_faults_is_rejected(tmp_path: Path) -> None:
-    paths = _candidate(tmp_path); payload = json.loads(paths[0].read_text()); payload["faults"] = payload["faults"][:-1]; _write(paths[0], payload)
-    assert any("fault ids must be" in item for item in _validate(paths)["blockers"])
-
-
-def test_each_fault_requires_a_nonempty_injection_parameter_record(tmp_path: Path) -> None:
-    result = _validate(_candidate(tmp_path))
-    assert any("rgb_freeze lacks injection parameters" in item for item in result["blockers"])
-
-
-def test_51mm_localization_and_string_states_are_rejected(tmp_path: Path) -> None:
-    paths = _candidate(tmp_path); payload = json.loads(paths[0].read_text()); payload["stability_metrics"]["localization_xy_p95_m"] = 0.051; payload["faults"][0]["safety_state_events"] = "STOPPED"; _write(paths[0], payload)
-    result = _validate(paths)
-    assert any("localization_xy_p95_m" in item for item in result["blockers"])
-    assert any("timestamped STOPPED" in item for item in result["blockers"])
-
-
-def test_future_and_pre_session_time_are_rejected(tmp_path: Path) -> None:
-    paths = _candidate(tmp_path); payload = json.loads(paths[0].read_text()); payload["wall_clock_collection"]["ended_epoch_ns"] = time.time_ns() + 60_000_000_000; payload["wall_clock_collection"]["started_epoch_ns"] = 0; _write(paths[0], payload)
-    result = _validate(paths)
-    assert any("future" in item for item in result["blockers"])
-    assert any("predates" in item for item in result["blockers"])
-
-
-def test_report_and_output_traversal_are_rejected(tmp_path: Path) -> None:
+def test_report_and_output_escape_are_rejected(tmp_path: Path) -> None:
     paths = _candidate(tmp_path); outside = tmp_path / "outside.json"; _write(outside, {})
-    result = validate(outside, paths[1], paths[2], paths[3], paths[4], repository_root=ROOT)
+    result = validate(outside, paths[1], paths[2], paths[3], paths[4], repository_root=ROOT, evidence_parent=tmp_path)
     assert any("report: path escapes root" in item for item in result["blockers"])
     try:
         _safe_output(paths[4] / ".." / "outside.json", paths[4])
     except ValueError as exc:
-        assert "output escapes root" in str(exc)
+        assert "parent traversal is forbidden" in str(exc)
     else:
         raise AssertionError("output traversal must fail")
-
-
-def test_raw_semantic_claims_and_binding_drift_cannot_pass_without_schema(tmp_path: Path) -> None:
-    paths = _candidate(tmp_path); payload = json.loads(paths[0].read_text())
-    payload["raw_evidence"] = {name: {"path": "invented.jsonl", "sha256": "a" * 64, "byte_size": 1} for name in payload["raw_evidence"]}
-    payload["wall_clock_time_series"] = [{"wall_clock_epoch_ns": 2}, {"wall_clock_epoch_ns": 1}]
-    payload["process_exit"] = {"exit_code": 7}; payload["zero_survivor"] = {"survivor_count": 1}
-    payload["current_bindings"] = {"repository_commit": "0" * 40}
-    _write(paths[0], payload); result = _validate(paths)
-    assert result["status"] == BLOCKED
-    assert any("no canonical current-main runtime collector" in item.lower() for item in result["blockers"])
-    assert any("same-commit snapshot/session/runtime-closure" in item for item in result["blockers"])

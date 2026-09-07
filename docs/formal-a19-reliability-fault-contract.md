@@ -6,6 +6,8 @@
 
 当前 main 没有规范 A19 runtime producer 或 receipt schema：没有任何收据能同时绑定同提交的 snapshot/session/runtime closure、可解析的实时连续 wall-clock 序列、启动命令、退出码、零 survivor、全故障注入记录及基于时间戳的 STOPPED/RECOVERED 状态。因此校验器不会把任意“路径 + 哈希 + size”文件解释为上述语义，也刻意不会产生 PASS；手写 JSON、65 秒 water soak 或历史产物都只能得到 BLOCKED。这是缺少生产器的真实边界，不是运行通过结论。
 
+未来 canonical producer 的责任已冻结在合同中：解析并交叉验证连续 wall-clock 序列和 cadence、启动命令/零退出、零 survivor、18 个带参数的故障记录及 STOPPED 后 RECOVERED 的时间顺序，并将它们绑定到同一提交的 snapshot/session/runtime closure。生产器与 schema 未落地前，当前 validator 不声称检查这些语义。
+
 离线核验：
 
 ```bash
