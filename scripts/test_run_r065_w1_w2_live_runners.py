@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 W1 = ROOT / "scripts" / "run_r065_w1_dynamic_footprint_live.sh"
 W2 = ROOT / "scripts" / "run_r065_w2_moveit_ground_live.sh"
 COLLECTOR = ROOT / "scripts" / "collect_r065_w2_live_grasp_request.py"
+TF_READINESS = ROOT / "scripts" / "r065_w2_tf_readiness.py"
 
 
 def _source(path: Path) -> str:
@@ -94,7 +95,10 @@ def test_w2_uses_real_campus_localization_and_machine_readable_gate_stdout() -> 
     assert 'formal_campus.launch.py' in source
     assert 'localization_backend:=amcl' in source
     assert 'start_pedestrians:=false start_navigation:=false start_coverage:=false' in source
-    assert 'ros2 run tf2_ros tf2_echo map base_footprint' in source
+    assert 'scripts/r065_w2_tf_readiness.py' in source
+    assert '--output "${tf_readiness_json}"' in source
+    assert 'tf2_echo map base_footprint' not in source
+    assert TF_READINESS.is_file()
     assert 'ros2 run sanitation_manipulation' in source
     assert 'moveit_ground_runtime_gate --ros-args' in source
     assert 'formal_pc_open_vocab.launch.py artifact_root:="${perception_artifact_root}"' in source

@@ -88,6 +88,8 @@ fresh R065 public session 在第一个 `transport_stowed` override 对旧 exact 
 
 ### W2：建立 MoveIt planning-scene bootstrap
 
+- W2 runner 的 MoveIt/node readiness 不得把持续 `tf2_echo` 的命令返回或 timeout `124` 当作 map TF 成立。nodes ready 后必须执行一次有界、只读 `rclpy Buffer/TransformListener` probe：严格读取 `map -> base_footprint`，要求 `/clock` 已推进、TF header stamp 非零、同一 ROS clock 下非 future 且未超过固定 freshness；任一缺失、错 frame、旧/未来 stamp 或超时都以原子 `passed=false, status=BLOCKED` JSON 退出。probe 不得建立 `/tf` publisher、执行器/control client、truth 或控制接口；它是 ROS schema/readiness 预检，不是 W2 或 formal session 通过证据。
+
 - 将 `bin_and_scene.yaml` 从死配置改为正式输入；区分 `required_robot_links` 与 `required_world_objects`，不得把 URDF robot link 伪装成 world object。
 - 启动/首次抓取前向 MoveIt world 注入有厚度、有限且覆盖完整 `200 m x 100 m` 正式 geofence（包含明确余量）的 `ground` box，frame、尺寸、顶面高度和 ID 必须来自配置并可验证。该 world object 必须直接存于 MoveIt 实际 planning frame（当前正式 SRDF 为 `map`），不得用会在应用时冻结为一次性世界位姿的 `base_footprint` 局部 patch 冒充全场地地面；`GetPlanningScene` 会以 planning frame 回读 world object，bootstrap 必须按该真实语义校验。正式 source-world geofence `x=[-100,100], y=[-50,50]` 以起点 `(-98,0)` 做唯一一次定位变换后，在 `map` 中为 `x=[-2,198], y=[-50,50]`；地面中心/边界必须从这条来源链推导并有覆盖测试，不能把 source-world 中心 `0` 直接当作 map 中心。地面高度仍须服从正式 URDF datum：`base_footprint` 是地面投影，`base_link` 相对它为 `+0.1651 m`；不得把 `base_link z=0` 错当物理地面。
 - 正式 `formal_vehicle.srdf` 必须声明 `map -> base_footprint` 的 planar virtual joint，使 MoveIt model/planning frame 与正式定位 TF 链一致；机械臂 group 不得因此包含或规划底盘自由度。MoveIt CurrentStateMonitor 应只从正式 TF 更新该 multi-DOF joint，不得向 `/joint_states` 或执行器端点注入伪造底盘状态。

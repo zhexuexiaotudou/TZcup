@@ -39,6 +39,7 @@ runtime_root="${run_root}/w2_runtime"
 runtime_binding="${run_root}/w2.runtime_binding.json"
 launch_log="${runtime_root}/formal_campus_moveit.launch.log"
 gate_json="${runtime_root}/moveit_ground_runtime_gate.json"
+tf_readiness_json="${runtime_root}/map_to_base_footprint_tf_readiness.json"
 request_json_path="${run_root}/w2_request.json"
 request_provenance="${run_root}/w2_request_provenance.json"
 cleanup_evidence="${runtime_root}/cleanup_evidence.txt"
@@ -141,8 +142,9 @@ formal_runtime_install_traps cleanup
   >"${launch_log}" 2>&1 &
 launch_pid=$!
 
-# A direct live TF query only observes the production global-EKF output.  It
-# is deliberately not a static-transform publisher or a shared-state source.
+# The one-shot helper only observes the production global-EKF output. It must
+# validate exact frames, a nonzero fresh simulated timestamp, and advancing
+# /clock; a tf2_echo timeout or arbitrary console text is never readiness.
 ready="false"
 for _ in $(seq 1 "${R065_W2_STARTUP_POLLS:-180}"); do
   if ! kill -0 "${launch_pid}" 2>/dev/null; then
@@ -151,15 +153,19 @@ for _ in $(seq 1 "${R065_W2_STARTUP_POLLS:-180}"); do
   fi
   if ros2 node list 2>/dev/null | grep -Fxq /move_group && \
       ros2 node list 2>/dev/null | grep -Fxq /global_ekf && \
-      timeout 3s ros2 run tf2_ros tf2_echo map base_footprint \
-        >"${runtime_root}/map_to_base_footprint.tf.log" 2>&1; then
+      "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" /usr/bin/python3 \
+        "${repo_root}/scripts/r065_w2_tf_readiness.py" \
+        --output "${tf_readiness_json}" \
+        --timeout-sec "${R065_W2_TF_READINESS_TIMEOUT_S:-3}" \
+        --max-age-sec "${R065_W2_TF_MAX_AGE_S:-0.50}" \
+        >"${runtime_root}/map_to_base_footprint_tf_readiness.stdout" 2>&1; then
     ready="true"
     break
   fi
   sleep 1
 done
 [[ "${ready}" == "true" ]] || {
-  echo "R065 W2 timed out waiting for live map->base_footprint and MoveIt" >&2
+  echo "R065 W2 timed out waiting for one-shot live map->base_footprint readiness and MoveIt" >&2
   exit 3
 }
 
