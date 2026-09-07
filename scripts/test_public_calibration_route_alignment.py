@@ -64,7 +64,8 @@ def test_deadline_helper_uses_term_then_kill_for_an_exact_private_group() -> Non
     start = source.index("stop_private_group() {")
     end = source.index("\nstop_deadline()", start)
     helper = source[start:end]
-    fixture = "#!/usr/bin/env bash\nset -Eeuo pipefail\n" + helper + "\nsetsid bash -c 'trap \"\" TERM; while :; do sleep 1; done' & pid=$!\nsleep .05\nset +e\nstop_private_group \"$pid\"\nrc=$?\nset -e\nkill -0 -- \"-$pid\" 2>/dev/null && exit 99\nprintf '%s\\n' \"$rc\"\n"
+    live = source[source.index("group_has_live_processes() {"):source.index("\n# Even an early setup")]
+    fixture = "#!/usr/bin/env bash\nset -Eeuo pipefail\n" + live + "\n" + helper + "\nsetsid bash -c 'trap \"\" TERM; while :; do sleep 1; done' & pid=$!\nsleep .05\nset +e\nstop_private_group \"$pid\"\nrc=$?\nset -e\nkill -0 -- \"-$pid\" 2>/dev/null && exit 99\nprintf '%s\\n' \"$rc\"\n"
     work = ROOT / ".work"
     work.mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory(dir=work) as raw:

@@ -47,6 +47,14 @@ binding_digest() { local -a bindings=("$ROOT/scripts/run_public_mobile_gazebo_do
 ADMISSION_BINDING_SHA256="$(binding_digest)"; export ADMISSION_BINDING_SHA256 CANONICAL_PLAN_SHA256
 DEADLINE_EPOCH=$((SECONDS + PUBLIC_GAZEBO_CALIBRATION_TOTAL_TIMEOUT_SEC))
 setsid sleep "$PUBLIC_GAZEBO_CALIBRATION_TOTAL_TIMEOUT_SEC" & DEADLINE_PID=$!
+group_has_live_processes() {
+  local pgid="$1"
+  [[ "$pgid" =~ ^[2-9][0-9]*$ ]] || return 1
+  # kill -0 reports an unreaped zombie leader as alive.  Census the exact
+  # PGID instead, so a completed setup session is reaped without burning the
+  # whole TERM grace while still treating any live descendant as a survivor.
+  ps -eo pgid=,stat= | awk -v target="$pgid" '$1 == target && $2 !~ /^Z/ { found=1 } END { exit !found }'
+}
 # Even an early setup/admission failure must not leave the absolute-deadline
 # session behind. The full isolation trap replaces this once it is installed.
 early_deadline_exit() {
@@ -56,8 +64,8 @@ early_deadline_exit() {
   # private PGID here as well as the deadline PGID, including TERM->KILL.
   if [[ -n "${SETUP_PID:-}" ]]; then
     kill -TERM -- "-$SETUP_PID" 2>/dev/null || true
-    for _ in {1..40}; do kill -0 -- "-$SETUP_PID" 2>/dev/null || break; sleep .25; done
-    kill -0 -- "-$SETUP_PID" 2>/dev/null && kill -KILL -- "-$SETUP_PID" 2>/dev/null || true
+    for _ in {1..40}; do group_has_live_processes "$SETUP_PID" || break; sleep .25; done
+    group_has_live_processes "$SETUP_PID" && kill -KILL -- "-$SETUP_PID" 2>/dev/null || true
     wait "$SETUP_PID" 2>/dev/null || true
   fi
   [[ -n "${DEADLINE_PID:-}" ]] && kill -TERM -- "-$DEADLINE_PID" 2>/dev/null || true
@@ -131,11 +139,12 @@ stop_private_group() {
   local pgid="$1" signal
   [[ "$pgid" =~ ^[2-9][0-9]*$ ]] || return 0
   for signal in TERM KILL; do
-    kill -0 -- "-$pgid" 2>/dev/null || return 0
+    group_has_live_processes "$pgid" || { wait "$pgid" 2>/dev/null || true; return 0; }
     kill -"$signal" -- "-$pgid" 2>/dev/null || true
-    for _ in {1..40}; do kill -0 -- "-$pgid" 2>/dev/null || return 0; sleep .25; done
+    for _ in {1..40}; do group_has_live_processes "$pgid" || { wait "$pgid" 2>/dev/null || true; return 0; }; sleep .25; done
   done
-  ! kill -0 -- "-$pgid" 2>/dev/null
+  wait "$pgid" 2>/dev/null || true
+  ! group_has_live_processes "$pgid"
 }
 stop_deadline() { [[ -n "$DEADLINE_PID" ]] && stop_private_group "$DEADLINE_PID" || true; DEADLINE_PID=""; }
 # Setup files are executable inputs.  Source them in a private, deadline-bound

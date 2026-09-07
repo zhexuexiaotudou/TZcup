@@ -120,13 +120,14 @@ def test_hung_foreground_child_is_taken_over_by_the_one_absolute_deadline() -> N
     remaining = source[source.index("remaining_seconds() {"):source.index("\ndeadline_run() {")]
     deadline = source[source.index("deadline_run() {"):source.index("\nstop_private_group() {")]
     stopper = source[source.index("stop_private_group() {"):source.index("\nstop_deadline()", source.index("stop_private_group() {"))]
+    live = source[source.index("group_has_live_processes() {"):source.index("\n# Even an early setup")]
     work = ROOT / ".work"
     work.mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory(dir=work) as raw:
         fixture = Path(raw) / "fixture.sh"
         fixture.write_bytes((
             "#!/usr/bin/env bash\nset -Eeuo pipefail\n"
-            + remaining + "\n" + deadline + "\n" + stopper
+            + live + "\n" + remaining + "\n" + deadline + "\n" + stopper
             + "\nDEADLINE_EPOCH=$((SECONDS + 1)); setsid sleep 1 & DEADLINE_PID=$!\n"
             + "if deadline_run 20 /dev/null bash -c 'sleep 20'; then rc=0; else rc=$?; fi\n"
             + "kill -0 -- \"-$DEADLINE_PID\" 2>/dev/null && exit 99\nprintf '%s\\n' \"$rc\"\n"
@@ -141,12 +142,13 @@ def test_setup_leader_exit_with_background_child_fails_closed_and_reaps_group() 
     remaining = source[source.index("remaining_seconds() {"):source.index("\nrevalidate_final_inputs() {")]
     deadline = source[source.index("deadline_run() {"):source.index("\nstop_private_group() {")]
     stopper = source[source.index("stop_private_group() {"):source.index("\nstop_deadline()", source.index("stop_private_group() {"))]
+    live = source[source.index("group_has_live_processes() {"):source.index("\n# Even an early setup")]
     work = ROOT / ".work"
     with tempfile.TemporaryDirectory(dir=work) as raw:
         fixture = Path(raw) / "fixture.sh"
         fixture.write_bytes((
             "#!/usr/bin/env bash\nset -Eeuo pipefail\n"
-            + remaining + "\n" + deadline + "\n" + stopper
+            + live + "\n" + remaining + "\n" + deadline + "\n" + stopper
             + "\nDEADLINE_EPOCH=$((SECONDS + 20)); setsid sleep 20 & DEADLINE_PID=$!; CURRENT_PHASE=setup\n"
             + "if deadline_run 5 /dev/null bash -c 'sleep 20 & exit 0'; then rc=0; else rc=$?; fi\n"
             + "[[ -z \"${SETUP_PID:-}\" ]] || exit 98\nkill -0 -- \"-$DEADLINE_PID\" 2>/dev/null && kill -TERM -- \"-$DEADLINE_PID\" || true\nprintf '%s\\n' \"$rc\"\n"
@@ -159,6 +161,7 @@ def test_setup_leader_exit_with_background_child_fails_closed_and_reaps_group() 
 def test_signal_during_setup_reaps_setup_and_deadline_groups() -> None:
     source = RUNNER.read_text(encoding="utf-8")
     early = source[source.index("early_deadline_exit() {"):source.index("\ntrap early_deadline_exit EXIT")]
+    live = source[source.index("group_has_live_processes() {"):source.index("\n# Even an early setup")]
     work = ROOT / ".work"
     with tempfile.TemporaryDirectory(dir=work) as raw:
         raw_path = Path(raw)
@@ -166,7 +169,7 @@ def test_signal_during_setup_reaps_setup_and_deadline_groups() -> None:
         fixture = raw_path / "fixture.sh"
         fixture.write_bytes((
             "#!/usr/bin/env bash\nset -Eeuo pipefail\ncd -- \"$(dirname -- \"${BASH_SOURCE[0]}\")\"\n"
-            + early + "\n"
+            + live + "\n" + early + "\n"
             + "setsid bash -c 'sleep 20' & SETUP_PID=$!; setsid sleep 20 & DEADLINE_PID=$!\n"
             + "printf '%s %s\\n' \"$SETUP_PID\" \"$DEADLINE_PID\" >pids\n"
             + "trap early_deadline_exit EXIT\ntrap 'early_deadline_exit 143' TERM\nkill -TERM \"$$\"\n"
