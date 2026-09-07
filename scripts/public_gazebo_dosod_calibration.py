@@ -193,6 +193,7 @@ class MobileEvidence:
     camera_frame: str
     tf_translation: tuple[float, float, float] = (0.0, 0.0, 0.0)
     tf_quaternion: tuple[float, float, float, float] = (0.0, 0.0, 0.0, 1.0)
+    tf_static_source_node: str = ""
     tf_static_source_gid: str = ""
     odom_source_node: str = ""
     odom_source_gid: str = ""
@@ -239,7 +240,12 @@ def _angle_delta(left: float, right: float) -> float:
 def require_mobile_evidence(*, image_stamp_ns: int, image_frame: str, evidence: MobileEvidence, accepted_poses: list[tuple[float, float, float]]) -> None:
     """Fail closed unless an active bt_navigator goal and a new physical view exist."""
 
-    if not re.fullmatch(r"bt_navigator:[0-9a-f]{2,}", evidence.action_server) or not re.fullmatch(r"[0-9a-f]{32}", evidence.goal_uuid):
+    action_prefix = "bt_navigator:"
+    if (
+        not evidence.action_server.startswith(action_prefix)
+        or not _valid_endpoint_gid(evidence.action_server[len(action_prefix):])
+        or not re.fullmatch(r"[0-9a-f]{32}", evidence.goal_uuid)
+    ):
         raise CalibrationRejected("mobile_nav2_action_identity_invalid")
     if evidence.action_status != 2:
         raise CalibrationRejected("mobile_nav2_goal_not_bt_navigator_executing")
@@ -260,7 +266,7 @@ def require_mobile_evidence(*, image_stamp_ns: int, image_frame: str, evidence: 
         raise CalibrationRejected("mobile_odom_or_camera_tf_not_fresh")
     if evidence.tf_stamp_ns and (image_stamp_ns - evidence.tf_stamp_ns > MOBILE_EVIDENCE_MAX_AGE_NS or evidence.tf_stamp_ns > image_stamp_ns):
         raise CalibrationRejected("mobile_odom_or_camera_tf_not_fresh")
-    if not re.fullmatch(r"[0-9a-f]{2,}", evidence.tf_static_source_gid) or not all(math.isfinite(value) for value in (*evidence.tf_translation, *evidence.tf_quaternion)):
+    if evidence.tf_static_source_node != "robot_state_publisher" or not _valid_endpoint_gid(evidence.tf_static_source_gid) or not all(math.isfinite(value) for value in (*evidence.tf_translation, *evidence.tf_quaternion)):
         raise CalibrationRejected("mobile_camera_tf_invalid")
     if abs(math.sqrt(sum(value * value for value in evidence.tf_quaternion)) - 1.0) > 1e-3:
         raise CalibrationRejected("mobile_camera_tf_invalid")
@@ -497,8 +503,11 @@ def collect_live(*, output: Path, plan: dict[str, Any], contract: dict[str, Any]
             raise CalibrationRejected("mobile_nav2_action_server_missing")
         if len(servers) != 1 or servers[0].node_name != "bt_navigator" or servers[0].node_namespace != "/" or servers[0].topic_type != "action_msgs/msg/GoalStatusArray":
             raise CalibrationRejected("mobile_nav2_action_server_not_bt_navigator")
-        gid = bytes(servers[0].endpoint_gid).hex()
-        if not re.fullmatch(r"[0-9a-f]{2,}", gid):
+        try:
+            gid = bytes(servers[0].endpoint_gid).hex()
+        except (AttributeError, TypeError, ValueError) as exc:
+            raise CalibrationRejected("mobile_nav2_action_server_gid_invalid") from exc
+        if not _valid_endpoint_gid(gid):
             raise CalibrationRejected("mobile_nav2_action_server_gid_invalid")
         return gid
     def mobile_evidence(image: Image) -> MobileEvidence:
@@ -538,13 +547,18 @@ def collect_live(*, output: Path, plan: dict[str, Any], contract: dict[str, Any]
         yaw = math.atan2(2.0 * (q.w * q.z + q.x * q.y), 1.0 - 2.0 * (q.y * q.y + q.z * q.z))
         odom_stamp = int(latest_odom.header.stamp.sec) * 1_000_000_000 + int(latest_odom.header.stamp.nanosec)
         tf_stamp = int(transform.header.stamp.sec) * 1_000_000_000 + int(transform.header.stamp.nanosec)
-        static = [item for item in node.get_publishers_info_by_topic("/tf_static") if item.node_name == "robot_state_publisher"]
-        if not static:
-            raise CalibrationRejected("mobile_camera_tf_source_missing")
-        if len(static) != 1:
-            raise CalibrationRejected("mobile_camera_tf_source_invalid")
+        try:
+            static_gid = require_sole_publisher_identity(
+                node.get_publishers_info_by_topic("/tf_static"), topic="/tf_static",
+                node_name="robot_state_publisher", topic_type="tf2_msgs/msg/TFMessage",
+                missing="mobile_camera_tf_source_missing",
+            )
+        except CalibrationRejected as exc:
+            if str(exc) == "mobile_sensor_source_identity_invalid":
+                raise CalibrationRejected("mobile_camera_tf_source_invalid") from exc
+            raise
         translation, rotation = transform.transform.translation, transform.transform.rotation
-        return MobileEvidence(active[0], 2, "bt_navigator:" + gid, odom_stamp, float(pose.position.x), float(pose.position.y), yaw, tf_stamp, str(image.header.frame_id), (float(translation.x), float(translation.y), float(translation.z)), (float(rotation.x), float(rotation.y), float(rotation.z), float(rotation.w)), bytes(static[0].endpoint_gid).hex(), "local_ekf", odom_gid, "formal_legacy_topic_adapter", image_gid, "formal_legacy_topic_adapter", camera_gid)
+        return MobileEvidence(active[0], 2, "bt_navigator:" + gid, odom_stamp, float(pose.position.x), float(pose.position.y), yaw, tf_stamp, str(image.header.frame_id), (float(translation.x), float(translation.y), float(translation.z)), (float(rotation.x), float(rotation.y), float(rotation.z), float(rotation.w)), "robot_state_publisher", static_gid, "local_ekf", odom_gid, "formal_legacy_topic_adapter", image_gid, "formal_legacy_topic_adapter", camera_gid)
     def consume_pair(pair: tuple[dict[str, str], Any, Any] | None) -> None:
         if pair is None:
             return
