@@ -39,6 +39,13 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
     mode = context.perform_substitution(LaunchConfiguration("mission_mode"))
     if mode not in {"mapping", "cleaning"}:
         raise RuntimeError("mission_mode must be mapping or cleaning")
+    mapping_high_bandwidth_sensor_runtime = context.perform_substitution(
+        LaunchConfiguration("mapping_high_bandwidth_sensor_runtime")
+    )
+    if mapping_high_bandwidth_sensor_runtime not in {"true", "false"}:
+        raise RuntimeError(
+            "mapping_high_bandwidth_sensor_runtime must be true or false"
+        )
     cleaning_planner = context.perform_substitution(
         LaunchConfiguration("cleaning_planner")
     )
@@ -123,10 +130,14 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
         "cmd_vel_in_topic": "/cmd_vel_smoothed",
         "cmd_vel_out_topic": "/cmd_vel_gate",
     })
-    # Mapping has no high-bandwidth 3D publisher by contract.  Narrow only
-    # that runtime's collision monitor to the live, self-filtered 2D scan;
-    # saved-map cleaning retains the formal high-bandwidth source set.
-    configure_collision_monitor_sources(nav2, mission_mode=mode)
+    # Scan-only mapping narrows collision monitoring to the self-filtered 2D
+    # scan. The explicit public-mobile high-bandwidth opt-in retains and
+    # verifies MID360; saved-map cleaning retains its formal source set.
+    configure_collision_monitor_sources(
+        nav2,
+        mission_mode=mode,
+        high_bandwidth_sensor_runtime=mapping_high_bandwidth_sensor_runtime == "true",
+    )
     canonical_scan = "/scan/navigation"
     nav2["amcl"]["ros__parameters"]["scan_topic"] = canonical_scan
     nav2["collision_monitor"]["ros__parameters"]["scan"]["topic"] = canonical_scan

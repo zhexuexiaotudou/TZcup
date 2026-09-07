@@ -54,7 +54,10 @@ def test_formal_launch_separates_mapping_and_saved_map_cleaning():
     assert '"start_velocity_gate": "false"' in source
     assert '"cmd_vel_in_topic": "/cmd_vel_smoothed"' in source
     assert '"cmd_vel_out_topic": "/cmd_vel_gate"' in source
-    assert "configure_collision_monitor_sources(nav2, mission_mode=mode)" in source
+    assert 'LaunchConfiguration("mapping_high_bandwidth_sensor_runtime")' in source
+    assert 'if mapping_high_bandwidth_sensor_runtime not in {"true", "false"}:' in source
+    assert '"mapping_high_bandwidth_sensor_runtime must be true or false"' in source
+    assert 'high_bandwidth_sensor_runtime=mapping_high_bandwidth_sensor_runtime == "true"' in source
     assert 'nav2[node_name]["ros__parameters"]["enable_stamped_cmd_vel"] = False' in source
     assert '"controller_server",' in source
     assert '"velocity_smoother",' in source
@@ -108,6 +111,8 @@ def test_formal_launch_separates_mapping_and_saved_map_cleaning():
     assert 'name="high_bandwidth_sensor_runtime" default="true"' in vehicle
     assert 'high_bandwidth_runtime="$(arg high_bandwidth_sensor_runtime)"' in vehicle
     assert '<xacro:if value="${high_bandwidth_runtime}">' in sensors
+    assert '<sensor name="mid360" type="gpu_lidar">' in sensors
+    assert '<topic>/sensors/lidar_3d</topic><update_rate>10</update_rate>' in sensors
 
 
 def test_frontier_action_discovery_and_goal_response_are_bounded():

@@ -25,7 +25,10 @@ def test_public_mobile_runner_reuses_lifecycle_operator_and_remains_read_only():
     assert source.count("stop_verified") >= 3
 
 
-def test_mapping_mobile_rgb_opt_in_does_not_reenable_a_dead_mid360_safety_source():
+def test_mapping_mobile_rgb_opt_in_retains_the_live_mid360_safety_source():
     source = (ROOT / "starter_ws/src/sanitation_formal_campus_integration/sanitation_formal_campus_integration/nav2_mode_config.py").read_text(encoding="utf-8")
+    assert "high_bandwidth_sensor_runtime: bool" in source
     assert 'parameters["observation_sources"] = ["scan"]' in source
     assert 'parameters.pop("mid360", None)' in source
+    assert 'elif mission_mode == "mapping":' in source
+    assert '"high-bandwidth mapping requires an enabled mid360 source"' in source
