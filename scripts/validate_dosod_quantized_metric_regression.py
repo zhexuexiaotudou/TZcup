@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from hbm_evidence_common import atomic_json, fresh_directory, load_object, normal_file, sha256_file
+from run_dosod_hbm_x86_parity import _compile_receipt_relocated, _validate_runner_identity as _validate_parity_runner_identity, is_absolute_origin
 from validate_dosod_s100p_hbm_compile_contract import audit_calibration
 
 
@@ -144,13 +145,12 @@ def _validate_compile_receipt(path: Path, *, hbm: Path, calibration_manifest: Pa
         raise ValueError("compile_receipt_not_successful")
     if receipt.get("output_created_by_this_compile") is not True:
         raise ValueError("compile_receipt_does_not_prove_fresh_output")
-    root = receipt.get("evidence_root")
-    if not isinstance(root, str) or not Path(root).is_absolute() or Path(root).is_symlink() or Path(root).resolve() != path.parent.resolve():
-        raise ValueError("compile_receipt_evidence_root_invalid")
-    if receipt.get("receipt_path") != str(path.resolve()):
-        raise ValueError("compile_receipt_path_binding_mismatch")
+    relocated = _compile_receipt_relocated(receipt, path)
     producer = Path(__file__).resolve().with_name("execute_dosod_hbm_compile.py")
-    if receipt.get("producer_script_path") != str(producer) or receipt.get("producer_script_sha256") != sha256_file(producer):
+    source_producer = receipt.get("producer_script_path")
+    if not is_absolute_origin(source_producer) or receipt.get("producer_script_sha256") != sha256_file(producer):
+        raise ValueError("compile_receipt_producer_identity_mismatch")
+    if not relocated and source_producer != str(producer):
         raise ValueError("compile_receipt_producer_identity_mismatch")
     for stream in ("stdout", "stderr"):
         name = receipt.get(f"raw_{stream}_path")
@@ -166,13 +166,17 @@ def _validate_compile_receipt(path: Path, *, hbm: Path, calibration_manifest: Pa
     inputs = receipt.get("inputs")
     if not isinstance(inputs, dict) or inputs.get("calibration_manifest_sha256") != sha256_file(calibration_manifest):
         raise ValueError("compile_receipt_calibration_binding_mismatch")
-    if inputs.get("contract") != str(CANONICAL_CONTRACT.resolve()) or inputs.get("contract_sha256") != sha256_file(CANONICAL_CONTRACT):
+    if inputs.get("contract_sha256") != sha256_file(CANONICAL_CONTRACT):
+        raise ValueError("compile_receipt_canonical_contract_mismatch")
+    if not relocated and inputs.get("contract") != str(CANONICAL_CONTRACT.resolve()):
         raise ValueError("compile_receipt_canonical_contract_mismatch")
     for key in ("preflight", "compile_config", "compiler_identity"):
         value, digest = inputs.get(key), inputs.get(f"{key}_sha256")
-        if not isinstance(value, str) or not Path(value).is_absolute() or not _digest(digest):
+        if not is_absolute_origin(value) or not _digest(digest):
             raise ValueError(f"compile_receipt_{key}_identity_missing")
         artifact = Path(value)
+        if relocated and not artifact.exists():
+            raise ValueError(f"compile_receipt_relocated_input_not_materialized:{key}")
         normal_file(artifact, f"compile_receipt_{key}")
         if sha256_file(artifact) != digest:
             raise ValueError(f"compile_receipt_{key}_identity_mismatch")
@@ -182,7 +186,10 @@ def _validate_compile_receipt(path: Path, *, hbm: Path, calibration_manifest: Pa
         raise ValueError("compile_receipt_preflight_contract_mismatch")
     identity = load_object(Path(str(inputs["compiler_identity"])))
     producer = Path(__file__).resolve().with_name("collect_dosod_s100p_compiler_identity.py")
-    if identity.get("identity_verified") is not True or identity.get("producer_script_path") != str(producer) or identity.get("producer_script_sha256") != sha256_file(producer):
+    identity_producer = identity.get("producer_script_path")
+    if identity.get("identity_verified") is not True or not is_absolute_origin(identity_producer) or identity.get("producer_script_sha256") != sha256_file(producer):
+        raise ValueError("compile_receipt_compiler_identity_unverified")
+    if not relocated and identity_producer != str(producer):
         raise ValueError("compile_receipt_compiler_identity_unverified")
     if receipt.get("output_sha256") != sha256_file(hbm) or receipt.get("output_byte_size") != hbm.stat().st_size:
         raise ValueError("compile_receipt_hbm_identity_mismatch")
@@ -248,6 +255,16 @@ def _holdout_sources_and_adapter(path: Path) -> tuple[set[str], dict[str, Any]]:
     adapter = manifest.get("hbm_input_adapter")
     if not isinstance(adapter, dict) or adapter.get("status") != "VERIFIED" or not isinstance(adapter.get("command"), list):
         raise ValueError("metric_holdout_adapter_unverified")
+    for row in manifest["records"]:
+        files = row.get("hbm_input_files") if isinstance(row, dict) else None
+        by_role = {item.get("role"): item for item in files if isinstance(item, dict)} if isinstance(files, list) else {}
+        if set(by_role) != {"images_y", "images_uv"} or any(
+            set(item) != {"role", "relative_path", "sha256", "byte_size"}
+            or not isinstance(item["relative_path"], str) or not _digest(item["sha256"])
+            or not isinstance(item["byte_size"], int) or item["byte_size"] <= 0
+            for item in by_role.values()
+        ):
+            raise ValueError("metric_holdout_hbm_inputs_invalid")
     values = {row.get("source_sha256") for row in manifest["records"] if isinstance(row, dict)}
     if not values or not all(_digest(value) for value in values):
         raise ValueError("metric_holdout_source_sha_invalid")
@@ -258,27 +275,14 @@ def _holdout_sources_and_adapter(path: Path) -> tuple[set[str], dict[str, Any]]:
 
 
 def _validate_runner_identity(path: Path, expected_sha: str, holdout_adapter: dict[str, Any]) -> None:
-    """Bind metric acceptance to the runner identity used by passed parity."""
+    """Reuse the parity tool's hrt_model_exec identity contract verbatim."""
 
-    identity = load_object(path)
     if sha256_file(path) != expected_sha:
         raise ValueError("metric_runner_identity_digest_mismatch")
-    if identity.get("schema_version") != 1 or identity.get("report_id") != "tzcup_dosod_hbm_runner_identity_v1" or identity.get("status") != "VERIFIED":
-        raise ValueError("metric_runner_identity_not_verified")
-    runner = identity.get("runner")
-    if not isinstance(runner, dict) or not isinstance(runner.get("absolute_path"), str) or not Path(runner["absolute_path"]).is_absolute():
-        raise ValueError("metric_runner_identity_path_invalid")
-    executable = Path(runner["absolute_path"])
-    normal_file(executable, "metric_runner_executable")
-    if runner.get("sha256") != sha256_file(executable) or not isinstance(runner.get("version"), str) or not runner["version"].strip():
-        raise ValueError("metric_runner_identity_binding_invalid")
-    if identity.get("command_template") != ["{runner}", "--model", "{hbm}", "--input", "{input}", "--output-path", "{output}"]:
-        raise ValueError("metric_runner_identity_command_template_invalid")
-    output_map = identity.get("output_map")
-    if not isinstance(output_map, dict) or set(output_map) != {"scores", "boxes"} or not all(isinstance(value, str) and value.endswith(".npy") for value in output_map.values()):
-        raise ValueError("metric_runner_identity_output_map_invalid")
-    if identity.get("hbm_input_adapter") != holdout_adapter:
-        raise ValueError("metric_runner_identity_adapter_mismatch")
+    try:
+        _validate_parity_runner_identity(path, {"hbm_input_adapter": holdout_adapter})
+    except ValueError as exc:
+        raise ValueError(f"metric_runner_identity_invalid:{exc}") from exc
 
 
 def _validate_thresholds(value: dict[str, Any]) -> tuple[dict[str, float], dict[str, float], dict[str, float]]:

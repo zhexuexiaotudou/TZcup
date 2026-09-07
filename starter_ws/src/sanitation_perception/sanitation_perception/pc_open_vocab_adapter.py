@@ -22,6 +22,26 @@ from .tracking import TargetTracker
 
 FORBIDDEN_INPUT_TOKENS = ("ground_truth", "evaluator", "evaluation/")
 GROUND_DIRT_CLASS_IDS = frozenset(("fallen_leaves", "dust_or_soil", "puddle"))
+NANOSECONDS_PER_SECOND = 1_000_000_000
+
+
+def select_source_stamp(
+    last_stamp_ns: int | None, stamp_ns: int, target_rate_hz: float
+) -> tuple[bool, str]:
+    """Select a source frame deterministically without a wall-clock budget."""
+    if not isinstance(stamp_ns, int) or stamp_ns < 0:
+        return False, "invalid_source_stamp"
+    if target_rate_hz <= 0.0 or not math.isfinite(target_rate_hz):
+        return False, "invalid_target_rate"
+    if last_stamp_ns is None:
+        return True, "selected"
+    if stamp_ns == last_stamp_ns:
+        return False, "duplicate_source_stamp"
+    if stamp_ns < last_stamp_ns:
+        return False, "out_of_order_source_stamp"
+    if stamp_ns - last_stamp_ns < int(NANOSECONDS_PER_SECOND / target_rate_hz):
+        return False, "source_rate_limited"
+    return True, "selected"
 
 
 def _stamp_seconds(stamp) -> float:
@@ -262,6 +282,7 @@ def main() -> None:
             # paired empty-ground frame peaks at 0.00144. Keep a measured
             # margin rather than inheriting the generic COCO-style 0.25 gate.
             self.declare_parameter("score_threshold", 0.005)
+            self.declare_parameter("prefilter_score_threshold", 0.002)
             self.declare_parameter("fallen_leaves_score_threshold", 0.0025)
             self.declare_parameter("dust_or_soil_score_threshold", 0.002)
             self.declare_parameter("puddle_score_threshold", 0.003)
@@ -299,8 +320,9 @@ def main() -> None:
             load_started = time.monotonic()
             self.detector = DosodOnnxDetector(
                 root / "dosod" / "dosod_mlp3x_s_tzcup_rep.onnx",
-                score_threshold=float(self.get_parameter("score_threshold").value),
+                score_threshold=float(self.get_parameter("prefilter_score_threshold").value),
                 class_score_thresholds={
+                    "litter_cube": float(self.get_parameter("score_threshold").value),
                     "fallen_leaves": float(
                         self.get_parameter("fallen_leaves_score_threshold").value
                     ),
@@ -321,8 +343,9 @@ def main() -> None:
             self.latest_map = None
             self.latest_depth: dict[str, Image] = {}
             self.latest_info: dict[str, CameraInfo] = {}
-            self.last_run: dict[str, float] = {}
+            self.last_run: dict[str, int] = {}
             self.rates = {"front": 2.0, "wrist": 2.0, "rear_left": 1.0, "rear_right": 1.0}
+            self.frame_counts = {"input": 0, "selected": 0, "output": 0, "rate_limited": 0}
             # DOSOD + EdgeSAM inference is deliberately serialized because the
             # ONNX sessions are shared.  Keep the short-lived map/depth/info
             # cache callbacks in a different group so a long inference cannot
@@ -363,6 +386,7 @@ def main() -> None:
             self.diagnostic_publisher = self.create_publisher(
                 DiagnosticArray, "/perception/open_vocab/diagnostics", diagnostic_qos
             )
+            self._last_success_diagnostic_s = float("-inf")
 
             map_qos = QoSProfile(
                 history=HistoryPolicy.KEEP_LAST,
@@ -460,12 +484,32 @@ def main() -> None:
         def _on_map(self, message: OccupancyGrid) -> None:
             self.latest_map = message
 
-        def _due(self, sensor: str) -> bool:
-            now = time.monotonic()
-            if now - self.last_run.get(sensor, -1e9) < 1.0 / self.rates[sensor]:
+        def _due(self, sensor: str, stamp) -> bool:
+            self.frame_counts["input"] += 1
+            try:
+                stamp_ns = int(stamp.sec) * NANOSECONDS_PER_SECOND + int(stamp.nanosec)
+            except (AttributeError, TypeError, ValueError):
+                self._diagnostic(2, "rgb_source_stamp_rejected", {"sensor": sensor, "reason": "invalid_source_stamp"})
                 return False
-            self.last_run[sensor] = now
+            selected, reason = select_source_stamp(
+                self.last_run.get(sensor), stamp_ns, self.rates[sensor]
+            )
+            if not selected:
+                if reason == "source_rate_limited":
+                    self.frame_counts["rate_limited"] += 1
+                    return False
+                self._diagnostic(2, "rgb_source_stamp_rejected", {"sensor": sensor, "reason": reason})
+                return False
+            self.last_run[sensor] = stamp_ns
+            self.frame_counts["selected"] += 1
             return True
+
+        def _record_output(self) -> dict[str, int | float]:
+            self.frame_counts["output"] += 1
+            return {
+                **self.frame_counts,
+                "front_target_rate_hz": self.rates["front"],
+            }
 
         def _detections_message(self, image: Image, results) -> Detection2DArray:
             array = Detection2DArray()
@@ -486,7 +530,7 @@ def main() -> None:
             return array
 
         def _on_rgb_only(self, sensor: str, image_message: Image) -> None:
-            if not self._due(sensor):
+            if not self._due(sensor, image_message.header.stamp):
                 return
             try:
                 rgb = self.bridge.imgmsg_to_cv2(image_message, desired_encoding="rgb8")
@@ -494,12 +538,12 @@ def main() -> None:
                 product = self._detections_message(image_message, results)
                 self.box_publisher.publish(product)
                 self.detection_publisher.publish(product)
-                self._diagnostic(0, "rgb_only_ok", {"sensor": sensor, "detections": len(results)})
+                self._diagnostic(0, "rgb_only_ok", {"sensor": sensor, "detections": len(results), **self._record_output()})
             except Exception as exc:
                 self._diagnostic(2, "rgb_only_failed_closed", {"sensor": sensor, "error": str(exc)})
 
         def _on_rgbd(self, sensor: str, image_message: Image) -> None:
-            if not self._due(sensor):
+            if not self._due(sensor, image_message.header.stamp):
                 return
             depth_message = self.latest_depth.get(sensor)
             info = self.latest_info.get(sensor)
@@ -513,12 +557,11 @@ def main() -> None:
                 self._diagnostic(2, "stale_depth_rejected", {"sensor": sensor, "age_s": age})
                 return
             try:
-                # The campus localization chain does not promise historical
-                # interpolation at every camera stamp.  Use the newest complete
-                # public TF chain, then bound its age against the image stamp so
-                # latest-TF can never silently become an unbounded stale pose.
+                # A projected observation must use the RGB source stamp.  A
+                # missing historical transform is a fail-closed projection
+                # failure, never permission to substitute latest TF.
                 transform = self.tf_buffer.lookup_transform(
-                    "map", image_message.header.frame_id, Time(), timeout=Duration(seconds=0.2)
+                    "map", image_message.header.frame_id, rgb_time, timeout=Duration(seconds=0.2)
                 )
             except TransformException as exc:
                 self._diagnostic(2, "map_tf_missing", {"sensor": sensor, "error": str(exc)})
@@ -548,7 +591,7 @@ def main() -> None:
                 self._diagnostic(
                     0,
                     "dosod_product_ok",
-                    {"sensor": sensor, "detections": len(results)},
+                    {"sensor": sensor, "detections": len(results), **self._record_output()},
                 )
                 class_ids = [item.class_id for item in results]
                 dirt_indices = _ground_dirt_prompt_indices(
@@ -781,12 +824,16 @@ def main() -> None:
                 self._diagnostic(2, "rgbd_product_failed_closed", {"sensor": sensor, "error": str(exc)})
 
         def _diagnostic(self, level: int, message: str, values: dict) -> None:
+            if level == 0:
+                now = time.monotonic()
+                if now - self._last_success_diagnostic_s < 1.0:
+                    return
+                self._last_success_diagnostic_s = now
             array = DiagnosticArray()
             array.header.stamp = self.get_clock().now().to_msg()
             status = DiagnosticStatus()
-            # diagnostic_msgs/DiagnosticStatus.level is ROS ``byte`` (not
-            # uint8), so rclpy requires a one-byte value on Jazzy and Humble.
-            status.level = bytes([level])
+            # ROS 2 generates DiagnosticStatus.level as a uint8 integer.
+            status.level = int(level)
             status.name = "formal_open_vocab_perception/pc_product_adapter"
             status.hardware_id = "pc_cpu_onnxruntime"
             status.message = message

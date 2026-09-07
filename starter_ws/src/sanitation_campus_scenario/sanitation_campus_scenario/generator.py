@@ -896,6 +896,9 @@ def render_sdf(profile_name: str, profile: dict[str, Any], assets: list[Asset], 
         ET.SubElement(model, "pose").text = f"{_fmt(patch.pose.x_m)} {_fmt(patch.pose.y_m)} 0.002 0 0 {_fmt(patch.pose.yaw_rad)}"
         link = ET.SubElement(model, "link", {"name": "link"})
         _add_dirt_visuals(link, patch)
+        label = {"leaf": 2, "dust": 3, "puddle": 4}[patch.kind]
+        plugin = ET.SubElement(model, "plugin", {"filename": "gz-sim-label-system", "name": "gz::sim::systems::Label"})
+        ET.SubElement(plugin, "label").text = str(label)
     for cube in cubes:
         asset = Asset(cube.object_id, "bin", cube.pose, (cube.edge_m, cube.edge_m, cube.edge_m))
         model = ET.SubElement(world, "model", {"name": asset.asset_id})
@@ -920,6 +923,8 @@ def render_sdf(profile_name: str, profile: dict[str, Any], assets: list[Asset], 
                 rgba = " ".join(_fmt(v) for v in cube.color_rgba)
                 ET.SubElement(material, "ambient").text = rgba
                 ET.SubElement(material, "diffuse").text = rgba
+        plugin = ET.SubElement(model, "plugin", {"filename": "gz-sim-label-system", "name": "gz::sim::systems::Label"})
+        ET.SubElement(plugin, "label").text = "1"
     for pedestrian in pedestrians:
         t0, x, y = pedestrian.waypoints[0]
         model = ET.SubElement(world, "model", {"name": pedestrian.object_id})

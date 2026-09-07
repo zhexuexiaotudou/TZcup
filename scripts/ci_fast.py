@@ -442,6 +442,7 @@ def run_ros_independent_tests() -> None:
     tasks_package = SOURCE_ROOT / "sanitation_tasks"
     gnss_package = SOURCE_ROOT / "sanitation_gnss_sim"
     perception_package = SOURCE_ROOT / "sanitation_perception"
+    perception_evaluator_package = SOURCE_ROOT / "sanitation_perception_evaluator"
     dataset_package = SOURCE_ROOT / "sanitation_dataset"
     ground_truth_package = SOURCE_ROOT / "sanitation_ground_truth"
     spot_cleaning_package = SOURCE_ROOT / "sanitation_spot_cleaning"
@@ -462,6 +463,7 @@ def run_ros_independent_tests() -> None:
     sys.path.insert(0, str(tasks_package))
     sys.path.insert(0, str(gnss_package))
     sys.path.insert(0, str(perception_package))
+    sys.path.insert(0, str(perception_evaluator_package))
     sys.path.insert(0, str(dataset_package))
     sys.path.insert(0, str(ground_truth_package))
     sys.path.insert(0, str(spot_cleaning_package))

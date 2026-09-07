@@ -14,7 +14,7 @@ import time
 import numpy as np
 import yaml
 
-from .formal_random_scene_evaluator_core import (
+from sanitation_perception.formal_random_scene_evaluator_core import (
     BoxObservation,
     TruthBox,
     finalize_acceptance,

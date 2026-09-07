@@ -16,7 +16,7 @@ import math
 import os
 import re
 import secrets
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 from typing import Any
 
@@ -26,6 +26,7 @@ from collect_formal_s100_calibration_frames import (
     CalibrationRejected, atomic_write_json, canonical_sha256, preprocess_dosod_rgb,
     rgb_from_ros_image, sha256_file,
 )
+from public_gazebo_dosod_gt_sidecar import SidecarRejected, build_sidecar, validate_sidecar_identity, write_sidecar
 
 CLASS_IDS = ("litter_cube", "fallen_leaves", "dust_or_soil", "puddle")
 MIN_HOLDOUT_SAMPLES = 100
@@ -34,7 +35,9 @@ SCENE_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:-]*$")
 FORMAL_CAMPUS_CONFIG = Path(__file__).resolve().parents[1] / "starter_ws/src/sanitation_formal_campus_integration/config/formal_campus_integration.yaml"
 FORMAL_RGB_TOPIC = "/camera/color/image_raw"
 FORMAL_CAMERA_INFO_TOPIC = "/camera/color/camera_info"
-PAIR_CACHE_LIMIT = 64
+# GT evidence is an exact-stamp join, not a best-effort synchronizer.  Keep
+# one in-flight stamp only so an old role can never pair with a later frame.
+PAIR_CACHE_LIMIT = 1
 MOBILE_EVIDENCE_MAX_AGE_NS = 2_000_000_000
 POSE_SEPARATION_M = 0.5
 YAW_SEPARATION_RAD = math.radians(15.0)
@@ -253,6 +256,7 @@ class Frame:
     scene_id: str; topic: str; frame_id: str; stamp_ns: int; data: bytes; width: int; height: int; step: int; encoding: str; camera: dict[str, Any]
     generation_nonce: str = ""; episode_manifest_sha256: str = ""
     mobile_evidence: MobileEvidence | None = None
+    gt_sidecar: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True)
@@ -397,8 +401,34 @@ class FreshPairCache:
         return image[0], image[1], info[1]
 
 
+class FreshEvidenceCache:
+    """One-deep bounded RGB/CameraInfo/semantic/instance exact-stamp join."""
+    def __init__(self, limit: int = PAIR_CACHE_LIMIT) -> None:
+        self.limit = limit
+        self.rows: OrderedDict[tuple[str, int], dict[str, tuple[dict[str, str], Any]]] = OrderedDict()
+
+    def reset(self) -> None:
+        self.rows.clear()
+
+    def put(self, role: str, key: tuple[str, int], selector: dict[str, str], message: Any):
+        if role not in {"rgb", "camera", "semantic", "instance"}:
+            raise CalibrationRejected("gt_pair_role_invalid")
+        row = self.rows.setdefault(key, {})
+        row[role] = (selector, message)
+        self.rows.move_to_end(key)
+        while len(self.rows) > self.limit:
+            self.rows.popitem(last=False)
+        if set(row) != {"rgb", "camera", "semantic", "instance"}:
+            return None
+        self.rows.pop(key)
+        selectors = [item[0] for item in row.values()]
+        if not all(FreshPairCache._same_selector(selectors[0], item) for item in selectors[1:]):
+            return None
+        return selectors[0], row["rgb"][1], row["camera"][1], row["semantic"][1], row["instance"][1]
+
+
 class PublicGazeboStore:
-    def __init__(self, output: Path, contract: dict[str, Any], plan: dict[str, Any], *, per_scene_quota: int = 1, pilot_scene: str | None = None) -> None:
+    def __init__(self, output: Path, contract: dict[str, Any], plan: dict[str, Any], *, per_scene_quota: int = 1, pilot_scene: str | None = None, require_gt_sidecar: bool = False) -> None:
         if not isinstance(per_scene_quota, int) or isinstance(per_scene_quota, bool) or per_scene_quota < 1:
             raise CalibrationRejected("per_scene_quota_invalid")
         require_empty_output(output); self.output, self.contract, self.plan = output, contract, plan
@@ -416,8 +446,31 @@ class PublicGazeboStore:
         self.accepted_poses: dict[str, list[tuple[float, float, float]]] = {}
         self.duplicate_source_count = 0; self.duplicate_tensor_count = 0
         self.mobile_rejection_count = 0
+        self.require_gt_sidecar = require_gt_sidecar
         self.mobile_rejection_reasons: dict[str, int] = {}
-        output.mkdir(parents=True); (output / "samples").mkdir(); (output / "holdout_samples").mkdir(); (output / "provenance").mkdir()
+        output.mkdir(parents=True); (output / "samples").mkdir(); (output / "holdout_samples").mkdir(); (output / "provenance").mkdir(); (output / "sidecars").mkdir(); (output / "raw_sensor").mkdir()
+
+    def _write_raw_sensor(self, name: str, frame: Frame, source_sha256: str) -> dict[str, Any]:
+        target = self.output / "raw_sensor" / f"{name}.bin"
+        if target.exists() or target.is_symlink():
+            raise CalibrationRejected("raw_sensor_destination_not_fresh")
+        pending = target.with_name(f".{target.name}.pending.{os.getpid()}")
+        with pending.open("xb") as handle:
+            handle.write(frame.data)
+        os.replace(pending, target)
+        if target.is_symlink() or not target.is_file() or sha256_file(target) != source_sha256 or target.stat().st_size != len(frame.data):
+            raise CalibrationRejected("raw_sensor_write_verification_failed")
+        return {"relative_path": f"raw_sensor/{target.name}", "sha256": source_sha256, "byte_size": len(frame.data),
+                "width": frame.width, "height": frame.height, "step": frame.step, "encoding": frame.encoding,
+                "frame_id": frame.frame_id, "stamp_ns": frame.stamp_ns}
+
+    def _verify_raw_sensor(self, row: dict[str, Any]) -> None:
+        raw = row.get("raw_sensor")
+        if not isinstance(raw, dict) or set(raw) != {"relative_path", "sha256", "byte_size", "width", "height", "step", "encoding", "frame_id", "stamp_ns"}:
+            raise CalibrationRejected("raw_sensor_record_invalid")
+        candidate = (self.output / str(raw["relative_path"])).resolve()
+        if not candidate.is_relative_to(self.output.resolve()) or candidate.is_symlink() or not candidate.is_file() or candidate.stat().st_size != raw["byte_size"] or sha256_file(candidate) != raw["sha256"] or raw["sha256"] != row.get("source_sha256"):
+            raise CalibrationRejected("raw_sensor_record_drift")
 
     def add(self, frame: Frame) -> bool:
         if any(token in frame.topic.lower() for token in FORBIDDEN) or frame.scene_id not in self.calibration_scenes | self.holdout_scenes:
@@ -437,6 +490,13 @@ class PublicGazeboStore:
             self.duplicate_source_count += 1
             return False
         self.sources.add(source)
+        sidecar_record = None
+        if self.require_gt_sidecar:
+            identity = {"generation_nonce": frame.generation_nonce, "episode_manifest_sha256": frame.episode_manifest_sha256, "rgb_source_sha256": source, "rgb_stamp_ns": frame.stamp_ns, "semantic_stamp_ns": frame.stamp_ns, "instance_stamp_ns": frame.stamp_ns}
+            try:
+                validate_sidecar_identity(frame.gt_sidecar, identity, frame.width, frame.height)
+            except SidecarRejected as exc:
+                raise CalibrationRejected(str(exc)) from exc
         rgb = rgb_from_ros_image(data=frame.data, width=frame.width, height=frame.height, step=frame.step, encoding=frame.encoding)
         tensor = preprocess_dosod_rgb(rgb)
         tensor_bytes = tensor.tobytes()
@@ -447,6 +507,7 @@ class PublicGazeboStore:
         self.tensor_contents.add(tensor_content_sha)
         if frame.scene_id in self.holdout_scenes:
             name = f"holdout_{len(self.holdout_records):06d}"
+            raw_sensor = self._write_raw_sensor(name, frame, source)
             sample = self.output / "holdout_samples" / f"{name}.npy"
             pending = sample.with_name(f".{sample.name}.pending.{os.getpid()}")
             with pending.open("xb") as handle:
@@ -457,6 +518,9 @@ class PublicGazeboStore:
             provenance = {"source_domain": "public_gazebo_sensor", "scene_id": frame.scene_id, "topic": frame.topic, "frame_id": frame.frame_id, "stamp_ns": frame.stamp_ns, "encoding": frame.encoding, "camera": frame.camera, "source_sha256": source, "generation_nonce": frame.generation_nonce, "episode_manifest_sha256": frame.episode_manifest_sha256, "mobile_evidence": asdict(frame.mobile_evidence) if frame.mobile_evidence else None}
             provenance_path = f"provenance/{name}.json"
             atomic_write_json(self.output / provenance_path, provenance)
+            if self.require_gt_sidecar:
+                sidecar_record = write_sidecar(self.output / "sidecars" / f"{name}.json", frame.gt_sidecar)
+                sidecar_record["relative_path"] = f"sidecars/{name}.json"
             self.holdout_records.append({
                 "scene_id": frame.scene_id,
                 "source_sha256": source,
@@ -466,13 +530,15 @@ class PublicGazeboStore:
                 "relative_path": f"holdout_samples/{name}.npy",
                 "byte_size": sample.stat().st_size,
                 "sha256": tensor_sha,
+                "raw_sensor": raw_sensor,
                 "provenance": provenance_path,
+                "gt_sidecar": sidecar_record,
             })
             counts[frame.scene_id] = counts.get(frame.scene_id, 0) + 1
             if frame.mobile_evidence is not None:
                 self.accepted_poses.setdefault(frame.scene_id, []).append((frame.mobile_evidence.odom_x, frame.mobile_evidence.odom_y, frame.mobile_evidence.odom_yaw))
             return False
-        name = f"{len(self.records):06d}"; sample = self.output / "samples" / f"{name}.npy"
+        name = f"{len(self.records):06d}"; raw_sensor = self._write_raw_sensor(name, frame, source); sample = self.output / "samples" / f"{name}.npy"
         pending = sample.with_name(f".{sample.name}.pending.{os.getpid()}")
         with pending.open("xb") as handle: np.save(handle, tensor, allow_pickle=False)
         os.replace(pending, sample); tensor_sha = sha256_file(sample)
@@ -481,7 +547,10 @@ class PublicGazeboStore:
         provenance = {"source_domain": "public_gazebo_sensor", "scene_id": frame.scene_id, "topic": frame.topic, "frame_id": frame.frame_id, "stamp_ns": frame.stamp_ns, "encoding": frame.encoding, "camera": frame.camera, "source_sha256": source, "generation_nonce": frame.generation_nonce, "episode_manifest_sha256": frame.episode_manifest_sha256, "mobile_evidence": asdict(frame.mobile_evidence) if frame.mobile_evidence else None}
         provenance_file = self.output / "provenance" / f"{name}.json"
         atomic_write_json(provenance_file, provenance)
-        self.records.append({"relative_path": f"samples/{name}.npy", "byte_size": sample.stat().st_size, "sha256": tensor_sha, "source_sha256": source, "source_role": "calibration_only", "scene_id": frame.scene_id, "generation_nonce": frame.generation_nonce, "episode_manifest_sha256": frame.episode_manifest_sha256, "provenance": f"provenance/{name}.json", "provenance_sha256": sha256_file(provenance_file), "provenance_byte_size": provenance_file.stat().st_size})
+        if self.require_gt_sidecar:
+            sidecar_record = write_sidecar(self.output / "sidecars" / f"{name}.json", frame.gt_sidecar)
+            sidecar_record["relative_path"] = f"sidecars/{name}.json"
+        self.records.append({"relative_path": f"samples/{name}.npy", "byte_size": sample.stat().st_size, "sha256": tensor_sha, "source_sha256": source, "source_role": "calibration_only", "scene_id": frame.scene_id, "generation_nonce": frame.generation_nonce, "episode_manifest_sha256": frame.episode_manifest_sha256, "raw_sensor": raw_sensor, "provenance": f"provenance/{name}.json", "provenance_sha256": sha256_file(provenance_file), "provenance_byte_size": provenance_file.stat().st_size, "gt_sidecar": sidecar_record})
         counts[frame.scene_id] = counts.get(frame.scene_id, 0) + 1
         if frame.mobile_evidence is not None:
             self.accepted_poses.setdefault(frame.scene_id, []).append((frame.mobile_evidence.odom_x, frame.mobile_evidence.odom_y, frame.mobile_evidence.odom_yaw))
@@ -528,6 +597,7 @@ class PublicGazeboStore:
                 raise CalibrationRejected("pilot_contact_sheet_renderer_unavailable") from exc
             tiles = []
             for row in self.records:
+                self._verify_raw_sensor(row)
                 sample = self.output / row["relative_path"]
                 if sample.is_symlink() or not sample.is_file() or sample.stat().st_size != row["byte_size"] or sha256_file(sample) != row["sha256"]:
                     raise CalibrationRejected("pilot_sample_drift")
@@ -565,7 +635,23 @@ class PublicGazeboStore:
             or not bindings_valid
         ):
             raise CalibrationRejected("calibration_or_scene_disjoint_holdout_below_minimum")
-        value = {"schema_version": 1, "status": "FROZEN", "dataset_id": "tzcup_public_gazebo_dosod_calibration_v1", "source_domain": "public_gazebo_sensor", "formal_passed": False, "class_ids": list(CLASS_IDS), "preprocessing_sha256": canonical_sha256(self.contract["preprocessing"]), "calibration_sample_count": len(self.records), "calibration_scene_count": len(self.calibration_scene_counts), "evaluation_holdout_sample_count": len(self.holdout_records), "evaluation_holdout_scene_count": len(self.holdout_scene_counts), "evaluation_holdout_source_sha256": sorted(self.holdout_sources), "evaluation_holdout_scene_ids": sorted(self.holdout_scene_counts), "duplicate_source_count": self.duplicate_source_count, "duplicate_tensor_count": self.duplicate_tensor_count, "holdout_records": self.holdout_records, "per_scene_quota": self.per_scene_quota, "records": self.records}
+        sidecar_rows = []
+        for row in bindings:
+            self._verify_raw_sensor(row)
+            sidecar = row.get("gt_sidecar")
+            if self.require_gt_sidecar:
+                if not isinstance(sidecar, dict) or set(sidecar) != {"relative_path", "sha256", "byte_size"}:
+                    raise CalibrationRejected("sidecar_record_missing_or_invalid")
+                candidate = self.output / sidecar["relative_path"]
+                if candidate.is_symlink() or not candidate.is_file() or candidate.stat().st_size != sidecar["byte_size"] or sha256_file(candidate) != sidecar["sha256"]:
+                    raise CalibrationRejected("sidecar_record_drift")
+            if isinstance(sidecar, dict):
+                sidecar_rows.append({"source_sha256": row["source_sha256"], "source_role": row["source_role"], "generation_nonce": row["generation_nonce"], "episode_manifest_sha256": row["episode_manifest_sha256"], "sidecar": sidecar})
+        sidecar_manifest = {"schema_version": 1, "status": "FROZEN_EVALUATOR_ONLY", "classification": "EVALUATOR_ONLY_PUBLIC_GAZEBO_GT", "formal_passed": False, "rows": sidecar_rows}
+        sidecar_path = self.output / "gt_sidecar_scene_manifest.json"
+        atomic_write_json(sidecar_path, sidecar_manifest)
+        sidecar_binding = {"relative_path": sidecar_path.name, "sha256": sha256_file(sidecar_path), "byte_size": sidecar_path.stat().st_size}
+        value = {"schema_version": 1, "status": "FROZEN", "dataset_id": "tzcup_public_gazebo_dosod_calibration_v1", "source_domain": "public_gazebo_sensor", "formal_passed": False, "class_ids": list(CLASS_IDS), "preprocessing_sha256": canonical_sha256(self.contract["preprocessing"]), "calibration_sample_count": len(self.records), "calibration_scene_count": len(self.calibration_scene_counts), "evaluation_holdout_sample_count": len(self.holdout_records), "evaluation_holdout_scene_count": len(self.holdout_scene_counts), "evaluation_holdout_source_sha256": sorted(self.holdout_sources), "evaluation_holdout_scene_ids": sorted(self.holdout_scene_counts), "duplicate_source_count": self.duplicate_source_count, "duplicate_tensor_count": self.duplicate_tensor_count, "holdout_records": self.holdout_records, "per_scene_quota": self.per_scene_quota, "records": self.records, "gt_sidecar_scene_manifest": sidecar_binding}
         target = self.output / self.contract["calibration"]["manifest_name"]
         atomic_write_json(target, value); return target
 
@@ -602,8 +688,8 @@ def collect_live(*, output: Path, plan: dict[str, Any], contract: dict[str, Any]
     from sensor_msgs.msg import CameraInfo, Image
     from tf2_ros import Buffer, TransformException, TransformListener
     rclpy.init(); node = rclpy.create_node("public_gazebo_dosod_calibration_collector", parameter_overrides=[Parameter("use_sim_time", Parameter.Type.BOOL, True)])
-    pairs = FreshPairCache()
-    store = PublicGazeboStore(output, contract, plan, per_scene_quota=per_scene_quota, pilot_scene=pilot_scene)
+    pairs = FreshEvidenceCache(limit=PAIR_CACHE_LIMIT)
+    store = PublicGazeboStore(output, contract, plan, per_scene_quota=per_scene_quota, pilot_scene=pilot_scene, require_gt_sidecar=True)
     selector_nonce: str | None = None
     errors: list[str] = []
     latest_odom: Any | None = None
@@ -678,20 +764,26 @@ def collect_live(*, output: Path, plan: dict[str, Any], contract: dict[str, Any]
                 node_name="robot_state_publisher", topic_type="tf2_msgs/msg/TFMessage",
                 missing="mobile_camera_tf_source_missing",
             )
-        except CalibrationRejected as exc:
+        except (CalibrationRejected, SidecarRejected) as exc:
             if str(exc) == "mobile_sensor_source_identity_invalid":
                 raise CalibrationRejected("mobile_camera_tf_source_invalid") from exc
             raise
         translation, rotation = transform.transform.translation, transform.transform.rotation
         return MobileEvidence(active[0], 2, "bt_navigator:" + gid, odom_stamp, float(pose.position.x), float(pose.position.y), yaw, tf_stamp, str(image.header.frame_id), (float(translation.x), float(translation.y), float(translation.z)), (float(rotation.x), float(rotation.y), float(rotation.z), float(rotation.w)), "robot_state_publisher", static_gid, "local_ekf", odom_gid, "formal_legacy_topic_adapter", image_gid, "formal_legacy_topic_adapter", camera_gid)
-    def consume_pair(pair: tuple[dict[str, str], Any, Any] | None) -> None:
+    def consume_pair(pair) -> None:
         if pair is None:
             return
-        selected, image_message, info_message = pair
+        selected, image_message, info_message, semantic_message, instance_message = pair
         try:
-            store.add(frame_from_ros(scene_id=selected["scene_id"], topic=topic, image=image_message, camera_info=info_message, generation_nonce=selected["generation_nonce"], episode_manifest_sha256=selected["episode_manifest_sha256"], mobile_evidence=mobile_evidence(image_message)))
+            rgb_hash = hashlib.sha256(bytes(image_message.data)).hexdigest()
+            semantic = rgb_from_ros_image(data=bytes(semantic_message.data), width=int(semantic_message.width), height=int(semantic_message.height), step=int(semantic_message.step), encoding=str(semantic_message.encoding))
+            instances = rgb_from_ros_image(data=bytes(instance_message.data), width=int(instance_message.width), height=int(instance_message.height), step=int(instance_message.step), encoding=str(instance_message.encoding))
+            stamp = int(image_message.header.stamp.sec) * 1_000_000_000 + int(image_message.header.stamp.nanosec)
+            sidecar = build_sidecar(identity={"generation_nonce": selected["generation_nonce"], "episode_manifest_sha256": selected["episode_manifest_sha256"], "rgb_source_sha256": rgb_hash, "rgb_stamp_ns": stamp, "semantic_stamp_ns": int(semantic_message.header.stamp.sec) * 1_000_000_000 + int(semantic_message.header.stamp.nanosec), "instance_stamp_ns": int(instance_message.header.stamp.sec) * 1_000_000_000 + int(instance_message.header.stamp.nanosec)}, semantic_rgb=semantic, instance_rgb=instances)
+            frame = frame_from_ros(scene_id=selected["scene_id"], topic=topic, image=image_message, camera_info=info_message, generation_nonce=selected["generation_nonce"], episode_manifest_sha256=selected["episode_manifest_sha256"], mobile_evidence=mobile_evidence(image_message))
+            store.add(replace(frame, gt_sidecar=sidecar))
             save_progress()
-        except CalibrationRejected as exc:
+        except (CalibrationRejected, SidecarRejected) as exc:
             if str(exc) in RETRYABLE_MOBILE_REJECTIONS:
                 store.reject_mobile(str(exc))
                 save_progress()
@@ -706,7 +798,7 @@ def collect_live(*, output: Path, plan: dict[str, Any], contract: dict[str, Any]
         if selected["state"] != "ACTIVE":
             return
         key = (str(message.header.frame_id), int(message.header.stamp.sec) * 1_000_000_000 + int(message.header.stamp.nanosec))
-        consume_pair(pairs.put_info(key, selected, message))
+        consume_pair(pairs.put("camera", key, selected, message))
     def on_image(message: Image) -> None:
         try:
             selected, changed = selection()
@@ -716,7 +808,13 @@ def collect_live(*, output: Path, plan: dict[str, Any], contract: dict[str, Any]
         if selected["state"] != "ACTIVE":
             return
         key = (str(message.header.frame_id), int(message.header.stamp.sec) * 1_000_000_000 + int(message.header.stamp.nanosec))
-        consume_pair(pairs.put_image(key, selected, message))
+        consume_pair(pairs.put("rgb", key, selected, message))
+    def on_gt(role: str, message: Image) -> None:
+        try: selected, _ = selection()
+        except CalibrationRejected as exc: errors.append(str(exc)); return
+        if selected["state"] != "ACTIVE": return
+        key = (str(message.header.frame_id), int(message.header.stamp.sec) * 1_000_000_000 + int(message.header.stamp.nanosec))
+        consume_pair(pairs.put(role, key, selected, message))
     def on_odom(message: Odometry) -> None:
         nonlocal latest_odom
         try:
@@ -742,6 +840,8 @@ def collect_live(*, output: Path, plan: dict[str, Any], contract: dict[str, Any]
     try:
         node.create_subscription(CameraInfo, camera_info_topic, on_info, qos_profile_sensor_data)
         node.create_subscription(Image, topic, on_image, qos_profile_sensor_data)
+        node.create_subscription(Image, "/g2/semantic_gt/labels_map", lambda message: on_gt("semantic", message), qos_profile_sensor_data)
+        node.create_subscription(Image, "/g2/instance_gt/labels_map", lambda message: on_gt("instance", message), qos_profile_sensor_data)
         node.create_subscription(Odometry, "/odom", on_odom, qos_profile_sensor_data)
         node.create_subscription(GoalStatusArray, "/navigate_to_pose/_action/status", on_action_status, action_qos)
         save_progress()

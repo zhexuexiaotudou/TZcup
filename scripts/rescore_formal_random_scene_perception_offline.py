@@ -19,7 +19,7 @@ from types import SimpleNamespace
 
 import numpy as np
 
-from sanitation_perception.formal_random_scene_evaluator import _project_cube
+from sanitation_perception_evaluator.formal_random_scene_evaluator import _project_cube
 from sanitation_perception.formal_random_scene_evaluator_core import (
     BoxObservation,
     TruthBox,

@@ -207,7 +207,7 @@ def _validate_overlay(
         "ai_msgs", "cv_bridge", "diagnostic_msgs", "geometry_msgs", "hobot_dosod",
         "launch", "launch_ros", "mono_edgesam", "nav_msgs", "python3-numpy",
         "python3-opencv", "python3-pip", "python3-yaml", "rclpy",
-        "ros_gz_interfaces", "sensor_msgs", "std_msgs", "tf2_ros", "vision_msgs",
+        "sensor_msgs", "std_msgs", "tf2_ros", "vision_msgs",
     }
     checks["overlay_runtime_package_set_valid"] = isinstance(required_runtime, list) and set(required_runtime) == expected_runtime
     if not checks["overlay_runtime_package_set_valid"]:

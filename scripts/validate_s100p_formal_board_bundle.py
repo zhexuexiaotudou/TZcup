@@ -60,7 +60,7 @@ REQUIRED_PAYLOAD_ROLE_BINDINGS = {
 SANITATION_PERCEPTION_EXEC_DEPENDENCIES = {
     "ai_msgs", "cv_bridge", "diagnostic_msgs", "geometry_msgs", "launch",
     "launch_ros", "nav_msgs", "python3-numpy", "python3-opencv", "python3-pip",
-    "python3-yaml", "rclpy", "ros_gz_interfaces", "sanitation_perception_interfaces",
+    "python3-yaml", "rclpy", "sanitation_perception_interfaces",
     "sensor_msgs", "std_msgs", "tf2_ros", "vision_msgs",
 }
 MANDATORY_BLOCKERS = {

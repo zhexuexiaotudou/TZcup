@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 import tempfile
 from pathlib import Path
@@ -39,6 +40,7 @@ def test_runner_receipt_binds_pilot_artifacts_and_blocks_drift() -> None:
     source = (ROOT / "scripts/run_public_mobile_gazebo_dosod_calibration.sh").read_text(encoding="utf-8")
     start = source.index("write_receipt() {")
     write_receipt = source[start:source.index("\nstop_verified()", start)]
+    write_receipt = "export PUBLIC_GAZEBO_CALIBRATION_TIMEOUT_SEC=900\n" + write_receipt
     work = ROOT / ".work"; work.mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="pilot-receipt-", dir=work) as raw:
         root = Path(raw); dataset = root / "dataset"; dataset.mkdir(); sheet = dataset / "pilot_contact_sheet.png"
@@ -49,8 +51,8 @@ def test_runner_receipt_binds_pilot_artifacts_and_blocks_drift() -> None:
         manifest = {"status":"NON_FORMAL_PILOT_CAPTURED","formal_passed":False,"pilot_scene":"map-0-mission-0","record_count":25,"record_sha256":"a"*64,"contact_sheet":{"relative_path":sheet.name,"sha256":sheet_hash,"byte_size":sheet.stat().st_size}}
         (dataset / "pilot_manifest.json").write_text(json.dumps(manifest))
         fixture = root / "fixture.sh"
-        fixture.write_bytes(("#!/usr/bin/env bash\nset -u\ncd \"$(dirname \"${BASH_SOURCE[0]}\")\"\nRECEIPT=receipt.json\nMODE=pilot\nDATASET=dataset\nEXPECTED_MANIFEST=pilot_manifest.json\nPUBLIC_GAZEBO_CALIBRATION_REVIEW_RECEIPT=''\nPUBLIC_GAZEBO_CALIBRATION_PILOT_MANIFEST=''\nPRIMARY_ERROR=''\n" + write_receipt + "\nset +e\nwrite_receipt NON_FORMAL_PILOT_CAPTURED 0 true\necho $?\n").encode("utf-8"))
-        result = subprocess.run(["bash", fixture.relative_to(ROOT).as_posix()], cwd=ROOT, text=True, capture_output=True, check=True, timeout=20)
+        fixture.write_bytes(("#!/usr/bin/env bash\nset -u\ncd \"$(dirname \"${BASH_SOURCE[0]}\")\"\nRECEIPT=receipt.json\nMODE=pilot\nDATASET=dataset\nEXPECTED_MANIFEST=pilot_manifest.json\nPUBLIC_GAZEBO_CALIBRATION_REVIEW_RECEIPT=''\nPUBLIC_GAZEBO_CALIBRATION_PILOT_MANIFEST=''\nPUBLIC_GAZEBO_CALIBRATION_TIMEOUT_SEC=900\nPRIMARY_ERROR=''\n" + write_receipt + "\nset +e\nwrite_receipt NON_FORMAL_PILOT_CAPTURED 0 true\necho $?\n").encode("utf-8"))
+        result = subprocess.run(["bash", fixture.relative_to(ROOT).as_posix()], cwd=ROOT, env={**os.environ, "PUBLIC_GAZEBO_CALIBRATION_TIMEOUT_SEC":"900"}, text=True, capture_output=True, check=True, timeout=20)
         assert result.stdout.strip() == "0", result.stderr
         receipt = json.loads((root / "receipt.json").read_text()); assert receipt["status"] == "NON_FORMAL_PILOT_CAPTURED" and receipt["artifact"]["contact_sheet"]["sha256"] == sheet_hash
         sheet.unlink()
@@ -63,6 +65,7 @@ def test_runner_receipt_binds_pilot_artifacts_and_blocks_drift() -> None:
 def test_runner_full_receipt_blocks_snapshot_bound_mutation(mutation: str) -> None:
     source = (ROOT / "scripts/run_public_mobile_gazebo_dosod_calibration.sh").read_text(encoding="utf-8")
     start = source.index("write_receipt() {"); write_receipt = source[start:source.index("\nstop_verified()", start)]
+    write_receipt = "export PUBLIC_GAZEBO_CALIBRATION_TIMEOUT_SEC=14400\n" + write_receipt
     work = ROOT / ".work"; work.mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory(prefix=f"full-receipt-{mutation}-", dir=work) as raw:
         root = Path(raw); dataset = root / "dataset"; dataset.mkdir(); (dataset / "calibration_manifest.json").write_text('{"status":"FROZEN"}')
@@ -74,8 +77,8 @@ def test_runner_full_receipt_blocks_snapshot_bound_mutation(mutation: str) -> No
         digest = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
         snapshot = root / "snapshot.json"; snapshot.write_text(json.dumps({"status":"NON_FORMAL_REVIEW_APPROVED","review_receipt_sha256":digest(review),"pilot_manifest_sha256":digest(pilot),"contact_sheet_sha256":sheet_hash,"record_sha256":"a"*64}))
         fixture = root / "fixture.sh"
-        fixture.write_bytes(("#!/usr/bin/env bash\nset -u\ncd \"$(dirname \"${BASH_SOURCE[0]}\")\"\nRECEIPT=receipt.json\nMODE=full\nDATASET=dataset\nEXPECTED_MANIFEST=calibration_manifest.json\nPUBLIC_GAZEBO_CALIBRATION_REVIEW_RECEIPT=review.json\nPUBLIC_GAZEBO_CALIBRATION_PILOT_MANIFEST=pilot.json\nVALIDATION_SNAPSHOT=snapshot.json\nPRIMARY_ERROR=''\n" + write_receipt + "\nset +e\nwrite_receipt NON_FORMAL_CALIBRATION_FROZEN 0 true\necho $?\n").encode("utf-8"))
-        run = lambda: subprocess.run(["bash", fixture.relative_to(ROOT).as_posix()], cwd=ROOT, text=True, capture_output=True, check=True, timeout=20)
+        fixture.write_bytes(("#!/usr/bin/env bash\nset -u\ncd \"$(dirname \"${BASH_SOURCE[0]}\")\"\nRECEIPT=receipt.json\nMODE=full\nDATASET=dataset\nEXPECTED_MANIFEST=calibration_manifest.json\nPUBLIC_GAZEBO_CALIBRATION_REVIEW_RECEIPT=review.json\nPUBLIC_GAZEBO_CALIBRATION_PILOT_MANIFEST=pilot.json\nPUBLIC_GAZEBO_CALIBRATION_TIMEOUT_SEC=14400\nVALIDATION_SNAPSHOT=snapshot.json\nPRIMARY_ERROR=''\n" + write_receipt + "\nset +e\nwrite_receipt NON_FORMAL_CALIBRATION_FROZEN 0 true\necho $?\n").encode("utf-8"))
+        run = lambda: subprocess.run(["bash", fixture.relative_to(ROOT).as_posix()], cwd=ROOT, env={**os.environ, "PUBLIC_GAZEBO_CALIBRATION_TIMEOUT_SEC":"14400"}, text=True, capture_output=True, check=True, timeout=20)
         assert run().stdout.strip() == "0"
         receipt = json.loads((root / "receipt.json").read_text()); assert receipt["artifact"]["contact_sheet_sha256"] == sheet_hash and receipt["artifact"]["record_sha256"] == "a"*64
         if mutation == "review": review.write_text('{"approved":false}')

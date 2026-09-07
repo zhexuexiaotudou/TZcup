@@ -42,6 +42,8 @@ FINAL_RUNTIME_PACKAGES: tuple[str, ...] = (
     "sanitation_manipulation",
     "sanitation_navigation",
     "sanitation_perception",
+    # Formal random-scene scoring runs from the evaluator-only package.
+    "sanitation_perception_evaluator",
     "sanitation_perception_interfaces",
     "sanitation_power_system",
     "sanitation_product_demo_integration",

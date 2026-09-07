@@ -10,7 +10,9 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts/rescore_formal_random_scene_perception_offline.py"
 SOURCE_PACKAGE_ROOT = ROOT / "starter_ws" / "src" / "sanitation_perception"
+EVALUATOR_PACKAGE_ROOT = ROOT / "starter_ws" / "src" / "sanitation_perception_evaluator"
 sys.path.insert(0, str(SOURCE_PACKAGE_ROOT))
+sys.path.insert(0, str(EVALUATOR_PACKAGE_ROOT))
 
 SPEC = importlib.util.spec_from_file_location("offline_rescore", SCRIPT)
 assert SPEC is not None and SPEC.loader is not None
@@ -20,8 +22,8 @@ SPEC.loader.exec_module(MODULE)
 PACKAGE_ROOT = SOURCE_PACKAGE_ROOT / "sanitation_perception"
 assert Path(sys.modules["sanitation_perception"].__file__).resolve().parent == PACKAGE_ROOT.resolve()
 assert (
-    Path(sys.modules["sanitation_perception.formal_random_scene_evaluator"].__file__).resolve()
-    == (PACKAGE_ROOT / "formal_random_scene_evaluator.py").resolve()
+    Path(sys.modules["sanitation_perception_evaluator.formal_random_scene_evaluator"].__file__).resolve()
+    == (EVALUATOR_PACKAGE_ROOT / "sanitation_perception_evaluator/formal_random_scene_evaluator.py").resolve()
 )
 
 

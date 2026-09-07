@@ -14,6 +14,7 @@ import argparse
 import importlib.metadata
 import json
 import os
+import signal
 import shutil
 import subprocess
 import sys
@@ -33,6 +34,8 @@ from validate_dosod_s100p_hbm_compile_contract import audit_calibration
 RECEIPT_ID = "tzcup_s100p_dosod_hbm_compile_receipt_v1"
 EXPECTED_PREFIX = "dosod_mlp3x_s_tzcup_rep-int16"
 CANONICAL_CONTRACT = Path(__file__).resolve().parents[1] / "config" / "dosod_s100p_hbm_compile_contract.json"
+COMPILE_DEADLINE_SECONDS = 3600
+TERM_GRACE_SECONDS = 10
 
 
 def _package_versions() -> dict[str, str | None]:
@@ -56,10 +59,58 @@ def _block(receipt: dict[str, Any], reason: str) -> None:
         receipt["blockers"].append(reason)
 
 
+def _run_compiler(
+    command: list[str], *, runner: Callable[..., subprocess.CompletedProcess[str]], deadline_seconds: int,
+) -> tuple[int | None, str, str, dict[str, Any], str | None]:
+    """Run production in one session; injected unit runners remain deterministic."""
+    execution = {
+        "deadline_seconds": deadline_seconds, "term_grace_seconds": TERM_GRACE_SECONDS,
+        "start_new_session": runner is subprocess.run, "pgid": None, "timed_out": False,
+        "term_sent": False, "kill_sent": False, "zero_survivor": None,
+        "elapsed_seconds": None,
+    }
+    start = time.monotonic()
+    if runner is not subprocess.run:
+        completed = runner(command, capture_output=True, text=True, check=False)
+        execution.update({"start_new_session": False, "zero_survivor": True,
+                          "elapsed_seconds": time.monotonic() - start})
+        return completed.returncode, completed.stdout or "", completed.stderr or "", execution, None
+    if os.name != "posix":
+        execution["elapsed_seconds"] = time.monotonic() - start
+        return None, "", "POSIX process-group supervision unavailable", execution, "hb_compile_posix_supervisor_unavailable"
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                               text=True, start_new_session=True)
+    pgid = os.getpgid(process.pid)
+    execution["pgid"] = pgid
+    try:
+        stdout, stderr = process.communicate(timeout=deadline_seconds)
+    except subprocess.TimeoutExpired:
+        execution["timed_out"] = True
+        execution["term_sent"] = True
+        os.killpg(pgid, signal.SIGTERM)
+        try:
+            stdout, stderr = process.communicate(timeout=TERM_GRACE_SECONDS)
+        except subprocess.TimeoutExpired:
+            execution["kill_sent"] = True
+            os.killpg(pgid, signal.SIGKILL)
+            stdout, stderr = process.communicate()
+    finally:
+        execution["elapsed_seconds"] = time.monotonic() - start
+    try:
+        os.killpg(pgid, 0)
+    except ProcessLookupError:
+        execution["zero_survivor"] = True
+    except PermissionError:
+        execution["zero_survivor"] = False
+    else:
+        execution["zero_survivor"] = False
+    return process.returncode, stdout or "", stderr or "", execution, None
+
+
 def _validate(
     *, contract_path: Path, preflight_path: Path, config_path: Path,
     identity_path: Path, calibration_manifest_path: Path, compiler: str,
-) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], Path | None, list[str]]:
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], Path | None, list[str], dict[str, Any]]:
     blockers: list[str] = []
     contract = load_object(contract_path)
     preflight = load_object(preflight_path)
@@ -67,11 +118,11 @@ def _validate(
     calibration_manifest = load_object(calibration_manifest_path)
     if yaml is None:
         blockers.append("pyyaml_unavailable")
-        return contract, preflight, identity, None, blockers
+        return contract, preflight, identity, None, blockers, {"manifest_sha256": None, "records_sha256": None, "sample_count": 0}
     config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
     if not isinstance(config, dict):
         blockers.append("compile_config_not_object")
-        return contract, preflight, identity, None, blockers
+        return contract, preflight, identity, None, blockers, {"manifest_sha256": None, "records_sha256": None, "sample_count": 0}
     if preflight.get("preflight_pass") is not True or preflight.get("compile_config_emitted") is not True:
         blockers.append("preflight_not_passed")
     if preflight.get("compile_executed") is not False or preflight.get("hbm_status") != "HBM_NOT_PRODUCED":
@@ -110,7 +161,7 @@ def _validate(
     model_parameters = config.get("model_parameters")
     if not isinstance(model_parameters, dict):
         blockers.append("compile_config_model_parameters_missing")
-        return contract, preflight, identity, None, blockers
+        return contract, preflight, identity, None, blockers, calibration_audit
     if model_parameters.get("march") != contract.get("compile_recipe", {}).get("march"):
         blockers.append("compile_config_march_mismatch")
     if model_parameters.get("onnx_model") != preflight.get("model_path"):
@@ -120,14 +171,14 @@ def _validate(
     working_dir = model_parameters.get("working_dir")
     if not isinstance(working_dir, str) or not working_dir:
         blockers.append("compile_config_working_dir_missing")
-        return contract, preflight, identity, None, blockers
+        return contract, preflight, identity, None, blockers, calibration_audit
     expected_output = Path(working_dir) / f"{EXPECTED_PREFIX}.hbm"
     if expected_output.parent.is_symlink() or expected_output.parent.exists():
         blockers.append("compile_working_directory_preexisted")
     calibration_parameters = config.get("calibration_parameters")
     if not isinstance(calibration_parameters, dict) or calibration_parameters.get("cal_data_dir") != str(calibration_manifest_path.parent.resolve()):
         blockers.append("compile_config_calibration_path_mismatch")
-    return contract, preflight, identity, expected_output, blockers
+    return contract, preflight, identity, expected_output, blockers, calibration_audit
 
 
 def execute_compile(
@@ -163,10 +214,15 @@ def execute_compile(
         "compiler_identity_verified": False,
         "raw_stdout_path": "hb_compile.stdout.txt",
         "raw_stderr_path": "hb_compile.stderr.txt",
+        "raw_stdout_sha256": None,
+        "raw_stderr_sha256": None,
+        "execution": {"deadline_seconds": COMPILE_DEADLINE_SECONDS, "term_grace_seconds": TERM_GRACE_SECONDS,
+                      "start_new_session": None, "pgid": None, "timed_out": False, "term_sent": False,
+                      "kill_sent": False, "zero_survivor": None, "elapsed_seconds": None},
         "blockers": [],
     }
     try:
-        contract, preflight, identity, expected_hbm, blockers = _validate(
+        contract, preflight, identity, expected_hbm, blockers, calibration_audit = _validate(
             contract_path=contract_path, preflight_path=preflight_path, config_path=config_path,
             identity_path=identity_path, calibration_manifest_path=calibration_manifest_path, compiler=compiler,
         )
@@ -174,9 +230,11 @@ def execute_compile(
             "contract_sha256": sha256_file(contract_path), "preflight_sha256": sha256_file(preflight_path),
             "compile_config_sha256": sha256_file(config_path), "compiler_identity_sha256": sha256_file(identity_path),
             "calibration_manifest_sha256": sha256_file(calibration_manifest_path),
+            "calibration_records_sha256": calibration_audit.get("records_sha256"),
+            "calibration_sample_count": calibration_audit.get("sample_count"),
             "model_sha256": contract.get("model", {}).get("sha256"),
         })
-        receipt["calibration_reaudit"] = calibration_audit if "calibration_audit" in locals() else None
+        receipt["calibration_reaudit"] = calibration_audit
         receipt["compiler_identity_verified"] = identity.get("identity_verified") is True
         for blocker in blockers:
             _block(receipt, blocker)
@@ -189,11 +247,18 @@ def execute_compile(
             command = [compiler, "-c", str(config_path.resolve())]
             receipt["command"] = command
             try:
-                completed = runner(command, capture_output=True, text=True, check=False)
-                stdout = completed.stdout or ""
-                stderr = completed.stderr or ""
-                receipt["returncode"] = completed.returncode
-            except (OSError, subprocess.TimeoutExpired) as exc:
+                returncode, stdout, stderr, execution, run_blocker = _run_compiler(
+                    command, runner=runner, deadline_seconds=COMPILE_DEADLINE_SECONDS,
+                )
+                receipt["returncode"] = returncode
+                receipt["execution"] = execution
+                if run_blocker is not None:
+                    _block(receipt, run_blocker)
+                if execution["timed_out"]:
+                    _block(receipt, "hb_compile_deadline_exceeded")
+                if execution["zero_survivor"] is not True:
+                    _block(receipt, "hb_compile_process_group_not_closed")
+            except OSError as exc:
                 stdout, stderr = "", f"{type(exc).__name__}:{exc}"
                 _block(receipt, "hb_compile_invocation_failed")
             receipt["raw_stdout_sha256"] = _write_text(output / receipt["raw_stdout_path"], stdout)

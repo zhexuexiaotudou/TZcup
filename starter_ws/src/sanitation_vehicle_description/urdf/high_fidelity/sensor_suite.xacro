@@ -22,7 +22,7 @@
     </joint>
   </xacro:macro>
 
-  <xacro:macro name="hf_d435" params="name parent xyz rpy topic ir_left_topic ir_right_topic max_range mount_bracket:=false runtime_enabled:=true">
+  <xacro:macro name="hf_d435" params="name parent xyz rpy topic ir_left_topic ir_right_topic max_range mount_bracket:=false runtime_enabled:=true training_gt:=false">
     <xacro:if value="${mount_bracket}">
       <link name="${name}_mount_link">
         <visual name="${name}_machined_side_bracket_visual">
@@ -109,6 +109,17 @@
           <depth_camera><output>depths</output></depth_camera>
         </camera>
       </sensor>
+      <xacro:if value="${training_gt}">
+        <!-- Evidence-only labels share the production D435 link, lens and cadence. -->
+        <sensor name="g2_semantic_gt" type="segmentation">
+          <topic>g2/semantic_gt</topic><gz_frame_id>${name}_depth_optical_frame</gz_frame_id><update_rate>30</update_rate><always_on>true</always_on>
+          <camera><segmentation_type>semantic</segmentation_type><optical_frame_id>${name}_depth_optical_frame</optical_frame_id><horizontal_fov>1.518436</horizontal_fov><image><width>848</width><height>480</height><format>R8G8B8</format></image><clip><near>0.2</near><far>${max_range}</far></clip><lens><intrinsics><fx>447.2</fx><fy>433.0</fy><cx>424.0</cx><cy>240.0</cy><s>0</s></intrinsics></lens></camera>
+        </sensor>
+        <sensor name="g2_instance_gt" type="segmentation">
+          <topic>g2/instance_gt</topic><gz_frame_id>${name}_depth_optical_frame</gz_frame_id><update_rate>30</update_rate><always_on>true</always_on>
+          <camera><segmentation_type>instance</segmentation_type><optical_frame_id>${name}_depth_optical_frame</optical_frame_id><horizontal_fov>1.518436</horizontal_fov><image><width>848</width><height>480</height><format>R8G8B8</format></image><clip><near>0.2</near><far>${max_range}</far></clip><lens><intrinsics><fx>447.2</fx><fy>433.0</fy><cx>424.0</cx><cy>240.0</cy><s>0</s></intrinsics></lens></camera>
+        </sensor>
+      </xacro:if>
       <sensor name="${name}_d435_infra1" type="camera">
         <pose>0 0 0 0 0 0</pose>
         <topic>${ir_left_topic}</topic><update_rate>30</update_rate>
@@ -188,7 +199,7 @@
     </xacro:if>
   </xacro:macro>
 
-  <xacro:macro name="hf_sensor_suite" params="mast_parent base_parent wrist_parent high_bandwidth_runtime:=true">
+  <xacro:macro name="hf_sensor_suite" params="mast_parent base_parent wrist_parent high_bandwidth_runtime:=true enable_training_gt:=false">
     <!-- Every fixed sensor is connected through a named, physical mounting
          link.  This makes the installation hierarchy inspectable in TF/URDF
          and keeps the visible vendor housing separate from project-owned CAD. -->
@@ -282,7 +293,7 @@
                     topic="/sensors/front_rgbd/depth/image_rect_raw"
                     ir_left_topic="/sensors/front_rgbd/infra1/image_rect_raw"
                     ir_right_topic="/sensors/front_rgbd/infra2/image_rect_raw" max_range="10.0"
-                    runtime_enabled="${high_bandwidth_runtime}"/>
+                    runtime_enabled="${high_bandwidth_runtime}" training_gt="${enable_training_gt}"/>
     <!-- Side bracket position keeps the camera outside the Robotiq base and
          turns its optical +X onto the gripper's +Z approach direction. -->
     <!-- Roll the housing 90 degrees about its unchanged optical axis.  The

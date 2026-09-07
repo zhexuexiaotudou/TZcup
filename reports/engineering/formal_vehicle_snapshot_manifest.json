@@ -167,8 +167,8 @@
       "size_bytes": 3431
     },
     "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py": {
-      "sha256": "e5f2f89500a4bf810f8380ebb89ed177d5402fbe765b5d585fbf8f25b297b815",
-      "size_bytes": 39366
+      "sha256": "d424e0de8b7aa6893d238e1aa675bcae2330e3fa3a02d8c61decf717bf7ee212",
+      "size_bytes": 40626
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/MANIFEST.sha256": {
       "sha256": "0022a0157796ce6e1aba2dfb18cca9e9e2bda44f1bfdc251839d9aa8dd5f87a7",
@@ -967,8 +967,8 @@
       "size_bytes": 2949
     },
     "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro": {
-      "sha256": "d8765b91b045a249d4a774424afe849fb5df1afec4a83677d58894ce7fc1d445",
-      "size_bytes": 17703
+      "sha256": "124e79bf215d787ac215b70fa0fdb7e7d7a8f588f02ebd976a18ccdd1f4909a4",
+      "size_bytes": 17832
     },
     "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/a300_platform.xacro": {
       "sha256": "294a160cd22adf46f25724b7fe96404e184ab5863c841a93fd48215d59c6dad3",
@@ -995,13 +995,13 @@
       "size_bytes": 17726
     },
     "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/sensor_suite.xacro": {
-      "sha256": "08f582fb0495647a8d790eac94206f83b73b2e62b195aac6da847c4c5b6e8f11",
-      "size_bytes": 30111
+      "sha256": "36de63218a6ab2d4f34d915a4c546362dbea4e9c496cda7bbba72e2d0a58b2b9",
+      "size_bytes": 31612
     },
     "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/storage_system.xacro": {
       "sha256": "f010277b4013b14ffcb6d718b3b4c0f6669621f9c8cd701613857bd18468fe54",
       "size_bytes": 26704
     }
   },
-  "source_inventory_sha256": "e3176b2e70b73d273f3799cb2988b449dc86ddbd1f611e153f7807fe7827bf66"
+  "source_inventory_sha256": "74a251a5d13e8afca5ff548284712472cba0a407032770205ec798daaff01ced"
 }

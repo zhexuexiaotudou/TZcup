@@ -322,7 +322,8 @@ exec colcon --log-base "${runtime_ws}/log" build --merge-install \
     sanitation_active_cleaning sanitation_campus_scenario sanitation_coverage \
     sanitation_formal_campus_integration sanitation_gazebo_auxiliary \
     sanitation_gazebo_control sanitation_localization sanitation_manipulation \
-    sanitation_navigation sanitation_perception sanitation_perception_interfaces \
+    sanitation_navigation sanitation_perception sanitation_perception_evaluator \
+    sanitation_perception_interfaces \
     sanitation_power_system sanitation_product_demo_integration sanitation_safety \
     sanitation_service_acceptance sanitation_vehicle_description \
     opennav_coverage_msgs opennav_coverage

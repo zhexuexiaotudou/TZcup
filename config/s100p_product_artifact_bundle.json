@@ -79,8 +79,8 @@
       "relative_path": "config/s100p_product_overlay_packages.json",
       "target_root": "overlay_root",
       "target_relative_path": "share/sanitation_perception/config/s100p_product_overlay_packages.json",
-      "sha256": "34b497665724860a382988fed876cce2d9a2920366860966b5c9a630d62710ca",
-      "byte_size": 2176
+      "sha256": "3399521ca54ef4d7b4cf075c8372186ab9c1f58139b46c6522e23d64a555ecb9",
+      "byte_size": 2126
     },
     "board_launch_parameter_record": {
       "source_scope": "repository_root",

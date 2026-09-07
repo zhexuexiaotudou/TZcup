@@ -1,0 +1,22 @@
+# Evaluator-only, opt-in public-mobile bridge.  ``parameter_bridge`` consumes
+# the same per-topic lazy and one-deep schema as the formal high-bandwidth
+# bridge; it is never loaded by the default formal W1-W5 graph.
+- ros_topic_name: /g2/semantic_gt/labels_map
+  gz_topic_name: /g2/semantic_gt/labels_map
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: gz.msgs.Image
+  direction: GZ_TO_ROS
+  qos_profile: SENSOR_DATA
+  subscriber_queue: 1
+  publisher_queue: 1
+  lazy: true
+
+- ros_topic_name: /g2/instance_gt/labels_map
+  gz_topic_name: /g2/instance_gt/labels_map
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: gz.msgs.Image
+  direction: GZ_TO_ROS
+  qos_profile: SENSOR_DATA
+  subscriber_queue: 1
+  publisher_queue: 1
+  lazy: true

@@ -247,6 +247,7 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                 "high_bandwidth_sensor_runtime": LaunchConfiguration(
                     "high_bandwidth_sensor_runtime"
                 ),
+                "enable_training_gt": LaunchConfiguration("enable_training_gt"),
                 # Place the vehicle before NavSat/local-EKF startup.  A later
                 # SetPose changes the GNSS world datum but not wheel/IMU odom,
                 # producing a false ~98 m GNSS-consistency failure.
@@ -505,6 +506,7 @@ def generate_launch_description() -> LaunchDescription:
             DeclareLaunchArgument(
                 "high_bandwidth_sensor_runtime", default_value="true"
             ),
+            DeclareLaunchArgument("enable_training_gt", default_value="false"),
             DeclareLaunchArgument("spawn_x", default_value="nan"),
             DeclareLaunchArgument("spawn_y", default_value="nan"),
             DeclareLaunchArgument("spawn_yaw", default_value="nan"),

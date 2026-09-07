@@ -4,8 +4,9 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from sanitation_perception.dosod_ros_adapter import DosodOnnxDetector
+from sanitation_perception.dosod_ros_adapter import DosodOnnxDetector, postprocess_anchors
 from sanitation_perception.edgesam_ros_adapter import EdgeSamOnnxSegmenter
+from sanitation_perception.dosod_geometry import inverse_model_roi, square_pad_geometry
 from sanitation_perception.product_projection import (
     CameraIntrinsics,
     PublicGrid,
@@ -14,11 +15,46 @@ from sanitation_perception.product_projection import (
 from sanitation_perception.pc_open_vocab_adapter import (
     _ground_dirt_prompt_indices,
     _projection_masks,
+    select_source_stamp,
     serialize_wrist_grasp_recheck,
 )
 
 
 PACKAGE = Path(__file__).resolve().parents[1]
+
+
+def test_front_source_stamp_selector_is_exactly_two_hz_and_rejects_replays():
+    selected, reason = select_source_stamp(None, 1_000_000_000, 2.0)
+    assert (selected, reason) == (True, "selected")
+    assert select_source_stamp(1_000_000_000, 1_499_999_999, 2.0) == (
+        False,
+        "source_rate_limited",
+    )
+
+
+def test_dosod_inverse_roi_golden_vectors_cover_padding_and_odd_remainder():
+    geometry = square_pad_geometry(848, 480)
+    assert (geometry.scale, geometry.pad_x, geometry.pad_y) == pytest.approx((640 / 848, 0, 184))
+    roi, status = inverse_model_roi((0, 0, 640, 640), geometry)
+    assert status == "partial_clip" and roi == pytest.approx((0.0, 0.0, 848.0, 480.0))
+    assert inverse_model_roi((1, 1, 2, 2), geometry) == (None, "padding_only_drop")
+    assert inverse_model_roi((float("nan"), 1, 2, 3), geometry) == (None, "invalid_box")
+    odd = square_pad_geometry(5, 4, 10)
+    assert (odd.pad_x, odd.pad_y) == (0, 0)
+    integer, status = inverse_model_roi((0.1, 0.1, 9.9, 7.9), odd, integer_roi=True)
+    assert (integer, status) == ((0, 0, 5, 4), "kept")
+    assert select_source_stamp(1_000_000_000, 1_500_000_000, 2.0) == (
+        True,
+        "selected",
+    )
+    assert select_source_stamp(1_500_000_000, 1_500_000_000, 2.0) == (
+        False,
+        "duplicate_source_stamp",
+    )
+    assert select_source_stamp(1_500_000_000, 1_499_999_999, 2.0) == (
+        False,
+        "out_of_order_source_stamp",
+    )
 
 
 class _Io:
@@ -36,11 +72,12 @@ class _DosodSession:
     def run(self, output_names, feed):
         assert output_names == ["scores", "boxes"]
         assert feed["images"].shape == (1, 3, 640, 640)
-        scores = np.zeros((1, 3, 4), dtype=np.float32)
+        scores = np.zeros((1, 8400, 4), dtype=np.float32)
         scores[0, 0, 0] = 0.90
         scores[0, 1, 0] = 0.80
         scores[0, 2, 3] = 0.75
-        boxes = np.asarray([[[100, 100, 300, 300], [110, 110, 290, 290], [320, 320, 500, 500]]], dtype=np.float32)
+        boxes = np.zeros((1, 8400, 4), dtype=np.float32)
+        boxes[0, :3] = [[100, 100, 300, 300], [110, 110, 290, 290], [320, 320, 500, 500]]
         return scores, boxes
 
 
@@ -54,16 +91,14 @@ class _CoordinateRoundTripSession:
     def run(self, output_names, feed):
         assert output_names == ["scores", "boxes"]
         assert feed["images"].shape == (1, 3, 640, 640)
-        scores = np.zeros((1, 1, 4), dtype=np.float32)
+        scores = np.zeros((1, 8400, 4), dtype=np.float32)
         scores[0, 0, 0] = 0.90
         # Original 848x480 box (106, 32, 742, 448), after symmetric square
         # padding by 184 px and resize by 640/848.
         scale = 640.0 / 848.0
-        boxes = np.asarray(
-            [[[106.0 * scale, (32.0 + 184.0) * scale,
-               742.0 * scale, (448.0 + 184.0) * scale]]],
-            dtype=np.float32,
-        )
+        boxes = np.zeros((1, 8400, 4), dtype=np.float32)
+        boxes[0, 0] = [106.0 * scale, (32.0 + 184.0) * scale,
+                       742.0 * scale, (448.0 + 184.0) * scale]
         return scores, boxes
 
 
@@ -89,7 +124,7 @@ class _DecoderSession:
 
 
 def test_dosod_adapter_runs_fixed_class_nms_and_restores_image_coordinates():
-    detector = DosodOnnxDetector(session=_DosodSession(), score_threshold=0.5)
+    detector = DosodOnnxDetector(session=_DosodSession())
     results = detector.infer(np.zeros((480, 640, 3), dtype=np.uint8))
     assert [result.class_id for result in results] == ["litter_cube", "puddle"]
     assert results[0].confidence == np.float32(0.9)
@@ -98,7 +133,7 @@ def test_dosod_adapter_runs_fixed_class_nms_and_restores_image_coordinates():
 
 def test_dosod_adapter_exactly_round_trips_square_padding_coordinates():
     detector = DosodOnnxDetector(
-        session=_CoordinateRoundTripSession(), score_threshold=0.5
+        session=_CoordinateRoundTripSession()
     )
     results = detector.infer(np.zeros((480, 848, 3), dtype=np.uint8))
     assert len(results) == 1
@@ -106,14 +141,41 @@ def test_dosod_adapter_exactly_round_trips_square_padding_coordinates():
     assert results[0].xyxy == pytest.approx((106.0, 32.0, 742.0, 448.0), abs=1e-4)
 
 
-def test_dosod_adapter_supports_measured_class_specific_thresholds():
-    detector = DosodOnnxDetector(
-        session=_DosodSession(),
-        score_threshold=0.85,
-        class_score_thresholds={"puddle": 0.70},
-    )
-    results = detector.infer(np.zeros((480, 640, 3), dtype=np.uint8))
-    assert [result.class_id for result in results] == ["litter_cube", "puddle"]
+def test_dosod_adapter_rejects_project_threshold_drift():
+    detector = DosodOnnxDetector(session=_DosodSession(), class_score_thresholds={"puddle": 0.70})
+    with pytest.raises(ValueError, match="postprocess contract drift"):
+        detector.infer(np.zeros((480, 640, 3), dtype=np.uint8))
+
+
+def test_dosod_postprocess_is_global_stable_capped_and_class_agnostic():
+    scores = np.zeros((402, 4), dtype=np.float32)
+    boxes = np.tile(np.asarray([[0.0, 0.0, 10.0, 10.0]], dtype=np.float32), (402, 1))
+    scores[:, 0] = 0.003
+    scores[0, 1] = 0.005
+    scores[1, 2] = 0.005
+    scores[400, 3] = 0.003
+    scores[401, 3] = 0.002
+    boxes[1] = [20.0, 0.0, 30.0, 10.0]
+    boxes[400] = [40.0, 0.0, 50.0, 10.0]
+    # Anchor 400 cannot enter the capped 400 candidates: equal score anchors
+    # preserve their original index after the two higher-score anchors.
+    result = postprocess_anchors(scores, boxes)
+    assert result[0][:2] == (0, 1)
+    assert result[1][:2] == (1, 2)
+    assert all(index != 400 for index, _, _ in result)
+    assert all(index != 401 for index, _, _ in result)  # strict > 0.002
+
+
+def test_dosod_postprocess_drops_invalid_after_cap_without_consuming_top_k():
+    scores = np.zeros((8400, 4), dtype=np.float32)
+    boxes = np.zeros((8400, 4), dtype=np.float32)
+    scores[0, 0] = 0.9
+    scores[1, 1] = 0.8
+    boxes[0] = [np.nan, 0, 10, 10]
+    boxes[1] = [20, 0, 30, 10]
+    counters = {"invalid_box": 0}
+    assert postprocess_anchors(scores, boxes, counters=counters) == [(1, 1, pytest.approx(0.8))]
+    assert counters["invalid_box"] == 1
 
 
 def test_edgesam_adapter_uses_box_prompts_and_best_mask():
@@ -216,10 +278,14 @@ def test_ros_product_adapter_lists_every_formal_camera_and_no_evaluator_subscrip
     assert 'declare_parameter("fallen_leaves_score_threshold", 0.0025)' in source
     assert 'declare_parameter("dust_or_soil_score_threshold", 0.002)' in source
     assert '"stale_map_tf_rejected"' in source
-    assert '"map", image_message.header.frame_id, Time()' in source
+    assert 'rgb_time = Time.from_msg(image_message.header.stamp)' in source
+    assert '"map", image_message.header.frame_id, rgb_time' in source
+    assert '"map", image_message.header.frame_id, Time()' not in source
     assert "boxes[dirt_indices]" in source
     assert "Publish DOSOD immediately" in source
     assert '"dosod_product_ok"' in source
+    assert "status.level = int(level)" in source
+    assert "status.level = bytes([level])" not in source
     assert "self.create_timer(" in source
     assert '"alive"' in source
     assert "diagnostic_qos" in source
@@ -231,6 +297,13 @@ def test_ros_product_adapter_lists_every_formal_camera_and_no_evaluator_subscrip
     assert source.count("callback_group=self.inference_callback_group") == 2
     assert source.count("callback_group=self.cache_callback_group") == 3
     assert "MultiThreadedExecutor(num_threads=3)" in source
+    assert "self._last_success_diagnostic_s" in source
+    assert "now - self._last_success_diagnostic_s < 1.0" in source
+    assert "select_source_stamp(" in source
+    assert "NANOSECONDS_PER_SECOND / target_rate_hz" in source
+    assert '"duplicate_source_stamp"' in source
+    assert '"out_of_order_source_stamp"' in source
+    assert '"front_target_rate_hz": self.rates["front"]' in source
     assert '"/perception/wrist/grasp_recheck"' in source
     rgbd_start = source.index("def _on_rgbd")
     assert source.index("self.detection_publisher.publish(product)", rgbd_start) < source.index(

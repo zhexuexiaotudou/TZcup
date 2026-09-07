@@ -4387,9 +4387,9 @@
           "valid": true
         },
         "board_overlay_package_contract": {
-          "byte_size": 2176,
+          "byte_size": 2126,
           "path": "config/s100p_product_overlay_packages.json",
-          "sha256": "34b497665724860a382988fed876cce2d9a2920366860966b5c9a630d62710ca",
+          "sha256": "3399521ca54ef4d7b4cf075c8372186ab9c1f58139b46c6522e23d64a555ecb9",
           "valid": true
         },
         "dosod_edgesam_s100_profile": {
@@ -4419,7 +4419,7 @@
         "offline_predeploy_product_bundle": {
           "byte_size": 4157,
           "path": "config/s100p_product_artifact_bundle.json",
-          "sha256": "5fe2ba959d5f80fa881c4124c73ae1dcd82028d43f88b94a869f746ff1c49819",
+          "sha256": "d689e3e7f788580d107909a7f13b68347c3399264754710fbc545c8bf1d31cf3",
           "valid": true
         },
         "perception_interfaces_package_manifest": {
@@ -4435,15 +4435,15 @@
           "valid": true
         },
         "project_perception_entry_points": {
-          "byte_size": 1567,
+          "byte_size": 1452,
           "path": "starter_ws/src/sanitation_perception/setup.py",
-          "sha256": "9766b35de72648e7355916f0f98c2bcdc3339648cde0d995bbe9d06db3359eca",
+          "sha256": "30433ce4b70679e471fcde23ac61c771c23cd041b2658509f960e87266537842",
           "valid": true
         },
         "project_perception_package_manifest": {
-          "byte_size": 1241,
+          "byte_size": 1194,
           "path": "starter_ws/src/sanitation_perception/package.xml",
-          "sha256": "203329c440c63b1d955ba677a1a3c8b8555f8288483327785f1c77c782cd7389",
+          "sha256": "19f3d5e37a87e52f48962b809d67fd7c4d18b331f99192ed15bc84fbd039440e",
           "valid": true
         }
       },
@@ -4520,7 +4520,7 @@
           "checks": [
             {
               "evidence": {
-                "line": 72,
+                "line": 74,
                 "path": "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro",
                 "token": "filename=\"libA300DrivetrainPlantSystem.so\""
               },
@@ -4528,7 +4528,7 @@
             },
             {
               "evidence": {
-                "line": 78,
+                "line": 80,
                 "path": "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro",
                 "token": "<command_topic>"
               },
@@ -4552,7 +4552,7 @@
             },
             {
               "evidence": {
-                "line": 300,
+                "line": 303,
                 "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
                 "token": "a300_drivetrain_bridge"
               },
@@ -4594,7 +4594,7 @@
             },
             {
               "evidence": {
-                "line": 95,
+                "line": 97,
                 "path": "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro",
                 "token": "libGripperMimicEffortSystem.so"
               },
@@ -4736,7 +4736,7 @@
           "checks": [
             {
               "evidence": {
-                "line": 210,
+                "line": 212,
                 "path": "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro",
                 "token": "libGroundDirtCleaningSystem.so"
               },
@@ -4778,7 +4778,7 @@
           "checks": [
             {
               "evidence": {
-                "line": 236,
+                "line": 238,
                 "path": "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro",
                 "token": "libWaterRecoverySystem.so"
               },
@@ -4834,7 +4834,7 @@
             },
             {
               "evidence": {
-                "line": 763,
+                "line": 770,
                 "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
                 "token": "formal_vehicle_product_native_bridge"
               },
@@ -4860,7 +4860,7 @@
           "checks": [
             {
               "evidence": {
-                "line": 198,
+                "line": 209,
                 "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/sensor_suite.xacro",
                 "token": "utm30lx"
               },
@@ -4876,7 +4876,7 @@
             },
             {
               "evidence": {
-                "line": 763,
+                "line": 770,
                 "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
                 "token": "formal_vehicle_product_native_bridge"
               },
@@ -4894,7 +4894,7 @@
           "checks": [
             {
               "evidence": {
-                "line": 253,
+                "line": 264,
                 "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/sensor_suite.xacro",
                 "token": "sensor name=\"mid360\""
               },
@@ -4920,7 +4920,7 @@
           "checks": [
             {
               "evidence": {
-                "line": 281,
+                "line": 292,
                 "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/sensor_suite.xacro",
                 "token": "name=\"front_rgbd\""
               },
@@ -4946,7 +4946,7 @@
           "checks": [
             {
               "evidence": {
-                "line": 298,
+                "line": 309,
                 "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/sensor_suite.xacro",
                 "token": "rear_left_fisheye"
               },
@@ -4972,7 +4972,7 @@
           "checks": [
             {
               "evidence": {
-                "line": 291,
+                "line": 302,
                 "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/sensor_suite.xacro",
                 "token": "name=\"wrist_rgbd\""
               },
@@ -4998,7 +4998,7 @@
           "checks": [
             {
               "evidence": {
-                "line": 380,
+                "line": 391,
                 "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/sensor_suite.xacro",
                 "token": "sensor name=\"zed_f9p\""
               },
@@ -5014,7 +5014,7 @@
             },
             {
               "evidence": {
-                "line": 763,
+                "line": 770,
                 "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
                 "token": "formal_vehicle_product_native_bridge"
               },
@@ -5048,7 +5048,7 @@
             },
             {
               "evidence": {
-                "line": 214,
+                "line": 217,
                 "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
                 "token": "joint_state_broadcaster"
               },
