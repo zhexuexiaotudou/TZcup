@@ -72,6 +72,13 @@ def test_s100p_adapter_is_installed_with_ai_msgs_runtime_dependency():
     assert '"numpy==1.26.4"' not in setup
 
 
+def test_fast_validation_installs_setuptools_for_sdist_contract():
+    workflow = (
+        REPOSITORY_ROOT / ".github/workflows/development-workflow.yml"
+    ).read_text(encoding="utf-8")
+    assert "setuptools==80.9.0" in workflow
+
+
 def test_s100p_bpu_nodes_consume_the_validated_nv12_topic():
     source = LAUNCH.read_text(encoding="utf-8")
     assert '"ros_img_sub_topic_name": front_dosod_nv12_topic' in source
