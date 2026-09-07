@@ -175,8 +175,8 @@
       "source": ["COMPETITION_REQUIREMENTS.md", "config/high_fidelity_vehicle/formal_a19_reliability_fault_contract.json"],
       "step_ids": ["single_episode", "multisite_product", "s100_live"],
       "evidence_gates": ["a19_two_hour_reliability_fault"],
-      "state": "BLOCKED_UNTIL_CURRENT_SESSION_RUNTIME_EVIDENCE",
-      "blockers": ["The A19 contract requires a current two-hour collection with bound raw telemetry, logs, fault-injection receipt, formal session, and runtime closure; none is retained yet."]
+      "state": "BLOCKED_MISSING_CANONICAL_A19_RUNTIME_PRODUCER",
+      "blockers": ["The A19 product-standard contract has no current-main canonical producer for a two-hour full-pipeline receipt with raw time series, command/exit/survivor evidence, all 18 faults, and current commit/session/runtime-closure bindings."]
     },
     {
       "id": "A20",

@@ -1,74 +1,69 @@
 #!/usr/bin/env python3
-"""Focused fixtures for the A19 reliability/fault evidence boundary."""
+"""Adversarial fixtures: current main must never manufacture an A19 PASS."""
 
 from __future__ import annotations
 
-import hashlib
 import json
+import time
 from pathlib import Path
 
-from validate_formal_a19_reliability_fault import BLOCKED, PASS, validate
+from validate_formal_a19_reliability_fault import BLOCKED, ROOT, validate
 
 
-def _write(path: Path, value: object) -> str:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(value), encoding="utf-8")
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+def _write(path: Path, payload: object) -> None:
+    path.write_text(json.dumps(payload), encoding="utf-8")
 
 
-def _fixtures(tmp_path: Path, duration_s: int = 7200) -> tuple[Path, Path, Path, Path, Path]:
-    evidence = tmp_path / "evidence"
-    snapshot = tmp_path / "snapshot.json"
-    _write(snapshot, {"source_inventory_sha256": "a" * 64, "outputs": {"reports/engineering/formal_competition_vehicle.urdf": {"sha256": "b" * 64}}})
-    closure = tmp_path / "closure.json"
-    _write(closure, {"kind": "tzcup_formal_final_runtime_closure", "status": "FORMAL_FINAL_RUNTIME_CLOSURE_FROZEN", "closure_sha256": "c" * 64})
-    snapshot_binding = {"snapshot_manifest_sha256": hashlib.sha256(snapshot.read_bytes()).hexdigest(), "source_inventory_sha256": "a" * 64, "expanded_urdf_sha256": "b" * 64}
-    closure_binding = {"runtime_closure_manifest_sha256": hashlib.sha256(closure.read_bytes()).hexdigest(), "runtime_closure_sha256": "c" * 64}
-    session = tmp_path / "session.json"
-    _write(session, {"report_id": "tzcup_formal_final_acceptance_session_v1", "status": "FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING", "started_epoch_ns": 10, "snapshot": snapshot_binding, "runtime_closure_binding": {"manifest_sha256": closure_binding["runtime_closure_manifest_sha256"], "closure_sha256": "c" * 64}})
-    session_binding = {"session_manifest_sha256": hashlib.sha256(session.read_bytes()).hexdigest(), "session_started_epoch_ns": 10, "snapshot": snapshot_binding}
-    collection = {"started_epoch_ns": 20, "ended_epoch_ns": 20 + duration_s * 1_000_000_000}
-    telemetry = {"collection": collection, "coverage_ratio": 0.9, "collision_count": 0, "localization_p95_m": 0.2, "max_estop_brake_latency_s": 1.0}
-    telemetry_hash = _write(evidence / "telemetry.json", telemetry)
-    fault_rows = [{"profile": profile, "injected_epoch_ns": 30, "safety_outcome": "STOPPED_SAFE", "recovery_outcome": "RECOVERED_SAFE"} for profile in ("transport_stress", "wet_surface", "degraded_drive")]
-    fault_hash = _write(evidence / "faults.json", {"fault_injections": fault_rows})
-    log_path = evidence / "launch.log"
-    log_path.write_text("retained launch log\n", encoding="utf-8")
-    log_hash = hashlib.sha256(log_path.read_bytes()).hexdigest()
-    report = tmp_path / "candidate.json"
-    _write(report, {"schema_version": 1, "report_id": "tzcup_formal_a19_reliability_fault_report_v1", "acceptance_session_binding": session_binding, "runtime_closure_binding": closure_binding, "collection": collection, "raw_evidence": {"telemetry": {"path": "telemetry.json", "sha256": telemetry_hash}, "launch_log": {"path": "launch.log", "sha256": log_hash}, "fault_injection": {"path": "faults.json", "sha256": fault_hash}}, "metrics": {key: telemetry[key] for key in ("coverage_ratio", "collision_count", "localization_p95_m", "max_estop_brake_latency_s")}, "fault_injections": fault_rows})
-    return report, snapshot, session, closure, evidence
+def _record(fault_id: str, stamp: int) -> dict:
+    event = [{"state": "STOPPED", "wall_clock_epoch_ns": stamp}]
+    return {"fault_id": fault_id, "safety_state_events": event, "recovery_state_events": [{"state": "RECOVERED", "wall_clock_epoch_ns": stamp + 1}], "perception_health_events": [{"state": "DEGRADED", "wall_clock_epoch_ns": stamp}], "safety_nav_operational": True, "unsafe_pending_clean_outcome": "CANCELLED"}
 
 
-def test_current_two_hour_fixture_passes(tmp_path: Path) -> None:
-    report, snapshot, session, closure, evidence = _fixtures(tmp_path)
-    assert validate(report, snapshot, session, closure, evidence)["status"] == PASS
+def _candidate(tmp_path: Path) -> tuple[Path, Path, Path, Path, Path]:
+    evidence = tmp_path / "evidence"; evidence.mkdir()
+    now = time.time_ns(); start = now - 7_201_000_000_000
+    report = {"profiles": ["nominal", "transport_stress", "wet_surface", "degraded_drive"], "faults": [_record(name, start + 1) for name in ("rgb_freeze", "depth_freeze", "timestamp_skew", "camera_info_mismatch", "tf_unavailable", "invalid_depth", "proposal_flood", "proposal_dropout", "classifier_exception", "classifier_timeout", "action_verifier_failure", "reobserve_timeout", "cuda_provider_failure", "model_hash_mismatch", "corrupt_model", "sustained_slow_inference", "nav2_path_unavailable", "dynamic_obstacle_blocks_observation")], "stability_metrics": {"crash_count": 0, "deadlock_count": 0, "memory_growth_ratio": 0.05, "queue_growth_count": 0, "unexpected_model_reload_count": 0, "persistent_tf_failure_count": 0, "unrecoverable_watchdog_event_count": 0, "unsafe_cleaning_action_count": 0, "localization_xy_rmse_m": 0.05, "localization_xy_p95_m": 0.05, "estop_brake_latency_s": 1.0, "pipeline_components": ["Coverage", "Perception", "Tracking", "DynamicTrashMap", "Spot Cleaning", "Post-Clean Verification"]}, "wall_clock_collection": {"started_epoch_ns": start, "ended_epoch_ns": now}, "raw_evidence": {name: {} for name in ("wall_clock_time_series", "launch_command", "process_exit", "zero_survivor", "fault_injection_receipt")}}
+    report_path = evidence / "report.json"; _write(report_path, report)
+    snapshot = evidence / "snapshot.json"; _write(snapshot, {"source_inventory_sha256": "a" * 64})
+    session = evidence / "session.json"; _write(session, {"started_epoch_ns": start - 1})
+    closure = evidence / "closure.json"; _write(closure, {"closure_sha256": "b" * 64})
+    return report_path, snapshot, session, closure, evidence
 
 
-def test_short_soak_cannot_be_relabelled_as_a19_pass(tmp_path: Path) -> None:
-    report, snapshot, session, closure, evidence = _fixtures(tmp_path, duration_s=65)
-    result = validate(report, snapshot, session, closure, evidence)
-    assert result["status"] == BLOCKED
-    assert any("7200" in blocker for blocker in result["blockers"])
+def _validate(paths: tuple[Path, Path, Path, Path, Path]) -> dict:
+    return validate(*paths, repository_root=ROOT)
 
 
-def test_missing_fault_profile_blocks_even_with_good_metrics(tmp_path: Path) -> None:
-    report, snapshot, session, closure, evidence = _fixtures(tmp_path)
-    payload = json.loads(report.read_text(encoding="utf-8"))
-    payload["fault_injections"] = payload["fault_injections"][:-1]
-    fault_hash = _write(evidence / "faults.json", {"fault_injections": payload["fault_injections"]})
-    payload["raw_evidence"]["fault_injection"]["sha256"] = fault_hash
-    _write(report, payload)
-    result = validate(report, snapshot, session, closure, evidence)
-    assert result["status"] == BLOCKED
-    assert any("missing fault profiles" in blocker for blocker in result["blockers"])
+def test_complete_hand_authored_static_claim_is_still_blocked(tmp_path: Path) -> None:
+    result = _validate(_candidate(tmp_path))
+    assert result["status"] == BLOCKED and not result["passed"]
+    assert any("canonical current-main runtime collector" in item for item in result["blockers"])
 
 
-def test_closure_mismatch_blocks_candidate(tmp_path: Path) -> None:
-    report, snapshot, session, closure, evidence = _fixtures(tmp_path)
-    payload = json.loads(report.read_text(encoding="utf-8"))
-    payload["runtime_closure_binding"]["runtime_closure_sha256"] = "d" * 64
-    _write(report, payload)
-    result = validate(report, snapshot, session, closure, evidence)
-    assert result["status"] == BLOCKED
-    assert "candidate report does not bind the current runtime closure" in result["blockers"]
+def test_duplicate_or_unknown_profile_is_rejected(tmp_path: Path) -> None:
+    paths = _candidate(tmp_path); payload = json.loads(paths[0].read_text()); payload["profiles"] = ["nominal", "nominal", "wet_surface", "unknown"]; _write(paths[0], payload)
+    assert any("profiles must be" in item for item in _validate(paths)["blockers"])
+
+
+def test_missing_one_of_the_eighteen_faults_is_rejected(tmp_path: Path) -> None:
+    paths = _candidate(tmp_path); payload = json.loads(paths[0].read_text()); payload["faults"] = payload["faults"][:-1]; _write(paths[0], payload)
+    assert any("fault ids must be" in item for item in _validate(paths)["blockers"])
+
+
+def test_each_fault_requires_a_nonempty_injection_parameter_record(tmp_path: Path) -> None:
+    result = _validate(_candidate(tmp_path))
+    assert any("rgb_freeze lacks injection parameters" in item for item in result["blockers"])
+
+
+def test_51mm_localization_and_string_states_are_rejected(tmp_path: Path) -> None:
+    paths = _candidate(tmp_path); payload = json.loads(paths[0].read_text()); payload["stability_metrics"]["localization_xy_p95_m"] = 0.051; payload["faults"][0]["safety_state_events"] = "STOPPED"; _write(paths[0], payload)
+    result = _validate(paths)
+    assert any("localization_xy_p95_m" in item for item in result["blockers"])
+    assert any("timestamped STOPPED" in item for item in result["blockers"])
+
+
+def test_future_and_pre_session_time_are_rejected(tmp_path: Path) -> None:
+    paths = _candidate(tmp_path); payload = json.loads(paths[0].read_text()); payload["wall_clock_collection"]["ended_epoch_ns"] = time.time_ns() + 60_000_000_000; payload["wall_clock_collection"]["started_epoch_ns"] = 0; _write(paths[0], payload)
+    result = _validate(paths)
+    assert any("future" in item for item in result["blockers"])
+    assert any("predates" in item for item in result["blockers"])
