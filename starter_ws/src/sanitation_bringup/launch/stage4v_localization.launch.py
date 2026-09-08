@@ -117,13 +117,13 @@ def generate_launch_description():
                     'cleaning_width': LaunchConfiguration('cleaning_width'),
                     'brush_center_y': LaunchConfiguration('brush_center_y'),
                     'world_to_map_x': LaunchConfiguration(
-                        'gnss_world_to_map_x'
+                        'simulation_world_to_map_x'
                     ),
                     'world_to_map_y': LaunchConfiguration(
-                        'gnss_world_to_map_y'
+                        'simulation_world_to_map_y'
                     ),
                     'world_to_map_yaw': LaunchConfiguration(
-                        'gnss_world_to_map_yaw'
+                        'simulation_world_to_map_yaw'
                     ),
                     'camera_profile': LaunchConfiguration('camera_profile'),
                     'enable_training_gt': LaunchConfiguration('enable_training_gt'),
@@ -181,13 +181,13 @@ def generate_launch_description():
                     'initial_pose_y': LaunchConfiguration('initial_pose_y'),
                     'initial_pose_yaw': LaunchConfiguration('initial_pose_yaw'),
                     'world_to_map_x': LaunchConfiguration(
-                        'simulation_world_to_map_x'
+                        'gnss_world_to_map_x'
                     ),
                     'world_to_map_y': LaunchConfiguration(
-                        'simulation_world_to_map_y'
+                        'gnss_world_to_map_y'
                     ),
                     'world_to_map_yaw': LaunchConfiguration(
-                        'simulation_world_to_map_yaw'
+                        'gnss_world_to_map_yaw'
                     ),
                     'gnss_outlier_threshold_m': LaunchConfiguration(
                         'gnss_outlier_threshold_m'
