@@ -50,6 +50,7 @@ def test_competition_profile_is_full_scale_but_truthfully_zone_bounded(tmp_path:
     assert "live_zone_area_m2: 10440.0" in efficiency
     assert "planning_swath_spacing_m: 1.20" in efficiency
     assert "ackermann_lane_skip: 3" in efficiency
+    assert "ackermann_staging_offset_m: 0.0" in efficiency
     assert "CLEAN: {linear_mps: 1.00" in efficiency
     assert "    operation_width: 1.20" in efficiency_coverage
     assert "  - [10.0, 45.5]" in ackermann

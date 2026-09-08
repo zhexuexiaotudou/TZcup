@@ -907,7 +907,7 @@ class CoverageProbe(Node):
                     # The first swath owns a measured 2 m brush-off alignment
                     # window. Treat staging as an intermediate primitive hand-
                     # off so MPPI stops before pruning past the final arc.
-                    terminal_goal_checker_id="frontier_goal_checker",
+                    terminal_goal_checker_id="primitive_goal_checker",
                 )
             else:
                 transit = self._navigate_to(selected["staging_pose"])
