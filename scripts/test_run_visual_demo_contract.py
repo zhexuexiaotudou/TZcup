@@ -55,7 +55,7 @@ def test_ackermann_visual_demo_keeps_gnss_gate_and_records_diagnostics():
     assert 'gnss_outlier_threshold_m:="${gnss_outlier_threshold_m}"' in launcher
     assert 'gnss_anchor_smoothing_alpha="0.10"' in launcher
     assert 'gnss_anchor_smoothing_alpha="0.50"' in launcher
-    assert 'if [[ "${DRIVE_MODEL}" == "ackermann" && "${COMPETITION_PROFILE}" -eq 0 ]]; then' in launcher
+    assert 'if [[ "${DRIVE_MODEL}" == "ackermann" ]]; then' in launcher
     assert 'gnss_anchor_smoothing_alpha:="${gnss_anchor_smoothing_alpha}"' in launcher
     assert 'simulation_world_to_map_x:="${world_to_map_x}"' in launcher
     assert 'simulation_world_to_map_y:="${world_to_map_y}"' in launcher

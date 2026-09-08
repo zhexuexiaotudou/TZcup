@@ -404,10 +404,9 @@ if [[ "${MAP_SIZE}" == "small" ]]; then
   if [[ "${DRIVE_MODEL}" != "ackermann" && "${SIMULATION_SPEED}" == "fast" ]]; then max_linear_velocity="0.70"; max_angular_velocity="0.60"; fi
   if [[ "${DRIVE_MODEL}" != "ackermann" && "${SIMULATION_SPEED}" == "turbo" ]]; then max_linear_velocity="0.90"; max_angular_velocity="0.75"; fi
 fi
-if [[ "${DRIVE_MODEL}" == "ackermann" && "${COMPETITION_PROFILE}" -eq 0 ]]; then
-  # The controlled RTK-fixed visual demo needs faster absolute-anchor
-  # correction through its Ackermann turn transitions. Production keeps the
-  # stage4v default (0.10).
+if [[ "${DRIVE_MODEL}" == "ackermann" ]]; then
+  # Ackermann turn transitions need faster absolute-anchor correction. This
+  # value is shared by the visual and competition profiles.
   gnss_anchor_smoothing_alpha="0.50"
 fi
 if [[ "${COMPETITION_PROFILE}" -eq 1 ]]; then
