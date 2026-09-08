@@ -47,6 +47,9 @@ hybrid_global_fuser:
     # propagation remains unsmoothed, so this removes fix noise without adding
     # motion lag.
     gnss_anchor_smoothing_alpha: 0.10
+    # Stamp map->odom slightly ahead of the source odometry to cover normal
+    # callback/transport delay without allowing a stale transform lookup.
+    map_to_odom_transform_tolerance_s: 0.20
     # A scan-map correction that disagrees with fresh RTK beyond this bound is
     # not allowed to dominate the global pose.
     maximum_refined_gnss_disagreement_m: 0.10
