@@ -569,7 +569,7 @@ else:
     # them with generic demo speeds defeats curvature tracking and can drive a
     # Reeds-Shepp connector into an occupied start pose during replanning.
     assert follow["use_rotate_to_heading"] is False
-    assert follow["allow_reversing"] is False
+    assert follow["allow_reversing"] is True
     assert config["controller_server"]["ros__parameters"]["ReversePath"]["allow_reversing"] is True
     if competition_lane == "efficiency":
         controllers = config["controller_server"]["ros__parameters"]

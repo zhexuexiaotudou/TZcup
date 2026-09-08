@@ -322,7 +322,7 @@ def test_visual_launcher_preserves_ackermann_controller_limits():
     assert '"${MAP_SIZE}" "${DRIVE_MODEL}"' in launcher
     assert 'if drive_model != "ackermann":' in launcher
     assert 'assert follow["use_rotate_to_heading"] is False' in launcher
-    assert 'assert follow["allow_reversing"] is False' in launcher
+    assert 'assert follow["allow_reversing"] is True' in launcher
     assert '["ReversePath"]["allow_reversing"] is True' in launcher
     assert 'map_file="${map_root}/sanitation_test_map.yaml"' in launcher
 
