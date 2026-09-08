@@ -80,6 +80,7 @@ def test_coco80_or_nms_graph_cannot_pass_four_class_contract() -> None:
         custom_domains={"vendor.example"},
     )
     assert blockers == [
+        "onnx_output_abi_mismatch",
         "onnx_output_signature_mismatch",
         "onnx_node_count_mismatch",
         "onnx_forbidden_operator_present",

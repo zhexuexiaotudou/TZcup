@@ -19,7 +19,7 @@ def _sha(path: Path) -> str:
 
 
 def _oracle_route_contract(model: Path, vocabulary: Path, route_id: str = 'BOOTSTRAP_SYMMETRIC_BLACK_V1', official_identity: dict | None = None) -> dict:
- return {'model_sha256':_sha(model),'vocabulary_sha256':_sha(vocabulary),'preprocessing_status':'CANDIDATE_UNVERIFIED','selected_route':None,'candidate_routes':[{'route_id':route_id,'preprocessing':{'layout':'NCHW','route':route_id}}], 'runtime_inputs':[{'index':0,'name':'images_y','shape':[1,640,640,1],'dtype':'HB_DNN_TENSOR_TYPE_U8','byte_size':409600},{'index':1,'name':'images_uv','shape':[1,320,320,2],'dtype':'HB_DNN_TENSOR_TYPE_U8','byte_size':204800}], 'official_preprocess_identity':official_identity or {'status':'UNAVAILABLE_BLOCKED'}, 'runtime_outputs':{'scores':{'index':0,'name':'scores','shape':[1,8400,4],'dtype':'HB_DNN_TENSOR_TYPE_F32'},'boxes':{'index':1,'name':'boxes','shape':[1,8400,4],'dtype':'HB_DNN_TENSOR_TYPE_F32'}},'raw_output_thresholds':{'scores':{'cosine_min':.99,'normalized_rmse_max':.02},'boxes':{'cosine_min':.99,'normalized_rmse_max':.02}}}
+ return {'model_sha256':_sha(model),'vocabulary_sha256':_sha(vocabulary),'preprocessing_status':'CANDIDATE_UNVERIFIED','selected_route':None,'candidate_routes':[{'route_id':route_id,'preprocessing':{'layout':'NCHW','route':route_id}}], 'runtime_inputs':[{'index':0,'name':'images_y','shape':[1,640,640,1],'dtype':'HB_DNN_TENSOR_TYPE_U8','byte_size':409600},{'index':1,'name':'images_uv','shape':[1,320,320,2],'dtype':'HB_DNN_TENSOR_TYPE_U8','byte_size':204800}], 'onnx_outputs':[{'name':'scores','dtype':'FLOAT','shape':[1,8400,4]},{'name':'boxes','dtype':'FLOAT','shape':[1,8400,4]}], 'official_preprocess_identity':official_identity or {'status':'UNAVAILABLE_BLOCKED'}, 'runtime_outputs':{'scores':{'index':0,'name':'scores','shape':[1,8400,4],'dtype':'HB_DNN_TENSOR_TYPE_S16'},'boxes':{'index':1,'name':'boxes','shape':[1,8400,4],'dtype':'HB_DNN_TENSOR_TYPE_S16'}},'raw_output_thresholds':{'scores':{'cosine_min':.99,'normalized_rmse_max':.02},'boxes':{'cosine_min':.99,'normalized_rmse_max':.02}}}
 
 
 def _model_info() -> str:
@@ -37,11 +37,11 @@ aligned byte size: -1
 output[0]:
 name: scores
 valid shape: (1, 8400, 4)
-tensor type: HB_DNN_TENSOR_TYPE_F32
+tensor type: HB_DNN_TENSOR_TYPE_S16
 output[1]:
 name: boxes
 valid shape: (1, 8400, 4)
-tensor type: HB_DNN_TENSOR_TYPE_F32
+tensor type: HB_DNN_TENSOR_TYPE_S16
 '''
 
 

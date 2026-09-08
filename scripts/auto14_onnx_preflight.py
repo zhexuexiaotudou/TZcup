@@ -10,6 +10,7 @@ from pathlib import Path
 
 import yaml
 
+from dosod_hbm_abi_contract import REMOVE_NODE_TYPE, validate_pre_onnx_outputs
 from validate_dosod_s100p_hbm_compile_contract import (
     audit_compile_inputs,
     load_json,
@@ -122,6 +123,10 @@ def validate_onnx_contract(
     blockers: list[str] = []
     if inputs != model_contract.get("inputs"):
         blockers.append("onnx_input_signature_mismatch")
+    try:
+        validate_pre_onnx_outputs(outputs)
+    except ValueError:
+        blockers.append("onnx_output_abi_mismatch")
     if outputs != model_contract.get("outputs"):
         blockers.append("onnx_output_signature_mismatch")
     if ir_version != model_contract.get("ir_version"):
@@ -314,7 +319,7 @@ def main() -> int:
             "march": args.march,
             "working_dir": str((output / "compiled").resolve()),
             "output_model_file_prefix": recipe["output_model_file_prefix"],
-            "remove_node_type": "Dequantize;Quantize;Transpose;Cast;Reshape",
+            "remove_node_type": REMOVE_NODE_TYPE,
             "layer_out_dump": False,
         },
         "input_parameters": {

@@ -9,6 +9,7 @@ from typing import Any
 import numpy as np
 
 from hbm_evidence_common import MEMORY_WATCHDOG_THRESHOLDS, load_object, normal_file, path_under, sha256_file
+from dosod_hbm_abi_contract import validate_pre_onnx_outputs
 from run_dosod_hbm_x86_parity import _dump_filename, _validate_model_info, raw_parity_metrics
 from execute_dosod_nonformal_oracle_candidate_compile import validate_candidate_receipt
 
@@ -98,6 +99,10 @@ def _capture(path: Path) -> dict[str, Any]:
 def _validate_raw(path: Path, *, contract_path: Path = CONTRACT, outer_supervised: bool = False) -> dict[str, Any]:
     normal_file(path, "oracle_receipt"); normal_file(contract_path, "oracle_contract")
     receipt, contract = load_object(path), load_object(contract_path)
+    try:
+        validate_pre_onnx_outputs(contract.get("onnx_outputs"))
+    except ValueError:
+        raise ValueError("oracle_contract_onnx_output_abi_invalid") from None
     if receipt.get("receipt_id") != RECEIPT_ID or receipt.get("status") != STATUS or receipt.get("formal_compile") is not False or receipt.get("board_acceptance") is not False or receipt.get("test_fixture") is not False or receipt.get("blockers") != [] or receipt.get("receipt_path") != str(path.resolve()):
         raise ValueError("oracle_receipt_not_verified")
     producer = ROOT / "scripts" / "collect_dosod_single_frame_preprocessing_oracle.py"
@@ -172,6 +177,9 @@ def _validate_raw(path: Path, *, contract_path: Path = CONTRACT, outer_supervise
             raise ValueError(f"oracle_metric_failed:{name}")
         expected = np.load(_bound(root, receipt.get("onnx_outputs", {}).get(name), f"oracle_onnx_{name}"), allow_pickle=False)
         actual = np.load(_bound(root, receipt.get("hbm_outputs", {}).get(name), f"oracle_hbm_{name}"), allow_pickle=False)
+        expected_onnx = contract["onnx_outputs"][list(contract["runtime_outputs"]).index(name)]
+        if expected.dtype != np.float32 or list(expected.shape) != expected_onnx["shape"]:
+            raise ValueError(f"oracle_onnx_output_abi_invalid:{name}")
         if raw_parity_metrics(expected, actual) != observed_metrics:
             raise ValueError(f"oracle_metric_receipt_drift:{name}")
     tensor = np.load(_bound(root, receipt.get("onnx_input"), "oracle_onnx_input"), allow_pickle=False)
