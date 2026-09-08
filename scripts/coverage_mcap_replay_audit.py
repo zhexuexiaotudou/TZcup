@@ -78,6 +78,25 @@ def summarize_replay(
     }
 
 
+def validate_product_replay_reports(replays: list[dict]) -> dict:
+    """Keep A20 blocked until a complete product MCAP producer exists.
+
+    This module can reconstruct a coverage mission only.  It cannot establish
+    product localization, formal-session, or runtime-closure semantics, so
+    supplied report dictionaries must never be promoted to product evidence.
+    """
+
+    return {
+        "replay_count": len(replays),
+        "status": "A20_PRODUCT_REPLAY_STATIC_BLOCKED",
+        "failures": [
+            "canonical formal product MCAP replay producer is absent; "
+            "coverage-only reports cannot satisfy A20"
+        ],
+        "passed": False,
+    }
+
+
 def read_bag(path: Path):
     import rosbag2_py
     from rclpy.serialization import deserialize_message

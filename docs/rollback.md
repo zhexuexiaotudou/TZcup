@@ -22,3 +22,10 @@
 
 不得使用 `git reset --hard` 破坏共享工作区。仓库主线回滚应通过新的 PR
 执行 `git revert`，保留审计历史。
+
+## A20 回执
+
+只有实际完成上述回滚步骤并保留验证报告 SHA-256 的演练，才可成为未来
+[`A20 release/replay receipt`](a20-release-replay-receipt.md) 的候选输入。当前 A20 没有
+canonical complete product replay producer，仍保持 BLOCKED；声明一个 rollback commit、静态 JSON
+校验成功或重用历史日志都不构成已验证回滚。
