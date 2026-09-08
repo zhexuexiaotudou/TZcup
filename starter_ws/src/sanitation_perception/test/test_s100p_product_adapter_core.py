@@ -513,7 +513,7 @@ def test_development_artifact_manifest_rejects_symlinked_payload(tmp_path, monke
     row = payload["artifacts"]["edgesam/edgesam_encoder_512.hbm"]
     row["path"] = str(link.absolute())
     manifest.write_text(json.dumps(payload), encoding="utf-8")
-    with pytest.raises(S100PProductAdapterError, match="regular non-link"):
+    with pytest.raises(S100PProductAdapterError, match="no symlink components"):
         load_verified_development_artifact_contract(artifact_manifest_path=manifest, artifact_paths=(paths | {"edgesam/edgesam_encoder_512.hbm": link}))
 
 
