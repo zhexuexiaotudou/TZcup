@@ -250,6 +250,24 @@ def test_curvature_reversal_split_separates_curve_straight_curve():
     ]
 
 
+def test_curvature_reversal_split_caps_continuous_arc_heading_variation():
+    from sanitation_coverage.metrics import (
+        path_heading_variation,
+        split_path_at_curvature_reversals,
+    )
+
+    headings = [index * math.pi / 8.0 for index in range(13)]
+    points = [(math.cos(heading), math.sin(heading)) for heading in headings]
+    sections = split_path_at_curvature_reversals(points, headings)
+
+    assert len(sections) == 2
+    assert sections[0][0][-1] == sections[1][0][0]
+    assert all(
+        path_heading_variation(section_headings) <= math.pi + 1.0e-9
+        for _, section_headings in sections
+    )
+
+
 def test_path_heading_variation_accumulates_wrapped_turns():
     from sanitation_coverage.metrics import path_heading_variation
 

@@ -10,6 +10,10 @@ from sanitation_coverage.ackermann_connector import (
     plan_ackermann_connector,
     split_hybrid_path_by_direction,
 )
+from sanitation_coverage.metrics import (
+    path_heading_variation,
+    split_path_at_curvature_reversals,
+)
 
 
 def test_ackermann_swaths_use_cleanable_polygon_not_outer_turning_apron():
@@ -104,6 +108,36 @@ def test_expanded_apron_admits_forward_only_transit():
         + (end[1] - start[1]) * math.sin(start[2]) >= -1e-6
         for start, end in zip(path, path[1:])
     )
+
+
+def test_38e_live_replan_dubins_path_is_bounded_curvature_primitives():
+    path = plan_forward_dubins_path(
+        (-2.123593582122087, -2.824409008155041, 0.8278789497578054),
+        (-2.880000000000001, -1.3499999947547914, -5.9604645663569045e-09),
+        [(-7.8, -6.5), (7.8, -6.5), (7.8, 3.5), (-7.8, 3.5)],
+        [],
+    )
+    assert path is not None
+    assert len(path) == 183
+    points = [(pose[0], pose[1]) for pose in path]
+    headings = [pose[2] for pose in path]
+    primitives = split_path_at_curvature_reversals(points, headings)
+
+    # The former final 4.864 rad arc becomes two MPPI-safe primitives.
+    assert len(primitives) == 4
+    assert all(
+        path_heading_variation(primitive_headings) <= math.pi + 1.0e-9
+        for _, primitive_headings in primitives
+    )
+    rebuilt_points = list(primitives[0][0])
+    rebuilt_headings = list(primitives[0][1])
+    for primitive_points, primitive_headings in primitives[1:]:
+        assert rebuilt_points[-1] == primitive_points[0]
+        assert rebuilt_headings[-1] == primitive_headings[0]
+        rebuilt_points.extend(primitive_points[1:])
+        rebuilt_headings.extend(primitive_headings[1:])
+    assert rebuilt_points == points
+    assert rebuilt_headings == headings
 
 
 def test_reverse_dubins_transit_reaches_goal_without_a_cusp():

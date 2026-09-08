@@ -78,6 +78,12 @@ def test_ackermann_hybrid_sections_use_mppi_forward_and_reverse_rpp():
     assert "forward_controller_id" not in hybrid_executor
     assert "FollowPath" not in hybrid_executor
     assert "segmented ConnectorPath/ReversePath" in hybrid_executor
+    assert "split_path_at_curvature_reversals(" in hybrid_executor
+    assert '"primitive_goal_checker"' in hybrid_executor
+    assert "next_section_is_real_cusp" in hybrid_executor
+    assert "if next_section_is_real_cusp:" in hybrid_executor
+    assert '"curvature_primitive_index"' in hybrid_executor
+    assert '"curvature_primitive_count"' in hybrid_executor
 
 
 def test_launcher_can_run_a_bounded_physical_dynamic_matrix():

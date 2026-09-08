@@ -2027,7 +2027,7 @@ class CoverageProbe(Node):
     def _follow_ackermann_hybrid_plan(
         self, pose, *, precomputed_plan=None, replan_depth=0
     ):
-        """Plan once, split reverse cusps, and follow each section explicitly."""
+        """Plan once, split cusps and forward curvature primitives explicitly."""
         if replan_depth > 6:
             return {
                 "success": False,
@@ -2114,8 +2114,10 @@ class CoverageProbe(Node):
                 "controller": "Smac Hybrid plan-once + segmented ConnectorPath/ReversePath",
             }
         planner_source = plan.get("planner_id", "Smac Hybrid")
-        sections = split_hybrid_path_by_direction(plan.get("path_poses", []))
-        if not sections:
+        direction_sections = split_hybrid_path_by_direction(
+            plan.get("path_poses", [])
+        )
+        if not direction_sections:
             return {
                 **plan,
                 "success": False,
@@ -2123,9 +2125,50 @@ class CoverageProbe(Node):
                 "controller": "Smac Hybrid plan-once + segmented ConnectorPath/ReversePath",
             }
 
+        # A forward-only CCC Dubins recovery has no gear cusp, but it can
+        # still revisit the vicinity of an earlier arc.  MPPI's stateful path
+        # pruning must receive each bounded curvature primitive separately.
+        # Reverse sections retain their established direction-only handling.
+        sections = []
+        for direction_section_index, direction_section in enumerate(
+            direction_sections
+        ):
+            if direction_section["direction"] != "FORWARD":
+                sections.append({
+                    **direction_section,
+                    "direction_section_index": direction_section_index,
+                    "curvature_primitive_index": 0,
+                    "curvature_primitive_count": 1,
+                })
+                continue
+            direction_poses = list(direction_section["poses"])
+            primitives = split_path_at_curvature_reversals(
+                [(item[0], item[1]) for item in direction_poses],
+                [item[2] for item in direction_poses],
+            )
+            for primitive_index, (points, headings) in enumerate(primitives):
+                sections.append({
+                    **direction_section,
+                    "poses": [
+                        (point[0], point[1], heading)
+                        for point, heading in zip(points, headings)
+                    ],
+                    # Only the original direction boundary is a real gear
+                    # cusp. Curvature boundaries are continuous motion.
+                    "cusp_before": (
+                        direction_section["cusp_before"] and primitive_index == 0
+                    ),
+                    "direction_section_index": direction_section_index,
+                    "curvature_primitive_index": primitive_index,
+                    "curvature_primitive_count": len(primitives),
+                })
+
         section_results = []
         cusp_stop_count = 0
         for index, section in enumerate(sections):
+            next_section_is_real_cusp = (
+                index < len(sections) - 1 and sections[index + 1]["cusp_before"]
+            )
             if section["cusp_before"]:
                 cusp_stop_count += 1
                 if not self._wait_for_cusp_stop(
@@ -2135,6 +2178,15 @@ class CoverageProbe(Node):
                         "success": False,
                         "section_index": index,
                         "direction": section["direction"],
+                        "direction_section_index": section[
+                            "direction_section_index"
+                        ],
+                        "curvature_primitive_index": section[
+                            "curvature_primitive_index"
+                        ],
+                        "curvature_primitive_count": section[
+                            "curvature_primitive_count"
+                        ],
                         "error": "cusp_stop_speed_timeout",
                     })
                     break
@@ -2156,9 +2208,13 @@ class CoverageProbe(Node):
                     # non-holonomic chassis around the completed loop merely
                     # to improve yaw by a few tenths of a radian.
                     "goal_checker_id": (
-                        "cusp_goal_checker"
-                        if index < len(sections) - 1
-                        else "connector_goal_checker"
+                        "connector_goal_checker"
+                        if index == len(sections) - 1
+                        else (
+                            "cusp_goal_checker"
+                            if next_section_is_real_cusp
+                            else "primitive_goal_checker"
+                        )
                     ),
                     "speed_limit_mps": (
                         self.speed_limits_mps["REVERSE"]
@@ -2185,11 +2241,18 @@ class CoverageProbe(Node):
                 "section_index": index,
                 "direction": section["direction"],
                 "cusp_before": section["cusp_before"],
+                "direction_section_index": section["direction_section_index"],
+                "curvature_primitive_index": section[
+                    "curvature_primitive_index"
+                ],
+                "curvature_primitive_count": section[
+                    "curvature_primitive_count"
+                ],
             })
             section_results.append(section_result)
             if not section_result.get("success"):
                 break
-            if index < len(sections) - 1:
+            if next_section_is_real_cusp:
                 # Replan from the measured stopped cusp. If the planner cannot
                 # find a continuation, retain the original kinematically
                 # feasible section. Never splice the measured pose directly
@@ -2210,7 +2273,8 @@ class CoverageProbe(Node):
                         "goal_pose": pose,
                         "planned_length_m": plan.get("path_length_m"),
                         "path_pose_count": plan.get("path_pose_count"),
-                        "direction_section_count": len(sections),
+                        "direction_section_count": len(direction_sections),
+                        "curvature_primitive_section_count": len(sections),
                         "cusp_stop_count": cusp_stop_count,
                         "replan_depth": replan_depth,
                         "section_results": section_results,
@@ -2233,7 +2297,8 @@ class CoverageProbe(Node):
             "goal_pose": pose,
             "planned_length_m": plan.get("path_length_m"),
             "path_pose_count": plan.get("path_pose_count"),
-            "direction_section_count": len(sections),
+            "direction_section_count": len(direction_sections),
+            "curvature_primitive_section_count": len(sections),
             "cusp_stop_count": cusp_stop_count,
             "section_results": section_results,
             "terminal_tracking_error": self._tracking_error(pose),

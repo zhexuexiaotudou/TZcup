@@ -54,21 +54,36 @@ def projected_path_progress(points, position):
     return best_progress
 
 
-def split_path_at_curvature_reversals(points, headings, *, tolerance_rad=1e-4):
-    """Split a sampled path where signed curvature changes direction.
+def split_path_at_curvature_reversals(
+    points,
+    headings,
+    *,
+    tolerance_rad=1e-4,
+    maximum_heading_variation_rad=math.pi,
+):
+    """Split a sampled path into topology-safe curvature primitives.
 
     Dubins CCC paths can pass close to an earlier branch of the same path.
     Giving each curvature primitive to a stateful path follower separately
     preserves path topology without changing the collision-checked geometry.
-    The boundary pose is intentionally shared by adjacent sections.
+    A long, continuous arc can make that same near-branch ambiguity even
+    without a signed-curvature reversal, so each primitive also has bounded
+    cumulative wrapped heading variation.  The boundary pose is intentionally
+    shared by adjacent sections.
     """
     if len(points) != len(headings):
         raise ValueError("points and headings must have the same length")
+    if (
+        not math.isfinite(maximum_heading_variation_rad)
+        or maximum_heading_variation_rad <= 0.0
+    ):
+        raise ValueError("maximum heading variation must be finite and positive")
     if len(points) < 2:
         return [(list(points), list(headings))] if points else []
 
     boundaries = [0]
     active_class = None
+    cumulative_variation = 0.0
     for edge_index, (first, second) in enumerate(
         zip(headings, headings[1:])
     ):
@@ -81,10 +96,20 @@ def split_path_at_curvature_reversals(points, headings, *, tolerance_rad=1e-4):
             else -1 if delta < -tolerance_rad
             else 0
         )
-        if active_class is not None and curvature_class != active_class:
+        starts_new_curvature = (
+            active_class is not None and curvature_class != active_class
+        )
+        exceeds_heading_limit = (
+            active_class is not None
+            and cumulative_variation + abs(delta)
+            > maximum_heading_variation_rad
+        )
+        if starts_new_curvature or exceeds_heading_limit:
             boundary = edge_index
             if boundary > boundaries[-1]:
                 boundaries.append(boundary)
+            cumulative_variation = 0.0
+        cumulative_variation += abs(delta)
         active_class = curvature_class
     if boundaries[-1] != len(points) - 1:
         boundaries.append(len(points) - 1)
