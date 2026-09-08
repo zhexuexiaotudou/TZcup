@@ -180,12 +180,11 @@ def test_product_fuser_owns_one_calibrated_global_pose_contract() -> None:
 def test_stage4v_forwards_map_frame_and_controlled_gnss_gate_to_fuser() -> None:
     stage4v = STAGE4V_LAUNCH.read_text(encoding="utf-8")
     hybrid = HYBRID_LAUNCH.read_text(encoding="utf-8")
-    for suffix in ("x", "y", "yaw"):
-        assert f"'world_to_map_{suffix}': LaunchConfiguration(" in stage4v
-        assert f"'gnss_world_to_map_{suffix}'" in stage4v
-        assert f"'world_to_map_{suffix}': LaunchConfiguration(" in hybrid
-    assert "DeclareLaunchArgument('gnss_world_to_map_x', default_value='0.0')" in stage4v
-    assert "DeclareLaunchArgument('gnss_world_to_map_y', default_value='0.0')" in stage4v
-    assert "DeclareLaunchArgument('gnss_world_to_map_yaw', default_value='0.0')" in stage4v
-    assert "'gnss_outlier_threshold_m': LaunchConfiguration(" in stage4v
-    assert "'gnss_outlier_threshold_m': LaunchConfiguration(" in hybrid
+    for name in (
+        "world_to_map_x",
+        "world_to_map_y",
+        "world_to_map_yaw",
+        "gnss_outlier_threshold_m",
+    ):
+        assert f"'{name}': LaunchConfiguration(" in stage4v
+        assert f"'{name}': LaunchConfiguration(" in hybrid

@@ -372,6 +372,9 @@ if [[ "${MAP_SIZE}" == "small" ]]; then
   # scan corrections. Medium/large retain hybrid scan fallback.
   localization_fusion_mode="rtk_imu_wheel"
   enable_scan_refiner="false"
+  if [[ "${DRIVE_MODEL}" == "ackermann" && "${COMPETITION_PROFILE}" -eq 0 ]]; then
+    gnss_outlier_threshold_m="2.0"
+  fi
   if [[ "${DRIVE_MODEL}" != "ackermann" ]]; then
     cleaning_width="0.65"
     brush_center_y="0.23"
