@@ -38,23 +38,39 @@ PUBLIC_GAZEBO_CALIBRATION_PER_SCENE_QUOTA=25
 PUBLIC_GAZEBO_CALIBRATION_TOTAL_TIMEOUT_SEC=<approved_whole_run_wall_deadline>
 ```
 
-The runner writes the existing Windows/WSL memory preflight only after its
-fresh-root admission and starts the collector in a dedicated `setsid` PGID.
-For each scene, the existing formal memory watchdog binds to the separate
-campus/Gazebo `setsid` PGID, which is the memory-bearing group. The caller must
-provide the explicit whole-run deadline above. Deadline expiry terminates the
-collector/materializer PGIDs and the active campus PGID plus its exact
-partition with TERM-to-KILL; any survivor is recorded fail-closed. The
-formal-campus child remains the sole owner of the shared Gazebo lock.
+`scripts/run_public_mobile_gazebo_dosod_calibration.sh` is the sole collection
+implementation. `scripts/run_public_gazebo_dosod_calibration.sh` is retained
+only as a compatibility `exec` shim to that runner; it has no collector,
+materializer, launch, or cleanup body of its own. The mobile runner admits only
+a fresh empty run directory and regular inputs below its own clean Git
+worktree, and only a lock below that worktree's `.work/locks`. It records an
+admission/final SHA-256 binding over the runner and all supplied inputs.
+The supplied plan must be the exact regular file
+`config/public_gazebo_dosod_train_scene_plan.json`, including its admission
+digest; a look-alike 20/4 plan is not accepted. Pilot collector and total
+budgets are each at least 900 seconds; full collector and total budgets are
+each at least 14,400 seconds.
+
+The runner uses the existing `run_formal_runtime_isolation.sh` preflight,
+domain/lock setup, exact-PGID cleanup, and `wait -n` supervision. Each Gazebo
+launch owns a 9 GiB (`9437184` KiB) exact-PGID watchdog. The explicit total
+deadline races the preflight, collector, launch/operator, quota waiter, and
+watchdog; expiry and all cleanup use TERM then KILL and a non-zero survivor
+check fails closed. This is a resource boundary, not a successful Gazebo run.
+Success receipts retain matching admission/final bindings, Git head/tree,
+per-role plan/setup identities, and each scene's actual Gazebo PGID plus its
+completed watchdog JSON/log bindings. Before writing `FROZEN`, full mode runs
+the canonical oracle validator again in the last bounded 120-second finalizer
+window and binds that final validation output.
 
 The pair is authorized by
 `formal_campus_integration.yaml`: native
 `/sensors/front_rgbd/depth/image_rect_raw/image` maps to the RGB topic and its
 native CameraInfo maps to the CameraInfo topic. The collector rejects any other
-pair and requires equal frame IDs and timestamps. The source runner additionally
-requires a fresh empty run root, a shared lock path, frozen setup files, a
-whole-run timeout, and an isolated `ROS_DOMAIN_ID`; see
-[`scripts/run_public_gazebo_dosod_calibration.sh`](../scripts/run_public_gazebo_dosod_calibration.sh).
+pair and requires equal frame IDs and timestamps. The canonical runner also
+requires the explicit total deadline, isolated `ROS_DOMAIN_ID`, and exact
+worktree-local lock described above; see
+[`scripts/run_public_mobile_gazebo_dosod_calibration.sh`](../scripts/run_public_mobile_gazebo_dosod_calibration.sh).
 
 Before committing to all 24 scenes, run the explicit `pilot` mode on the fixed
 first calibration scene `map-0-mission-0` with quota exactly 25. It writes only
@@ -71,12 +87,16 @@ After collection, inspect only the frozen public RGB tensors and their public
 provenance/scene records. Produce a review receipt with per-class visible-frame
 counts for `litter_cube`, `fallen_leaves`, `dust_or_soil`, and `puddle`, plus
 the scene/background and viewpoint buckets actually observed. The full collector
-requires an explicit approved receipt bound by SHA-256 to `pilot_manifest.json`:
+requires an explicit approved receipt bound by SHA-256 to `pilot_manifest.json`,
+plus a current external preprocessing finalizer with status `ORACLE_VERIFIED`:
 all four class counts must be positive, background and material-view review must
 be true, and at least one named manual or agent reviewer must explicitly approve. `class_ids` in a plan or manifest is
 not visibility evidence. A zero count, unknown class, missing provenance, or
 unreviewed tensor blocks compiler admission. No evaluator, ground-truth, hidden
-file, replay, or control topic may supply this review.
+file, replay, or control topic may supply this review. Pilot mode does not
+require review or oracle evidence. Full mode validates the pilot, review,
+oracle, and their hashes before any Gazebo launch, then accepts only the fixed
+20 calibration plus four holdout scenes at quota 25 (500+100).
 
 ## Current collector-to-compiler boundary
 

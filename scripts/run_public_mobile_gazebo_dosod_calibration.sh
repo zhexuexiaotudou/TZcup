@@ -6,75 +6,223 @@ source "$ROOT/scripts/run_formal_runtime_isolation.sh"
 source "$ROOT/scripts/public_gazebo_mobile_readiness.sh"
 export PUBLIC_GAZEBO_CALIBRATION_PARSER="$ROOT/scripts/parse_public_gazebo_topic_info.py"
 : "${PUBLIC_GAZEBO_CALIBRATION_PLAN:?}" "${PUBLIC_GAZEBO_CALIBRATION_OUTPUT:?}"
-: "${PUBLIC_GAZEBO_CALIBRATION_LOCK:?}" "${PUBLIC_GAZEBO_CALIBRATION_TIMEOUT_SEC:?}"
+: "${PUBLIC_GAZEBO_CALIBRATION_LOCK:?}" "${PUBLIC_GAZEBO_CALIBRATION_TIMEOUT_SEC:?}" "${PUBLIC_GAZEBO_CALIBRATION_TOTAL_TIMEOUT_SEC:?}"
+: "${PUBLIC_GAZEBO_CALIBRATION_IMAGE_TOPIC:?}" "${PUBLIC_GAZEBO_CALIBRATION_CAMERA_INFO_TOPIC:?}"
 : "${PUBLIC_GAZEBO_CALIBRATION_PER_SCENE_QUOTA:?}" "${PUBLIC_GAZEBO_CALIBRATION_STAGE1_SETUP:?}"
 : "${PUBLIC_GAZEBO_CALIBRATION_RUNTIME_SETUP:?}" "${PUBLIC_GAZEBO_CALIBRATION_CAMPUS_SETUP:?}" "${ROS_DOMAIN_ID:?}"
 MODE="${PUBLIC_GAZEBO_CALIBRATION_MODE:-full}"
 [[ "$MODE" == pilot || "$MODE" == full ]] || { echo 'BLOCKED: mode must be pilot or full' >&2; exit 2; }
+[[ "$PUBLIC_GAZEBO_CALIBRATION_TIMEOUT_SEC" =~ ^[1-9][0-9]*$ && "$PUBLIC_GAZEBO_CALIBRATION_TOTAL_TIMEOUT_SEC" =~ ^[1-9][0-9]*$ ]] || { echo 'BLOCKED: calibration deadlines must be positive integer seconds' >&2; exit 2; }
+[[ "$PUBLIC_GAZEBO_CALIBRATION_IMAGE_TOPIC" == /camera/color/image_raw && "$PUBLIC_GAZEBO_CALIBRATION_CAMERA_INFO_TOPIC" == /camera/color/camera_info ]] || { echo 'BLOCKED: only the approved public RGB/CameraInfo pair is accepted' >&2; exit 2; }
 PILOT_SCENE="map-0-mission-0"
 if [[ "$MODE" == pilot ]]; then
   [[ "$PUBLIC_GAZEBO_CALIBRATION_PER_SCENE_QUOTA" == 25 ]] || { echo 'BLOCKED: pilot quota must be 25' >&2; exit 2; }
+  (( PUBLIC_GAZEBO_CALIBRATION_TIMEOUT_SEC >= 900 && PUBLIC_GAZEBO_CALIBRATION_TOTAL_TIMEOUT_SEC >= 900 )) || { echo 'BLOCKED: pilot collector and total deadlines must be at least 900 seconds' >&2; exit 2; }
   EXPECTED_MANIFEST="pilot_manifest.json"
 else
-  : "${PUBLIC_GAZEBO_CALIBRATION_REVIEW_RECEIPT:?}" "${PUBLIC_GAZEBO_CALIBRATION_PILOT_MANIFEST:?}"
+  : "${PUBLIC_GAZEBO_CALIBRATION_REVIEW_RECEIPT:?}" "${PUBLIC_GAZEBO_CALIBRATION_PILOT_MANIFEST:?}" "${PUBLIC_GAZEBO_CALIBRATION_PREPROCESSING_ORACLE:?}"
+  [[ "$PUBLIC_GAZEBO_CALIBRATION_PER_SCENE_QUOTA" == 25 ]] || { echo 'BLOCKED: full quota must be 25 (20+4 scenes = 500+100)' >&2; exit 2; }
+  (( PUBLIC_GAZEBO_CALIBRATION_TIMEOUT_SEC >= 14400 && PUBLIC_GAZEBO_CALIBRATION_TOTAL_TIMEOUT_SEC >= 14400 )) || { echo 'BLOCKED: full collector and total deadlines must be at least 14400 seconds' >&2; exit 2; }
   EXPECTED_MANIFEST="calibration_manifest.json"
 fi
+has_symlink_ancestor() { local path="$1"; [[ "$path" == /* && "$path" != *'/../'* && "$path" != */.. && "$path" != .. ]] || return 1; while [[ "$path" != / ]]; do [[ ! -L "$path" ]] || return 1; path="$(dirname "$path")"; done; }
+real_regular() { [[ -f "$1" && ! -L "$1" ]] && has_symlink_ancestor "$1" && realpath --no-symlinks -e "$1"; }
+within_root() { [[ "$1" == "$ROOT"/* ]]; }
+has_symlink_ancestor "$PUBLIC_GAZEBO_CALIBRATION_OUTPUT" || exit 2
 RUN_ROOT="$(realpath --no-symlinks -e "$PUBLIC_GAZEBO_CALIBRATION_OUTPUT")"
-[[ -d "$RUN_ROOT" && ! -L "$RUN_ROOT" && -z "$(find "$RUN_ROOT" -mindepth 1 -print -quit)" ]] || { echo 'BLOCKED: fresh empty run root required' >&2; exit 2; }
-for required in "$PUBLIC_GAZEBO_CALIBRATION_PLAN" "$PUBLIC_GAZEBO_CALIBRATION_STAGE1_SETUP" "$PUBLIC_GAZEBO_CALIBRATION_RUNTIME_SETUP" "$PUBLIC_GAZEBO_CALIBRATION_CAMPUS_SETUP"; do [[ -f "$required" && ! -L "$required" ]] || { echo "BLOCKED: required regular file missing: $required" >&2; exit 2; }; done
-set +u
-source /opt/ros/jazzy/setup.bash
-source "$PUBLIC_GAZEBO_CALIBRATION_STAGE1_SETUP"; source "$PUBLIC_GAZEBO_CALIBRATION_RUNTIME_SETUP"; source "$PUBLIC_GAZEBO_CALIBRATION_CAMPUS_SETUP"
-set -u
-FORMAL_GAZEBO_LOCK_FILE="$PUBLIC_GAZEBO_CALIBRATION_LOCK" formal_runtime_configure "$ROS_DOMAIN_ID"
-export TZCUP_REPOSITORY_ROOT="$ROOT"
-DATASET="$RUN_ROOT/dataset"; SELECTOR="$RUN_ROOT/scene_selector.json"; PROGRESS="$RUN_ROOT/collector_progress.json"
+[[ -d "$RUN_ROOT" && ! -L "$RUN_ROOT" && -z "$(find "$RUN_ROOT" -mindepth 1 -maxdepth 1 -print -quit)" ]] && within_root "$RUN_ROOT" || { echo 'BLOCKED: output must be fresh, empty, regular, and inside this worktree' >&2; exit 2; }
+LOCK_PARENT="$(dirname "$PUBLIC_GAZEBO_CALIBRATION_LOCK")"; has_symlink_ancestor "$LOCK_PARENT" || exit 2
+LOCK_PARENT="$(realpath --no-symlinks -e "$LOCK_PARENT")"; [[ "$LOCK_PARENT" == "$ROOT/.work/locks" ]] || { echo 'BLOCKED: lock parent must be worktree .work/locks' >&2; exit 2; }
+[[ ! -e "$PUBLIC_GAZEBO_CALIBRATION_LOCK" || ( -f "$PUBLIC_GAZEBO_CALIBRATION_LOCK" && ! -L "$PUBLIC_GAZEBO_CALIBRATION_LOCK" ) ]] || exit 2
+LOCK_PATH="$LOCK_PARENT/$(basename "$PUBLIC_GAZEBO_CALIBRATION_LOCK")"
+for variable in PUBLIC_GAZEBO_CALIBRATION_PLAN PUBLIC_GAZEBO_CALIBRATION_STAGE1_SETUP PUBLIC_GAZEBO_CALIBRATION_RUNTIME_SETUP PUBLIC_GAZEBO_CALIBRATION_CAMPUS_SETUP; do value="$(real_regular "${!variable}")" || { echo "BLOCKED: required regular input missing: ${!variable}" >&2; exit 2; }; within_root "$value" || { echo "BLOCKED: input must be inside worktree: $value" >&2; exit 2; }; printf -v "$variable" '%s' "$value"; done
+CANONICAL_PLAN="$(real_regular "$ROOT/config/public_gazebo_dosod_train_scene_plan.json")" || { echo 'BLOCKED: canonical public plan is unavailable' >&2; exit 2; }
+[[ "$PUBLIC_GAZEBO_CALIBRATION_PLAN" == "$CANONICAL_PLAN" ]] || { echo 'BLOCKED: only config/public_gazebo_dosod_train_scene_plan.json is accepted' >&2; exit 2; }
+CANONICAL_PLAN_SHA256="$(sha256sum "$CANONICAL_PLAN" | awk '{print $1}')"
+if [[ "$MODE" == full ]]; then for variable in PUBLIC_GAZEBO_CALIBRATION_REVIEW_RECEIPT PUBLIC_GAZEBO_CALIBRATION_PILOT_MANIFEST PUBLIC_GAZEBO_CALIBRATION_PREPROCESSING_ORACLE; do value="$(real_regular "${!variable}")" || { echo "BLOCKED: full input missing or unsafe: ${!variable}" >&2; exit 2; }; within_root "$value" || { echo "BLOCKED: full input must be inside worktree: $value" >&2; exit 2; }; printf -v "$variable" '%s' "$value"; done; fi
+git -C "$ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo 'BLOCKED: worktree must be a git repository' >&2; exit 2; }
+GIT_STATUS_AT_ADMISSION="$(git -C "$ROOT" status --porcelain=v1)"; [[ -z "$GIT_STATUS_AT_ADMISSION" ]] || { echo 'BLOCKED: worktree must be clean' >&2; exit 2; }
+ADMISSION_GIT_HEAD="$(git -C "$ROOT" rev-parse HEAD)"; ADMISSION_GIT_TREE="$(git -C "$ROOT" rev-parse 'HEAD^{tree}')"
+binding_digest() { local -a bindings=("$ROOT/scripts/run_public_mobile_gazebo_dosod_calibration.sh" "$ROOT/scripts/public_gazebo_dosod_calibration.py" "$ROOT/scripts/public_gazebo_mobile_readiness.sh" "$ROOT/scripts/run_formal_runtime_isolation.sh" "$ROOT/starter_ws/src/sanitation_formal_campus_integration/launch/formal_campus_map_lifecycle.launch.py" "$ROOT/starter_ws/src/sanitation_campus_scenario/config/default_scenario.yaml" "$PUBLIC_GAZEBO_CALIBRATION_PLAN" "$PUBLIC_GAZEBO_CALIBRATION_STAGE1_SETUP" "$PUBLIC_GAZEBO_CALIBRATION_RUNTIME_SETUP" "$PUBLIC_GAZEBO_CALIBRATION_CAMPUS_SETUP"); [[ "$MODE" == full ]] && bindings+=("$PUBLIC_GAZEBO_CALIBRATION_REVIEW_RECEIPT" "$PUBLIC_GAZEBO_CALIBRATION_PILOT_MANIFEST" "$PUBLIC_GAZEBO_CALIBRATION_PREPROCESSING_ORACLE"); sha256sum "${bindings[@]}" | sha256sum | awk '{print $1}'; }
+ADMISSION_BINDING_SHA256="$(binding_digest)"; export ADMISSION_BINDING_SHA256 CANONICAL_PLAN_SHA256
+DEADLINE_EPOCH=$((SECONDS + PUBLIC_GAZEBO_CALIBRATION_TOTAL_TIMEOUT_SEC))
+setsid sleep "$PUBLIC_GAZEBO_CALIBRATION_TOTAL_TIMEOUT_SEC" & DEADLINE_PID=$!
+group_has_live_processes() {
+  local pgid="$1"
+  [[ "$pgid" =~ ^[2-9][0-9]*$ ]] || return 1
+  # kill -0 reports an unreaped zombie leader as alive.  Census the exact
+  # PGID instead, so a completed setup session is reaped without burning the
+  # whole TERM grace while still treating any live descendant as a survivor.
+  ps -eo pgid=,stat= | awk -v target="$pgid" '$1 == target && $2 !~ /^Z/ { found=1 } END { exit !found }'
+}
+# Even an early setup/admission failure must not leave the absolute-deadline
+# session behind. The full isolation trap replaces this once it is installed.
+early_deadline_exit() {
+  local rc="${1:-$?}"
+  trap - EXIT INT TERM
+  # Setup starts before the full isolation trap exists.  Contain its exact
+  # private PGID here as well as the deadline PGID, including TERM->KILL.
+  if [[ -n "${SETUP_PID:-}" ]]; then
+    kill -TERM -- "-$SETUP_PID" 2>/dev/null || true
+    for _ in {1..40}; do group_has_live_processes "$SETUP_PID" || break; sleep .25; done
+    group_has_live_processes "$SETUP_PID" && kill -KILL -- "-$SETUP_PID" 2>/dev/null || true
+    wait "$SETUP_PID" 2>/dev/null || true
+  fi
+  [[ -n "${DEADLINE_PID:-}" ]] && kill -TERM -- "-$DEADLINE_PID" 2>/dev/null || true
+  [[ -n "${DEADLINE_PID:-}" ]] && wait "$DEADLINE_PID" 2>/dev/null || true
+  exit "$rc"
+}
+trap early_deadline_exit EXIT
+trap 'early_deadline_exit 130' INT
+trap 'early_deadline_exit 143' TERM
+REQUESTED_ROS_DOMAIN_ID="$ROS_DOMAIN_ID"
+DATASET="$RUN_ROOT/dataset"; SELECTOR="$RUN_ROOT/scene_selector.json"; PROGRESS="$RUN_ROOT/collector_progress.json"; SCENE_RUNTIME_INDEX="$RUN_ROOT/scene_runtime_index.json"
 RECEIPT="$RUN_ROOT/public_mobile_gazebo_dosod_calibration_receipt.json"; PRIMARY_ERROR=""; DESIRED_STATE="BLOCKED"
 collector_pid=""; launch_pid=""; operator_pid=""; stop_estop_pid=""
 scene_operator_started=false; scene_stop_attempted=false; scene_stop_verified=false
 RUNNER_EXIT_CODE=0
-VALIDATION_SNAPSHOT=""
+VALIDATION_SNAPSHOT=""; ORACLE_FINAL_SUMMARY=""
 GENERATOR_DEADLINE_SEC=60
 READINESS_DEADLINE_SEC=60
 FINAL_VALIDATION_DEADLINE_SEC=120
 COLLECTOR_DEADLINE_SEC="$PUBLIC_GAZEBO_CALIBRATION_TIMEOUT_SEC"
+QUOTA_PID=""; WATCHDOG_PID=""; GZ_PGID=""; PREFLIGHT_PID=""; PREFLIGHT_PGID=""; READINESS_PID=""; FINAL_ORACLE_PID=""; FINAL_BINDING_SHA256=""; SETUP_PID=""; STOP_PID=""
+export FORMAL_MEMORY_WATCHDOG_ENABLED=1 FORMAL_MEMORY_MAX_GROUP_RSS_KIB=9437184
+remaining_seconds() { local remaining=$((DEADLINE_EPOCH - SECONDS)); (( remaining > 0 )) && printf '%s\n' "$remaining"; }
+revalidate_final_inputs() {
+  local variable value
+  for variable in PUBLIC_GAZEBO_CALIBRATION_PLAN PUBLIC_GAZEBO_CALIBRATION_STAGE1_SETUP PUBLIC_GAZEBO_CALIBRATION_RUNTIME_SETUP PUBLIC_GAZEBO_CALIBRATION_CAMPUS_SETUP; do
+    value="$(real_regular "${!variable}")" || return 1
+    [[ "$value" == "${!variable}" ]] && within_root "$value" || return 1
+  done
+  [[ "$PUBLIC_GAZEBO_CALIBRATION_PLAN" == "$CANONICAL_PLAN" ]] || return 1
+  if [[ "$MODE" == full ]]; then
+    for variable in PUBLIC_GAZEBO_CALIBRATION_REVIEW_RECEIPT PUBLIC_GAZEBO_CALIBRATION_PILOT_MANIFEST PUBLIC_GAZEBO_CALIBRATION_PREPROCESSING_ORACLE; do
+      value="$(real_regular "${!variable}")" || return 1
+      [[ "$value" == "${!variable}" ]] && within_root "$value" || return 1
+    done
+  fi
+}
+require_final_oracle_reserve() {
+  local available
+  available="$(remaining_seconds)" || return 124
+  (( available >= FINAL_VALIDATION_DEADLINE_SEC )) || return 124
+  printf '%s\n' "$FINAL_VALIDATION_DEADLINE_SEC"
+}
 deadline_run() {
   # Each short operation owns a fresh session.  TERM waits ten seconds before
   # KILL and the caller receives failure unless that exact group is gone.
-  local limit="$1" log="$2"; shift 2
-  setsid "$@" >"$log" 2>&1 & local pid=$! elapsed=0
-  while kill -0 "$pid" 2>/dev/null && (( elapsed < limit )); do sleep 1; ((elapsed+=1)); done
-  if kill -0 "$pid" 2>/dev/null; then
-    kill -TERM -- "-$pid" 2>/dev/null || true; sleep 10
-    kill -0 -- "-$pid" 2>/dev/null && kill -KILL -- "-$pid" 2>/dev/null || true
-    wait "$pid" 2>/dev/null || true
-    ! kill -0 -- "-$pid" 2>/dev/null || return 125
+  local limit="$1" log="$2" finished rc=0; shift 2
+  remaining_seconds >/dev/null || return 124
+  setsid timeout -k 10 "$limit" "$@" >"$log" 2>&1 & local pid=$!
+  [[ "${CURRENT_PHASE:-}" == setup ]] && SETUP_PID="$pid"
+  set +e; wait -n -p finished "$pid" "$DEADLINE_PID"; rc=$?; set -e
+  if [[ "$finished" == "$DEADLINE_PID" ]]; then
+    stop_private_group "$pid" || return 125
+    [[ "${CURRENT_PHASE:-}" == setup ]] && SETUP_PID=""
     return 124
   fi
-  local rc=0
-  wait "$pid" || rc=$?
+  [[ "$finished" == "$pid" ]] || { [[ "${CURRENT_PHASE:-}" == setup ]] && SETUP_PID=""; return 125; }
   # A leader exiting first is not cleanup: any exact child still in its
   # private PGID turns this operation into a fail-closed cleanup failure.
   if kill -0 -- "-$pid" 2>/dev/null; then
     kill -TERM -- "-$pid" 2>/dev/null || true; sleep 10
     kill -0 -- "-$pid" 2>/dev/null && kill -KILL -- "-$pid" 2>/dev/null || true
     ! kill -0 -- "-$pid" 2>/dev/null || return 125
+    [[ "${CURRENT_PHASE:-}" == setup ]] && SETUP_PID=""
     return 125
   fi
+  [[ "${CURRENT_PHASE:-}" == setup ]] && SETUP_PID=""
   return "$rc"
+}
+stop_private_group() {
+  local pgid="$1" signal
+  [[ "$pgid" =~ ^[2-9][0-9]*$ ]] || return 0
+  for signal in TERM KILL; do
+    group_has_live_processes "$pgid" || { wait "$pgid" 2>/dev/null || true; return 0; }
+    kill -"$signal" -- "-$pgid" 2>/dev/null || true
+    for _ in {1..40}; do group_has_live_processes "$pgid" || { wait "$pgid" 2>/dev/null || true; return 0; }; sleep .25; done
+  done
+  wait "$pgid" 2>/dev/null || true
+  ! group_has_live_processes "$pgid"
+}
+stop_deadline() { [[ -n "$DEADLINE_PID" ]] && stop_private_group "$DEADLINE_PID" || true; DEADLINE_PID=""; }
+# Setup files are executable inputs.  Source them in a private, deadline-bound
+# child and import only a serialized allow-list after validating its syntax.
+SETUP_SNAPSHOT="$RUN_ROOT/setup_environment.sh"
+CURRENT_PHASE=setup
+deadline_run "$(remaining_seconds)" "$SETUP_SNAPSHOT" bash -c '
+  set -Eeuo pipefail
+  for setup in "$@"; do source "$setup"; done
+  while IFS= read -r name; do
+    case "$name" in
+      PATH|PYTHONPATH|LD_LIBRARY_PATH|PKG_CONFIG_PATH|AMENT_PREFIX_PATH|CMAKE_PREFIX_PATH|COLCON_PREFIX_PATH|COLCON_CURRENT_PREFIX|ROS_DISTRO|ROS_VERSION|ROS_PYTHON_VERSION|ROS_PACKAGE_PATH|RMW_IMPLEMENTATION|GZ_SIM_RESOURCE_PATH|GZ_SIM_SYSTEM_PLUGIN_PATH|GZ_CONFIG_PATH|IGN_GAZEBO_RESOURCE_PATH|IGN_GAZEBO_SYSTEM_PLUGIN_PATH|IGN_CONFIG_PATH|GAZEBO_RESOURCE_PATH|GAZEBO_PLUGIN_PATH) declare -px "$name" ;;
+    esac
+  done < <(compgen -v)
+' bash /opt/ros/jazzy/setup.bash "$PUBLIC_GAZEBO_CALIBRATION_STAGE1_SETUP" "$PUBLIC_GAZEBO_CALIBRATION_RUNTIME_SETUP" "$PUBLIC_GAZEBO_CALIBRATION_CAMPUS_SETUP" || { RUNNER_EXIT_CODE=$?; CURRENT_PHASE=""; exit "$RUNNER_EXIT_CODE"; }
+CURRENT_PHASE=""
+deadline_run "$(remaining_seconds)" "$RUN_ROOT/setup_snapshot_validation.log" python3 -c 'import re,sys; raw=open(sys.argv[1],"rb").read(); lines=raw.decode("utf-8").splitlines(); safe=re.compile(r"declare -x [A-Za-z_][A-Za-z0-9_]*(?:=\"(?:[^\"\\\\\n]|\\\\.)*\")?$"); raise SystemExit(0 if raw and b"\0" not in raw and b"$\x27" not in raw and all(safe.fullmatch(x) for x in lines) else 2)' "$SETUP_SNAPSHOT" || { RUNNER_EXIT_CODE=$?; exit "$RUNNER_EXIT_CODE"; }
+source "$SETUP_SNAPSHOT"
+ROS_DOMAIN_ID="$REQUESTED_ROS_DOMAIN_ID"; export ROS_DOMAIN_ID
+FORMAL_GAZEBO_LOCK_FILE="$LOCK_PATH" formal_runtime_configure "$ROS_DOMAIN_ID"
+export TZCUP_REPOSITORY_ROOT="$ROOT" PUBLIC_GAZEBO_CALIBRATION_RECEIPT_STRICT=1
+start_quota_waiter() {
+  local scene="$1"
+  setsid bash -c '
+    set -Eeuo pipefail
+    progress="$1"; scene="$2"; quota="$3"
+    while :; do
+      if python3 - "$progress" "$scene" "$quota" <<"PY"
+import json,sys
+try: d=json.load(open(sys.argv[1]))
+except Exception: raise SystemExit(1)
+count=max(d.get("calibration_scene_counts",{}).get(sys.argv[2],0), d.get("holdout_scene_counts",{}).get(sys.argv[2],0))
+raise SystemExit(0 if count >= int(sys.argv[3]) else 1)
+PY
+      then exit 0; fi
+      sleep .2
+    done
+  ' bash "$PROGRESS" "$scene" "$PUBLIC_GAZEBO_CALIBRATION_PER_SCENE_QUOTA" & QUOTA_PID=$!
 }
 require_mapping_readiness() {
   local expected=""
   if [[ "${FORMAL_ORCHESTRATED_STEP_SESSION:-0}" == 1 ]]; then expected="$(ps -o pgid= -p "$$" | tr -d '[:space:]')"; fi
   public_mobile_mapping_readiness "$launch_pid" "$1" "$READINESS_DEADLINE_SEC" "$expected"
 }
-write_receipt() { python3 - "$RECEIPT" "$1" "$2" "$PRIMARY_ERROR" "$3" "$MODE" "$DATASET" "$EXPECTED_MANIFEST" "${PUBLIC_GAZEBO_CALIBRATION_REVIEW_RECEIPT:-}" "${PUBLIC_GAZEBO_CALIBRATION_PILOT_MANIFEST:-}" "${VALIDATION_SNAPSHOT:-}" <<'PY'
+start_mapping_readiness() {
+  local output="$1" expected=""
+  if [[ "${FORMAL_ORCHESTRATED_STEP_SESSION:-0}" == 1 ]]; then expected="$(ps -o pgid= -p "$$" | tr -d '[:space:]')"; fi
+  setsid bash -c 'source "$1"; public_mobile_mapping_readiness "$2" "$3" "$4" "$5"' bash "$ROOT/scripts/public_gazebo_mobile_readiness.sh" "$launch_pid" "$output" "$READINESS_DEADLINE_SEC" "$expected" & READINESS_PID=$!
+}
+record_scene_runtime() {
+  python3 - "$SCENE_RUNTIME_INDEX" "$scene" "$GZ_PGID" "$scene_root/memory_watchdog.json" "$scene_root/memory_watchdog.log" <<'PY'
 import hashlib,json,os,sys
 from pathlib import Path
-p,status,code,error,zero,mode,dataset,expected,review,pilot,snapshot=(Path(sys.argv[1]),sys.argv[2],sys.argv[3],sys.argv[4],sys.argv[5],sys.argv[6],Path(sys.argv[7]),sys.argv[8],sys.argv[9],sys.argv[10],sys.argv[11])
+index,scene,pgid,watch_json,watch_log=map(Path,sys.argv[1:])
+def item(path): return {'relative_path':str(path.relative_to(index.parent)),'sha256':hashlib.sha256(path.read_bytes()).hexdigest(),'byte_size':path.stat().st_size}
+if not pgid.name.isdigit() or int(pgid.name) <= 1: raise SystemExit(2)
+for path in (watch_json,watch_log):
+ if not path.is_file() or path.is_symlink(): raise SystemExit(2)
+watch=json.loads(watch_json.read_text())
+if watch.get('target_pgid') != int(pgid.name) or watch.get('surviving_group_processes') != 0: raise SystemExit(2)
+rows=[] if not index.exists() else json.loads(index.read_text())
+rows.append({'scene_id':scene.name,'gazebo_pgid':int(pgid.name),'watchdog_status':watch.get('status'),'watchdog_json':item(watch_json),'watchdog_log':item(watch_log)})
+tmp=index.with_name('.'+index.name+'.pending.'+str(os.getpid())); tmp.write_text(json.dumps(rows,sort_keys=True)+'\n'); os.replace(tmp,index)
+PY
+}
+write_receipt() { python3 - "$RECEIPT" "$1" "$2" "$PRIMARY_ERROR" "$3" "$MODE" "$DATASET" "$EXPECTED_MANIFEST" "${PUBLIC_GAZEBO_CALIBRATION_REVIEW_RECEIPT:-}" "${PUBLIC_GAZEBO_CALIBRATION_PILOT_MANIFEST:-}" "${PUBLIC_GAZEBO_CALIBRATION_PREPROCESSING_ORACLE:-}" "${VALIDATION_SNAPSHOT:-}" <<'PY'
+import hashlib,json,os,sys
+from pathlib import Path
+p,status,code,error,zero,mode,dataset,expected,review,pilot,oracle,snapshot=(Path(sys.argv[1]),sys.argv[2],sys.argv[3],sys.argv[4],sys.argv[5],sys.argv[6],Path(sys.argv[7]),sys.argv[8],sys.argv[9],sys.argv[10],sys.argv[11],sys.argv[12])
 def digest(path): return hashlib.sha256(path.read_bytes()).hexdigest()
 def regular(path): return path.is_file() and not path.is_symlink()
-v={'report_id':'tzcup_public_mobile_gazebo_dosod_calibration_runner_v1','status':status,'formal_passed':False,'classification':'NON_FORMAL','exit_code':int(code),'primary_error':error,'zero_survivor_check':zero=='true','mode':mode,'budgets_sec':{'whole_runner':int(os.environ['PUBLIC_GAZEBO_CALIBRATION_TIMEOUT_SEC']),'collector':int(os.environ['PUBLIC_GAZEBO_CALIBRATION_TIMEOUT_SEC']),'scene_generator':60,'readiness':60,'final_validation':120,'term_grace':10}}
+strict=os.environ.get('PUBLIC_GAZEBO_CALIBRATION_RECEIPT_STRICT') == '1'
+root=Path(os.environ.get('TZCUP_REPOSITORY_ROOT',Path.cwd()))
+def ident(path): return {'path':str(path.relative_to(root)),'sha256':digest(path),'byte_size':path.stat().st_size}
+roles={} if not strict else {'plan':Path(os.environ['PUBLIC_GAZEBO_CALIBRATION_PLAN']),'stage1_setup':Path(os.environ['PUBLIC_GAZEBO_CALIBRATION_STAGE1_SETUP']),'runtime_setup':Path(os.environ['PUBLIC_GAZEBO_CALIBRATION_RUNTIME_SETUP']),'campus_setup':Path(os.environ['PUBLIC_GAZEBO_CALIBRATION_CAMPUS_SETUP'])}
+scene_index=p.parent/'scene_runtime_index.json'
+scenes=[] if not regular(scene_index) else json.loads(scene_index.read_text())
+v={'report_id':'tzcup_public_mobile_gazebo_dosod_calibration_runner_v1','status':status,'formal_passed':False,'classification':'NON_FORMAL','exit_code':int(code),'primary_error':error,'zero_survivor_check':zero=='true','mode':mode,'budgets_sec':{'whole_runner':int(os.environ.get('PUBLIC_GAZEBO_CALIBRATION_TOTAL_TIMEOUT_SEC',os.environ['PUBLIC_GAZEBO_CALIBRATION_TIMEOUT_SEC'])),'collector':int(os.environ['PUBLIC_GAZEBO_CALIBRATION_TIMEOUT_SEC']),'scene_generator':60,'readiness':60,'final_validation':120,'term_grace':10},'memory_watchdog_max_group_rss_kib':9437184,'bindings':{'admission_sha256':os.environ.get('ADMISSION_BINDING_SHA256'),'final_sha256':os.environ.get('FINAL_BINDING_SHA256'),'unchanged':os.environ.get('ADMISSION_BINDING_SHA256')==os.environ.get('FINAL_BINDING_SHA256'),'canonical_plan_sha256':os.environ.get('CANONICAL_PLAN_SHA256'),'inputs':{name:ident(path) for name,path in roles.items()}},'git':None if not strict else {'admission_head':os.environ.get('ADMISSION_GIT_HEAD'),'admission_tree':os.environ.get('ADMISSION_GIT_TREE'),'admission_clean':os.environ.get('GIT_STATUS_AT_ADMISSION')=='','final_head':os.environ.get('FINAL_GIT_HEAD'),'final_tree':os.environ.get('FINAL_GIT_TREE'),'final_clean':os.environ.get('FINAL_GIT_STATUS')=='','unchanged':os.environ.get('ADMISSION_GIT_HEAD')==os.environ.get('FINAL_GIT_HEAD') and os.environ.get('ADMISSION_GIT_TREE')==os.environ.get('FINAL_GIT_TREE')},'preflight':{'pid':int(os.environ.get('PREFLIGHT_PID','0') or 0),'pgid':int(os.environ.get('PREFLIGHT_PGID','0') or 0)},'scene_runtime':scenes}
 invalid=False
 if status in {'NON_FORMAL_PILOT_CAPTURED','NON_FORMAL_CALIBRATION_FROZEN'}:
  try:
@@ -86,12 +234,15 @@ if status in {'NON_FORMAL_PILOT_CAPTURED','NON_FORMAL_CALIBRATION_FROZEN'}:
    if data.get('status') != status or data.get('formal_passed') is not False or data.get('pilot_scene') != 'map-0-mission-0' or data.get('record_count') != 25 or sheet.get('relative_path') != 'pilot_contact_sheet.png' or not regular(path) or sheet.get('sha256') != digest(path) or sheet.get('byte_size') != path.stat().st_size: raise ValueError('pilot')
    artifact.update({'pilot_scene':data['pilot_scene'],'record_count':data['record_count'],'record_sha256':data.get('record_sha256'),'contact_sheet':sheet})
   else:
-   if data.get('status') != 'FROZEN' or not all(regular(Path(x)) for x in (review,pilot,snapshot)): raise ValueError('full')
+   if data.get('status') != 'FROZEN' or not all(regular(Path(x)) for x in (review,pilot,oracle,snapshot)): raise ValueError('full')
    checked=json.loads(Path(snapshot).read_text())
    pilot_data=json.loads(Path(pilot).read_text()); sheet=pilot_data.get('contact_sheet',{}); sheet_path=Path(pilot).parent/sheet.get('relative_path','')
    if checked.get('status') != 'NON_FORMAL_REVIEW_APPROVED' or checked.get('review_receipt_sha256') != digest(Path(review)) or checked.get('pilot_manifest_sha256') != digest(Path(pilot)) or checked.get('contact_sheet_sha256') != sheet.get('sha256') or checked.get('record_sha256') != pilot_data.get('record_sha256') or not regular(sheet_path) or digest(sheet_path) != checked['contact_sheet_sha256']: raise ValueError('full_snapshot')
-   artifact.update({'review_receipt_sha256':checked['review_receipt_sha256'],'pilot_manifest_sha256':checked['pilot_manifest_sha256'],'contact_sheet_sha256':checked['contact_sheet_sha256'],'record_sha256':checked['record_sha256'],'review_validation_snapshot_sha256':digest(Path(snapshot))})
+   final_oracle=Path(os.environ.get('ORACLE_FINAL_SUMMARY',''))
+   if strict and not regular(final_oracle): raise ValueError('final_oracle_validation_missing')
+   artifact.update({'review_receipt_sha256':checked['review_receipt_sha256'],'pilot_manifest_sha256':checked['pilot_manifest_sha256'],'preprocessing_oracle_sha256':digest(Path(oracle)),'preprocessing_oracle_final_validation_sha256':digest(final_oracle) if regular(final_oracle) else None,'contact_sheet_sha256':checked['contact_sheet_sha256'],'record_sha256':checked['record_sha256'],'review_validation_snapshot_sha256':digest(Path(snapshot))})
   v['artifact']=artifact
+  if strict and status != 'BLOCKED' and (not v['bindings']['unchanged'] or not scenes or any(row.get('watchdog_status') != 'FORMAL_MEMORY_WATCHDOG_COMPLETED' for row in scenes)): raise ValueError('final_binding_or_watchdog_invalid')
  except Exception:
   v.update({'status':'BLOCKED','exit_code':125,'primary_error':'runner_artifact_binding_invalid'}); status='BLOCKED'; invalid=True
 t=p.with_name('.'+p.name+'.pending.'+str(os.getpid())); t.write_text(json.dumps(v,indent=2,sort_keys=True)+'\n'); os.replace(t,p)
@@ -117,6 +268,26 @@ stop_verified() {
   if [[ "$verified" == true && "$rc" == 0 ]]; then scene_stop_verified=true; else rc=1; fi
   return "$rc"
 }
+start_verified_stop() {
+  # The safety proof is a blocking ROS sequence, so make it a private child
+  # and race it with the live Gazebo, watchdog, and absolute deadline.  Force
+  # no nested session in the worker: its emergency-stop publisher remains in
+  # this exact STOP_PID group until the parent reaps it.
+  export ROOT scene_root operator_pid
+  setsid env FORMAL_ORCHESTRATED_STEP_SESSION=1 bash -c 'source "$1"; eval "$2"; stop_verified' bash "$ROOT/scripts/run_formal_runtime_isolation.sh" "$(declare -f stop_verified)" & STOP_PID=$!
+}
+wait_verified_stop() {
+  local finished status
+  start_verified_stop
+  set +e; wait -n -p finished "$STOP_PID" "$WATCHDOG_PID" "$launch_pid" "$DEADLINE_PID"; status=$?; set -e
+  case "$finished" in
+    "$STOP_PID") (( status == 0 )) || return 4; scene_stop_verified=true; operator_pid=""; return 0 ;;
+    "$WATCHDOG_PID") formal_runtime_record_memory_watchdog_exit "$WATCHDOG_PID" "$status" || return 125; WATCHDOG_PID=""; formal_runtime_memory_watchdog_tripped && return "$FORMAL_RUNTIME_MEMORY_BREACH_EXIT_CODE"; return 125 ;;
+    "$DEADLINE_PID") return 124 ;;
+    "$launch_pid") return 4 ;;
+    *) return 125 ;;
+  esac
+}
 stop_estop_publisher() {
   local rc=0
   if [[ -n "$stop_estop_pid" ]]; then
@@ -128,7 +299,7 @@ stop_estop_publisher() {
   return "$rc"
 }
 cleanup() {
-  local survivor=true cleanup_failed=0 state="$DESIRED_STATE" pid receipt_code="$RUNNER_EXIT_CODE"
+  local survivor=true cleanup_failed=0 state="$DESIRED_STATE" pid receipt_code="${FORMAL_RUNTIME_EXIT_STATUS:-$RUNNER_EXIT_CODE}"
   trap - ERR
   set +e
   if [[ -e "$SELECTOR" ]]; then
@@ -138,26 +309,51 @@ cleanup() {
     if [[ "$scene_stop_attempted" != true ]]; then stop_verified || cleanup_failed=1; fi
     [[ "$scene_stop_verified" == true ]] || cleanup_failed=1
   fi
-  formal_runtime_cleanup_groups "${GZ_PARTITION:-}" "$launch_pid" "$operator_pid" "$collector_pid" || cleanup_failed=1
-  for pid in "$launch_pid" "$operator_pid" "$collector_pid"; do
+  stop_private_group "$QUOTA_PID" || cleanup_failed=1; QUOTA_PID=""
+  stop_deadline || cleanup_failed=1
+  formal_runtime_cleanup_groups "${GZ_PARTITION:-}" "$SETUP_PID" "$PREFLIGHT_PID" "$READINESS_PID" "$FINAL_ORACLE_PID" "$STOP_PID" "$launch_pid" "$operator_pid" "$collector_pid" || cleanup_failed=1
+  for pid in "$SETUP_PID" "$PREFLIGHT_PID" "$READINESS_PID" "$FINAL_ORACLE_PID" "$STOP_PID" "$launch_pid" "$operator_pid" "$collector_pid"; do
     [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null && survivor=false
   done
-  launch_pid=""; operator_pid=""; collector_pid=""
+  launch_pid=""; operator_pid=""; collector_pid=""; SETUP_PID=""; READINESS_PID=""; FINAL_ORACLE_PID=""; STOP_PID=""
   stop_estop_publisher || cleanup_failed=1
-  if [[ "$survivor" != true || "$cleanup_failed" != 0 ]]; then cleanup_failed=1; state=BLOCKED; receipt_code=125; fi
+  # The watchdog result is authoritative and must be frozen before receipt
+  # emission, so the receipt and the outer isolation trap use identical rc
+  # precedence: breach 86, unexpected watchdog 125, then original failure.
+  formal_runtime_stop_memory_watchdog || cleanup_failed=1
+  if formal_runtime_memory_watchdog_tripped; then receipt_code="$FORMAL_RUNTIME_MEMORY_BREACH_EXIT_CODE"
+  elif (( FORMAL_RUNTIME_MEMORY_WATCHDOG_RESULT != 0 )); then receipt_code=125; fi
+  revalidate_final_inputs || { cleanup_failed=1; PRIMARY_ERROR=binding_or_git_drift; }
+  FINAL_BINDING_SHA256="$(binding_digest)"; export FINAL_BINDING_SHA256 PREFLIGHT_PID PREFLIGHT_PGID
+  FINAL_GIT_HEAD="$(git -C "$ROOT" rev-parse HEAD)"; FINAL_GIT_TREE="$(git -C "$ROOT" rev-parse 'HEAD^{tree}')"; FINAL_GIT_STATUS="$(git -C "$ROOT" status --porcelain=v1)"
+  export FINAL_GIT_HEAD FINAL_GIT_TREE FINAL_GIT_STATUS ADMISSION_GIT_HEAD ADMISSION_GIT_TREE GIT_STATUS_AT_ADMISSION
+  [[ "$FINAL_BINDING_SHA256" == "$ADMISSION_BINDING_SHA256" && "$FINAL_GIT_HEAD" == "$ADMISSION_GIT_HEAD" && "$FINAL_GIT_TREE" == "$ADMISSION_GIT_TREE" && "$FINAL_GIT_STATUS" == "$GIT_STATUS_AT_ADMISSION" ]] || { cleanup_failed=1; PRIMARY_ERROR=binding_or_git_drift; }
+  if [[ "$survivor" != true || "$cleanup_failed" != 0 ]]; then
+    cleanup_failed=1; state=BLOCKED
+    # A watchdog breach always takes priority over later cleanup/binding error.
+    formal_runtime_memory_watchdog_tripped || receipt_code=125
+  fi
   write_receipt "$state" "$receipt_code" "$survivor" || cleanup_failed=1
   (( cleanup_failed == 0 ))
 }
 trap 'RUNNER_EXIT_CODE=$?; PRIMARY_ERROR="${BASH_COMMAND}"' ERR
-formal_runtime_register_evidence_paths "$RUN_ROOT"
+formal_runtime_register_evidence_paths "$RUN_ROOT" "$RECEIPT" "$RUN_ROOT/memory_preflight.json" "$RUN_ROOT/memory_preflight.log" "$RUN_ROOT/memory_watchdog.json" "$RUN_ROOT/memory_watchdog.log"
 formal_runtime_install_traps cleanup
 trap 'RUNNER_EXIT_CODE=$?; formal_runtime_exit_trap "$RUNNER_EXIT_CODE"' EXIT
 trap 'RUNNER_EXIT_CODE=130; PRIMARY_ERROR=signal:INT; exit 130' INT
 trap 'RUNNER_EXIT_CODE=143; PRIMARY_ERROR=signal:TERM; exit 143' TERM
+setsid bash -c 'source "$1"; formal_runtime_memory_preflight "$2"' bash "$ROOT/scripts/run_formal_runtime_isolation.sh" "$RUN_ROOT/memory_preflight" & PREFLIGHT_PID=$!
+PREFLIGHT_PGID="$(formal_runtime_wait_for_setsid_pgid "$PREFLIGHT_PID")" || { RUNNER_EXIT_CODE=125; exit 125; }
+set +e; wait -n -p finished "$PREFLIGHT_PID" "$DEADLINE_PID"; preflight_status=$?; set -e
+if [[ "$finished" == "$PREFLIGHT_PID" ]]; then PREFLIGHT_PID=""; else RUNNER_EXIT_CODE=124; exit 124; fi
+(( preflight_status == 0 )) || { RUNNER_EXIT_CODE=125; (( preflight_status == FORMAL_RUNTIME_MEMORY_BREACH_EXIT_CODE )) && RUNNER_EXIT_CODE=$preflight_status; exit "$RUNNER_EXIT_CODE"; }
 preflight_args=(--scene-plan "$PUBLIC_GAZEBO_CALIBRATION_PLAN" --contract "$ROOT/config/dosod_s100p_hbm_compile_contract.json")
-if [[ "$MODE" == full ]]; then preflight_args+=(--review-receipt "$PUBLIC_GAZEBO_CALIBRATION_REVIEW_RECEIPT" --pilot-manifest "$PUBLIC_GAZEBO_CALIBRATION_PILOT_MANIFEST"); fi
-python3 "$ROOT/scripts/public_gazebo_dosod_calibration.py" "${preflight_args[@]}" >"$RUN_ROOT/preflight.json"
-whole_deadline=$((SECONDS + PUBLIC_GAZEBO_CALIBRATION_TIMEOUT_SEC))
+if [[ "$MODE" == full ]]; then
+  preflight_args+=(--review-receipt "$PUBLIC_GAZEBO_CALIBRATION_REVIEW_RECEIPT" --pilot-manifest "$PUBLIC_GAZEBO_CALIBRATION_PILOT_MANIFEST")
+  deadline_run "$(remaining_seconds)" "$RUN_ROOT/preprocessing_oracle_validation.json" python3 "$ROOT/scripts/validate_dosod_single_frame_preprocessing_oracle.py" --receipt "$PUBLIC_GAZEBO_CALIBRATION_PREPROCESSING_ORACLE" || { RUNNER_EXIT_CODE=$?; exit "$RUNNER_EXIT_CODE"; }
+  deadline_run "$(remaining_seconds)" "$RUN_ROOT/canonical_plan_shape_validation.log" python3 -c 'import json,sys; groups=json.load(open(sys.argv[1],encoding="utf-8")).get("scene_groups",{}); raise SystemExit(0 if len(groups.get("calibration",[])) == 20 and len(groups.get("holdout",[])) == 4 else 2)' "$PUBLIC_GAZEBO_CALIBRATION_PLAN" || { RUNNER_EXIT_CODE=$?; exit "$RUNNER_EXIT_CODE"; }
+fi
+deadline_run "$(remaining_seconds)" "$RUN_ROOT/preflight.json" python3 "$ROOT/scripts/public_gazebo_dosod_calibration.py" "${preflight_args[@]}" || { RUNNER_EXIT_CODE=$?; exit "$RUNNER_EXIT_CODE"; }
 scene_rows() { python3 - "$PUBLIC_GAZEBO_CALIBRATION_PLAN" "$MODE" <<'PY'
 import json,sys
 plan=json.load(open(sys.argv[1])); mode=sys.argv[2]
@@ -170,68 +366,87 @@ for role in ('calibration','holdout'):
  for scene in plan['scene_groups'][role]: print(role+'\t'+scene)
 PY
 }
-started=false
+started=false; collection_complete=false
 while IFS=$'\t' read -r role scene; do
   [[ "$scene" =~ ^map-([0-9]+)-mission-([0-9]+)$ ]] || { RUNNER_EXIT_CODE=2; exit 2; }
   scene_root="$RUN_ROOT/scenes/$scene"; mkdir -p "$scene_root"
-  deadline_run "$GENERATOR_DEADLINE_SEC" "$scene_root/generator.log" ros2 run sanitation_campus_scenario sanitation-campus-scenario generate --config "$ROOT/starter_ws/src/sanitation_campus_scenario/config/default_scenario.yaml" --profile formal --split train --map-index "${BASH_REMATCH[1]}" --mission-index "${BASH_REMATCH[2]}" --output "$scene_root/episode" || { rc=$?; PRIMARY_ERROR=scene_generator_deadline_or_failure; RUNNER_EXIT_CODE=$rc; exit "$RUNNER_EXIT_CODE"; }
+  remaining_seconds >/dev/null || { RUNNER_EXIT_CODE=124; exit 124; }; generator_budget="$(remaining_seconds)"; (( generator_budget > GENERATOR_DEADLINE_SEC )) && generator_budget="$GENERATOR_DEADLINE_SEC"
+  deadline_run "$generator_budget" "$scene_root/generator.log" ros2 run sanitation_campus_scenario sanitation-campus-scenario generate --config "$ROOT/starter_ws/src/sanitation_campus_scenario/config/default_scenario.yaml" --profile formal --split train --map-index "${BASH_REMATCH[1]}" --mission-index "${BASH_REMATCH[2]}" --output "$scene_root/episode" || { rc=$?; PRIMARY_ERROR=scene_generator_deadline_or_failure; RUNNER_EXIT_CODE=$rc; exit "$RUNNER_EXIT_CODE"; }
   manifest="$scene_root/episode/public/episode_manifest.json"
   scene_operator_started=false; scene_stop_attempted=false; scene_stop_verified=false
-  python3 "$ROOT/scripts/public_gazebo_dosod_calibration.py" --scene-plan "$PUBLIC_GAZEBO_CALIBRATION_PLAN" --contract "$ROOT/config/dosod_s100p_hbm_compile_contract.json" --write-scene-selector --scene-selector "$SELECTOR" --scene-id "$scene" --episode-manifest "$manifest" >"$scene_root/selector.json"
+  deadline_run "$(remaining_seconds)" "$scene_root/selector.json" python3 "$ROOT/scripts/public_gazebo_dosod_calibration.py" --scene-plan "$PUBLIC_GAZEBO_CALIBRATION_PLAN" --contract "$ROOT/config/dosod_s100p_hbm_compile_contract.json" --write-scene-selector --scene-selector "$SELECTOR" --scene-id "$scene" --episode-manifest "$manifest" || { RUNNER_EXIT_CODE=$?; exit "$RUNNER_EXIT_CODE"; }
   if [[ "$started" == false ]]; then
     collector_args=(--live-output "$DATASET" --image-topic /camera/color/image_raw --camera-info-topic /camera/color/camera_info --timeout-sec "$PUBLIC_GAZEBO_CALIBRATION_TIMEOUT_SEC" --scene-selector "$SELECTOR" --per-scene-quota "$PUBLIC_GAZEBO_CALIBRATION_PER_SCENE_QUOTA" --progress-output "$PROGRESS")
     if [[ "$MODE" == pilot ]]; then collector_args+=(--pilot-scene "$PILOT_SCENE"); else collector_args+=(--review-receipt "$PUBLIC_GAZEBO_CALIBRATION_REVIEW_RECEIPT" --pilot-manifest "$PUBLIC_GAZEBO_CALIBRATION_PILOT_MANIFEST"); fi
     "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" python3 "$ROOT/scripts/public_gazebo_dosod_calibration.py" --scene-plan "$PUBLIC_GAZEBO_CALIBRATION_PLAN" --contract "$ROOT/config/dosod_s100p_hbm_compile_contract.json" "${collector_args[@]}" 9>&- >"$RUN_ROOT/collector.stdout" 2>"$RUN_ROOT/collector.stderr" & collector_pid=$!; started=true
   fi
+  remaining_seconds >/dev/null || { RUNNER_EXIT_CODE=124; exit 124; }
   GZ_PARTITION="tzcup_public_mobile_${ROS_DOMAIN_ID}_$$_${scene}"; export GZ_PARTITION
   "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 launch sanitation_formal_campus_integration formal_campus_map_lifecycle.launch.py mission_mode:=mapping gui:=false mapping_high_bandwidth_sensor_runtime:=true enable_training_gt:=true world:="$scene_root/episode/public/world.sdf" episode_manifest:="$manifest" map_artifact_dir:="$scene_root/runtime" pedestrian_schedule:="$scene_root/episode/environment/pedestrian_schedule.json" start_pedestrians:=false start_coverage:=false >"$scene_root/mapping.launch.log" 2>&1 & launch_pid=$!
-  if ! require_mapping_readiness "$scene_root/readiness"; then echo "BLOCKED: mapping readiness timed out or GT/RGB contract missing" >&2; RUNNER_EXIT_CODE=4; exit 4; fi
+  GZ_PGID="$(formal_runtime_wait_for_setsid_pgid "$launch_pid")" || { RUNNER_EXIT_CODE=125; exit 125; }
+  formal_runtime_register_evidence_paths "$scene_root/memory_watchdog.json" "$scene_root/memory_watchdog.log"
+  formal_runtime_start_memory_watchdog "$launch_pid" "$scene_root/memory_watchdog" || { RUNNER_EXIT_CODE=$?; exit "$RUNNER_EXIT_CODE"; }
+  WATCHDOG_PID="$FORMAL_RUNTIME_MEMORY_WATCHDOG_PID"
+  start_mapping_readiness "$scene_root/readiness"
+  set +e; wait -n -p finished "$READINESS_PID" "$WATCHDOG_PID" "$launch_pid" "$DEADLINE_PID"; readiness_status=$?; set -e
+  case "$finished" in
+    "$READINESS_PID") [[ "$readiness_status" == 0 ]] || { RUNNER_EXIT_CODE=4; exit 4; }; READINESS_PID="" ;;
+    "$WATCHDOG_PID") formal_runtime_record_memory_watchdog_exit "$WATCHDOG_PID" "$readiness_status" || { RUNNER_EXIT_CODE=125; exit 125; }; WATCHDOG_PID=""; formal_runtime_memory_watchdog_tripped && { RUNNER_EXIT_CODE="$FORMAL_RUNTIME_MEMORY_BREACH_EXIT_CODE"; exit "$RUNNER_EXIT_CODE"; }; RUNNER_EXIT_CODE=125; exit 125 ;;
+    "$DEADLINE_PID") RUNNER_EXIT_CODE=124; exit 124 ;;
+    "$launch_pid") RUNNER_EXIT_CODE=4; exit 4 ;;
+    *) RUNNER_EXIT_CODE=125; exit 125 ;;
+  esac
   "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" python3 "$ROOT/scripts/collect_formal_map_lifecycle_runtime.py" --mode mapping --map-root "$scene_root/runtime" --timeout "$PUBLIC_GAZEBO_CALIBRATION_TIMEOUT_SEC" --output "$scene_root/mapping_runtime.json" >"$scene_root/operator.log" 2>&1 & operator_pid=$!
   scene_operator_started=true
-  while kill -0 "$launch_pid" 2>/dev/null && kill -0 "$collector_pid" 2>/dev/null && kill -0 "$operator_pid" 2>/dev/null && (( SECONDS < whole_deadline )); do python3 - "$PROGRESS" "$scene" "$PUBLIC_GAZEBO_CALIBRATION_PER_SCENE_QUOTA" <<'PY' && break || true
-import json,sys
-try: d=json.load(open(sys.argv[1]))
-except Exception: raise SystemExit(1)
-raise SystemExit(0 if max(d.get('calibration_scene_counts',{}).get(sys.argv[2],0),d.get('holdout_scene_counts',{}).get(sys.argv[2],0)) >= int(sys.argv[3]) else 1)
-PY
-    [[ -f "$scene_root/runtime/map_lifecycle_manifest.json" ]] && break; sleep 1
-  done
-  if ! kill -0 "$collector_pid" 2>/dev/null; then
-    if wait "$collector_pid"; then rc=0; else rc=$?; fi
-    if [[ "$rc" == 0 && -f "$DATASET/$EXPECTED_MANIFEST" ]] && python3 - "$PROGRESS" <<'PY'
-import json,sys
-try: raise SystemExit(0 if json.load(open(sys.argv[1])).get('collection_complete') is True else 1)
-except Exception: raise SystemExit(1)
-PY
-    then collector_pid=""; break; fi
-    echo "BLOCKED: collector exited before complete dataset rc=$rc" >&2; RUNNER_EXIT_CODE=4; exit 4
-  fi
-  if ! python3 - "$PROGRESS" "$scene" "$PUBLIC_GAZEBO_CALIBRATION_PER_SCENE_QUOTA" <<'PY'
-import json,sys
-try: d=json.load(open(sys.argv[1]))
-except Exception: raise SystemExit(1)
-raise SystemExit(0 if max(d.get('calibration_scene_counts',{}).get(sys.argv[2],0),d.get('holdout_scene_counts',{}).get(sys.argv[2],0)) >= int(sys.argv[3]) else 1)
-PY
-  then
-    [[ -f "$scene_root/runtime/map_lifecycle_manifest.json" ]] && reason=map_sealed_before_quota || reason=deadline_or_launch_exit
-    python3 - "$scene_root/scene_result.json" "$reason" <<'PY'
-import json,sys
-open(sys.argv[1],'w').write(json.dumps({'status':'BLOCKED','reason':sys.argv[2]},sort_keys=True)+'\n')
-PY
-    echo "BLOCKED: $reason" >&2; RUNNER_EXIT_CODE=4; exit 4
-  fi
-  python3 "$ROOT/scripts/public_gazebo_dosod_calibration.py" --scene-plan "$PUBLIC_GAZEBO_CALIBRATION_PLAN" --contract "$ROOT/config/dosod_s100p_hbm_compile_contract.json" --deactivate-scene-selector --scene-selector "$SELECTOR" >"$scene_root/selector_inactive.json"
-  if ! stop_verified; then PRIMARY_ERROR=verified_stop_failed; RUNNER_EXIT_CODE=4; exit 4; fi
-  formal_runtime_cleanup_groups "${GZ_PARTITION}" "$operator_pid" "$launch_pid"
+  start_quota_waiter "$scene"
+  set +e; wait -n -p finished "$collector_pid" "$launch_pid" "$operator_pid" "$WATCHDOG_PID" "$DEADLINE_PID" "$QUOTA_PID"; wait_status=$?; set -e
+  case "$finished" in
+    "$QUOTA_PID") (( wait_status == 0 )) || { RUNNER_EXIT_CODE=125; exit 125; }; QUOTA_PID="" ;;
+    "$WATCHDOG_PID") formal_runtime_record_memory_watchdog_exit "$WATCHDOG_PID" "$wait_status" || { RUNNER_EXIT_CODE=125; exit 125; }; WATCHDOG_PID=""; formal_runtime_memory_watchdog_tripped && { RUNNER_EXIT_CODE="$FORMAL_RUNTIME_MEMORY_BREACH_EXIT_CODE"; exit "$RUNNER_EXIT_CODE"; }; RUNNER_EXIT_CODE=125; exit 125 ;;
+    "$DEADLINE_PID") RUNNER_EXIT_CODE=124; exit 124 ;;
+    "$collector_pid")
+      [[ "$wait_status" == 0 && -f "$DATASET/$EXPECTED_MANIFEST" ]] || { RUNNER_EXIT_CODE=4; exit 4; }
+      collection_complete=true; collector_pid="" ;;
+    "$launch_pid"|"$operator_pid") RUNNER_EXIT_CODE=4; exit 4 ;;
+    *) RUNNER_EXIT_CODE=125; exit 125 ;;
+  esac
+  deadline_run "$(remaining_seconds)" "$scene_root/selector_inactive.json" python3 "$ROOT/scripts/public_gazebo_dosod_calibration.py" --scene-plan "$PUBLIC_GAZEBO_CALIBRATION_PLAN" --contract "$ROOT/config/dosod_s100p_hbm_compile_contract.json" --deactivate-scene-selector --scene-selector "$SELECTOR" || { RUNNER_EXIT_CODE=$?; exit "$RUNNER_EXIT_CODE"; }
+  set +e; wait_verified_stop; stop_status=$?; set -e
+  (( stop_status == 0 )) || { PRIMARY_ERROR=verified_stop_failed; RUNNER_EXIT_CODE=$stop_status; exit "$RUNNER_EXIT_CODE"; }
+  formal_runtime_cleanup_groups "${GZ_PARTITION}" "$operator_pid" "$launch_pid" || { PRIMARY_ERROR=scene_group_cleanup_failed; RUNNER_EXIT_CODE=125; exit 125; }
   launch_pid=""; operator_pid=""
+  # Do not TERM a healthy watcher after its target PGID is gone: wait for its
+  # natural COMPLETED evidence, racing the one absolute deadline.
+  set +e; wait -n -p finished "$WATCHDOG_PID" "$DEADLINE_PID"; watchdog_status=$?; set -e
+  [[ "$finished" == "$WATCHDOG_PID" && "$watchdog_status" == 0 ]] || { RUNNER_EXIT_CODE=124; [[ "$finished" == "$WATCHDOG_PID" ]] && RUNNER_EXIT_CODE=125; exit "$RUNNER_EXIT_CODE"; }
+  formal_runtime_record_memory_watchdog_exit "$WATCHDOG_PID" "$watchdog_status" || { RUNNER_EXIT_CODE=125; exit 125; }; WATCHDOG_PID=""
+  record_scene_runtime || { PRIMARY_ERROR=scene_watchdog_evidence_invalid; RUNNER_EXIT_CODE=125; exit 125; }
+  stop_private_group "$STOP_PID" || { PRIMARY_ERROR=stop_estop_cleanup_failed; RUNNER_EXIT_CODE=125; exit 125; }; STOP_PID=""
   if ! stop_estop_publisher; then PRIMARY_ERROR=stop_estop_cleanup_failed; RUNNER_EXIT_CODE=4; exit 4; fi
   scene_operator_started=false; scene_stop_attempted=false; scene_stop_verified=false
+  [[ "${collection_complete:-false}" == true ]] && break
 done < <(scene_rows)
-if [[ -n "$collector_pid" ]]; then wait "$collector_pid"; collector_pid=""; fi
+if [[ -n "$collector_pid" ]]; then
+  set +e; wait -n -p finished "$collector_pid" "$DEADLINE_PID"; collector_status=$?; set -e
+  [[ "$finished" == "$collector_pid" && "$collector_status" == 0 ]] || { RUNNER_EXIT_CODE=124; [[ "$finished" == "$collector_pid" ]] && RUNNER_EXIT_CODE=4; exit "$RUNNER_EXIT_CODE"; }
+  collector_pid=""
+fi
 if [[ "$MODE" == pilot ]]; then
-  deadline_run "$FINAL_VALIDATION_DEADLINE_SEC" "$RUN_ROOT/pilot_manifest_validation.json" python3 "$ROOT/scripts/public_gazebo_dosod_calibration.py" --scene-plan "$PUBLIC_GAZEBO_CALIBRATION_PLAN" --contract "$ROOT/config/dosod_s100p_hbm_compile_contract.json" --validate-pilot-manifest "$DATASET/pilot_manifest.json"
+  deadline_run "$FINAL_VALIDATION_DEADLINE_SEC" "$RUN_ROOT/pilot_manifest_validation.json" python3 "$ROOT/scripts/public_gazebo_dosod_calibration.py" --scene-plan "$PUBLIC_GAZEBO_CALIBRATION_PLAN" --contract "$ROOT/config/dosod_s100p_hbm_compile_contract.json" --validate-pilot-manifest "$DATASET/pilot_manifest.json" || { RUNNER_EXIT_CODE=$?; exit "$RUNNER_EXIT_CODE"; }
 else
   VALIDATION_SNAPSHOT="$RUN_ROOT/full_review_validation.json"
-  deadline_run "$FINAL_VALIDATION_DEADLINE_SEC" "$VALIDATION_SNAPSHOT" python3 "$ROOT/scripts/public_gazebo_dosod_calibration.py" --scene-plan "$PUBLIC_GAZEBO_CALIBRATION_PLAN" --contract "$ROOT/config/dosod_s100p_hbm_compile_contract.json" --review-receipt "$PUBLIC_GAZEBO_CALIBRATION_REVIEW_RECEIPT" --pilot-manifest "$PUBLIC_GAZEBO_CALIBRATION_PILOT_MANIFEST"
+  remaining_seconds >/dev/null && (( $(remaining_seconds) >= FINAL_VALIDATION_DEADLINE_SEC )) || { RUNNER_EXIT_CODE=124; exit 124; }
+  deadline_run "$FINAL_VALIDATION_DEADLINE_SEC" "$VALIDATION_SNAPSHOT" python3 "$ROOT/scripts/public_gazebo_dosod_calibration.py" --scene-plan "$PUBLIC_GAZEBO_CALIBRATION_PLAN" --contract "$ROOT/config/dosod_s100p_hbm_compile_contract.json" --review-receipt "$PUBLIC_GAZEBO_CALIBRATION_REVIEW_RECEIPT" --pilot-manifest "$PUBLIC_GAZEBO_CALIBRATION_PILOT_MANIFEST" || { RUNNER_EXIT_CODE=$?; exit "$RUNNER_EXIT_CODE"; }
+  ORACLE_FINAL_SUMMARY="$RUN_ROOT/preprocessing_oracle_final_validation.json"; export ORACLE_FINAL_SUMMARY
+  # Reserve the full 120-second oracle window after the review itself; do not
+  # start an oracle that can only be killed by the outer deadline.
+  final_oracle_budget="$(require_final_oracle_reserve)" || { RUNNER_EXIT_CODE=124; exit 124; }
+  setsid timeout -k 10 "$final_oracle_budget" python3 "$ROOT/scripts/validate_dosod_single_frame_preprocessing_oracle.py" --receipt "$PUBLIC_GAZEBO_CALIBRATION_PREPROCESSING_ORACLE" >"$ORACLE_FINAL_SUMMARY" & FINAL_ORACLE_PID=$!
+  set +e; wait -n -p finished "$FINAL_ORACLE_PID" "$DEADLINE_PID"; final_oracle_status=$?; set -e
+  [[ "$finished" == "$FINAL_ORACLE_PID" && "$final_oracle_status" == 0 ]] || { RUNNER_EXIT_CODE=124; [[ "$finished" == "$FINAL_ORACLE_PID" ]] && RUNNER_EXIT_CODE=125; exit "$RUNNER_EXIT_CODE"; }
 fi
+revalidate_final_inputs || { PRIMARY_ERROR=binding_or_git_drift; RUNNER_EXIT_CODE=125; exit 125; }
+FINAL_BINDING_SHA256="$(binding_digest)"; FINAL_GIT_HEAD="$(git -C "$ROOT" rev-parse HEAD)"; FINAL_GIT_TREE="$(git -C "$ROOT" rev-parse 'HEAD^{tree}')"; FINAL_GIT_STATUS="$(git -C "$ROOT" status --porcelain=v1)"
+export FINAL_BINDING_SHA256 FINAL_GIT_HEAD FINAL_GIT_TREE FINAL_GIT_STATUS ADMISSION_GIT_HEAD ADMISSION_GIT_TREE GIT_STATUS_AT_ADMISSION
+[[ "$FINAL_BINDING_SHA256" == "$ADMISSION_BINDING_SHA256" && "$FINAL_GIT_HEAD" == "$ADMISSION_GIT_HEAD" && "$FINAL_GIT_TREE" == "$ADMISSION_GIT_TREE" && "$FINAL_GIT_STATUS" == "$GIT_STATUS_AT_ADMISSION" ]] || { PRIMARY_ERROR=binding_or_git_drift; RUNNER_EXIT_CODE=125; exit 125; }
 DESIRED_STATE="$([[ "$MODE" == pilot ]] && echo NON_FORMAL_PILOT_CAPTURED || echo NON_FORMAL_CALIBRATION_FROZEN)"

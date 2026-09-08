@@ -18,7 +18,7 @@ def test_public_mobile_runner_reuses_lifecycle_operator_and_remains_read_only():
     assert "stop_verified || cleanup_failed=1" in source
     assert "operator-estop-rearm.log" in source
     assert "--once >\"$RUN_ROOT/operator_stop.log\"" not in source
-    assert 'if [[ -n "$collector_pid" ]]; then wait "$collector_pid"' in source
+    assert 'wait -n -p finished "$collector_pid" "$DEADLINE_PID"' in source
     assert 'write_receipt "$state" "$receipt_code" "$survivor"' in source
     assert "receipt_code=125" in source
     assert 'trap \'RUNNER_EXIT_CODE=$?; formal_runtime_exit_trap "$RUNNER_EXIT_CODE"\' EXIT' in source
@@ -34,6 +34,8 @@ def test_public_mobile_runner_has_explicit_non_formal_fixed_scene_pilot_and_full
     assert 'PUBLIC_GAZEBO_CALIBRATION_PILOT_MANIFEST' in source
     assert 'NON_FORMAL_PILOT_CAPTURED' in source
     assert 'preflight_args+=(--review-receipt' in source
+    assert 'PUBLIC_GAZEBO_CALIBRATION_PREPROCESSING_ORACLE' in source
+    assert 'validate_dosod_single_frame_preprocessing_oracle.py' in source
 
 
 def test_mapping_mobile_rgb_opt_in_retains_the_live_mid360_safety_source():

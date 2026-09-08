@@ -74,10 +74,11 @@ def test_runner_full_receipt_blocks_snapshot_bound_mutation(mutation: str) -> No
         sheet = root / "pilot_contact_sheet.png"; Image.new("RGB", (800, 800)).save(sheet); sheet_hash = hashlib.sha256(sheet.read_bytes()).hexdigest()
         pilot = root / "pilot.json"; pilot.write_text(json.dumps({"record_sha256":"a"*64,"contact_sheet":{"relative_path":sheet.name,"sha256":sheet_hash}}))
         review = root / "review.json"; review.write_text('{"approved":true}')
+        oracle = root / "oracle.json"; oracle.write_text('{"status":"ORACLE_VERIFIED"}')
         digest = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
         snapshot = root / "snapshot.json"; snapshot.write_text(json.dumps({"status":"NON_FORMAL_REVIEW_APPROVED","review_receipt_sha256":digest(review),"pilot_manifest_sha256":digest(pilot),"contact_sheet_sha256":sheet_hash,"record_sha256":"a"*64}))
         fixture = root / "fixture.sh"
-        fixture.write_bytes(("#!/usr/bin/env bash\nset -u\ncd \"$(dirname \"${BASH_SOURCE[0]}\")\"\nRECEIPT=receipt.json\nMODE=full\nDATASET=dataset\nEXPECTED_MANIFEST=calibration_manifest.json\nPUBLIC_GAZEBO_CALIBRATION_REVIEW_RECEIPT=review.json\nPUBLIC_GAZEBO_CALIBRATION_PILOT_MANIFEST=pilot.json\nPUBLIC_GAZEBO_CALIBRATION_TIMEOUT_SEC=14400\nVALIDATION_SNAPSHOT=snapshot.json\nPRIMARY_ERROR=''\n" + write_receipt + "\nset +e\nwrite_receipt NON_FORMAL_CALIBRATION_FROZEN 0 true\necho $?\n").encode("utf-8"))
+        fixture.write_bytes(("#!/usr/bin/env bash\nset -u\ncd \"$(dirname \"${BASH_SOURCE[0]}\")\"\nRECEIPT=receipt.json\nMODE=full\nDATASET=dataset\nEXPECTED_MANIFEST=calibration_manifest.json\nPUBLIC_GAZEBO_CALIBRATION_REVIEW_RECEIPT=review.json\nPUBLIC_GAZEBO_CALIBRATION_PILOT_MANIFEST=pilot.json\nPUBLIC_GAZEBO_CALIBRATION_PREPROCESSING_ORACLE=oracle.json\nPUBLIC_GAZEBO_CALIBRATION_TIMEOUT_SEC=14400\nVALIDATION_SNAPSHOT=snapshot.json\nPRIMARY_ERROR=''\n" + write_receipt + "\nset +e\nwrite_receipt NON_FORMAL_CALIBRATION_FROZEN 0 true\necho $?\n").encode("utf-8"))
         run = lambda: subprocess.run(["bash", fixture.relative_to(ROOT).as_posix()], cwd=ROOT, env={**os.environ, "PUBLIC_GAZEBO_CALIBRATION_TIMEOUT_SEC":"14400"}, text=True, capture_output=True, check=True, timeout=20)
         assert run().stdout.strip() == "0"
         receipt = json.loads((root / "receipt.json").read_text()); assert receipt["artifact"]["contact_sheet_sha256"] == sheet_hash and receipt["artifact"]["record_sha256"] == "a"*64

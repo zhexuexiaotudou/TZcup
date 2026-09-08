@@ -32,7 +32,7 @@
 3. A12 历史文档提到的 `product_acceptance_v1` 文件在当前仓库历史中不存在，不能假装仍由旧脚本覆盖。
 4. A15 的一次性 hidden materializer、consumed/freeze/output-summary 账本和最终 12 站点重验合同已闭合；当前状态仅是尚未在新鲜快照上执行，不是通过。
 5. A18 的 S100 性能部分与 A21 共用外部硬缺口，不能只标成“尚未运行”。
-6. A19 当前 26 门没有独立的全时长 soak/故障注入门；必须补齐或明确由哪些正式报告等价覆盖。
+6. A19 已完整编码产品标准的两小时长稳/18 故障合同，但 current main 尚无 canonical runtime producer；不能由手写 JSON 代替连续原始证据，保持 `BLOCKED_MISSING_CANONICAL_A19_RUNTIME_PRODUCER`。
 7. A20 的 receipt 入口现 fail-closed：仓库尚无能从 MCAP 重算正式产品 coverage、localization、session 和 closure 绑定的 canonical producer。AUTO-02/AUTO-03、coverage-only 和历史 AUTO-16 报告均不可替代，故 A20 保持 BLOCKED。
 8. A21 仍缺项目 DOSOD HBM、真实非仿真图像/标定与 holdout 数据、真实功率测量。板卡在线本身不等于验收通过。
 

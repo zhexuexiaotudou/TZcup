@@ -1,0 +1,56 @@
+{
+  "schema_version": 2,
+  "contract_id": "tzcup_formal_a19_two_hour_reliability_fault_contract_v2",
+  "goal": "A19",
+  "title": "two-hour full-product pipeline stability and fault recovery",
+  "current_state": "BLOCKED_MISSING_CANONICAL_A19_RUNTIME_PRODUCER",
+  "authoritative_source": {
+    "repository_commit": "e1d900faa255c8c2e56ca20d2b17b7af6d59ca7d",
+    "path": "docs/product-acceptance-spec-v1.md",
+    "lines": "1205-1280",
+    "sections": ["36. 两小时 Soak", "37. Fault Injection"],
+    "availability_on_current_main": false
+  },
+  "canonical_producer": {
+    "required": true,
+    "receipt_id": "tzcup_a19_canonical_runtime_receipt_v1",
+    "required_commit_binding": true,
+    "available_on_current_main": false,
+    "future_producer_required_semantics": ["chronological wall-clock time series with continuity and cadence", "launch command and zero exit code", "zero-survivor process receipt", "fault injection parameters and timestamped STOPPED then RECOVERED state sequence", "same-commit snapshot/session/runtime-closure binding"],
+    "blocker": "No canonical current-main runtime collector produces a receipt with full-product time series, command/exit/zero-survivor evidence, all 18 injected faults, and formal session/runtime-closure bindings. Hand-authored JSON can never pass A19."
+  },
+  "required_pipeline_components": ["Coverage", "Perception", "Tracking", "DynamicTrashMap", "Spot Cleaning", "Post-Clean Verification"],
+  "stability_gates": {
+    "minimum_duration_s": 7200,
+    "crash_count": 0,
+    "deadlock_count": 0,
+    "maximum_memory_growth_ratio": 0.05,
+    "queue_growth_count": 0,
+    "unexpected_model_reload_count": 0,
+    "persistent_tf_failure_count": 0,
+    "unrecoverable_watchdog_event_count": 0,
+    "unsafe_cleaning_action_count": 0,
+    "maximum_localization_xy_rmse_m": 0.05,
+    "maximum_localization_xy_p95_m": 0.05,
+    "maximum_estop_brake_latency_s": 1.0
+  },
+  "required_profiles": ["nominal", "transport_stress", "wet_surface", "degraded_drive"],
+  "required_faults": [
+    "rgb_freeze", "depth_freeze", "timestamp_skew", "camera_info_mismatch", "tf_unavailable", "invalid_depth",
+    "proposal_flood", "proposal_dropout", "classifier_exception", "classifier_timeout", "action_verifier_failure", "reobserve_timeout",
+    "cuda_provider_failure", "model_hash_mismatch", "corrupt_model", "sustained_slow_inference",
+    "nav2_path_unavailable", "dynamic_obstacle_blocks_observation"
+  ],
+  "required_fault_evidence": {
+    "require_injection_parameters": true,
+    "unsafe_pending_clean_outcomes": ["CANCELLED", "DEFERRED"],
+    "perception_health_states": ["DEGRADED", "ERROR"],
+    "required_safety_state": "STOPPED",
+    "required_recovery_state": "RECOVERED",
+    "require_safety_nav_operational": true,
+    "require_safe_coverage_recovery_when_possible": true
+  },
+  "required_runtime_health": ["Safety", "Nav2", "Watchdog"],
+  "required_raw_evidence": ["wall_clock_time_series", "launch_command", "process_exit", "zero_survivor", "fault_injection_receipt"],
+  "claim_boundary": "This contract preserves every product-standard stability and fault gate. It is fail-closed: until the canonical producer exists on current main and emits one current, hash-bound receipt, every candidate is BLOCKED."
+}
