@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 from types import SimpleNamespace
 
+import numpy as np
 import pytest
 
 from sanitation_perception.s100p_product_adapter import _partition_dosod_source_rois, _perf_latency_ms
@@ -255,6 +256,69 @@ def test_projection_inputs_require_one_exact_rgb_depth_camerainfo_frame():
     ):
         with pytest.raises(S100PProductAdapterError):
             validate_exact_rgbd_projection_binding(**(valid | update))
+
+
+@pytest.mark.parametrize(
+    "camera_k",
+    (
+        [1.0, 0.0, 2.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0],
+        (1.0, 0.0, 2.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0),
+        np.asarray((1.0, 0.0, 2.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0)),
+        (value for value in (1.0, 0.0, 2.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0)),
+    ),
+)
+def test_projection_inputs_freeze_iterable_camerainfo_k_representations(camera_k):
+    """Generators are intentionally accepted because the validator freezes them first."""
+    valid = {
+        "rgb_stamp_ns": 42,
+        "rgb_frame_id": "front_camera_optical",
+        "rgb_width": 4,
+        "rgb_height": 2,
+        "depth_stamp_ns": 42,
+        "depth_frame_id": "front_camera_optical",
+        "depth_width": 4,
+        "depth_height": 2,
+        "depth_encoding": "16UC1",
+        "camera_info_stamp_ns": 42,
+        "camera_info_frame_id": "front_camera_optical",
+        "camera_info_width": 4,
+        "camera_info_height": 2,
+        "camera_k": camera_k,
+    }
+    assert validate_exact_rgbd_projection_binding(**valid) is None
+
+
+@pytest.mark.parametrize(
+    "camera_k",
+    (
+        1.0,
+        "123456789",
+        (1.0,) * 8,
+        (1.0, 0.0, 2.0, 0.0, float("nan"), 1.0, 0.0, 0.0, 1.0),
+        (-1.0, 0.0, 2.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0),
+        (1.0, 0.0, 2.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0),
+        (value for value in (1.0,) * 8),
+    ),
+)
+def test_projection_inputs_reject_malformed_nonfinite_or_invalid_focal_camerainfo_k(camera_k):
+    valid = {
+        "rgb_stamp_ns": 42,
+        "rgb_frame_id": "front_camera_optical",
+        "rgb_width": 4,
+        "rgb_height": 2,
+        "depth_stamp_ns": 42,
+        "depth_frame_id": "front_camera_optical",
+        "depth_width": 4,
+        "depth_height": 2,
+        "depth_encoding": "16UC1",
+        "camera_info_stamp_ns": 42,
+        "camera_info_frame_id": "front_camera_optical",
+        "camera_info_width": 4,
+        "camera_info_height": 2,
+        "camera_k": camera_k,
+    }
+    with pytest.raises(S100PProductAdapterError):
+        validate_exact_rgbd_projection_binding(**valid)
 
 
 def test_dosod_rois_are_already_bound_to_the_original_848x480_source_frame():

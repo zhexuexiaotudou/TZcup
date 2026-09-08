@@ -579,7 +579,7 @@ def validate_exact_rgbd_projection_binding(
     camera_info_frame_id: str,
     camera_info_width: int,
     camera_info_height: int,
-    camera_k: Sequence[Any],
+    camera_k: Iterable[Any],
 ) -> None:
     """Reject any RGB-D/CameraInfo tuple not bound to one source frame."""
     stamp = _stamp_ns(rgb_stamp_ns, "RGB stamp")
@@ -594,17 +594,24 @@ def validate_exact_rgbd_projection_binding(
         or depth_encoding not in {"16UC1", "32FC1"}
     ):
         raise S100PProductAdapterError("depth is not exactly bound to the RGB frame")
+    try:
+        # RCLPY exposes CameraInfo.k as a numpy.ndarray on the S100P.  Freeze
+        # any iterable before validation so its contents are checked exactly
+        # once; this accepts that runtime representation without weakening any
+        # of the projection-binding invariants below.
+        camera_values = tuple(camera_k)
+    except TypeError as exc:
+        raise S100PProductAdapterError("CameraInfo.K must be an iterable of nine values") from exc
     if (
         _stamp_ns(camera_info_stamp_ns, "CameraInfo stamp") != stamp
         or _nonempty_string(camera_info_frame_id, "CameraInfo frame id") != frame_id
         or _positive_int(camera_info_width, "CameraInfo width") != width
         or _positive_int(camera_info_height, "CameraInfo height") != height
-        or not isinstance(camera_k, Sequence)
         or isinstance(camera_k, (str, bytes))
-        or len(camera_k) != 9
+        or len(camera_values) != 9
     ):
         raise S100PProductAdapterError("CameraInfo is not exactly bound to the RGB frame")
-    values = tuple(_finite_number(value, "CameraInfo.K") for value in camera_k)
+    values = tuple(_finite_number(value, "CameraInfo.K") for value in camera_values)
     if values[0] <= 0.0 or values[4] <= 0.0:
         raise S100PProductAdapterError("CameraInfo focal lengths must be positive")
 

@@ -4434,6 +4434,12 @@
           "sha256": "192d6a7db318698d668b9845dadd36541f389b201d1fd009ae6e84c5490d9dc9",
           "valid": true
         },
+        "product_adapter_core_source": {
+          "byte_size": 34081,
+          "path": "starter_ws/src/sanitation_perception/sanitation_perception/s100p_product_adapter_core.py",
+          "sha256": "e0cda94846e1246ca121e8a1ff4ce77c4a07dfb69d5100c63196dda55e40424b",
+          "valid": true
+        },
         "product_adapter_source": {
           "byte_size": 42244,
           "path": "starter_ws/src/sanitation_perception/sanitation_perception/s100p_product_adapter.py",

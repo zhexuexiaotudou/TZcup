@@ -190,7 +190,7 @@ def test_development_artifact_mode_is_explicit_and_cannot_leak_into_formal_launc
     assert "load_verified_board_artifact_contract(**artifact_kwargs)" in adapter
     assert "from .s100p_development_artifact_contract import" in adapter
     core = PACKAGE / "sanitation_perception" / "s100p_product_adapter_core.py"
-    assert hashlib.sha256(core.read_bytes()).hexdigest() == "57c52aead86ebff5d10b4257cd08eb4e2a2ba64b50ebd39dab8ac55f613ce3fd"
+    assert hashlib.sha256(core.read_bytes()).hexdigest() == "e0cda94846e1246ca121e8a1ff4ce77c4a07dfb69d5100c63196dda55e40424b"
 
 
 def test_development_launch_is_ast_identical_to_formal_except_for_its_mode():
@@ -213,7 +213,7 @@ def test_development_launch_is_ast_identical_to_formal_except_for_its_mode():
     assert ast.dump(formal, include_attributes=False) == ast.dump(development, include_attributes=False)
 
 
-def test_formal_bundle_rebind_is_limited_to_the_product_adapter_source_row():
+def test_formal_bundle_rebinds_both_product_adapter_runtime_sources():
     manifest = json.loads((REPOSITORY_ROOT / "config/s100p_formal_board_bundle_manifest.json").read_text(encoding="utf-8"))
     assert manifest["status"] == "COPYABLE_MANIFEST_ONLY_BLOCKED_DEPLOYMENT"
     assert manifest["copy_boundary"]["payload_copy_authorized"] is False
@@ -222,7 +222,8 @@ def test_formal_bundle_rebind_is_limited_to_the_product_adapter_source_row():
         "dosod_hbm_compile_contract", "offline_predeploy_product_bundle", "board_launch_parameter_record",
         "board_overlay_package_contract", "dosod_edgesam_s100_profile", "formal_ros2_launch",
         "project_perception_package_manifest", "diagnostic_compat_source", "nv12_adapter_source",
-        "product_adapter_source", "project_perception_entry_points", "perception_interfaces_package_manifest",
+        "product_adapter_source", "product_adapter_core_source", "project_perception_entry_points",
+        "perception_interfaces_package_manifest",
     }
     adapter = PACKAGE / "sanitation_perception" / "s100p_product_adapter.py"
     assert rows["product_adapter_source"] == {
@@ -230,6 +231,13 @@ def test_formal_bundle_rebind_is_limited_to_the_product_adapter_source_row():
         "byte_size": adapter.stat().st_size,
         "sha256": hashlib.sha256(adapter.read_bytes()).hexdigest(),
         "role": "product_adapter_source",
+    }
+    core = PACKAGE / "sanitation_perception" / "s100p_product_adapter_core.py"
+    assert rows["product_adapter_core_source"] == {
+        "path": "starter_ws/src/sanitation_perception/sanitation_perception/s100p_product_adapter_core.py",
+        "byte_size": core.stat().st_size,
+        "sha256": hashlib.sha256(core.read_bytes()).hexdigest(),
+        "role": "product_adapter_core_source",
     }
     assert rows["formal_ros2_launch"]["sha256"] == "cbe73e72bb3dbb76131766ed6d241602a74b4dc1ccc4467c1ebc26454507a7c5"
     assert rows["dosod_hbm_compile_contract"]["sha256"] == "05a10c9d427a7836366f355e455dda96f3c7a1aa6d5aad2ca087d21065a3dd7d"

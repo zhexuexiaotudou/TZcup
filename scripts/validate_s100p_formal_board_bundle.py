@@ -27,6 +27,7 @@ EXPECTED_BOUND_ROLES = {
     "diagnostic_compat_source",
     "nv12_adapter_source",
     "product_adapter_source",
+    "product_adapter_core_source",
     "project_perception_entry_points",
     "perception_interfaces_package_manifest",
 }
