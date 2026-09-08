@@ -64,7 +64,7 @@ def test_ackermann_visual_demo_keeps_gnss_gate_and_records_diagnostics():
     assert '"controller_id": "DubinsPath"' not in connector_executor
 
 
-def test_live_connector_replan_reuses_mppi_and_preserves_reverse_controller():
+def test_ackermann_hybrid_sections_use_mppi_forward_and_reverse_rpp():
     probe = (
         ROOT
         / "starter_ws/src/sanitation_coverage/sanitation_coverage/coverage_probe.py"
@@ -73,15 +73,11 @@ def test_live_connector_replan_reuses_mppi_and_preserves_reverse_controller():
         probe.index("    def _follow_ackermann_hybrid_plan"):
         probe.index("    def _follow_component")
     ]
-    connector_executor = probe[
-        probe.index("    def _follow_forward_dubins_primitives"):
-        probe.index("    def _execute_ackermann_swath")
-    ]
-
-    assert "forward_controller_id=None" in hybrid_executor
     assert '"ReversePath"' in hybrid_executor
-    assert 'else (forward_controller_id or "FollowPath")' in hybrid_executor
-    assert 'final_goal, forward_controller_id="ConnectorPath"' in connector_executor
+    assert 'else "ConnectorPath"' in hybrid_executor
+    assert "forward_controller_id" not in hybrid_executor
+    assert "FollowPath" not in hybrid_executor
+    assert "segmented ConnectorPath/ReversePath" in hybrid_executor
 
 
 def test_launcher_can_run_a_bounded_physical_dynamic_matrix():

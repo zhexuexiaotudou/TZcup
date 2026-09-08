@@ -2025,15 +2025,14 @@ class CoverageProbe(Node):
         return result
 
     def _follow_ackermann_hybrid_plan(
-        self, pose, *, precomputed_plan=None, replan_depth=0,
-        forward_controller_id=None,
+        self, pose, *, precomputed_plan=None, replan_depth=0
     ):
         """Plan once, split reverse cusps, and follow each section explicitly."""
         if replan_depth > 6:
             return {
                 "success": False,
                 "error": "hybrid_cusp_replan_limit_exceeded",
-                "controller": "Smac Hybrid cusp-replan + segmented FollowPath",
+                "controller": "Smac Hybrid cusp-replan + segmented ConnectorPath/ReversePath",
             }
         if not self._wait_controller_active():
             return {
@@ -2112,7 +2111,7 @@ class CoverageProbe(Node):
             return {
                 **plan,
                 "success": False,
-                "controller": "Smac Hybrid plan-once + segmented FollowPath",
+                "controller": "Smac Hybrid plan-once + segmented ConnectorPath/ReversePath",
             }
         planner_source = plan.get("planner_id", "Smac Hybrid")
         sections = split_hybrid_path_by_direction(plan.get("path_poses", []))
@@ -2121,7 +2120,7 @@ class CoverageProbe(Node):
                 **plan,
                 "success": False,
                 "error": "hybrid_path_has_no_motion_sections",
-                "controller": "Smac Hybrid plan-once + segmented FollowPath",
+                "controller": "Smac Hybrid plan-once + segmented ConnectorPath/ReversePath",
             }
 
         section_results = []
@@ -2153,7 +2152,7 @@ class CoverageProbe(Node):
                     # A transit endpoint is immediately followed by a
                     # separately controlled entry segment, so use the
                     # dedicated hand-off tolerance on the final section too.
-                    # This prevents stateful RPP goal handling from driving a
+                    # This prevents stateful controller goal handling from driving a
                     # non-holonomic chassis around the completed loop merely
                     # to improve yaw by a few tenths of a radian.
                     "goal_checker_id": (
@@ -2166,17 +2165,16 @@ class CoverageProbe(Node):
                         if section["direction"] == "REVERSE"
                         else self.speed_limits_mps["FORWARD"]
                     ),
-                    # A live connector recovery is a forward-only Dubins
-                    # path. Reuse its MPPI controller rather than applying
-                    # the generic RPP transit controller; reverse sections
-                    # retain their established reverse controller.
+                    # Ackermann forward sections use the forward-only MPPI
+                    # controller; reverse sections retain their established
+                    # reverse controller.
                     "controller_id": (
                         "ReversePath"
                         if section["direction"] == "REVERSE"
-                        else (forward_controller_id or "FollowPath")
+                        else "ConnectorPath"
                     ),
                     # Replaying a plan whose start is now metres behind the
-                    # robot is unsafe and lets RPP select the wrong branch of
+                    # robot is unsafe and lets a controller select the wrong branch of
                     # a looping path. Fail closed; the caller may replan from
                     # the measured stopped pose instead.
                     "retry_limit_override": 0,
@@ -2198,9 +2196,7 @@ class CoverageProbe(Node):
                 # onto that section: such a chord can introduce an unplanned
                 # direction change exactly at the cusp.
                 continuation = self._follow_ackermann_hybrid_plan(
-                    pose,
-                    replan_depth=replan_depth + 1,
-                    forward_controller_id=forward_controller_id,
+                    pose, replan_depth=replan_depth + 1
                 )
                 section_result["replanned_continuation"] = continuation
                 if continuation.get("success"):
@@ -2208,7 +2204,7 @@ class CoverageProbe(Node):
                         "success": True,
                         "error": None,
                         "controller": (
-                            "Smac Hybrid cusp-replan + segmented FollowPath"
+                            "Smac Hybrid cusp-replan + segmented ConnectorPath/ReversePath"
                         ),
                         "planner": planner_source,
                         "goal_pose": pose,
@@ -2232,7 +2228,7 @@ class CoverageProbe(Node):
                 section_results[-1].get("error", "hybrid_section_failed")
                 if section_results else "hybrid_section_failed"
             ),
-            "controller": "Smac Hybrid plan-once + segmented FollowPath",
+            "controller": "Smac Hybrid plan-once + segmented ConnectorPath/ReversePath",
             "planner": planner_source,
             "goal_pose": pose,
             "planned_length_m": plan.get("path_length_m"),
@@ -2373,7 +2369,7 @@ class CoverageProbe(Node):
                 if handoff["requires_replan"]:
                     # Primitive goal checkers intentionally tolerate finite
                     # curvature-end error, but the next static arc is unsafe
-                    # once that error exceeds the RPP pruning envelope. Plan
+                    # once that error exceeds the static-path pruning envelope. Plan
                     # the remaining brush-off connector from the measured
                     # pose and follow it as one direction-continuous section.
                     final_goal = {
@@ -2381,9 +2377,7 @@ class CoverageProbe(Node):
                         "y": float(component["points"][-1][1]),
                         "yaw": float(headings[-1]),
                     }
-                    recovery = self._follow_ackermann_hybrid_plan(
-                        final_goal, forward_controller_id="ConnectorPath"
-                    )
+                    recovery = self._follow_ackermann_hybrid_plan(final_goal)
                     return {
                         "success": bool(recovery.get("success")),
                         "error": None if recovery.get("success") else recovery.get(
@@ -2406,7 +2400,7 @@ class CoverageProbe(Node):
                             "terminal_tracking_error"
                         ),
                         "controller": (
-                            "curvature-segmented FollowPath + live hybrid replan"
+                            "curvature-segmented ConnectorPath + live hybrid replan"
                         ),
                         "live_handoff_replan": True,
                         "handoff_error": handoff,
@@ -2465,7 +2459,7 @@ class CoverageProbe(Node):
             "planned_length_m": path_length(component["points"]),
             "goal_pose": terminal.get("goal_pose"),
             "terminal_tracking_error": terminal.get("terminal_tracking_error"),
-            "controller": "curvature-segmented FollowPath",
+            "controller": "curvature-segmented ConnectorPath",
         }
 
     def _execute_ackermann_swath(self, component, alignment_distance_m):
