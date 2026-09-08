@@ -3,6 +3,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def test_mapping_lifecycle_node_name_is_explicit_and_stable():
+    source = (ROOT / "starter_ws/src/sanitation_formal_campus_integration/launch/formal_campus_map_lifecycle.launch.py").read_text(encoding="utf-8")
+    assert 'executable="formal-map-lifecycle-manager",\n                    name="formal_map_lifecycle_manager",' in source
+
+
 def test_mapping_high_bandwidth_default_is_opt_in_and_cleaning_stays_true():
     source = (ROOT / "starter_ws/src/sanitation_formal_campus_integration/launch/formal_campus_map_lifecycle.launch.py").read_text(encoding="utf-8")
     assert 'DeclareLaunchArgument(\n            "mapping_high_bandwidth_sensor_runtime", default_value="false"' in source

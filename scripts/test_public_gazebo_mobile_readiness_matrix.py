@@ -58,6 +58,13 @@ def test_matrix_fake_ros2_cases() -> None:
 mode=${FAKE_MODE:-ok}
 printf '%s\n' "$*" >> "${FAKE_ARGS_LOG:?}"
 if [[ "$1 $2" == "node list" ]]; then
+  if [[ $mode == delayed_node || $mode == old_alias ]]; then
+    count_file=${FAKE_NODE_LIST_COUNT:?}
+    printf '1\n' >> "$count_file"
+    count=$(wc -l < "$count_file")
+    ((count == 1)) && { echo /formal_legacy_topic_adapter; echo /formal_vehicle_training_gt_bridge; exit 0; }
+    [[ $mode == old_alias ]] && { echo /_formal_map_lifecycle_manager; echo /formal_legacy_topic_adapter; echo /formal_vehicle_training_gt_bridge; exit 0; }
+  fi
   echo /formal_map_lifecycle_manager
   echo /formal_legacy_topic_adapter
   echo /formal_vehicle_training_gt_bridge
@@ -97,9 +104,10 @@ exit 2
             newline="\n",
         )
         fake.chmod(0o755)
-        arguments_log = raw / "ros2-arguments.log"
         cases = [
             ("ok", 0, "independent"),
+            ("delayed_node", 0, "independent"),
+            ("old_alias", 124, "independent"),
             ("missing", 2, "independent"),
             ("duplicate", 2, "independent"),
             ("wrong_owner", 2, "independent"),
@@ -115,6 +123,7 @@ exit 2
         ]
         for index, (mode, expected_rc, topology) in enumerate(cases):
             log = raw / f"{index}-{mode}.log"
+            arguments_log = raw / f"{index}-{mode}.ros2-arguments.log"
             leader = "setsid sleep 80 & p=$!"
             session = ""
             expected = ""
@@ -133,6 +142,8 @@ export PUBLIC_GAZEBO_CALIBRATION_PARSER="{PARSER}"
 export PUBLIC_GAZEBO_CALIBRATION_ROS2_BIN="{_bash(fake)}"
 export FAKE_ARGS_LOG="{_bash(arguments_log)}"
 export FAKE_MODE="{mode}"
+export FAKE_NODE_LIST_COUNT="{_bash(raw / f'{index}.node-list-count')}"
+export PUBLIC_GAZEBO_CALIBRATION_READINESS_POLL_SECONDS=0.05
 {session}
 {leader}
 cleanup() {{ {cleanup}; }}
@@ -150,11 +161,24 @@ exit "$r"
             assert receipt["returncode"] == expected_rc
             assert receipt["status"] == ("READY" if expected_rc == 0 else "BLOCKED")
             assert receipt["operations"] or topology == "leader_exit_child"
+            assert receipt["command_count"] == len(receipt["operations"])
             assert all({"role", "path", "sha256", "elapsed_ms", "returncode", "zero_survivor"} <= row.keys() for row in receipt["operations"])
             assert all(row["zero_survivor"] for row in receipt["operations"])
-        commands = arguments_log.read_text(encoding="utf-8").splitlines()
-        node_lists = [command for command in commands if command.startswith("node list")]
-        assert node_lists
-        assert all(command == "node list --no-daemon" for command in node_lists)
+            commands = (
+                arguments_log.read_text(encoding="utf-8").splitlines()
+                if arguments_log.exists()
+                else []
+            )
+            if topology != "leader_exit_child":
+                node_lists = [command for command in commands if command.startswith("node list")]
+                assert node_lists
+                assert all(command == "node list --no-daemon" for command in node_lists)
+            if mode in {"delayed_node", "old_alias"}:
+                assert sum(
+                    row["role"].startswith("nodes-discovery-")
+                    for row in receipt["operations"]
+                ) >= 2
+            if mode == "old_alias":
+                assert "node info /_formal_map_lifecycle_manager" not in commands
     finally:
         shutil.rmtree(raw)

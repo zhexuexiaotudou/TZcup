@@ -4,8 +4,11 @@ public_mobile_mapping_readiness() {
   local leader="$1" log="$2" limit="${3:-60}" expected_pgid="${4:-}"
   local ros2bin="${PUBLIC_GAZEBO_CALIBRATION_ROS2_BIN:-ros2}"
   local started=$SECONDS deadline rc=0 count=0 node topic remain pgid expected file owner
+  local attempt=0 all_ready=false node_count poll_seconds="${PUBLIC_GAZEBO_CALIBRATION_READINESS_POLL_SECONDS:-0.25}"
   local -a required_nodes=(/formal_map_lifecycle_manager /formal_legacy_topic_adapter /formal_vehicle_training_gt_bridge)
   [[ "$limit" =~ ^[1-9][0-9]*$ && ! -e "$log" && ! -L "$log" && ! -e "$log.receipt.json" && ! -L "$log.receipt.json" ]] || return 125
+  [[ "$poll_seconds" =~ ^[0-9]+([.][0-9]+)?$ ]] || return 125
+  awk -v value="$poll_seconds" 'BEGIN { exit !(value > 0 && value <= 5) }' || return 125
   deadline=$((SECONDS + limit))
   : >"$log"
 
@@ -26,6 +29,7 @@ public_mobile_mapping_readiness() {
   group_is_live() { kill -0 -- "-$1" 2>/dev/null; }
   run_probe() {
     local name="$1" begun="$(date +%s%3N)" ret=0 zero=true state grace p until
+    ((count += 1))
     shift
     remain=$((deadline - SECONDS))
     file="$log.$name"
@@ -68,12 +72,29 @@ PY
   }
 
   leader_is_live && leader_pgid_is_expected || rc=125
+  while ((rc == 0 && SECONDS < deadline)); do
+    leader_is_live && leader_pgid_is_expected || { rc=125; break; }
+    attempt=$((attempt + 1))
+    run_probe "nodes-discovery-$attempt.list" "$ros2bin" node list --no-daemon || { rc=$?; break; }
+    all_ready=true
+    for node in "${required_nodes[@]}"; do
+      node_count="$(grep -Fxc "$node" "$file" || true)"
+      case "$node_count" in
+        0) all_ready=false ;;
+        1) ;;
+        *) rc=2; break ;;
+      esac
+    done
+    ((rc == 0)) || break
+    [[ "$all_ready" == true ]] && break
+    ((SECONDS < deadline)) && sleep "$poll_seconds"
+  done
+  if ((rc == 0)) && [[ "$all_ready" != true ]]; then
+    rc=124
+  fi
   for node in "${required_nodes[@]}"; do
     ((rc == 0 && deadline - SECONDS > 0)) || { ((rc == 0)) && rc=124; break; }
-    run_probe "node-${node//\//_}.list" "$ros2bin" node list --no-daemon || { rc=$?; break; }
-    [[ "$(grep -Fxc "$node" "$file")" == 1 ]] || { rc=2; break; }
     run_probe "node-${node//\//_}.info" "$ros2bin" node info "$node" || { rc=$?; break; }
-    ((count += 2))
   done
   for topic in /camera/color/image_raw /camera/color/camera_info /g2/semantic_gt/labels_map /g2/instance_gt/labels_map; do
     ((rc == 0 && deadline - SECONDS > 0)) || { ((rc == 0)) && rc=124; break; }
@@ -82,7 +103,6 @@ PY
     case "$topic" in /camera/*) owner='formal_legacy_topic_adapter';; *) owner='formal_vehicle_training_gt_bridge';; esac
     python3 "${PUBLIC_GAZEBO_CALIBRATION_PARSER:?}" "$file" "$expected" "$owner" || { rc=2; break; }
     run_probe "topic-${topic//\//_}.message" "$ros2bin" topic echo --once "$topic" "$expected" || { rc=$?; break; }
-    ((count += 1))
   done
   if ((rc == 0)); then
     run_probe clock-first "$ros2bin" topic echo --once /clock rosgraph_msgs/msg/Clock || rc=$?
@@ -97,7 +117,6 @@ def stamp(p):
  return int(a.group(1))*1_000_000_000+int(b.group(1))
 raise SystemExit(0 if stamp(sys.argv[2])>stamp(sys.argv[1]) else 2)
 PY
-    ((count += 2))
   fi
   leader_is_live && leader_pgid_is_expected || rc=125
   python3 - "$log.receipt.json" "$rc" "$count" "$limit" "$((SECONDS-started))" "$log" <<'PY'

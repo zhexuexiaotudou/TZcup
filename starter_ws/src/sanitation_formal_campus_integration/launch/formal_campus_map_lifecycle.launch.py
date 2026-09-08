@@ -354,6 +354,7 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                 Node(
                     package="sanitation_formal_campus_integration",
                     executable="formal-map-lifecycle-manager",
+                    name="formal_map_lifecycle_manager",
                     parameters=[{
                         "use_sim_time": True,
                         "mode": mode,
