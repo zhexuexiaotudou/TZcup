@@ -86,7 +86,7 @@ def test_ackermann_hybrid_sections_use_mppi_forward_and_reverse_rpp():
     assert '"curvature_primitive_count"' in hybrid_executor
 
 
-def test_ackermann_entry_replans_from_live_pose_with_strict_acceptance():
+def test_ackermann_entry_uses_existing_brush_off_swath_lead_in():
     probe = (
         ROOT
         / "starter_ws/src/sanitation_coverage/sanitation_coverage/coverage_probe.py"
@@ -98,10 +98,11 @@ def test_ackermann_entry_replans_from_live_pose_with_strict_acceptance():
 
     assert "self.estimated_pose[:2]" in entry_executor
     assert "entry_points(current_point, first_component)" in entry_executor
-    assert "self._follow_ackermann_hybrid_plan(" in entry_executor
-    assert 'terminal_goal_checker_id="goal_checker"' in entry_executor
+    assert "self._follow_ackermann_hybrid_plan(" not in entry_executor
     assert '"brush_enabled": False' in entry_executor
-    assert "precomputed_plan=" not in entry_executor
+    assert '"strategy": "integrated_ackermann_swath_lead_in"' in entry_executor
+    assert '"motion_deferred_to_first_swath": True' in entry_executor
+    assert '"alignment_distance_m": float(alignment_distance_m)' in entry_executor
     assert "self._follow_component({" in entry_executor
 
 

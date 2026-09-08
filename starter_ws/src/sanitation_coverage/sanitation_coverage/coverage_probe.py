@@ -911,7 +911,8 @@ class CoverageProbe(Node):
             if transit["success"]:
                 self._set_state("ALIGNING")
                 transit["entry"] = self._follow_entry_to_first_swath(
-                    selected_components[0], selected["staging_pose"]
+                    selected_components[0], selected["staging_pose"],
+                    endpoint_extension,
                 )
                 transit["success"] = transit["entry"]["success"]
         component_results = []
@@ -2019,7 +2020,9 @@ class CoverageProbe(Node):
         result["terminal_tracking_error"] = self._tracking_error(pose)
         return result
 
-    def _follow_entry_to_first_swath(self, first_component, staging_pose):
+    def _follow_entry_to_first_swath(
+        self, first_component, staging_pose, alignment_distance_m
+    ):
         """Reach the brush-off lead-in without violating chassis kinematics."""
         self._set_brush(False)
         current_point = self.estimated_pose[:2] if self.estimated_pose else (
@@ -2030,27 +2033,34 @@ class CoverageProbe(Node):
             heading = segment_heading(
                 first_component["points"][0], first_component["points"][1]
             )
-            target = points[-1]
-            result = self._follow_ackermann_hybrid_plan(
-                {"x": target[0], "y": target[1], "yaw": heading},
-                # Entry previously used the strict general goal checker. Keep
-                # that acceptance contract instead of inheriting the wider
-                # connector hand-off tolerance used between brush-off arcs.
-                terminal_goal_checker_id="goal_checker",
-            )
-            result.update({
+            swath_start = first_component["points"][0]
+            goal_pose = {
+                "x": swath_start[0], "y": swath_start[1], "yaw": heading,
+            }
+            # Ackermann swaths already include a long, brush-off approach and
+            # _execute_ackermann_swath keeps the brush disabled throughout it.
+            # Running a second short chord here is both redundant and
+            # kinematically invalid when the staging controller hands off with
+            # finite pose error. Let the continuous swath controller settle on
+            # its path before the measured-distance brush gate opens.
+            return {
+                "success": True,
+                "error": None,
                 "kind": "entry",
                 "index": -1,
                 "brush_enabled": False,
-            })
-            return result
+                "strategy": "integrated_ackermann_swath_lead_in",
+                "motion_deferred_to_first_swath": True,
+                "alignment_distance_m": float(alignment_distance_m),
+                "goal_pose": goal_pose,
+                "terminal_tracking_error": self._tracking_error(goal_pose),
+            }
         return self._follow_component({
             "kind": "entry", "index": -1, "brush": False, "points": points,
         })
 
     def _follow_ackermann_hybrid_plan(
-        self, pose, *, precomputed_plan=None, replan_depth=0,
-        terminal_goal_checker_id="connector_goal_checker",
+        self, pose, *, precomputed_plan=None, replan_depth=0
     ):
         """Plan once, split cusps and forward curvature primitives explicitly."""
         if replan_depth > 6:
@@ -2233,7 +2243,7 @@ class CoverageProbe(Node):
                     # non-holonomic chassis around the completed loop merely
                     # to improve yaw by a few tenths of a radian.
                     "goal_checker_id": (
-                        terminal_goal_checker_id
+                        "connector_goal_checker"
                         if index == len(sections) - 1
                         else (
                             "cusp_goal_checker"
@@ -2284,9 +2294,7 @@ class CoverageProbe(Node):
                 # onto that section: such a chord can introduce an unplanned
                 # direction change exactly at the cusp.
                 continuation = self._follow_ackermann_hybrid_plan(
-                    pose,
-                    replan_depth=replan_depth + 1,
-                    terminal_goal_checker_id=terminal_goal_checker_id,
+                    pose, replan_depth=replan_depth + 1
                 )
                 section_result["replanned_continuation"] = continuation
                 if continuation.get("success"):
