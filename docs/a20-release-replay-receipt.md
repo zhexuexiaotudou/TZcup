@@ -18,6 +18,7 @@ receipt 才能绑定当前 snapshot/session/closure、source/model/config/datase
 SHA256SUMS、SBOM、容器/许可/依赖锁以及按 [`docs/rollback.md`](rollback.md) 真实演练的 rollback
 报告。该 producer 还必须拒绝 historical AUTO-16 reuse、路径逸出、符号链接与 read/write TOCTOU。
 
-CLI 目前仅为上述未完成 contract 保留安全的 fail-closed 边界：repository root、receipt 和 output
-必须为绝对、仓库内、非符号链接路径；output 必须尚不存在，并以原子文件写入。它仍会以非零
-退出，直到 canonical producer 可用。
+CLI 目前仅为上述未完成 contract 保留安全的 fail-closed 边界：它只支持具备 `dir_fd` 与
+`O_NOFOLLOW` 的 POSIX/WSL CPython；Windows CPython 会在解析后的第一项安全检查稳定地拒绝，
+不会半执行。repository root、receipt 和 output 必须为绝对、仓库内、非符号链接路径；output
+必须尚不存在，并以原子文件写入。它仍会以非零退出，直到 canonical producer 可用。

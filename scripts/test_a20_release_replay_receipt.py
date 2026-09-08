@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 from pathlib import Path
 
 import pytest
@@ -11,6 +12,7 @@ from a20_release_replay_receipt import (
     _open_bound_input,
     _open_root_directory,
     _output_in_root,
+    _require_posix_descriptor_api,
     _read_bound_json,
     _regular_in_root,
     _write_fresh_output,
@@ -96,6 +98,55 @@ def test_secure_output_rejects_pending_symlink_and_commit_race(tmp_path: Path, m
     finally:
         os.close(root_descriptor)
     assert output.read_text(encoding="utf-8") == "attacker"
+
+
+@pytest.mark.skipif(os.name == "nt", reason="secure dir_fd traversal is POSIX-only")
+def test_secure_output_reopens_bound_root_after_parent_swap(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    root = tmp_path / "root"
+    parent = root / "evidence"
+    parent.mkdir(parents=True)
+    output = parent / "result.json"
+    retained = root / "retained-evidence"
+    real_link = os.link
+
+    def link_then_swap_parent(*args, **kwargs):
+        result = real_link(*args, **kwargs)
+        parent.rename(retained)
+        parent.mkdir()
+        output.write_text("attacker", encoding="utf-8")
+        return result
+
+    monkeypatch.setattr(receipt_module.os, "link", link_then_swap_parent)
+    root_descriptor = _open_root_directory(root)
+    try:
+        with pytest.raises(ValueError, match="identity mismatch"):
+            _write_fresh_output(root, root_descriptor, output, {"blocked": True})
+    finally:
+        os.close(root_descriptor)
+    assert output.read_text(encoding="utf-8") == "attacker"
+    assert (retained / "result.json").is_file()
+
+
+def test_windows_cli_is_explicitly_blocked_before_path_processing(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+    if os.name != "nt":
+        monkeypatch.setattr(receipt_module.os, "name", "nt")
+        with pytest.raises(ValueError, match="POSIX/WSL-only"):
+            _require_posix_descriptor_api()
+        return
+
+    root = tmp_path / "root"
+    root.mkdir()
+    monkeypatch.setattr(sys, "argv", [
+        "a20_release_replay_receipt.py",
+        "--repository-root", str(root),
+        "--receipt", str(root / "receipt.json"),
+        "--output", str(root / "report.json"),
+    ])
+
+    assert receipt_module.main() == 2
+    report = json.loads(capsys.readouterr().out)
+    assert report["status"] == "A20_RECEIPT_STATIC_BLOCKED"
+    assert "POSIX/WSL-only" in report["error"]
 
 
 @pytest.mark.skipif(os.name == "nt", reason="secure dir_fd traversal is POSIX-only")

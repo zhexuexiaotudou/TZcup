@@ -36,15 +36,13 @@ def test_replay_fails_when_ros2_bag_play_did_not_complete():
     assert report["pass"] is False
 
 
-def test_product_replay_receipts_require_five_distinct_passing_bags():
+def test_product_replay_reports_stay_blocked_even_when_hand_authored_as_passing():
     audit = {"schema": "tzcup.coverage_mcap_replay.v1", "pass": True, "gates": {"play": True}}
     replays = [
         {"bag_sha256": f"{index:x}" * 64, "product_replay": True, "audit": audit}
         for index in range(5)
     ]
 
-    assert validate_product_replay_reports(replays)["passed"] is True
-    replays[-1]["bag_sha256"] = replays[0]["bag_sha256"]
-    assert validate_product_replay_reports(replays)["passed"] is False
-    replays[-1]["bag_sha256"] = "z" * 64
-    assert validate_product_replay_reports(replays)["passed"] is False
+    result = validate_product_replay_reports(replays)
+    assert result["passed"] is False
+    assert result["status"] == "A20_PRODUCT_REPLAY_STATIC_BLOCKED"

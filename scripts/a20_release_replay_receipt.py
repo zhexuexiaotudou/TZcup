@@ -97,6 +97,15 @@ def _identity(value: os.stat_result) -> tuple[int, int, int, int, int]:
     )
 
 
+def _require_posix_descriptor_api() -> None:
+    """Refuse the CLI where CPython cannot enforce its descriptor contract."""
+
+    if os.name == "nt" or os.open not in os.supports_dir_fd:
+        raise ValueError(
+            "A20 receipt CLI is POSIX/WSL-only: this CPython lacks secure dir_fd traversal"
+        )
+
+
 def _open_root_directory(root: Path) -> int:
     flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
     if not root.is_absolute():
@@ -231,9 +240,14 @@ def _write_fresh_output(root: Path, root_descriptor: int, path: Path, payload: d
             )
         except FileExistsError as exc:
             raise ValueError("output appeared during commit") from exc
-        committed = os.stat(path.name, dir_fd=directory, follow_symlinks=False)
-        if not stat.S_ISREG(committed.st_mode) or _identity(committed)[:2] != expected_file:
-            raise ValueError("output commit identity mismatch")
+        committed_descriptor, committed_identity = _open_bound_input(
+            root, root_descriptor, path
+        )
+        try:
+            if committed_identity[:2] != expected_file:
+                raise ValueError("output commit identity mismatch")
+        finally:
+            os.close(committed_descriptor)
     finally:
         if owned_temporary:
             try:
@@ -252,6 +266,7 @@ def main() -> int:
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     try:
+        _require_posix_descriptor_api()
         root = args.repository_root
         root_descriptor = _open_root_directory(root)
         try:
