@@ -4,7 +4,7 @@ public_mobile_mapping_readiness() {
   local leader="$1" log="$2" limit="${3:-60}" expected_pgid="${4:-}"
   local ros2bin="${PUBLIC_GAZEBO_CALIBRATION_ROS2_BIN:-ros2}"
   local started=$SECONDS deadline rc=0 count=0 node topic remain pgid expected file owner
-  local -a required_nodes=(/formal_campus_map_lifecycle /formal_legacy_topic_adapter /formal_vehicle_training_gt_bridge)
+  local -a required_nodes=(/formal_map_lifecycle_manager /formal_legacy_topic_adapter /formal_vehicle_training_gt_bridge)
   [[ "$limit" =~ ^[1-9][0-9]*$ && ! -e "$log" && ! -L "$log" && ! -e "$log.receipt.json" && ! -L "$log.receipt.json" ]] || return 125
   deadline=$((SECONDS + limit))
   : >"$log"
@@ -70,7 +70,7 @@ PY
   leader_is_live && leader_pgid_is_expected || rc=125
   for node in "${required_nodes[@]}"; do
     ((rc == 0 && deadline - SECONDS > 0)) || { ((rc == 0)) && rc=124; break; }
-    run_probe "node-${node//\//_}.list" "$ros2bin" node list || { rc=$?; break; }
+    run_probe "node-${node//\//_}.list" "$ros2bin" node list --no-daemon || { rc=$?; break; }
     [[ "$(grep -Fxc "$node" "$file")" == 1 ]] || { rc=2; break; }
     run_probe "node-${node//\//_}.info" "$ros2bin" node info "$node" || { rc=$?; break; }
     ((count += 2))
