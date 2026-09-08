@@ -90,6 +90,9 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 'gnss_outlier_threshold_m', default_value='0.75'
             ),
+            DeclareLaunchArgument(
+                'gnss_anchor_smoothing_alpha', default_value='0.10'
+            ),
             DeclareLaunchArgument('enable_scan_refiner', default_value='true'),
             DeclareLaunchArgument('headless_rendering', default_value='true'),
             DeclareLaunchArgument('publish_map_to_odom', default_value='true'),
@@ -191,6 +194,9 @@ def generate_launch_description():
                     ),
                     'gnss_outlier_threshold_m': LaunchConfiguration(
                         'gnss_outlier_threshold_m'
+                    ),
+                    'gnss_anchor_smoothing_alpha': LaunchConfiguration(
+                        'gnss_anchor_smoothing_alpha'
                     ),
                 }.items(),
             ),

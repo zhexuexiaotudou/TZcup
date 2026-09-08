@@ -205,3 +205,7 @@ def test_stage4v_forwards_map_frame_and_controlled_gnss_gate_to_fuser() -> None:
         assert f"'simulation_world_to_map_{suffix}'" not in hybrid_include
     assert "'gnss_outlier_threshold_m': LaunchConfiguration(" in stage4v
     assert "'gnss_outlier_threshold_m': LaunchConfiguration(" in hybrid
+    assert "DeclareLaunchArgument(\n                'gnss_anchor_smoothing_alpha', default_value='0.10'" in stage4v
+    assert "DeclareLaunchArgument(\n                'gnss_anchor_smoothing_alpha', default_value='0.10'" in hybrid
+    assert "'gnss_anchor_smoothing_alpha': LaunchConfiguration(" in stage4v
+    assert "'gnss_anchor_smoothing_alpha': LaunchConfiguration(" in hybrid

@@ -53,11 +53,35 @@ def test_ackermann_visual_demo_keeps_gnss_gate_and_records_diagnostics():
     assert 'gnss_outlier_threshold_m="0.75"' in launcher
     assert 'gnss_outlier_threshold_m="2.0"' not in launcher
     assert 'gnss_outlier_threshold_m:="${gnss_outlier_threshold_m}"' in launcher
+    assert 'gnss_anchor_smoothing_alpha="0.10"' in launcher
+    assert 'gnss_anchor_smoothing_alpha="0.30"' in launcher
+    assert 'if [[ "${DRIVE_MODEL}" == "ackermann" && "${COMPETITION_PROFILE}" -eq 0 ]]; then' in launcher
+    assert 'gnss_anchor_smoothing_alpha:="${gnss_anchor_smoothing_alpha}"' in launcher
     assert 'simulation_world_to_map_x:="${world_to_map_x}"' in launcher
     assert 'simulation_world_to_map_y:="${world_to_map_y}"' in launcher
     assert '/gnss/fix /localization/fusion_diagnostics' in launcher
     assert connector_executor.count('"controller_id": "ConnectorPath"') == 2
     assert '"controller_id": "DubinsPath"' not in connector_executor
+
+
+def test_live_connector_replan_reuses_mppi_and_preserves_reverse_controller():
+    probe = (
+        ROOT
+        / "starter_ws/src/sanitation_coverage/sanitation_coverage/coverage_probe.py"
+    ).read_text(encoding="utf-8")
+    hybrid_executor = probe[
+        probe.index("    def _follow_ackermann_hybrid_plan"):
+        probe.index("    def _follow_component")
+    ]
+    connector_executor = probe[
+        probe.index("    def _follow_forward_dubins_primitives"):
+        probe.index("    def _execute_ackermann_swath")
+    ]
+
+    assert "forward_controller_id=None" in hybrid_executor
+    assert '"ReversePath"' in hybrid_executor
+    assert 'else (forward_controller_id or "FollowPath")' in hybrid_executor
+    assert 'final_goal, forward_controller_id="ConnectorPath"' in connector_executor
 
 
 def test_launcher_can_run_a_bounded_physical_dynamic_matrix():

@@ -2025,7 +2025,8 @@ class CoverageProbe(Node):
         return result
 
     def _follow_ackermann_hybrid_plan(
-        self, pose, *, precomputed_plan=None, replan_depth=0
+        self, pose, *, precomputed_plan=None, replan_depth=0,
+        forward_controller_id=None,
     ):
         """Plan once, split reverse cusps, and follow each section explicitly."""
         if replan_depth > 6:
@@ -2165,6 +2166,15 @@ class CoverageProbe(Node):
                         if section["direction"] == "REVERSE"
                         else self.speed_limits_mps["FORWARD"]
                     ),
+                    # A live connector recovery is a forward-only Dubins
+                    # path. Reuse its MPPI controller rather than applying
+                    # the generic RPP transit controller; reverse sections
+                    # retain their established reverse controller.
+                    "controller_id": (
+                        "ReversePath"
+                        if section["direction"] == "REVERSE"
+                        else (forward_controller_id or "FollowPath")
+                    ),
                     # Replaying a plan whose start is now metres behind the
                     # robot is unsafe and lets RPP select the wrong branch of
                     # a looping path. Fail closed; the caller may replan from
@@ -2188,7 +2198,9 @@ class CoverageProbe(Node):
                 # onto that section: such a chord can introduce an unplanned
                 # direction change exactly at the cusp.
                 continuation = self._follow_ackermann_hybrid_plan(
-                    pose, replan_depth=replan_depth + 1
+                    pose,
+                    replan_depth=replan_depth + 1,
+                    forward_controller_id=forward_controller_id,
                 )
                 section_result["replanned_continuation"] = continuation
                 if continuation.get("success"):
@@ -2369,7 +2381,9 @@ class CoverageProbe(Node):
                         "y": float(component["points"][-1][1]),
                         "yaw": float(headings[-1]),
                     }
-                    recovery = self._follow_ackermann_hybrid_plan(final_goal)
+                    recovery = self._follow_ackermann_hybrid_plan(
+                        final_goal, forward_controller_id="ConnectorPath"
+                    )
                     return {
                         "success": bool(recovery.get("success")),
                         "error": None if recovery.get("success") else recovery.get(

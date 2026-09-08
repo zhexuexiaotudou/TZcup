@@ -347,6 +347,7 @@ max_angular_velocity="0.70"
 localization_fusion_mode="hybrid_rtk_scan_imu_wheel"
 enable_scan_refiner="true"
 gnss_outlier_threshold_m="0.75"
+gnss_anchor_smoothing_alpha="0.10"
 profile_label="STANDARD DEMO"
 mission_scope="LIVE DEMO AREA"
 map_area_m2="4000.0"
@@ -402,6 +403,12 @@ if [[ "${MAP_SIZE}" == "small" ]]; then
   fi
   if [[ "${DRIVE_MODEL}" != "ackermann" && "${SIMULATION_SPEED}" == "fast" ]]; then max_linear_velocity="0.70"; max_angular_velocity="0.60"; fi
   if [[ "${DRIVE_MODEL}" != "ackermann" && "${SIMULATION_SPEED}" == "turbo" ]]; then max_linear_velocity="0.90"; max_angular_velocity="0.75"; fi
+fi
+if [[ "${DRIVE_MODEL}" == "ackermann" && "${COMPETITION_PROFILE}" -eq 0 ]]; then
+  # The controlled RTK-fixed visual demo needs faster absolute-anchor
+  # correction through its Ackermann turn transitions. Production keeps the
+  # stage4v default (0.10).
+  gnss_anchor_smoothing_alpha="0.30"
 fi
 if [[ "${COMPETITION_PROFILE}" -eq 1 ]]; then
   competition_runtime="${runtime}/competition_profile"
@@ -657,6 +664,7 @@ setsid ros2 launch sanitation_bringup stage4v_localization.launch.py \
   camera_profile:=V5_retracted fusion_mode:="${localization_fusion_mode}" \
   enable_scan_refiner:="${enable_scan_refiner}" \
   gnss_outlier_threshold_m:="${gnss_outlier_threshold_m}" \
+  gnss_anchor_smoothing_alpha:="${gnss_anchor_smoothing_alpha}" \
   > "${OUTPUT_DIR}/localization.log" 2>&1 &
 localization_pid="$!"
 pids+=("${localization_pid}")
