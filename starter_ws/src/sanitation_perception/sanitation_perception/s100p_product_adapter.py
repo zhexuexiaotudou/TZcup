@@ -31,7 +31,6 @@ from .s100p_product_adapter_core import (
     ground_dirt_prompt_batch,
     load_verified_board_artifact_contract,
     requires_edgesam_handoff,
-    validate_dosod_source_rois,
     validate_exact_rgbd_projection_binding,
     validate_exact_tf_binding,
     validate_public_map_binding,
@@ -77,6 +76,27 @@ def _perf_latency_ms(message: Any) -> float | None:
     ]
     positive = [value for value in values if math.isfinite(value) and value > 0.0]
     return max(positive) if positive else None
+
+
+def _partition_dosod_source_rois(
+    detections: tuple[Detection, ...], *, source_width: int, source_height: int
+) -> tuple[tuple[Detection, ...], tuple[tuple[int, str], ...]]:
+    """Reject each invalid DOSOD ROI without clipping or changing accepted geometry."""
+    accepted: list[Detection] = []
+    rejected: list[tuple[int, str]] = []
+    for row in detections:
+        x1, y1, x2, y2 = row.roi.xyxy
+        if not all(math.isfinite(value) for value in (x1, y1, x2, y2)):
+            reason = "nonfinite"
+        elif x2 <= x1 or y2 <= y1:
+            reason = "nonpositive_extent"
+        elif x1 < 0.0 or y1 < 0.0 or x2 > source_width or y2 > source_height:
+            reason = "outside_source_frame"
+        else:
+            accepted.append(row)
+            continue
+        rejected.append((row.source_index, reason))
+    return tuple(accepted), tuple(rejected)
 
 
 def _transform_matrix(transform: Any) -> np.ndarray:
@@ -313,8 +333,8 @@ def main() -> None:
             stamp = _stamp_ns(message.header.stamp)
             self._cache_source("camera_info", stamp, message)
 
-        def _record_reject(self, reason: str) -> None:
-            self._reject_reasons[reason] = self._reject_reasons.get(reason, 0) + 1
+        def _record_reject(self, reason: str, count: int = 1) -> None:
+            self._reject_reasons[reason] = self._reject_reasons.get(reason, 0) + count
 
         def _cache_source(self, kind: str, stamp: int, message: Any) -> None:
             try:
@@ -464,11 +484,33 @@ def main() -> None:
                     emitted_label_to_class_id=self._dosod_emitted_label_map,
                 )
                 detections = filter_s100p_product_detections(detections)
-                detections = validate_dosod_source_rois(
+                detections, rejected_rois = _partition_dosod_source_rois(
                     detections,
                     source_width=S100P_SOURCE_WIDTH,
                     source_height=S100P_SOURCE_HEIGHT,
                 )
+                roi_diagnostic = {
+                    "invalid_roi_count": len(rejected_rois),
+                    "invalid_roi_indices": [index for index, _reason in rejected_rois],
+                    "invalid_roi_reasons": [reason for _index, reason in rejected_rois],
+                    "invalid_roi_ratio": (
+                        len(rejected_rois) / (len(detections) + len(rejected_rois))
+                        if detections or rejected_rois
+                        else 0.0
+                    ),
+                }
+                for _source_index, reason in rejected_rois:
+                    self._record_reject(f"dosod_roi_{reason}")
+                if not detections:
+                    self._adapter_diagnostic(
+                        2,
+                        "dosod_all_rois_rejected_fail_closed",
+                        {
+                            "source_stamp_ns": stamp,
+                            **roi_diagnostic,
+                        },
+                    )
+                    return
                 product = self._detection_message(image.header, detections)
                 self._box_publisher.publish(product)
                 self._detection_publisher.publish(product)
@@ -493,12 +535,15 @@ def main() -> None:
                         0, "dosod_no_edgesam_prompt_terminal", {"source_stamp_ns": stamp}
                     )
                 self._adapter_diagnostic(
-                    0,
-                    "dosod_product_and_prompts_published",
+                    1 if rejected_rois else 0,
+                    "dosod_partial_rois_rejected"
+                    if rejected_rois
+                    else "dosod_product_and_prompts_published",
                     {
                         "source_stamp_ns": stamp,
                         "detections": len(detections),
                         "prompt_count": len(batch.prompts),
+                        **roi_diagnostic,
                     },
                 )
                 self._product_box_frames += 1

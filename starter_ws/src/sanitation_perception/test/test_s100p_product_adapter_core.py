@@ -10,7 +10,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from sanitation_perception.s100p_product_adapter import _perf_latency_ms
+from sanitation_perception.s100p_product_adapter import _partition_dosod_source_rois, _perf_latency_ms
 from sanitation_perception.s100p_product_adapter_core import (
     Detection,
     EdgeSamPromptBatch,
@@ -262,6 +262,39 @@ def test_dosod_rois_are_already_bound_to_the_original_848x480_source_frame():
     assert validate_dosod_source_rois((source,)) == (source,)
     with pytest.raises(S100PProductAdapterError, match="848x480"):
         validate_dosod_source_rois((Detection("puddle", 0.8, Roi(800, 0, 64, 64), 0),))
+
+
+def test_dosod_roi_partition_keeps_legal_rois_and_rejects_only_real_r9_overflows():
+    legal = Detection("litter_cube", 0.9, Roi(1.0, 2.0, 3.0, 4.0), 3)
+    # r9: post-threshold candidates 12 and 26 crossed the 848x480 source edge.
+    r9_index_12 = Detection("dust_or_soil", 0.00540, Roi(10.0, 478.0, 20.0, 368.0), 12)
+    r9_index_26 = Detection("dust_or_soil", 0.00253, Roi(10.0, 499.0, 20.0, 335.0), 26)
+
+    accepted, rejected = _partition_dosod_source_rois(
+        (legal, r9_index_12, r9_index_26), source_width=848, source_height=480
+    )
+
+    assert accepted == (legal,)
+    assert rejected == ((12, "outside_source_frame"), (26, "outside_source_frame"))
+    assert len(accepted) + len(rejected) == 3
+
+
+def test_dosod_roi_partition_preserves_all_legal_or_returns_empty_for_all_invalid():
+    legal = (
+        Detection("puddle", 0.8, Roi(0.0, 0.0, 84.8, 84.8), 0),
+        Detection("dust_or_soil", 0.9, Roi(800.0, 470.0, 48.0, 10.0), 1),
+    )
+    accepted, rejected = _partition_dosod_source_rois(legal, source_width=848, source_height=480)
+    assert accepted == legal
+    assert not rejected
+
+    invalid = (
+        Detection("puddle", 0.8, Roi(848.0, 0.0, 1.0, 1.0), 2),
+        Detection("dust_or_soil", 0.9, Roi(0.0, 480.0, 1.0, 1.0), 3),
+    )
+    accepted, rejected = _partition_dosod_source_rois(invalid, source_width=848, source_height=480)
+    assert accepted == ()
+    assert rejected == ((2, "outside_source_frame"), (3, "outside_source_frame"))
 
 
 def test_exact_stamp_rgbd_cache_preserves_n_until_dosod_n_then_consumes_it_once():
