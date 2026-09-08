@@ -13,6 +13,7 @@ HMI_PACKAGE = ROOT / "starter_ws" / "src" / "sanitation_hmi" / "package.xml"
 NAVIGATION_LAUNCH = ROOT / "starter_ws" / "src" / "sanitation_navigation" / "launch" / "navigation.launch.py"
 FUSER_SOURCE = ROOT / "starter_ws" / "src" / "sanitation_scan_refiner" / "src" / "hybrid_global_fuser_node.cpp"
 HYBRID_LAUNCH = ROOT / "starter_ws" / "src" / "sanitation_scan_refiner" / "launch" / "hybrid_localization.launch.py"
+STAGE4V_LAUNCH = ROOT / "starter_ws" / "src" / "sanitation_bringup" / "launch" / "stage4v_localization.launch.py"
 COVERAGE_PROBE = ROOT / "starter_ws" / "src" / "sanitation_coverage" / "sanitation_coverage" / "coverage_probe.py"
 
 
@@ -174,3 +175,16 @@ def test_product_fuser_owns_one_calibrated_global_pose_contract() -> None:
     assert ".reliable().transient_local()" in fuser
     assert 'DeclareLaunchArgument(\'respawn_fuser\', default_value=\'false\')' in hybrid_launch
     assert "respawn=LaunchConfiguration('respawn_fuser')" in hybrid_launch
+
+
+def test_stage4v_forwards_map_frame_and_controlled_gnss_gate_to_fuser() -> None:
+    stage4v = STAGE4V_LAUNCH.read_text(encoding="utf-8")
+    hybrid = HYBRID_LAUNCH.read_text(encoding="utf-8")
+    for name in (
+        "world_to_map_x",
+        "world_to_map_y",
+        "world_to_map_yaw",
+        "gnss_outlier_threshold_m",
+    ):
+        assert f"'{name}': LaunchConfiguration(" in stage4v
+        assert f"'{name}': LaunchConfiguration(" in hybrid

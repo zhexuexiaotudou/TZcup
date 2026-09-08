@@ -2333,7 +2333,7 @@ class CoverageProbe(Node):
                 "metadata": {
                     **component.get("metadata", {}),
                     "goal_checker_id": "connector_goal_checker",
-                    "controller_id": "DubinsPath",
+                    "controller_id": "ConnectorPath",
                     "retry_limit_override": 0,
                 },
             }
@@ -2411,7 +2411,7 @@ class CoverageProbe(Node):
                         if primitive_index == len(sections) - 1
                         else "primitive_goal_checker"
                     ),
-                    "controller_id": "DubinsPath",
+                    "controller_id": "ConnectorPath",
                     "retry_limit_override": 0,
                 },
             }

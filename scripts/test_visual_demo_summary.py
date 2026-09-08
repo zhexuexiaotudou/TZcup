@@ -52,6 +52,7 @@ def test_visual_demo_summary_passes_with_coverage_dashboard_bag_and_video(tmp_pa
         "/coverage/evaluation_sample",
         "/coverage/state",
         "/localization/fused_pose",
+        "/localization/fusion_diagnostics",
         "/scan",
         "/tf",
     ]

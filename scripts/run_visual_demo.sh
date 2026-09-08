@@ -346,6 +346,7 @@ max_linear_velocity="1.0"
 max_angular_velocity="0.70"
 localization_fusion_mode="hybrid_rtk_scan_imu_wheel"
 enable_scan_refiner="true"
+gnss_outlier_threshold_m="0.75"
 profile_label="STANDARD DEMO"
 mission_scope="LIVE DEMO AREA"
 map_area_m2="4000.0"
@@ -371,6 +372,9 @@ if [[ "${MAP_SIZE}" == "small" ]]; then
   # scan corrections. Medium/large retain hybrid scan fallback.
   localization_fusion_mode="rtk_imu_wheel"
   enable_scan_refiner="false"
+  if [[ "${DRIVE_MODEL}" == "ackermann" && "${COMPETITION_PROFILE}" -eq 0 ]]; then
+    gnss_outlier_threshold_m="2.0"
+  fi
   if [[ "${DRIVE_MODEL}" != "ackermann" ]]; then
     cleaning_width="0.65"
     brush_center_y="0.23"
@@ -655,6 +659,7 @@ setsid ros2 launch sanitation_bringup stage4v_localization.launch.py \
   initial_pose_x:="${initial_pose_x}" initial_pose_y:="${initial_pose_y}" initial_pose_yaw:="${initial_pose_yaw}" \
   camera_profile:=V5_retracted fusion_mode:="${localization_fusion_mode}" \
   enable_scan_refiner:="${enable_scan_refiner}" \
+  gnss_outlier_threshold_m:="${gnss_outlier_threshold_m}" \
   > "${OUTPUT_DIR}/localization.log" 2>&1 &
 localization_pid="$!"
 pids+=("${localization_pid}")
@@ -860,6 +865,7 @@ if [[ "${RECORD_MCAP}" -eq 1 ]]; then
   setsid ros2 bag record --storage mcap \
     --output "${OUTPUT_DIR}/visual_demo_bag" \
     /clock /tf /tf_static /scan /odom /wheel/odom_raw /joint_states /localization/fused_pose \
+    /gnss/fix /localization/fusion_diagnostics \
     /ground_truth/odom /cmd_vel /cmd_vel_gate /brush_enabled \
     /emergency_stop /coverage/state /coverage/component_state \
     /coverage/current_path /coverage/evaluation_sample \

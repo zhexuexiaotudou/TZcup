@@ -95,6 +95,7 @@ def assemble(
         "/coverage/evaluation_sample",
         "/coverage/state",
         "/localization/fused_pose",
+        "/localization/fusion_diagnostics",
         "/scan",
         "/tf",
     }

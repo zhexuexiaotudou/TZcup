@@ -39,6 +39,25 @@ def test_launcher_defaults_to_ackermann_and_keeps_legacy_profiles_explicit():
     assert '[ValidateSet("optimized", "legacy")]' in frozen
 
 
+def test_ackermann_visual_demo_uses_bounded_gnss_recovery_and_records_diagnostics():
+    launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
+    probe = (
+        ROOT
+        / "starter_ws/src/sanitation_coverage/sanitation_coverage/coverage_probe.py"
+    ).read_text(encoding="utf-8")
+    connector_executor = probe[
+        probe.index("    def _follow_forward_dubins_primitives"):
+        probe.index("    def _execute_ackermann_swath")
+    ]
+
+    assert 'gnss_outlier_threshold_m="0.75"' in launcher
+    assert 'gnss_outlier_threshold_m="2.0"' in launcher
+    assert 'gnss_outlier_threshold_m:="${gnss_outlier_threshold_m}"' in launcher
+    assert '/gnss/fix /localization/fusion_diagnostics' in launcher
+    assert connector_executor.count('"controller_id": "ConnectorPath"') == 2
+    assert '"controller_id": "DubinsPath"' not in connector_executor
+
+
 def test_launcher_can_run_a_bounded_physical_dynamic_matrix():
     launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
     wrapper = (ROOT / "scripts" / "run_visual_demo.ps1").read_text(encoding="utf-8")

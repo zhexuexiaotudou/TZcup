@@ -74,6 +74,9 @@ def generate_launch_description():
             DeclareLaunchArgument('world_to_map_x', default_value='8.0'),
             DeclareLaunchArgument('world_to_map_y', default_value='0.0'),
             DeclareLaunchArgument('world_to_map_yaw', default_value='0.0'),
+            DeclareLaunchArgument(
+                'gnss_outlier_threshold_m', default_value='0.75'
+            ),
             DeclareLaunchArgument('enable_scan_refiner', default_value='true'),
             DeclareLaunchArgument('headless_rendering', default_value='true'),
             DeclareLaunchArgument('publish_map_to_odom', default_value='true'),
@@ -158,6 +161,12 @@ def generate_launch_description():
                     'initial_pose_x': LaunchConfiguration('initial_pose_x'),
                     'initial_pose_y': LaunchConfiguration('initial_pose_y'),
                     'initial_pose_yaw': LaunchConfiguration('initial_pose_yaw'),
+                    'world_to_map_x': LaunchConfiguration('world_to_map_x'),
+                    'world_to_map_y': LaunchConfiguration('world_to_map_y'),
+                    'world_to_map_yaw': LaunchConfiguration('world_to_map_yaw'),
+                    'gnss_outlier_threshold_m': LaunchConfiguration(
+                        'gnss_outlier_threshold_m'
+                    ),
                 }.items(),
             ),
         ]
