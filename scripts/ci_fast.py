@@ -632,6 +632,7 @@ def run_ros_independent_tests() -> None:
         ROOT / "scripts" / "test_build_formal_final_runtime_guard.py",
         ROOT / "scripts" / "test_dosod_receipt_hardening.py",
         ROOT / "scripts" / "test_dosod_hbm_abi_contract.py",
+        ROOT / "scripts" / "test_dosod_hbm_disas_receipt.py",
         ROOT / "scripts" / "test_hbm_evidence_producers.py",
         ROOT / "scripts" / "test_dosod_single_frame_preprocessing_oracle.py",
         ROOT / "scripts" / "test_run_dosod_official_preprocess_capture.py",
