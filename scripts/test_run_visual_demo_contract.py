@@ -86,6 +86,25 @@ def test_ackermann_hybrid_sections_use_mppi_forward_and_reverse_rpp():
     assert '"curvature_primitive_count"' in hybrid_executor
 
 
+def test_ackermann_entry_replans_from_live_pose_with_strict_acceptance():
+    probe = (
+        ROOT
+        / "starter_ws/src/sanitation_coverage/sanitation_coverage/coverage_probe.py"
+    ).read_text(encoding="utf-8")
+    entry_executor = probe[
+        probe.index("    def _follow_entry_to_first_swath"):
+        probe.index("    def _follow_ackermann_hybrid_plan")
+    ]
+
+    assert "self.estimated_pose[:2]" in entry_executor
+    assert "entry_points(current_point, first_component)" in entry_executor
+    assert "self._follow_ackermann_hybrid_plan(" in entry_executor
+    assert 'terminal_goal_checker_id="goal_checker"' in entry_executor
+    assert '"brush_enabled": False' in entry_executor
+    assert "precomputed_plan=" not in entry_executor
+    assert "self._follow_component({" in entry_executor
+
+
 def test_launcher_can_run_a_bounded_physical_dynamic_matrix():
     launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
     wrapper = (ROOT / "scripts" / "run_visual_demo.ps1").read_text(encoding="utf-8")

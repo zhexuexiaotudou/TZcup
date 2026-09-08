@@ -910,14 +910,9 @@ class CoverageProbe(Node):
                 transit = self._navigate_to(selected["staging_pose"])
             if transit["success"]:
                 self._set_state("ALIGNING")
-                current_point = self.estimated_pose[:2] if self.estimated_pose else (
-                    selected["staging_pose"]["x"], selected["staging_pose"]["y"]
+                transit["entry"] = self._follow_entry_to_first_swath(
+                    selected_components[0], selected["staging_pose"]
                 )
-                entry = {
-                    "kind": "entry", "index": -1, "brush": False,
-                    "points": entry_points(current_point, selected_components[0]),
-                }
-                transit["entry"] = self._follow_component(entry)
                 transit["success"] = transit["entry"]["success"]
         component_results = []
         if transit["success"]:
@@ -2024,8 +2019,38 @@ class CoverageProbe(Node):
         result["terminal_tracking_error"] = self._tracking_error(pose)
         return result
 
+    def _follow_entry_to_first_swath(self, first_component, staging_pose):
+        """Reach the brush-off lead-in without violating chassis kinematics."""
+        self._set_brush(False)
+        current_point = self.estimated_pose[:2] if self.estimated_pose else (
+            staging_pose["x"], staging_pose["y"]
+        )
+        points = entry_points(current_point, first_component)
+        if self.ackermann_profile_active:
+            heading = segment_heading(
+                first_component["points"][0], first_component["points"][1]
+            )
+            target = points[-1]
+            result = self._follow_ackermann_hybrid_plan(
+                {"x": target[0], "y": target[1], "yaw": heading},
+                # Entry previously used the strict general goal checker. Keep
+                # that acceptance contract instead of inheriting the wider
+                # connector hand-off tolerance used between brush-off arcs.
+                terminal_goal_checker_id="goal_checker",
+            )
+            result.update({
+                "kind": "entry",
+                "index": -1,
+                "brush_enabled": False,
+            })
+            return result
+        return self._follow_component({
+            "kind": "entry", "index": -1, "brush": False, "points": points,
+        })
+
     def _follow_ackermann_hybrid_plan(
-        self, pose, *, precomputed_plan=None, replan_depth=0
+        self, pose, *, precomputed_plan=None, replan_depth=0,
+        terminal_goal_checker_id="connector_goal_checker",
     ):
         """Plan once, split cusps and forward curvature primitives explicitly."""
         if replan_depth > 6:
@@ -2208,7 +2233,7 @@ class CoverageProbe(Node):
                     # non-holonomic chassis around the completed loop merely
                     # to improve yaw by a few tenths of a radian.
                     "goal_checker_id": (
-                        "connector_goal_checker"
+                        terminal_goal_checker_id
                         if index == len(sections) - 1
                         else (
                             "cusp_goal_checker"
@@ -2259,7 +2284,9 @@ class CoverageProbe(Node):
                 # onto that section: such a chord can introduce an unplanned
                 # direction change exactly at the cusp.
                 continuation = self._follow_ackermann_hybrid_plan(
-                    pose, replan_depth=replan_depth + 1
+                    pose,
+                    replan_depth=replan_depth + 1,
+                    terminal_goal_checker_id=terminal_goal_checker_id,
                 )
                 section_result["replanned_continuation"] = continuation
                 if continuation.get("success"):
