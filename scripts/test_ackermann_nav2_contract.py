@@ -149,6 +149,8 @@ def test_rpp_controllers_have_explicit_direction_and_no_rotate():
     assert float(connector["vx_min"]) == 0.0
     assert float(connector["wz_max"]) == 0.25
     assert float(connector["model_dt"]) == pytest.approx(1.0 / 15.0)
+    assert float(connector["max_robot_pose_search_dist"]) == pytest.approx(1.0)
+    assert float(connector["prune_distance"]) == pytest.approx(1.0)
     assert connector["PathAlignCritic"]["use_path_orientations"] is True
     assert int(connector["PathAngleCritic"]["mode"]) == 2
     assert "PreferForwardCritic" in connector["critics"]

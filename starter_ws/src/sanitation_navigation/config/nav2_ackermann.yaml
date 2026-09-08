@@ -267,6 +267,9 @@ controller_server:
       vx_min: 0.0
       wz_max: 0.25
       iteration_count: 1
+      # Limit MPPI's nearest-pose search to the next local metre so a nearby
+      # branch of a looping Dubins path cannot be selected as the active path.
+      max_robot_pose_search_dist: 1.0
       prune_distance: 1.0
       transform_tolerance: 0.2
       temperature: 0.3

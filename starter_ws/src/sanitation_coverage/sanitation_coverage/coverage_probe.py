@@ -51,7 +51,6 @@ from sanitation_coverage.metrics import (
 from sanitation_coverage.coverage_components import (
     ComponentType,
     CoverageComponent,
-    connector_handoff_replan_decision,
 )
 from sanitation_coverage.coverage_plan import CoveragePlan
 from sanitation_coverage.blocked_swath_manager import BlockedSwathManager
@@ -2066,7 +2065,6 @@ class CoverageProbe(Node):
     def _follow_ackermann_hybrid_plan(
         self, pose, *, precomputed_plan=None, replan_depth=0,
         terminal_goal_checker_id="connector_goal_checker",
-        forward_only=False,
     ):
         """Plan once, split cusps and forward curvature primitives explicitly."""
         if replan_depth > 6:
@@ -2091,14 +2089,12 @@ class CoverageProbe(Node):
             goal_pose = (
                 float(pose["x"]), float(pose["y"]), float(pose["yaw"])
             )
-            reverse_poses = None
-            if not forward_only:
-                reverse_poses = plan_reverse_dubins_path(
-                    start_pose,
-                    goal_pose,
-                    self.mission_geometry["outer_polygon"],
-                    self.mission_geometry["exclusion_polygons"],
-                )
+            reverse_poses = plan_reverse_dubins_path(
+                start_pose,
+                goal_pose,
+                self.mission_geometry["outer_polygon"],
+                self.mission_geometry["exclusion_polygons"],
+            )
             direct_distance = math.dist(start_pose[:2], goal_pose[:2])
             reverse_length = path_length(
                 [(item[0], item[1]) for item in reverse_poses]
@@ -2146,7 +2142,7 @@ class CoverageProbe(Node):
             plan = self._compute_path(
                 pose, include_path=True, planner_id="GridBasedForward"
             )
-            if not plan.get("success") and not forward_only:
+            if not plan.get("success"):
                 plan = self._compute_path(
                     pose, include_path=True, planner_id="GridBased"
                 )
@@ -2160,15 +2156,6 @@ class CoverageProbe(Node):
         direction_sections = split_hybrid_path_by_direction(
             plan.get("path_poses", [])
         )
-        if forward_only and any(
-            section["direction"] != "FORWARD" for section in direction_sections
-        ):
-            return {
-                **plan,
-                "success": False,
-                "error": "forward_only_replan_returned_nonforward_section",
-                "controller": "Smac Hybrid forward-only handoff replan",
-            }
         if not direction_sections:
             return {
                 **plan,
@@ -2303,43 +2290,6 @@ class CoverageProbe(Node):
             })
             section_results.append(section_result)
             if not section_result.get("success"):
-                attempts = section_result.get("attempts") or []
-                last_attempt = attempts[-1] if attempts else {}
-                recoverable_forward_prune = (
-                    section["direction"] == "FORWARD"
-                    and last_attempt.get("error_name") == "INVALID_PATH"
-                    and replan_depth < 6
-                )
-                if recoverable_forward_prune and self._wait_for_cusp_stop(
-                    float(self.get_parameter("translation_timeout_sec").value)
-                ):
-                    continuation = self._follow_ackermann_hybrid_plan(
-                        pose,
-                        replan_depth=replan_depth + 1,
-                        terminal_goal_checker_id=terminal_goal_checker_id,
-                        forward_only=True,
-                    )
-                    section_result["invalid_path_recovery"] = continuation
-                    if continuation.get("success"):
-                        return {
-                            "success": True,
-                            "error": None,
-                            "controller": (
-                                "Smac Hybrid invalid-path recovery + segmented "
-                                "ConnectorPath/ReversePath"
-                            ),
-                            "planner": planner_source,
-                            "goal_pose": pose,
-                            "planned_length_m": plan.get("path_length_m"),
-                            "path_pose_count": plan.get("path_pose_count"),
-                            "direction_section_count": len(direction_sections),
-                            "curvature_primitive_section_count": len(sections),
-                            "cusp_stop_count": cusp_stop_count,
-                            "replan_depth": replan_depth,
-                            "section_results": section_results,
-                            "terminal_tracking_error": self._tracking_error(pose),
-                        }
-                    section_result["error"] = "live_invalid_path_replan_failed"
                 break
             if next_section_is_real_cusp:
                 # Replan from the measured stopped cusp. If the planner cannot
@@ -2351,7 +2301,6 @@ class CoverageProbe(Node):
                     pose,
                     replan_depth=replan_depth + 1,
                     terminal_goal_checker_id=terminal_goal_checker_id,
-                    forward_only=forward_only,
                 )
                 section_result["replanned_continuation"] = continuation
                 if continuation.get("success"):
@@ -2514,59 +2463,6 @@ class CoverageProbe(Node):
 
         primitive_results = []
         for primitive_index, (points, primitive_headings) in enumerate(sections):
-            if primitive_index > 0 and self.estimated_pose is not None:
-                handoff = connector_handoff_replan_decision(
-                    tuple(float(value) for value in self.estimated_pose[:3]),
-                    (
-                        float(points[0][0]),
-                        float(points[0][1]),
-                        float(primitive_headings[0]),
-                    ),
-                )
-                if handoff["requires_replan"]:
-                    # Primitive goal checkers intentionally tolerate finite
-                    # curvature-end error, but the next static arc is unsafe
-                    # once that error exceeds the static-path pruning envelope. Plan
-                    # the remaining brush-off connector from the measured
-                    # pose and follow it as one direction-continuous section.
-                    final_goal = {
-                        "x": float(component["points"][-1][0]),
-                        "y": float(component["points"][-1][1]),
-                        "yaw": float(headings[-1]),
-                    }
-                    recovery = self._follow_ackermann_hybrid_plan(
-                        final_goal,
-                        terminal_goal_checker_id="primitive_goal_checker",
-                    )
-                    return {
-                        "success": bool(recovery.get("success")),
-                        "error": None if recovery.get("success") else recovery.get(
-                            "error", "live_primitive_handoff_replan_failed"
-                        ),
-                        "attempts": [
-                            attempt
-                            for item in primitive_results
-                            for attempt in item.get("attempts", [])
-                        ],
-                        "primitive_results": primitive_results,
-                        "primitive_count": len(sections),
-                        "completed_primitive_count": sum(
-                            bool(item.get("success")) for item in primitive_results
-                        ),
-                        "path_pose_count": len(component["points"]),
-                        "planned_length_m": path_length(component["points"]),
-                        "goal_pose": final_goal,
-                        "terminal_tracking_error": recovery.get(
-                            "terminal_tracking_error"
-                        ),
-                        "controller": (
-                            "curvature-segmented ConnectorPath + live hybrid replan"
-                        ),
-                        "live_handoff_replan": True,
-                        "handoff_error": handoff,
-                        "handoff_after_primitive_index": primitive_index - 1,
-                        "live_handoff_replan_result": recovery,
-                    }
             primitive = {
                 **component,
                 "points": points,
@@ -2709,41 +2605,8 @@ class CoverageProbe(Node):
             if component.get("metadata", {}).get(
                 "connector_class"
             ) == "FORWARD_DUBINS_TURN":
-                metadata = component.get("metadata", {})
-                headings = metadata.get("headings_rad") or []
-                handoff = None
-                if self.estimated_pose is not None and headings:
-                    handoff = connector_handoff_replan_decision(
-                        tuple(float(value) for value in self.estimated_pose[:3]),
-                        (
-                            float(component["points"][0][0]),
-                            float(component["points"][0][1]),
-                            float(headings[0]),
-                        ),
-                    )
-                if handoff and handoff["requires_replan"]:
-                    # A long swath may legally finish with finite Ackermann
-                    # endpoint error. Replan this brush-off connector from the
-                    # measured map pose instead of handing RPP a stale loop.
-                    goal = {
-                        "x": float(component["points"][-1][0]),
-                        "y": float(component["points"][-1][1]),
-                        "yaw": float(headings[-1]),
-                    }
-                    result = self._follow_ackermann_hybrid_plan(
-                        goal,
-                        terminal_goal_checker_id="primitive_goal_checker",
-                    )
-                    result["live_handoff_replan"] = True
-                    result["handoff_error"] = handoff
-                    result["nominal_connector_class"] = (
-                        "FORWARD_DUBINS_TURN"
-                    )
-                else:
-                    result = self._follow_forward_dubins_primitives(component)
-                    result.setdefault("live_handoff_replan", False)
-                    if handoff is not None:
-                        result.setdefault("handoff_error", handoff)
+                result = self._follow_forward_dubins_primitives(component)
+                result.setdefault("live_handoff_replan", False)
             else:
                 result = self._follow_component(component)
             result.update({
