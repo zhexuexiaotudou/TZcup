@@ -124,7 +124,7 @@ def test_ackermann_entry_uses_existing_brush_off_swath_lead_in():
         probe.index("            if self.ackermann_profile_active:"):
         probe.index("        component_results = []")
     ]
-    assert 'terminal_goal_checker_id="primitive_goal_checker"' in transit_dispatch
+    assert 'terminal_goal_checker_id="staging_goal_checker"' in transit_dispatch
     assert "plan is None" in probe
     assert "next_section_is_real_cusp and not using_precomputed_plan" in probe
     assert 'or using_precomputed_plan' in probe

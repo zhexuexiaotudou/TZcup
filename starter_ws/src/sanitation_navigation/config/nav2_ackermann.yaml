@@ -74,7 +74,7 @@ controller_server:
     min_theta_velocity_threshold: 0.001
     failure_tolerance: 5.0
     progress_checker_plugins: [progress_checker]
-    goal_checker_plugins: [goal_checker, frontier_goal_checker, cusp_goal_checker, primitive_goal_checker, connector_goal_checker, swath_exit_goal_checker]
+    goal_checker_plugins: [goal_checker, frontier_goal_checker, cusp_goal_checker, primitive_goal_checker, staging_goal_checker, connector_goal_checker, swath_exit_goal_checker]
     controller_plugins: [FollowPath, FrontierPath, DubinsPath, ReversePath, ConnectorPath, CleanPath, RepairPath]
     progress_checker:
       plugin: nav2_controller::PoseProgressChecker
@@ -116,6 +116,13 @@ controller_server:
       plugin: nav2_controller::SimpleGoalChecker
       stateful: false
       xy_goal_tolerance: 0.40
+      yaw_goal_tolerance: 1.00
+    # Staging is followed by a 3 m brush-off swath lead-in. Keep this
+    # hand-off tolerance separate from scored connectors and swath exits.
+    staging_goal_checker:
+      plugin: nav2_controller::SimpleGoalChecker
+      stateful: false
+      xy_goal_tolerance: 0.50
       yaw_goal_tolerance: 1.00
     # A connector hands off to a separately scored straight swath. The 3 m
     # brush-off lead-in settles this finite steering error; tighter endpoint

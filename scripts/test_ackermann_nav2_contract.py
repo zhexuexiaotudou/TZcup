@@ -108,7 +108,7 @@ def test_rpp_controllers_have_explicit_direction_and_no_rotate():
         "frontier_goal_checker",
         "cusp_goal_checker",
         "primitive_goal_checker",
-        "connector_goal_checker", "swath_exit_goal_checker",
+        "staging_goal_checker", "connector_goal_checker", "swath_exit_goal_checker",
     ]
     assert float(
         controllers["primitive_goal_checker"]["yaw_goal_tolerance"]
@@ -280,7 +280,7 @@ def test_nonholonomic_goal_tolerance_is_bounded_but_not_point_turn_strict():
     assert cusp["stateful"] is False
     assert controller["goal_checker_plugins"] == [
         "goal_checker", "frontier_goal_checker", "cusp_goal_checker", "primitive_goal_checker",
-        "connector_goal_checker", "swath_exit_goal_checker",
+        "staging_goal_checker", "connector_goal_checker", "swath_exit_goal_checker",
     ]
     frontier = controller["frontier_goal_checker"]
     assert float(frontier["xy_goal_tolerance"]) == 0.25
@@ -289,6 +289,10 @@ def test_nonholonomic_goal_tolerance_is_bounded_but_not_point_turn_strict():
     assert primitive["stateful"] is False
     assert float(primitive["xy_goal_tolerance"]) <= 0.40
     assert float(primitive["yaw_goal_tolerance"]) <= 1.00
+    staging = controller["staging_goal_checker"]
+    assert staging["stateful"] is False
+    assert float(staging["xy_goal_tolerance"]) == 0.50
+    assert float(staging["yaw_goal_tolerance"]) == 1.00
     connector = controller["connector_goal_checker"]
     assert connector["stateful"] is False
     assert float(connector["xy_goal_tolerance"]) <= 0.40
