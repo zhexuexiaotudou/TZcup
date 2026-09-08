@@ -105,6 +105,12 @@ def test_ackermann_entry_uses_existing_brush_off_swath_lead_in():
     assert '"alignment_distance_m": float(alignment_distance_m)' in entry_executor
     assert "self._follow_component({" in entry_executor
 
+    transit_dispatch = probe[
+        probe.index("            if self.ackermann_profile_active:"):
+        probe.index("        component_results = []")
+    ]
+    assert 'terminal_goal_checker_id="primitive_goal_checker"' in transit_dispatch
+
 
 def test_launcher_can_run_a_bounded_physical_dynamic_matrix():
     launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")

@@ -905,6 +905,10 @@ class CoverageProbe(Node):
                 transit = self._follow_ackermann_hybrid_plan(
                     selected["staging_pose"],
                     precomputed_plan=selected.get("preflight"),
+                    # The first swath owns a measured 2 m brush-off alignment
+                    # window. Treat staging as an intermediate primitive hand-
+                    # off so MPPI stops before pruning past the final arc.
+                    terminal_goal_checker_id="primitive_goal_checker",
                 )
             else:
                 transit = self._navigate_to(selected["staging_pose"])
@@ -2060,7 +2064,8 @@ class CoverageProbe(Node):
         })
 
     def _follow_ackermann_hybrid_plan(
-        self, pose, *, precomputed_plan=None, replan_depth=0
+        self, pose, *, precomputed_plan=None, replan_depth=0,
+        terminal_goal_checker_id="connector_goal_checker",
     ):
         """Plan once, split cusps and forward curvature primitives explicitly."""
         if replan_depth > 6:
@@ -2243,7 +2248,7 @@ class CoverageProbe(Node):
                     # non-holonomic chassis around the completed loop merely
                     # to improve yaw by a few tenths of a radian.
                     "goal_checker_id": (
-                        "connector_goal_checker"
+                        terminal_goal_checker_id
                         if index == len(sections) - 1
                         else (
                             "cusp_goal_checker"
@@ -2294,7 +2299,9 @@ class CoverageProbe(Node):
                 # onto that section: such a chord can introduce an unplanned
                 # direction change exactly at the cusp.
                 continuation = self._follow_ackermann_hybrid_plan(
-                    pose, replan_depth=replan_depth + 1
+                    pose,
+                    replan_depth=replan_depth + 1,
+                    terminal_goal_checker_id=terminal_goal_checker_id,
                 )
                 section_result["replanned_continuation"] = continuation
                 if continuation.get("success"):
