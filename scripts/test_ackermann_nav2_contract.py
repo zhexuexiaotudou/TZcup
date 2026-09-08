@@ -364,7 +364,7 @@ def test_ackermann_swath_leadin_and_repair_entry_are_kinematic():
         ROOT
         / "starter_ws/src/sanitation_tasks/config/competition_ackermann_demo_area.yaml"
     ).read_text(encoding="utf-8"))
-    assert float(mission["swath_endpoint_extension_m"]) == 2.2
+    assert float(mission["swath_endpoint_extension_m"]) == 3.0
     xs = [float(point[0]) for point in mission["outer_polygon"]]
     ys = [float(point[1]) for point in mission["outer_polygon"]]
     assert max(xs) - min(xs) == pytest.approx(15.6)
