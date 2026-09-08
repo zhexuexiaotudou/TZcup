@@ -4411,9 +4411,9 @@
           "valid": true
         },
         "nv12_adapter_source": {
-          "byte_size": 10928,
+          "byte_size": 10839,
           "path": "starter_ws/src/sanitation_perception/sanitation_perception/rgb_to_nv12_adapter.py",
-          "sha256": "b90dd2624289add18733c1c09169170c030a24712e9431f5fd29eb411c33080f",
+          "sha256": "103311eb3b9719dd53740a5c62d7c40c753cbcaa2ed99340e9374ac3780498bc",
           "valid": true
         },
         "offline_predeploy_product_bundle": {
@@ -4429,9 +4429,9 @@
           "valid": true
         },
         "product_adapter_source": {
-          "byte_size": 39016,
+          "byte_size": 38926,
           "path": "starter_ws/src/sanitation_perception/sanitation_perception/s100p_product_adapter.py",
-          "sha256": "3bdb3c07653aafdcb26144dc6182e92d8d8f2380ada66a8f94e08a4e1ff837a7",
+          "sha256": "cf14da9ae60ff1fed0b8a3b615d0f7292734bd94da2dde22018e0d5708d7545c",
           "valid": true
         },
         "project_perception_entry_points": {
