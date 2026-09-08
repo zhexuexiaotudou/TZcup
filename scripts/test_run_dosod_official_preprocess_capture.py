@@ -4,6 +4,8 @@ import hashlib
 import importlib.util
 import json
 import os
+import shutil
+import stat
 import sys
 import time
 from pathlib import Path
@@ -31,10 +33,18 @@ def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _regular_python(tmp_path: Path) -> Path:
+    """The production runner correctly rejects interpreter symlink chains."""
+    binary = tmp_path / "official-python"
+    shutil.copy2(sys.executable, binary)
+    binary.chmod(binary.stat().st_mode | stat.S_IXUSR)
+    return binary
+
+
 @pytest.mark.skipif(os.name != "posix", reason="owned process-group evidence is a board/Linux-only path")
 def test_runs_a_real_subprocess_and_seals_its_planes(tmp_path, monkeypatch):
     raw = tmp_path / "raw.rgb"; raw.write_bytes(b"r" * 12)
-    binary, source = Path(sys.executable), tmp_path / "official_source.py"
+    binary, source = _regular_python(tmp_path), tmp_path / "official_source.py"
     source.write_text("source")
     contract_root = tmp_path / "root"; (contract_root / "config").mkdir(parents=True)
     identity = {"status": "VERIFIED", "binary_path": str(binary.resolve()), "binary_sha256": _sha(binary), "source_path": str(source.resolve()), "source_sha256": _sha(source), "source_revision": "rev", "dpkg_package": "pkg", "dpkg_version": "1", "dpkg_path_role": "official"}
@@ -53,7 +63,7 @@ def test_runs_a_real_subprocess_and_seals_its_planes(tmp_path, monkeypatch):
 @pytest.mark.skipif(os.name != "posix", reason="owned process-group evidence is a board/Linux-only path")
 def test_timeout_reaps_the_official_producer_process_group(tmp_path, monkeypatch):
     raw = tmp_path / "raw.rgb"; raw.write_bytes(b"r" * 12)
-    binary, source = Path(sys.executable), tmp_path / "official_source.py"
+    binary, source = _regular_python(tmp_path), tmp_path / "official_source.py"
     source.write_text("source")
     monkeypatch.setattr(sealer, "_pilot_binding", lambda *_: {
         "path": str(raw.resolve()), "sha256": _sha(raw), "byte_size": 12,
@@ -84,7 +94,7 @@ def test_timeout_reaps_the_official_producer_process_group(tmp_path, monkeypatch
 
 
 def test_refuses_a_command_that_does_not_consume_all_real_inputs(tmp_path, monkeypatch):
-    binary = Path(sys.executable)
+    binary = _regular_python(tmp_path)
     source = tmp_path / "source"; source.write_text("source")
     monkeypatch.setattr(sealer, "_pilot_binding", lambda *_: {"path": str(source.resolve()), "width": 2, "height": 2, "step": 6, "encoding": "rgb8"})
     try:
