@@ -490,6 +490,7 @@ def main() -> None:
                     source_height=S100P_SOURCE_HEIGHT,
                 )
                 roi_diagnostic = {
+                    "thresholded_detections": len(detections) + len(rejected_rois),
                     "invalid_roi_count": len(rejected_rois),
                     "invalid_roi_indices": [index for index, _reason in rejected_rois],
                     "invalid_roi_reasons": [reason for _index, reason in rejected_rois],
