@@ -2484,7 +2484,10 @@ class CoverageProbe(Node):
                         "y": float(component["points"][-1][1]),
                         "yaw": float(headings[-1]),
                     }
-                    recovery = self._follow_ackermann_hybrid_plan(final_goal)
+                    recovery = self._follow_ackermann_hybrid_plan(
+                        final_goal,
+                        terminal_goal_checker_id="primitive_goal_checker",
+                    )
                     return {
                         "success": bool(recovery.get("success")),
                         "error": None if recovery.get("success") else recovery.get(
@@ -2677,7 +2680,10 @@ class CoverageProbe(Node):
                         "y": float(component["points"][-1][1]),
                         "yaw": float(headings[-1]),
                     }
-                    result = self._follow_ackermann_hybrid_plan(goal)
+                    result = self._follow_ackermann_hybrid_plan(
+                        goal,
+                        terminal_goal_checker_id="primitive_goal_checker",
+                    )
                     result["live_handoff_replan"] = True
                     result["handoff_error"] = handoff
                     result["nominal_connector_class"] = (

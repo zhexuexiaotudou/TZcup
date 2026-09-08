@@ -85,6 +85,21 @@ def test_ackermann_hybrid_sections_use_mppi_forward_and_reverse_rpp():
     assert '"curvature_primitive_index"' in hybrid_executor
     assert '"curvature_primitive_count"' in hybrid_executor
 
+    connector_executor = probe[
+        probe.index("    def _follow_forward_dubins_primitives"):
+        probe.index("    def _execute_ackermann_swath")
+    ]
+    component_executor = probe[
+        probe.index("    def _execute_component"):
+        probe.index("    def _wait_for_cusp_stop")
+    ]
+    assert connector_executor.count(
+        'terminal_goal_checker_id="primitive_goal_checker"'
+    ) == 1
+    assert component_executor.count(
+        'terminal_goal_checker_id="primitive_goal_checker"'
+    ) == 1
+
 
 def test_ackermann_entry_uses_existing_brush_off_swath_lead_in():
     probe = (
