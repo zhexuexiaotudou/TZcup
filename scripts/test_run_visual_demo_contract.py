@@ -82,6 +82,9 @@ def test_ackermann_hybrid_sections_use_mppi_forward_and_reverse_rpp():
     assert '"primitive_goal_checker"' in hybrid_executor
     assert "next_section_is_real_cusp" in hybrid_executor
     assert "if next_section_is_real_cusp:" in hybrid_executor
+    assert 'section_result["curvature_handoff_error"] = handoff' in hybrid_executor
+    assert 'if handoff["requires_replan"]:' in hybrid_executor
+    assert '"live_curvature_handoff_replan_failed"' in hybrid_executor
     assert '"curvature_primitive_index"' in hybrid_executor
     assert '"curvature_primitive_count"' in hybrid_executor
 

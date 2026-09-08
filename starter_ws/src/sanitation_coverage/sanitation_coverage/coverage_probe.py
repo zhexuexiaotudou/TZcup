@@ -2292,6 +2292,57 @@ class CoverageProbe(Node):
             section_results.append(section_result)
             if not section_result.get("success"):
                 break
+            if (
+                index < len(sections) - 1
+                and not next_section_is_real_cusp
+                and self.estimated_pose is not None
+            ):
+                next_pose = sections[index + 1]["poses"][0]
+                handoff = connector_handoff_replan_decision(
+                    tuple(float(value) for value in self.estimated_pose[:3]),
+                    (
+                        float(next_pose[0]),
+                        float(next_pose[1]),
+                        float(next_pose[2]),
+                    ),
+                )
+                section_result["curvature_handoff_error"] = handoff
+                if handoff["requires_replan"]:
+                    # Intermediate goal checkers deliberately allow finite
+                    # error. Do not give the next static arc a stale start:
+                    # on a looping Dubins path MPPI may otherwise prune onto
+                    # the wrong branch and drive past its endpoint.
+                    continuation = self._follow_ackermann_hybrid_plan(
+                        pose,
+                        replan_depth=replan_depth + 1,
+                        terminal_goal_checker_id=terminal_goal_checker_id,
+                    )
+                    section_result["replanned_continuation"] = continuation
+                    section_result["curvature_handoff_replanned"] = True
+                    if continuation.get("success"):
+                        return {
+                            "success": True,
+                            "error": None,
+                            "controller": (
+                                "Smac Hybrid live-handoff replan + segmented "
+                                "ConnectorPath/ReversePath"
+                            ),
+                            "planner": planner_source,
+                            "goal_pose": pose,
+                            "planned_length_m": plan.get("path_length_m"),
+                            "path_pose_count": plan.get("path_pose_count"),
+                            "direction_section_count": len(direction_sections),
+                            "curvature_primitive_section_count": len(sections),
+                            "cusp_stop_count": cusp_stop_count,
+                            "replan_depth": replan_depth,
+                            "section_results": section_results,
+                            "terminal_tracking_error": self._tracking_error(pose),
+                        }
+                    section_result["success"] = False
+                    section_result["error"] = (
+                        "live_curvature_handoff_replan_failed"
+                    )
+                    break
             if next_section_is_real_cusp:
                 # Replan from the measured stopped cusp. If the planner cannot
                 # find a continuation, retain the original kinematically
