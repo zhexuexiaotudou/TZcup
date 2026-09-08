@@ -361,8 +361,8 @@ robot_footprint:
         "vehicle_candidate": {
             "cleaning_width_m": 1.32,
             "brush_center_y_m": 0.52,
-            "max_cleaning_speed_m_s": 0.6,
-            "theoretical_peak_efficiency_m2_h": 2851.2,
+            "max_cleaning_speed_m_s": 1.0,
+            "theoretical_peak_efficiency_m2_h": 4752.0,
             "offline_mean_effective_efficiency_m2_h": None,
         },
         "competition_truth": {

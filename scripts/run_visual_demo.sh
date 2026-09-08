@@ -589,7 +589,7 @@ else:
         # the westbound 186 m swath reached the loose endpoint at 0.73 rad and
         # the next Dubins primitive was pruned to an empty path.
         controllers["CleanPath"]["min_approach_linear_velocity"] = 0.2
-        controllers["CleanPath"]["approach_velocity_scaling_dist"] = 5.0
+        controllers["CleanPath"]["approach_velocity_scaling_dist"] = 3.0
         controllers["DubinsPath"]["desired_linear_vel"] = 0.6
         controllers["DubinsPath"]["regulated_linear_scaling_min_speed"] = 0.5
         controllers["DubinsPath"]["min_approach_linear_velocity"] = 0.2

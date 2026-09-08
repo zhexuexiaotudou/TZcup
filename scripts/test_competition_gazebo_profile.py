@@ -82,7 +82,7 @@ def test_visual_launcher_exposes_competition_profile() -> None:
     assert 'competition_efficiency_ackermann.yaml' in bash
     assert 'competition_coverage_efficiency_ackermann.yaml' in bash
     assert 'controllers["CleanPath"]["min_approach_linear_velocity"] = 0.2' in bash
-    assert 'controllers["CleanPath"]["approach_velocity_scaling_dist"] = 5.0' in bash
+    assert 'controllers["CleanPath"]["approach_velocity_scaling_dist"] = 3.0' in bash
     assert '--competition-lane' in bash
     assert '[ValidateSet("representative", "efficiency")]' in powershell
     assert '"--competition-lane", $CompetitionLane' in powershell

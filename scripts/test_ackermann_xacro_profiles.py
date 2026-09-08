@@ -172,6 +172,7 @@ def test_ackermann_plugin_counts_and_configuration():
         "child_frame_id": "base_footprint",
         "odom_publish_frequency": "50",
         "topic": "/cmd_vel",
+        "max_velocity": "1.0",
     }
     for key, value in expected.items():
         child = plugin.find(key)
