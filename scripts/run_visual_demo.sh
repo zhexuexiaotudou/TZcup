@@ -461,10 +461,13 @@ if [[ "${COMPETITION_PROFILE}" -eq 1 ]]; then
     initial_pose_y="45.95"
     initial_pose_yaw="0.0"
     if [[ "${COMPETITION_LANE}" == "efficiency" ]]; then
-      spawn_x="-94.80"
-      spawn_y="-30.05"
-      initial_pose_x="5.20"
-      initial_pose_y="19.95"
+      # Start one metre behind and exactly aligned with the first staging pose.
+      # The previous 0.65 m lateral offset forced a self-intersecting three-point
+      # maneuver before cleaning and made its middle branch ambiguous.
+      spawn_x="-95.68"
+      spawn_y="-29.40"
+      initial_pose_x="4.32"
+      initial_pose_y="20.60"
     fi
   fi
 fi

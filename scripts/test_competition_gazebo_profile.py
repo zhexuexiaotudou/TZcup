@@ -90,6 +90,10 @@ def test_visual_launcher_exposes_competition_profile() -> None:
     assert 'spawn_x="-94.80"' in bash
     assert 'initial_pose_y="45.95"' in bash
     assert bash.index('spawn_x="-90.0"') < bash.index('spawn_x="-94.80"')
+    assert 'spawn_x="-95.68"' in bash
+    assert 'spawn_y="-29.40"' in bash
+    assert 'initial_pose_x="4.32"' in bash
+    assert 'initial_pose_y="20.60"' in bash
     assert '"${DRIVE_MODEL}" == "ackermann" && "${COMPETITION_PROFILE}" -eq 0' in bash
     assert 'if [[ "${COMPETITION_PROFILE}" -eq 0 ]]; then\n    cp "${mission_template}" "${mission_config}"' in bash
     assert "[switch]$CompetitionProfile" in powershell
