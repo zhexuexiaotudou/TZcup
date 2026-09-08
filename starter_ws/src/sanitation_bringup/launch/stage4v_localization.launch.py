@@ -74,6 +74,13 @@ def generate_launch_description():
             DeclareLaunchArgument('world_to_map_x', default_value='8.0'),
             DeclareLaunchArgument('world_to_map_y', default_value='0.0'),
             DeclareLaunchArgument('world_to_map_yaw', default_value='0.0'),
+            # The simulated GNSS is generated from /ground_truth/odom after the
+            # world-to-map transform has already been applied. Keep a distinct
+            # transform for the fuser so the parent launch values are not
+            # inherited and applied a second time.
+            DeclareLaunchArgument('gnss_world_to_map_x', default_value='0.0'),
+            DeclareLaunchArgument('gnss_world_to_map_y', default_value='0.0'),
+            DeclareLaunchArgument('gnss_world_to_map_yaw', default_value='0.0'),
             DeclareLaunchArgument(
                 'gnss_outlier_threshold_m', default_value='0.75'
             ),
@@ -103,9 +110,15 @@ def generate_launch_description():
                     'spawn_yaw': LaunchConfiguration('spawn_yaw'),
                     'cleaning_width': LaunchConfiguration('cleaning_width'),
                     'brush_center_y': LaunchConfiguration('brush_center_y'),
-                    'world_to_map_x': LaunchConfiguration('world_to_map_x'),
-                    'world_to_map_y': LaunchConfiguration('world_to_map_y'),
-                    'world_to_map_yaw': LaunchConfiguration('world_to_map_yaw'),
+                    'world_to_map_x': LaunchConfiguration(
+                        'gnss_world_to_map_x'
+                    ),
+                    'world_to_map_y': LaunchConfiguration(
+                        'gnss_world_to_map_y'
+                    ),
+                    'world_to_map_yaw': LaunchConfiguration(
+                        'gnss_world_to_map_yaw'
+                    ),
                     'camera_profile': LaunchConfiguration('camera_profile'),
                     'enable_training_gt': LaunchConfiguration('enable_training_gt'),
                 }.items(),
