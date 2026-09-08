@@ -3,8 +3,12 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import os
 import sys
+import time
 from pathlib import Path
+
+import pytest
 
 
 HERE = Path(__file__).parent
@@ -27,6 +31,7 @@ def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+@pytest.mark.skipif(os.name != "posix", reason="owned process-group evidence is a board/Linux-only path")
 def test_runs_a_real_subprocess_and_seals_its_planes(tmp_path, monkeypatch):
     raw = tmp_path / "raw.rgb"; raw.write_bytes(b"r" * 12)
     binary, source = Path(sys.executable), tmp_path / "official_source.py"
@@ -42,6 +47,40 @@ def test_runs_a_real_subprocess_and_seals_its_planes(tmp_path, monkeypatch):
     receipt = producer.run(pilot_manifest=tmp_path / "pilot.json", pilot_record_index=0, adapter_binary=binary, adapter_source=source, dpkg_package="pkg", dpkg_path_role="official", output=tmp_path / "out", timeout_seconds=10, producer_command=[str(binary.resolve()), str(helper), "{images_y}", "{images_uv}", "{raw_rgb}"])
     assert receipt["status"] == "OFFICIAL_PREPROCESS_CAPTURED"
     assert receipt["official_preprocessor"]["command"][-1] == str(raw.resolve())
+    assert receipt["execution"]["zero_survivor"] is True
+
+
+@pytest.mark.skipif(os.name != "posix", reason="owned process-group evidence is a board/Linux-only path")
+def test_timeout_reaps_the_official_producer_process_group(tmp_path, monkeypatch):
+    raw = tmp_path / "raw.rgb"; raw.write_bytes(b"r" * 12)
+    binary, source = Path(sys.executable), tmp_path / "official_source.py"
+    source.write_text("source")
+    monkeypatch.setattr(sealer, "_pilot_binding", lambda *_: {
+        "path": str(raw.resolve()), "sha256": _sha(raw), "byte_size": 12,
+        "width": 2, "height": 2, "step": 6, "encoding": "rgb8",
+        "frame_id": "camera", "stamp_ns": 1,
+    })
+    monkeypatch.setattr(producer, "_dpkg", lambda *_: ("", 1))
+    child_pid = tmp_path / "child.pid"
+    code = (
+        "import pathlib,subprocess,sys,time; "
+        "child=subprocess.Popen([sys.executable,'-c','import time; time.sleep(60)']); "
+        f"pathlib.Path({str(child_pid)!r}).write_text(str(child.pid)); time.sleep(60)"
+    )
+    receipt = producer.run(
+        pilot_manifest=tmp_path / "pilot.json", pilot_record_index=0,
+        adapter_binary=binary, adapter_source=source, dpkg_package="pkg",
+        dpkg_path_role="official", output=tmp_path / "out", timeout_seconds=0.1,
+        producer_command=[str(binary.resolve()), "-c", code, "{raw_rgb}", "{images_y}", "{images_uv}"],
+    )
+    assert receipt["status"] == "BLOCKED"
+    assert receipt["execution"]["timed_out"] is True
+    assert receipt["execution"]["zero_survivor"] is True
+    deadline = time.monotonic() + 2
+    while child_pid.exists() and (Path("/proc") / child_pid.read_text()).exists() and time.monotonic() < deadline:
+        time.sleep(0.05)
+    assert child_pid.exists()
+    assert not (Path("/proc") / child_pid.read_text()).exists()
 
 
 def test_refuses_a_command_that_does_not_consume_all_real_inputs(tmp_path, monkeypatch):

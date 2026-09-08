@@ -11,7 +11,7 @@ import json
 import subprocess
 from pathlib import Path
 
-from hbm_evidence_common import fresh_directory, normal_file
+from hbm_evidence_common import fresh_directory, normal_file, run_owned_process
 import capture_dosod_official_preprocess as sealer
 
 
@@ -48,13 +48,9 @@ def run(*, pilot_manifest: Path, pilot_record_index: int, adapter_binary: Path,
     })
     if command[0] != str(adapter_binary.resolve()):
         raise ValueError("producer_command_must_start_with_adapter_binary")
-    try:
-        result = subprocess.run(command, capture_output=True, text=True, check=False, timeout=timeout_seconds)
-        returncode, stdout, stderr = result.returncode, result.stdout, result.stderr
-    except subprocess.TimeoutExpired as error:
-        returncode = 124
-        stdout = error.stdout or ""
-        stderr = (error.stderr or "") + "\nofficial_producer_timeout\n"
+    returncode, stdout, stderr, execution = run_owned_process(
+        command, timeout_seconds=timeout_seconds
+    )
     stdout_path, stderr_path, dpkg_path = output / "official.stdout.txt", output / "official.stderr.txt", output / "official.dpkg.txt"
     stdout_path.write_text(stdout, encoding="utf-8")
     stderr_path.write_text(stderr, encoding="utf-8")
@@ -66,6 +62,7 @@ def run(*, pilot_manifest: Path, pilot_record_index: int, adapter_binary: Path,
         adapter_source=adapter_source, dpkg_output=dpkg_path, stdout=stdout_path,
         stderr=stderr_path, command=command, returncode=returncode,
         output=output / "sealed", dpkg_returncode=dpkg_returncode,
+        execution=execution,
     )
 
 

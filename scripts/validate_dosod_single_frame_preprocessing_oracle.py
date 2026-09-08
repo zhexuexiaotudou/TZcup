@@ -55,7 +55,7 @@ def _capture(path: Path) -> dict[str, Any]:
     normal_file(CAPTURE_PRODUCER, "official_capture_producer")
     if value.get("producer_script_path") != str(CAPTURE_PRODUCER.resolve()) or value.get("producer_script_sha256") != sha256_file(CAPTURE_PRODUCER):
         raise ValueError("official_capture_producer_identity_invalid")
-    required = {"receipt_id", "status", "test_fixture", "raw_sensor", "official_preprocessor", "inputs", "producer_script_path", "producer_script_sha256", "started_epoch_ns", "ended_epoch_ns", "blockers"}
+    required = {"receipt_id", "status", "test_fixture", "raw_sensor", "official_preprocessor", "execution", "inputs", "producer_script_path", "producer_script_sha256", "started_epoch_ns", "ended_epoch_ns", "blockers"}
     if set(value) != required or value["receipt_id"] != "tzcup_dosod_official_preprocess_capture_receipt_v1" or value["status"] != "OFFICIAL_PREPROCESS_CAPTURED" or value["test_fixture"] is not False:
         raise ValueError("official_capture_receipt_invalid")
     raw = value["raw_sensor"]
@@ -65,6 +65,10 @@ def _capture(path: Path) -> dict[str, Any]:
     raw_path = Path(raw["path"]); normal_file(raw_path, "official_capture_raw")
     if raw_path.stat().st_size != raw["byte_size"] or sha256_file(raw_path) != raw["sha256"] or raw["encoding"] not in {"rgb8", "bgr8"} or any(not isinstance(raw[key], int) or raw[key] <= 0 for key in ("width", "height", "step", "stamp_ns")) or not isinstance(raw["frame_id"], str) or not raw["frame_id"]:
         raise ValueError("official_capture_raw_drift")
+    execution = value["execution"]
+    execution_keys = {"pgid", "deadline_seconds", "term_grace_seconds", "timed_out", "term_sent", "kill_sent", "zero_survivor", "elapsed_seconds"}
+    if not isinstance(execution, dict) or set(execution) != execution_keys or not isinstance(execution["pgid"], int) or execution["pgid"] <= 1 or not isinstance(execution["deadline_seconds"], (int, float)) or execution["deadline_seconds"] <= 0 or execution["term_grace_seconds"] != 10 or not isinstance(execution["timed_out"], bool) or not isinstance(execution["term_sent"], bool) or not isinstance(execution["kill_sent"], bool) or execution["zero_survivor"] is not True or not isinstance(execution["elapsed_seconds"], (int, float)) or execution["elapsed_seconds"] < 0:
+        raise ValueError("official_capture_execution_invalid")
     official = value["official_preprocessor"]
     if not isinstance(official, dict) or set(official) != {"binary", "source", "dpkg", "stdout", "stderr", "command", "returncode", "identity", "execution_host", "zero_survivor"}:
         raise ValueError("official_capture_identity_invalid")
@@ -75,7 +79,7 @@ def _capture(path: Path) -> dict[str, Any]:
         item_path = Path(item["path"]); normal_file(item_path, f"official_capture_{label}")
         if item_path.stat().st_size != item.get("byte_size") or sha256_file(item_path) != item["sha256"]:
             raise ValueError(f"official_capture_{label}_identity_drift")
-    if official["returncode"] != 0 or not isinstance(official["command"], list) or not official["command"] or official["command"][0] != official["binary"]["path"] or not isinstance(official["execution_host"], dict) or not official["execution_host"].get("system") or not official["execution_host"].get("machine"):
+    if official["returncode"] != 0 or official["zero_survivor"] is not True or not isinstance(official["command"], list) or not official["command"] or official["command"][0] != official["binary"]["path"] or not isinstance(official["execution_host"], dict) or not official["execution_host"].get("system") or not official["execution_host"].get("machine"):
         raise ValueError("official_capture_command_invalid")
     identity = official["identity"]
     if not isinstance(identity, dict) or set(identity) != {"package", "version", "path_role", "source_revision", "dpkg_returncode"} or identity.get("dpkg_returncode") != 0:
