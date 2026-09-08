@@ -652,7 +652,7 @@ setsid ros2 launch sanitation_bringup stage4v_localization.launch.py \
   gui_config:="${gui_config}" \
   map_file:="${map_file}" spawn_x:="${spawn_x}" spawn_y:="${spawn_y}" spawn_yaw:="${spawn_yaw}" \
   cleaning_width:="${cleaning_width}" brush_center_y:="${brush_center_y}" \
-  world_to_map_x:="${world_to_map_x}" world_to_map_y:="${world_to_map_y}" \
+  simulation_world_to_map_x:="${world_to_map_x}" simulation_world_to_map_y:="${world_to_map_y}" \
   initial_pose_x:="${initial_pose_x}" initial_pose_y:="${initial_pose_y}" initial_pose_yaw:="${initial_pose_yaw}" \
   camera_profile:=V5_retracted fusion_mode:="${localization_fusion_mode}" \
   enable_scan_refiner:="${enable_scan_refiner}" \

@@ -187,5 +187,10 @@ def test_stage4v_forwards_map_frame_and_controlled_gnss_gate_to_fuser() -> None:
     assert "DeclareLaunchArgument('gnss_world_to_map_x', default_value='0.0')" in stage4v
     assert "DeclareLaunchArgument('gnss_world_to_map_y', default_value='0.0')" in stage4v
     assert "DeclareLaunchArgument('gnss_world_to_map_yaw', default_value='0.0')" in stage4v
+    assert "'simulation_world_to_map_x', default_value='8.0'" in stage4v
+    assert "'simulation_world_to_map_y', default_value='0.0'" in stage4v
+    assert "'simulation_world_to_map_yaw', default_value='0.0'" in stage4v
+    for suffix in ("x", "y", "yaw"):
+        assert f"'simulation_world_to_map_{suffix}'" in stage4v
     assert "'gnss_outlier_threshold_m': LaunchConfiguration(" in stage4v
     assert "'gnss_outlier_threshold_m': LaunchConfiguration(" in hybrid

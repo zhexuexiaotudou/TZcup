@@ -71,9 +71,15 @@ def generate_launch_description():
             DeclareLaunchArgument('spawn_yaw', default_value='0.0'),
             DeclareLaunchArgument('cleaning_width', default_value='1.32'),
             DeclareLaunchArgument('brush_center_y', default_value='0.52'),
-            DeclareLaunchArgument('world_to_map_x', default_value='8.0'),
-            DeclareLaunchArgument('world_to_map_y', default_value='0.0'),
-            DeclareLaunchArgument('world_to_map_yaw', default_value='0.0'),
+            DeclareLaunchArgument(
+                'simulation_world_to_map_x', default_value='8.0'
+            ),
+            DeclareLaunchArgument(
+                'simulation_world_to_map_y', default_value='0.0'
+            ),
+            DeclareLaunchArgument(
+                'simulation_world_to_map_yaw', default_value='0.0'
+            ),
             # The simulated GNSS is generated from /ground_truth/odom after the
             # world-to-map transform has already been applied. Keep a distinct
             # transform for the fuser so the parent launch values are not
@@ -174,9 +180,15 @@ def generate_launch_description():
                     'initial_pose_x': LaunchConfiguration('initial_pose_x'),
                     'initial_pose_y': LaunchConfiguration('initial_pose_y'),
                     'initial_pose_yaw': LaunchConfiguration('initial_pose_yaw'),
-                    'world_to_map_x': LaunchConfiguration('world_to_map_x'),
-                    'world_to_map_y': LaunchConfiguration('world_to_map_y'),
-                    'world_to_map_yaw': LaunchConfiguration('world_to_map_yaw'),
+                    'world_to_map_x': LaunchConfiguration(
+                        'simulation_world_to_map_x'
+                    ),
+                    'world_to_map_y': LaunchConfiguration(
+                        'simulation_world_to_map_y'
+                    ),
+                    'world_to_map_yaw': LaunchConfiguration(
+                        'simulation_world_to_map_yaw'
+                    ),
                     'gnss_outlier_threshold_m': LaunchConfiguration(
                         'gnss_outlier_threshold_m'
                     ),

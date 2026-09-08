@@ -53,6 +53,8 @@ def test_ackermann_visual_demo_keeps_gnss_gate_and_records_diagnostics():
     assert 'gnss_outlier_threshold_m="0.75"' in launcher
     assert 'gnss_outlier_threshold_m="2.0"' not in launcher
     assert 'gnss_outlier_threshold_m:="${gnss_outlier_threshold_m}"' in launcher
+    assert 'simulation_world_to_map_x:="${world_to_map_x}"' in launcher
+    assert 'simulation_world_to_map_y:="${world_to_map_y}"' in launcher
     assert '/gnss/fix /localization/fusion_diagnostics' in launcher
     assert connector_executor.count('"controller_id": "ConnectorPath"') == 2
     assert '"controller_id": "DubinsPath"' not in connector_executor
