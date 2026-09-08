@@ -8,6 +8,8 @@ from typing import Any
 import cv2
 import numpy as np
 
+from .diagnostic_compat import set_diagnostic_level
+
 
 class Nv12ConversionError(ValueError):
     """Raised when an image cannot be bound safely to an NV12 frame."""
@@ -188,9 +190,7 @@ def main() -> None:
             array = DiagnosticArray()
             array.header.stamp = self.get_clock().now().to_msg()
             status = DiagnosticStatus()
-            # diagnostic_msgs/DiagnosticStatus.level is ROS uint8, represented
-            # by an integer in rclpy (not a one-byte ``bytes`` payload).
-            status.level = int(level)
+            set_diagnostic_level(status, level)
             status.name = "formal_open_vocab_perception/rgb_to_nv12_adapter"
             status.hardware_id = "RDK_S100P_Journey_6P"
             status.message = message

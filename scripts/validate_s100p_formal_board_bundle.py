@@ -24,6 +24,7 @@ EXPECTED_BOUND_ROLES = {
     "dosod_edgesam_s100_profile",
     "formal_ros2_launch",
     "project_perception_package_manifest",
+    "diagnostic_compat_source",
     "nv12_adapter_source",
     "product_adapter_source",
     "project_perception_entry_points",
