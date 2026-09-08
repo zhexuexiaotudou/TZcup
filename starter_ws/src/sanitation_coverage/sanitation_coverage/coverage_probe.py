@@ -2177,7 +2177,10 @@ class CoverageProbe(Node):
         for direction_section_index, direction_section in enumerate(
             direction_sections
         ):
-            if direction_section["direction"] != "FORWARD":
+            if (
+                direction_section["direction"] != "FORWARD"
+                or using_precomputed_plan
+            ):
                 sections.append({
                     **direction_section,
                     "direction_section_index": direction_section_index,

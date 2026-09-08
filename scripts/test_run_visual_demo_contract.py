@@ -127,6 +127,7 @@ def test_ackermann_entry_uses_existing_brush_off_swath_lead_in():
     assert 'terminal_goal_checker_id="primitive_goal_checker"' in transit_dispatch
     assert "plan is None" in probe
     assert "next_section_is_real_cusp and not using_precomputed_plan" in probe
+    assert 'or using_precomputed_plan' in probe
 
 
 def test_launcher_can_run_a_bounded_physical_dynamic_matrix():
