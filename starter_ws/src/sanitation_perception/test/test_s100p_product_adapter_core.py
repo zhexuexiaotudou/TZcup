@@ -634,8 +634,8 @@ def test_decode_edgesam_labels_requires_exact_stamp_dimensions_roi_order_and_lab
         Detection("puddle", 0.8, Roi(1, 2, 3, 2), 10),
         Detection("dust_or_soil", 0.7, Roi(5, 2, 2, 2), 11),
     )
-    batch = EdgeSamPromptBatch(1000, 4, 2, prompts)
-    rois = [_roi(1, 2, 3, 2, 0.8), _roi(5, 2, 2, 2, 0.7)]
+    batch = EdgeSamPromptBatch(1000, 8, 4, prompts)
+    rois = [_roi(2, 2, 1, 1, 0.8), _roi(6, 2, 1, 1, 0.7)]
     decoded = decode_edgesam_label_features(
         batch,
         output_stamp_ns=1000,
@@ -691,11 +691,17 @@ def test_decode_edgesam_rejects_empty_prompt_batch_and_short_capture():
         )
 
 
-def test_decode_accepts_real_s100p_network_mask_shape_and_segment_bbox_adjustment():
-    prompt = Detection("puddle", 0.8, Roi(1020, 300, 432, 600), 0)
-    batch = EdgeSamPromptBatch(55, 1920, 1080, (prompt,))
+def test_decode_replays_r13_official_s100p_roi_canonicalization_exactly():
+    prompts = (
+        Detection("puddle", 0.8, Roi(135, 384, 710, 90), 0),
+        Detection("dust_or_soil", 0.7, Roi(696, 368, 144, 35), 1),
+        Detection("fallen_leaves", 0.6, Roi(683, 352, 132, 37), 2),
+    )
+    batch = EdgeSamPromptBatch(55, 848, 480, prompts)
     values = [0.0] * (512 * 288)
     values[123] = 1.0
+    values[124] = 2.0
+    values[125] = 3.0
     decoded = decode_edgesam_label_features(
         batch,
         output_stamp_ns=55,
@@ -704,18 +710,24 @@ def test_decode_accepts_real_s100p_network_mask_shape_and_segment_bbox_adjustmen
         capture_height=288,
         expected_capture_width=512,
         expected_capture_height=288,
-        output_prompt_rois=[_roi(1020, 300, 427, 596, 0.8, "puddle")],
-        output_prompt_class_ids=["puddle"],
+        output_prompt_rois=[
+            _roi(135, 382, 708, 87, 0.8, "puddle"),
+            _roi(695, 367, 142, 34, 0.7, "dust_or_soil"),
+            _roi(682, 351, 130, 36, 0.6, "fallen_leaves"),
+        ],
+        output_prompt_class_ids=["puddle", "dust_or_soil", "fallen_leaves"],
     )
     assert decoded.image_width == 512
     assert decoded.image_height == 288
     assert decoded.masks[0][123]
+    assert decoded.masks[1][124]
+    assert decoded.masks[2][125]
 
 
-def test_decode_rejects_weak_roi_overlap_even_with_correct_class_order():
-    prompt = Detection("puddle", 0.8, Roi(100, 100, 100, 100), 0)
-    batch = EdgeSamPromptBatch(9, 1920, 1080, (prompt,))
-    with pytest.raises(S100PProductAdapterError, match="geometry"):
+def test_decode_rejects_noncanonical_roi_even_when_it_is_a_nearby_overlap():
+    prompt = Detection("puddle", 0.8, Roi(135, 384, 710, 90), 0)
+    batch = EdgeSamPromptBatch(9, 848, 480, (prompt,))
+    with pytest.raises(S100PProductAdapterError, match="exactly match"):
         decode_edgesam_label_features(
             batch,
             output_stamp_ns=9,
@@ -724,9 +736,49 @@ def test_decode_rejects_weak_roi_overlap_even_with_correct_class_order():
             capture_height=288,
             expected_capture_width=512,
             expected_capture_height=288,
-            output_prompt_rois=[_roi(150, 100, 100, 100, 0.8, "puddle")],
+            output_prompt_rois=[_roi(136, 382, 708, 87, 0.8, "puddle")],
             output_prompt_class_ids=["puddle"],
         )
+
+
+def test_official_s100p_roi_canonicalizer_rejects_unsupported_shapes_and_parity_collapse():
+    with pytest.raises(S100PProductAdapterError, match="512x512"):
+        core.canonicalize_official_s100p_edgesam_roi(
+            Roi(135, 384, 710, 90),
+            source_image_width=848,
+            source_image_height=480,
+            model_input_width=1024,
+            model_input_height=1024,
+        )
+    with pytest.raises(S100PProductAdapterError, match="parity canonicalization"):
+        core.canonicalize_official_s100p_edgesam_roi(
+            Roi(847, 100, 1, 3),
+            source_image_width=848,
+            source_image_height=480,
+        )
+
+
+@pytest.mark.parametrize(
+    "roi, source_width, source_height, expected",
+    [
+        # q_right is exactly 512, so upstream clamps it to 511 before it
+        # truncates width and rescales the integer fields back to source space.
+        (Roi(0, 0, 849, 480), 849, 480, Roi(0, 0, 847, 477)),
+        # q_bottom is exactly 512; this independently exercises the Y clamp.
+        (Roi(0, 0, 451, 481), 451, 481, Roi(0, 0, 450, 480)),
+        # Height dominates.  ResizeNV12Img aligns width 289 down to 288 and
+        # recomputes ratio as 480 / 288 before the two ROI quantizations.
+        (Roi(0, 0, 480, 849), 480, 849, Roi(0, 0, 478, 848)),
+    ],
+)
+def test_official_s100p_roi_canonicalizer_replays_clamp_and_resize_alignment(
+    roi, source_width, source_height, expected
+):
+    assert core.canonicalize_official_s100p_edgesam_roi(
+        roi,
+        source_image_width=source_width,
+        source_image_height=source_height,
+    ) == expected
 
 
 def test_perf_latency_accepts_only_positive_predict_infer_metric():

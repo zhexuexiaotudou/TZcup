@@ -190,7 +190,7 @@ def test_development_artifact_mode_is_explicit_and_cannot_leak_into_formal_launc
     assert "load_verified_board_artifact_contract(**artifact_kwargs)" in adapter
     assert "from .s100p_development_artifact_contract import" in adapter
     core = PACKAGE / "sanitation_perception" / "s100p_product_adapter_core.py"
-    assert hashlib.sha256(core.read_bytes()).hexdigest() == "e0cda94846e1246ca121e8a1ff4ce77c4a07dfb69d5100c63196dda55e40424b"
+    assert hashlib.sha256(core.read_bytes()).hexdigest() == "bbc3a0f865c2cd4a11d46de9aa86431f374a1bd0dbf1a7ac8b51c28ec75d1b5c"
 
 
 def test_development_launch_is_ast_identical_to_formal_except_for_its_mode():
