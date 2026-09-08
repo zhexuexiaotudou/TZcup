@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "contract_id": "tzcup_product_acceptance_contract_v1",
+  "authoritative_specification": {
+    "a12_requirement_id": "A12",
+    "path": "docs/a12-product-acceptance-specification.md",
+    "authoritative_source_path": "docs/a12-product-acceptance-specification.md",
+    "canonical_content_sha256": "56466de739f873173bfba57789ceaa86e22aefecf3561712aa17d11c9ec3d1c4",
+    "status": "TRACKED_FIXED_BASELINE"
+  },
+  "claim_boundary": "Tracked contract integrity is not runtime acceptance and must not promote any product runtime state.",
+  "product_runtime_states": {
+    "simulation_product_complete": false,
+    "product_integration_ready": false,
+    "product_field_ready": false
+  },
+  "auto15_execution_accounting": {
+    "scenario_ids": [
+      "mapping",
+      "full_coverage",
+      "timed_trajectory",
+      "discrete_pick",
+      "leaf_pile",
+      "puddle",
+      "spot_cleaning",
+      "dynamic_avoidance",
+      "narrow_corridor",
+      "boundary_protection",
+      "emergency_stop",
+      "app",
+      "speech",
+      "llm_dsl",
+      "bin_full",
+      "recovery_replay",
+      "efficiency",
+      "j6_runtime"
+    ],
+    "seeds": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+    "required_execution_count": 180,
+    "minimum_mission_group_count": 30,
+    "required_execution_evidence": ["video", "mcap"]
+  },
+  "auto15_runtime_receipt_contract": {
+    "receipt_ingestion_status": "BLOCKED_NO_CANONICAL_PRODUCER",
+    "blocker": "No tracked producer atomically creates fresh session-bound video, MCAP, replay/recalculation, provenance, and independent mission-group receipts. Arbitrary JSON/media intake is forbidden.",
+    "session_report_id": "tzcup_formal_final_acceptance_session_v1",
+    "runtime_binding_status": "FORMAL_RUNTIME_GATE_BOUND",
+    "video_audit_stage": "AUTO-17",
+    "mcap_replay_schema": "tzcup.coverage_mcap_replay.v1",
+    "required_provenance_fields": ["run_root", "source_commit", "source_tree", "model_sha256", "config_sha256", "dataset_sha256", "container_digest", "dependency_lock_sha256"],
+    "required_execution_fields": ["command", "exit_code", "started_epoch_ns", "finished_epoch_ns", "replay"]
+  }
+}

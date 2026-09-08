@@ -45,11 +45,9 @@ def test_crosswalk_covers_current_goal_runner_and_gate_contract() -> None:
     mapped_steps = {step for item in requirements for step in item["step_ids"]}
     mapped_gates = {gate for item in requirements for gate in item["evidence_gates"]}
     assert mapped_steps == _runner_step_ids()
-    # A19 is a separately blocked contract: its canonical runtime producer is
-    # intentionally absent, so it is not a gate of the 26-gate final runner.
-    assert mapped_gates - {"a19_two_hour_reliability_fault"} == set(
-        contract["evidence_gates"]
-    )
+    formal_gates = set(contract["evidence_gates"])
+    assert formal_gates <= mapped_gates
+    assert mapped_gates - formal_gates == {"a19_two_hour_reliability_fault"}
     assert all(item["state"] != "PASS" for item in requirements)
 
 
@@ -58,11 +56,14 @@ def test_crosswalk_keeps_external_and_historical_claims_fail_closed() -> None:
     by_id = {item["id"]: item for item in payload["requirements"]}
 
     assert by_id["A16"]["state"] == "HISTORICAL_COMPONENT_PASS_NOT_FORMAL_INTEGRATED"
+    assert by_id["A12"]["state"] == "BLOCKED_NO_CANONICAL_PRODUCER"
+    assert "canonical producer" in by_id["A12"]["blockers"][0]
     assert by_id["A15"]["state"] == "NOT_RUN_CURRENT_SNAPSHOT"
     assert "blockers" not in by_id["A15"]
     assert by_id["A17"]["state"] == "BLOCKED"
     assert by_id["A18"]["state"] == "BLOCKED_EXTERNAL_INPUT_AND_ARTIFACTS"
     assert by_id["A19"]["state"] == "BLOCKED_MISSING_CANONICAL_A19_RUNTIME_PRODUCER"
+    assert by_id["A19"]["evidence_gates"] == ["a19_two_hour_reliability_fault"]
     assert by_id["A20"]["state"] == "BLOCKED"
     assert by_id["A20"]["evidence_gates"] == []
     assert by_id["A20"]["receipt_validator"] == "scripts/a20_release_replay_receipt.py"

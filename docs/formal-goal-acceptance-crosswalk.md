@@ -29,7 +29,7 @@
 
 1. A02 服务舱门修复需要在新鲜 r062 运行根上重跑物理门。
 2. A08 的 3500 m²/h 指标与 0.45 m/s 速度上限冲突，需要分档复核并保留安全余量；不是简单改大速度常量。
-3. A12 历史文档提到的 `product_acceptance_v1` 文件在当前仓库历史中不存在，不能假装仍由旧脚本覆盖。
+3. A12 的固定产品验收基准已版本化为 [`a12-product-acceptance-specification.md`](a12-product-acceptance-specification.md)，并由 [`product_acceptance_contract.json`](../config/high_fidelity_vehicle/product_acceptance_contract.json) 约束 AUTO-15 的 18×10 执行账本、至少 30 个 mission group 及每个执行的 video/MCAP 保留。运行时收据还必须绑定当前 formal session/snapshot/run root、源码 commit/tree、模型/配置/数据集/容器/依赖身份，并通过 MCAP metadata、真实 replay/recalculation 与视频审计；由于还没有受总编排接线、可原子产出这些当前 session 收据的 canonical producer，A12 保持 `BLOCKED_NO_CANONICAL_PRODUCER`。静态合同只验证声明与基数，不能使任何产品运行时状态变为 true。
 4. A15 的一次性 hidden materializer、consumed/freeze/output-summary 账本和最终 12 站点重验合同已闭合；当前状态仅是尚未在新鲜快照上执行，不是通过。
 5. A18 的 S100 性能部分与 A21 共用外部硬缺口，不能只标成“尚未运行”。
 6. A19 已完整编码产品标准的两小时长稳/18 故障合同，但 current main 尚无 canonical runtime producer；不能由手写 JSON 代替连续原始证据，保持 `BLOCKED_MISSING_CANONICAL_A19_RUNTIME_PRODUCER`。

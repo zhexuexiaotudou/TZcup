@@ -112,11 +112,12 @@
     {
       "id": "A12",
       "title": "产品级详细指标与异常归因",
-      "source": [".workspace/specifications/acceptance/TZcup_仿真产品级最终验收标准与产品准入要求.md"],
+      "source": ["docs/a12-product-acceptance-specification.md", "config/high_fidelity_vehicle/product_acceptance_contract.json"],
       "step_ids": ["perception", "single_episode"],
       "evidence_gates": ["random_scene_perception", "end_to_end_cleaning_mission"],
-      "state": "CONTRACT_MAPPING_OPEN",
-      "blockers": ["Historical product_acceptance_v1 artifacts referenced by documentation are absent from current repository history; thresholds must be represented by current formal reports before PASS."]
+      "runtime_evidence_requirements": ["current_formal_session_and_snapshot_binding", "current_run_root_and_source_commit_tree", "model_config_dataset_container_dependency_identities", "per_execution_video_audit", "per_execution_mcap_metadata_and_replay_recalculation", "180_unique_scenario_seed_receipts", "30_independent_mission_group_receipts"],
+      "state": "BLOCKED_NO_CANONICAL_PRODUCER",
+      "blockers": ["No canonical producer is wired to atomically create current-formal-session-bound AUTO-15 video, MCAP, replay/recalculation, provenance, and independent mission-group receipts. The authoritative fixed product-acceptance specification and static cardinality contract cannot promote a product runtime state."]
     },
     {
       "id": "A13",
