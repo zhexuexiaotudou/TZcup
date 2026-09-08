@@ -408,7 +408,7 @@ if [[ "${DRIVE_MODEL}" == "ackermann" && "${COMPETITION_PROFILE}" -eq 0 ]]; then
   # The controlled RTK-fixed visual demo needs faster absolute-anchor
   # correction through its Ackermann turn transitions. Production keeps the
   # stage4v default (0.10).
-  gnss_anchor_smoothing_alpha="0.30"
+  gnss_anchor_smoothing_alpha="0.50"
 fi
 if [[ "${COMPETITION_PROFILE}" -eq 1 ]]; then
   competition_runtime="${runtime}/competition_profile"
