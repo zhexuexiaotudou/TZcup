@@ -81,7 +81,7 @@ def test_ackermann_hybrid_sections_use_mppi_forward_and_reverse_rpp():
     assert "split_path_at_curvature_reversals(" in hybrid_executor
     assert '"primitive_goal_checker"' in hybrid_executor
     assert "next_section_is_real_cusp" in hybrid_executor
-    assert "if next_section_is_real_cusp:" in hybrid_executor
+    assert "if next_section_is_real_cusp and not using_precomputed_plan:" in hybrid_executor
     assert "forward_only" not in hybrid_executor
     assert "invalid_path_recovery" not in hybrid_executor
     assert 'last_attempt.get("error_name") == "INVALID_PATH"' not in hybrid_executor
@@ -126,6 +126,7 @@ def test_ackermann_entry_uses_existing_brush_off_swath_lead_in():
     ]
     assert 'terminal_goal_checker_id="primitive_goal_checker"' in transit_dispatch
     assert "plan is None" in probe
+    assert "next_section_is_real_cusp and not using_precomputed_plan" in probe
 
 
 def test_launcher_can_run_a_bounded_physical_dynamic_matrix():

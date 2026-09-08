@@ -2083,6 +2083,7 @@ class CoverageProbe(Node):
         # A staging pose directly behind the chassis is the one case where a
         # single reverse-only Dubins-equivalent path is both shorter and more
         # controllable than a multi-cusp Reeds-Shepp result.
+        using_precomputed_plan = precomputed_plan is not None
         plan = precomputed_plan
         if (
             plan is None
@@ -2295,7 +2296,7 @@ class CoverageProbe(Node):
             section_results.append(section_result)
             if not section_result.get("success"):
                 break
-            if next_section_is_real_cusp:
+            if next_section_is_real_cusp and not using_precomputed_plan:
                 # Replan from the measured stopped cusp. If the planner cannot
                 # find a continuation, retain the original kinematically
                 # feasible section. Never splice the measured pose directly
