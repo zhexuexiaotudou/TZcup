@@ -125,6 +125,7 @@ def test_ackermann_entry_uses_existing_brush_off_swath_lead_in():
         probe.index("        component_results = []")
     ]
     assert 'terminal_goal_checker_id="primitive_goal_checker"' in transit_dispatch
+    assert "plan is None" in probe
 
 
 def test_launcher_can_run_a_bounded_physical_dynamic_matrix():

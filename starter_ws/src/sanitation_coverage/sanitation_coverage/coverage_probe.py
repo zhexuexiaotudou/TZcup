@@ -2084,7 +2084,11 @@ class CoverageProbe(Node):
         # single reverse-only Dubins-equivalent path is both shorter and more
         # controllable than a multi-cusp Reeds-Shepp result.
         plan = precomputed_plan
-        if self.estimated_pose is not None and self.mission_geometry is not None:
+        if (
+            plan is None
+            and self.estimated_pose is not None
+            and self.mission_geometry is not None
+        ):
             start_pose = tuple(float(value) for value in self.estimated_pose[:3])
             goal_pose = (
                 float(pose["x"]), float(pose["y"]), float(pose["yaw"])

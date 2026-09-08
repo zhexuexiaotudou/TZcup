@@ -290,7 +290,7 @@ headland:
 safety_margin_m: 0.10
 staging_offset_m: 0.50
 optimized_staging_offset_m: 0.15
-ackermann_staging_offset_m: 0.0
+ackermann_staging_offset_m: 1.0
 robot_footprint:
   - [0.82, 0.66]
   - [0.82, -0.66]
