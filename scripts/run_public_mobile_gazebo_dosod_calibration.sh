@@ -382,7 +382,7 @@ while IFS=$'\t' read -r role scene; do
   fi
   remaining_seconds >/dev/null || { RUNNER_EXIT_CODE=124; exit 124; }
   GZ_PARTITION="tzcup_public_mobile_${ROS_DOMAIN_ID}_$$_${scene}"; export GZ_PARTITION
-  "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 launch sanitation_formal_campus_integration formal_campus_map_lifecycle.launch.py mission_mode:=mapping gui:=false mapping_high_bandwidth_sensor_runtime:=true enable_training_gt:=true world:="$scene_root/episode/public/world.sdf" episode_manifest:="$manifest" map_artifact_dir:="$scene_root/runtime" pedestrian_schedule:="$scene_root/episode/environment/pedestrian_schedule.json" start_pedestrians:=false start_coverage:=false >"$scene_root/mapping.launch.log" 2>&1 & launch_pid=$!
+  "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 launch sanitation_formal_campus_integration formal_campus_map_lifecycle.launch.py mission_mode:=mapping operation_speed_profile:=mapping_safe gui:=false mapping_high_bandwidth_sensor_runtime:=true enable_training_gt:=true world:="$scene_root/episode/public/world.sdf" episode_manifest:="$manifest" map_artifact_dir:="$scene_root/runtime" pedestrian_schedule:="$scene_root/episode/environment/pedestrian_schedule.json" start_pedestrians:=false start_coverage:=false >"$scene_root/mapping.launch.log" 2>&1 & launch_pid=$!
   GZ_PGID="$(formal_runtime_wait_for_setsid_pgid "$launch_pid")" || { RUNNER_EXIT_CODE=125; exit 125; }
   formal_runtime_register_evidence_paths "$scene_root/memory_watchdog.json" "$scene_root/memory_watchdog.log"
   formal_runtime_start_memory_watchdog "$launch_pid" "$scene_root/memory_watchdog" || { RUNNER_EXIT_CODE=$?; exit "$RUNNER_EXIT_CODE"; }

@@ -25,6 +25,16 @@ def test_public_mobile_runner_reuses_lifecycle_operator_and_remains_read_only():
     assert source.count("stop_verified") >= 3
 
 
+def test_public_mobile_mapping_launch_fixes_the_required_mapping_safe_profile():
+    source = (ROOT / "scripts/run_public_mobile_gazebo_dosod_calibration.sh").read_text(encoding="utf-8")
+    launch = next(
+        line for line in source.splitlines()
+        if "ros2 launch sanitation_formal_campus_integration formal_campus_map_lifecycle.launch.py" in line
+    )
+    assert "mission_mode:=mapping" in launch
+    assert "operation_speed_profile:=mapping_safe" in launch
+
+
 def test_public_mobile_runner_has_explicit_non_formal_fixed_scene_pilot_and_full_review_gate():
     source = (ROOT / "scripts/run_public_mobile_gazebo_dosod_calibration.sh").read_text(encoding="utf-8")
     assert 'MODE="${PUBLIC_GAZEBO_CALIBRATION_MODE:-full}"' in source
