@@ -4392,6 +4392,12 @@
           "sha256": "f28f3e73a2f0ec73f676e6987aaf7acf7f605b3651067a7e94bf0b480a2e953c",
           "valid": true
         },
+        "diagnostic_compat_source": {
+          "byte_size": 323,
+          "path": "starter_ws/src/sanitation_perception/sanitation_perception/diagnostic_compat.py",
+          "sha256": "ef2a9099d3f8c85fe941ac86ec02761ab94137fe7d586b07cd201c7b142ff5e4",
+          "valid": true
+        },
         "dosod_edgesam_s100_profile": {
           "byte_size": 4159,
           "path": "starter_ws/src/sanitation_perception/config/open_vocab_s100_profile.yaml",

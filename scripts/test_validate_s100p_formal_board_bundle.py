@@ -87,6 +87,22 @@ class S100PFormalBoardBundleTests(unittest.TestCase):
         self.assertIn("bound_source_digest_mismatch:dosod_hbm_compile_contract", report["blockers"])
         self.assertFalse(report["board_operations_performed"])
 
+    def test_diagnostic_compat_source_is_mandatory_bound_runtime_source(self) -> None:
+        manifest_path = ROOT / "config" / "s100p_formal_board_bundle_manifest.json"
+        altered = json.loads(manifest_path.read_text(encoding="utf-8"))
+        altered["bound_sources"] = [
+            row for row in altered["bound_sources"]
+            if row["role"] != "diagnostic_compat_source"
+        ]
+        with tempfile.TemporaryDirectory() as temporary:
+            candidate = Path(temporary) / "bundle.json"
+            candidate.write_text(json.dumps(altered), encoding="utf-8")
+            report = MODULE.validate_manifest(candidate)
+        self.assertEqual(report["status"], "BLOCKED")
+        self.assertFalse(report["checks"]["bound_source_roles_exact"])
+        self.assertIn("bound_source_roles_not_exact", report["blockers"])
+        self.assertFalse(report["board_operations_performed"])
+
     def test_required_payload_role_target_path_mismatch_is_blocked(self) -> None:
         manifest_path = ROOT / "config" / "s100p_formal_board_bundle_manifest.json"
         altered = json.loads(manifest_path.read_text(encoding="utf-8"))
