@@ -438,9 +438,11 @@ def main() -> None:
             return output
 
         def _on_dosod(self, message: PerceptionTargets) -> None:
-            latency = _perf_latency_ms(message)
-            self._inference_diagnostic("dosod", latency, latency is not None)
             stamp = _stamp_ns(message.header.stamp)
+            latency = _perf_latency_ms(message)
+            self._inference_diagnostic(
+                "dosod", latency, latency is not None, source_stamp_ns=stamp
+            )
             self._dosod_raw_frames += 1
             try:
                 evicted = self._pending_dosod.put(stamp, message, now_ns=time.monotonic_ns())
@@ -596,9 +598,11 @@ def main() -> None:
             return capture, prompt_targets
 
         def _on_edgesam(self, message: PerceptionTargets) -> None:
-            latency = _perf_latency_ms(message)
-            self._inference_diagnostic("edgesam", latency, latency is not None)
             stamp = _stamp_ns(message.header.stamp)
+            latency = _perf_latency_ms(message)
+            self._inference_diagnostic(
+                "edgesam", latency, latency is not None, source_stamp_ns=stamp
+            )
             try:
                 if stamp <= 0:
                     raise S100PProductAdapterError("EdgeSAM stamp is invalid")
@@ -866,9 +870,15 @@ def main() -> None:
             level: int,
             message: str,
             values: dict[str, Any],
+            *,
+            source_stamp_ns: int | None = None,
         ) -> None:
             array = DiagnosticArray()
-            array.header.stamp = self.get_clock().now().to_msg()
+            if isinstance(source_stamp_ns, int) and source_stamp_ns > 0:
+                array.header.stamp.sec = source_stamp_ns // 1_000_000_000
+                array.header.stamp.nanosec = source_stamp_ns % 1_000_000_000
+            else:
+                array.header.stamp = self.get_clock().now().to_msg()
             status = DiagnosticStatus()
             set_diagnostic_level(status, level)
             status.name = name
@@ -908,7 +918,12 @@ def main() -> None:
             )
 
         def _inference_diagnostic(
-            self, component: str, latency: float | None, ok: bool
+            self,
+            component: str,
+            latency: float | None,
+            ok: bool,
+            *,
+            source_stamp_ns: int,
         ) -> None:
             hashes = (
                 self._model_hashes["dosod"]
@@ -931,7 +946,9 @@ def main() -> None:
                     ),
                     "latency_ms": latency if latency is not None else "",
                     "inference_ok": ok,
+                    "source_stamp_ns": source_stamp_ns,
                 },
+                source_stamp_ns=source_stamp_ns,
             )
 
     rclpy.init()

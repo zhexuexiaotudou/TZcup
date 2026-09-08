@@ -799,3 +799,12 @@ def test_pending_dosod_expiry_timer_uses_steady_clock_not_ros_sim_time():
     source = adapter.read_text(encoding="utf-8")
     assert "from rclpy.clock import Clock, ClockType" in source
     assert "clock=Clock(clock_type=ClockType.STEADY_TIME)" in source
+
+
+def test_inference_diagnostics_preserve_the_exact_source_stamp():
+    adapter = Path(__file__).parents[1] / "sanitation_perception" / "s100p_product_adapter.py"
+    source = adapter.read_text(encoding="utf-8")
+    assert source.count("source_stamp_ns=stamp") == 2
+    assert '"source_stamp_ns": source_stamp_ns' in source
+    assert "array.header.stamp.sec = source_stamp_ns // 1_000_000_000" in source
+    assert "array.header.stamp.nanosec = source_stamp_ns % 1_000_000_000" in source
