@@ -2066,6 +2066,7 @@ class CoverageProbe(Node):
     def _follow_ackermann_hybrid_plan(
         self, pose, *, precomputed_plan=None, replan_depth=0,
         terminal_goal_checker_id="connector_goal_checker",
+        forward_only=False,
     ):
         """Plan once, split cusps and forward curvature primitives explicitly."""
         if replan_depth > 6:
@@ -2090,12 +2091,14 @@ class CoverageProbe(Node):
             goal_pose = (
                 float(pose["x"]), float(pose["y"]), float(pose["yaw"])
             )
-            reverse_poses = plan_reverse_dubins_path(
-                start_pose,
-                goal_pose,
-                self.mission_geometry["outer_polygon"],
-                self.mission_geometry["exclusion_polygons"],
-            )
+            reverse_poses = None
+            if not forward_only:
+                reverse_poses = plan_reverse_dubins_path(
+                    start_pose,
+                    goal_pose,
+                    self.mission_geometry["outer_polygon"],
+                    self.mission_geometry["exclusion_polygons"],
+                )
             direct_distance = math.dist(start_pose[:2], goal_pose[:2])
             reverse_length = path_length(
                 [(item[0], item[1]) for item in reverse_poses]
@@ -2143,7 +2146,7 @@ class CoverageProbe(Node):
             plan = self._compute_path(
                 pose, include_path=True, planner_id="GridBasedForward"
             )
-            if not plan.get("success"):
+            if not plan.get("success") and not forward_only:
                 plan = self._compute_path(
                     pose, include_path=True, planner_id="GridBased"
                 )
@@ -2157,6 +2160,15 @@ class CoverageProbe(Node):
         direction_sections = split_hybrid_path_by_direction(
             plan.get("path_poses", [])
         )
+        if forward_only and any(
+            section["direction"] != "FORWARD" for section in direction_sections
+        ):
+            return {
+                **plan,
+                "success": False,
+                "error": "forward_only_replan_returned_nonforward_section",
+                "controller": "Smac Hybrid forward-only handoff replan",
+            }
         if not direction_sections:
             return {
                 **plan,
@@ -2316,6 +2328,7 @@ class CoverageProbe(Node):
                         pose,
                         replan_depth=replan_depth + 1,
                         terminal_goal_checker_id=terminal_goal_checker_id,
+                        forward_only=True,
                     )
                     section_result["replanned_continuation"] = continuation
                     section_result["curvature_handoff_replanned"] = True
@@ -2353,6 +2366,7 @@ class CoverageProbe(Node):
                     pose,
                     replan_depth=replan_depth + 1,
                     terminal_goal_checker_id=terminal_goal_checker_id,
+                    forward_only=forward_only,
                 )
                 section_result["replanned_continuation"] = continuation
                 if continuation.get("success"):
