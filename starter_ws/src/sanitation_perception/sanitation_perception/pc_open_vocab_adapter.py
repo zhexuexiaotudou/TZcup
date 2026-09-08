@@ -14,6 +14,7 @@ import time
 import numpy as np
 
 from .dosod_ros_adapter import DosodOnnxDetector
+from .diagnostic_compat import set_diagnostic_level
 from .edgesam_ros_adapter import EdgeSamOnnxSegmenter
 from .product_intermediate_capture import ProductIntermediateCapture
 from .product_projection import CameraIntrinsics, PublicGrid, project_rgbd_observation
@@ -832,8 +833,7 @@ def main() -> None:
             array = DiagnosticArray()
             array.header.stamp = self.get_clock().now().to_msg()
             status = DiagnosticStatus()
-            # ROS 2 generates DiagnosticStatus.level as a uint8 integer.
-            status.level = int(level)
+            set_diagnostic_level(status, level)
             status.name = "formal_open_vocab_perception/pc_product_adapter"
             status.hardware_id = "pc_cpu_onnxruntime"
             status.message = message

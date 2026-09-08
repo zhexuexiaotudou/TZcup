@@ -284,8 +284,7 @@ def test_ros_product_adapter_lists_every_formal_camera_and_no_evaluator_subscrip
     assert "boxes[dirt_indices]" in source
     assert "Publish DOSOD immediately" in source
     assert '"dosod_product_ok"' in source
-    assert "status.level = int(level)" in source
-    assert "status.level = bytes([level])" not in source
+    assert "set_diagnostic_level(status, level)" in source
     assert "self.create_timer(" in source
     assert '"alive"' in source
     assert "diagnostic_qos" in source

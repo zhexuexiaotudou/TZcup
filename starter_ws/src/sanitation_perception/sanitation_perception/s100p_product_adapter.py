@@ -17,6 +17,7 @@ from typing import Any
 import numpy as np
 
 from .product_projection import CameraIntrinsics, PublicGrid, project_rgbd_observation
+from .diagnostic_compat import set_diagnostic_level
 from .s100p_product_adapter_core import (
     Detection,
     EdgeSamPromptBatch,
@@ -811,9 +812,7 @@ def main() -> None:
             array = DiagnosticArray()
             array.header.stamp = self.get_clock().now().to_msg()
             status = DiagnosticStatus()
-            # diagnostic_msgs/DiagnosticStatus.level is ROS uint8, represented
-            # by an integer in rclpy (not a one-byte ``bytes`` payload).
-            status.level = int(level)
+            set_diagnostic_level(status, level)
             status.name = name
             status.hardware_id = "RDK_S100P_Journey_6P"
             status.message = message

@@ -156,31 +156,17 @@ def test_s100p_short_diagnostic_contract_binds_dual_nv12_and_same_stamp_chain():
     }
 
 
-def test_s100p_diagnostic_status_level_is_an_rclpy_uint8_integer():
-    """Without ROS locally, assert the generated setter's concrete AST shape."""
+def test_s100p_diagnostic_status_level_supports_rclpy_uint8_generators():
+    """Both deployed Python generators must accept the diagnostic-level helper."""
     for module in ("rgb_to_nv12_adapter.py", "s100p_product_adapter.py"):
-        tree = ast.parse((PACKAGE / "sanitation_perception" / module).read_text(encoding="utf-8"))
-        assignments = [
-            node
-            for node in ast.walk(tree)
-            if isinstance(node, ast.Assign)
-            and any(
-                isinstance(target, ast.Attribute)
-                and target.attr == "level"
-                and isinstance(target.value, ast.Name)
-                and target.value.id == "status"
-                for target in node.targets
-            )
-        ]
-        assert any(
-            isinstance(assignment.value, ast.Call)
-            and isinstance(assignment.value.func, ast.Name)
-            and assignment.value.func.id == "int"
-            and len(assignment.value.args) == 1
-            and isinstance(assignment.value.args[0], ast.Name)
-            and assignment.value.args[0].id == "level"
-            for assignment in assignments
-        ), module
+        source = (PACKAGE / "sanitation_perception" / module).read_text(encoding="utf-8")
+        assert "from .diagnostic_compat import set_diagnostic_level" in source
+        assert "set_diagnostic_level(status, level)" in source
+    compat = (PACKAGE / "sanitation_perception" / "diagnostic_compat.py").read_text(
+        encoding="utf-8"
+    )
+    assert "status.level = value" in compat
+    assert "status.level = bytes([value])" in compat
 
 
 def test_s100p_adapter_receives_the_frozen_board_artifact_manifest():
