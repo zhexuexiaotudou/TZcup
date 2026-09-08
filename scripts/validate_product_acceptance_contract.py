@@ -85,8 +85,32 @@ def _canonical_digest(data: bytes) -> str:
 def _tracked(path: Path, label: str) -> None:
     root, candidate = _in_root(path, label)
     relative = candidate.relative_to(root).as_posix()
-    result = subprocess.run(["git", "-C", str(root), "ls-files", "--error-unmatch", "--", relative], capture_output=True, text=True, check=False)
-    if result.returncode or result.stdout.strip() != relative:
+    command = ["git", "-C", str(root), "ls-files", "--error-unmatch", "--", relative]
+    try:
+        result = subprocess.run(command, capture_output=True, text=True, check=False)
+    except OSError:
+        result = None
+    if result is None or result.returncode or result.stdout.strip() != relative:
+        # A Windows-created worktree mounted in WSL has a Windows gitdir that
+        # Linux git cannot parse.  Ask the matching Git implementation before
+        # rejecting the fixed authority; an unavailable or non-matching result
+        # still fails closed below.
+        try:
+            windows_root = subprocess.run(
+                ["wslpath", "-w", str(root)],
+                capture_output=True,
+                text=True,
+                check=True,
+            ).stdout.strip()
+            result = subprocess.run(
+                ["git.exe", "-C", windows_root, "ls-files", "--error-unmatch", "--", relative],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+        except (OSError, subprocess.CalledProcessError):
+            result = None
+    if result is None or result.returncode or result.stdout.strip() != relative:
         raise ProductAcceptanceContractError(f"{label} is not a tracked repository file")
 
 

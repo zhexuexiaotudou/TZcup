@@ -58,6 +58,8 @@ def test_crosswalk_keeps_external_and_historical_claims_fail_closed() -> None:
     by_id = {item["id"]: item for item in payload["requirements"]}
 
     assert by_id["A16"]["state"] == "HISTORICAL_COMPONENT_PASS_NOT_FORMAL_INTEGRATED"
+    assert by_id["A12"]["state"] == "BLOCKED_NO_CANONICAL_PRODUCER"
+    assert "canonical producer" in by_id["A12"]["blockers"][0]
     assert by_id["A15"]["state"] == "NOT_RUN_CURRENT_SNAPSHOT"
     assert "blockers" not in by_id["A15"]
     assert by_id["A17"]["state"] == "BLOCKED"
