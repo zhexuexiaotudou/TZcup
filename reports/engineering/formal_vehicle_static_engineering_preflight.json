@@ -4435,9 +4435,9 @@
           "valid": true
         },
         "product_adapter_source": {
-          "byte_size": 38926,
+          "byte_size": 40095,
           "path": "starter_ws/src/sanitation_perception/sanitation_perception/s100p_product_adapter.py",
-          "sha256": "cf14da9ae60ff1fed0b8a3b615d0f7292734bd94da2dde22018e0d5708d7545c",
+          "sha256": "0d5ca32ee7162a82aa68cf3e4e6ede0c1b47b71ef745bd90c359d8f61c87106b",
           "valid": true
         },
         "project_perception_entry_points": {

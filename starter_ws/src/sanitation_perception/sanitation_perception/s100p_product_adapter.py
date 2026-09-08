@@ -164,6 +164,7 @@ def main() -> None:
                 "edgesam_encoder_model_path": "",
                 "edgesam_decoder_model_path": "",
                 "artifact_manifest_path": "",
+                "artifact_mode": "formal",
             }
             for name, value in defaults.items():
                 self.declare_parameter(name, value)
@@ -175,25 +176,25 @@ def main() -> None:
             self.declare_parameter("edgesam_capture_width", 512)
             self.declare_parameter("edgesam_capture_height", 288)
 
-            artifact_contract = load_verified_board_artifact_contract(
-                artifact_manifest_path=str(
-                    self.get_parameter("artifact_manifest_path").value
-                ),
-                artifact_paths={
-                    "dosod/dosod_mlp3x_s_tzcup_rep-int16.hbm": str(
-                        self.get_parameter("dosod_model_path").value
-                    ),
-                    "dosod/tzcup_offline_vocabulary.json": str(
-                        self.get_parameter("dosod_vocabulary_path").value
-                    ),
-                    "edgesam/edgesam_encoder_512.hbm": str(
-                        self.get_parameter("edgesam_encoder_model_path").value
-                    ),
-                    "edgesam/edgesam_decoder_512.hbm": str(
-                        self.get_parameter("edgesam_decoder_model_path").value
-                    ),
+            self._artifact_mode = str(self.get_parameter("artifact_mode").value)
+            artifact_kwargs = {
+                "artifact_manifest_path": str(self.get_parameter("artifact_manifest_path").value),
+                "artifact_paths": {
+                    "dosod/dosod_mlp3x_s_tzcup_rep-int16.hbm": str(self.get_parameter("dosod_model_path").value),
+                    "dosod/tzcup_offline_vocabulary.json": str(self.get_parameter("dosod_vocabulary_path").value),
+                    "edgesam/edgesam_encoder_512.hbm": str(self.get_parameter("edgesam_encoder_model_path").value),
+                    "edgesam/edgesam_decoder_512.hbm": str(self.get_parameter("edgesam_decoder_model_path").value),
                 },
-            )
+            }
+            if self._artifact_mode == "formal":
+                artifact_contract = load_verified_board_artifact_contract(**artifact_kwargs)
+            elif self._artifact_mode == "development":
+                from .s100p_development_artifact_contract import (
+                    load_verified_development_artifact_contract,
+                )
+                artifact_contract = load_verified_development_artifact_contract(**artifact_kwargs)
+            else:
+                raise S100PProductAdapterError("artifact_mode must be exactly 'formal' or 'development'")
             hashes = artifact_contract.model_hashes
             self._model_hashes = {
                 "dosod": hashes["dosod/dosod_mlp3x_s_tzcup_rep-int16.hbm"],
@@ -202,6 +203,11 @@ def main() -> None:
                 "edgesam_decoder": hashes["edgesam/edgesam_decoder_512.hbm"],
             }
             self._dosod_emitted_label_map = artifact_contract.emitted_label_to_class_id
+            self._artifact_classification = (
+                "NON_FORMAL_ABI_DEVELOPMENT"
+                if self._artifact_mode == "development"
+                else "FORMAL_BOARD_ARTIFACT_CONTRACT"
+            )
             self._bridge = CvBridge()
             self._tf_buffer = Buffer(cache_time=Duration(seconds=10.0))
             self._tf_listener = TransformListener(self._tf_buffer, self)
@@ -284,7 +290,13 @@ def main() -> None:
                 self._expire_pending_dosod,
                 clock=Clock(clock_type=ClockType.STEADY_TIME),
             )
-            self._adapter_diagnostic(0, "ready_waiting_for_real_board_inputs", {})
+            self._adapter_diagnostic(
+                1 if self._artifact_mode == "development" else 0,
+                "development_artifact_mode_non_formal_ready_waiting_for_real_board_inputs"
+                if self._artifact_mode == "development"
+                else "ready_waiting_for_real_board_inputs",
+                {},
+            )
 
         def _on_rgb(self, message: Image) -> None:
             stamp = _stamp_ns(message.header.stamp)
@@ -843,6 +855,9 @@ def main() -> None:
                     "reject_reasons": self._reject_reasons,
                     "fail_closed": level >= 2,
                     "ground_truth_input_used": False,
+                    "artifact_mode": self._artifact_mode,
+                    "artifact_classification": self._artifact_classification,
+                    "semantic_or_board_acceptance": False if self._artifact_mode == "development" else "not_claimed",
                 },
             )
 
