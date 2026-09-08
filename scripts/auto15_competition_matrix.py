@@ -4,12 +4,16 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import platform
+import uuid
 
 from validate_product_acceptance_contract import (
     DEFAULT_CONTRACT,
     ProductAcceptanceContractError,
+    _in_root,
+    _sealed_regular_bytes,
     load_contract,
     validate_auto15_execution_evidence,
     validate_static_contract,
@@ -53,7 +57,24 @@ def sha256(path: Path) -> str:
 
 
 def write_json(path: Path, payload: object) -> None:
-    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    write_new(path, (json.dumps(payload, indent=2) + "\n").encode("utf-8"))
+
+
+def write_new(path: Path, data: bytes) -> None:
+    """Publish one fresh artifact atomically without ever replacing evidence."""
+    if path.exists() or path.is_symlink():
+        raise FileExistsError(f"refusing to overwrite retained evidence: {path}")
+    temporary = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
+    fd = os.open(temporary, os.O_CREAT | os.O_EXCL | os.O_WRONLY | getattr(os, "O_BINARY", 0), 0o600)
+    try:
+        with os.fdopen(fd, "wb") as stream:
+            stream.write(data)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.link(temporary, path)  # atomic no-replace publication; fails if raced.
+    finally:
+        if temporary.exists():
+            temporary.unlink()
 
 
 def build_matrix(
@@ -129,7 +150,7 @@ def build_matrix(
         "stage": "AUTO-15",
         "status": "BLOCKED",
         "simulation_competition_matrix_pass": False,
-        "static_contract_pass": contract["static_contract_pass"],
+        "contract_integrity_verified": contract["contract_integrity_verified"],
         "runtime_execution_evidence_pass": bool(
             runtime_evidence and runtime_evidence["execution_evidence_pass"]
         ),
@@ -161,16 +182,15 @@ def main() -> int:
     parser.add_argument("--authoritative-source", type=Path)
     args = parser.parse_args()
 
-    state_path = Path(args.state).resolve()
-    output = Path(args.output).resolve()
-    output.mkdir(parents=True, exist_ok=True)
-    state = json.loads(state_path.read_text(encoding="utf-8"))
+    state_path = Path(args.state).absolute()
+    output = Path(args.output).absolute()
+    _in_root(state_path, "AUTO-15 state input")
+    _in_root(output.parent, "AUTO-15 output parent")
+    output.mkdir()
+    state = json.loads(_sealed_regular_bytes(state_path, "AUTO-15 state input").decode("utf-8"))
     try:
-        execution_evidence = (
-            json.loads(args.execution_evidence.read_text(encoding="utf-8"))
-            if args.execution_evidence
-            else None
-        )
+        # Receipt intake is disabled; do not open an untrusted arbitrary ledger.
+        execution_evidence = {} if args.execution_evidence else None
         matrix = build_matrix(
             state, execution_evidence, args.evidence_root, args.authoritative_source
         )
@@ -199,7 +219,7 @@ def main() -> int:
         "executed_integrated_missions": matrix["executed_integrated_missions"],
         "formal_video_count": matrix["formal_video_count"],
         "formal_mcap_count": matrix["formal_mcap_count"],
-        "static_contract_pass": matrix["static_contract_pass"],
+        "contract_integrity_verified": matrix["contract_integrity_verified"],
         "runtime_execution_evidence_pass": matrix["runtime_execution_evidence_pass"],
         "product_runtime_states": matrix["product_runtime_states"],
         "simulation_competition_matrix_pass": False,
@@ -252,7 +272,7 @@ def main() -> int:
             "human_review_required": False,
             "human_approval_required": False,
             "competition_evidence": False,
-            "static_contract_pass": matrix["static_contract_pass"],
+            "contract_integrity_verified": matrix["contract_integrity_verified"],
             "runtime_execution_evidence_pass": matrix["runtime_execution_evidence_pass"],
             "product_runtime_states": matrix["product_runtime_states"],
             "dependencies": {
@@ -265,7 +285,7 @@ def main() -> int:
                 "Runtime receipts are evidence accounting only and do not "
                 "promote product runtime states."
                 if matrix["runtime_execution_evidence_pass"]
-                else "Static contract/cardinality validation passed, but no AUTO-15 runtime execution receipts, videos, or MCAPs were supplied; product runtime states remain false."
+                else "Tracked contract integrity is verified, but AUTO-15 runtime receipt intake is BLOCKED_NO_CANONICAL_PRODUCER; product runtime states remain false."
             ),
         },
     )
@@ -300,41 +320,17 @@ def main() -> int:
             "state_file": state_path.name,
         },
     )
-    (output / "commands.txt").write_text(
+    write_new(output / "commands.txt", (
         "py -3 scripts/auto15_competition_matrix.py "
         "--output artifacts/autonomous_auto15_20260730_evidence "
         "--implementation-commit <sha>\n"
-        "py -3 scripts/ci_fast.py\n",
-        encoding="utf-8",
-    )
-    (output / "README.md").write_text(
+        "py -3 scripts/ci_fast.py\n"
+    ).encode("utf-8"))
+    write_new(output / "README.md", (
         "# AUTO-15 evidence\n\n"
         "Complete 18-scenario requirement/dependency matrix. AUTO-15 formal "
-        "integrated missions were not executed and are not claimed.\n",
-        encoding="utf-8",
-    )
-
-    state["stages"]["AUTO-15"].update(
-        {
-            "status": "BLOCKED",
-            "machine_gate_pass": False,
-            "blocked": True,
-            "blocked_external": False,
-            "first_blocking_layer": matrix["first_blocking_layer"],
-            "attempt_count": 1,
-            "selected_attempt": "AUTO-15-DEPENDENCY-PREFLIGHT-V1",
-            "implementation_commit": args.implementation_commit,
-            "evidence_dir": output.relative_to(ROOT).as_posix(),
-            "metrics": metrics,
-            "unexecuted_items": unexecuted,
-        }
-    )
-    state["final_states"]["SIMULATION_COMPETITION_MATRIX_PASS"] = False
-    state["final_states"]["FINAL_COMPETITION_EVIDENCE_COMPLETE"] = False
-    state["run"]["branch"] = "agent/autonomous-auto15"
-    state["run"]["current_stage"] = "AUTO-16"
-    state["run"]["last_commit"] = args.implementation_commit
-    state_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
+        "integrated missions were not executed and are not claimed.\n"
+    ).encode("utf-8"))
 
     files = []
     for path in sorted(output.rglob("*")):

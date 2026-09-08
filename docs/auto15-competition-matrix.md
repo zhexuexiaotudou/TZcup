@@ -10,6 +10,8 @@ dependency_AUTO-08_learned_spot_cleaning_blocked
 
 AUTO-08 依赖 AUTO-07，而 AUTO-07 又因 AUTO-05 三次 G3 模型 screening 未通过而阻断。因此离散垃圾识别、落叶堆、积水和学习感知定点清扫不能进入综合矩阵。J6 runtime 也因 AUTO-14 未获得正式模型和实体板而阻断。
 
+此外，AUTO-15 的 runtime receipt intake 为 `BLOCKED_NO_CANONICAL_PRODUCER`：仓库没有一个受总编排接线的 producer 能从当前 formal session 原子地产出新鲜、不可复用的每执行 video、MCAP、真实 replay/recalculation、provenance 和独立 mission-group receipt。因此任何手写 JSON、`ftyp` 填充文件或 MCAP magic bytes 都不会被当作运行证据。未来接线必须保留 `18×10=180` 个唯一 execution、每个 video/MCAP、以及至少 `30` 个有成员收据的独立 mission group；未实现前 AUTO-15 保持 BLOCKED。
+
 ## 证据口径
 
 `competition_matrix.json` 覆盖全部 18 类场景，并分别记录：
