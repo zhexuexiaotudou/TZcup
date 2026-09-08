@@ -18,6 +18,7 @@ from typing import Any
 import numpy as np
 
 from hbm_evidence_common import MEMORY_WATCHDOG_THRESHOLDS, atomic_json, fresh_directory, load_object, memory_watchdog_evidence, normal_file, require_completed_memory_watchdog, run_owned_process, sha256_file
+from dosod_hbm_abi_contract import REMOVE_NODE_TYPE, validate_remove_node_type
 from public_gazebo_dosod_calibration import canonical_sha256, load_scene_plan, validate_pilot_manifest
 
 RECEIPT_ID = "tzcup_dosod_nonformal_oracle_candidate_compile_receipt_v1"
@@ -79,7 +80,7 @@ def _expected_compile_config(*, model: Path, work: Path, calibration: Path, reci
         "model_parameters": {
             "onnx_model": str(model.resolve()), "march": recipe["march"],
             "working_dir": str(work.resolve()), "output_model_file_prefix": recipe["output_model_file_prefix"],
-            "remove_node_type": "Dequantize;Quantize;Transpose;Cast;Reshape", "layer_out_dump": False,
+            "remove_node_type": REMOVE_NODE_TYPE, "layer_out_dump": False,
         },
         "input_parameters": {
             "input_name": recipe["input_name"], "input_type_train": recipe["input_type_train"],
@@ -150,6 +151,7 @@ def validate_candidate_receipt(receipt_path: Path, *, expected_raw_sha256: str |
     expected_hbm = root / "candidate_work" / "dosod_mlp3x_s_tzcup_rep-int16.hbm"
     if config != _expected_compile_config(model=bound_paths["model"], work=root / "candidate_work", calibration=pilot_path.parent / "samples", recipe=compile_contract["compile_recipe"]):
         raise ValueError("candidate_receipt_compile_config_drift")
+    validate_remove_node_type(config.get("model_parameters", {}).get("remove_node_type"))
     command = value.get("command")
     if not isinstance(command, list) or command != [command[0], "-c", str(bound_paths["compile_config"].resolve())]:
         raise ValueError("candidate_receipt_command_invalid")
@@ -219,6 +221,7 @@ def execute(*, pilot_manifest: Path, pilot_record_index: int, compiler_identity:
         expected_config = _expected_compile_config(model=model, work=work, calibration=pilot_manifest.parent / "samples", recipe=compile_contract["compile_recipe"])
         if config != expected_config or expected_hbm.exists() or expected_hbm.is_symlink():
             raise ValueError("candidate_compile_config_binding_invalid")
+        validate_remove_node_type(config.get("model_parameters", {}).get("remove_node_type"))
         command = [str(Path(executable).resolve()), "-c", str(compile_config.resolve())]
         receipt.update({"pilot_raw": raw, "pilot_manifest_sha256":sha256_file(pilot_manifest), "pilot_records_sha256":canonical_sha256(load_object(pilot_manifest)["records"]), "pilot_record_count":25, "pilot_producer_script_path":str(PILOT_PRODUCER.resolve()), "pilot_producer_script_sha256":sha256_file(PILOT_PRODUCER), "candidate_route":calibration["candidate_route"], "candidate_calibration_records_sha256":calibration["records_sha256"], "canonical_compile_contract_sha256": sha256_file(CANONICAL_COMPILE_CONTRACT), "canonical_oracle_contract_sha256": sha256_file(CANONICAL_ORACLE_CONTRACT), "model_path":str(model.resolve()), "model_sha256": sha256_file(model), "vocabulary_path":str(vocabulary.resolve()), "vocabulary_sha256": sha256_file(vocabulary), "compiler_identity_path": str(compiler_identity.resolve()), "compiler_identity_sha256": sha256_file(compiler_identity), "compile_config_path": str(compile_config.resolve()), "compile_config_sha256": sha256_file(compile_config), "expected_hbm_path": str(expected_hbm.resolve()), "command": command})
         code, stdout, stderr, execution = run_owned_process(command, timeout_seconds=3600,

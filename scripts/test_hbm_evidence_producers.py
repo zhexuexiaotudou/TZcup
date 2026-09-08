@@ -66,7 +66,7 @@ class CompileProducerTests(unittest.TestCase):
                                   "records_sha256": compile_contract.canonical_sha256([record]), "evaluation_holdout_source_sha256": []})
         _write_json(identity, {"identity_verified": True, "oe_version": "3.7.0", "required_versions": {"hbdk4_compiler": "4.7.5", "hmct": "2.6.5", "horizon_tc_ui": "3.5.3"},
                                "hb_compile_executable_sha256": _sha(compiler)})
-        config.write_text(yaml.safe_dump({"model_parameters": {"march": "nash-m", "onnx_model": str(root / "model.onnx"), "output_model_file_prefix": "dosod_mlp3x_s_tzcup_rep-int16", "working_dir": str(working)}, "calibration_parameters": {"cal_data_dir": str(root)}}), encoding="utf-8")
+        config.write_text(yaml.safe_dump({"model_parameters": {"march": "nash-m", "onnx_model": str(root / "model.onnx"), "output_model_file_prefix": "dosod_mlp3x_s_tzcup_rep-int16", "working_dir": str(working), "remove_node_type": "Dequantize;Quantize;Cast;Reshape"}, "calibration_parameters": {"cal_data_dir": str(root)}}), encoding="utf-8")
         _write_json(oracle, {"fixture": "canonical validator is mocked by this producer-only test"})
         _write_json(preflight, {"preflight_pass": True, "compile_config_emitted": True, "compile_executed": False,
                                 "hbm_status": "HBM_NOT_PRODUCED", "model_sha256": "a" * 64, "model_path": str(root / "model.onnx"),
@@ -274,8 +274,8 @@ class MetricRegressionTests(unittest.TestCase):
                                       "model_name": "dosod",
                                       "inputs": [{"index": 0, "name": "images_y", "shape": [1, 640, 640, 1], "dtype": "HB_DNN_TENSOR_TYPE_U8", "aligned_byte_size": -1}, {"index": 1, "name": "images_uv", "shape": [1, 320, 320, 2], "dtype": "HB_DNN_TENSOR_TYPE_U8", "aligned_byte_size": -1}],
                                       "output_map": {
-                                          "scores": {"index": 0, "name": "scores", "shape": [1, 8400, 4], "dtype": "HB_DNN_TENSOR_TYPE_F32"},
-                                          "boxes": {"index": 1, "name": "boxes", "shape": [1, 8400, 4], "dtype": "HB_DNN_TENSOR_TYPE_F32"},
+                                          "scores": {"index": 0, "name": "scores", "shape": [1, 8400, 4], "dtype": "HB_DNN_TENSOR_TYPE_S16"},
+                                          "boxes": {"index": 1, "name": "boxes", "shape": [1, 8400, 4], "dtype": "HB_DNN_TENSOR_TYPE_S16"},
                                       },
                                       "hbm_input_adapter": adapter})
         runner_sha = _sha(runner_identity)
@@ -390,8 +390,8 @@ class ParityManifestTests(unittest.TestCase):
                                    "model_name": "dosod",
                                    "inputs": [{"index": 0, "name": "images_y", "shape": [1, 640, 640, 1], "dtype": "HB_DNN_TENSOR_TYPE_U8", "aligned_byte_size": -1}, {"index": 1, "name": "images_uv", "shape": [1, 320, 320, 2], "dtype": "HB_DNN_TENSOR_TYPE_U8", "aligned_byte_size": -1}],
                                    "output_map": {
-                                       "scores": {"index": 0, "name": "scores", "shape": [1, 8400, 4], "dtype": "HB_DNN_TENSOR_TYPE_F32"},
-                                       "boxes": {"index": 1, "name": "boxes", "shape": [1, 8400, 4], "dtype": "HB_DNN_TENSOR_TYPE_F32"},
+                                       "scores": {"index": 0, "name": "scores", "shape": [1, 8400, 4], "dtype": "HB_DNN_TENSOR_TYPE_S16"},
+                                       "boxes": {"index": 1, "name": "boxes", "shape": [1, 8400, 4], "dtype": "HB_DNN_TENSOR_TYPE_S16"},
                                    },
                                    "hbm_input_adapter": adapter})
             runner_path, model_name, input_binding, outputs, _, _ = parity._validate_runner_identity(identity, {"hbm_input_adapter": adapter})
@@ -404,8 +404,8 @@ class ParityManifestTests(unittest.TestCase):
 
     def test_model_info_binds_output_index_name_shape_and_dtype(self) -> None:
         output_map = {
-            "scores": {"index": 0, "name": "scores", "shape": [1, 8400, 4], "dtype": "HB_DNN_TENSOR_TYPE_F32"},
-            "boxes": {"index": 1, "name": "boxes", "shape": [1, 8400, 4], "dtype": "HB_DNN_TENSOR_TYPE_F32"},
+            "scores": {"index": 0, "name": "scores", "shape": [1, 8400, 4], "dtype": "HB_DNN_TENSOR_TYPE_S16"},
+            "boxes": {"index": 1, "name": "boxes", "shape": [1, 8400, 4], "dtype": "HB_DNN_TENSOR_TYPE_S16"},
         }
         stdout = """[model name]: dosod
 input[0]:
@@ -421,18 +421,18 @@ tensor type: HB_DNN_TENSOR_TYPE_U8
 output[0]:
 name: scores
 valid shape: (1,8400,4)
-aligned byte size: 134400
-tensor type: HB_DNN_TENSOR_TYPE_F32
+aligned byte size: 67200
+tensor type: HB_DNN_TENSOR_TYPE_S16
 output[1]:
 name: boxes
 valid shape: (1,8400,4)
-aligned byte size: 134400
-tensor type: HB_DNN_TENSOR_TYPE_F32
+aligned byte size: 67200
+tensor type: HB_DNN_TENSOR_TYPE_S16
 """
         input_binding = [{"index": 0, "name": "images_y", "shape": [1, 640, 640, 1], "dtype": "HB_DNN_TENSOR_TYPE_U8", "aligned_byte_size": -1}, {"index": 1, "name": "images_uv", "shape": [1, 320, 320, 2], "dtype": "HB_DNN_TENSOR_TYPE_U8", "aligned_byte_size": -1}]
         self.assertEqual(parity._validate_model_info(stdout, "dosod", input_binding, output_map)["output"][1]["name"], "boxes")
-        output_map["boxes"]["dtype"] = "HB_DNN_TENSOR_TYPE_S16"
-        with self.assertRaisesRegex(ValueError, "output_binding_mismatch:boxes"):
+        output_map["boxes"]["dtype"] = "HB_DNN_TENSOR_TYPE_F32"
+        with self.assertRaisesRegex(ValueError, "abi_contract_mismatch"):
             parity._validate_model_info(stdout, "dosod", input_binding, output_map)
 
 

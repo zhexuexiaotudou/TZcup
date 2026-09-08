@@ -29,6 +29,7 @@ except ImportError:  # surfaced as a blocker in the receipt
     yaml = None
 
 from hbm_evidence_common import atomic_json, fresh_directory, load_object, normal_file, sha256_file
+from dosod_hbm_abi_contract import validate_remove_node_type
 from validate_dosod_s100p_hbm_compile_contract import audit_calibration
 from validate_dosod_single_frame_preprocessing_oracle import validate as validate_preprocessing_oracle
 
@@ -194,6 +195,10 @@ def _validate(
         blockers.append("compile_config_model_path_mismatch")
     if model_parameters.get("output_model_file_prefix") != EXPECTED_PREFIX:
         blockers.append("compile_config_output_prefix_mismatch")
+    try:
+        validate_remove_node_type(model_parameters.get("remove_node_type"))
+    except ValueError:
+        blockers.append("compile_config_remove_node_type_mismatch")
     working_dir = model_parameters.get("working_dir")
     if not isinstance(working_dir, str) or not working_dir:
         blockers.append("compile_config_working_dir_missing")

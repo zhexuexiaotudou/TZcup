@@ -18,6 +18,7 @@ from typing import Any
 import numpy as np
 
 from hbm_evidence_common import atomic_json, fresh_directory, normal_file, run_owned_process, sha256_file
+from dosod_hbm_abi_contract import validate_pre_onnx_outputs
 from run_dosod_hbm_x86_parity import COMMAND_TEMPLATE, MODEL_INFO_TEMPLATE, _dump_filename, _validate_model_info, raw_parity_metrics
 from validate_dosod_single_frame_preprocessing_oracle import CONTRACT, RECEIPT_ID, STATUS, _candidate, _capture
 
@@ -77,6 +78,7 @@ def collect(*, candidate_receipt: Path, official_capture_receipt: Path, onnx_mod
         if fixture:
             raise ValueError("test_fixture_cli_forbidden")
         route = _candidate_route(contract)
+        validate_pre_onnx_outputs(contract.get("onnx_outputs"))
         receipt["selected_route"] = route["route_id"]
         receipt["preprocessing"] = route["preprocessing"]
         receipt["preprocessing_sha256"] = hashlib.sha256(json.dumps(route["preprocessing"], sort_keys=True, separators=(",", ":")).encode()).hexdigest()
@@ -95,9 +97,10 @@ def collect(*, candidate_receipt: Path, official_capture_receipt: Path, onnx_mod
         except ImportError as exc:
             raise ValueError("onnxruntime_unavailable") from exc
         session = ort.InferenceSession(str(onnx_model), providers=["CPUExecutionProvider"])
-        outputs = session.run(["scores", "boxes"], {"images": tensor})
-        for name, value in zip(("scores", "boxes"), outputs):
-            if value.shape != tuple(contract["runtime_outputs"][name]["shape"]) or not np.isfinite(value).all():
+        outputs = session.run([row["name"] for row in contract["onnx_outputs"]], {"images": tensor})
+        for expected, value in zip(contract["onnx_outputs"], outputs):
+            name = expected["name"]
+            if value.dtype != np.float32 or value.shape != tuple(expected["shape"]) or not np.isfinite(value).all():
                 raise ValueError(f"oracle_onnx_output_invalid:{name}")
             path = output / f"onnx_{name}.npy"; np.save(path, value, allow_pickle=False); receipt["onnx_outputs"][name] = _binding(output, path)
         version_code, version_stdout, version_stderr, version_exec = _run([str(hrt), "--version"], 30)

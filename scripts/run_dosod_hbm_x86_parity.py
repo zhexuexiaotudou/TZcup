@@ -24,6 +24,7 @@ from typing import Any, Callable
 import numpy as np
 
 from hbm_evidence_common import atomic_json, fresh_directory, load_object, normal_file, path_under, run_owned_process, sha256_file
+from dosod_hbm_abi_contract import validate_post_hbm_inputs, validate_post_hbm_outputs
 
 
 REPORT_ID = "tzcup_dosod_hbm_x86_nash_parity_v1"
@@ -194,8 +195,9 @@ def _input_bindings(value: Any) -> list[dict[str, Any]]:
     if not isinstance(value, list) or len(value) != 2:
         raise ValueError("runner_identity_inputs_invalid")
     bindings = [_input_binding(item) for item in value]
-    expected = [(0, "images_y", [1, 640, 640, 1], "HB_DNN_TENSOR_TYPE_U8"), (1, "images_uv", [1, 320, 320, 2], "HB_DNN_TENSOR_TYPE_U8")]
-    if [(item["index"], item["name"], item["shape"], item["dtype"]) for item in bindings] != expected:
+    try:
+        validate_post_hbm_inputs(bindings)
+    except ValueError:
         raise ValueError("runner_identity_inputs_not_project_nv12_planes")
     return bindings
 
@@ -236,6 +238,10 @@ def _validate_runner_identity(path: Path, holdout: dict[str, Any]) -> tuple[Path
     if not isinstance(output_map, dict) or set(output_map) != OUTPUTS:
         raise ValueError("runner_identity_output_map_invalid")
     bindings = {name: _output_binding(value, name) for name, value in output_map.items()}
+    try:
+        validate_post_hbm_outputs(bindings)
+    except ValueError:
+        raise ValueError("runner_identity_outputs_not_project_int16_pred_major") from None
     if len({binding["index"] for binding in bindings.values()}) != len(bindings) or len({binding["name"] for binding in bindings.values()}) != len(bindings):
         raise ValueError("runner_identity_output_map_not_unique")
     if identity.get("hbm_input_adapter") != holdout.get("hbm_input_adapter"):
@@ -284,6 +290,11 @@ def _parse_model_info(stdout: str, model_name: str) -> dict[str, dict[int, dict[
 
 
 def _validate_model_info(stdout: str, model_name: str, input_binding: list[dict[str, Any]], output_map: dict[str, dict[str, Any]]) -> dict[str, dict[int, dict[str, Any]]]:
+    try:
+        validate_post_hbm_inputs(input_binding)
+        validate_post_hbm_outputs(output_map)
+    except ValueError:
+        raise ValueError("runner_model_info_abi_contract_mismatch") from None
     observed = _parse_model_info(stdout, model_name)
     if observed["input"] != {item["index"]: item for item in input_binding}:
         raise ValueError("runner_model_info_input_binding_mismatch")

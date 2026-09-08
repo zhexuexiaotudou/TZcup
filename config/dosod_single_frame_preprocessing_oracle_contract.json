@@ -16,6 +16,10 @@
     {"index": 0, "name": "images_y", "shape": [1, 640, 640, 1], "dtype": "HB_DNN_TENSOR_TYPE_U8", "byte_size": 409600},
     {"index": 1, "name": "images_uv", "shape": [1, 320, 320, 2], "dtype": "HB_DNN_TENSOR_TYPE_U8", "byte_size": 204800}
   ],
+  "onnx_outputs": [
+    {"name": "scores", "dtype": "FLOAT", "shape": [1, 8400, 4]},
+    {"name": "boxes", "dtype": "FLOAT", "shape": [1, 8400, 4]}
+  ],
   "official_preprocess_identity": {
     "status": "UNAVAILABLE_BLOCKED",
     "binary_path": null,
@@ -28,8 +32,8 @@
     "dpkg_path_role": null
   },
   "runtime_outputs": {
-    "scores": {"index": 0, "name": "scores", "shape": [1, 8400, 4], "dtype": "HB_DNN_TENSOR_TYPE_F32"},
-    "boxes": {"index": 1, "name": "boxes", "shape": [1, 8400, 4], "dtype": "HB_DNN_TENSOR_TYPE_F32"}
+    "scores": {"index": 0, "name": "scores", "shape": [1, 8400, 4], "dtype": "HB_DNN_TENSOR_TYPE_S16"},
+    "boxes": {"index": 1, "name": "boxes", "shape": [1, 8400, 4], "dtype": "HB_DNN_TENSOR_TYPE_S16"}
   },
   "raw_output_thresholds": {
     "scores": {"cosine_min": 0.99, "normalized_rmse_max": 0.02},
