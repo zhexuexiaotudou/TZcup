@@ -99,11 +99,41 @@ def _identity(value: os.stat_result) -> tuple[int, int, int, int, int]:
 
 def _open_root_directory(root: Path) -> int:
     flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
-    descriptor = os.open(root, flags)
-    if not stat.S_ISDIR(os.fstat(descriptor).st_mode):
+    if not root.is_absolute():
+        raise ValueError("repository root must be absolute")
+    descriptor = os.open(root.anchor, flags)
+    try:
+        for part in root.parts[1:]:
+            child = os.open(part, flags, dir_fd=descriptor)
+            os.close(descriptor)
+            descriptor = child
+        if not stat.S_ISDIR(os.fstat(descriptor).st_mode):
+            raise ValueError("repository root is not a directory")
+        return descriptor
+    except Exception:
         os.close(descriptor)
-        raise ValueError("repository root is not a directory")
-    return descriptor
+        raise
+
+
+def _assert_root_binding(root: Path, descriptor: int) -> None:
+    """Detect a renamed/replaced root while all operations stay descriptor-bound."""
+
+    current = os.stat(root, follow_symlinks=False)
+    bound = os.fstat(descriptor)
+    if current.st_mode != bound.st_mode or _identity(current)[:2] != _identity(bound)[:2]:
+        raise ValueError("repository root changed after secure open")
+
+
+def _relative_in_root(root: Path, candidate: Path, label: str) -> Path:
+    if not candidate.is_absolute():
+        raise ValueError(f"{label} must be absolute")
+    try:
+        relative = candidate.relative_to(root)
+    except ValueError as exc:
+        raise ValueError(f"{label} escapes repository root") from exc
+    if ".." in relative.parts:
+        raise ValueError(f"{label} escapes repository root")
+    return relative
 
 
 def _open_directory(root_descriptor: int, parts: tuple[str, ...]) -> int:
@@ -222,18 +252,19 @@ def main() -> int:
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     try:
-        if not args.repository_root.is_absolute() or args.repository_root.is_symlink():
-            raise ValueError("repository root must be absolute and non-symlink")
-        root = args.repository_root.resolve(strict=True)
+        root = args.repository_root
         root_descriptor = _open_root_directory(root)
         try:
-            receipt_path = _regular_in_root(root, args.receipt, "receipt")
-            output = _output_in_root(root, args.output)
+            receipt_path = root / _relative_in_root(root, args.receipt, "receipt")
+            output = root / _relative_in_root(root, args.output, "output")
+            _assert_root_binding(root, root_descriptor)
             descriptor, identity = _open_bound_input(root, root_descriptor, receipt_path)
             receipt, receipt_sha256 = _read_bound_json(descriptor, identity)
+            _assert_root_binding(root, root_descriptor)
             report = validate_receipt(receipt)
             report["receipt_sha256"] = receipt_sha256
             _write_fresh_output(root, root_descriptor, output, report)
+            _assert_root_binding(root, root_descriptor)
         finally:
             os.close(root_descriptor)
     except (OSError, UnicodeError, json.JSONDecodeError, ValueError) as exc:

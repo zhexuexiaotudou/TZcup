@@ -7,6 +7,7 @@ import pytest
 import a20_release_replay_receipt as receipt_module
 from a20_release_replay_receipt import (
     BLOCKER,
+    _assert_root_binding,
     _open_bound_input,
     _open_root_directory,
     _output_in_root,
@@ -115,3 +116,20 @@ def test_bound_input_rejects_mutation_after_read(tmp_path: Path, monkeypatch: py
     monkeypatch.setattr(receipt_module.os, "fstat", mutate_before_fstat)
     with pytest.raises(ValueError, match="changed while being read"):
         _read_bound_json(descriptor, identity)
+
+
+@pytest.mark.skipif(os.name == "nt", reason="secure dir_fd traversal is POSIX-only")
+def test_root_replacement_after_fd_open_is_rejected(tmp_path: Path) -> None:
+    root = tmp_path / "root"
+    root.mkdir()
+    descriptor = _open_root_directory(root)
+    retained = tmp_path / "retained"
+    root.rename(retained)
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    root.symlink_to(outside, target_is_directory=True)
+    try:
+        with pytest.raises(ValueError, match="root changed"):
+            _assert_root_binding(root, descriptor)
+    finally:
+        os.close(descriptor)
