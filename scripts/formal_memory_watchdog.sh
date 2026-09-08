@@ -177,6 +177,10 @@ wait_for_group_exit() {
 stop_requested=0
 windows_probe_pid=""
 windows_probe_fd=""
+# The watchdog owns and waits for its probe directly.  A caller-provided
+# SIGCHLD trap can trigger a Bash 5.2 parser race while this script uses
+# process substitutions, so do not inherit one into the watchdog.
+trap - SIGCHLD
 cleanup_windows_probe() {
   if [[ -n "${windows_probe_pid}" ]]; then
     kill -TERM "${windows_probe_pid}" 2>/dev/null || true

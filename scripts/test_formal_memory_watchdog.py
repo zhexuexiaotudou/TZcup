@@ -254,6 +254,10 @@ done
 def test_one_windows_probe_timeout_recovers_without_signalling_target(
     tmp_path: Path,
 ) -> None:
+    bash_env = tmp_path / "bash_env"
+    # Reproduce the inherited noninteractive handler that exercised the Bash
+    # SIGCHLD/process-substitution parser race in CI.
+    bash_env.write_text("trap : SIGCHLD\n", encoding="utf-8")
     fake = tmp_path / "fake-powershell"
     fake.write_text(
         """#!/usr/bin/env bash
@@ -284,6 +288,7 @@ done
         "FORMAL_WINDOWS_PROBE_TIMEOUT_S": "0.2",
         "FORMAL_WINDOWS_PROBE_TRANSIENT_RETRIES": "1",
         "FORMAL_MEMORY_POLL_S": "0.1",
+        "BASH_ENV": str(bash_env),
     }
     watchdog = subprocess.Popen(
         [
