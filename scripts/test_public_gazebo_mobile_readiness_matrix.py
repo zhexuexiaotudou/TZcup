@@ -46,6 +46,9 @@ def _run(script_path: Path) -> subprocess.CompletedProcess[str]:
 
 
 def test_matrix_fake_ros2_cases() -> None:
+    readiness = (ROOT / "scripts/public_gazebo_mobile_readiness.sh").read_text(encoding="utf-8")
+    assert "required_nodes=(/formal_map_lifecycle_manager /formal_legacy_topic_adapter /formal_vehicle_training_gt_bridge)" in readiness
+    assert '"$ros2bin" node list --no-daemon' in readiness
     WORK.mkdir(exist_ok=True)
     raw = Path(tempfile.mkdtemp(prefix="test-readiness-", dir=WORK))
     try:
@@ -53,8 +56,9 @@ def test_matrix_fake_ros2_cases() -> None:
         fake.write_text(
             r'''#!/usr/bin/env bash
 mode=${FAKE_MODE:-ok}
+printf '%s\n' "$*" >> "${FAKE_ARGS_LOG:?}"
 if [[ "$1 $2" == "node list" ]]; then
-  echo /formal_campus_map_lifecycle
+  echo /formal_map_lifecycle_manager
   echo /formal_legacy_topic_adapter
   echo /formal_vehicle_training_gt_bridge
   [[ $mode == duplicate ]] && echo /formal_legacy_topic_adapter
@@ -93,6 +97,7 @@ exit 2
             newline="\n",
         )
         fake.chmod(0o755)
+        arguments_log = raw / "ros2-arguments.log"
         cases = [
             ("ok", 0, "independent"),
             ("missing", 2, "independent"),
@@ -126,6 +131,7 @@ exit 2
 source "{LIB}"
 export PUBLIC_GAZEBO_CALIBRATION_PARSER="{PARSER}"
 export PUBLIC_GAZEBO_CALIBRATION_ROS2_BIN="{_bash(fake)}"
+export FAKE_ARGS_LOG="{_bash(arguments_log)}"
 export FAKE_MODE="{mode}"
 {session}
 {leader}
@@ -146,5 +152,9 @@ exit "$r"
             assert receipt["operations"] or topology == "leader_exit_child"
             assert all({"role", "path", "sha256", "elapsed_ms", "returncode", "zero_survivor"} <= row.keys() for row in receipt["operations"])
             assert all(row["zero_survivor"] for row in receipt["operations"])
+        commands = arguments_log.read_text(encoding="utf-8").splitlines()
+        node_lists = [command for command in commands if command.startswith("node list")]
+        assert node_lists
+        assert all(command == "node list --no-daemon" for command in node_lists)
     finally:
         shutil.rmtree(raw)
