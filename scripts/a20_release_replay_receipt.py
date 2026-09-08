@@ -100,14 +100,29 @@ def _identity(value: os.stat_result) -> tuple[int, int, int, int, int]:
 def _require_posix_descriptor_api() -> None:
     """Refuse the CLI where CPython cannot enforce its descriptor contract."""
 
-    if os.name == "nt" or os.open not in os.supports_dir_fd:
+    if os.name == "nt":
         raise ValueError(
             "A20 receipt CLI is POSIX/WSL-only: this CPython lacks secure dir_fd traversal"
         )
+    for flag in ("O_NOFOLLOW", "O_DIRECTORY"):
+        if not hasattr(os, flag):
+            raise ValueError(f"A20 receipt CLI requires {flag}; refusing unsafe path traversal")
+    required_dir_fd = {
+        "os.open": os.open,
+        "os.stat": os.stat,
+        "os.link": os.link,
+        "os.unlink": os.unlink,
+    }
+    for name, operation in required_dir_fd.items():
+        if operation not in os.supports_dir_fd:
+            raise ValueError(f"A20 receipt CLI requires {name} dir_fd support")
+    for name, operation in {"os.stat": os.stat, "os.link": os.link}.items():
+        if operation not in os.supports_follow_symlinks:
+            raise ValueError(f"A20 receipt CLI requires {name} no-follow support")
 
 
 def _open_root_directory(root: Path) -> int:
-    flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+    flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
     if not root.is_absolute():
         raise ValueError("repository root must be absolute")
     descriptor = os.open(root.anchor, flags)
@@ -146,7 +161,7 @@ def _relative_in_root(root: Path, candidate: Path, label: str) -> Path:
 
 
 def _open_directory(root_descriptor: int, parts: tuple[str, ...]) -> int:
-    flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+    flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
     descriptor = os.dup(root_descriptor)
     try:
         for part in parts:
@@ -165,7 +180,7 @@ def _open_bound_input(root: Path, root_descriptor: int, path: Path) -> tuple[int
     relative = path.relative_to(root)
     directory = _open_directory(root_descriptor, relative.parts[:-1])
     try:
-        flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
+        flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | os.O_NOFOLLOW
         descriptor = os.open(relative.name, flags, dir_fd=directory)
     finally:
         os.close(directory)

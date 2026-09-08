@@ -149,6 +149,33 @@ def test_windows_cli_is_explicitly_blocked_before_path_processing(tmp_path: Path
     assert "POSIX/WSL-only" in report["error"]
 
 
+@pytest.mark.skipif(os.name == "nt", reason="Windows is rejected before POSIX capability checks")
+def test_cli_fails_closed_without_no_follow_or_link_dirfd(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+    root = tmp_path / "root"
+    root.mkdir()
+    monkeypatch.setattr(sys, "argv", [
+        "a20_release_replay_receipt.py",
+        "--repository-root", str(root),
+        "--receipt", str(root / "receipt.json"),
+        "--output", str(root / "report.json"),
+    ])
+    monkeypatch.delattr(receipt_module.os, "O_NOFOLLOW")
+
+    assert receipt_module.main() == 2
+    report = json.loads(capsys.readouterr().out)
+    assert report["status"] == "A20_RECEIPT_STATIC_BLOCKED"
+    assert "requires O_NOFOLLOW" in report["error"]
+
+    monkeypatch.undo()
+    monkeypatch.setattr(
+        receipt_module.os,
+        "supports_dir_fd",
+        frozenset(operation for operation in os.supports_dir_fd if operation is not os.link),
+    )
+    with pytest.raises(ValueError, match="os.link dir_fd"):
+        _require_posix_descriptor_api()
+
+
 @pytest.mark.skipif(os.name == "nt", reason="secure dir_fd traversal is POSIX-only")
 def test_bound_input_rejects_mutation_after_read(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     receipt = tmp_path / "receipt.json"
