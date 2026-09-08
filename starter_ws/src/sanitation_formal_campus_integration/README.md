@@ -26,6 +26,20 @@ costmaps use `motion_footprints.transport_stowed`; the old 0.80 m x 0.72 m
 footprint is rejected. Coverage width comes from the same profile's declared
 effective cleaning width.
 
+Transport and cleaning share the same conservative XY envelope: raising the
+vertical cleaning lift does not retract its side brushes. Only a finite lift
+position within 5 mm of the raised zero pose selects the transport state;
+intermediate or out-of-range readings retain the cleaning state. Both costmaps
+use 0.63 m inflation, above the corrected padded footprint inradius of 0.62 m.
+
+Saved-map coverage telemetry still integrates a nominal 1.32 m solid disk at
+the vehicle base. It is diagnostic only: it does not model the offset side
+brushes, roller, or their transverse gaps. The collector and final acceptance
+therefore reject this estimator as proof of actual cleaned area even at 95%
+or 100%. Its model identity and implementation hash are reported; submitted
+qualification booleans cannot override the implemented model's unqualified
+status. First-map observation and localization checks remain independent.
+
 The map materializer reads only `public/episode_manifest.json`,
 `public/world.sdf` and the formal motion profile. It rejects evaluator-only
 manifest fields and never reads dirt truth. An embedded proxy vehicle is

@@ -1,5 +1,13 @@
 # 项目推进记录
 
+## 2026-09-08：比赛地图与整车结构审计（软件修复，机械干涉与运行验收未闭合）
+
+- 从 `fe17b31` 的独立工作树检查正式 196-link/258-collision 模型，修复地图旋转偏移、圆柱 keepout、限速编码、导航包络和升降中间态判断；不支持的 SDF 层级明确拒绝。详见 `docs/competition-model-audit-20260908.md`。
+- 收纳与清扫包络统一为 `x=[-0.610,0.620]、y=±0.695 m`，Nav2 inflation 为 `0.63 m`；来源快照和当前静态依赖已由生成器/验证器重新生成，历史 runtime/session 不改写。
+- 确认两条 85 mm 清扫空隙及滚刷与两个前轮在升起/工作状态的实体干涉。新增报告明确 `model_mechanical_layout_clear=false`；旧机械臂碰撞门未检查滚刷-车轮配对，不能证明整车无干涉。1.32 m 名义圆盘统计不能再通过实际清扫面积验收。
+- 重新执行完整 FOV 和 1024 Halton/1113 总姿态的惯量/机械臂扫描；结果在原范围内通过，14/14 静态 preflight 完整执行不等于机械设计、制造或部署就绪。清扫机构重布局仍需质量、安装和全行程间隙依据。
+- 地图 20 项、接入 49 项、新几何及 motion profile 26 项聚焦测试通过；最终 ci_fast 2023 passed / 30 skipped，绑定回归 62 项通过。Stage 2/3/4 因缺少新构建工作区停止，Windows 可用提交内存不足又阻断 WSL 冷启动；没有运行验收、部署或比赛通过声明。
+
 ## 2026-09-07：W2 单次只读 map TF 就绪门（源码完成，fresh W2 runtime 待验）
 
 - W2 旧 runner 把持续 `tf2_echo` 的非超时返回当作就绪，不能证明 exact `map -> base_footprint`、仿真时钟、非零 stamp 或 freshness，故 timeout `124` 与任意控制台文本均不再具有正向语义。新 helper 只使用一次 `rclpy` Buffer/TransformListener，要求 advancing `use_sim_time` clock、strict frame、nonzero/nonfuture/fresh stamp，并原子写 PASS/BLOCKED JSON；它不创建 TF publisher、执行器/控制接口、truth 或控制命令。

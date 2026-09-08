@@ -31,7 +31,7 @@ source_snapshot:
   algorithm: sha256
   inputs:
     - path: config/high_fidelity_vehicle/formal_vehicle_layout.yaml
-      sha256: 3c9c10da558c116bcbedf39a516093ca20c1e3eb590e2bb2d121ebd491cf10a9
+      sha256: efa5af24c53fd50297387822d0b0295aa442ba386e77247fe45675b66f1fe44e
       role: nominal_layout_frames
     - path: config/high_fidelity_vehicle/formal_vehicle_component_register.yaml
       sha256: 688b72f49b7bd06ba6adc3d080c190f04f613b76ed05cbb69bf7a55580cff61a

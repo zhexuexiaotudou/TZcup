@@ -17,6 +17,13 @@ sys.path.insert(0, str(PACKAGE))
 sys.path.insert(0, str(ROOT / "starter_ws/src/sanitation_campus_scenario"))
 
 from sanitation_formal_campus_integration.campus_materializer import (  # noqa: E402
+    GridSpec,
+    StaticCollision,
+    _collision_polygon,
+    _point_in_polygon,
+    _write_map_yaml,
+    _write_pgm,
+    extract_static_collisions,
     materialize_campus_artifacts,
 )
 from sanitation_formal_campus_integration.contract import (  # noqa: E402
@@ -39,6 +46,71 @@ LAUNCH = PACKAGE / "launch/formal_campus.launch.py"
 SCENARIO_CONFIG = (
     ROOT / "starter_ws/src/sanitation_campus_scenario/config/default_scenario.yaml"
 )
+
+
+def test_collision_offsets_compose_through_rotated_link(tmp_path):
+    world = tmp_path / "compound.sdf"
+    world.write_text(f'''<sdf version="1.10"><world name="campus_formal">
+      <model name="bench"><static>true</static><pose>10 20 0 0 0 {math.pi / 2}</pose>
+        <link name="rotated"><pose>2 0 0 0 0 {math.pi / 2}</pose>
+          <collision name="end"><pose>1 0 0 0 0 0.2</pose>
+            <geometry><box><size>0.4 0.2 1</size></box></geometry>
+          </collision>
+        </link>
+      </model></world></sdf>''', encoding="utf-8")
+    _, collisions = extract_static_collisions(world)
+    assert collisions[0].center == pytest.approx((9.0, 22.0))
+    assert collisions[0].yaw == pytest.approx(math.pi + 0.2)
+
+
+@pytest.mark.parametrize("pose", [
+    '<pose relative_to="other">1 0 0 0 0 0</pose>',
+    '<pose degrees="true">0 0 0 0 0 90</pose>',
+    '<pose rotation_format="quat_xyzw">0 0 0 0 0 0 1</pose>',
+    '<pose>0 0 0 0.1 0 0</pose>',
+    '<pose>0 0 0 0 0.1 0</pose>',
+])
+def test_static_raster_rejects_unsupported_frame_semantics(tmp_path, pose):
+    world = tmp_path / "unsupported.sdf"
+    world.write_text(f'''<sdf><world name="campus_formal"><model name="asset">
+      <static>true</static>{pose}<link name="link"><collision name="box">
+      <geometry><box><size>1 1 1</size></box></geometry></collision></link>
+      </model></world></sdf>''', encoding="utf-8")
+    with pytest.raises(IntegrationContractError):
+        extract_static_collisions(world)
+
+
+def test_cylinder_keepout_contains_entire_physical_disk_and_margin():
+    collision = StaticCollision("pole", "cylinder", (2.0, -3.0), 0.13, (0.24, 0.24))
+    polygon = _collision_polygon(collision, 1.0)
+    for index in range(720):
+        angle = index * 2 * math.pi / 720
+        radius = (0.12 + 1.0) * (1.0 - 1e-9)
+        assert _point_in_polygon(2.0 + radius * math.cos(angle), -3.0 + radius * math.sin(angle), polygon)
+
+
+def test_scale_mask_roundtrips_all_percentages_with_nav2_threshold_semantics(tmp_path):
+    # Nav2 Jazzy map_io.cpp normalizes pixels, then rescales Scale values
+    # between free_thresh and occupied_thresh before rounding to [0, 100].
+    spec = GridSpec(0.0, 0.0, 0.1, 101, 1, ())
+    image = tmp_path / "mask.pgm"
+    metadata_path = tmp_path / "mask.yaml"
+    _write_pgm(image, [bytearray(range(101))])
+    _write_map_yaml(metadata_path, image.name, spec, "scale")
+    metadata = yaml.safe_load(metadata_path.read_text(encoding="utf-8"))
+    _, _, pixels = _read_pgm(image)
+    decoded = []
+    for pixel in pixels:
+        occupancy = 1.0 - pixel / 255.0
+        if occupancy >= metadata["occupied_thresh"]:
+            value = 100
+        elif occupancy <= metadata["free_thresh"]:
+            value = 0
+        else:
+            value = round(100 * (occupancy - metadata["free_thresh"]) /
+                          (metadata["occupied_thresh"] - metadata["free_thresh"]))
+        decoded.append(value)
+    assert decoded == list(range(101))
 
 
 def _manifest() -> dict:
@@ -438,6 +510,20 @@ def test_launch_materializes_maps_and_keeps_power_on_estop_latched():
     assert source.count('default_value="true"') >= 4
     assert "main_power=true" in source
     assert "emergency_stop=false" in source
+
+
+@pytest.mark.parametrize("geometry", [
+    '<include><uri>model://obstacle</uri></include>',
+    '<model name="parent"><static>true</static><model name="obstacle">'
+    '<static>true</static><link name="body"><collision name="solid">'
+    '<geometry><box><size>1 1 1</size></box></geometry></collision></link>'
+    '</model></model>',
+])
+def test_static_map_cannot_silently_drop_included_or_nested_obstacles(tmp_path, geometry):
+    world = tmp_path / "world.sdf"
+    world.write_text(f'<sdf version="1.9"><world name="test">{geometry}</world></sdf>', encoding="utf-8")
+    with pytest.raises(IntegrationContractError, match="included or nested"):
+        extract_static_collisions(world)
 
 
 def test_resolution_contract_values_are_bound_to_executable_defaults():

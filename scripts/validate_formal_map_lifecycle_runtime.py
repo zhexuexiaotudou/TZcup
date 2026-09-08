@@ -31,6 +31,7 @@ from sanitation_formal_campus_integration.saved_map_coverage_core import (
     DRY_CLEANING_SPEED_PROFILE,
     MAPPING_SAFE_SPEED_PROFILE,
     SavedMapCoverageError,
+    coverage_geometry_contract,
     load_formal_operation_speed_profile,
 )
 from sanitation_formal_campus_integration.runtime_evidence_core import (
@@ -166,7 +167,11 @@ def validate(
     except (TypeError, ValueError):
         observed_fraction = quality_threshold = math.nan
         stable_samples = 0
+    geometry_contract = coverage_geometry_contract()
     checks = {
+        "actual_cleaned_area_geometry_qualified": (
+            geometry_contract["actual_cleaned_area_qualified"] is True
+        ),
         "quality_gated_map_manifest": (
             manifest.get("schema_version") == 1
             and manifest.get("status") == "ready_for_localization_cleaning"
@@ -275,6 +280,7 @@ def validate(
         "passed": passed,
         "checks": checks,
         "blockers": [name for name, value in checks.items() if not value],
+        "coverage_geometry_contract": geometry_contract,
         "truth_used_for_control": False,
         "operation_speed_profiles": {
             "mapping_safe": (
