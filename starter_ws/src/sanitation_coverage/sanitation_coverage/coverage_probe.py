@@ -2303,41 +2303,29 @@ class CoverageProbe(Node):
             })
             section_results.append(section_result)
             if not section_result.get("success"):
-                break
-            if (
-                index < len(sections) - 1
-                and not next_section_is_real_cusp
-                and self.estimated_pose is not None
-            ):
-                next_pose = sections[index + 1]["poses"][0]
-                handoff = connector_handoff_replan_decision(
-                    tuple(float(value) for value in self.estimated_pose[:3]),
-                    (
-                        float(next_pose[0]),
-                        float(next_pose[1]),
-                        float(next_pose[2]),
-                    ),
+                attempts = section_result.get("attempts") or []
+                last_attempt = attempts[-1] if attempts else {}
+                recoverable_forward_prune = (
+                    section["direction"] == "FORWARD"
+                    and last_attempt.get("error_name") == "INVALID_PATH"
+                    and replan_depth < 6
                 )
-                section_result["curvature_handoff_error"] = handoff
-                if handoff["requires_replan"]:
-                    # Intermediate goal checkers deliberately allow finite
-                    # error. Do not give the next static arc a stale start:
-                    # on a looping Dubins path MPPI may otherwise prune onto
-                    # the wrong branch and drive past its endpoint.
+                if recoverable_forward_prune and self._wait_for_cusp_stop(
+                    float(self.get_parameter("translation_timeout_sec").value)
+                ):
                     continuation = self._follow_ackermann_hybrid_plan(
                         pose,
                         replan_depth=replan_depth + 1,
                         terminal_goal_checker_id=terminal_goal_checker_id,
                         forward_only=True,
                     )
-                    section_result["replanned_continuation"] = continuation
-                    section_result["curvature_handoff_replanned"] = True
+                    section_result["invalid_path_recovery"] = continuation
                     if continuation.get("success"):
                         return {
                             "success": True,
                             "error": None,
                             "controller": (
-                                "Smac Hybrid live-handoff replan + segmented "
+                                "Smac Hybrid invalid-path recovery + segmented "
                                 "ConnectorPath/ReversePath"
                             ),
                             "planner": planner_source,
@@ -2351,11 +2339,8 @@ class CoverageProbe(Node):
                             "section_results": section_results,
                             "terminal_tracking_error": self._tracking_error(pose),
                         }
-                    section_result["success"] = False
-                    section_result["error"] = (
-                        "live_curvature_handoff_replan_failed"
-                    )
-                    break
+                    section_result["error"] = "live_invalid_path_replan_failed"
+                break
             if next_section_is_real_cusp:
                 # Replan from the measured stopped cusp. If the planner cannot
                 # find a continuation, retain the original kinematically
