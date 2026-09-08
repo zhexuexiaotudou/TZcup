@@ -166,7 +166,7 @@ def test_rpp_controllers_have_explicit_direction_and_no_rotate():
     assert float(controllers["ReversePath"]["max_robot_pose_search_dist"]) <= 1.0
     clean_speed = float(controllers["CleanPath"]["desired_linear_vel"])
     assert clean_speed == 1.00
-    assert float(controllers["CleanPath"]["lookahead_dist"]) == 1.20
+    assert float(controllers["CleanPath"]["lookahead_dist"]) == 3.00
     assert controllers["CleanPath"]["use_velocity_scaled_lookahead_dist"] is False
     assert float(controllers["CleanPath"]["min_lookahead_dist"]) == 1.20
     assert float(controllers["CleanPath"]["max_lookahead_dist"]) == 1.20

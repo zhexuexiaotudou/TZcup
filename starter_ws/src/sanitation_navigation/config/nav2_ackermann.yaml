@@ -341,7 +341,7 @@ controller_server:
       # The 1.32 m brush needs 1.0 m/s straight cruise to leave enough
       # physical headroom for the all-inclusive 3500 m2/h product gate.
       desired_linear_vel: 1.00
-      lookahead_dist: 1.20
+      lookahead_dist: 3.00
       min_lookahead_dist: 1.20
       max_lookahead_dist: 1.20
       lookahead_time: 1.5
