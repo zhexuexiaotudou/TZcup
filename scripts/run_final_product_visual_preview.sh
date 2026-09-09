@@ -141,11 +141,6 @@ if "${preflight_only}"; then
 fi
 
 mkdir -p "${run_root}" "${cleaning_root}" "${dashboard_output}"
-# Pin ROS discovery to the loopback CycloneDDS profile and acquire the shared
-# formal Gazebo lease before any DDS participant exists.  This prevents the
-# FastDDS shared-memory lock collisions that made concurrent local Gazebo
-# runs nondeterministic, while still keeping this preview outside acceptance.
-formal_runtime_configure "${mapping_ros_domain}"
 
 write_state() {
   local stage="$1" map_sha256="${2:-}"
@@ -194,22 +189,67 @@ stop_pid() {
     sleep 0.1
   done
   kill -KILL -- "-${pid}" 2>/dev/null || true
+  for _ in $(seq 1 50); do
+    kill -0 -- "-${pid}" 2>/dev/null || return 0
+    sleep 0.1
+  done
+  echo "process group ${pid} survived TERM then KILL" >&2
+  return 1
 }
 cleanup() {
+  local cleanup_status=0
   # The formal helper owns exact process-group plus exact GZ_PARTITION
   # cleanup.  It never relies on a broad ros2/gz process match.
-  formal_runtime_cleanup_groups "${mapping_partition}" "${mapping_launch_pid}" || true
-  formal_runtime_cleanup_groups "${cleaning_partition}" "${cleaning_launch_pid}" || true
-  stop_pid "${emergency_stop_pid}"; stop_pid "${main_power_pid}"
-  stop_pid "${state_publisher_pid}"; stop_pid "${dashboard_pid}"
+  formal_runtime_cleanup_groups "${mapping_partition}" "${mapping_launch_pid}" || cleanup_status=1
+  formal_runtime_cleanup_groups "${cleaning_partition}" "${cleaning_launch_pid}" || cleanup_status=1
+  stop_pid "${emergency_stop_pid}" || cleanup_status=1
+  stop_pid "${main_power_pid}" || cleanup_status=1
+  stop_pid "${state_publisher_pid}" || cleanup_status=1
+  stop_pid "${dashboard_pid}" || cleanup_status=1
   for pid in "${mapping_launch_pid}" "${cleaning_launch_pid}" "${emergency_stop_pid}" "${main_power_pid}" "${state_publisher_pid}" "${dashboard_pid}"; do
     [[ -n "${pid}" ]] && wait "${pid}" 2>/dev/null || true
   done
   if [[ -d "${run_root}" && "${terminal_written}" != true && ! -e "${terminal_output}" ]]; then
     write_terminal "preview interrupted or failed before completion; formal product acceptance was not evaluated"
   fi
+  return "${cleanup_status}"
 }
-trap cleanup EXIT INT TERM
+formal_runtime_install_traps cleanup
+
+require_phase_processes() {
+  local label="$1" pid
+  shift
+  for pid in "$@"; do
+    if [[ -z "${pid}" ]] || ! kill -0 "${pid}" 2>/dev/null; then
+      echo "${label} process exited unexpectedly: ${pid:-missing}" >&2
+      return 125
+    fi
+  done
+}
+
+require_memory_watchdog() {
+  local watchdog_pid="${FORMAL_RUNTIME_MEMORY_WATCHDOG_PID}" watchdog_status
+  [[ -n "${watchdog_pid}" ]] || return 125
+  kill -0 "${watchdog_pid}" 2>/dev/null && return 0
+  set +e
+  wait "${watchdog_pid}" 2>/dev/null
+  watchdog_status=$?
+  set -e
+  formal_runtime_record_memory_watchdog_exit "${watchdog_pid}" "${watchdog_status}" || return 125
+  formal_runtime_memory_watchdog_tripped && return "${FORMAL_RUNTIME_MEMORY_BREACH_EXIT_CODE}"
+  return 125
+}
+
+finish_memory_watchdog() {
+  formal_runtime_stop_memory_watchdog
+  formal_runtime_memory_watchdog_tripped && return "${FORMAL_RUNTIME_MEMORY_BREACH_EXIT_CODE}"
+  (( FORMAL_RUNTIME_MEMORY_WATCHDOG_RESULT == 0 )) || return 125
+}
+
+# Refuse a memory-starved start, then pin ROS discovery to loopback and take
+# the shared Gazebo lease before any DDS participant exists.
+formal_runtime_memory_preflight "${run_root}/windows_memory_preflight"
+formal_runtime_configure "${mapping_ros_domain}"
 
 set +u
 source /opt/ros/jazzy/setup.bash
@@ -310,6 +350,8 @@ export GZ_PARTITION="${mapping_partition}"
   pedestrian_schedule:="${episode_root}/environment/pedestrian_schedule.json" \
   start_pedestrians:=false start_coverage:=false operation_speed_profile:=mapping_safe \
   >"${run_root}/mapping.launch.log" 2>&1 & mapping_launch_pid=$!
+formal_runtime_start_memory_watchdog \
+  "${mapping_launch_pid}" "${run_root}/mapping.memory_watchdog"
 start_safety_heartbeat "${mapping_ros_domain}" mapping
 
 # The preview needs a real sealed map before it can demonstrate a hard restart,
@@ -317,21 +359,26 @@ start_safety_heartbeat "${mapping_ros_domain}" mapping
 deadline=$((SECONDS + mapping_timeout_sec))
 while [[ ! -f "${map_root}/map_lifecycle_manifest.json" ]]; do
   kill -0 "${mapping_launch_pid}" 2>/dev/null || { echo "mapping launch exited; see ${run_root}/mapping.launch.log" >&2; exit 3; }
+  require_memory_watchdog
+  require_phase_processes mapping \
+    "${dashboard_pid}" "${state_publisher_pid}" "${emergency_stop_pid}" "${main_power_pid}"
   (( SECONDS < deadline )) || { echo "preview mapping timed out before a sealed map" >&2; exit 4; }
   sleep 2
 done
 map_sha256="$(sha256sum "${map_root}/map_lifecycle_manifest.json" | awk '{print $1}')"
 write_state MAP_SAVED "${map_sha256}"
-sleep 1
-write_state HARD_RESTART "${map_sha256}"
-formal_runtime_cleanup_groups "${mapping_partition}" "${mapping_launch_pid}" || true
+formal_runtime_cleanup_groups "${mapping_partition}" "${mapping_launch_pid}" || exit 125
+finish_memory_watchdog || exit $?
 mapping_launch_pid=""
-stop_pid "${emergency_stop_pid}"; stop_pid "${main_power_pid}"
+stop_pid "${emergency_stop_pid}" || exit 125
+stop_pid "${main_power_pid}" || exit 125
 wait "${emergency_stop_pid}" 2>/dev/null || true; wait "${main_power_pid}" 2>/dev/null || true
 emergency_stop_pid=""; main_power_pid=""
-stop_pid "${state_publisher_pid}"; stop_pid "${dashboard_pid}"
+stop_pid "${state_publisher_pid}" || exit 125
+stop_pid "${dashboard_pid}" || exit 125
 wait "${state_publisher_pid}" 2>/dev/null || true; wait "${dashboard_pid}" 2>/dev/null || true
 state_publisher_pid=""; dashboard_pid=""
+write_state HARD_RESTART "${map_sha256}"
 
 prepare_cleaning_world
 write_state RELOAD_LOCALIZE "${map_sha256}"
@@ -346,12 +393,17 @@ export GZ_PARTITION="${cleaning_partition}"
   start_coverage:=true coverage_evidence_dir:="${cleaning_root}" \
   operation_speed_profile:=dry_cleaning_competition_candidate \
   >"${cleaning_root}/cleaning.launch.log" 2>&1 & cleaning_launch_pid=$!
+formal_runtime_start_memory_watchdog \
+  "${cleaning_launch_pid}" "${cleaning_root}/cleaning.memory_watchdog"
 start_safety_heartbeat "${cleaning_ros_domain}" cleaning
 write_state COVERAGE "${map_sha256}"
 
 deadline=$((SECONDS + cleaning_timeout_sec))
 coverage_report="${cleaning_root}/coverage_execution.json"
 while [[ ! -s "${coverage_report}" ]]; do
+  require_memory_watchdog
+  require_phase_processes cleaning \
+    "${dashboard_pid}" "${state_publisher_pid}" "${emergency_stop_pid}" "${main_power_pid}"
   if ! kill -0 "${cleaning_launch_pid}" 2>/dev/null; then
     write_state PRODUCT_TERMINAL "${map_sha256}"
     write_terminal "same-map FullCoverage launch exited before a terminal report"
@@ -384,6 +436,13 @@ then
   echo "preview coverage report is non-success: ${coverage_report}" >&2
   exit 5
 fi
+formal_runtime_cleanup_groups "${cleaning_partition}" "${cleaning_launch_pid}" || exit 125
+finish_memory_watchdog || exit $?
+cleaning_launch_pid=""
+stop_pid "${emergency_stop_pid}" || exit 125
+stop_pid "${main_power_pid}" || exit 125
+wait "${emergency_stop_pid}" 2>/dev/null || true; wait "${main_power_pid}" 2>/dev/null || true
+emergency_stop_pid=""; main_power_pid=""
 write_state PRODUCT_TERMINAL "${map_sha256}"
 write_terminal "live mapping and same-map FullCoverage preview; no formal closure/session/perception acceptance"
 terminal_written=true

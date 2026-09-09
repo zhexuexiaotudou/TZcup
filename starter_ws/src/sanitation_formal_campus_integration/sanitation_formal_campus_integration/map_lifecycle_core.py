@@ -273,15 +273,36 @@ def assess_grid_observation(
     # tiny locally complete map pass the 95% whole-campus gate.
     field_cells = max(1, round(_polygon_area(geofence) / (resolution * resolution)))
     observed_cells = 0
-    for row in range(height):
-        local_y = (row + 0.5) * resolution
-        base = row * width
-        for column in range(width):
-            local_x = (column + 0.5) * resolution
-            x = origin_x + cosine * local_x - sine * local_y
-            y = origin_y + sine * local_x + cosine * local_y
-            if _inside(x, y, geofence):
-                if int(data[base + column]) >= 0:
+    xs = {float(point[0]) for point in geofence}
+    ys = {float(point[1]) for point in geofence}
+    rectangle = (
+        len(geofence) == 4
+        and len(xs) == 2
+        and len(ys) == 2
+        and set(geofence) == {(x, y) for x in xs for y in ys}
+    )
+    if rectangle and abs(math.atan2(sine, cosine)) <= 1e-12:
+        # The formal field and SLAM raster are axis-aligned. Count row slices
+        # instead of running an 8-million-cell point-in-polygon loop every 5s.
+        min_x, max_x = min(xs), max(xs)
+        min_y, max_y = min(ys), max(ys)
+        column_start = max(0, math.ceil((min_x - origin_x) / resolution - 0.5))
+        column_stop = min(width, math.ceil((max_x - origin_x) / resolution - 0.5))
+        row_start = max(0, math.ceil((min_y - origin_y) / resolution - 0.5))
+        row_stop = min(height, math.ceil((max_y - origin_y) / resolution - 0.5))
+        for row in range(row_start, row_stop):
+            start = row * width + column_start
+            stop = row * width + column_stop
+            observed_cells += sum(int(value) >= 0 for value in data[start:stop])
+    else:
+        for row in range(height):
+            local_y = (row + 0.5) * resolution
+            base = row * width
+            for column in range(width):
+                local_x = (column + 0.5) * resolution
+                x = origin_x + cosine * local_x - sine * local_y
+                y = origin_y + sine * local_x + cosine * local_y
+                if _inside(x, y, geofence) and int(data[base + column]) >= 0:
                     observed_cells += 1
     if observed_cells == 0:
         raise MapLifecycleError("SLAM grid does not overlap the formal geofence")

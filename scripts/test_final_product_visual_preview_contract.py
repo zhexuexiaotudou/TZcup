@@ -74,3 +74,20 @@ def test_preview_uses_formal_dds_gazebo_isolation_with_safe_distinct_domains() -
     assert 'RMW_IMPLEMENTATION=rmw_fastrtps_cpp' not in RUNNER
     assert "Test-LinuxSafeRosDomain" in WINDOWS
     assert "Linux-safe ROS domains: 0..101 or 215..231" in WINDOWS
+
+
+def test_preview_fails_closed_on_memory_or_process_cleanup_faults() -> None:
+    assert 'formal_runtime_memory_preflight "${run_root}/windows_memory_preflight"' in RUNNER
+    assert RUNNER.count("formal_runtime_start_memory_watchdog") == 2
+    assert RUNNER.count("finish_memory_watchdog") == 3
+    assert "formal_runtime_memory_watchdog_tripped" in RUNNER
+    assert 'return "${FORMAL_RUNTIME_MEMORY_BREACH_EXIT_CODE}"' in RUNNER
+    assert "formal_runtime_install_traps cleanup" in RUNNER
+    assert 'formal_runtime_cleanup_groups "${mapping_partition}" "${mapping_launch_pid}" || exit 125' in RUNNER
+    assert RUNNER.index(
+        'formal_runtime_cleanup_groups "${mapping_partition}" "${mapping_launch_pid}" || exit 125'
+    ) < RUNNER.index('write_state HARD_RESTART "${map_sha256}"')
+    assert 'echo "process group ${pid} survived TERM then KILL"' in RUNNER
+    assert "require_phase_processes mapping" in RUNNER
+    assert "require_phase_processes cleaning" in RUNNER
+    assert "except PermissionError" in HMI_SERVER

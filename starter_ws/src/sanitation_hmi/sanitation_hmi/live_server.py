@@ -5,6 +5,7 @@ from __future__ import annotations
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import math
+import os
 from pathlib import Path
 import threading
 
@@ -311,15 +312,21 @@ class LiveDashboardNode(Node):
         if self.output_dir is None:
             return
         target = self.output_dir / "dashboard_telemetry.json"
-        temporary = target.with_suffix(".json.tmp")
-        temporary.write_text(
-            json.dumps(
-                self.state.snapshot(), ensure_ascii=False, indent=2
+        temporary = target.with_name(f".{target.name}.{os.getpid()}.tmp")
+        try:
+            temporary.write_text(
+                json.dumps(
+                    self.state.snapshot(), ensure_ascii=False, indent=2
+                )
+                + "\n",
+                encoding="utf-8",
             )
-            + "\n",
-            encoding="utf-8",
-        )
-        temporary.replace(target)
+            temporary.replace(target)
+        except PermissionError as exc:
+            # DrvFs/Windows scanners can briefly hold the previous snapshot.
+            # The HTTP dashboard serves the in-memory state, so retain the
+            # last complete evidence file and retry on the next timer tick.
+            self.get_logger().warning(f"deferred telemetry snapshot update: {exc}")
 
     def destroy_node(self):
         self._write_snapshot()

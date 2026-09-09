@@ -221,6 +221,30 @@ def test_frontier_goal_is_known_free_inside_geofence():
     assert data[row * 7 + column] == 0
 
 
+def test_axis_aligned_observation_fast_path_counts_only_field_cell_centers():
+    data = [-1] * (40 * 30)
+    for row in range(5, 25):
+        for column in range(5, 30):
+            data[row * 40 + column] = 0
+    data[12 * 40 + 14] = -1
+
+    quality = assess_grid_observation(
+        data,
+        width=40,
+        height=30,
+        resolution=0.1,
+        origin_x=-0.5,
+        origin_y=-0.5,
+        origin_yaw=0.0,
+        geofence=((0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (0.0, 2.0)),
+        threshold=0.5,
+    )
+
+    assert quality.field_cells == 400
+    assert quality.observed_cells == 399
+    assert quality.observed_fraction == pytest.approx(399 / 400)
+
+
 def test_frontier_goal_never_crosses_to_a_disconnected_free_island():
     width, height, resolution = 30, 15, 0.1
     data = [-1] * (width * height)
