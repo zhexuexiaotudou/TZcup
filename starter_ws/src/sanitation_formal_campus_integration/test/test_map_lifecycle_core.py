@@ -1,5 +1,6 @@
 import hashlib
 import json
+import math
 from pathlib import Path
 
 import pytest
@@ -210,10 +211,321 @@ def test_frontier_goal_is_known_free_inside_geofence():
         robot_x=0.35,
         robot_y=0.35,
         sample_spacing_m=0.1,
+        clearance_m=0.0,
+        frontier_standoff_m=0.2,
+        seed_max_offset_m=0.2,
+        min_goal_distance_m=0.0,
     )
     assert goal is not None
     column, row = int(goal[0] / 0.1), int(goal[1] / 0.1)
     assert data[row * 7 + column] == 0
+
+
+def test_frontier_goal_never_crosses_to_a_disconnected_free_island():
+    width, height, resolution = 30, 15, 0.1
+    data = [-1] * (width * height)
+    for row in range(2, 13):
+        for column in range(2, 11):
+            data[row * width + column] = 0
+        for column in range(20, 28):
+            data[row * width + column] = 0
+
+    goal = select_frontier_goal(
+        data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=0.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((0.0, 0.0), (3.0, 0.0), (3.0, 1.5), (0.0, 1.5)),
+        robot_x=0.55,
+        robot_y=0.75,
+        sample_spacing_m=0.1,
+        clearance_m=0.2,
+        frontier_standoff_m=0.4,
+        seed_max_offset_m=0.2,
+        min_goal_distance_m=0.2,
+    )
+
+    assert goal is not None
+    assert goal[0] < 1.1
+
+
+def test_frontier_goal_never_crosses_a_vehicle_width_blocking_corridor():
+    width, height, resolution = 30, 15, 0.1
+    data = [-1] * (width * height)
+    for row in range(2, 13):
+        for column in range(2, 11):
+            data[row * width + column] = 0
+        for column in range(20, 28):
+            data[row * width + column] = 0
+    for column in range(11, 20):
+        data[7 * width + column] = 0
+
+    goal = select_frontier_goal(
+        data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=0.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((0.0, 0.0), (3.0, 0.0), (3.0, 1.5), (0.0, 1.5)),
+        robot_x=0.55,
+        robot_y=0.75,
+        sample_spacing_m=0.1,
+        clearance_m=0.2,
+        frontier_standoff_m=0.4,
+        seed_max_offset_m=0.2,
+        min_goal_distance_m=0.2,
+    )
+
+    assert goal is not None
+    assert goal[0] < 1.1
+
+
+def test_frontier_goal_uses_a_bounded_nearest_free_seed_outside_the_map():
+    width, height, resolution = 40, 20, 0.1
+    data = [-1] * (width * height)
+    for row in range(4, 16):
+        for column in range(5, 35):
+            data[row * width + column] = 0
+    common = dict(
+        data=data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=0.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((0.0, 0.0), (4.0, 0.0), (4.0, 2.0), (0.0, 2.0)),
+        sample_spacing_m=0.1,
+        clearance_m=0.0,
+        frontier_standoff_m=0.2,
+        min_goal_distance_m=0.2,
+    )
+
+    assert select_frontier_goal(
+        robot_x=0.40,
+        robot_y=0.45,
+        seed_max_offset_m=0.20,
+        **common,
+    ) is not None
+    assert select_frontier_goal(
+        robot_x=-0.30,
+        robot_y=0.45,
+        seed_max_offset_m=0.75,
+        **common,
+    ) is None
+
+
+def test_frontier_goal_recovers_when_robot_is_just_outside_a_growing_map():
+    width = height = 40
+    resolution = 0.1
+    data = [-1] * (width * height)
+    for row in range(0, 31):
+        for column in range(5, 36):
+            data[row * width + column] = 0
+
+    goal = select_frontier_goal(
+        data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=0.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((-1.0, -1.0), (5.0, -1.0), (5.0, 5.0), (-1.0, 5.0)),
+        robot_x=2.0,
+        robot_y=-0.04,
+        sample_spacing_m=0.1,
+        clearance_m=0.95,
+        frontier_standoff_m=1.2,
+        seed_max_offset_m=0.75,
+        min_goal_distance_m=1.0,
+    )
+
+    assert goal is not None
+    assert 1.05 <= goal[0] <= 3.55
+    assert 1.05 <= goal[1] <= 2.05
+
+
+@pytest.mark.parametrize("field", ("origin_x", "origin_y", "origin_yaw", "robot_x", "robot_y"))
+def test_frontier_goal_rejects_non_finite_pose_inputs(field):
+    kwargs = dict(
+        data=[0] * 25,
+        width=5,
+        height=5,
+        resolution=0.1,
+        origin_x=0.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((0.0, 0.0), (0.5, 0.0), (0.5, 0.5), (0.0, 0.5)),
+        robot_x=0.25,
+        robot_y=0.25,
+    )
+    kwargs[field] = math.nan
+    with pytest.raises(MapLifecycleError, match=f"{field} must be finite"):
+        select_frontier_goal(**kwargs)
+
+
+def test_frontier_goal_is_stood_off_by_the_full_footprint_clearance():
+    width = height = 50
+    resolution = 0.1
+    data = [-1] * (width * height)
+    for row in range(5, 45):
+        for column in range(5, 45):
+            data[row * width + column] = 0
+
+    goal = select_frontier_goal(
+        data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=0.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((0.0, 0.0), (5.0, 0.0), (5.0, 5.0), (0.0, 5.0)),
+        robot_x=2.55,
+        robot_y=2.55,
+        sample_spacing_m=0.1,
+        clearance_m=0.95,
+        frontier_standoff_m=1.2,
+        seed_max_offset_m=0.1,
+        min_goal_distance_m=1.0,
+    )
+
+    assert goal is not None
+    column, row = int(goal[0] / resolution), int(goal[1] / resolution)
+    radius = math.ceil(0.95 / resolution)
+    for dr in range(-radius, radius + 1):
+        for dc in range(-radius, radius + 1):
+            if (dr * resolution) ** 2 + (dc * resolution) ** 2 <= 0.95**2:
+                assert data[(row + dr) * width + column + dc] == 0
+
+
+def test_frontier_clearance_includes_the_raster_cell_half_diagonal():
+    width = height = 30
+    resolution = 0.1
+    data = [100] * (width * height)
+    for row in range(3, 27):
+        data[row * width + 4] = -1
+        for column in range(5, 26):
+            data[row * width + column] = 0
+
+    goal = select_frontier_goal(
+        data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=0.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((0.0, 0.0), (3.0, 0.0), (3.0, 3.0), (0.0, 3.0)),
+        robot_x=1.45,
+        robot_y=1.55,
+        sample_spacing_m=0.1,
+        clearance_m=0.95,
+        frontier_standoff_m=1.2,
+        seed_max_offset_m=0.2,
+        min_goal_distance_m=0.0,
+    )
+
+    assert goal is not None
+    assert goal[0] >= 1.55 - 1e-9
+
+
+def test_frontier_vehicle_clearance_stays_inside_the_geofence():
+    width = 40
+    height = 20
+    resolution = 0.1
+    data = [0] * (width * height)
+    for row in range(height):
+        data[row * width + 35] = -1
+
+    goal = select_frontier_goal(
+        data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=0.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((0.0, 1.0), (4.0, 1.0), (4.0, 2.0), (0.0, 2.0)),
+        robot_x=2.0,
+        robot_y=1.05,
+        sample_spacing_m=0.1,
+        clearance_m=0.3,
+        frontier_standoff_m=0.5,
+        seed_max_offset_m=0.75,
+        min_goal_distance_m=0.2,
+    )
+
+    assert goal is not None
+    assert goal[1] >= 1.45 - 1e-9
+
+
+def test_frontier_selection_prefers_nearest_geodesic_goal_and_honors_history():
+    width, height, resolution = 30, 7, 0.1
+    data = [100] * (width * height)
+    for row in range(2, 5):
+        for column in range(2, 28):
+            data[row * width + column] = 0
+        data[row * width + 1] = -1
+        data[row * width + 28] = -1
+    kwargs = dict(
+        data=data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=0.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((0.0, 0.0), (3.0, 0.0), (3.0, 0.7), (0.0, 0.7)),
+        robot_x=0.55,
+        robot_y=0.35,
+        sample_spacing_m=0.1,
+        clearance_m=0.0,
+        frontier_standoff_m=0.0,
+        seed_max_offset_m=0.1,
+        min_goal_distance_m=0.1,
+    )
+
+    nearest = select_frontier_goal(**kwargs)
+    assert nearest is not None and nearest[0] < 0.5
+    alternate = select_frontier_goal(previous_goals=(nearest,), **kwargs)
+    assert alternate is not None and alternate[0] > 2.5
+
+
+def test_frontier_seed_and_goal_respect_a_rotated_map_origin():
+    width, height, resolution = 30, 7, 0.1
+    data = [100] * (width * height)
+    for row in range(2, 5):
+        for column in range(2, 28):
+            data[row * width + column] = 0
+        data[row * width + 1] = -1
+        data[row * width + 28] = -1
+
+    goal = select_frontier_goal(
+        data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=10.0,
+        origin_y=-2.0,
+        origin_yaw=math.pi / 2.0,
+        geofence=((9.0, -2.0), (10.0, -2.0), (10.0, 1.0), (9.0, 1.0)),
+        robot_x=9.65,
+        robot_y=-1.45,
+        sample_spacing_m=0.1,
+        clearance_m=0.0,
+        frontier_standoff_m=0.0,
+        seed_max_offset_m=0.1,
+        min_goal_distance_m=0.1,
+    )
+
+    assert goal == pytest.approx((9.65, -1.75))
 
 
 @pytest.mark.parametrize(
