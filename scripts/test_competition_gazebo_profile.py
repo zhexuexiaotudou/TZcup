@@ -20,6 +20,17 @@ def test_competition_profile_is_full_scale_but_truthfully_zone_bounded(tmp_path:
     pgm = (tmp_path / "competition_map.pgm").read_bytes()
     assert pgm.startswith(b"P5\n2000 1000\n255\n")
     assert len(pgm) == len(b"P5\n2000 1000\n255\n") + 2_000_000
+    pixels = pgm[len(b"P5\n2000 1000\n255\n"):]
+
+    def map_pixel(x_m: float, y_m: float) -> int:
+        column = int(x_m / 0.1)
+        row_from_top = 1000 - 1 - int(y_m / 0.1)
+        return pixels[row_from_top * 2000 + column]
+
+    # These are physical SDF collision bodies alongside R9 swath-05.  The
+    # generated map must not claim their cells are free.
+    assert map_pixel(102.9, 37.3) == 0  # tree_17 trunk
+    assert map_pixel(106.8, 39.6) == 0  # waste_bin_1
     mission = (tmp_path / "competition_zone_auto12.yaml").read_text(encoding="utf-8")
     assert "operation_width_m: 1.32" in mission
     assert "full_map_area_m2: 20000.0" in mission
@@ -50,8 +61,11 @@ def test_competition_profile_is_full_scale_but_truthfully_zone_bounded(tmp_path:
     assert "live_zone_area_m2: 10440.0" in efficiency
     assert "planning_swath_spacing_m: 1.20" in efficiency
     assert "ackermann_lane_skip: 3" in efficiency
+    assert "ackermann_staging_offset_m: 1.0" in efficiency
     assert "CLEAN: {linear_mps: 1.00" in efficiency
     assert "    operation_width: 1.20" in efficiency_coverage
+    assert "- name: tree_17" in efficiency
+    assert "- name: waste_bin_1" in efficiency
     assert "  - [10.0, 45.5]" in ackermann
     assert manifest["live_demonstration"]["ackermann_bounds_xyxy_m"] == [
         10.0, 45.5, 22.0, 54.5
@@ -81,7 +95,7 @@ def test_visual_launcher_exposes_competition_profile() -> None:
     assert 'competition_efficiency_ackermann.yaml' in bash
     assert 'competition_coverage_efficiency_ackermann.yaml' in bash
     assert 'controllers["CleanPath"]["min_approach_linear_velocity"] = 0.2' in bash
-    assert 'controllers["CleanPath"]["approach_velocity_scaling_dist"] = 5.0' in bash
+    assert 'controllers["CleanPath"]["approach_velocity_scaling_dist"] = 3.0' in bash
     assert '--competition-lane' in bash
     assert '[ValidateSet("representative", "efficiency")]' in powershell
     assert '"--competition-lane", $CompetitionLane' in powershell
@@ -89,6 +103,10 @@ def test_visual_launcher_exposes_competition_profile() -> None:
     assert 'spawn_x="-94.80"' in bash
     assert 'initial_pose_y="45.95"' in bash
     assert bash.index('spawn_x="-90.0"') < bash.index('spawn_x="-94.80"')
+    assert 'spawn_x="-95.68"' in bash
+    assert 'spawn_y="-29.40"' in bash
+    assert 'initial_pose_x="4.32"' in bash
+    assert 'initial_pose_y="20.60"' in bash
     assert '"${DRIVE_MODEL}" == "ackermann" && "${COMPETITION_PROFILE}" -eq 0' in bash
     assert 'if [[ "${COMPETITION_PROFILE}" -eq 0 ]]; then\n    cp "${mission_template}" "${mission_config}"' in bash
     assert "[switch]$CompetitionProfile" in powershell

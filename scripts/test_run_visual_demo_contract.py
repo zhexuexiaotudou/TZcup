@@ -39,6 +39,97 @@ def test_launcher_defaults_to_ackermann_and_keeps_legacy_profiles_explicit():
     assert '[ValidateSet("optimized", "legacy")]' in frozen
 
 
+def test_ackermann_visual_demo_keeps_gnss_gate_and_records_diagnostics():
+    launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
+    probe = (
+        ROOT
+        / "starter_ws/src/sanitation_coverage/sanitation_coverage/coverage_probe.py"
+    ).read_text(encoding="utf-8")
+    connector_executor = probe[
+        probe.index("    def _follow_forward_dubins_primitives"):
+        probe.index("    def _execute_ackermann_swath")
+    ]
+
+    assert 'gnss_outlier_threshold_m="0.75"' in launcher
+    assert 'gnss_outlier_threshold_m="2.0"' not in launcher
+    assert 'gnss_outlier_threshold_m:="${gnss_outlier_threshold_m}"' in launcher
+    assert 'gnss_anchor_smoothing_alpha="0.10"' in launcher
+    assert 'gnss_anchor_smoothing_alpha="0.50"' in launcher
+    assert 'if [[ "${DRIVE_MODEL}" == "ackermann" ]]; then' in launcher
+    assert 'gnss_anchor_smoothing_alpha:="${gnss_anchor_smoothing_alpha}"' in launcher
+    assert 'simulation_world_to_map_x:="${world_to_map_x}"' in launcher
+    assert 'simulation_world_to_map_y:="${world_to_map_y}"' in launcher
+    assert '/gnss/fix /localization/fusion_diagnostics' in launcher
+    assert connector_executor.count('"controller_id": "ConnectorPath"') == 2
+    assert '"controller_id": "DubinsPath"' not in connector_executor
+
+
+def test_ackermann_hybrid_sections_use_mppi_forward_and_reverse_rpp():
+    probe = (
+        ROOT
+        / "starter_ws/src/sanitation_coverage/sanitation_coverage/coverage_probe.py"
+    ).read_text(encoding="utf-8")
+    hybrid_executor = probe[
+        probe.index("    def _follow_ackermann_hybrid_plan"):
+        probe.index("    def _follow_component")
+    ]
+    assert '"ReversePath"' in hybrid_executor
+    assert 'else "ConnectorPath"' in hybrid_executor
+    assert "forward_controller_id" not in hybrid_executor
+    assert "FollowPath" not in hybrid_executor
+    assert "segmented ConnectorPath/ReversePath" in hybrid_executor
+    assert "split_path_at_curvature_reversals(" in hybrid_executor
+    assert '"primitive_goal_checker"' in hybrid_executor
+    assert "next_section_is_real_cusp" in hybrid_executor
+    assert "if next_section_is_real_cusp and not using_precomputed_plan:" in hybrid_executor
+    assert "forward_only" not in hybrid_executor
+    assert "invalid_path_recovery" not in hybrid_executor
+    assert 'last_attempt.get("error_name") == "INVALID_PATH"' not in hybrid_executor
+    assert '"curvature_primitive_index"' in hybrid_executor
+    assert '"curvature_primitive_count"' in hybrid_executor
+
+    connector_executor = probe[
+        probe.index("    def _follow_forward_dubins_primitives"):
+        probe.index("    def _execute_ackermann_swath")
+    ]
+    component_executor = probe[
+        probe.index("    def _execute_component"):
+        probe.index("    def _wait_for_cusp_stop")
+    ]
+    assert "connector_handoff_replan_decision(" not in connector_executor
+    assert "connector_handoff_replan_decision(" not in component_executor
+    assert "self._follow_forward_dubins_primitives(component)" in component_executor
+
+
+def test_ackermann_entry_uses_existing_brush_off_swath_lead_in():
+    probe = (
+        ROOT
+        / "starter_ws/src/sanitation_coverage/sanitation_coverage/coverage_probe.py"
+    ).read_text(encoding="utf-8")
+    entry_executor = probe[
+        probe.index("    def _follow_entry_to_first_swath"):
+        probe.index("    def _follow_ackermann_hybrid_plan")
+    ]
+
+    assert "self.estimated_pose[:2]" in entry_executor
+    assert "entry_points(current_point, first_component)" in entry_executor
+    assert "self._follow_ackermann_hybrid_plan(" not in entry_executor
+    assert '"brush_enabled": False' in entry_executor
+    assert '"strategy": "integrated_ackermann_swath_lead_in"' in entry_executor
+    assert '"motion_deferred_to_first_swath": True' in entry_executor
+    assert '"alignment_distance_m": float(alignment_distance_m)' in entry_executor
+    assert "self._follow_component({" in entry_executor
+
+    transit_dispatch = probe[
+        probe.index("            if self.ackermann_profile_active:"):
+        probe.index("        component_results = []")
+    ]
+    assert 'terminal_goal_checker_id="staging_goal_checker"' in transit_dispatch
+    assert "plan is None" in probe
+    assert "next_section_is_real_cusp and not using_precomputed_plan" in probe
+    assert 'or using_precomputed_plan' in probe
+
+
 def test_launcher_can_run_a_bounded_physical_dynamic_matrix():
     launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
     wrapper = (ROOT / "scripts" / "run_visual_demo.ps1").read_text(encoding="utf-8")

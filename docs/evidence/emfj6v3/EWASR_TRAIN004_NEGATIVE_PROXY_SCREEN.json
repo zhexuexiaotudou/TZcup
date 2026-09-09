@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "protocol_id": "EMFJ6V3",
+  "source_commit": "de3a4aa24a7fe07c862f850485d0def83d7fc07c",
+  "executed_at": "2026-08-24T01:45:32+08:00",
+  "model": {
+    "model_id": "area_ewasr_resnet18",
+    "sha256": "15e520fc5f7e910c9367556db9a9c1107bdc9c74e7982b3bf89c7050509411d7",
+    "runtime": "PC_ONNX_CPU",
+    "class_order": [
+      "obstacles_or_environment",
+      "water",
+      "sky"
+    ],
+    "target_class_mapping": null
+  },
+  "dataset": {
+    "source_root_id": "TRAIN_004",
+    "frame_count": 60,
+    "negative_only_for_semantic_ids": [4, 5],
+    "area_manifest_sha256": "8c9f4c06bcf2a59a3ce15bc53c716c6411945b92870eaee18789bf4ddc291720",
+    "area_manifest_canonical_sha256": "056a3b599e8b2b3aa5de141a0e6234ec6b1dbe1ed561c999b7e43123a827828e"
+  },
+  "native_water_activation": {
+    "measurement_grid_hw": [96, 128],
+    "activated_frame_count": 60,
+    "activated_frame_rate": 1.0,
+    "water_pixel_count": 201415,
+    "total_pixel_count": 737280,
+    "water_pixel_fraction": 0.2731865776909722,
+    "water_component_count": 371
+  },
+  "target_area_metrics_computed": false,
+  "a4_area_pass_computed": false,
+  "EMF_EXISTING_MODEL_FUNCTIONAL_CANDIDATE": false,
+  "EMF_EXISTING_MODEL_PRODUCT_CANDIDATE": false,
+  "training_authorized": false,
+  "external_evidence": {
+    "name": "EWASR_TRAIN004_NEGATIVE_PROXY_SCREEN.json",
+    "bytes": 28307,
+    "sha256": "6c3172957e47819a2ef73ff239a7871000048dc1b9eb9b93d513909b492282a1"
+  },
+  "decision": "native_water_reference_rejected_as_direct_leaf_pile_or_puddle_candidate",
+  "truth_boundary": "All 60 frames activate the model's native water channel, but maritime water is not mapped to road puddle and the model has no leaf_pile class. This is a negative proxy diagnostic, not 60/60 puddle false positives, Area IoU, A4 pass, product, or Journey 6 evidence."
+}

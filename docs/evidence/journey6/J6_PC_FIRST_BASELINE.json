@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "baseline_commit": "e1d900faa255c8c2e56ca20d2b17b7af6d59ca7d",
+  "baseline_pr": 92,
+  "baseline_pr_state": "open_draft",
+  "baseline_branch": "codex/simulation-product-acceptance",
+  "target_family": "journey6",
+  "target_sku": "auto",
+  "target_march": "auto",
+  "facts": {
+    "product_model_manifests": "placeholder_not_activatable",
+    "product_inference_engine": "legacy_fixed_detector_and_classifier_contract",
+    "existing_j6_adapter": "hash_checked_external_runner_no_onnx_fallback",
+    "official_journey6_sdk": "not_discovered",
+    "official_journey6_board": "not_available",
+    "historical_journey6_hbm_bc_hbo": "not_discovered_as_valid_artifact",
+    "frozen_calibration_manifest_records": 0,
+    "ros2_aarch64_workspace": "generic_cross_build_only"
+  }
+}

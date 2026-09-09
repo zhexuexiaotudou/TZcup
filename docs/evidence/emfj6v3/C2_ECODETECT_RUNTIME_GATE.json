@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "protocol_id": "EMFJ6V3",
+  "source_commit": "15b3bed4e0c375b8660720ffae4a5a7fc962f16a",
+  "audited_at": "2026-08-24T02:12:00+08:00",
+  "model_id": "c2_ecodetect_efficientnetb0",
+  "artifacts": {
+    "ecodetect_model.h5": {
+      "bytes": 46455368,
+      "sha256": "2886fe9514920376e9e7284edfd3e72e87b85b39420e119cef54f9cc593f2e3d",
+      "download_revision": "9719e6fc9a352d62209529e0e0573fff3bb7dc3d"
+    },
+    "README.md": {
+      "bytes": 1328,
+      "sha256": "c910e2016eb0180cb036ce84fac063fc54ecf9a0580694fe5b9a17ace80457fc"
+    }
+  },
+  "nonexecuting_contract_audit": {
+    "saved_keras_version": "3.10.0",
+    "input_shape": [null, 124, 124, 3],
+    "output_shape": [null, 6],
+    "output_activation": "softmax",
+    "class_order_source": "pinned_README",
+    "class_order": [
+      "cardboard",
+      "glass",
+      "metal",
+      "paper",
+      "plastic",
+      "trash"
+    ],
+    "preprocess_ambiguity": "README divides RGB pixels by 255 while the serialized EfficientNet also contains an internal Rescaling(1/255) layer"
+  },
+  "runtime": {
+    "image_digest": "sha256:b793dcf3cb54aa3c1e164788920314bec07a841909967a0c9e717ca345e02006",
+    "python": "3.11.13",
+    "tensorflow": "2.20.0",
+    "keras": "3.11.2",
+    "numpy": "2.3.2",
+    "pillow": "11.3.0",
+    "h5py": "3.14.0",
+    "uid": 65534,
+    "non_root": true,
+    "network": "none",
+    "read_only_rootfs": true,
+    "model_mount_read_only": true,
+    "safe_mode": true
+  },
+  "runtime_gate": {
+    "passed": false,
+    "operation": "tf.keras.models.load_model(..., compile=False, safe_mode=True)",
+    "error_type": "ValueError",
+    "error": "Shape mismatch in efficientnetb0 stem_conv/kernel: runtime expects (3,3,1,32), saved weight has (3,3,3,32)",
+    "preprocess_routes_executed": false,
+    "route_selected": false,
+    "route_frozen": false
+  },
+  "disposition": "blocked_official_keras3_runtime_deserialization_shape_mismatch",
+  "EMF_EXISTING_MODEL_FUNCTIONAL_CANDIDATE": false,
+  "EMF_EXISTING_MODEL_PRODUCT_CANDIDATE": false,
+  "training_authorized": false,
+  "truth_boundary": "Pinned artifacts are complete, but the official isolated Keras runtime cannot deserialize and bind the frozen 3-channel weights. No inference, A/B preprocess comparison, threshold selection, product, release, Journey 6, or training claim is made. Manual architecture reconstruction, skip_mismatch, or unbounded runtime search was not used."
+}

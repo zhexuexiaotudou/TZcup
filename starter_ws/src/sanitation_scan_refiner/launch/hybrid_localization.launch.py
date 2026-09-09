@@ -45,6 +45,12 @@ def generate_launch_description():
             DeclareLaunchArgument('world_to_map_x', default_value='0.0'),
             DeclareLaunchArgument('world_to_map_y', default_value='0.0'),
             DeclareLaunchArgument('world_to_map_yaw', default_value='0.0'),
+            DeclareLaunchArgument(
+                'gnss_outlier_threshold_m', default_value='0.75'
+            ),
+            DeclareLaunchArgument(
+                'gnss_anchor_smoothing_alpha', default_value='0.10'
+            ),
             DeclareLaunchArgument('respawn_fuser', default_value='false'),
             Node(
                 package='sanitation_scan_refiner',
@@ -83,6 +89,12 @@ def generate_launch_description():
                         'world_to_map_x': LaunchConfiguration('world_to_map_x'),
                         'world_to_map_y': LaunchConfiguration('world_to_map_y'),
                         'world_to_map_yaw': LaunchConfiguration('world_to_map_yaw'),
+                        'gnss_outlier_threshold_m': LaunchConfiguration(
+                            'gnss_outlier_threshold_m'
+                        ),
+                        'gnss_anchor_smoothing_alpha': LaunchConfiguration(
+                            'gnss_anchor_smoothing_alpha'
+                        ),
                     },
                 ],
             ),

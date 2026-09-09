@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "protocol_id": "EMFJ6V3",
+  "model_id": "d6_yolox_tiny_coco_onnx",
+  "source_commit": "df285417d0d30d15501a4f29f546faa8c35d65e1",
+  "executed_at": "2026-08-24T01:02:00+08:00",
+  "runtime": {
+    "provider": "onnx_cpu",
+    "fallback_used": false,
+    "model_sha256": "427cc366d34e27ff7a03e2899b5e3671425c262ea2291f88bb942bc1cc70b0f7",
+    "source_coco_sha256": "4de8234b2b6cd81b309be53da1cc5a13dd9cefaad40e6f6f8d60e7826a0f8655"
+  },
+  "dataset": {
+    "split": "TRAIN_DEVELOPMENT_FIXED",
+    "images": 410,
+    "annotations": 81,
+    "target_counts": {
+      "plastic_bottle": 14,
+      "metal_can": 47,
+      "paper_litter": 20
+    },
+    "unannotated_frames": 329,
+    "independent_negative_only_frames": 0,
+    "formal_A4_negative_domain_ready": false
+  },
+  "external_evidence": {
+    "raw_inference": {
+      "name": "D6_YOLOX_TRAIN_RAW_INFERENCE.json",
+      "bytes": 7807600,
+      "sha256": "ade421d1be15f4f576f65616a7eaadc673edba1c865bcb8584816f4007aabed0"
+    },
+    "full_report": {
+      "name": "D6_YOLOX_TRAIN_PROPOSAL_SCREEN.json",
+      "bytes": 253254,
+      "sha256": "86b5b6d828c22802b2516343be567867d38f487051cbc3de0866991d74eaa87e"
+    }
+  },
+  "threshold_summary": [
+    {"threshold": 0.001, "proposal_recall": 0.0, "false_positives_per_frame": 61.36585365853659, "unannotated_predictions_per_frame": 62.285714285714285},
+    {"threshold": 0.01, "proposal_recall": 0.0, "false_positives_per_frame": 17.841463414634145, "unannotated_predictions_per_frame": 18.145896656534955},
+    {"threshold": 0.05, "proposal_recall": 0.0, "false_positives_per_frame": 6.841463414634147, "unannotated_predictions_per_frame": 6.547112462006079},
+    {"threshold": 0.1, "proposal_recall": 0.0, "false_positives_per_frame": 4.146341463414634, "unannotated_predictions_per_frame": 3.723404255319149},
+    {"threshold": 0.2, "proposal_recall": 0.0, "false_positives_per_frame": 2.7536585365853656, "unannotated_predictions_per_frame": 2.303951367781155},
+    {"threshold": 0.3, "proposal_recall": 0.0, "false_positives_per_frame": 2.1951219512195124, "unannotated_predictions_per_frame": 1.696048632218845},
+    {"threshold": 0.4, "proposal_recall": 0.0, "false_positives_per_frame": 1.7609756097560976, "unannotated_predictions_per_frame": 1.2249240121580547},
+    {"threshold": 0.5, "proposal_recall": 0.0, "false_positives_per_frame": 1.4439024390243902, "unannotated_predictions_per_frame": 0.8875379939209727}
+  ],
+  "semantic_precision_recall_f1": "not_applicable_semantic_mapping_absent",
+  "EMF_EXISTING_MODEL_SCREENING_COMPLETE": false,
+  "EMF_EXISTING_MODEL_FUNCTIONAL_CANDIDATE": false,
+  "EMF_EXISTING_MODEL_PRODUCT_CANDIDATE": false,
+  "training_authorized": false,
+  "decision": "rejected_existing_product_candidate_reference_screen_failed",
+  "truth_boundary": "TRAIN proposal-only diagnostic. No semantic, independent-negative, HOLDOUT, product, Journey 6, or training claim is permitted."
+}

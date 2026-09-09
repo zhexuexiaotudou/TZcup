@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "target_family": "journey6",
+  "status": "blocked_external",
+  "calibration_ready": false,
+  "sealed_access_allowed": false,
+  "forbidden_sources": ["G5_V2", "SEALED_FINAL", "DEV_VAL"],
+  "source": {
+    "source_id": null,
+    "record_inventory_path": null,
+    "record_inventory_sha256": null,
+    "candidate_train_roots": [
+      "F:/Project/TZcup/.workspace/artifacts/product-acceptance-v12/perception/models-and-evaluation/perception_v12_g10_25d9dc0/g10/smoke_train_world0",
+      "F:/Project/TZcup/.workspace/artifacts/product-acceptance-v12/perception/models-and-evaluation/perception_v12_g10_25d9dc0/g10/smoke_positive_train_world0"
+    ],
+    "candidate_rgb_png_count": 471,
+    "candidate_roi_or_crop_file_count": 0
+  },
+  "preprocess": {
+    "source_color": "rgb",
+    "input_width": 640,
+    "input_height": 640,
+    "letterbox": {
+      "enabled": true,
+      "preserve_aspect_ratio": true,
+      "placement": "center",
+      "pad_value": 114,
+      "interpolation": "bilinear"
+    },
+    "nv12": {
+      "layout": "nv12",
+      "matrix": "bt601",
+      "value_range": "limited",
+      "chroma_order": "uv",
+      "width_alignment": 2,
+      "height_alignment": 2
+    }
+  },
+  "counts": {"detector_frame": 0, "second_pass_roi": 0},
+  "minimum_counts": {"detector_frame": 1000, "second_pass_roi": 1000},
+  "records": [],
+  "blockers": [
+    {"code": "nonsealed_calibration_record_inventory_missing"},
+    {"code": "detector_calibration_frames_below_minimum", "candidate_observed": 471, "required": 1000},
+    {"code": "second_pass_roi_calibration_set_missing", "candidate_observed": 0, "required": 1000},
+    {"code": "stratification_metadata_missing"}
+  ],
+  "truth_boundary": "Candidate TRAIN RGB counts are read-only inventory only. No frame is calibration-eligible until an explicit SHA-locked record with complete strata is audited."
+}

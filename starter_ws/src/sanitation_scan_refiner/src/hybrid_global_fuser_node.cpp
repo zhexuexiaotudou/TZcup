@@ -20,6 +20,7 @@
 #include <memory>
 #include <optional>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <utility>
 
@@ -105,6 +106,14 @@ public:
     gnss_outlier_threshold_m_ = declare_parameter<double>("gnss_outlier_threshold_m", 0.75);
     gnss_anchor_smoothing_alpha_ = declare_parameter<double>(
       "gnss_anchor_smoothing_alpha", 1.0);
+    map_to_odom_transform_tolerance_s_ = declare_parameter<double>(
+      "map_to_odom_transform_tolerance_s", 0.20);
+    if (!std::isfinite(map_to_odom_transform_tolerance_s_) ||
+      map_to_odom_transform_tolerance_s_ < 0.0)
+    {
+      throw std::invalid_argument(
+              "map_to_odom_transform_tolerance_s must be finite and non-negative");
+    }
     maximum_refined_gnss_disagreement_m_ = declare_parameter<double>(
       "maximum_refined_gnss_disagreement_m", 0.10);
     minimum_refined_variance_ = declare_parameter<double>(
@@ -129,8 +138,10 @@ public:
       "/localization/fused_odom", 20);
     diagnostics_publisher_ = create_publisher<diagnostic_msgs::msg::DiagnosticArray>(
       "/localization/fusion_diagnostics", 10);
+    const auto local_odom_qos = rclcpp::QoS(rclcpp::KeepLast(1)).best_effort();
     local_subscription_ = create_subscription<nav_msgs::msg::Odometry>(
-      local_topic, 50, std::bind(&HybridGlobalFuserNode::onLocal, this, std::placeholders::_1));
+      local_topic, local_odom_qos,
+      std::bind(&HybridGlobalFuserNode::onLocal, this, std::placeholders::_1));
     gnss_subscription_ = create_subscription<sensor_msgs::msg::NavSatFix>(
       gnss_topic, 20, std::bind(&HybridGlobalFuserNode::onGnss, this, std::placeholders::_1));
     gnss_heading_subscription_ = create_subscription<std_msgs::msg::Float64>(
@@ -416,6 +427,15 @@ private:
       const tf2::Transform map_to_odom = map_to_base * odom_to_base.inverse();
       geometry_msgs::msg::TransformStamped transform;
       transform.header = pose.header;
+      const auto transform_stamp =
+        rclcpp::Time(pose.header.stamp) +
+        rclcpp::Duration::from_seconds(map_to_odom_transform_tolerance_s_);
+      constexpr std::int64_t kNanosecondsPerSecond = 1000000000LL;
+      const auto transform_nanoseconds = transform_stamp.nanoseconds();
+      transform.header.stamp.sec = static_cast<std::int32_t>(
+        transform_nanoseconds / kNanosecondsPerSecond);
+      transform.header.stamp.nanosec = static_cast<std::uint32_t>(
+        transform_nanoseconds % kNanosecondsPerSecond);
       transform.child_frame_id = odom_frame_;
       transform.transform = tf2::toMsg(map_to_odom);
       tf_broadcaster_.sendTransform(transform);
@@ -442,6 +462,10 @@ private:
     status.values.push_back(keyValue("gnss_heading_receive_stamp", gnss_heading_receive_stamp_));
     status.values.push_back(keyValue("gnss_heading_smoothing_alpha",
         gnss_heading_smoothing_alpha_));
+    status.values.push_back(keyValue("gnss_anchor_smoothing_alpha",
+        gnss_anchor_smoothing_alpha_));
+    status.values.push_back(keyValue("map_to_odom_transform_tolerance_s",
+        map_to_odom_transform_tolerance_s_));
     status.values.push_back(keyValue("map_to_odom_owner", publish_map_to_odom_));
     status.values.push_back(keyValue("world_to_map_x", world_to_map_x_));
     status.values.push_back(keyValue("world_to_map_y", world_to_map_y_));
@@ -468,6 +492,7 @@ private:
   double gnss_variance_scale_{1.0};
   double gnss_outlier_threshold_m_{0.75};
   double gnss_anchor_smoothing_alpha_{1.0};
+  double map_to_odom_transform_tolerance_s_{0.20};
   double maximum_refined_gnss_disagreement_m_{0.10};
   double minimum_refined_variance_{0.0025};
   double maximum_refined_variance_{1.0};

@@ -13,6 +13,7 @@ HMI_PACKAGE = ROOT / "starter_ws" / "src" / "sanitation_hmi" / "package.xml"
 NAVIGATION_LAUNCH = ROOT / "starter_ws" / "src" / "sanitation_navigation" / "launch" / "navigation.launch.py"
 FUSER_SOURCE = ROOT / "starter_ws" / "src" / "sanitation_scan_refiner" / "src" / "hybrid_global_fuser_node.cpp"
 HYBRID_LAUNCH = ROOT / "starter_ws" / "src" / "sanitation_scan_refiner" / "launch" / "hybrid_localization.launch.py"
+STAGE4V_LAUNCH = ROOT / "starter_ws" / "src" / "sanitation_bringup" / "launch" / "stage4v_localization.launch.py"
 COVERAGE_PROBE = ROOT / "starter_ws" / "src" / "sanitation_coverage" / "sanitation_coverage" / "coverage_probe.py"
 
 
@@ -174,3 +175,37 @@ def test_product_fuser_owns_one_calibrated_global_pose_contract() -> None:
     assert ".reliable().transient_local()" in fuser
     assert 'DeclareLaunchArgument(\'respawn_fuser\', default_value=\'false\')' in hybrid_launch
     assert "respawn=LaunchConfiguration('respawn_fuser')" in hybrid_launch
+
+
+def test_stage4v_forwards_map_frame_and_controlled_gnss_gate_to_fuser() -> None:
+    stage4v = STAGE4V_LAUNCH.read_text(encoding="utf-8")
+    hybrid = HYBRID_LAUNCH.read_text(encoding="utf-8")
+    sim_include = stage4v[
+        stage4v.index("PythonLaunchDescriptionSource(sim_launch)"):
+        stage4v.index("            Node(\n                package='nav2_map_server'")
+    ]
+    hybrid_include = stage4v[
+        stage4v.index("PythonLaunchDescriptionSource(hybrid_launch)"):
+    ]
+    for suffix in ("x", "y", "yaw"):
+        assert f"'world_to_map_{suffix}': LaunchConfiguration(" in stage4v
+        assert f"'gnss_world_to_map_{suffix}'" in stage4v
+        assert f"'world_to_map_{suffix}': LaunchConfiguration(" in hybrid
+    assert "DeclareLaunchArgument('gnss_world_to_map_x', default_value='0.0')" in stage4v
+    assert "DeclareLaunchArgument('gnss_world_to_map_y', default_value='0.0')" in stage4v
+    assert "DeclareLaunchArgument('gnss_world_to_map_yaw', default_value='0.0')" in stage4v
+    assert "'simulation_world_to_map_x', default_value='8.0'" in stage4v
+    assert "'simulation_world_to_map_y', default_value='0.0'" in stage4v
+    assert "'simulation_world_to_map_yaw', default_value='0.0'" in stage4v
+    for suffix in ("x", "y", "yaw"):
+        assert f"'simulation_world_to_map_{suffix}'" in stage4v
+        assert f"'simulation_world_to_map_{suffix}'" in sim_include
+        assert f"'gnss_world_to_map_{suffix}'" not in sim_include
+        assert f"'gnss_world_to_map_{suffix}'" in hybrid_include
+        assert f"'simulation_world_to_map_{suffix}'" not in hybrid_include
+    assert "'gnss_outlier_threshold_m': LaunchConfiguration(" in stage4v
+    assert "'gnss_outlier_threshold_m': LaunchConfiguration(" in hybrid
+    assert "DeclareLaunchArgument(\n                'gnss_anchor_smoothing_alpha', default_value='0.10'" in stage4v
+    assert "DeclareLaunchArgument(\n                'gnss_anchor_smoothing_alpha', default_value='0.10'" in hybrid
+    assert "'gnss_anchor_smoothing_alpha': LaunchConfiguration(" in stage4v
+    assert "'gnss_anchor_smoothing_alpha': LaunchConfiguration(" in hybrid

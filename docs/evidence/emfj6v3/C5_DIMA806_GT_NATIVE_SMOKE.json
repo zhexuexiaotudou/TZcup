@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "protocol_id": "EMFJ6V3",
+  "source_commit": "084e74e6868d2e1a502a548c98837904328d70e4",
+  "executed_at": "2026-08-24T02:04:54+08:00",
+  "model_id": "c5_dima806_garbage_types_vit",
+  "isolation": {
+    "runtime_image_digest": "sha256:bf61e2b6bca3b1fc6a66100986b59b2eec8aef91a24079b2560bd365622ecf86",
+    "uid": 65534,
+    "non_root": true,
+    "network": "none",
+    "read_only_rootfs": true,
+    "input_mounts_read_only": true,
+    "trust_remote_code": false,
+    "weight_format": "safetensors"
+  },
+  "runtime": {
+    "device": "cuda:0",
+    "torch": "2.5.1+cu124",
+    "transformers": "4.44.2",
+    "safetensors": "0.8.0",
+    "numpy": "1.26.4",
+    "pillow": "10.2.0",
+    "records": 183,
+    "elapsed_seconds": 10.0256146900001
+  },
+  "dataset": {
+    "split": "G10_TRAIN",
+    "source_manifest_sha256": "2f226ed4925779348e218c49c16d0b33ba719958289e493948fd5427e94e3166",
+    "identity_lock_sha256": "998f5666410ef5893cbbddbe22e8831fd70eb548559cda9739ba84086c8d37f8",
+    "records": 183,
+    "all_image_sha_bbox_record_identities_verified": true,
+    "formal_eligible": false,
+    "independent_negative_only_domain": false
+  },
+  "metrics": {
+    "prediction_counts": {
+      "background": 183,
+      "plastic_bottle": 0,
+      "metal_can": 0,
+      "paper_litter": 0
+    },
+    "macro_f1": 0.17894736842105263,
+    "target_macro_f1": 0.0,
+    "background_specificity": 1.0,
+    "target_recall": {
+      "plastic_bottle": 0.0,
+      "metal_can": 0.0,
+      "paper_litter": 0.0
+    }
+  },
+  "external_evidence": {
+    "name": "C5_GT_TRAIN_NATIVE_SMOKE.json",
+    "bytes": 244605,
+    "sha256": "cea5152963dc87a05e3297d3c54bd5942926444ff35147d5e26e66ee7832aab1"
+  },
+  "EMF_EXISTING_MODEL_FUNCTIONAL_CANDIDATE": false,
+  "EMF_EXISTING_MODEL_PRODUCT_CANDIDATE": false,
+  "training_authorized": false,
+  "decision": "direct_use_failed_all_crops_rejected_as_background",
+  "truth_boundary": "Development-only native safetensors smoke on offline GT-derived TRAIN crops. It is not proposal-crop A4, independent negative-domain, HOLDOUT, ONNX parity, product, release, Journey 6, or training evidence."
+}

@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "protocol_id": "EMFJ6V3",
+  "source_commit": "73f30395ec23bbc7901c9a86073056a47ccda93a",
+  "executed_at": "2026-08-24T02:20:27+08:00",
+  "stage": "A5_NONTRAINING_ADJUSTMENT_TRAIN_DIAGNOSTIC_V2",
+  "evidence_role": "TRAIN_upper_bound_only",
+  "dataset": {
+    "split": "G10_TRAIN",
+    "source_manifest_sha256": "2f226ed4925779348e218c49c16d0b33ba719958289e493948fd5427e94e3166",
+    "records": 183,
+    "complete_four_class_holdout_available": false,
+    "independent_unknown_bank_available": false
+  },
+  "contract": {
+    "models": [
+      "c1_wastewise_yolov8n_cls",
+      "c3_vasantvohra_trashnet"
+    ],
+    "raw_evidence_sha256": {
+      "c1_wastewise_yolov8n_cls": "22fa3432ac588e263bbf0cab182cc9860564a41ad2eb91fe2507e240cb782581",
+      "c3_vasantvohra_trashnet": "3323a4bec168e02da7e72e9cde076d12d578aa79870309b4724b326794e32048"
+    },
+    "artifact_and_native_class_schema_locked": true,
+    "crop_identity_exactly_aligned": true,
+    "target_probability_minimums": [0.05, 0.1, 0.2, 0.3, 0.4],
+    "maximum_unknown_probabilities": [0.5, 0.65, 0.8, 0.9, 1.0],
+    "candidate_count": 50,
+    "grid_override_allowed": false
+  },
+  "optimistic_train_only_upper_bounds": {
+    "c1_wastewise_yolov8n_cls": {
+      "maximum_macro_f1": 0.22374050086155128,
+      "maximum_target_macro_f1": 0.25559728058759446,
+      "macro_maximum_candidate_ids": [
+        "c1_wastewise_yolov8n_cls:target_min=0.05:unknown_max=0.90"
+      ],
+      "background_specificity_at_macro_maximum": 0.08823529411764706
+    },
+    "c3_vasantvohra_trashnet": {
+      "maximum_macro_f1": 0.7351478588209927,
+      "maximum_target_macro_f1": 0.7366841710427607,
+      "macro_maximum_candidate_ids": [
+        "c3_vasantvohra_trashnet:target_min=0.10:unknown_max=0.90",
+        "c3_vasantvohra_trashnet:target_min=0.10:unknown_max=1.00"
+      ],
+      "background_specificity_at_macro_maximum": 0.5980392156862745,
+      "target_recall_at_macro_maximum": {
+        "plastic_bottle": 0.9285714285714286,
+        "metal_can": 1.0,
+        "paper_litter": 0.85
+      }
+    }
+  },
+  "threshold_selected": false,
+  "threshold_frozen": false,
+  "unknown_rejection_formally_computed": false,
+  "EMF_NONTRAINING_ADJUSTMENT_COMPLETE": false,
+  "EMF_EXISTING_MODEL_FUNCTIONAL_CANDIDATE": false,
+  "EMF_EXISTING_MODEL_PRODUCT_CANDIDATE": false,
+  "training_authorized": false,
+  "external_evidence": {
+    "name": "EMF_CLASSIFIER_NONTRAINING_C1_C3_TRAIN_DIAGNOSTIC_V2.json",
+    "bytes": 101542,
+    "sha256": "c0f847a8fa8ca7e967f3a3f20da0dfc612bb8f91bb956d6a4d1b325638a9cb40"
+  },
+  "decision": "C3_has_information_bearing_TRAIN_signal_but_no_HOLDOUT_selection_or_freeze",
+  "truth_boundary": "The fixed C1/C3 grid is an optimistic TRAIN-only diagnostic. C3 has information-bearing target probabilities, but the macro maximum reduces background specificity to 0.5980 and is tied across two unknown limits. A5 selection requires a complete untouched four-class development HOLDOUT and an independent unknown/background bank. No threshold is selected, no model is promoted, and training remains unauthorized."
+}

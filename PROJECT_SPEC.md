@@ -2,7 +2,7 @@
 
 ## 1. 产品目标与状态
 
-TZcup 在结构化道路与安全约束内完成建图定位、导航、覆盖清扫、垃圾发现、跟踪与地图融合、定点清扫、清扫后验证和人工监督。系统以 ROS 2 Jazzy、Gazebo Harmonic 与 x86 产品链为仿真基线。
+TZcup 在结构化道路与安全约束内完成建图定位、导航、覆盖清扫、垃圾发现、跟踪与地图融合、定点清扫、清扫后验证和人工监督。系统以 ROS 2 Jazzy、Gazebo Harmonic 与 x86 产品链为仿真基线，目标计算平台家族为地平线 Journey 6；在板卡与随板官方 SDK 完成识别前，SKU 与 BPU march 均保持 `auto`。
 
 状态严格分层：
 
@@ -11,6 +11,8 @@ TZcup 在结构化道路与安全约束内完成建图定位、导航、覆盖�
 - `PRODUCT_FIELD_READY`：冻结版本在真实车辆、真实传感器和真实道路独立通过。
 
 下游状态不能由上游 smoke、单元测试或离线指标推导。
+
+Journey 6 的 PC 先行状态独立记录为 `J6_PC_FUNCTIONAL_PASS`、`J6_X86_SIMULATION_READY`、`J6_LOOPBACK_HIL_READY` 与 `J6_DEPLOYMENT_BUNDLE_READY`。这些状态不能推导上述产品状态；RDK S100/S100P、J5 或其他平台的 SDK、BSP、预编译 HBM 与性能数据不能作为 Journey 6 证据。
 
 ## 2. 三平面架构
 

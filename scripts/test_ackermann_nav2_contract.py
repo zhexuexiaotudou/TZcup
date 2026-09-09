@@ -108,7 +108,7 @@ def test_rpp_controllers_have_explicit_direction_and_no_rotate():
         "frontier_goal_checker",
         "cusp_goal_checker",
         "primitive_goal_checker",
-        "connector_goal_checker", "swath_exit_goal_checker",
+        "staging_goal_checker", "connector_goal_checker", "swath_exit_goal_checker",
     ]
     assert float(
         controllers["primitive_goal_checker"]["yaw_goal_tolerance"]
@@ -149,6 +149,8 @@ def test_rpp_controllers_have_explicit_direction_and_no_rotate():
     assert float(connector["vx_min"]) == 0.0
     assert float(connector["wz_max"]) == 0.25
     assert float(connector["model_dt"]) == pytest.approx(1.0 / 15.0)
+    assert float(connector["max_robot_pose_search_dist"]) == pytest.approx(1.0)
+    assert float(connector["prune_distance"]) == pytest.approx(1.0)
     assert connector["PathAlignCritic"]["use_path_orientations"] is True
     assert int(connector["PathAngleCritic"]["mode"]) == 2
     assert "PreferForwardCritic" in connector["critics"]
@@ -164,7 +166,7 @@ def test_rpp_controllers_have_explicit_direction_and_no_rotate():
     assert float(controllers["ReversePath"]["max_robot_pose_search_dist"]) <= 1.0
     clean_speed = float(controllers["CleanPath"]["desired_linear_vel"])
     assert clean_speed == 1.00
-    assert float(controllers["CleanPath"]["lookahead_dist"]) == 1.20
+    assert float(controllers["CleanPath"]["lookahead_dist"]) == 3.00
     assert controllers["CleanPath"]["use_velocity_scaled_lookahead_dist"] is False
     assert float(controllers["CleanPath"]["min_lookahead_dist"]) == 1.20
     assert float(controllers["CleanPath"]["max_lookahead_dist"]) == 1.20
@@ -278,7 +280,7 @@ def test_nonholonomic_goal_tolerance_is_bounded_but_not_point_turn_strict():
     assert cusp["stateful"] is False
     assert controller["goal_checker_plugins"] == [
         "goal_checker", "frontier_goal_checker", "cusp_goal_checker", "primitive_goal_checker",
-        "connector_goal_checker", "swath_exit_goal_checker",
+        "staging_goal_checker", "connector_goal_checker", "swath_exit_goal_checker",
     ]
     frontier = controller["frontier_goal_checker"]
     assert float(frontier["xy_goal_tolerance"]) == 0.25
@@ -287,6 +289,10 @@ def test_nonholonomic_goal_tolerance_is_bounded_but_not_point_turn_strict():
     assert primitive["stateful"] is False
     assert float(primitive["xy_goal_tolerance"]) <= 0.40
     assert float(primitive["yaw_goal_tolerance"]) <= 1.00
+    staging = controller["staging_goal_checker"]
+    assert staging["stateful"] is False
+    assert float(staging["xy_goal_tolerance"]) == 0.50
+    assert float(staging["yaw_goal_tolerance"]) == 1.00
     connector = controller["connector_goal_checker"]
     assert connector["stateful"] is False
     assert float(connector["xy_goal_tolerance"]) <= 0.40
@@ -322,7 +328,7 @@ def test_visual_launcher_preserves_ackermann_controller_limits():
     assert '"${MAP_SIZE}" "${DRIVE_MODEL}"' in launcher
     assert 'if drive_model != "ackermann":' in launcher
     assert 'assert follow["use_rotate_to_heading"] is False' in launcher
-    assert 'assert follow["allow_reversing"] is False' in launcher
+    assert 'assert follow["allow_reversing"] is True' in launcher
     assert '["ReversePath"]["allow_reversing"] is True' in launcher
     assert 'map_file="${map_root}/sanitation_test_map.yaml"' in launcher
 

@@ -1,0 +1,39 @@
+{
+  "schema_version": 2,
+  "target_family": "journey6",
+  "target_sku": "auto",
+  "target_march": "auto",
+  "statuses": {
+    "J6_DEV_MODEL_AVAILABLE": false,
+    "J6_PC_DISCRETE_FUNCTIONAL_PASS": false,
+    "J6_PC_AREA_FUNCTIONAL_PASS": false,
+    "J6_PC_FUNCTIONAL_PASS": false,
+    "J6_X86_SIMULATION_READY": false,
+    "J6_LOOPBACK_TRANSPORT_READY": false,
+    "J6_LOOPBACK_ALGORITHM_READY": false,
+    "J6_LOOPBACK_HIL_EMULATION_READY": false,
+    "J6_LOOPBACK_HIL_READY": false,
+    "J6_CALIBRATION_PACK_READY": false,
+    "J6_SOURCE_DEPLOYMENT_BUNDLE_READY": false,
+    "J6_COMPILED_HBM_BUNDLE_READY": false,
+    "J6_DEPLOYMENT_BUNDLE_READY": false,
+    "J6_COMPETITION_MODEL_READY": false,
+    "J6_LICENSE_RELEASE_READY": false,
+    "SIMULATION_PRODUCT_COMPLETE": false,
+    "PRODUCT_X86_PERCEPTION_READY": false,
+    "PRODUCT_INTEGRATION_READY": false,
+    "PRODUCT_FIELD_READY": false
+  },
+  "board_metrics": {
+    "FPS": null,
+    "BPU_utilization": null,
+    "CPU_utilization": null,
+    "DDR_utilization": null,
+    "temperature_c": null,
+    "power_w": null,
+    "HBM_latency_ms": null,
+    "network_HIL_latency_ms": null,
+    "board_30_seed": "not_run"
+  },
+  "truth_boundary": "PC contracts and bundle tooling do not prove official J6 x86 simulation, physical-board performance, V1 simulation acceptance, or field readiness."
+}

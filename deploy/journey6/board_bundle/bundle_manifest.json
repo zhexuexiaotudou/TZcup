@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "bundle_id": "tzcup-journey6-skeleton",
+  "source_commit": null,
+  "target_family": "journey6",
+  "target_sku": "auto",
+  "target_march": "auto",
+  "status": "skeleton",
+  "profiles": [
+    "journey6_generic",
+    "journey6_nash_e",
+    "journey6_nash_m",
+    "journey6_nash_p"
+  ],
+  "models": [],
+  "runtime_contract": {
+    "inventory_required": true,
+    "checksum_required": true,
+    "inactive_warmup_required": true,
+    "atomic_switch_required": true,
+    "rollback_required": true
+  },
+  "external_blockers": [
+    {
+      "code": "journey6_official_sdk_missing",
+      "status": "blocked_external"
+    },
+    {
+      "code": "journey6_board_inventory_missing",
+      "status": "blocked_external"
+    }
+  ]
+}

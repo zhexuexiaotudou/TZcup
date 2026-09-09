@@ -173,6 +173,12 @@ fi
 
 pids=()
 stopped=0
+rosbag_pid=""
+rosbag_finalized=0
+rosbag_finalization_failed=0
+ROSBAG_SIGINT_TIMEOUT_SEC="${ROSBAG_SIGINT_TIMEOUT_SEC:-180}"
+ROSBAG_SIGTERM_TIMEOUT_SEC="${ROSBAG_SIGTERM_TIMEOUT_SEC:-60}"
+ROSBAG_SEAL_TIMEOUT_SEC="${ROSBAG_SEAL_TIMEOUT_SEC:-30}"
 stop_group() {
   local pid="${1:-}"
   [[ -n "${pid}" ]] || return
@@ -219,6 +225,96 @@ stop_group() {
   kill -KILL "${pid}" 2>/dev/null || true
   wait "${pid}" 2>/dev/null || true
 }
+rosbag_group_alive() {
+  local pid="${1:-}"
+  kill -0 "${pid}" 2>/dev/null || pgrep -g "${pid}" >/dev/null 2>&1
+}
+wait_for_rosbag_exit() {
+  local pid="$1"
+  local timeout_sec="$2"
+  for _ in $(seq 1 "$((timeout_sec * 10))"); do
+    if ! rosbag_group_alive "${pid}"; then
+      wait "${pid}" 2>/dev/null || true
+      return 0
+    fi
+    sleep 0.1
+  done
+  return 1
+}
+wait_for_rosbag_seal() {
+  local bag_dir="$1"
+  for _ in $(seq 1 "$((ROSBAG_SEAL_TIMEOUT_SEC * 10))"); do
+    if python3 "${ROOT}/scripts/mcap_validation.py" \
+      --bag "${bag_dir}" --require-sealed \
+      > "${OUTPUT_DIR}/rosbag_seal_check.json" 2>/dev/null
+    then
+      return 0
+    fi
+    sleep 0.1
+  done
+  return 1
+}
+write_rosbag_finalization() {
+  local status="$1"
+  local escalation="$2"
+  local process_group="$3"
+  printf '{"schema_version":1,"status":"%s","escalation":"%s","process_group":"%s","timestamp_utc":"%s"}\n' \
+    "${status}" "${escalation}" "${process_group}" \
+    "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    > "${OUTPUT_DIR}/rosbag_finalization.json"
+}
+finalize_rosbag() {
+  [[ -n "${rosbag_pid}" ]] || return 0
+  [[ "${rosbag_finalized}" -eq 0 ]] || return 0
+  [[ "${rosbag_finalization_failed}" -eq 0 ]] || return 1
+
+  local process_group
+  process_group="$(ps -o pgid= -p "${rosbag_pid}" 2>/dev/null | tr -d '[:space:]' || true)"
+  if [[ "${process_group}" != "${rosbag_pid}" ]]; then
+    # setsid must make the recorder PID its PGID. Do not target an unrelated
+    # process group if that invariant is absent; stop only the known launcher
+    # and reject the artifact because its descendants cannot be accounted for.
+    process_group="${process_group:-unavailable}"
+    kill -INT "${rosbag_pid}" 2>/dev/null || true
+    if ! wait_for_rosbag_exit "${rosbag_pid}" "${ROSBAG_SIGINT_TIMEOUT_SEC}"; then
+      kill -TERM "${rosbag_pid}" 2>/dev/null || true
+      if ! wait_for_rosbag_exit "${rosbag_pid}" "${ROSBAG_SIGTERM_TIMEOUT_SEC}"; then
+        kill -KILL "${rosbag_pid}" 2>/dev/null || true
+        wait "${rosbag_pid}" 2>/dev/null || true
+        write_rosbag_finalization "FAILED" "PGID_MISMATCH_KILL_AFTER_TIMEOUT" "${process_group}"
+      else
+        write_rosbag_finalization "FAILED" "PGID_MISMATCH" "${process_group}"
+      fi
+    else
+      write_rosbag_finalization "FAILED" "PGID_MISMATCH" "${process_group}"
+    fi
+    rosbag_finalization_failed=1
+    echo "rosbag recorder did not own its process group; MCAP is rejected." >&2
+    return 1
+  fi
+  kill -INT -- "-${rosbag_pid}" 2>/dev/null || true
+
+  if ! wait_for_rosbag_exit "${rosbag_pid}" "${ROSBAG_SIGINT_TIMEOUT_SEC}"; then
+    kill -TERM -- "-${rosbag_pid}" 2>/dev/null || true
+    if ! wait_for_rosbag_exit "${rosbag_pid}" "${ROSBAG_SIGTERM_TIMEOUT_SEC}"; then
+      kill -KILL -- "-${rosbag_pid}" 2>/dev/null || true
+      wait "${rosbag_pid}" 2>/dev/null || true
+      rosbag_finalization_failed=1
+      write_rosbag_finalization "FAILED" "KILL_AFTER_TIMEOUT" "${process_group}"
+      echo "rosbag recorder exceeded graceful shutdown timeouts; MCAP is rejected." >&2
+      return 1
+    fi
+  fi
+
+  if ! wait_for_rosbag_seal "${OUTPUT_DIR}/visual_demo_bag"; then
+    rosbag_finalization_failed=1
+    write_rosbag_finalization "FAILED" "NO_KILL_UNSEALED" "${process_group}"
+    echo "rosbag recorder exited without a sealed MCAP metadata/footer pair." >&2
+    return 1
+  fi
+  rosbag_finalized=1
+  write_rosbag_finalization "FINALIZED" "NONE" "${process_group}"
+}
 stop_all() {
   [[ "${stopped}" -eq 0 ]] || return
   stopped=1
@@ -258,6 +354,9 @@ stop_all() {
 on_exit() {
   exit_code=$?
   trap - EXIT INT TERM
+  if ! finalize_rosbag; then
+    exit_code=4
+  fi
   stop_all
   exit "${exit_code}"
 }
@@ -346,6 +445,8 @@ max_linear_velocity="1.0"
 max_angular_velocity="0.70"
 localization_fusion_mode="hybrid_rtk_scan_imu_wheel"
 enable_scan_refiner="true"
+gnss_outlier_threshold_m="0.75"
+gnss_anchor_smoothing_alpha="0.10"
 profile_label="STANDARD DEMO"
 mission_scope="LIVE DEMO AREA"
 map_area_m2="4000.0"
@@ -402,6 +503,11 @@ if [[ "${MAP_SIZE}" == "small" ]]; then
   if [[ "${DRIVE_MODEL}" != "ackermann" && "${SIMULATION_SPEED}" == "fast" ]]; then max_linear_velocity="0.70"; max_angular_velocity="0.60"; fi
   if [[ "${DRIVE_MODEL}" != "ackermann" && "${SIMULATION_SPEED}" == "turbo" ]]; then max_linear_velocity="0.90"; max_angular_velocity="0.75"; fi
 fi
+if [[ "${DRIVE_MODEL}" == "ackermann" ]]; then
+  # Ackermann turn transitions need faster absolute-anchor correction. This
+  # value is shared by the visual and competition profiles.
+  gnss_anchor_smoothing_alpha="0.50"
+fi
 if [[ "${COMPETITION_PROFILE}" -eq 1 ]]; then
   competition_runtime="${runtime}/competition_profile"
   python3 "${ROOT}/scripts/generate_competition_gazebo_profile.py" \
@@ -454,10 +560,13 @@ if [[ "${COMPETITION_PROFILE}" -eq 1 ]]; then
     initial_pose_y="45.95"
     initial_pose_yaw="0.0"
     if [[ "${COMPETITION_LANE}" == "efficiency" ]]; then
-      spawn_x="-94.80"
-      spawn_y="-30.05"
-      initial_pose_x="5.20"
-      initial_pose_y="19.95"
+      # Start one metre behind and exactly aligned with the first staging pose.
+      # The previous 0.65 m lateral offset forced a self-intersecting three-point
+      # maneuver before cleaning and made its middle branch ambiguous.
+      spawn_x="-95.68"
+      spawn_y="-29.40"
+      initial_pose_x="4.32"
+      initial_pose_y="20.60"
     fi
   fi
 fi
@@ -569,7 +678,7 @@ else:
     # them with generic demo speeds defeats curvature tracking and can drive a
     # Reeds-Shepp connector into an occupied start pose during replanning.
     assert follow["use_rotate_to_heading"] is False
-    assert follow["allow_reversing"] is False
+    assert follow["allow_reversing"] is True
     assert config["controller_server"]["ros__parameters"]["ReversePath"]["allow_reversing"] is True
     if competition_lane == "efficiency":
         controllers = config["controller_server"]["ros__parameters"]
@@ -582,7 +691,7 @@ else:
         # the westbound 186 m swath reached the loose endpoint at 0.73 rad and
         # the next Dubins primitive was pruned to an empty path.
         controllers["CleanPath"]["min_approach_linear_velocity"] = 0.2
-        controllers["CleanPath"]["approach_velocity_scaling_dist"] = 5.0
+        controllers["CleanPath"]["approach_velocity_scaling_dist"] = 3.0
         controllers["DubinsPath"]["desired_linear_vel"] = 0.6
         controllers["DubinsPath"]["regulated_linear_scaling_min_speed"] = 0.5
         controllers["DubinsPath"]["min_approach_linear_velocity"] = 0.2
@@ -651,10 +760,12 @@ setsid ros2 launch sanitation_bringup stage4v_localization.launch.py \
   gui_config:="${gui_config}" \
   map_file:="${map_file}" spawn_x:="${spawn_x}" spawn_y:="${spawn_y}" spawn_yaw:="${spawn_yaw}" \
   cleaning_width:="${cleaning_width}" brush_center_y:="${brush_center_y}" \
-  world_to_map_x:="${world_to_map_x}" world_to_map_y:="${world_to_map_y}" \
+  simulation_world_to_map_x:="${world_to_map_x}" simulation_world_to_map_y:="${world_to_map_y}" \
   initial_pose_x:="${initial_pose_x}" initial_pose_y:="${initial_pose_y}" initial_pose_yaw:="${initial_pose_yaw}" \
   camera_profile:=V5_retracted fusion_mode:="${localization_fusion_mode}" \
   enable_scan_refiner:="${enable_scan_refiner}" \
+  gnss_outlier_threshold_m:="${gnss_outlier_threshold_m}" \
+  gnss_anchor_smoothing_alpha:="${gnss_anchor_smoothing_alpha}" \
   > "${OUTPUT_DIR}/localization.log" 2>&1 &
 localization_pid="$!"
 pids+=("${localization_pid}")
@@ -860,6 +971,7 @@ if [[ "${RECORD_MCAP}" -eq 1 ]]; then
   setsid ros2 bag record --storage mcap \
     --output "${OUTPUT_DIR}/visual_demo_bag" \
     /clock /tf /tf_static /scan /odom /wheel/odom_raw /joint_states /localization/fused_pose \
+    /gnss/fix /localization/fusion_diagnostics \
     /ground_truth/odom /cmd_vel /cmd_vel_gate /brush_enabled \
     /emergency_stop /coverage/state /coverage/component_state \
     /coverage/current_path /coverage/evaluation_sample \
@@ -870,7 +982,7 @@ if [[ "${RECORD_MCAP}" -eq 1 ]]; then
     /coverage/actual_transit_trajectory /coverage/actual_repair_trajectory \
     /coverage/diagnostics /local_costmap/costmap /global_costmap/costmap \
     > "${OUTPUT_DIR}/rosbag.log" 2>&1 &
-  pids+=("$!")
+  rosbag_pid="$!"
 fi
 
 effective_video_mode="${VIDEO_MODE}"
@@ -1024,12 +1136,24 @@ if [[ "${gui_closed_during_mission}" -eq 1 ]]; then
     "${runtime_termination_status}" \
     "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
     > "${OUTPUT_DIR}/launcher_termination.json"
+  rosbag_finalize_code=0
+  finalize_rosbag || rosbag_finalize_code=$?
   stop_all
   trap - EXIT INT TERM
+  if [[ "${rosbag_finalize_code}" -ne 0 ]]; then
+    exit 4
+  fi
   if [[ "${runtime_termination_status}" == "WSLG_WINDOW_GUARD_FAILED" ]]; then
     exit 7
   fi
   exit 0
+fi
+
+if [[ "${RECORD_MCAP}" -eq 1 ]]; then
+  # The coverage process has reached a terminal state.  Seal the recorder now,
+  # while the ROS graph is still alive, before generic runtime cleanup can send
+  # TERM/KILL to it.
+  finalize_rosbag || true
 fi
 
 sleep 8

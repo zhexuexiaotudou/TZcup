@@ -88,6 +88,13 @@ def test_hybrid_localizer_bounds_absolute_sensor_disagreement():
         ROOT / "starter_ws/src/sanitation_scan_refiner/src/hybrid_global_fuser_node.cpp"
     ).read_text(encoding="utf-8")
     assert 0.0 < config["gnss_anchor_smoothing_alpha"] < 1.0
+    assert config["map_to_odom_transform_tolerance_s"] == 0.20
     assert config["maximum_refined_gnss_disagreement_m"] == 0.10
     assert config["minimum_refined_variance"] >= 0.0015
     assert "rtk_local_refined_innovation_rejected" in source
+    assert "rclcpp::QoS(rclcpp::KeepLast(1)).best_effort()" in source
+    assert "map_to_odom_transform_tolerance_s must be finite and non-negative" in source
+    assert "rclcpp::Duration::from_seconds(map_to_odom_transform_tolerance_s_)" in source
+    assert "transform_stamp.nanoseconds()" in source
+    assert 'keyValue("gnss_anchor_smoothing_alpha"' in source
+    assert 'keyValue("map_to_odom_transform_tolerance_s"' in source

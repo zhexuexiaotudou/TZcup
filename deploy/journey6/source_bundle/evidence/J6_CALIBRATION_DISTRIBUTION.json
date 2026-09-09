@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "status": "blocked_external",
+  "stratification_pass": false,
+  "required_dimensions": ["target_class", "scene", "lighting", "distance_bucket"],
+  "minimum_role_counts": {"detector_frame": 1000, "second_pass_roi": 1000},
+  "role_counts": {"detector_frame": 0, "second_pass_roi": 0},
+  "distribution": {
+    "detector_frame": {},
+    "second_pass_roi": {}
+  },
+  "blockers": [
+    "sha_locked_record_inventory_missing",
+    "stratification_metadata_missing",
+    "detector_and_second_pass_minimums_not_met"
+  ]
+}

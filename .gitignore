@@ -108,6 +108,10 @@ artifacts/auto17_visual_demo_*/
 !artifacts/auto17_visual_demo_*_evidence/**
 artifacts/gazebo_cleaning_process_*/
 
+# Journey 6 loopback runs retain raw ROS/Docker/process logs locally. Commit
+# only reviewed compact reports under docs/evidence/journey6.
+artifacts/j6_loopback_pc_onnx_v2_*/
+
 # AUTO-16 clean-clone/full-workspace build logs are retained locally until
 # user confirmation; only the compact verification JSON is versioned.
 auto16_*build*.log

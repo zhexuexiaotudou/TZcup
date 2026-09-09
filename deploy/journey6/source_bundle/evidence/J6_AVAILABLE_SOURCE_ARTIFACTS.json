@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "target_family": "journey6",
+  "artifacts": [
+    {
+      "artifact_id": "d1_littercam_yolov9c_e1",
+      "role": "detector_and_second_pass",
+      "path": ".workspace/d1_export/evidence/routes/E1.onnx",
+      "sha256": "01c72cdbcd08b6fd91c9a56a065f19837bffd67cca175a75b39e295c3afc01f5",
+      "bytes": 203423811,
+      "format": "onnx",
+      "onnx_checker_pass": true,
+      "ir_version": 8,
+      "opset": 17,
+      "input": {"shape": [1, 3, 640, 640]},
+      "outputs": [{"shape": [1, 14, 8400]}, {"shape": [1, 14, 8400]}],
+      "development_only": true,
+      "functional_acceptance": false,
+      "copy_policy": "reference_only"
+    },
+    {
+      "artifact_id": "area_auto05_rgbd_area_segmenter",
+      "role": "area",
+      "path": ".workspace/models/j6f2/area/auto05_rgbd_area_segmenter.onnx",
+      "sha256": "82a408f17c81f0aebe68debcb5385eccde859308f59fe8ab2e8bcff72414b3eb",
+      "bytes": 2035107,
+      "format": "onnx",
+      "onnx_checker_pass": true,
+      "ir_version": 8,
+      "opset": 17,
+      "input": {"shape": [1, 7, 384, 512]},
+      "output": {"shape": [1, 2, 384, 512]},
+      "development_only": true,
+      "functional_acceptance": false,
+      "copy_policy": "reference_only"
+    },
+    {
+      "artifact_id": "d1_cpp_graph_external_postprocess",
+      "role": "postprocess_source",
+      "path": "deploy/journey6/board_runtime/src/d1_yolov9_postprocess.cpp",
+      "sha256": "6741bd1c4fafde6afeb001593426399ea56687ff3f3625a2676da53b7295a5c5",
+      "development_only": true,
+      "functional_acceptance": false,
+      "copy_policy": "reference_only"
+    },
+    {
+      "artifact_id": "d1_train_golden_tensor_lock",
+      "role": "cross_language_golden",
+      "path": "deploy/journey6/source_bundle/D1_GOLDEN_TENSOR_LOCK.json",
+      "sha256": "d38d18bca14909be35a56ec16e399741d7b172b65deb0e6501c09c3ab16a7240",
+      "external_tensor_path": ".workspace/evidence/j6/d1_postprocess_golden/E1_scene30001_frame00_primary.f32",
+      "external_tensor_sha256": "4700a73487db964bda276e92c5b7de24e6325691b688a94efd665ad22845dc15",
+      "development_only": true,
+      "functional_acceptance": false,
+      "copy_policy": "reference_only"
+    }
+  ],
+  "truth_boundary": "Artifact availability and ONNX structural checks do not prove current runtime, calibration, Journey 6 conversion, x86 simulation, or area functional acceptance."
+}

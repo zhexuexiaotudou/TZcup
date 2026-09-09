@@ -1,0 +1,26 @@
+schema_version: 1
+bundle_id: tzcup-journey6-source-v1
+target_family: journey6
+target_sku: auto
+target_march: auto
+source_only: true
+components:
+  - {id: detector_canonical_onnx, path: .workspace/d1_export/evidence/routes/E1.onnx, copy_policy: reference_only, expected_sha256: 01c72cdbcd08b6fd91c9a56a065f19837bffd67cca175a75b39e295c3afc01f5}
+  - {id: classifier_canonical_onnx, path: .workspace/d1_export/evidence/routes/E1.onnx, copy_policy: reference_only, expected_sha256: 01c72cdbcd08b6fd91c9a56a065f19837bffd67cca175a75b39e295c3afc01f5}
+  - {id: area_canonical_onnx, path: .workspace/models/j6f2/area/auto05_rgbd_area_segmenter.onnx, copy_policy: reference_only, expected_sha256: 82a408f17c81f0aebe68debcb5385eccde859308f59fe8ab2e8bcff72414b3eb}
+  - {id: model_lock, path: config/pretrained_model_selection.yaml, copy_policy: reference_only, expected_sha256: null}
+  - {id: model_license_audit, path: .workspace/evidence/j6/PRETRAINED_MODEL_LICENSE_AUDIT.json, copy_policy: reference_only, expected_sha256: null}
+  - {id: calibration_manifest, path: deploy/journey6/source_bundle/evidence/J6_CALIBRATION_MANIFEST.json, copy_policy: reference_only, expected_sha256: null}
+  - {id: calibration_distribution, path: deploy/journey6/source_bundle/evidence/J6_CALIBRATION_DISTRIBUTION.json, copy_policy: reference_only, expected_sha256: null}
+  - {id: calibration_sha256sums, path: deploy/journey6/source_bundle/evidence/J6_CALIBRATION_SHA256SUMS, copy_policy: reference_only, expected_sha256: null}
+  - {id: nv12_contract, path: starter_ws/src/sanitation_perception/sanitation_perception/journey6_nv12.py, copy_policy: reference_only, expected_sha256: null}
+  - {id: python_postprocess, path: starter_ws/src/sanitation_perception/sanitation_perception/pretrained_contracts.py, copy_policy: reference_only, expected_sha256: null}
+  - {id: cpp_postprocess, path: deploy/journey6/board_runtime/src/d1_yolov9_postprocess.cpp, copy_policy: reference_only, expected_sha256: null}
+  - {id: golden_tensor_lock, path: deploy/journey6/source_bundle/D1_GOLDEN_TENSOR_LOCK.json, copy_policy: reference_only, expected_sha256: d38d18bca14909be35a56ec16e399741d7b172b65deb0e6501c09c3ab16a7240}
+  - {id: nash_profiles, path: deploy/journey6/profiles, copy_policy: reference_only, expected_sha256: null}
+  - {id: toolchain_lock, path: deploy/journey6/J6_TOOLCHAIN_LOCK.yaml, copy_policy: reference_only, expected_sha256: null}
+  - {id: board_runtime_source, path: deploy/journey6/board_runtime, copy_policy: reference_only, expected_sha256: null}
+  - {id: install_source, path: deploy/journey6/board_bundle/scripts/install_candidate.sh, copy_policy: reference_only, expected_sha256: null}
+  - {id: healthcheck_source, path: deploy/journey6/board_bundle/scripts/healthcheck.sh, copy_policy: reference_only, expected_sha256: null}
+  - {id: rollback_source, path: deploy/journey6/board_bundle/scripts/install_candidate.sh, copy_policy: reference_only, expected_sha256: null}
+  - {id: hil_config, path: starter_ws/src/journey6_hil_gateway/config/hil_topic_qos_contract.yaml, copy_policy: reference_only, expected_sha256: null}

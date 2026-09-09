@@ -1,0 +1,49 @@
+schema_version: 1
+selection_id: journey6_pc_first_pretrained_matrix
+registry: config/pretrained_model_sources.yaml
+development_only: true
+competition_claim_allowed: false
+release_allowed: false
+sealed_access_allowed: false
+selection_frozen: false
+selected:
+  detector: null
+  close_range_classifier: null
+download_candidates:
+  - d1_littercam_yolov9c
+blocked_candidates:
+  d1_littercam_yolov9c: canonical_onnx_exported_but_strict_pt_onnx_parity_failed_and_fixed_train_development_gate_has_zero_true_positives_for_all_three_actionable_classes
+  d2_suhan_yolo11n: source_onnx_has_8_anonymous_classes_but_model_card_declares_6_and_ir10_exceeds_j6_preflight
+  c2_ecodetect_efficientnetb0: source_revision_has_no_onnx
+benchmark_combinations:
+  - detector: d1_littercam_yolov9c
+    classifier: c1_wastewise_yolov8n_cls
+  - detector: d1_littercam_yolov9c
+    classifier: c2_ecodetect_efficientnetb0
+  - detector: d2_suhan_yolo11n
+    classifier: c1_wastewise_yolov8n_cls
+  - detector: d2_suhan_yolo11n
+    classifier: c2_ecodetect_efficientnetb0
+selection_order:
+  - source_and_license
+  - class_coverage
+  - onnx_and_journey6_convertibility
+  - pc_offline_accuracy
+  - moving_online_accuracy
+  - combined_wrong_actionable
+  - performance
+  - quantization_loss
+activation_requirements:
+  - immutable_source_revision
+  - verified_source_sha256
+  - license_status_not_blocked
+  - onnx_checker_pass
+  - no_custom_operators
+  - class_mapping_frozen
+  - thresholds_and_nms_frozen
+  - crop_unknown_and_geometry_policies_frozen
+truth_boundary: >-
+  D1 was loaded from the pinned checkpoint and exported to a canonical ONNX,
+  but it failed strict PT/ONNX parity and the fixed TRAIN-only development
+  semantic gate. This file declares the candidate matrix only. No detector or
+  classifier is selected, activated, releasable, or competition-qualified.

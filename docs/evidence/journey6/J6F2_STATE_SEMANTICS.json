@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "layers": {
+    "development_functional": {
+      "statuses": [
+        "J6_DEV_MODEL_AVAILABLE",
+        "J6_PC_DISCRETE_FUNCTIONAL_PASS",
+        "J6_PC_AREA_FUNCTIONAL_PASS",
+        "J6_PC_FUNCTIONAL_PASS"
+      ],
+      "may_use_unresolved_release_license": true,
+      "weight_redistribution_allowed": false,
+      "journey6_runtime_claim_allowed": false
+    },
+    "loopback_emulation": {
+      "statuses": [
+        "J6_LOOPBACK_TRANSPORT_READY",
+        "J6_LOOPBACK_ALGORITHM_READY",
+        "J6_LOOPBACK_HIL_EMULATION_READY"
+      ],
+      "required_runtime_label": "PC_ONNX",
+      "not_journey6_runtime": true,
+      "minimum_duration_s": 1800,
+      "required_sensor_source": "gazebo",
+      "sensor_source_requires_hashed_launch_process_and_endpoint_provenance": true,
+      "algorithm_model_requires_hashed_parity_inference_and_full_stack_evidence": true,
+      "required_algorithm_host": {
+        "os": "ubuntu 22.04",
+        "ros_distro": "humble"
+      },
+      "implies_J6_LOOPBACK_HIL_READY": false
+    },
+    "source_deployment": {
+      "statuses": [
+        "J6_CALIBRATION_PACK_READY",
+        "J6_SOURCE_DEPLOYMENT_BUNDLE_READY"
+      ],
+      "official_sdk_required": false,
+      "compiled_hbm_required": false,
+      "implies_J6_DEPLOYMENT_BUNDLE_READY": false
+    },
+    "competition_release": {
+      "statuses": [
+        "J6_COMPETITION_MODEL_READY",
+        "J6_LICENSE_RELEASE_READY"
+      ],
+      "development_evidence_sufficient": false
+    },
+    "official_journey6": {
+      "statuses": [
+        "J6_X86_SIMULATION_READY",
+        "J6_LOOPBACK_HIL_READY",
+        "J6_COMPILED_HBM_BUNDLE_READY",
+        "J6_DEPLOYMENT_BUNDLE_READY"
+      ],
+      "official_sdk_required": true,
+      "actual_sku_and_march_required": true,
+      "rdk_substitution_allowed": false
+    }
+  },
+  "invariants": [
+    "J6_PC_FUNCTIONAL_PASS requires both discrete and area functional pass",
+    "PC_ONNX loopback never implies official Journey 6 x86 or HIL readiness",
+    "sensor_source strings and model qualification booleans cannot create readiness without hashed machine evidence",
+    "source deployment bundle never implies compiled HBM or deployable bundle",
+    "development-only models never imply competition or release readiness",
+    "all product completion states remain false until fixed V1 gates pass"
+  ]
+}

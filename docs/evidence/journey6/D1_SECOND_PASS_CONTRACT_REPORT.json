@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "stage": "J6F2_D1_SECOND_PASS_CONTRACT",
+  "implementation_present": true,
+  "development_only": true,
+  "real_d1_inference_exercised_in_provider": false,
+  "real_d1_external_golden_exercised": true,
+  "external_golden_contract": {
+    "model_sha256": "01c72cdbcd08b6fd91c9a56a065f19837bffd67cca175a75b39e295c3afc01f5",
+    "tensor_sha256": "4700a73487db964bda276e92c5b7de24e6325691b688a94efd665ad22845dc15",
+    "python_cpp_detection_parity": true,
+    "detections": "2 general_litter -> background_or_unknown"
+  },
+  "contract_tests_passed": 17,
+  "contract_tests_failed": 0,
+  "properties_verified": [
+    "exact ten-class D1 fail-closed mapping",
+    "native-image context crop and overlap match",
+    "bbox-size or depth close-range gate",
+    "invalid depth, no match, conflicts, and non-target classes defer",
+    "sparse depth, implausible far large boxes, duplicate or future timestamps, and same-view evidence defer",
+    "non-finite and out-of-range detector scores are rejected",
+    "at least two agreeing observations and score EMA",
+    "at most two re-observations",
+    "evidence cannot directly set confirmed or clean_now",
+    "ProductTrackerV2, DynamicTrashMap, and ProductActionVerifier remain required"
+  ],
+  "SECOND_PASS_CONTRACT_PASS": true,
+  "SECOND_PASS_REAL_D1_RUNTIME_PASS": false,
+  "truth_boundary": "The provider and integration contract pass with deterministic detections, and one real D1 E1 TRAIN golden passes Python/C++ graph-output postprocess parity. The provider itself has not run real D1 inference, and model parity/offline semantics remain failed."
+}

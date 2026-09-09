@@ -1,0 +1,35 @@
+schema_version: 1
+pipeline_id: journey6_pretrained_integration_dev
+activation_allowed: false
+target_family: journey6
+target_sku: auto
+target_march: auto
+profile: journey6_generic
+provider: journey6_hbm
+fallback_provider: null
+input:
+  runtime_type: nv12
+  training_type: rgb
+  color_matrix: bt601
+  value_range: limited
+  shape: [1, 960, 640]
+  image_size: [640, 640]
+  letterbox_pad_value: 114
+models:
+  detector:
+    source_pipeline: pretrained_pc_integration_dev
+    hbm_manifest: null
+    postprocess_contract: yolo11_detect_v1
+  classifier:
+    source_pipeline: pretrained_pc_integration_dev
+    hbm_manifest: null
+    postprocess_contract: yolo_cls_v1
+runtime:
+  required_version: auto
+  official_hucp_or_dnn_only: true
+  x86_simulation_required: true
+  silent_onnx_fallback_forbidden: true
+blocked_reasons:
+  - official_journey6_sdk_not_discovered
+  - actual_board_sku_and_march_unknown
+  - canonical_onnx_artifacts_not_frozen

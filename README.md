@@ -33,6 +33,52 @@ PRODUCT_INTEGRATION_READY=false
 PRODUCT_FIELD_READY=false
 ```
 
+目标计算平台已收敛为地平线 Journey 6，当前 SKU 与 `march` 均保持 `auto`。仓库新增 PC 先行的预训练模型、NV12、严格 provider、分离式 HIL 与板到即部署合同，并在 CI 中分别构建 Jazzy transport/gateway 与 Humble PC-ONNX algorithm-host 镜像；但真实 detector/classifier 激活与评测、官方 J6 OpenExplorer x86 仿真、30 分钟 loopback HIL 和物理板端证据尚未通过，因此所有 `J6_*_READY/PASS` 状态仍失效关闭。RDK S100/S100P 产物不得作为 Journey 6 证据。架构与到板流程见 [Journey 6 目标架构](docs/journey6-target-architecture.md) 和 [板卡到货手册](docs/journey6-board-arrival-runbook.md)。
+
+当前已按 `EMFJ6V3` 完成有界现存模型发现并冻结 `6 detector / 6 classifier / 3 Area` 清单，全部来源 revision 与登记 artifact SHA 可审计。库存 READY 只表示发现阶段闭合：TACO 类序绑定仍隔离，pLitter/COCO detector 仅作 proposal/reference，四个新 classifier 均没有 background/unknown，eWaSR/SegFormer 只有域错位或 generic Area 代理语义；固定开发集筛选、非训练调整、功能/产品候选与训练授权仍全部为 false，sealed 数据继续禁止访问。
+
+D1 native PT 已在同一 410 张 TRAIN 图、81 个目标上重新实跑，三类 TP 仍全为 0，negative FP/frame 仍为 `2.0152`，与历史 canonical ONNX 语义结果一致，因此主失败归因为 domain/semantic mismatch，禁止继续围绕 D1 调参或训练。发布者固定 revision 未提供模型卡所引用的样图，且当前固定集最大目标短边只有 21 px，A0 的 source-domain sanity 与 10 个明显目标人审条件仍失败关闭。
+
+d6 官方 YOLOX-Tiny COCO ONNX 已按固定 SHA 在相同 410/81 TRAIN 上完成 proposal-only CPU 实跑：阈值 `0.001–0.5` 的 class-agnostic recall 始终为 `0`，阈值 `0.5` 仍为 `1.4439 FP/frame`。COCO 只有 generic `bottle` 且没有目标 `metal_can/paper_litter`，所以 semantic 指标保持 `not_applicable`，d6 明确拒绝为现存产品候选；原始推理外置锁定，独立 negative-only 与完整 HOLDOUT 仍缺失，不能把本次诊断写成完整 A4 screening。
+
+C1 WasteWise 静态 ONNX 也已按固定 SHA 完成 183 个 development-only GT-crop native smoke：四类 macro-F1 `0.1369`、background specificity `0.6765`，plastic/metal/paper 三类召回均为 `0`。该结果只证明直接 mapped-argmax 使用失败；GT crop 不是 proposal-crop A4，且尚未完成目标概率质量/unknown rejection 的一次有界非训练调整，所以 C1 保持 adjustment pending，不能提前启动训练。
+
+C4 SigLIP2 safetensors 已在 non-root、断网、只读挂载、`trust_remote_code=false` 的固定 Transformers 4.50.2/CUDA 容器完成同一 183 crop native smoke；processor 明确锁定 slow bilinear、RGB、`/255`、mean/std 0.5 和 channels-last。macro-F1 `0.1911`、background specificity `0.9706`，三目标召回仍全部为 `0`，因此 direct-use 同样失败并进入非训练调整待办；尚无 canonical ONNX/parity，不得声明 Journey 6 可用。
+
+现已增加有界非训练与 Area 数据合同工具：C1/C4 只允许同一锁定 183-crop TRAIN 清单、精确 artifact/class schema 和逐 crop 身份对齐，固定 5x5 网格始终不选择/冻结阈值；Area 清单显式绑定 TRAIN/HOLDOUT 根、world/seed/mission/GT/三模态 SHA、small counts 与 negative domains，并对 RGB/depth/semantic 做内容和尺寸审计。eWaSR 仅允许锁定 Area 清单中的 `TRAIN_004` 60 帧负向根，保持原生 water 语义；真实 CPU 诊断为 60/60 water 激活、原生网格水像素 `27.32%`，不得映射为 puddle、Area IoU 或 A4 PASS。当前 Area 清单仍缺 leaf/puddle 正例且排除 2 个无 capture report 的中断场景，因此 `a4_area_dataset_ready=false`；训练仍未授权。
+
+上述完整外置证据分别锁为 classifier 非训练诊断 `6971887e…762a`（50 candidates）、Area 清单 `8c9f4c06…1720`（910 complete frames）和 eWaSR 负向屏 `6c317295…82a1`；仓库内的紧凑证据记录 source commit `de3a4aa24a7fe07c862f850485d0def83d7fc07c`。现存模型 screening 仍未完成：C2/C3/C5/C6 与其余 Area 合同尚需按冻结清单处理，不能据此越级训练。
+
+第三个 Area 候选 SegFormer-B0 的三件 artifact、150 类头与原生类序已完成非执行完整性审计；ADE20K 的 water/vegetation 代理类不能映射为 road puddle/leaf pile，本地又缺少可复核许可、完整离线 runtime 与 ONNX parity，因此终态为 direct-use rejected、release blocked。至此 3/3 Area 候选都有明确 disposition，但 Area 正例 GT 仍为 0，`area_screening_complete=false`。
+
+C5/C6 ViT 已通过固定镜像摘要、包版本、artifact SHA、原生 processor/类序和 183-crop identity lock 的断网只读 CUDA smoke。C5 将 183/183 全部拒为 background，三目标 recall 均为 0；C6 的 paper recall 为 `0.4`，但 plastic/metal recall 为 0 且 background specificity 仅 `0.0196`，形成严重前景 flood。二者 direct-use 均失败，所有 functional/product/training flag 保持 false；C6 的 hard/soft plastics 只按显式 many-to-one 概率求和，不把 cups 等未映射类猜成目标。
+
+C5/C6 完整外置 raw 分别锁为 `cea51529…aab1`（244605 bytes）与 `702c9a7a…846f`（246003 bytes），仓库内紧凑证据绑定 worker source commit `084e74e6868d2e1a502a548c98837904328d70e4`。classifier 冻结清单中还剩 C2/C3 未完成 full smoke，仍不得把 screening 标为 complete。
+
+C3 TrashNet H5 已在 immutable TensorFlow 1.15.5 Jupyter 镜像中以 non-root、断网、只读输入/rootfs 完成 183-crop CPU smoke；worker 保持 Python 3.6 兼容，并明确不导入上游会删除输入图像的 `prediction.py`。结果 macro-F1 `0.4411`、background specificity `0.7353`；metal recall `1.0`，但 plastic recall 仅 `0.0714`、paper recall `0`，因此 direct-use 仍失败且不能进入 functional gate。
+
+C3 完整 raw 锁为 `3323a4be…2048`（157442 bytes），仓库紧凑证据绑定 worker source commit `f8383d60be7469aef4e13e690d6591c43a5ea419`。C1/C3/C4/C5/C6 direct-use 均有真实失败证据。
+
+C3 worker 的图像预处理合同测试依赖 Pillow；`existing-model-screening-contract` clean-runner job 已显式安装该依赖，避免本机环境掩盖 CI collection 缺包。
+
+C2 的 pinned H5/README 已补齐并通过大小/SHA 与非执行 H5 合同审计，但官方 TensorFlow 2.20/Keras 3.11.2 安全反序列化把 EfficientNet stem 构造成 `(3,3,1,32)`，无法绑定冻结的 `(3,3,3,32)` 权重；因此两条预处理路径均未执行、未选择、未冻结，也没有用手工重建或 `skip_mismatch` 绕过。至此 6/6 classifier 都有终态 disposition；全局 screening 仍因完整 HOLDOUT、independent unknown bank 与 Area positive GT 缺失而保持 false。
+
+A5 的最小固定调整集已收敛为 C1 baseline + C3 information-bearing candidate，并在同一 183 条 G10 TRAIN GT crop identity 上执行不可扩展的 5×5 网格。C3 的 optimistic TRAIN macro-F1 上界为 `0.7351`，但对应背景 specificity 仅 `0.5980`，且两项 unknown limit 并列；因此该结果明确标为 `TRAIN_upper_bound_only`，未选择/冻结阈值。旧 C1+C4 证据保留不覆盖，新 C1+C3 完整证据锁为 `c0f847a8…cb40`（101542 bytes）。
+
+缺失开发数据的补齐路径已改成显式、可审计的工具合同：G10 COCO 只有在调用方提供固定 domain manifest 并明确声明 `G10_TRAIN` 或 `G10_HOLDOUT` 时，才接受对应六个 train 或三个 val capture worlds，并把 route/domain/trajectory 身份锁定为 capture-root-relative POSIX identity；offline-GT crop builder 会先全量核验 capture records、RGB-D/semantic/instance、场景与逐文件 SHA，再按固定规则抽取三类和 negative-only unknown bank。Area 侧新增固定四场景 G2 捕获入口，使用 immutable Jazzy 镜像与外置 overlay，只接受 TRAIN/HOLDOUT 各一个 positive 和一个 negative-only mission；这些工具均保持 development-only，不自动选择阈值、训练或宣称 A4/PC/product 通过。
+
+分类 HOLDOUT 的 C1 ONNX 与 C3 TensorFlow 1.15.5 原生 worker 现已统一为同一 raw-probability 合同：manifest 文件、canonical/record identity、固定 domain SHA、精确三个 HOLDOUT world、逐 crop/source SHA 与容器隔离均 fail-closed，固定 5×5 evaluator 只允许在三目标均有 TP 且 independent negative background specificity `>=0.995` 时选择 development threshold；即使选择也不代表 track、CLEAN_NOW、runtime、functional 或 product 通过。首次 `08_mixed_curb_vegetation` 采集留下 `62/180` 的失败报告，定位为 9 个 admitted-frame 左转把车辆确定性送入 `curb_a`；修复只把该静态布局的 post-switch 路线改为 GT 无关的中心走廊直行，不改 world、seed、asset、camera、碰撞或 GT，旧失败证据保留并将在新外置根完整重采该 world。
+
+中心走廊复跑进一步发现正例实物会在车辆完成 180 帧前与侧刷接触；采集器因此把 CLI `--linear-speed-mps` 明确落实为 motion profile 的线速度上限。真实 TRAIN smoke 又证明 `x=-1.50 m` 会在切换前因前伸碰撞停于 `x=-1.733 m`，且默认 Ackermann 不能用零线速旋转完成 motion gate，相关失败根已保留，route v19/v20 均被否决；后续只允许新鲜外置根上的 `g10_route_v21_reverse_xneg1p95`：以 `.05 m/s` 直行至 odom `x=-1.95 m` 后同速直线倒退，360 帧、相邻位移 `.02 m`，并把 route ID/config SHA、固定 domain SHA、干净 `linorobot2@b96aa42…` 纳入身份；不按目标 GT 分支，也不改 world、asset、camera 或碰撞体。该路线尚未形成正式 TRAIN/HOLDOUT 通过证据，旧 route v18-v20 原样保留。
+
+现已在新外置根完成严格 G10 HOLDOUT：精确 18 个 mission / 3240 帧 / 3 个 world，生成 1260 个逐源图与裁剪 SHA 锁定的 offline-GT 样本（negative-only `1080`，三目标各 `60`）。C1/C3 分别在固定 ONNX CPU 与 TensorFlow 1.15.5 容器中以 non-root、断网、只读输入完成 1260/1260 原生推理；固定 5×5 网格共 50 个候选均不满足“三目标各有 TP 且背景 specificity `>=0.995`”，所以 `selected=false`、`frozen=false`、`training_authorized=false`，不得进入 PC 在线链。采集完整性与隔离门通过，但正式 G10 capture QA 仍因正例尺寸阶段覆盖和 TRAIN mission 数门失败，不能伪报 A4 PASS。完整外置评估锁为 `581c208f…0684a`。
+
+Area 数据缺口也已通过固定 G2 入口真实补齐为独立 development 数据集：TRAIN/HOLDOUT 各一个 positive 与 negative-only mission，共 4 scene / 40 帧，leaf-pile 正例 13 帧、puddle 正例 11 帧，配对 RGB/depth/semantic/instance/TF 清单校验 `a4_area_dataset_ready=true`。这只授权后续在冻结的三条 Area 路线上做筛选，不是 Area IoU、A4、功能、产品或 Journey 6 通过；物理清单 SHA 为 `40e84acf…e2a6`，canonical manifest SHA 为 `4269af7d…0436`。
+
+G2 Area V2 清单把源 `negative_only` 声明传播到 scene/逐 frame，并锁定两 split 的 negative scene/frame/world 计数；negative 声明与对象或 semantic GT 冲突会 fail-closed，跨平台测试也按被修改 depth 的相对身份选帧而不依赖目录排序。三条冻结 Area 路线已有 G2-bound 终态：历史 exact leaf/puddle ONNX 实体在允许根中缺失；eWaSR 在 TRAIN/HOLDOUT 负例上均 `10/10` 激活 native water（像素 `47.95%/41.25%`）；SegFormer-B0 安全执行但 exact water/tree/grass/plant 激活为 0，且无目标类映射、许可不放行。故 `area_screening_complete=true` 只表示有界候选池关闭，Area IoU/迁移学习/PC/产品/J6 仍未授权。
+
+Journey 6 校准数据与源码部署包同样失效关闭：当前只读盘点两个明确 TRAIN 根得到 `471` 个 RGB PNG 候选和 `0` 个 ROI/crop，尚无逐文件 SHA 与分层元数据，因此 `J6_CALIBRATION_PACK_READY=false`。reference-only source bundle 已锁定 D1 E1 canonical ONNX、development-only Area ONNX、C++ graph-external 后处理和真实 TRAIN golden tensor lock；但模型选择/发布许可、正式校准、nash profile 与官方工具链仍未齐备，因此 `J6_SOURCE_DEPLOYMENT_BUNDLE_READY=false`。许可审计文件缺失本身也会显式保持 `model_license_not_release_clear`，不会因干净 CI 环境缺少本地 `.workspace` 证据而漏报。`G5_V2`、`SEALED_FINAL`、`DEV_VAL` 始终禁止进入校准链，详见 [Journey 6 校准与源码部署包](docs/journey6-calibration-source-bundle.md)。
+
 主要缺口是合格且可冻结的产品近距四分类/Area 模型、完整感知清扫链的真实 ROS/Gazebo 集成验证、20,000 m² 正式范围建图闭环、30-seed 综合链、3500 m²/h 实测效率、完整 10 Hz/10 min 性能、2 h soak、故障矩阵、5-bag replay、一次性 sealed final 和最终 release/rollback。详情见 [当前状态](docs/current-status.md)，运行时不变量见 [产品运行时基础架构](docs/product-runtime-architecture.md)。
 
 近距分类已完成协议限定的 [CRCRV11 R1/R2/R3](docs/close-range-classifier-contract-recovery-v11.md)，但三条路线全部失败并触发停止条件 B；sealed 数据保持未读，禁止以增加 R4/R5、重开 detector 搜索或降低门槛绕过该阻塞。强制要求的紧凑最终状态、blocker、model registry、release manifest、evidence index 与报告保存在 [`docs/evidence/crcrv11`](docs/evidence/crcrv11/PERCEPTION_CRCRV11_EVIDENCE_INDEX.md)，失败 checkpoint 和训练流水账不进入当前仓库。

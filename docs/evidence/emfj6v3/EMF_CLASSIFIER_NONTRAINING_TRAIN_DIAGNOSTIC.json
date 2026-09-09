@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "protocol_id": "EMFJ6V3",
+  "source_commit": "de3a4aa24a7fe07c862f850485d0def83d7fc07c",
+  "executed_at": "2026-08-24T01:45:32+08:00",
+  "stage": "A5_NONTRAINING_ADJUSTMENT_TRAIN_DIAGNOSTIC",
+  "dataset": {
+    "split": "G10_TRAIN",
+    "source_manifest_sha256": "2f226ed4925779348e218c49c16d0b33ba719958289e493948fd5427e94e3166",
+    "records": 183,
+    "complete_holdout_available": false,
+    "independent_unknown_bank_available": false
+  },
+  "contract": {
+    "models": [
+      "c1_wastewise_yolov8n_cls",
+      "c4_prithiv_trash_net_siglip2"
+    ],
+    "artifact_and_native_class_schema_locked": true,
+    "crop_identity_exactly_aligned": true,
+    "target_probability_minimums": [0.05, 0.1, 0.2, 0.3, 0.4],
+    "maximum_unknown_probabilities": [0.5, 0.65, 0.8, 0.9, 1.0],
+    "candidate_count": 50,
+    "grid_override_allowed": false
+  },
+  "optimistic_train_only_upper_bounds": {
+    "c1_wastewise_yolov8n_cls": {
+      "maximum_macro_f1": 0.22374050086155128,
+      "maximum_target_macro_f1": 0.25559728058759446,
+      "maximum_background_specificity": 0.7745098039215687
+    },
+    "c4_prithiv_trash_net_siglip2": {
+      "maximum_macro_f1": 0.19477911646586346,
+      "maximum_target_macro_f1": 0.0,
+      "maximum_background_specificity": 0.9705882352941176
+    }
+  },
+  "threshold_selected": false,
+  "threshold_frozen": false,
+  "unknown_rejection_formally_computed": false,
+  "EMF_NONTRAINING_ADJUSTMENT_COMPLETE": false,
+  "EMF_EXISTING_MODEL_FUNCTIONAL_CANDIDATE": false,
+  "EMF_EXISTING_MODEL_PRODUCT_CANDIDATE": false,
+  "training_authorized": false,
+  "external_evidence": {
+    "name": "EMF_CLASSIFIER_NONTRAINING_TRAIN_DIAGNOSTIC.json",
+    "bytes": 97431,
+    "sha256": "6971887eedf7606adfb29dc0a61f0c1ef0dc61ddca74f802a3ae62ba5aed762a"
+  },
+  "decision": "train_only_grid_did_not_produce_selectable_or_frozen_threshold",
+  "truth_boundary": "The fixed grid is an optimistic TRAIN-only diagnostic. A5 selection requires a complete untouched development HOLDOUT, including plastic_bottle, and an independent unknown/background bank. No threshold is selected, no model is promoted, and training remains unauthorized."
+}

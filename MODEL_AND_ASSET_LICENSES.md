@@ -25,3 +25,16 @@ AUTO-04 与 AUTO-05 证据中的 ONNX 模型由本项目脚本在自建 Gazebo
 
 当前清单中的未知许可证数量为 0。若未来加入外部模型、mesh、纹理、字体或
 数据集，必须先登记来源、版本、许可证和 SHA，才能进入发布包。
+
+## Journey 6 预训练候选
+
+Journey 6 PC-first 路线登记了四个候选来源，但当前均未进入项目 release：
+D1/C2 缺少可直接审计的 ONNX；D2/C1 已完成实际下载、SHA 与 ONNX 静态审计，
+但 D2 产物类别合同与模型卡不符，C1 的 ONNX Ultralytics AGPL 元数据与模型卡
+Apache-2.0 声明冲突，架构、训练代码、数据集与权重再分发条款尚未闭合。
+Git 不携带这些权重。
+详细边界见 `docs/journey6-license-boundary.md`。
+
+Journey 6 OpenExplorer、HUCP/DNN Runtime、BSP、sysroot、AIBenchmark 与官方
+sanity HBM 只使用板卡或官方 SDK 随附版本，不进入 Git 或项目 release ZIP；
+RDK S100/S100P 包不能替代它们。

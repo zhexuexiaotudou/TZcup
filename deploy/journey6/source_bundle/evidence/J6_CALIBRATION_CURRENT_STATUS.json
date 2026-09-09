@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "status": "blocked_external",
+  "calibration_ready": false,
+  "inspected_allowed_roots": [
+    "F:/Project/TZcup/.workspace/artifacts/product-acceptance-v12/perception/models-and-evaluation/perception_v12_g10_25d9dc0/g10/smoke_train_world0",
+    "F:/Project/TZcup/.workspace/artifacts/product-acceptance-v12/perception/models-and-evaluation/perception_v12_g10_25d9dc0/g10/smoke_positive_train_world0"
+  ],
+  "detector_frame_count": 471,
+  "detector_frame_minimum": 1000,
+  "second_pass_roi_count": 0,
+  "second_pass_roi_minimum": 1000,
+  "sealed_access_allowed": false,
+  "forbidden_sources": ["G5_V2", "SEALED_FINAL", "DEV_VAL"],
+  "blockers": [
+    "nonsealed_calibration_record_inventory_missing",
+    "detector_calibration_frames_below_1000",
+    "second_pass_roi_calibration_set_missing"
+  ],
+  "truth_boundary": "471 is a read-only file inventory of RGB PNGs under explicitly named TRAIN roots, not a completed SHA/stratification calibration audit. No ROI/crop files were found."
+}

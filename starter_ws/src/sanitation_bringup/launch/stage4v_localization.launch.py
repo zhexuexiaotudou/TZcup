@@ -71,9 +71,28 @@ def generate_launch_description():
             DeclareLaunchArgument('spawn_yaw', default_value='0.0'),
             DeclareLaunchArgument('cleaning_width', default_value='1.32'),
             DeclareLaunchArgument('brush_center_y', default_value='0.52'),
-            DeclareLaunchArgument('world_to_map_x', default_value='8.0'),
-            DeclareLaunchArgument('world_to_map_y', default_value='0.0'),
-            DeclareLaunchArgument('world_to_map_yaw', default_value='0.0'),
+            DeclareLaunchArgument(
+                'simulation_world_to_map_x', default_value='8.0'
+            ),
+            DeclareLaunchArgument(
+                'simulation_world_to_map_y', default_value='0.0'
+            ),
+            DeclareLaunchArgument(
+                'simulation_world_to_map_yaw', default_value='0.0'
+            ),
+            # The simulated GNSS is generated from /ground_truth/odom after the
+            # world-to-map transform has already been applied. Keep a distinct
+            # transform for the fuser so the parent launch values are not
+            # inherited and applied a second time.
+            DeclareLaunchArgument('gnss_world_to_map_x', default_value='0.0'),
+            DeclareLaunchArgument('gnss_world_to_map_y', default_value='0.0'),
+            DeclareLaunchArgument('gnss_world_to_map_yaw', default_value='0.0'),
+            DeclareLaunchArgument(
+                'gnss_outlier_threshold_m', default_value='0.75'
+            ),
+            DeclareLaunchArgument(
+                'gnss_anchor_smoothing_alpha', default_value='0.10'
+            ),
             DeclareLaunchArgument('enable_scan_refiner', default_value='true'),
             DeclareLaunchArgument('headless_rendering', default_value='true'),
             DeclareLaunchArgument('publish_map_to_odom', default_value='true'),
@@ -100,9 +119,15 @@ def generate_launch_description():
                     'spawn_yaw': LaunchConfiguration('spawn_yaw'),
                     'cleaning_width': LaunchConfiguration('cleaning_width'),
                     'brush_center_y': LaunchConfiguration('brush_center_y'),
-                    'world_to_map_x': LaunchConfiguration('world_to_map_x'),
-                    'world_to_map_y': LaunchConfiguration('world_to_map_y'),
-                    'world_to_map_yaw': LaunchConfiguration('world_to_map_yaw'),
+                    'world_to_map_x': LaunchConfiguration(
+                        'simulation_world_to_map_x'
+                    ),
+                    'world_to_map_y': LaunchConfiguration(
+                        'simulation_world_to_map_y'
+                    ),
+                    'world_to_map_yaw': LaunchConfiguration(
+                        'simulation_world_to_map_yaw'
+                    ),
                     'camera_profile': LaunchConfiguration('camera_profile'),
                     'enable_training_gt': LaunchConfiguration('enable_training_gt'),
                 }.items(),
@@ -158,6 +183,21 @@ def generate_launch_description():
                     'initial_pose_x': LaunchConfiguration('initial_pose_x'),
                     'initial_pose_y': LaunchConfiguration('initial_pose_y'),
                     'initial_pose_yaw': LaunchConfiguration('initial_pose_yaw'),
+                    'world_to_map_x': LaunchConfiguration(
+                        'gnss_world_to_map_x'
+                    ),
+                    'world_to_map_y': LaunchConfiguration(
+                        'gnss_world_to_map_y'
+                    ),
+                    'world_to_map_yaw': LaunchConfiguration(
+                        'gnss_world_to_map_yaw'
+                    ),
+                    'gnss_outlier_threshold_m': LaunchConfiguration(
+                        'gnss_outlier_threshold_m'
+                    ),
+                    'gnss_anchor_smoothing_alpha': LaunchConfiguration(
+                        'gnss_anchor_smoothing_alpha'
+                    ),
                 }.items(),
             ),
         ]

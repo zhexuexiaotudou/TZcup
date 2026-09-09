@@ -1,0 +1,45 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://tzcup.local/schemas/journey6-board-profile-v1
+title: TZcup Journey 6 board profile
+type: object
+additionalProperties: false
+required:
+  - schema_version
+  - profile_id
+  - target_family
+  - target_sku
+  - target_march
+  - runtime
+  - deployment
+properties:
+  schema_version: {const: 1}
+  profile_id: {type: string, pattern: "^journey6_[a-z0-9_]+$"}
+  target_family: {const: journey6}
+  target_sku: {const: auto}
+  target_march: {enum: [auto, nash-e, nash-m, nash-p]}
+  selection:
+    type: object
+    properties:
+      requires_inventory_match: {const: true}
+      selectable_before_inventory: {type: boolean}
+    required: [requires_inventory_match, selectable_before_inventory]
+    additionalProperties: false
+  runtime:
+    type: object
+    required: [abi, minimum_version, required_libraries]
+    properties:
+      abi: {type: [string, "null"]}
+      minimum_version: {type: [string, "null"]}
+      required_libraries:
+        type: array
+        items: {type: string}
+    additionalProperties: false
+  deployment:
+    type: object
+    required: [sanity_command, warmup_command, parity_command, healthcheck_command]
+    properties:
+      sanity_command: {type: [string, "null"]}
+      warmup_command: {type: [string, "null"]}
+      parity_command: {type: [string, "null"]}
+      healthcheck_command: {type: string}
+    additionalProperties: false

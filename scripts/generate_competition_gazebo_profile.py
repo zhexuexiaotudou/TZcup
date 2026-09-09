@@ -14,6 +14,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+import xml.etree.ElementTree as ET
 
 
 WIDTH_M = 200.0
@@ -22,6 +23,15 @@ RESOLUTION_M = 0.1
 WORLD_TO_MAP = (100.0, 50.0)
 DEMO_ZONE = (6.0, 45.5, 18.0, 54.5)
 EFFICIENCY_ZONE = (10.0, 20.0, 190.0, 78.0)
+# The Nav2 profile must represent the same ground-level collision bodies as
+# the spawned Gazebo world.  Collision geometry above this height (notably the
+# shelter roof) cannot intersect the vehicle footprint and is intentionally
+# excluded from the 2-D costmap.
+NAV2_COLLISION_BOTTOM_Z_MAX_M = 1.5
+WORLD_SOURCE = (
+    Path(__file__).resolve().parents[1]
+    / "starter_ws/src/sanitation_worlds/worlds/sanitation_campus_large.sdf"
+)
 
 
 def _paint_rectangle(
@@ -34,8 +44,11 @@ def _paint_rectangle(
     x0, y0, x1, y1 = bounds
     c0 = max(0, int(x0 / RESOLUTION_M))
     c1 = min(width - 1, int(x1 / RESOLUTION_M))
-    r0 = max(0, int(y0 / RESOLUTION_M))
-    r1 = min(height - 1, int(y1 / RESOLUTION_M))
+    # PGM rows run from the top, while map coordinates start at the lower
+    # origin.  Keeping this conversion here makes the rasterized SDF obstacle
+    # land at the same map coordinate reported by Nav2.
+    r0 = max(0, height - 1 - int(y1 / RESOLUTION_M))
+    r1 = min(height - 1, height - 1 - int(y0 / RESOLUTION_M))
     for row in range(r0, r1 + 1):
         start = row * width + c0
         pixels[start : row * width + c1 + 1] = bytes([value]) * (c1 - c0 + 1)
@@ -81,6 +94,75 @@ def _write_map_yaml(path: Path, image: str, mode: str = "trinary") -> None:
     )
 
 
+def _pose_values(element: ET.Element | None) -> list[float]:
+    values = (element.text if element is not None else "") or ""
+    parsed = [float(value) for value in values.split()]
+    return (parsed + [0.0] * 6)[:6]
+
+
+def _ground_collision_obstacles() -> list[dict]:
+    """Return footprint-relevant static SDF collision bodies in world frame.
+
+    The generator intentionally supports the primitive collision shapes used
+    by the campus scene.  A cylinder is conservatively rasterized as its
+    bounding square; that is safer than silently letting a Nav2 path cut
+    through a physical tree trunk.
+    """
+    root = ET.parse(WORLD_SOURCE).getroot()
+    obstacles = []
+    for model in root.findall("./world/model"):
+        if model.findtext("static", default="false").strip().lower() != "true":
+            continue
+        model_name = model.get("name", "unnamed")
+        if model_name == "asphalt_ground":
+            continue
+        model_x, model_y, model_z, *_ = _pose_values(model.find("pose"))
+        for collision in model.findall(".//collision"):
+            collision_x, collision_y, collision_z, *_ = _pose_values(
+                collision.find("pose")
+            )
+            geometry = collision.find("geometry")
+            if geometry is None:
+                continue
+            box = geometry.find("box")
+            cylinder = geometry.find("cylinder")
+            if box is not None:
+                size = [float(value) for value in box.findtext("size", "").split()]
+                if len(size) != 3:
+                    continue
+                size_x, size_y, size_z = size
+            elif cylinder is not None:
+                radius = float(cylinder.findtext("radius", "0"))
+                size_x = size_y = 2.0 * radius
+                size_z = float(cylinder.findtext("length", "0"))
+            else:
+                continue
+            bottom_z = model_z + collision_z - size_z / 2.0
+            if bottom_z > NAV2_COLLISION_BOTTOM_Z_MAX_M:
+                continue
+            obstacles.append({
+                "name": model_name,
+                "frame_id": "world",
+                "center": [model_x + collision_x, model_y + collision_y],
+                "size": [size_x, size_y],
+            })
+    return obstacles
+
+
+def _obstacle_yaml(obstacles: list[dict]) -> str:
+    return "\n".join(
+        "\n".join((
+            f"  - name: {item['name']}",
+            "    frame_id: world",
+            "    center: ["
+            f"{item['center'][0]:.9f}, {item['center'][1]:.9f}]",
+            "    size: ["
+            f"{item['size'][0]:.9f}, {item['size'][1]:.9f}]",
+        ))
+        for item in obstacles
+    )
+
+
 def generate(output: Path) -> dict:
     output.mkdir(parents=True, exist_ok=True)
     width = round(WIDTH_M / RESOLUTION_M)
@@ -92,14 +174,21 @@ def generate(output: Path) -> dict:
     _paint_rectangle(occupancy, width, height, (0.0, 0.0, WIDTH_M, 0.2))
     _paint_rectangle(occupancy, width, height, (0.0, HEIGHT_M - 0.2, WIDTH_M, HEIGHT_M))
 
-    # Static collision geometry from sanitation_campus_large.sdf, transformed
-    # from centered Gazebo world coordinates into the positive map frame.
-    for center_x in (40.0, 100.0, 160.0):
+    static_obstacles = _ground_collision_obstacles()
+    for obstacle in static_obstacles:
+        center_x = obstacle["center"][0] + WORLD_TO_MAP[0]
+        center_y = obstacle["center"][1] + WORLD_TO_MAP[1]
+        size_x, size_y = obstacle["size"]
         _paint_rectangle(
             occupancy, width, height,
-            (center_x - 9.0, 88.5, center_x + 9.0, 97.5),
+            (
+                center_x - size_x / 2.0,
+                center_y - size_y / 2.0,
+                center_x + size_x / 2.0,
+                center_y + size_y / 2.0,
+            ),
         )
-    _paint_rectangle(occupancy, width, height, (142.0, 3.0, 170.0, 11.0))
+    static_obstacles_yaml = _obstacle_yaml(static_obstacles)
 
     map_sha = _write_pgm(output / "competition_map.pgm", width, height, occupancy)
     _write_map_yaml(output / "competition_map.yaml", "competition_map.pgm")
@@ -136,7 +225,8 @@ outer_polygon:
   - [{x0}, {y1}]
 exclusion_polygons: []
 keepout_polygons: []
-static_obstacles: []
+static_obstacles:
+{static_obstacles_yaml}
 world_to_map_translation: [{WORLD_TO_MAP[0]}, {WORLD_TO_MAP[1]}]
 headland:
   enabled: true
@@ -206,7 +296,8 @@ cleanable_outer_polygon:
 exclusion_polygons: []
 cleanable_exclusion_polygons: []
 keepout_polygons: []
-static_obstacles: []
+static_obstacles:
+{static_obstacles_yaml}
 world_to_map_translation: [{WORLD_TO_MAP[0]}, {WORLD_TO_MAP[1]}]
 headland:
   enabled: true
@@ -282,7 +373,8 @@ cleanable_outer_polygon:
 exclusion_polygons: []
 cleanable_exclusion_polygons: []
 keepout_polygons: []
-static_obstacles: []
+static_obstacles:
+{static_obstacles_yaml}
 world_to_map_translation: [{WORLD_TO_MAP[0]}, {WORLD_TO_MAP[1]}]
 headland:
   enabled: true
@@ -361,8 +453,8 @@ robot_footprint:
         "vehicle_candidate": {
             "cleaning_width_m": 1.32,
             "brush_center_y_m": 0.52,
-            "max_cleaning_speed_m_s": 0.6,
-            "theoretical_peak_efficiency_m2_h": 2851.2,
+            "max_cleaning_speed_m_s": 1.0,
+            "theoretical_peak_efficiency_m2_h": 4752.0,
             "offline_mean_effective_efficiency_m2_h": None,
         },
         "competition_truth": {

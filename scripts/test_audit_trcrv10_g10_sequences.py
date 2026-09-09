@@ -1,4 +1,6 @@
+import json
 import numpy as np
+import pytest
 
 import audit_trcrv10_g10_sequences as audit
 
@@ -40,6 +42,8 @@ def test_capture_qa_requires_protocol_minimum_mission_counts() -> None:
     source = open(audit.__file__, encoding="utf-8").read()
     assert 'split_counts.get("G10_TRAIN", 0) >= 45' in source
     assert 'split_counts.get("G10_HOLDOUT", 0) >= 18' in source
+    assert '"G10_TRAIN_ROUTE_QA_PASS"' in source
+    assert '"--train-only-authorization"' in source
     assert '"positive_targets_cross_required_size_stages"' in source
     assert '"positive_targets_reach_frozen_minimum"' in source
 
@@ -55,6 +59,32 @@ def test_capture_qa_emits_all_protocol_artifacts_and_identity_gates() -> None:
         assert name in source
     for gate in (
         "world_overlap_zero", "seed_overlap_zero", "trajectory_overlap_zero",
-        "target_asset_overlap_zero",
+        "target_asset_overlap_zero", "approved_world_sets_exact",
+        "mission_id_unique", "scene_seed_unique", "trajectory_id_unique",
     ):
         assert gate in source
+
+
+def test_audit_rejects_declared_train_with_val_manifest(tmp_path) -> None:
+    scene = tmp_path / "scene_0001"
+    scene.mkdir()
+    (scene / "scene_manifest.json").write_text(json.dumps({
+        "split": "val",
+        "world_id": next(iter(audit.SPLIT_CONTRACT["G10_HOLDOUT"]["world_ids"])),
+    }), encoding="utf-8")
+    (scene / "capture_report.json").write_text("{}", encoding="utf-8")
+
+    with pytest.raises(RuntimeError, match="capture split mismatch"):
+        audit.audit_scene(scene, "G10_TRAIN", 18)
+
+
+def test_audit_contract_locks_route_domain_and_trajectory_identity() -> None:
+    source = open(audit.__file__, encoding="utf-8").read()
+    for contract in (
+        audit.EXPECTED_ROUTE_ID,
+        audit.EXPECTED_ROUTE_CONFIG_SHA256,
+        audit.EXPECTED_DOMAIN_MANIFEST_SHA256,
+        "scene/report route profile mismatch",
+        "G10 trajectory identity mismatch",
+    ):
+        assert contract in source

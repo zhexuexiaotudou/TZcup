@@ -98,6 +98,14 @@ Ackermann 任务的 `CLEAN/FORWARD/REVERSE/BYPASS/REPAIR` 线速度是运行合�
 
 产品 Coverage 在最后一条主刷道和补扫结束后不会立即宣布完成，而是进入 `WAITING_PRODUCT_TASKS`。此状态仍接受重观察/点清扫发起的安全暂停和续扫；只有 `/spot_clean/state` 与 `/reobserve/state` 都保持新鲜、无当前目标、无排队任务、刷盘关闭且已释放 Coverage 达到连续静默窗口，才结算终态与总效率。状态缺失、陈旧、队列未排空或超时均失败关闭；普通组件试验可显式不启用这道产品屏障。
 
+## Journey 6 运行边界
+
+Journey 6 是部署目标家族，当前 SKU 与 `march` 均保持 `auto`。PC 与板端共用冻结的输入、输出、类别映射、NV12、letterbox、decode/NMS、RGB-D 投影、Tracking、ActionVerifier、DynamicTrashMap 和 HIL 控制合同；板到后只允许用实际 inventory 与随板官方 OpenExplorer/OE、BSP、HUCP/DNN Runtime 解析 ABI、选择 `nash-e`/`nash-m`/`nash-p` 或拒绝部署。
+
+运行提供者必须显式选择 `onnx_cuda`、Journey 6 x86 仿真或 `journey6_hbm`。请求 HBM 时禁止静默退回 ONNX/CPU。分离式 HIL 中 PC 只承载 Gazebo、传感器、动力学、执行器、安全末级门和独立评测；拟上板算法侧是非零 Ackermann/刷盘命令的唯一算法权威。序列、时间戳、超时、断网归零与恢复后的人工 resume 都是正式合同，PC 不得运行感知、规划、Coverage 或控制副本。
+
+当前没有已验证的官方 Journey 6 SDK、板卡 inventory、可发布模型或 HBM，因此 x86 仿真、PTQ/HBM、真实板端部署和 30 分钟 HIL 均为 `blocked_external/not_run`；RDK S100/S100P/S600 产物不能替代这些证据。
+
 ## 尚不能据此宣称的状态
 
 代码合同和单元测试不等于实时产品证据。只有冻结模型实际激活、ROS build/test、完整 Gazebo 链、30-seed、性能、soak、fault、replay、sealed final 与 release 全部通过固定 V1 合同后，才能把 `SIMULATION_PRODUCT_COMPLETE` 设为 `true`。

@@ -51,7 +51,6 @@ from sanitation_coverage.metrics import (
 from sanitation_coverage.coverage_components import (
     ComponentType,
     CoverageComponent,
-    connector_handoff_replan_decision,
 )
 from sanitation_coverage.coverage_plan import CoveragePlan
 from sanitation_coverage.blocked_swath_manager import BlockedSwathManager
@@ -905,19 +904,19 @@ class CoverageProbe(Node):
                 transit = self._follow_ackermann_hybrid_plan(
                     selected["staging_pose"],
                     precomputed_plan=selected.get("preflight"),
+                    # The first swath owns a measured 2 m brush-off alignment
+                    # window. Treat staging as an intermediate primitive hand-
+                    # off so MPPI stops before pruning past the final arc.
+                    terminal_goal_checker_id="staging_goal_checker",
                 )
             else:
                 transit = self._navigate_to(selected["staging_pose"])
             if transit["success"]:
                 self._set_state("ALIGNING")
-                current_point = self.estimated_pose[:2] if self.estimated_pose else (
-                    selected["staging_pose"]["x"], selected["staging_pose"]["y"]
+                transit["entry"] = self._follow_entry_to_first_swath(
+                    selected_components[0], selected["staging_pose"],
+                    endpoint_extension,
                 )
-                entry = {
-                    "kind": "entry", "index": -1, "brush": False,
-                    "points": entry_points(current_point, selected_components[0]),
-                }
-                transit["entry"] = self._follow_component(entry)
                 transit["success"] = transit["entry"]["success"]
         component_results = []
         if transit["success"]:
@@ -2024,15 +2023,55 @@ class CoverageProbe(Node):
         result["terminal_tracking_error"] = self._tracking_error(pose)
         return result
 
-    def _follow_ackermann_hybrid_plan(
-        self, pose, *, precomputed_plan=None, replan_depth=0
+    def _follow_entry_to_first_swath(
+        self, first_component, staging_pose, alignment_distance_m
     ):
-        """Plan once, split reverse cusps, and follow each section explicitly."""
+        """Reach the brush-off lead-in without violating chassis kinematics."""
+        self._set_brush(False)
+        current_point = self.estimated_pose[:2] if self.estimated_pose else (
+            staging_pose["x"], staging_pose["y"]
+        )
+        points = entry_points(current_point, first_component)
+        if self.ackermann_profile_active:
+            heading = segment_heading(
+                first_component["points"][0], first_component["points"][1]
+            )
+            swath_start = first_component["points"][0]
+            goal_pose = {
+                "x": swath_start[0], "y": swath_start[1], "yaw": heading,
+            }
+            # Ackermann swaths already include a long, brush-off approach and
+            # _execute_ackermann_swath keeps the brush disabled throughout it.
+            # Running a second short chord here is both redundant and
+            # kinematically invalid when the staging controller hands off with
+            # finite pose error. Let the continuous swath controller settle on
+            # its path before the measured-distance brush gate opens.
+            return {
+                "success": True,
+                "error": None,
+                "kind": "entry",
+                "index": -1,
+                "brush_enabled": False,
+                "strategy": "integrated_ackermann_swath_lead_in",
+                "motion_deferred_to_first_swath": True,
+                "alignment_distance_m": float(alignment_distance_m),
+                "goal_pose": goal_pose,
+                "terminal_tracking_error": self._tracking_error(goal_pose),
+            }
+        return self._follow_component({
+            "kind": "entry", "index": -1, "brush": False, "points": points,
+        })
+
+    def _follow_ackermann_hybrid_plan(
+        self, pose, *, precomputed_plan=None, replan_depth=0,
+        terminal_goal_checker_id="connector_goal_checker",
+    ):
+        """Plan once, split cusps and forward curvature primitives explicitly."""
         if replan_depth > 6:
             return {
                 "success": False,
                 "error": "hybrid_cusp_replan_limit_exceeded",
-                "controller": "Smac Hybrid cusp-replan + segmented FollowPath",
+                "controller": "Smac Hybrid cusp-replan + segmented ConnectorPath/ReversePath",
             }
         if not self._wait_controller_active():
             return {
@@ -2044,8 +2083,13 @@ class CoverageProbe(Node):
         # A staging pose directly behind the chassis is the one case where a
         # single reverse-only Dubins-equivalent path is both shorter and more
         # controllable than a multi-cusp Reeds-Shepp result.
+        using_precomputed_plan = precomputed_plan is not None
         plan = precomputed_plan
-        if self.estimated_pose is not None and self.mission_geometry is not None:
+        if (
+            plan is None
+            and self.estimated_pose is not None
+            and self.mission_geometry is not None
+        ):
             start_pose = tuple(float(value) for value in self.estimated_pose[:3])
             goal_pose = (
                 float(pose["x"]), float(pose["y"]), float(pose["yaw"])
@@ -2111,21 +2155,67 @@ class CoverageProbe(Node):
             return {
                 **plan,
                 "success": False,
-                "controller": "Smac Hybrid plan-once + segmented FollowPath",
+                "controller": "Smac Hybrid plan-once + segmented ConnectorPath/ReversePath",
             }
         planner_source = plan.get("planner_id", "Smac Hybrid")
-        sections = split_hybrid_path_by_direction(plan.get("path_poses", []))
-        if not sections:
+        direction_sections = split_hybrid_path_by_direction(
+            plan.get("path_poses", [])
+        )
+        if not direction_sections:
             return {
                 **plan,
                 "success": False,
                 "error": "hybrid_path_has_no_motion_sections",
-                "controller": "Smac Hybrid plan-once + segmented FollowPath",
+                "controller": "Smac Hybrid plan-once + segmented ConnectorPath/ReversePath",
             }
+
+        # A forward-only CCC Dubins recovery has no gear cusp, but it can
+        # still revisit the vicinity of an earlier arc.  MPPI's stateful path
+        # pruning must receive each bounded curvature primitive separately.
+        # Reverse sections retain their established direction-only handling.
+        sections = []
+        for direction_section_index, direction_section in enumerate(
+            direction_sections
+        ):
+            if (
+                direction_section["direction"] != "FORWARD"
+                or using_precomputed_plan
+            ):
+                sections.append({
+                    **direction_section,
+                    "direction_section_index": direction_section_index,
+                    "curvature_primitive_index": 0,
+                    "curvature_primitive_count": 1,
+                })
+                continue
+            direction_poses = list(direction_section["poses"])
+            primitives = split_path_at_curvature_reversals(
+                [(item[0], item[1]) for item in direction_poses],
+                [item[2] for item in direction_poses],
+            )
+            for primitive_index, (points, headings) in enumerate(primitives):
+                sections.append({
+                    **direction_section,
+                    "poses": [
+                        (point[0], point[1], heading)
+                        for point, heading in zip(points, headings)
+                    ],
+                    # Only the original direction boundary is a real gear
+                    # cusp. Curvature boundaries are continuous motion.
+                    "cusp_before": (
+                        direction_section["cusp_before"] and primitive_index == 0
+                    ),
+                    "direction_section_index": direction_section_index,
+                    "curvature_primitive_index": primitive_index,
+                    "curvature_primitive_count": len(primitives),
+                })
 
         section_results = []
         cusp_stop_count = 0
         for index, section in enumerate(sections):
+            next_section_is_real_cusp = (
+                index < len(sections) - 1 and sections[index + 1]["cusp_before"]
+            )
             if section["cusp_before"]:
                 cusp_stop_count += 1
                 if not self._wait_for_cusp_stop(
@@ -2135,6 +2225,15 @@ class CoverageProbe(Node):
                         "success": False,
                         "section_index": index,
                         "direction": section["direction"],
+                        "direction_section_index": section[
+                            "direction_section_index"
+                        ],
+                        "curvature_primitive_index": section[
+                            "curvature_primitive_index"
+                        ],
+                        "curvature_primitive_count": section[
+                            "curvature_primitive_count"
+                        ],
                         "error": "cusp_stop_speed_timeout",
                     })
                     break
@@ -2152,21 +2251,33 @@ class CoverageProbe(Node):
                     # A transit endpoint is immediately followed by a
                     # separately controlled entry segment, so use the
                     # dedicated hand-off tolerance on the final section too.
-                    # This prevents stateful RPP goal handling from driving a
+                    # This prevents stateful controller goal handling from driving a
                     # non-holonomic chassis around the completed loop merely
                     # to improve yaw by a few tenths of a radian.
                     "goal_checker_id": (
-                        "cusp_goal_checker"
-                        if index < len(sections) - 1
-                        else "connector_goal_checker"
+                        terminal_goal_checker_id
+                        if index == len(sections) - 1
+                        else (
+                            "cusp_goal_checker"
+                            if next_section_is_real_cusp
+                            else "primitive_goal_checker"
+                        )
                     ),
                     "speed_limit_mps": (
                         self.speed_limits_mps["REVERSE"]
                         if section["direction"] == "REVERSE"
                         else self.speed_limits_mps["FORWARD"]
                     ),
+                    # Ackermann forward sections use the forward-only MPPI
+                    # controller; reverse sections retain their established
+                    # reverse controller.
+                    "controller_id": (
+                        "ReversePath"
+                        if section["direction"] == "REVERSE"
+                        else "ConnectorPath"
+                    ),
                     # Replaying a plan whose start is now metres behind the
-                    # robot is unsafe and lets RPP select the wrong branch of
+                    # robot is unsafe and lets a controller select the wrong branch of
                     # a looping path. Fail closed; the caller may replan from
                     # the measured stopped pose instead.
                     "retry_limit_override": 0,
@@ -2177,18 +2288,27 @@ class CoverageProbe(Node):
                 "section_index": index,
                 "direction": section["direction"],
                 "cusp_before": section["cusp_before"],
+                "direction_section_index": section["direction_section_index"],
+                "curvature_primitive_index": section[
+                    "curvature_primitive_index"
+                ],
+                "curvature_primitive_count": section[
+                    "curvature_primitive_count"
+                ],
             })
             section_results.append(section_result)
             if not section_result.get("success"):
                 break
-            if index < len(sections) - 1:
+            if next_section_is_real_cusp and not using_precomputed_plan:
                 # Replan from the measured stopped cusp. If the planner cannot
                 # find a continuation, retain the original kinematically
                 # feasible section. Never splice the measured pose directly
                 # onto that section: such a chord can introduce an unplanned
                 # direction change exactly at the cusp.
                 continuation = self._follow_ackermann_hybrid_plan(
-                    pose, replan_depth=replan_depth + 1
+                    pose,
+                    replan_depth=replan_depth + 1,
+                    terminal_goal_checker_id=terminal_goal_checker_id,
                 )
                 section_result["replanned_continuation"] = continuation
                 if continuation.get("success"):
@@ -2196,13 +2316,14 @@ class CoverageProbe(Node):
                         "success": True,
                         "error": None,
                         "controller": (
-                            "Smac Hybrid cusp-replan + segmented FollowPath"
+                            "Smac Hybrid cusp-replan + segmented ConnectorPath/ReversePath"
                         ),
                         "planner": planner_source,
                         "goal_pose": pose,
                         "planned_length_m": plan.get("path_length_m"),
                         "path_pose_count": plan.get("path_pose_count"),
-                        "direction_section_count": len(sections),
+                        "direction_section_count": len(direction_sections),
+                        "curvature_primitive_section_count": len(sections),
                         "cusp_stop_count": cusp_stop_count,
                         "replan_depth": replan_depth,
                         "section_results": section_results,
@@ -2220,12 +2341,13 @@ class CoverageProbe(Node):
                 section_results[-1].get("error", "hybrid_section_failed")
                 if section_results else "hybrid_section_failed"
             ),
-            "controller": "Smac Hybrid plan-once + segmented FollowPath",
+            "controller": "Smac Hybrid plan-once + segmented ConnectorPath/ReversePath",
             "planner": planner_source,
             "goal_pose": pose,
             "planned_length_m": plan.get("path_length_m"),
             "path_pose_count": plan.get("path_pose_count"),
-            "direction_section_count": len(sections),
+            "direction_section_count": len(direction_sections),
+            "curvature_primitive_section_count": len(sections),
             "cusp_stop_count": cusp_stop_count,
             "section_results": section_results,
             "terminal_tracking_error": self._tracking_error(pose),
@@ -2333,7 +2455,7 @@ class CoverageProbe(Node):
                 "metadata": {
                     **component.get("metadata", {}),
                     "goal_checker_id": "connector_goal_checker",
-                    "controller_id": "DubinsPath",
+                    "controller_id": "ConnectorPath",
                     "retry_limit_override": 0,
                 },
             }
@@ -2349,56 +2471,6 @@ class CoverageProbe(Node):
 
         primitive_results = []
         for primitive_index, (points, primitive_headings) in enumerate(sections):
-            if primitive_index > 0 and self.estimated_pose is not None:
-                handoff = connector_handoff_replan_decision(
-                    tuple(float(value) for value in self.estimated_pose[:3]),
-                    (
-                        float(points[0][0]),
-                        float(points[0][1]),
-                        float(primitive_headings[0]),
-                    ),
-                )
-                if handoff["requires_replan"]:
-                    # Primitive goal checkers intentionally tolerate finite
-                    # curvature-end error, but the next static arc is unsafe
-                    # once that error exceeds the RPP pruning envelope. Plan
-                    # the remaining brush-off connector from the measured
-                    # pose and follow it as one direction-continuous section.
-                    final_goal = {
-                        "x": float(component["points"][-1][0]),
-                        "y": float(component["points"][-1][1]),
-                        "yaw": float(headings[-1]),
-                    }
-                    recovery = self._follow_ackermann_hybrid_plan(final_goal)
-                    return {
-                        "success": bool(recovery.get("success")),
-                        "error": None if recovery.get("success") else recovery.get(
-                            "error", "live_primitive_handoff_replan_failed"
-                        ),
-                        "attempts": [
-                            attempt
-                            for item in primitive_results
-                            for attempt in item.get("attempts", [])
-                        ],
-                        "primitive_results": primitive_results,
-                        "primitive_count": len(sections),
-                        "completed_primitive_count": sum(
-                            bool(item.get("success")) for item in primitive_results
-                        ),
-                        "path_pose_count": len(component["points"]),
-                        "planned_length_m": path_length(component["points"]),
-                        "goal_pose": final_goal,
-                        "terminal_tracking_error": recovery.get(
-                            "terminal_tracking_error"
-                        ),
-                        "controller": (
-                            "curvature-segmented FollowPath + live hybrid replan"
-                        ),
-                        "live_handoff_replan": True,
-                        "handoff_error": handoff,
-                        "handoff_after_primitive_index": primitive_index - 1,
-                        "live_handoff_replan_result": recovery,
-                    }
             primitive = {
                 **component,
                 "points": points,
@@ -2411,7 +2483,7 @@ class CoverageProbe(Node):
                         if primitive_index == len(sections) - 1
                         else "primitive_goal_checker"
                     ),
-                    "controller_id": "DubinsPath",
+                    "controller_id": "ConnectorPath",
                     "retry_limit_override": 0,
                 },
             }
@@ -2451,7 +2523,7 @@ class CoverageProbe(Node):
             "planned_length_m": path_length(component["points"]),
             "goal_pose": terminal.get("goal_pose"),
             "terminal_tracking_error": terminal.get("terminal_tracking_error"),
-            "controller": "curvature-segmented FollowPath",
+            "controller": "curvature-segmented ConnectorPath",
         }
 
     def _execute_ackermann_swath(self, component, alignment_distance_m):
@@ -2541,38 +2613,8 @@ class CoverageProbe(Node):
             if component.get("metadata", {}).get(
                 "connector_class"
             ) == "FORWARD_DUBINS_TURN":
-                metadata = component.get("metadata", {})
-                headings = metadata.get("headings_rad") or []
-                handoff = None
-                if self.estimated_pose is not None and headings:
-                    handoff = connector_handoff_replan_decision(
-                        tuple(float(value) for value in self.estimated_pose[:3]),
-                        (
-                            float(component["points"][0][0]),
-                            float(component["points"][0][1]),
-                            float(headings[0]),
-                        ),
-                    )
-                if handoff and handoff["requires_replan"]:
-                    # A long swath may legally finish with finite Ackermann
-                    # endpoint error. Replan this brush-off connector from the
-                    # measured map pose instead of handing RPP a stale loop.
-                    goal = {
-                        "x": float(component["points"][-1][0]),
-                        "y": float(component["points"][-1][1]),
-                        "yaw": float(headings[-1]),
-                    }
-                    result = self._follow_ackermann_hybrid_plan(goal)
-                    result["live_handoff_replan"] = True
-                    result["handoff_error"] = handoff
-                    result["nominal_connector_class"] = (
-                        "FORWARD_DUBINS_TURN"
-                    )
-                else:
-                    result = self._follow_forward_dubins_primitives(component)
-                    result.setdefault("live_handoff_replan", False)
-                    if handoff is not None:
-                        result.setdefault("handoff_error", handoff)
+                result = self._follow_forward_dubins_primitives(component)
+                result.setdefault("live_handoff_replan", False)
             else:
                 result = self._follow_component(component)
             result.update({

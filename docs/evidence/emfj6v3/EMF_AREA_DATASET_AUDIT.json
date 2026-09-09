@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "protocol_id": "EMFJ6V3",
+  "source_commit": "de3a4aa24a7fe07c862f850485d0def83d7fc07c",
+  "executed_at": "2026-08-24T01:45:32+08:00",
+  "dataset_role": "area_model_screening_development_only",
+  "sealed_access_allowed": false,
+  "frame_count": 910,
+  "scene_count": 13,
+  "excluded_scene_count": 2,
+  "excluded_scene_reason": "missing_capture_report",
+  "bindings": {
+    "world_seed_mission_frame_sha_gt_source": true,
+    "rgb_depth_semantic_sha256": true,
+    "rgb_decode_and_shape_checked": true,
+    "depth_dtype_shape_and_invalid_value_counts_checked": true,
+    "semantic_dtype_shape_and_allowed_ids_checked": true,
+    "class_counts_small_counts_negative_domains": true
+  },
+  "semantic_audit": {
+    "observed_ids": [0, 1, 2, 3],
+    "leaf_pile_positive_frame_count": 0,
+    "puddle_positive_frame_count": 0,
+    "pixel_counts_by_id": {
+      "0": 279517551,
+      "1": 2115,
+      "2": 18625,
+      "3": 13709,
+      "4": 0,
+      "5": 0
+    },
+    "small_object_count_by_semantic_id": {
+      "0": 0,
+      "1": 1,
+      "2": 4,
+      "3": 0,
+      "4": 0,
+      "5": 0
+    }
+  },
+  "a4_area_dataset_ready": false,
+  "failure_reasons": [
+    "missing_positive_semantic_id:4",
+    "missing_positive_semantic_id:5",
+    "excluded_incomplete_scene_count:2"
+  ],
+  "external_evidence": {
+    "name": "EMF_AREA_DATASET_MANIFEST.json",
+    "bytes": 1598596,
+    "sha256": "8c9f4c06bcf2a59a3ce15bc53c716c6411945b92870eaee18789bf4ddc291720",
+    "canonical_manifest_sha256": "056a3b599e8b2b3aa5de141a0e6234ec6b1dbe1ed561c999b7e43123a827828e"
+  },
+  "training_authorized": false,
+  "decision": "area_positive_evaluation_blocked_by_missing_leaf_pile_and_puddle_ground_truth",
+  "truth_boundary": "This audit locks 910 complete non-sealed RGB/depth/semantic frames and explicitly excludes two interrupted captures. It does not provide leaf_pile or puddle positives, so Area IoU, boundary F1, A4 pass, adaptation, product, or Journey 6 claims are unavailable."
+}

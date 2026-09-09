@@ -620,7 +620,7 @@
         <child_frame_id>base_footprint</child_frame_id>
         <odom_publish_frequency>50</odom_publish_frequency>
         <min_velocity>-0.75</min_velocity>
-        <max_velocity>0.75</max_velocity>
+        <max_velocity>1.0</max_velocity>
         <min_acceleration>-0.8</min_acceleration>
         <max_acceleration>0.8</max_acceleration>
         <min_jerk>-2.0</min_jerk>

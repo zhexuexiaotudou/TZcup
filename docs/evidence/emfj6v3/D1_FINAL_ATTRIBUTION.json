@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "stage": "EMFJ6V3_A0_D1_FINAL_ATTRIBUTION",
+  "development_only": true,
+  "competition_claim_allowed": false,
+  "release_allowed": false,
+  "sealed_access_allowed": false,
+  "source_commit": "422840fca377eb5cc4680033ed2362f2b713e0b9",
+  "tool_sha256": {
+    "scripts/d1_export_worker.py": "b51f7da4a009b1949f30e15573e763c6b6815d294c301bcd171d3512efa7e697",
+    "scripts/evaluate_d1_development.py": "f6a0515537ebb97461b76e2e5b701dc66a0b713ed93605b8e33b8810c2b07b23",
+    "scripts/d1_golden_attribution.py": "e60bd59eef4f5e6d10312fef07e2a807fc8357bd29fd3375b473717d9c733fce"
+  },
+  "checkpoint": {
+    "sha256": "1cf60873661811f51cd84fb6aafb403646b67d2add57c4851b0be48ebdff2873",
+    "bytes": 409848737,
+    "loaded_nonroot_offline_readonly": true,
+    "inspection_sha256": "9aa607aba4447061e5b290774f8a28693460642a746dcf39030472350f342769"
+  },
+  "runtime": {
+    "container_image": "tzcup/perception-product:v12-functional",
+    "container_image_id": "sha256:f0ab59405bde11477999779a000d766a660bc5dfb4214d23436713d08271cb2d",
+    "yolov9_source": "https://github.com/WongKinYiu/yolov9",
+    "yolov9_revision": "5b1ea9a8b3f0ffe4fe0e203ec6232d788bb3fcff",
+    "device": "cuda:0",
+    "network_during_checkpoint_load_and_inference": "none",
+    "container_user": "65534:65534"
+  },
+  "dataset": {
+    "source_split": "TRAIN",
+    "coco_sha256": "4de8234b2b6cd81b309be53da1cc5a13dd9cefaad40e6f6f8d60e7826a0f8655",
+    "selection_sha256": "3e979a49ace80f207568e6ef5e777636681d8faa11d137c6066640a2b86af88e",
+    "image_count": 410,
+    "annotation_count": 81,
+    "negative_frame_count": 329,
+    "bbox_short_side_px": {
+      "minimum": 1.0,
+      "median": 14.0,
+      "p90": 19.0,
+      "maximum": 21.0,
+      "count_at_least_24": 0
+    },
+    "forbidden_read_flags": {
+      "G10_DEV_VAL_SEALED_read": false,
+      "VAL_NEW_read": false,
+      "G5_V2_read": false
+    }
+  },
+  "A0_1_source_domain_sanity": {
+    "pass": false,
+    "status": "blocked_missing_publisher_sample",
+    "evidence": "docs/evidence/emfj6v3/D1_SOURCE_DOMAIN_SAMPLE_AUDIT.json"
+  },
+  "A0_2_project_domain_native_pt": {
+    "executed": true,
+    "pass": false,
+    "native_inference_sha256": "262af6d56274bab9c674e20623acdf8fc0f07af9e96909a3996ef74bcffb006b",
+    "offline_report_sha256": "2175a139bc36261e5ac1ad6217fc6689ea0b587287d95caa8d46a4209d19637f",
+    "selected_threshold": 0.5,
+    "per_class_true_positive": {
+      "plastic_bottle": 0,
+      "metal_can": 0,
+      "paper_litter": 0
+    },
+    "proposal_recall_class_agnostic": 0.0,
+    "negative_false_positives_per_negative_frame": 2.0151975683890577,
+    "matches_historical_canonical_onnx_semantic_result": true
+  },
+  "A0_3_evaluator_golden_unit": {
+    "frame_count": 10,
+    "category_coverage": [
+      "plastic_bottle",
+      "metal_can",
+      "paper_litter"
+    ],
+    "machine_contract_pass": true,
+    "bbox_mapping_pass": true,
+    "iou_self_check_pass": true,
+    "letterbox_inverse_pass": true,
+    "class_index_check_pass": true,
+    "visual_review_pass": false,
+    "visual_review_status": "blocked_no_10_obvious_targets_all_gt_short_sides_at_most_21px",
+    "visual_observation": "GT boxes align with the rendered tiny targets; native PT instead emits high-confidence general_litter boxes along the vehicle-bottom region.",
+    "golden_report_sha256": "1c2710a2c40ef511be82c10a22d4eed987f20d9a1495cac10d010697d9d3d01d",
+    "contact_sheet_sha256": "bb7ae97bbb2d779c10738f85011072f22c6e043f4107da323ba12c562827a0d9"
+  },
+  "D1_PRIMARY_FAILURE": "DOMAIN_OR_SEMANTIC_MISMATCH",
+  "D1_DEVELOPMENT_SEMANTIC_FAIL": true,
+  "D1_FINAL_ATTRIBUTION_COMPLETE": false,
+  "A0_COMPLETE": false,
+  "blockers": [
+    "publisher revision contains no legal source-domain sample payload",
+    "fixed development set contains no 10 obvious targets; maximum annotated short side is 21 px"
+  ],
+  "next_step": "Do not tune or train D1. Continue bounded A1 existing-model discovery while preserving these A0 blockers and D1 as diagnostic-only.",
+  "truth_boundary": "Native PT reproduces canonical ONNX zero-TP semantics, so export is not the primary cause. A0 remains incomplete because source-domain sanity and the obvious-target visual criterion cannot be satisfied from current authorized assets."
+}

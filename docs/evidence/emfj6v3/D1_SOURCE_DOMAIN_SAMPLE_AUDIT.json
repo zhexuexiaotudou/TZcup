@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "stage": "EMFJ6V3_A0_1_SOURCE_DOMAIN_SANITY",
+  "audited_at": "2026-08-24T00:15:00+08:00",
+  "source_uri": "https://huggingface.co/aryanshh/littercamv3",
+  "revision": "861363597e109f9f0840f537f48d890cef5b5461",
+  "official_revision_api": "https://huggingface.co/api/models/aryanshh/littercamv3/revision/861363597e109f9f0840f537f48d890cef5b5461",
+  "published_files": [
+    ".gitattributes",
+    "README.md",
+    "best.pt",
+    "checkpoints/epoch0.pt",
+    "last.pt"
+  ],
+  "model_card_sha256": "f72abf393cdcb7a27567e832df48b225b9edfd3eade8e049b4e685ae8b84c59f",
+  "model_card_inference_example": "model('road.jpg', conf=0.35)",
+  "publisher_sample_present": false,
+  "publisher_sample_count": 0,
+  "A0_1_SOURCE_DOMAIN_SANITY_PASS": false,
+  "status": "blocked_missing_publisher_sample",
+  "truth_boundary": "The pinned publisher revision contains weights and a model card but no road.jpg or other sample payload. Project TRAIN images cannot substitute for publisher source-domain sanity."
+}
