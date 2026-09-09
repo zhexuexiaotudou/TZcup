@@ -27,6 +27,7 @@ FINAL_DEMO_STAGES = {
 }
 FINAL_DEMO_PERCEPTION_PROVIDERS = {"s100p", "pc", "unavailable"}
 FINAL_DEMO_STALE_SECONDS = 5.0
+LIVE_INPUT_STALE_SECONDS = 5.0
 OCCUPANCY_GRID_MAX_AXIS = 192
 
 
@@ -124,12 +125,15 @@ class LiveMissionState:
         # evaluator-truth substitute.
         self._odometry_preview_pose: list[float] | None = None
         self._evaluation_pose: list[float] | None = None
-        self._linear_speed = 0.0
-        self._angular_speed = 0.0
+        # Never turn a missing command/actuator topic into a plausible zero or
+        # false operator state.  These values become observable only after a
+        # fresh ROS message has actually arrived.
+        self._linear_speed: float | None = None
+        self._angular_speed: float | None = None
         self._speed_source = "unavailable"
         self._formal_base_command_seen = False
-        self._brush_enabled = False
-        self._emergency_stop = False
+        self._brush_enabled: bool | None = None
+        self._emergency_stop: bool | None = None
         self._planned_path: list[list[float]] = []
         self._occupancy_grid: dict | None = None
         self._odometry_preview_trajectory: deque[list[float]] = deque(maxlen=1200)
@@ -137,6 +141,75 @@ class LiveMissionState:
         self._cleaned_trajectory: deque[list[float]] = deque(maxlen=1200)
         self._events: deque[dict] = deque(maxlen=16)
         self._topics_seen: set[str] = set()
+        # Keep observation sources independent.  In particular, an
+        # evaluation sample may describe the brush state at the point where a
+        # coverage metric was computed; it is not a replacement for the live
+        # actuator-topic state displayed to an operator.
+        self._evaluation_sample_brush_enabled: bool | None = None
+        self._front_camera_png: bytes | None = None
+        self._live_inputs: dict[str, dict] = {
+            "front_camera": {
+                "topic": "/sensors/front_rgbd/depth/image_rect_raw/image",
+                "received_monotonic": None,
+                "error": None,
+                "width": None,
+                "height": None,
+            },
+            "perception_targets": {
+                "topic": "/perception/garbage/targets",
+                "received_monotonic": None,
+                "error": None,
+                "count": None,
+            },
+            "perception_diagnostics": {
+                "topic": "/perception/open_vocab/diagnostics",
+                "received_monotonic": None,
+                "error": None,
+                "statuses": [],
+            },
+            "speed": {
+                "topic": "/cmd_vel",
+                "received_monotonic": None,
+                "error": None,
+                "value": None,
+            },
+            "brush": {
+                "topic": "/brush_enabled",
+                "received_monotonic": None,
+                "error": None,
+                "value": None,
+            },
+            "emergency_stop": {
+                "topic": "/emergency_stop",
+                "received_monotonic": None,
+                "error": None,
+                "value": None,
+            },
+            "mapping_lifecycle": {
+                "topic": "/formal_mapping/lifecycle_status",
+                "received_monotonic": None,
+                "error": None,
+                "value": None,
+            },
+            "mapping_map_ready": {
+                "topic": "/formal_mapping/map_ready",
+                "received_monotonic": None,
+                "error": None,
+                "value": None,
+            },
+            "mapping_explorer": {
+                "topic": "/formal_mapping/explorer_status",
+                "received_monotonic": None,
+                "error": None,
+                "value": None,
+            },
+            "saved_map_coverage": {
+                "topic": "/formal_saved_map_coverage/state",
+                "received_monotonic": None,
+                "error": None,
+                "value": None,
+            },
+        }
         self._final_demo: dict = {
             "status": "unavailable",
             "reason": f"未收到 {FINAL_DEMO_TOPIC}",
@@ -245,7 +318,7 @@ class LiveMissionState:
                 or math.dist(self._cleaned_trajectory[-1], point) >= 0.025
             ):
                 self._cleaned_trajectory.append(point)
-            self._brush_enabled = bool(brush_enabled)
+            self._evaluation_sample_brush_enabled = bool(brush_enabled)
             if coverage_state and self._state not in TERMINAL_STATES:
                 self._state = str(coverage_state)
             self._topics_seen.add("/coverage/evaluation_sample")
@@ -260,8 +333,7 @@ class LiveMissionState:
                 self._linear_speed = float(linear)
                 self._angular_speed = float(angular)
                 self._speed_source = "/cmd_vel"
-            self._topics_seen.add("/cmd_vel")
-            self._touch()
+                self._update_live_input("speed", value=self._linear_speed)
 
     def update_formal_base_command_velocity(self, linear: float, angular: float) -> None:
         """Use the final drivetrain command stream as the speed-display source."""
@@ -270,20 +342,121 @@ class LiveMissionState:
             self._angular_speed = float(angular)
             self._speed_source = "/base_controller/cmd_vel"
             self._formal_base_command_seen = True
-            self._topics_seen.add("/base_controller/cmd_vel")
-            self._touch()
+            self._live_inputs["speed"]["topic"] = "/base_controller/cmd_vel"
+            self._update_live_input("speed", value=self._linear_speed)
 
     def update_brush(self, enabled: bool) -> None:
         with self._lock:
             self._brush_enabled = bool(enabled)
-            self._topics_seen.add("/brush_enabled")
+            self._update_live_input("brush", value=self._brush_enabled)
+
+    def update_front_camera(self, png: bytes, *, width: int, height: int) -> None:
+        """Store a real camera frame for the dedicated image endpoint."""
+        if not png or width <= 0 or height <= 0:
+            raise ValueError(
+                "front camera image must be non-empty with positive dimensions"
+            )
+        with self._lock:
+            self._front_camera_png = bytes(png)
+            self._update_live_input(
+                "front_camera", width=int(width), height=int(height)
+            )
+
+    def update_live_input_error(self, name: str, error: str) -> None:
+        with self._lock:
+            if name not in self._live_inputs:
+                raise ValueError(f"unknown live input: {name}")
+            entry = self._live_inputs[name]
+            entry["error"] = str(error)
+            entry["received_monotonic"] = self._clock()
+            self._topics_seen.add(str(entry["topic"]))
             self._touch()
+
+    def set_live_input_topic(self, name: str, topic: str) -> None:
+        if not isinstance(topic, str) or not topic.startswith("/"):
+            raise ValueError("live input topic must be an absolute ROS topic")
+        with self._lock:
+            if name not in self._live_inputs:
+                raise ValueError(f"unknown live input: {name}")
+            self._live_inputs[name]["topic"] = topic
+
+    def update_perception_targets(self, count: int) -> None:
+        if count < 0:
+            raise ValueError("perception target count must not be negative")
+        with self._lock:
+            self._update_live_input("perception_targets", count=int(count))
+
+    def update_perception_diagnostics(self, statuses: list[dict]) -> None:
+        normalized = []
+        for status in statuses:
+            name = status.get("name")
+            message = status.get("message")
+            level = status.get("level")
+            if not isinstance(name, str) or not isinstance(message, str):
+                continue
+            if isinstance(level, bool) or not isinstance(level, int):
+                continue
+            normalized.append({"name": name, "message": message, "level": level})
+        with self._lock:
+            self._update_live_input("perception_diagnostics", statuses=normalized)
+
+    def update_mapping_lifecycle(self, value: str) -> None:
+        with self._lock:
+            self._update_live_input("mapping_lifecycle", value=str(value))
+
+    def update_mapping_map_ready(self, value: bool) -> None:
+        with self._lock:
+            self._update_live_input("mapping_map_ready", value=bool(value))
+
+    def update_mapping_explorer(self, value: str) -> None:
+        with self._lock:
+            self._update_live_input("mapping_explorer", value=str(value))
+
+    def update_saved_map_coverage(self, value: str) -> None:
+        with self._lock:
+            self._update_live_input("saved_map_coverage", value=str(value))
+
+    def front_camera_png(self) -> bytes | None:
+        """Return a frame only while its actual ROS source remains fresh."""
+        with self._lock:
+            if self._front_camera_png is None:
+                return None
+            camera = self._live_inputs["front_camera"]
+            received = camera["received_monotonic"]
+            if camera["error"] is not None:
+                return None
+            if received is None or self._clock() - received > LIVE_INPUT_STALE_SECONDS:
+                return None
+            return self._front_camera_png
+
+    def _update_live_input(self, name: str, **values) -> None:
+        entry = self._live_inputs[name]
+        entry.update(values)
+        entry["error"] = None
+        entry["received_monotonic"] = self._clock()
+        self._topics_seen.add(str(entry["topic"]))
+        self._touch()
+
+    def _live_inputs_snapshot(self, now: float) -> dict:
+        values = deepcopy(self._live_inputs)
+        for entry in values.values():
+            received = entry.pop("received_monotonic", None)
+            age = None if received is None else round(now - received, 2)
+            entry["age_sec"] = age
+            if entry.get("error"):
+                entry["status"] = "error"
+            elif received is None:
+                entry["status"] = "unavailable"
+            elif age is not None and age > LIVE_INPUT_STALE_SECONDS:
+                entry["status"] = "stale"
+            else:
+                entry["status"] = "live"
+        return values
 
     def update_emergency_stop(self, enabled: bool) -> None:
         with self._lock:
             self._emergency_stop = bool(enabled)
-            self._topics_seen.add("/emergency_stop")
-            self._touch()
+            self._update_live_input("emergency_stop", value=self._emergency_stop)
 
     def update_planned_path(self, points) -> None:
         with self._lock:
@@ -428,12 +601,19 @@ class LiveMissionState:
                     "estimated_pose_map": deepcopy(self._estimated_pose),
                     "odometry_preview_pose_odom": deepcopy(self._odometry_preview_pose),
                     "evaluation_only_pose_map": deepcopy(self._evaluation_pose),
-                    "linear_speed_m_s": round(self._linear_speed, 4),
-                    "angular_speed_rad_s": round(self._angular_speed, 4),
+                    "linear_speed_m_s": (
+                        round(self._linear_speed, 4)
+                        if self._linear_speed is not None else None
+                    ),
+                    "angular_speed_rad_s": (
+                        round(self._angular_speed, 4)
+                        if self._angular_speed is not None else None
+                    ),
                     "speed_source": self._speed_source,
                 },
                 "cleaning": {
                     "brush_enabled": self._brush_enabled,
+                    "evaluation_sample_brush_enabled": self._evaluation_sample_brush_enabled,
                     "emergency_stop": self._emergency_stop,
                 },
                 "visualization": {
@@ -452,6 +632,7 @@ class LiveMissionState:
                 "topics_seen": sorted(self._topics_seen),
                 "details": deepcopy(self._details),
                 "final_demo": self._final_demo_snapshot(now),
+                "live_inputs": self._live_inputs_snapshot(now),
                 "claim_boundary": {
                     "source_level": "LIVE_FINAL_PRODUCT_VISUALIZATION_PREVIEW",
                     "ground_truth_usage": "evaluation_and_visualization_only",

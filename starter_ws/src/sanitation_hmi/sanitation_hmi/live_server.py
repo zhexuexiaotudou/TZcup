@@ -8,19 +8,23 @@ import math
 import os
 from pathlib import Path
 import threading
+import zlib
 
 from ament_index_python.packages import get_package_share_directory
+from diagnostic_msgs.msg import DiagnosticArray
 from geometry_msgs.msg import PoseWithCovarianceStamped, Twist, TwistStamped
 from nav_msgs.msg import OccupancyGrid, Odometry, Path as NavPath
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from rclpy.time import Time
+from sensor_msgs.msg import Image
 from std_msgs.msg import Bool, String
 from tf2_ros import Buffer, TransformException, TransformListener
 import yaml
 
 from .live_state import LiveMissionState
+from .ros_adapter import encode_image_png
 
 
 def _yaw_from_quaternion(quaternion) -> float:
@@ -68,6 +72,18 @@ def build_live_handler(state: LiveMissionState, web_root: Path):
             if route == "/api/v1/telemetry":
                 self._send_json(200, state.snapshot())
                 return
+            if route == "/api/v1/images/front_camera":
+                image = state.front_camera_png()
+                if image is None:
+                    self._send_json(404, {"status": "source_unavailable"})
+                    return
+                self.send_response(200)
+                self.send_header("Content-Type", "image/png")
+                self.send_header("Content-Length", str(len(image)))
+                self.send_header("Cache-Control", "no-store")
+                self.end_headers()
+                self.wfile.write(image)
+                return
             if route in {"/", "/demo.html"}:
                 body = (web_root / "demo.html").read_bytes()
                 self.send_response(200)
@@ -94,6 +110,10 @@ class LiveDashboardNode(Node):
         self.declare_parameter("mission_config", "")
         self.declare_parameter("expected_components", 17)
         self.declare_parameter("web_root", "")
+        self.declare_parameter(
+            "front_camera_topic",
+            "/sensors/front_rgbd/depth/image_rect_raw/image",
+        )
 
         mission_config = str(self.get_parameter("mission_config").value)
         mission_id = "final_product_visualization"
@@ -116,6 +136,8 @@ class LiveDashboardNode(Node):
             mission_id=mission_id,
             geometry=geometry,
         )
+        front_camera_topic = str(self.get_parameter("front_camera_topic").value)
+        self.state.set_live_input_topic("front_camera", front_camera_topic)
         output_value = str(self.get_parameter("output_dir").value).strip()
         self.output_dir = Path(output_value) if output_value else None
         if self.output_dir is not None:
@@ -175,6 +197,54 @@ class LiveDashboardNode(Node):
         )
         self.create_subscription(
             Bool, "/emergency_stop", self._on_emergency_stop, 20
+        )
+        # These are the formal map lifecycle and saved-map executor's own
+        # status streams.  Keep them separate from coverage-probe telemetry:
+        # an unavailable phase is not silently represented as a completed
+        # mapping or cleaning step.
+        self.create_subscription(
+            String,
+            "/formal_mapping/lifecycle_status",
+            self._on_mapping_lifecycle,
+            20,
+        )
+        self.create_subscription(
+            Bool,
+            "/formal_mapping/map_ready",
+            self._on_mapping_map_ready,
+            20,
+        )
+        self.create_subscription(
+            String,
+            "/formal_mapping/explorer_status",
+            self._on_mapping_explorer,
+            20,
+        )
+        self.create_subscription(
+            String,
+            "/formal_saved_map_coverage/state",
+            self._on_saved_map_coverage,
+            20,
+        )
+        self.create_subscription(
+            Image,
+            front_camera_topic,
+            self._on_front_camera,
+            2,
+        )
+        from sanitation_perception_interfaces.msg import GarbageTargetArray
+
+        self.create_subscription(
+            GarbageTargetArray,
+            "/perception/garbage/targets",
+            self._on_perception_targets,
+            10,
+        )
+        self.create_subscription(
+            DiagnosticArray,
+            "/perception/open_vocab/diagnostics",
+            self._on_perception_diagnostics,
+            10,
         )
         self.create_subscription(
             String, "/final_demo/state", self._on_final_demo_state, 20
@@ -305,6 +375,51 @@ class LiveDashboardNode(Node):
     def _on_emergency_stop(self, message: Bool) -> None:
         self.state.update_emergency_stop(message.data)
 
+    def _on_mapping_lifecycle(self, message: String) -> None:
+        self.state.update_mapping_lifecycle(message.data)
+
+    def _on_mapping_map_ready(self, message: Bool) -> None:
+        self.state.update_mapping_map_ready(message.data)
+
+    def _on_mapping_explorer(self, message: String) -> None:
+        self.state.update_mapping_explorer(message.data)
+
+    def _on_saved_map_coverage(self, message: String) -> None:
+        self.state.update_saved_map_coverage(message.data)
+
+    def _on_front_camera(self, message: Image) -> None:
+        try:
+            self.state.update_front_camera(
+                encode_image_png(message),
+                width=int(message.width),
+                height=int(message.height),
+            )
+        except (ValueError, zlib.error) as exc:
+            self.state.update_live_input_error("front_camera", str(exc))
+
+    def _on_perception_targets(self, message) -> None:
+        self.state.update_perception_targets(len(message.targets))
+
+    @staticmethod
+    def _diagnostic_level(value) -> int | None:
+        if isinstance(value, int) and not isinstance(value, bool):
+            return value
+        if isinstance(value, (bytes, bytearray)) and len(value) == 1:
+            return int(value[0])
+        return None
+
+    def _on_perception_diagnostics(self, message: DiagnosticArray) -> None:
+        self.state.update_perception_diagnostics(
+            [
+                {
+                    "name": str(status.name),
+                    "message": str(status.message),
+                    "level": self._diagnostic_level(status.level),
+                }
+                for status in message.status
+            ]
+        )
+
     def _on_final_demo_state(self, message: String) -> None:
         self.state.update_final_demo_state(message.data)
 
@@ -345,7 +460,8 @@ def main(args=None) -> None:
         pass
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == "__main__":

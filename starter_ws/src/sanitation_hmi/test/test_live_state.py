@@ -41,7 +41,8 @@ def test_live_state_tracks_components_paths_and_truth_boundary():
     assert snapshot["progress"]["completed_components"] == 1
     assert snapshot["progress"]["active_component_number"] == 2
     assert snapshot["vehicle"]["estimated_pose_map"] == [0.03, -0.01, 0.02]
-    assert snapshot["cleaning"]["brush_enabled"] is False
+    assert snapshot["cleaning"]["brush_enabled"] is None
+    assert snapshot["cleaning"]["evaluation_sample_brush_enabled"] is False
     assert len(snapshot["visualization"]["evaluation_only_trajectory"]) == 2
     assert len(snapshot["visualization"]["evaluation_only_cleaned_trajectory"]) == 1
     assert snapshot["claim_boundary"]["ground_truth_usage"] == (
@@ -192,3 +193,119 @@ def test_live_map_is_compact_and_keeps_occupied_cells_conservatively():
     assert grid["downsample_stride"] > 1
     assert 100 in grid["data"]
     assert grid["source_dimensions"] == [500, 400]
+
+
+def test_live_brush_topic_is_not_overwritten_by_evaluation_sample_history():
+    state = LiveMissionState()
+    state.update_brush(True)
+    state.update_evaluation_sample(
+        1.0, 2.0, 0.0, brush_enabled=False, coverage_state="EXECUTING_SWATH"
+    )
+
+    cleaning = state.snapshot()["cleaning"]
+
+    assert cleaning["brush_enabled"] is True
+    assert cleaning["evaluation_sample_brush_enabled"] is False
+
+
+def test_operator_values_are_unknown_until_a_fresh_source_message_arrives():
+    clock = FakeClock()
+    state = LiveMissionState(clock=clock)
+
+    initial = state.snapshot()
+    assert initial["vehicle"]["linear_speed_m_s"] is None
+    assert initial["cleaning"]["brush_enabled"] is None
+    assert initial["cleaning"]["emergency_stop"] is None
+    assert initial["live_inputs"]["speed"]["status"] == "unavailable"
+    assert initial["live_inputs"]["brush"]["status"] == "unavailable"
+    assert initial["live_inputs"]["emergency_stop"]["status"] == "unavailable"
+
+    state.update_velocity(0.4, -0.1)
+    state.update_brush(False)
+    state.update_emergency_stop(False)
+    live = state.snapshot()
+    assert live["vehicle"]["linear_speed_m_s"] == 0.4
+    assert live["cleaning"]["brush_enabled"] is False
+    assert live["cleaning"]["emergency_stop"] is False
+    assert all(
+        live["live_inputs"][name]["status"] == "live"
+        for name in ("speed", "brush", "emergency_stop")
+    )
+
+    clock.now = 5.1
+    stale = state.snapshot()
+    assert all(
+        stale["live_inputs"][name]["status"] == "stale"
+        for name in ("speed", "brush", "emergency_stop")
+    )
+
+
+def test_mapping_and_saved_map_runtime_sources_are_independent_and_freshness_tracked():
+    clock = FakeClock()
+    state = LiveMissionState(clock=clock)
+
+    state.update_mapping_lifecycle("mapping_running")
+    state.update_mapping_map_ready(False)
+    state.update_mapping_explorer("navigating_frontier")
+    state.update_saved_map_coverage("TRANSIT")
+    live = state.snapshot()["live_inputs"]
+
+    assert live["mapping_lifecycle"]["value"] == "mapping_running"
+    assert live["mapping_map_ready"]["value"] is False
+    assert live["mapping_explorer"]["value"] == "navigating_frontier"
+    assert live["saved_map_coverage"]["value"] == "TRANSIT"
+    assert all(
+        live[name]["status"] == "live"
+        for name in (
+            "mapping_lifecycle",
+            "mapping_map_ready",
+            "mapping_explorer",
+            "saved_map_coverage",
+        )
+    )
+
+    clock.now = 5.1
+    stale = state.snapshot()["live_inputs"]
+    assert stale["mapping_lifecycle"]["status"] == "stale"
+    assert stale["saved_map_coverage"]["status"] == "stale"
+
+
+def test_live_inputs_are_freshness_tracked_without_any_synthetic_fallback():
+    clock = FakeClock()
+    state = LiveMissionState(clock=clock)
+    unavailable = state.snapshot()["live_inputs"]
+    assert unavailable["front_camera"]["status"] == "unavailable"
+    assert unavailable["perception_targets"]["count"] is None
+
+    state.update_front_camera(b"real-png", width=848, height=480)
+    state.update_perception_targets(3)
+    state.update_perception_diagnostics([
+        {"name": "dosod", "message": "inference_ok", "level": 0},
+        {"name": "edgesam", "message": "inference_ok", "level": 0},
+    ])
+    live = state.snapshot()["live_inputs"]
+    assert live["front_camera"] == {
+        "topic": "/sensors/front_rgbd/depth/image_rect_raw/image",
+        "error": None,
+        "width": 848,
+        "height": 480,
+        "age_sec": 0.0,
+        "status": "live",
+    }
+    assert live["perception_targets"]["count"] == 3
+    assert live["perception_diagnostics"]["statuses"][1]["name"] == "edgesam"
+    assert state.front_camera_png() == b"real-png"
+
+    state.update_live_input_error("front_camera", "unsupported encoding")
+    errored = state.snapshot()["live_inputs"]["front_camera"]
+    assert errored["status"] == "error"
+    assert state.front_camera_png() is None
+
+    state.update_front_camera(b"new-real-png", width=848, height=480)
+
+    clock.now = 5.1
+    stale = state.snapshot()["live_inputs"]
+    assert stale["front_camera"]["status"] == "stale"
+    assert stale["perception_targets"]["status"] == "stale"
+    assert stale["perception_diagnostics"]["status"] == "stale"
+    assert state.front_camera_png() is None
