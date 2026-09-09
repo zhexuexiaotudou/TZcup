@@ -59,6 +59,9 @@ def test_preview_is_fresh_scoped_and_has_a_windows_preflight_entry() -> None:
     assert "MappingRosDomain and CleaningRosDomain must differ" in WINDOWS
     assert "run_final_product_visual_preview.sh" in WINDOWS
     assert "Replace('\\', '/')" in WINDOWS
+    assert "require_dashboard_port_available" in RUNNER
+    assert 'sock.bind(("127.0.0.1", port))' in RUNNER
+    assert RUNNER.index("require_dashboard_port_available\n\nif") < RUNNER.index('if "${preflight_only}"')
 
 
 def test_preview_uses_formal_dds_gazebo_isolation_with_safe_distinct_domains() -> None:
@@ -98,7 +101,26 @@ def test_preview_requires_observable_phase_progress_and_hmi_stage_receipts() -> 
     assert 'canonical scan ready; starting standard autostart SLAM lifecycle' in RUNNER
     assert "dashboard_has_first_map" in RUNNER
     assert "mapping progress watchdog timed out" in RUNNER
-    assert "cleaning progress watchdog timed out before hard-restart receipt" in RUNNER
+    assert "mapping explorer progress watchdog timed out after first map" in RUNNER
+    assert "dashboard_live_map_tf_pose" in RUNNER
+    assert 'source.get("status") != "live"' in RUNNER
+    assert 'source.get("topic") != "/tf map->base_footprint"' in RUNNER
+    assert "evaluation-only ground-truth overlay" in RUNNER
+    assert "math.hypot(x1 - x0, y1 - y0) >= 0.05" in RUNNER
+    assert "mapping frontier motion watchdog timed out" in RUNNER
+    assert "dashboard_observed_lifecycle_fraction" in RUNNER
+    assert 'lifecycle.get("status") != "observed"' in RUNNER
+    assert 'value.get("observed_fraction")' in RUNNER
+    assert "current >= previous + 0.001" in RUNNER
+    assert "mapping lifecycle stagnation watchdog timed out" in RUNNER
+    assert "initial_scan_sweep_blocked" in RUNNER
+    assert "blocked_excessive_nav2_failures" in RUNNER
+    assert "initial_scan_sweep_complete" in RUNNER
+    assert 'value.get("initial_scan_sweep_state")' in RUNNER
+    assert '"${initial_scan_sweep_state}" == "complete"' in RUNNER
+    assert "frontier_goal_requested|frontier_goal_reached|frontier_goal_failed|navigating_frontier" in RUNNER
+    assert "same planner turn as initial_scan_sweep_complete" in RUNNER
+    assert "periodic SLAM publication alone cannot prove either claim" in RUNNER
     assert 'http.client.HTTPConnection("127.0.0.1", int(port), timeout=3.0)' in RUNNER
     assert "urllib.request" not in RUNNER
     assert 'fetch_json("/api/v1/telemetry")' in RUNNER
@@ -108,7 +130,16 @@ def test_preview_requires_observable_phase_progress_and_hmi_stage_receipts() -> 
     assert 'wait_for_hmi_receipt MAP_SAVED "${map_sha256}"' in RUNNER
     assert 'wait_for_hmi_receipt HARD_RESTART "${map_sha256}"' in RUNNER
     assert 'wait_for_hmi_receipt RELOAD_LOCALIZE "${map_sha256}"' in RUNNER
+    assert "dashboard_live_coverage_state" in RUNNER
+    assert 'coverage.get("status") != "live"' in RUNNER
+    assert '"PLANNING", "TRANSIT", "CLEANING", "FAILED", "COMPLETED"' in RUNNER
+    assert "PLANNING|TRANSIT|CLEANING" in RUNNER
+    assert 'write_state COVERAGE "${map_sha256}"' in RUNNER
     assert 'wait_for_hmi_receipt COVERAGE "${map_sha256}"' in RUNNER
+    assert 'save_hmi_phase_snapshot cleaning COVERAGE "${map_sha256}"' in RUNNER
+    assert 'save_hmi_phase_snapshot cleaning RELOAD_LOCALIZE "${map_sha256}"' not in RUNNER
+    assert "coverage report appeared without a verified live coverage HMI receipt and snapshot" in RUNNER
+    assert "FAILED/COMPLETED remain governed by the" in RUNNER
     assert 'wait_for_hmi_receipt PRODUCT_TERMINAL "${map_sha256}"' in RUNNER
     assert RUNNER.index('write_state HARD_RESTART "${map_sha256}"') < RUNNER.rindex(
         'stop_pid "${state_publisher_pid}"'
@@ -117,3 +148,9 @@ def test_preview_requires_observable_phase_progress_and_hmi_stage_receipts() -> 
         'write_terminal "live mapping and same-map FullCoverage preview'
     )
     assert '"hmi_terminal_telemetry_sha256"' in RUNNER
+    assert '"hmi_phase_telemetry_sha256"' in RUNNER
+    assert 'save_hmi_phase_snapshot mapping MAP_SAVED "${map_sha256}"' in RUNNER
+    assert 'save_hmi_phase_snapshot hard_restart HARD_RESTART "${map_sha256}"' in RUNNER
+    assert "hmi_mapping_telemetry.json" in RUNNER
+    assert "hmi_hard_restart_telemetry.json" in RUNNER
+    assert "hmi_cleaning_telemetry.json" in RUNNER

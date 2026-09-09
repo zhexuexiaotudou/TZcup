@@ -138,6 +138,28 @@ state_file="${run_root}/final_demo_state.json"
 terminal_output="${run_root}/terminal.json"
 preview_hmi_mission="${run_root}/preview_hmi_mission.yaml"
 
+require_dashboard_port_available() {
+  # This is an admission check, not a reservation: the dashboard still has to
+  # prove its own health receipt after it starts.  Binding only loopback keeps
+  # the preview from silently colliding with another local dashboard.
+  python3 - "${dashboard_port}" <<'PY'
+import socket
+import sys
+
+port = int(sys.argv[1])
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+try:
+    sock.bind(("127.0.0.1", port))
+except OSError as exc:
+    raise SystemExit(f"dashboard loopback port is unavailable: 127.0.0.1:{port}: {exc}")
+finally:
+    sock.close()
+PY
+}
+
+# Make a dashboard collision fail before a live preview can create evidence.
+require_dashboard_port_available
+
 if "${preflight_only}"; then
   printf 'FINAL_VISUAL_PREVIEW_PREFLIGHT_OK run_root=%s runtime_ws=%s episode=%s\n' \
     "${run_root}" "${runtime_ws}" "${episode_root}"
@@ -164,13 +186,20 @@ PY
 
 write_terminal() {
   local detail="$1"
-  python3 - "${terminal_output}" "${detail}" "${hmi_telemetry_sha256}" <<'PY'
+  python3 - "${terminal_output}" "${detail}" "${hmi_telemetry_sha256}" \
+    "${mapping_hmi_telemetry_sha256}" "${hard_restart_hmi_telemetry_sha256}" \
+    "${cleaning_hmi_telemetry_sha256}" <<'PY'
 import datetime, json, pathlib, sys
 pathlib.Path(sys.argv[1]).write_text(json.dumps({
   "schema_version": 1, "status": "FINAL_VISUAL_PREVIEW_NOT_PRODUCT_PASS",
   "product_pass": False, "perception_provider": "unavailable",
   "detail": sys.argv[2], "field_dimensions_m": [200, 100], "vehicle": "A300",
   "hmi_terminal_telemetry_sha256": None if sys.argv[3] == "" else sys.argv[3],
+  "hmi_phase_telemetry_sha256": {
+    "mapping": None if sys.argv[4] == "" else sys.argv[4],
+    "hard_restart": None if sys.argv[5] == "" else sys.argv[5],
+    "cleaning": None if sys.argv[6] == "" else sys.argv[6],
+  },
   "completed_at_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
 }, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 PY
@@ -184,6 +213,9 @@ emergency_stop_pid=""
 main_power_pid=""
 terminal_written=false
 hmi_telemetry_sha256=""
+mapping_hmi_telemetry_sha256=""
+hard_restart_hmi_telemetry_sha256=""
+cleaning_hmi_telemetry_sha256=""
 mapping_partition="tzcup_final_visual_mapping_${mapping_ros_domain}_$$"
 cleaning_partition="tzcup_final_visual_cleaning_${cleaning_ros_domain}_$$"
 stop_pid() {
@@ -307,6 +339,40 @@ require_hmi_receipt() {
   return 125
 }
 
+save_hmi_phase_snapshot() {
+  local phase="$1" expected_stage="$2" expected_hash="$3" snapshot
+  case "${phase}" in
+    mapping) snapshot="${run_root}/hmi_mapping_telemetry.json" ;;
+    hard_restart) snapshot="${run_root}/hmi_hard_restart_telemetry.json" ;;
+    cleaning) snapshot="${run_root}/hmi_cleaning_telemetry.json" ;;
+    *) echo "unknown HMI snapshot phase: ${phase}" >&2; return 125 ;;
+  esac
+  # Copy only a receipt which still matches the phase; no inferred HMI state
+  # is ever promoted into saved evidence.
+  hmi_receipt_matches "${expected_stage}" "${expected_hash}" || {
+    echo "cannot save HMI ${phase} snapshot without a matching receipt" >&2
+    return 125
+  }
+  python3 - "${dashboard_output}/dashboard_telemetry.json" "${snapshot}" <<'PY'
+import json
+import os
+import pathlib
+import sys
+
+source, destination = map(pathlib.Path, sys.argv[1:])
+payload = json.loads(source.read_text(encoding="utf-8"))
+temporary = destination.with_name(f".{destination.name}.runner.{os.getpid()}.tmp")
+temporary.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+os.replace(temporary, destination)
+PY
+  hmi_telemetry_sha256="$(sha256sum "${snapshot}" | awk '{print $1}')"
+  case "${phase}" in
+    mapping) mapping_hmi_telemetry_sha256="${hmi_telemetry_sha256}" ;;
+    hard_restart) hard_restart_hmi_telemetry_sha256="${hmi_telemetry_sha256}" ;;
+    cleaning) cleaning_hmi_telemetry_sha256="${hmi_telemetry_sha256}" ;;
+  esac
+}
+
 dashboard_has_first_map() {
   python3 - "${dashboard_output}/dashboard_telemetry.json" <<'PY'
 import json
@@ -320,6 +386,204 @@ except (OSError, KeyError, TypeError, ValueError):
     ok = False
 raise SystemExit(0 if ok else 1)
 PY
+}
+
+dashboard_mapping_explorer_state() {
+  # The explorer is the authoritative producer for this progress gate.  A
+  # map revision is intentionally not treated as vehicle motion or frontier
+  # progress: periodic SLAM publication alone cannot prove either claim.
+  python3 - "${dashboard_output}/dashboard_telemetry.json" <<'PY'
+import json
+import pathlib
+import sys
+
+state = "unobserved"
+initial_scan_sweep_state = "unobserved"
+try:
+    record = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+    value = record["live_inputs"]["mapping_explorer"]["value"]
+    if isinstance(value, str):
+        try:
+            value = json.loads(value)
+        except json.JSONDecodeError:
+            pass
+    if isinstance(value, dict):
+        candidate_state = value.get("state")
+        candidate_sweep_state = value.get("initial_scan_sweep_state")
+        if isinstance(candidate_state, str) and candidate_state:
+            state = candidate_state
+        if isinstance(candidate_sweep_state, str) and candidate_sweep_state:
+            initial_scan_sweep_state = candidate_sweep_state
+except (OSError, KeyError, TypeError, ValueError):
+    pass
+# Use a delimiter that cannot occur in the published state vocabulary.  The
+# shell consumes both fields; it must not infer a completed sweep from a
+# short-lived, overwritten state event.
+print(f"{state}\t{initial_scan_sweep_state}")
+PY
+}
+
+observe_mapping_explorer_progress() {
+  local explorer_state initial_scan_sweep_state explorer_payload
+  explorer_payload="$(dashboard_mapping_explorer_state)"
+  IFS=$'\t' read -r explorer_state initial_scan_sweep_state <<< "${explorer_payload}"
+  case "${explorer_state}" in
+    initial_scan_sweep_blocked|blocked_excessive_nav2_failures)
+      echo "mapping explorer reached terminal ${explorer_state}" >&2
+      exit 4
+      ;;
+  esac
+  if [[ "${initial_scan_sweep_state}" == "blocked" ]]; then
+    echo "mapping explorer retained a blocked initial scan sweep" >&2
+    exit 4
+  fi
+  # The post-first-map proof window must not be satisfied by an event HMI
+  # received before it rendered the first grid.  A terminal block above is
+  # still fatal immediately, even before that grid is available.
+  [[ "${mapping_first_map}" == "true" ]] || return 0
+  if [[ "${initial_scan_sweep_state}" == "complete" ]]; then
+    mapping_initial_scan_sweep_complete=true
+  fi
+  case "${explorer_state}" in
+    frontier_goal_requested|frontier_goal_reached|frontier_goal_failed|navigating_frontier)
+      # The stable retained sweep state supplies the causal predecessor even
+      # when the HMI's latest-only view receives this follow-on status in the
+      # same planner turn as initial_scan_sweep_complete.
+      if [[ "${initial_scan_sweep_state}" == "complete" ]]; then
+        mapping_frontier_progress=true
+      fi
+      ;;
+  esac
+}
+
+dashboard_live_coverage_state() {
+  # A live executor status is a stronger demonstration receipt than a map
+  # revision or an artifact's mere existence.  Do not infer coverage from a
+  # stale, unavailable, or non-JSON HMI value.
+  python3 - "${dashboard_output}/dashboard_telemetry.json" <<'PY'
+import json
+import pathlib
+import sys
+
+try:
+    record = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+    coverage = record["live_inputs"]["saved_map_coverage"]
+    if coverage.get("status") != "live":
+        raise ValueError("coverage is not live")
+    value = coverage.get("value")
+    if isinstance(value, str):
+        value = json.loads(value)
+    state = value.get("state") if isinstance(value, dict) else None
+    if state not in {"PLANNING", "TRANSIT", "CLEANING", "FAILED", "COMPLETED"}:
+        raise ValueError("unknown coverage state")
+except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError):
+    raise SystemExit(1)
+print(state)
+PY
+}
+
+dashboard_live_map_tf_pose() {
+  # /tf map->base_footprint is the only accepted pose for this gate.  It is a
+  # live map-frame estimate, never the evaluation-only ground-truth overlay.
+  python3 - "${dashboard_output}/dashboard_telemetry.json" <<'PY'
+import json
+import math
+import pathlib
+import sys
+
+try:
+    record = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+    source = record["live_inputs"]["map_pose"]
+    if source.get("status") != "live" or source.get("topic") != "/tf map->base_footprint":
+        raise ValueError("map tf is not live")
+    pose = record["vehicle"]["estimated_pose_map"]
+    if not isinstance(pose, list) or len(pose) < 2:
+        raise ValueError("map pose is missing")
+    x, y = float(pose[0]), float(pose[1])
+    if not math.isfinite(x) or not math.isfinite(y):
+        raise ValueError("map pose is not finite")
+except (OSError, KeyError, TypeError, ValueError):
+    raise SystemExit(1)
+print(f"{x}\t{y}")
+PY
+}
+
+dashboard_observed_lifecycle_fraction() {
+  # Lifecycle is retained as an observed source.  Its JSON payload, not map
+  # revision count, provides the monotonic-quality signal for stagnation.
+  python3 - "${dashboard_output}/dashboard_telemetry.json" <<'PY'
+import json
+import math
+import pathlib
+import sys
+
+try:
+    record = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+    lifecycle = record["live_inputs"]["mapping_lifecycle"]
+    if lifecycle.get("status") != "observed":
+        raise ValueError("lifecycle is not observed")
+    value = lifecycle.get("value")
+    if isinstance(value, str):
+        value = json.loads(value)
+    fraction = float(value.get("observed_fraction")) if isinstance(value, dict) else math.nan
+    if not math.isfinite(fraction) or not 0.0 <= fraction <= 1.0:
+        raise ValueError("observed_fraction is invalid")
+except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError):
+    raise SystemExit(1)
+print(fraction)
+PY
+}
+
+observe_mapping_motion_and_stagnation() {
+  local pose_payload pose_x pose_y lifecycle_fraction
+  [[ "${mapping_first_map}" == "true" ]] || return 0
+
+  if [[ "${mapping_frontier_progress}" == "true" ]]; then
+    if (( mapping_frontier_motion_deadline == 0 )); then
+      mapping_frontier_motion_deadline=$((SECONDS + phase_progress_timeout_sec))
+    fi
+    if pose_payload="$(dashboard_live_map_tf_pose 2>/dev/null)"; then
+      IFS=$'\t' read -r pose_x pose_y <<< "${pose_payload}"
+      if [[ "${mapping_frontier_pose_baseline_set}" != "true" ]]; then
+        mapping_frontier_pose_x="${pose_x}"
+        mapping_frontier_pose_y="${pose_y}"
+        mapping_frontier_pose_baseline_set=true
+      elif python3 - "${mapping_frontier_pose_x}" "${mapping_frontier_pose_y}" "${pose_x}" "${pose_y}" <<'PY'
+import math
+import sys
+x0, y0, x1, y1 = map(float, sys.argv[1:])
+raise SystemExit(0 if math.hypot(x1 - x0, y1 - y0) >= 0.05 else 1)
+PY
+      then
+        mapping_frontier_motion_proven=true
+      fi
+    fi
+    if (( SECONDS >= mapping_frontier_motion_deadline )) \
+      && [[ "${mapping_frontier_motion_proven}" != "true" ]]; then
+      echo "mapping frontier motion watchdog timed out: no live map-TF displacement >=0.05m" >&2
+      exit 4
+    fi
+  fi
+
+  if lifecycle_fraction="$(dashboard_observed_lifecycle_fraction 2>/dev/null)"; then
+    if [[ "${mapping_observed_fraction_baseline_set}" != "true" ]]; then
+      mapping_observed_fraction="${lifecycle_fraction}"
+      mapping_observed_fraction_baseline_set=true
+      mapping_observed_fraction_deadline=$((SECONDS + 1200))
+    elif python3 - "${mapping_observed_fraction}" "${lifecycle_fraction}" <<'PY'
+import math
+import sys
+previous, current = map(float, sys.argv[1:])
+raise SystemExit(0 if math.isfinite(previous) and math.isfinite(current) and current >= previous + 0.001 else 1)
+PY
+    then
+      mapping_observed_fraction="${lifecycle_fraction}"
+      mapping_observed_fraction_deadline=$((SECONDS + 1200))
+    elif (( SECONDS >= mapping_observed_fraction_deadline )); then
+      echo "mapping lifecycle stagnation watchdog timed out: observed_fraction did not grow by >=0.001 in 1200s" >&2
+      exit 4
+    fi
+  fi
 }
 
 require_memory_watchdog() {
@@ -392,6 +656,7 @@ PY
 
 start_dashboard() {
   local domain="$1" phase="$2"
+  require_dashboard_port_available
   (
     export ROS_DOMAIN_ID="${domain}"
     export PYTHONPATH="${repo_root}/starter_ws/src/sanitation_hmi${PYTHONPATH:+:${PYTHONPATH}}"
@@ -454,14 +719,26 @@ start_safety_heartbeat "${mapping_ros_domain}" mapping
 # but does not evaluate or present that map as a formal acceptance artifact.
 deadline=$((SECONDS + mapping_timeout_sec))
 mapping_progress_deadline=$((SECONDS + phase_progress_timeout_sec))
+mapping_explorer_progress_deadline=0
 mapping_scan_ready=false
 mapping_first_map=false
+mapping_initial_scan_sweep_complete=false
+mapping_frontier_progress=false
+mapping_frontier_motion_deadline=0
+mapping_frontier_pose_baseline_set=false
+mapping_frontier_pose_x=""
+mapping_frontier_pose_y=""
+mapping_frontier_motion_proven=false
+mapping_observed_fraction_baseline_set=false
+mapping_observed_fraction=""
+mapping_observed_fraction_deadline=0
 while [[ ! -f "${map_root}/map_lifecycle_manifest.json" ]]; do
   kill -0 "${mapping_launch_pid}" 2>/dev/null || { echo "mapping launch exited; see ${run_root}/mapping.launch.log" >&2; exit 3; }
   require_memory_watchdog
   require_phase_processes mapping \
     "${dashboard_pid}" "${state_publisher_pid}" "${emergency_stop_pid}" "${main_power_pid}"
   require_hmi_receipt MAPPING ""
+  observe_mapping_explorer_progress
   if [[ "${mapping_scan_ready}" == "false" ]] \
     && grep -Fq "canonical scan ready; starting standard autostart SLAM lifecycle" \
       "${run_root}/mapping.launch.log" 2>/dev/null; then
@@ -469,6 +746,19 @@ while [[ ! -f "${map_root}/map_lifecycle_manifest.json" ]]; do
   fi
   if [[ "${mapping_first_map}" == "false" ]] && dashboard_has_first_map; then
     mapping_first_map=true
+    # A first occupancy grid is not evidence that exploration made the
+    # vehicle move.  Start a separate bounded proof chain from this point.
+    mapping_explorer_progress_deadline=$((SECONDS + phase_progress_timeout_sec))
+  fi
+  if [[ "${mapping_first_map}" == "true" ]]; then
+    observe_mapping_explorer_progress
+    observe_mapping_motion_and_stagnation
+    if (( SECONDS >= mapping_explorer_progress_deadline )) \
+      && { [[ "${mapping_initial_scan_sweep_complete}" != "true" ]] \
+        || [[ "${mapping_frontier_progress}" != "true" ]]; }; then
+      echo "mapping explorer progress watchdog timed out after first map: initial_scan_sweep_complete=${mapping_initial_scan_sweep_complete} frontier_progress=${mapping_frontier_progress}" >&2
+      exit 4
+    fi
   fi
   if (( SECONDS >= mapping_progress_deadline )) \
     && { [[ "${mapping_scan_ready}" != "true" ]] || [[ "${mapping_first_map}" != "true" ]]; }; then
@@ -478,13 +768,19 @@ while [[ ! -f "${map_root}/map_lifecycle_manifest.json" ]]; do
   (( SECONDS < deadline )) || { echo "preview mapping timed out before a sealed map" >&2; exit 4; }
   sleep 2
 done
-if [[ "${mapping_scan_ready}" != "true" || "${mapping_first_map}" != "true" ]]; then
-  echo "sealed map arrived without required scan-ready and first-map progress" >&2
+observe_mapping_explorer_progress
+observe_mapping_motion_and_stagnation
+if [[ "${mapping_scan_ready}" != "true" || "${mapping_first_map}" != "true" \
+  || "${mapping_initial_scan_sweep_complete}" != "true" \
+  || "${mapping_frontier_progress}" != "true" \
+  || "${mapping_frontier_motion_proven}" != "true" ]]; then
+  echo "sealed map arrived without scan, first-map, completed-sweep, frontier-progress, and map-TF motion proof" >&2
   exit 4
 fi
 map_sha256="$(sha256sum "${map_root}/map_lifecycle_manifest.json" | awk '{print $1}')"
 write_state MAP_SAVED "${map_sha256}"
 wait_for_hmi_receipt MAP_SAVED "${map_sha256}"
+save_hmi_phase_snapshot mapping MAP_SAVED "${map_sha256}"
 formal_runtime_cleanup_groups "${mapping_partition}" "${mapping_launch_pid}" || exit 125
 finish_memory_watchdog || exit $?
 mapping_launch_pid=""
@@ -494,6 +790,7 @@ wait "${emergency_stop_pid}" 2>/dev/null || true; wait "${main_power_pid}" 2>/de
 emergency_stop_pid=""; main_power_pid=""
 write_state HARD_RESTART "${map_sha256}"
 wait_for_hmi_receipt HARD_RESTART "${map_sha256}"
+save_hmi_phase_snapshot hard_restart HARD_RESTART "${map_sha256}"
 stop_pid "${state_publisher_pid}" || exit 125
 stop_pid "${dashboard_pid}" || exit 125
 wait "${state_publisher_pid}" 2>/dev/null || true; wait "${dashboard_pid}" 2>/dev/null || true
@@ -518,9 +815,8 @@ formal_runtime_start_memory_watchdog \
 start_safety_heartbeat "${cleaning_ros_domain}" cleaning
 
 deadline=$((SECONDS + cleaning_timeout_sec))
-cleaning_progress_deadline=$((SECONDS + phase_progress_timeout_sec))
-coverage_stage_published=false
 coverage_report="${cleaning_root}/coverage_execution.json"
+coverage_stage_published=false
 while [[ ! -s "${coverage_report}" ]]; do
   require_memory_watchdog
   require_phase_processes cleaning \
@@ -529,13 +825,18 @@ while [[ ! -s "${coverage_report}" ]]; do
     require_hmi_receipt COVERAGE "${map_sha256}"
   else
     require_hmi_receipt RELOAD_LOCALIZE "${map_sha256}"
-    if [[ -s "${cleaning_root}/hard_restart_record.json" ]]; then
-      write_state COVERAGE "${map_sha256}"
-      wait_for_hmi_receipt COVERAGE "${map_sha256}"
-      coverage_stage_published=true
-    elif (( SECONDS >= cleaning_progress_deadline )); then
-      echo "cleaning progress watchdog timed out before hard-restart receipt" >&2
-      exit 4
+    # Only actual, fresh executor activity may promote the dashboard from
+    # localization into coverage.  FAILED/COMPLETED remain governed by the
+    # existing terminal report path below; they never fabricate coverage.
+    if coverage_state="$(dashboard_live_coverage_state 2>/dev/null)"; then
+      case "${coverage_state}" in
+        PLANNING|TRANSIT|CLEANING)
+          write_state COVERAGE "${map_sha256}"
+          wait_for_hmi_receipt COVERAGE "${map_sha256}"
+          save_hmi_phase_snapshot cleaning COVERAGE "${map_sha256}"
+          coverage_stage_published=true
+          ;;
+      esac
     fi
   fi
   if ! kill -0 "${cleaning_launch_pid}" 2>/dev/null; then
@@ -559,9 +860,9 @@ done
 if [[ "${coverage_stage_published}" != "true" ]]; then
   write_state PRODUCT_TERMINAL "${map_sha256}"
   wait_for_hmi_receipt PRODUCT_TERMINAL "${map_sha256}"
-  write_terminal "coverage report appeared without a hard-restart coverage receipt"
+  write_terminal "coverage report appeared without a verified live coverage HMI receipt and snapshot"
   terminal_written=true
-  echo "preview coverage report appeared before hard-restart receipt" >&2
+  echo "preview coverage report appeared before verified live coverage HMI receipt" >&2
   exit 5
 fi
 if ! python3 - "${coverage_report}" <<'PY'
