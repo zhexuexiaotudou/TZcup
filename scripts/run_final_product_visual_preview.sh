@@ -704,6 +704,19 @@ require_runtime_package_provenance() {
   done
 }
 
+require_runtime_overlay_freshness() {
+  local report="${run_root}/runtime_overlay_freshness.json"
+  local temporary="${run_root}/.runtime_overlay_freshness.json.$$.tmp"
+  if ! python3 "${repo_root}/scripts/check_runtime_overlay_freshness.py" \
+      --runtime-ws "${runtime_ws}" >"${temporary}"; then
+    mv -f -- "${temporary}" "${report}"
+    echo "runtime overlay is stale or cannot be tied to the selected workspace:" >&2
+    cat "${report}" >&2
+    return 125
+  fi
+  mv -f -- "${temporary}" "${report}"
+}
+
 require_expanded_wheel_surface() {
   local vehicle_xacro="${repo_root}/starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro"
   local expanded_urdf="${run_root}/expanded_vehicle_preflight.urdf"
@@ -779,6 +792,7 @@ PY
 }
 
 require_runtime_package_provenance
+require_runtime_overlay_freshness
 require_expanded_wheel_surface
 
 if "${preflight_only}"; then
@@ -920,7 +934,7 @@ mapping_frontier_motion_proven=false
 mapping_observed_fraction_baseline_set=false
 mapping_observed_fraction=""
 mapping_observed_fraction_deadline=0
-mapping_cleaning_motor_fault_deadline=0
+mapping_cleaning_motor_nonhealthy_deadline=0
 while [[ ! -f "${map_root}/map_lifecycle_manifest.json" ]]; do
   if ! kill -0 "${mapping_launch_pid}" 2>/dev/null; then
     publish_preview_terminal_with_hmi \
@@ -939,46 +953,58 @@ while [[ ! -f "${map_root}/map_lifecycle_manifest.json" ]]; do
   guard_or_publish_terminal \
     "mapping HMI receipt was lost" "mapping_hmi_liveness" \
     '{"code":"mapping_hmi_receipt_lost"}' require_hmi_receipt MAPPING ""
-  cleaning_motor_status="$(python3 - "${dashboard_output}/dashboard_telemetry.json" <<'PY'
+  IFS=$'\t' read -r cleaning_motor_state cleaning_motor_detail < <(
+    python3 - "${dashboard_output}/dashboard_telemetry.json" <<'PY'
 import json
 import pathlib
 import sys
 
+detail = {"source_status": "unavailable"}
 try:
     dashboard = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
     source = dashboard["live_inputs"]["cleaning_motor_status"]
-    value = json.loads(source["value"])
-except (KeyError, TypeError, ValueError, OSError, json.JSONDecodeError):
-    raise SystemExit(1)
-if source.get("status") != "live" or value.get("fault_active") is not True:
-    raise SystemExit(1)
-print(json.dumps(value, sort_keys=True, separators=(",", ":")))
+    detail["source_status"] = source.get("status")
+    if source.get("status") != "live":
+        state = "unavailable"
+    else:
+        value = json.loads(source["value"])
+        detail["cleaning_motor_status"] = value
+        fault_active = value.get("fault_active")
+        if fault_active is False:
+            state = "healthy"
+        elif fault_active is True:
+            state = "fault"
+        else:
+            state = "invalid"
+except (KeyError, TypeError, ValueError, OSError, json.JSONDecodeError) as exc:
+    state = "unavailable"
+    detail["error"] = f"{type(exc).__name__}: {exc}"
+print(state + "\t" + json.dumps(detail, sort_keys=True, separators=(",", ":")))
 PY
-  )" || cleaning_motor_status=""
-  if [[ -n "${cleaning_motor_status}" ]]; then
-    if (( mapping_cleaning_motor_fault_deadline == 0 )); then
-      # Startup is deliberately fail-closed while physics feedback and command
-      # mirrors connect. A live fault for 90 wall seconds is no longer a
-      # transient and must not consume the complete Nav2 Spin timeout.
-      mapping_cleaning_motor_fault_deadline=$((SECONDS + 90))
-    elif (( SECONDS >= mapping_cleaning_motor_fault_deadline )); then
-      cleaning_fault_detail="$(python3 - "${cleaning_motor_status}" <<'PY'
+  )
+  if [[ "${cleaning_motor_state}" == "healthy" ]]; then
+    mapping_cleaning_motor_nonhealthy_deadline=0
+  elif (( mapping_cleaning_motor_nonhealthy_deadline == 0 )); then
+    # Startup is deliberately fail-closed while physics feedback and command
+    # mirrors connect. Unknown, malformed, stale, and faulted telemetry are
+    # all non-healthy; none may silently reset the safety deadline.
+    mapping_cleaning_motor_nonhealthy_deadline=$((SECONDS + 90))
+  elif (( SECONDS >= mapping_cleaning_motor_nonhealthy_deadline )); then
+      cleaning_fault_code="persistent_cleaning_motor_${cleaning_motor_state}"
+      cleaning_fault_detail="$(python3 - "${cleaning_fault_code}" "${cleaning_motor_detail}" <<'PY'
 import json
 import sys
 print(json.dumps({
-    "code": "persistent_cleaning_motor_fault",
+    "code": sys.argv[1],
     "wall_timeout_sec": 90,
-    "cleaning_motor_status": json.loads(sys.argv[1]),
+    "observation": json.loads(sys.argv[2]),
 }, sort_keys=True, separators=(",", ":")))
 PY
       )"
       publish_preview_terminal_with_hmi \
-        "persistent cleaning motor fault blocked mapping traction" \
-        "mapping_cleaning_motor_fault" "${cleaning_fault_detail}"
+        "persistent non-healthy cleaning motor telemetry blocked mapping traction" \
+        "mapping_cleaning_motor_${cleaning_motor_state}" "${cleaning_fault_detail}"
       exit 4
-    fi
-  else
-    mapping_cleaning_motor_fault_deadline=0
   fi
   observe_mapping_explorer_progress
   if [[ "${mapping_scan_ready}" == "false" ]] \

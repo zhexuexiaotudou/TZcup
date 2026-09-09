@@ -267,6 +267,14 @@ def test_launch_is_parseable_and_keeps_safety_and_controller_ownership_explicit(
     assert '"command_input_topic": "/cmd_vel_gate"' in source
     assert '"base_command_output_topic": "/base_controller/cmd_vel"' in source
     assert '"--inactive"' in source
+    assert "actions=[position_controller_spawner]" in source
+    assert "target_action=position_controller_spawner" in source
+    assert "args=[velocity_controller_loader]" in source
+    assert "target_action=velocity_controller_loader" in source
+    assert "args=[safety_manager]" in source
+    assert source.index("target_action=position_controller_spawner") < source.index(
+        "target_action=velocity_controller_loader"
+    )
     assert '"service_controller"' in source
     assert 'DeclareLaunchArgument("spawn_x"' in source
     assert 'DeclareLaunchArgument("spawn_y"' in source

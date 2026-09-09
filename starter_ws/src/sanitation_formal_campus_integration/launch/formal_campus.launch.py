@@ -14,9 +14,11 @@ from launch.actions import (
     IncludeLaunchDescription,
     LogInfo,
     OpaqueFunction,
+    RegisterEventHandler,
     TimerAction,
 )
 from launch.conditions import IfCondition
+from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import (
     EnvironmentVariable,
@@ -39,6 +41,11 @@ from sanitation_formal_campus_integration.saved_map_coverage_core import (
     DRY_CLEANING_SPEED_PROFILE,
     load_formal_operation_speed_profile,
 )
+
+
+def _start_actions_unless_shutdown(context, *actions):
+    """Do not let controller-exit events start nodes during launch teardown."""
+    return [] if context.is_shutdown else list(actions)
 
 
 def _runtime_actions(context):  # type: ignore[no-untyped-def]
@@ -207,6 +214,75 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
         "brush_controller",
         "recovery_controller",
     ]
+    position_controller_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        name="formal_campus_position_controller_spawner",
+        arguments=[
+            "joint_state_broadcaster",
+            *position_hold_controllers,
+            "--controller-manager",
+            "/controller_manager",
+            "--controller-manager-timeout",
+            "180",
+            "--service-call-timeout",
+            "60",
+            "--switch-timeout",
+            "60",
+            "--activate-as-group",
+        ],
+        output="screen",
+    )
+    velocity_controller_loader = Node(
+        package="controller_manager",
+        executable="spawner",
+        name="formal_campus_velocity_controller_loader",
+        arguments=[
+            *safety_switched_controllers,
+            "--controller-manager",
+            "/controller_manager",
+            "--controller-manager-timeout",
+            "180",
+            "--service-call-timeout",
+            "60",
+            "--switch-timeout",
+            "60",
+            "--inactive",
+        ],
+        output="screen",
+    )
+    safety_manager = Node(
+        package="sanitation_safety",
+        executable="whole_vehicle_safety_manager",
+        name="whole_vehicle_safety_manager",
+        output="screen",
+        parameters=[
+            {
+                "use_sim_time": True,
+                # Nav2 collision_monitor emits its checked Twist on
+                # /cmd_vel_gate.  The formal manager is the sole
+                # TwistStamped controller writer.
+                "command_input_topic": "/cmd_vel_gate",
+                "base_command_output_topic": "/base_controller/cmd_vel",
+                "max_linear_velocity": ParameterValue(
+                    LaunchConfiguration("max_linear_velocity"), value_type=float
+                ),
+                "max_angular_velocity": ParameterValue(
+                    LaunchConfiguration("max_angular_velocity"), value_type=float
+                ),
+                # Empty/default values are deliberately not eligible for
+                # high speed.  The lifecycle wrapper supplies the exact
+                # dry same-map scope when it has independently qualified it.
+                "mission_mode": LaunchConfiguration("mission_mode"),
+                "operation_speed_profile": LaunchConfiguration(
+                    "operation_speed_profile"
+                ),
+                "speed_qualification_state": LaunchConfiguration(
+                    "speed_qualification_state"
+                ),
+            }
+        ],
+    )
 
     return [
         LogInfo(
@@ -294,45 +370,29 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
         ),
         TimerAction(
             period=12.0,
-            actions=[
-                Node(
-                    package="controller_manager",
-                    executable="spawner",
-                    name="formal_campus_position_controller_spawner",
-                    arguments=[
-                        "joint_state_broadcaster",
-                        *position_hold_controllers,
-                        "--controller-manager",
-                        "/controller_manager",
-                        "--controller-manager-timeout",
-                        "180",
-                        "--service-call-timeout",
-                        "60",
-                        "--switch-timeout",
-                        "60",
-                        "--activate-as-group",
-                    ],
-                    output="screen",
-                ),
-                Node(
-                    package="controller_manager",
-                    executable="spawner",
-                    name="formal_campus_velocity_controller_loader",
-                    arguments=[
-                        *safety_switched_controllers,
-                        "--controller-manager",
-                        "/controller_manager",
-                        "--controller-manager-timeout",
-                        "180",
-                        "--service-call-timeout",
-                        "60",
-                        "--switch-timeout",
-                        "60",
-                        "--inactive",
-                    ],
-                    output="screen",
-                ),
-            ],
+            actions=[position_controller_spawner],
+        ),
+        RegisterEventHandler(
+            OnProcessExit(
+                target_action=position_controller_spawner,
+                on_exit=[
+                    OpaqueFunction(
+                        function=_start_actions_unless_shutdown,
+                        args=[velocity_controller_loader],
+                    )
+                ],
+            )
+        ),
+        RegisterEventHandler(
+            OnProcessExit(
+                target_action=velocity_controller_loader,
+                on_exit=[
+                    OpaqueFunction(
+                        function=_start_actions_unless_shutdown,
+                        args=[safety_manager],
+                    )
+                ],
+            )
         ),
         Node(
             package="sanitation_formal_campus_integration",
@@ -371,38 +431,6 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                 "start_navsat_transform": "false",
                 "start_global_fusion": start_global_fusion,
             }.items(),
-        ),
-        Node(
-            package="sanitation_safety",
-            executable="whole_vehicle_safety_manager",
-            name="whole_vehicle_safety_manager",
-            output="screen",
-            parameters=[
-                {
-                    "use_sim_time": True,
-                    # Nav2 collision_monitor emits its checked Twist on
-                    # /cmd_vel_gate.  The formal manager is the sole
-                    # TwistStamped controller writer.
-                    "command_input_topic": "/cmd_vel_gate",
-                    "base_command_output_topic": "/base_controller/cmd_vel",
-                    "max_linear_velocity": ParameterValue(
-                        LaunchConfiguration("max_linear_velocity"), value_type=float
-                    ),
-                    "max_angular_velocity": ParameterValue(
-                        LaunchConfiguration("max_angular_velocity"), value_type=float
-                    ),
-                    # Empty/default values are deliberately not eligible for
-                    # high speed.  The lifecycle wrapper supplies the exact
-                    # dry same-map scope when it has independently qualified it.
-                    "mission_mode": LaunchConfiguration("mission_mode"),
-                    "operation_speed_profile": LaunchConfiguration(
-                        "operation_speed_profile"
-                    ),
-                    "speed_qualification_state": LaunchConfiguration(
-                        "speed_qualification_state"
-                    ),
-                }
-            ],
         ),
         # Fast DDS participant discovery becomes nondeterministic when the
         # simulator, bridges, all Nav2 servers, filters and coverage are

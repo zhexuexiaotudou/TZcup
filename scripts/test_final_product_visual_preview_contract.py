@@ -66,6 +66,9 @@ def test_preview_is_fresh_scoped_and_has_a_windows_preflight_entry() -> None:
         'if "${preflight_only}"'
     )
     assert RUNNER.index("require_runtime_package_provenance") < RUNNER.index('if "${preflight_only}"')
+    assert "check_runtime_overlay_freshness.py" in RUNNER
+    assert "runtime_overlay_freshness.json" in RUNNER
+    assert RUNNER.index("require_runtime_overlay_freshness") < RUNNER.index('if "${preflight_only}"')
     assert RUNNER.index("require_expanded_wheel_surface") < RUNNER.index('if "${preflight_only}"')
     assert "A300_EXPANDED_WHEEL_SURFACE_PREFLIGHT_PASSED" in RUNNER
 
@@ -180,7 +183,9 @@ def test_preview_requires_observable_phase_progress_and_hmi_stage_receipts() -> 
     assert 'dashboard["live_inputs"]["cleaning_motor_status"]' in RUNNER
     assert '"${dashboard_output}/dashboard_telemetry.json"' in RUNNER
     assert '"${dashboard_telemetry}"' not in RUNNER
-    assert "mapping_cleaning_motor_fault_deadline=$((SECONDS + 90))" in RUNNER
-    assert '"persistent_cleaning_motor_fault"' in RUNNER
-    assert '"mapping_cleaning_motor_fault"' in RUNNER
+    assert "mapping_cleaning_motor_nonhealthy_deadline=$((SECONDS + 90))" in RUNNER
+    assert 'cleaning_fault_code="persistent_cleaning_motor_${cleaning_motor_state}"' in RUNNER
+    assert '"mapping_cleaning_motor_${cleaning_motor_state}"' in RUNNER
+    assert '[[ "${cleaning_motor_state}" == "healthy" ]]' in RUNNER
+    assert "Unknown, malformed, stale, and faulted telemetry" in RUNNER
     assert RUNNER.count("publish_preview_terminal_with_hmi") >= 15
