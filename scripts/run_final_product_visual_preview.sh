@@ -237,21 +237,29 @@ hmi_receipt_matches() {
   local expected_stage="$1" expected_hash="$2"
   python3 - "${dashboard_port}" "${dashboard_output}/dashboard_telemetry.json" \
     "${expected_stage}" "${expected_hash}" <<'PY'
+import http.client
 import json
+import os
 import pathlib
 import sys
-import http.client
 
 port, telemetry_path, stage, digest = sys.argv[1:]
 try:
-    connection = http.client.HTTPConnection("127.0.0.1", int(port), timeout=1.0)
-    connection.request("GET", "/healthz")
-    response = connection.getresponse()
-    response.read()
-    connection.close()
-    if response.status != 200:
-        raise RuntimeError("health status")
-    payload = json.loads(pathlib.Path(telemetry_path).read_text(encoding="utf-8"))
+    def fetch_json(route):
+        connection = http.client.HTTPConnection("127.0.0.1", int(port), timeout=1.0)
+        try:
+            connection.request("GET", route)
+            response = connection.getresponse()
+            body = response.read()
+            if response.status != 200:
+                raise RuntimeError(f"{route} status")
+            return json.loads(body)
+        finally:
+            connection.close()
+
+    if fetch_json("/healthz").get("status") != "ok":
+        raise RuntimeError("health payload")
+    payload = fetch_json("/api/v1/telemetry")
     final_demo = payload["final_demo"]
     expected_digest = None if digest == "" else digest
     if (
@@ -260,6 +268,10 @@ try:
         or final_demo.get("map_sha256") != expected_digest
     ):
         raise RuntimeError("telemetry stage/hash mismatch")
+    path = pathlib.Path(telemetry_path)
+    temporary = path.with_name(f".{path.name}.runner.{os.getpid()}.tmp")
+    temporary.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    os.replace(temporary, path)
 except (OSError, KeyError, TypeError, ValueError, RuntimeError):
     raise SystemExit(1)
 PY

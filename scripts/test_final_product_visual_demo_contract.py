@@ -86,6 +86,8 @@ def test_demo_runner_fails_closed_on_visual_progress_and_hmi_receipts() -> None:
     assert "cleaning progress watchdog timed out before hard-restart receipt" in RUNNER
     assert 'http.client.HTTPConnection("127.0.0.1", int(port), timeout=1.0)' in RUNNER
     assert "urllib.request" not in RUNNER
+    assert 'fetch_json("/api/v1/telemetry")' in RUNNER
+    assert "os.replace(temporary, path)" in RUNNER
     assert 'wait_for_hmi_receipt MAPPING ""' in RUNNER
     assert 'wait_for_hmi_receipt HARD_RESTART "${map_sha256}"' in RUNNER
     assert 'wait_for_hmi_receipt COVERAGE "${map_sha256}"' in RUNNER

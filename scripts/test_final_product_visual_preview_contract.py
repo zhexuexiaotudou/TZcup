@@ -101,6 +101,8 @@ def test_preview_requires_observable_phase_progress_and_hmi_stage_receipts() -> 
     assert "cleaning progress watchdog timed out before hard-restart receipt" in RUNNER
     assert 'http.client.HTTPConnection("127.0.0.1", int(port), timeout=1.0)' in RUNNER
     assert "urllib.request" not in RUNNER
+    assert 'fetch_json("/api/v1/telemetry")' in RUNNER
+    assert "os.replace(temporary, path)" in RUNNER
     assert 'wait_for_hmi_receipt MAPPING ""' in RUNNER
     assert 'wait_for_hmi_receipt MAP_SAVED "${map_sha256}"' in RUNNER
     assert 'wait_for_hmi_receipt HARD_RESTART "${map_sha256}"' in RUNNER
