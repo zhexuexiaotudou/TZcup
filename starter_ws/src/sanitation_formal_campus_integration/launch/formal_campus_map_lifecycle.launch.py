@@ -354,6 +354,11 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                     "enable_dynamic_footprint_runtime_test_override"
                 ),
                 "start_navigation": "false",
+                # First-task mapping does not execute grasp actions.  Keep the
+                # physical arm in the vehicle description but skip MoveIt, the
+                # grasp executor, and their ROS-Gazebo contact interfaces.
+                # Saved-map cleaning retains the full product runtime.
+                "start_manipulation_runtime": "false" if mode == "mapping" else "true",
                 "mission_mode": mode,
                 "localization_backend": "slam" if mode == "mapping" else "amcl",
                 "start_coverage": "false",

@@ -227,7 +227,13 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                 "gui": LaunchConfiguration("gui"),
                 "world": LaunchConfiguration("world"),
                 "model": manipulation_model,
-                "manipulation_sim_interfaces": "true",
+                # Mapping keeps the physical arm in the vehicle model but does
+                # not need grasp/contact ROS interfaces.  The lifecycle selects
+                # that lean runtime explicitly; direct/cleaning launches retain
+                # the full manipulation stack by default.
+                "manipulation_sim_interfaces": LaunchConfiguration(
+                    "start_manipulation_runtime"
+                ),
                 # The integration layer loads the base controller and leaves
                 # all managed actuators inactive for the safety manager.
                 "start_controllers": "false",
@@ -261,6 +267,7 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
         ),
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(manipulation_launch),
+            condition=IfCondition(LaunchConfiguration("start_manipulation_runtime")),
         ),
         # Dynamic pedestrian motion still uses this public-world service. Its
         # presence does not authorize moving the vehicle after initial create.
@@ -564,6 +571,15 @@ def generate_launch_description() -> LaunchDescription:
             DeclareLaunchArgument("slow_zone_percent", default_value="50"),
             DeclareLaunchArgument("start_navigation", default_value="true"),
             DeclareLaunchArgument("start_coverage", default_value="true"),
+            DeclareLaunchArgument(
+                "start_manipulation_runtime",
+                default_value="true",
+                description=(
+                    "Start MoveIt, the physical grasp executor, and its ROS-Gazebo "
+                    "interfaces. Mapping lifecycle disables this only while the arm "
+                    "remains physically stowed."
+                ),
+            ),
             DeclareLaunchArgument("localization_backend", default_value="amcl"),
             DeclareLaunchArgument("mission_mode", default_value=""),
             DeclareLaunchArgument("max_linear_velocity", default_value="0.45"),

@@ -250,8 +250,11 @@ def test_launch_is_parseable_and_keeps_safety_and_controller_ownership_explicit(
     ast.parse(source)
     assert "formal_vehicle_sim.launch.py" in source
     assert "formal_manipulation_acceptance.urdf.xacro" in source
-    assert '"manipulation_sim_interfaces": "true"' in source
+    assert '"manipulation_sim_interfaces": LaunchConfiguration(' in source
+    assert '"start_manipulation_runtime"' in source
     assert "formal_physical_grasp.launch.py" in source
+    assert 'condition=IfCondition(LaunchConfiguration("start_manipulation_runtime"))' in source
+    assert 'DeclareLaunchArgument(\n                "start_manipulation_runtime",\n                default_value="true",' in source
     assert '"start_controllers": "false"' in source
     assert '"enable_safety_manager": "false"' in source
     assert 'executable="whole_vehicle_safety_manager"' in source
@@ -291,6 +294,7 @@ def test_launch_is_parseable_and_keeps_safety_and_controller_ownership_explicit(
     assert "default_value=DRY_CLEANING_SPEED_PROFILE" in lifecycle
     assert "mapping mode must retain the mapping_safe speed profile" in lifecycle
     assert "clean_path_speed_mps=speed_profile.maximum_linear_speed_mps" in lifecycle
+    assert '"start_manipulation_runtime": "false" if mode == "mapping" else "true"' in lifecycle
 
     navigation_launch = (
         ROOT / "starter_ws/src/sanitation_navigation/launch/navigation.launch.py"
