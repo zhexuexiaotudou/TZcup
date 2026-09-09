@@ -4,23 +4,41 @@ from __future__ import annotations
 
 import argparse
 import importlib
+import importlib.metadata
 import json
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Mapping
 
 
 PYTHON_IMPORTS = ("numpy", "cv2", "yaml", "rclpy", "cv_bridge", "ai_msgs", "sensor_msgs", "vision_msgs", "tf2_ros", "sanitation_perception")
 
 
-def collect_python_imports(importer: Callable[[str], Any] = importlib.import_module) -> dict[str, dict[str, str]]:
+def collect_python_imports(
+    importer: Callable[[str], Any] = importlib.import_module,
+    distribution_version: Callable[[str], str] = importlib.metadata.version,
+    distribution_packages: Callable[[], Mapping[str, list[str]]] = importlib.metadata.packages_distributions,
+) -> dict[str, dict[str, str | None]]:
     """Return exact module version/path, failing before a partial receipt exists."""
-    rows: dict[str, dict[str, str]] = {}
+    rows: dict[str, dict[str, str | None]] = {}
     for name in PYTHON_IMPORTS:
         module = importer(name)
         path = getattr(module, "__file__", None)
-        version = getattr(module, "__version__", None)
-        if not isinstance(path, str) or not path.startswith("/") or not isinstance(version, str) or not version:
-            raise RuntimeError(f"sourced Python import lacks version/path: {name}")
+        if not isinstance(path, str) or not path.startswith("/"):
+            raise RuntimeError(f"sourced Python import lacks absolute path: {name}")
+        try:
+            version = distribution_version(name)
+        except importlib.metadata.PackageNotFoundError:
+            version = None
+            for distribution in distribution_packages().get(name, ()):
+                try:
+                    version = distribution_version(distribution)
+                    break
+                except importlib.metadata.PackageNotFoundError:
+                    continue
+            if version is None:
+                version = getattr(module, "__version__", None)
+        if version is not None and (not isinstance(version, str) or not version):
+            raise RuntimeError(f"sourced Python import has invalid version: {name}")
         rows[name] = {"version": version, "module_path": path}
     return rows
 
