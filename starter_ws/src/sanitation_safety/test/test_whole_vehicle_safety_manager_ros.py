@@ -429,7 +429,8 @@ def test_ros_gateway_zeros_velocity_actuators_and_switches_trajectory_controller
     try:
         _wait_until(
             lambda: manager._velocity_controller_state_known
-            and not manager._velocity_controllers_active
+            and not manager._velocity_controllers_active,
+            timeout=8.0,
         )
         _wait_until(lambda: harness.cancel_request_count >= 4)
         _wait_until(
@@ -503,6 +504,9 @@ def test_ros_gateway_zeros_velocity_actuators_and_switches_trajectory_controller
             "status_publish_count",
             "maximum_timer_gap_sec",
             "publish_thread_error",
+            "effective_max_linear_velocity_mps",
+            "operation_speed_profile",
+            "speed_qualification_state",
         }
         assert len(
             json.dumps(status_json, sort_keys=True, separators=(",", ":")).encode()
@@ -547,11 +551,11 @@ def test_ros_gateway_zeros_velocity_actuators_and_switches_trajectory_controller
             and manager._last_requested_permit is False
         )
         # Full controller reconciliation remains owned by the unique timer.
-        # The request may have completed before this test thread observes it,
-        # so assert the safety outcome rather than forcing a duplicate switch.
+        # The completed request is cleared only after its callback records the
+        # authoritative state, preventing a timer from issuing a duplicate
+        # STRICT switch in the future/callback scheduling gap.
         _wait_until(
-            lambda: manager._switch_future is not None
-            and manager._switch_future.done()
+            lambda: manager._switch_future is None
             and manager._velocity_controller_state_known
             and not manager._velocity_controllers_active,
             details=lambda: {

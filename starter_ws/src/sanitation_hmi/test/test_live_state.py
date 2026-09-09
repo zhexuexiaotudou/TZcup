@@ -281,8 +281,10 @@ def test_mapping_and_saved_map_runtime_sources_keep_observed_and_retained_semant
     state.update_mapping_map_ready(False)
     state.update_mapping_explorer("navigating_frontier")
     state.update_saved_map_coverage("TRANSIT")
-    live = state.snapshot()["live_inputs"]
+    snapshot = state.snapshot()
+    live = snapshot["live_inputs"]
 
+    assert snapshot["status"] == "MAPPING"
     assert live["mapping_lifecycle"]["value"] == "mapping_running"
     assert live["mapping_map_ready"]["value"] is False
     assert live["mapping_explorer"]["value"] == "navigating_frontier"

@@ -249,6 +249,8 @@ def test_frontier_goal_is_known_free_inside_geofence():
         "seed_safe": True,
         "seed_touches_boundary": False,
         "anchor_found": True,
+        "bootstrap_certificate_active": False,
+        "raw_frontier_evaluated": True,
         "raw_frontier_count": 8,
         "candidate_count": 9,
         "rejection_reason": None,
@@ -424,6 +426,113 @@ def test_frontier_goal_bootstraps_past_lidar_unknown_cells_under_robot_body():
     assert diagnostics["anchor_found"] is True
     assert diagnostics["candidate_count"] > 0
     assert diagnostics["rejection_reason"] is None
+
+
+def test_frontier_goal_uses_public_start_clearance_only_for_unknown_bootstrap():
+    width = height = 100
+    resolution = 0.05
+    data = [0] * (width * height)
+    robot_row = robot_column = 50
+    # Model the self-occluded patch left by a vehicle at the fixed start.  Its
+    # width forces the first fully known 0.95 m circle beyond the old 20-cell
+    # generic bootstrap bound.
+    for row in range(robot_row - 10, robot_row + 11):
+        for column in range(robot_column - 10, robot_column + 11):
+            data[row * width + column] = -1
+    for column in range(robot_column - 10, robot_column + 11):
+        data[robot_row * width + column] = 0
+    diagnostics: dict[str, object] = {}
+    goal = select_frontier_goal(
+        data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=-2.525,
+        origin_y=-2.525,
+        origin_yaw=0.0,
+        geofence=((-3.0, -3.0), (3.0, -3.0), (3.0, 3.0), (-3.0, 3.0)),
+        robot_x=0.0,
+        robot_y=0.0,
+        clearance_m=0.95,
+        frontier_standoff_m=1.20,
+        bootstrap_clear_center=(0.0, 0.0),
+        bootstrap_clear_radius_m=1.5,
+        sample_spacing_m=0.1,
+        min_goal_distance_m=0.1,
+        diagnostics=diagnostics,
+    )
+
+    assert goal is not None, json.dumps(diagnostics, sort_keys=True)
+    assert diagnostics["bootstrap_certificate_active"] is True
+    assert diagnostics["anchor_found"] is True
+    assert diagnostics["raw_frontier_evaluated"] is True
+
+
+def test_frontier_bootstrap_certificate_never_excuses_unknown_outside_start_zone():
+    width = height = 100
+    resolution = 0.05
+    data = [0] * (width * height)
+    robot_row = robot_column = 50
+    for row in range(robot_row - 10, robot_row + 11):
+        for column in range(robot_column - 10, robot_column + 11):
+            data[row * width + column] = -1
+    for column in range(robot_column - 10, robot_column + 11):
+        data[robot_row * width + column] = 0
+    # This unknown wall is outside the 1.5 m public start certificate and
+    # prevents every otherwise possible bootstrap transit to a safe anchor.
+    for row in range(height):
+        data[row * width + 82] = -1
+    diagnostics: dict[str, object] = {}
+    goal = select_frontier_goal(
+        data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=-2.525,
+        origin_y=-2.525,
+        origin_yaw=0.0,
+        geofence=((-3.0, -3.0), (3.0, -3.0), (3.0, 3.0), (-3.0, 3.0)),
+        robot_x=0.0,
+        robot_y=0.0,
+        clearance_m=0.95,
+        frontier_standoff_m=1.20,
+        bootstrap_clear_center=(0.0, 0.0),
+        bootstrap_clear_radius_m=1.5,
+        sample_spacing_m=0.1,
+        min_goal_distance_m=0.1,
+        diagnostics=diagnostics,
+    )
+
+    # A goal may exist on the near side of the wall, but it must never be
+    # selected beyond the uncertified unknown wall.
+    assert goal is None or goal[0] < 1.5
+
+
+def test_frontier_goal_treats_public_infield_raster_edge_as_implicit_unknown():
+    width = height = 40
+    resolution = 0.1
+    data = [0] * (width * height)
+    diagnostics: dict[str, object] = {}
+    goal = select_frontier_goal(
+        data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=0.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((-1.0, -1.0), (5.0, -1.0), (5.0, 5.0), (-1.0, 5.0)),
+        robot_x=2.0,
+        robot_y=2.0,
+        clearance_m=0.2,
+        frontier_standoff_m=0.5,
+        min_goal_distance_m=0.1,
+        diagnostics=diagnostics,
+    )
+
+    assert goal is not None
+    assert diagnostics["raw_frontier_evaluated"] is True
+    assert diagnostics["raw_frontier_count"] > 0
 
 
 def test_frontier_circle_does_not_require_square_only_corner_cells():

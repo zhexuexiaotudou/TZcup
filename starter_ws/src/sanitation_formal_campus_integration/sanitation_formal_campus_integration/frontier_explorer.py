@@ -528,6 +528,28 @@ class FormalFrontierExplorer(Node):
             1.0 - 2.0 * (orientation.y * orientation.y + orientation.z * orientation.z),
         )
         selector_diagnostics: dict[str, object] = {}
+        # The public manifest certificate is tied to the fixed map-frame
+        # origin.  A skid-steer Spin may translate slightly; never apply that
+        # certificate after meaningful pose drift.
+        bootstrap_start_offset_m = math.hypot(map_position[0], map_position[1])
+        # The previous physical run showed 0.53 m of map-frame estimate drift
+        # after the skid-steer sweep. Keep a bounded 0.75 m identity gate; the
+        # selector still checks every excused unknown cell against the tighter
+        # 1.5 m public certificate, so this does not enlarge the safe region.
+        bootstrap_start_tolerance_m = 0.75
+        bootstrap_certificate_eligible = (
+            self._goals_requested == 0
+            and self._initial_scan_sweep_state == "complete"
+            and self._contract.fixed_start_clear_radius_m > 0.0
+            and bootstrap_start_offset_m <= bootstrap_start_tolerance_m
+        )
+        selector_diagnostics.update(
+            {
+                "bootstrap_certificate_eligible": bootstrap_certificate_eligible,
+                "bootstrap_start_offset_m": bootstrap_start_offset_m,
+                "bootstrap_start_tolerance_m": bootstrap_start_tolerance_m,
+            }
+        )
         target = select_frontier_goal(
             message.data,
             width=message.info.width,
@@ -541,6 +563,14 @@ class FormalFrontierExplorer(Node):
             robot_y=map_position[1],
             previous_goals=self._previous[-100:],
             sample_spacing_m=float(self.get_parameter("sample_spacing_m").value),
+            bootstrap_clear_center=(0.0, 0.0)
+            if bootstrap_certificate_eligible
+            else None,
+            bootstrap_clear_radius_m=(
+                self._contract.fixed_start_clear_radius_m
+                if bootstrap_certificate_eligible
+                else 0.0
+            ),
             diagnostics=selector_diagnostics,
         )
         if target is None:

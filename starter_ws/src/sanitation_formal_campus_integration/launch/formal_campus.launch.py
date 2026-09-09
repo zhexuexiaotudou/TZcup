@@ -280,6 +280,18 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                 "speed_qualification_state": LaunchConfiguration(
                     "speed_qualification_state"
                 ),
+                # The high-fidelity Gazebo profile intentionally runs below
+                # real time on CPU.  Simulation safety heartbeats therefore
+                # arrive at a lower wall-clock cadence even though no source
+                # heartbeat is missing.  Keep hardware defaults untouched and
+                # give only this simulator enough margin over the observed
+                # scheduler gap; command timeout remains the fast 0.5 s stop.
+                "heartbeat_timeout_sec": 2.0,
+                "bumper_timeout_sec": 2.0,
+                "safety_relay_timeout_sec": 2.0,
+                "bms_fault_timeout_sec": 2.0,
+                "cleaning_motor_fault_timeout_sec": 1.0,
+                "traction_permit_timeout_sec": 2.0,
             }
         ],
     )

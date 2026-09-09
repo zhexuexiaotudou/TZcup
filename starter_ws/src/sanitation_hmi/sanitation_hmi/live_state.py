@@ -471,6 +471,10 @@ class LiveMissionState:
 
     def update_mapping_lifecycle(self, value: str) -> None:
         with self._lock:
+            if self._state == "BOOTING" and str(value):
+                self._state = "MAPPING"
+                self._details = {"source": "/formal_mapping/lifecycle_status"}
+                self._append_event("MAPPING", "首次建图运行中")
             self._update_live_input("mapping_lifecycle", value=str(value))
 
     def update_mapping_map_ready(self, value: bool) -> None:

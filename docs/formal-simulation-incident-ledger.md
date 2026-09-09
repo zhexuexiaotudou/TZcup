@@ -173,6 +173,36 @@ root, then pass the smallest applicable gate before starting a long run.
   limits remain authoritative.  Retain the captured same-direction arc as a
   regression case; do not wait for a Nav2 progress timeout to diagnose this
   signature again.
+- The 135-degree sweep then reached the selector but still returned
+  `no_footprint_safe_bootstrap_anchor`: the lidar self-filter necessarily left
+  unknown cells under the vehicle, so a fully known 0.95 m envelope could not
+  be placed at the initial pose.  Public scenario manifests now carry only the
+  generator-derived 1.5 m collision-free start certificate.  The explorer may
+  use it once, after the initial sweep, to cross grid-internal unknown cells
+  wholly inside that circle and reach a fully known-safe anchor.  Occupied,
+  geofence-outside and raster-outside cells remain forbidden, and subsequent
+  goals receive no certificate.  Do not read evaluator truth or generalize
+  this exception to normal frontier traversal.  The eligibility gate allows
+  at most 0.75 m of map-frame start estimate drift because the physical Spin
+  already demonstrated 0.53 m; this gate does not enlarge the certified circle
+  because every excused unknown cell is still checked against its boundary.
+- A dynamically expanding SLAM raster has implicit unknown space immediately
+  outside its current array.  The selector previously discarded every
+  known-free raster-edge cell before testing the geofence, which could report
+  zero usable frontiers even though the physical field continued.  A raster
+  edge is now a frontier only when its adjacent world coordinate remains
+  inside the public geofence; the search window also includes the larger of
+  frontier standoff and clearance.  Keep `raw_frontier_evaluated` separate
+  from its count so an early bootstrap failure is not misdiagnosed as a scan
+  with zero frontiers.
+- Low-real-time-factor execution exposed a controller-switch re-entry race:
+  the timer saw a completed future before its callback recorded the
+  authoritative state and issued another STRICT request.  The safety manager
+  now retains exclusive ownership until the callback records state and clears
+  the future.  Simulator-only sensor heartbeat thresholds are 1-2 seconds to
+  tolerate CPU scheduling at low RTF; the command timeout and hardware
+  defaults remain unchanged.  Repeated activate/deactivate cycles or STRICT
+  rejection are therefore runtime regressions, not harmless startup noise.
 
 ## Runtime interpretation traps
 

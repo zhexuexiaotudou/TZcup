@@ -93,6 +93,7 @@ class CampusMapContract:
     geofence: tuple[tuple[float, float], ...]
     source_geofence: tuple[tuple[float, float], ...]
     fixed_start_source: tuple[float, float, float]
+    fixed_start_clear_radius_m: float
 
 
 @dataclass(frozen=True)
@@ -217,6 +218,27 @@ def load_campus_map_contract(path: str | Path) -> CampusMapContract:
         local = expected_local
     elif not _same_polygon(local, expected_local):
         raise MapLifecycleError("localization geofence must apply the source transform exactly once")
+    start_clearance = value.get("vehicle_start_clearance_contract")
+    fixed_start_clear_radius_m = 0.0
+    if start_clearance is not None:
+        if (
+            not isinstance(start_clearance, dict)
+            or start_clearance.get("frame_id") != "source_world"
+            or start_clearance.get("semantics")
+            != "public_generator_reserved_collision_free_start"
+        ):
+            raise MapLifecycleError("fixed-start clearance contract is invalid")
+        try:
+            fixed_start_clear_radius_m = float(
+                start_clearance["collision_free_radius_m"]
+            )
+        except (KeyError, TypeError, ValueError) as exc:
+            raise MapLifecycleError("fixed-start clearance radius is invalid") from exc
+        if (
+            not math.isfinite(fixed_start_clear_radius_m)
+            or fixed_start_clear_radius_m <= 0.0
+        ):
+            raise MapLifecycleError("fixed-start clearance radius is invalid")
     return CampusMapContract(
         episode_id=str(value.get("episode_id", "")),
         map_id=str(value.get("map_id", "")),
@@ -224,6 +246,7 @@ def load_campus_map_contract(path: str | Path) -> CampusMapContract:
         geofence=local,
         source_geofence=source_polygon,
         fixed_start_source=(source[0], source[1], source[2]),
+        fixed_start_clear_radius_m=fixed_start_clear_radius_m,
     )
 
 
@@ -339,6 +362,8 @@ def select_frontier_goal(
     seed_max_offset_m: float = 0.75,
     min_goal_distance_m: float = 1.0,
     max_search_radius_m: float = 14.0,
+    bootstrap_clear_center: tuple[float, float] | None = None,
+    bootstrap_clear_radius_m: float = 0.0,
     diagnostics: dict[str, Any] | None = None,
 ) -> tuple[float, float] | None:
     """Select a nearby, footprint-clear goal inside a reachable frontier."""
@@ -354,6 +379,8 @@ def select_frontier_goal(
             "seed_safe": None,
             "seed_touches_boundary": None,
             "anchor_found": False,
+            "bootstrap_certificate_active": False,
+            "raw_frontier_evaluated": False,
             "raw_frontier_count": 0,
             "candidate_count": 0,
             "rejection_reason": None,
@@ -389,11 +416,19 @@ def select_frontier_goal(
         ("seed_max_offset_m", seed_max_offset_m),
         ("min_goal_distance_m", min_goal_distance_m),
         ("max_search_radius_m", max_search_radius_m),
+        ("bootstrap_clear_radius_m", bootstrap_clear_radius_m),
     ):
         if not math.isfinite(value) or value < 0.0:
             raise MapLifecycleError(f"{name} must be finite and non-negative")
     if frontier_standoff_m < clearance_m:
         raise MapLifecycleError("frontier standoff must cover footprint clearance")
+    if bootstrap_clear_center is not None:
+        if len(bootstrap_clear_center) != 2 or not all(
+            math.isfinite(float(value)) for value in bootstrap_clear_center
+        ):
+            raise MapLifecycleError("bootstrap clear center must be a finite pair")
+    if bootstrap_clear_radius_m > 0.0 and bootstrap_clear_center is None:
+        raise MapLifecycleError("bootstrap clear radius requires a center")
 
     cosine, sine = math.cos(origin_yaw), math.sin(origin_yaw)
 
@@ -413,7 +448,14 @@ def select_frontier_goal(
     robot_local_y = -sine * robot_dx + cosine * robot_dy
     robot_column = math.floor(robot_local_x / resolution)
     robot_row = math.floor(robot_local_y / resolution)
-    padding_m = max_search_radius_m + clearance_m + resolution
+    # A valid goal may sit ``frontier_standoff_m`` inside a frontier that is
+    # itself beyond max_search_radius_m.  Include the larger policy envelope
+    # so cropping cannot discard a frontier whose inward goal is in range.
+    padding_m = (
+        max_search_radius_m
+        + max(clearance_m, frontier_standoff_m)
+        + resolution
+    )
     padding_cells = math.ceil(padding_m / resolution)
     min_column = max(0, robot_column - padding_cells)
     max_column = min(width - 1, robot_column + padding_cells)
@@ -466,11 +508,20 @@ def select_frontier_goal(
         remaining = max(0.0, radius_squared - dy * dy)
         half_width = math.floor(math.sqrt(remaining) / resolution + 1e-12)
         clearance_row_spans.append((row_offset, half_width))
+    certificate_active = (
+        bootstrap_clear_center is not None and bootstrap_clear_radius_m > 0.0
+    )
+    bootstrap_step_limit = (
+        math.ceil((bootstrap_clear_radius_m + cell_intersection_radius) / resolution)
+        if certificate_active
+        else clearance_cells
+    )
     if diagnostics is not None:
         diagnostics["clearance_mask_cell_count"] = sum(
             2 * half_width + 1 for _, half_width in clearance_row_spans
         )
-        diagnostics["bootstrap_step_limit"] = clearance_cells
+        diagnostics["bootstrap_step_limit"] = bootstrap_step_limit
+        diagnostics["bootstrap_certificate_active"] = certificate_active
     safe_cache = bytearray(local_size)
 
     def is_safe(local_index: int) -> bool:
@@ -510,6 +561,58 @@ def select_frontier_goal(
         return global_world_position(
             min_row + local_row, min_column + local_column
         )
+
+    def cell_inside_bootstrap_certificate(
+        global_row: int, global_column: int
+    ) -> bool:
+        if not certificate_active:
+            return False
+        assert bootstrap_clear_center is not None
+        center_x, center_y = bootstrap_clear_center
+        radius_squared = bootstrap_clear_radius_m * bootstrap_clear_radius_m
+        for row_corner, column_corner in (
+            (global_row, global_column),
+            (global_row + 1, global_column),
+            (global_row, global_column + 1),
+            (global_row + 1, global_column + 1),
+        ):
+            local_x = column_corner * resolution
+            local_y = row_corner * resolution
+            world_x = origin_x + cosine * local_x - sine * local_y
+            world_y = origin_y + sine * local_x + cosine * local_y
+            if (world_x - center_x) ** 2 + (world_y - center_y) ** 2 > (
+                radius_squared + 1e-12
+            ):
+                return False
+        return True
+
+    def bootstrap_transit_permitted(local_index: int) -> bool:
+        if not certificate_active:
+            return True
+        local_row, local_column = divmod(local_index, local_width)
+        for row_offset, half_width in clearance_row_spans:
+            row = local_row + row_offset
+            if row < 0 or row >= local_height:
+                return False
+            for column in range(
+                local_column - half_width, local_column + half_width + 1
+            ):
+                if column < 0 or column >= local_width:
+                    return False
+                index = row * local_width + column
+                if free[index]:
+                    continue
+                global_row = min_row + row
+                global_column = min_column + column
+                if not (0 <= global_row < height and 0 <= global_column < width):
+                    return False
+                if int(data[global_row * width + global_column]) >= 0:
+                    return False
+                if not cell_inside_bootstrap_certificate(
+                    global_row, global_column
+                ):
+                    return False
+        return True
 
     seed: int | None = None
     seed_offset = math.inf
@@ -558,7 +661,7 @@ def select_frontier_goal(
         if is_safe(current):
             anchor = current
             break
-        if distance >= clearance_cells:
+        if distance >= bootstrap_step_limit or not bootstrap_transit_permitted(current):
             continue
         local_row, local_column = divmod(current, local_width)
         for dr, dc in neighbours:
@@ -596,20 +699,28 @@ def select_frontier_goal(
                 queue.append(next_index)
 
     raw_frontiers: list[int] = []
+    if diagnostics is not None:
+        diagnostics["raw_frontier_evaluated"] = True
+
+    def is_unknown_inside_geofence(global_row: int, global_column: int) -> bool:
+        world_x, world_y = global_world_position(global_row, global_column)
+        if not _inside(world_x, world_y, geofence):
+            return False
+        if not (0 <= global_row < height and 0 <= global_column < width):
+            # slam_toolbox grows its raster with observations.  A known-free
+            # edge cell is still a frontier when the adjacent world position
+            # is inside the public geofence but outside the current raster.
+            return True
+        return int(data[global_row * width + global_column]) < 0
+
     for local_index, is_free in enumerate(free):
         if not is_free:
             continue
         local_row, local_column = divmod(local_index, local_width)
         global_row = min_row + local_row
         global_column = min_column + local_column
-        if not (0 < global_row < height - 1 and 0 < global_column < width - 1):
-            continue
         if any(
-            int(data[(global_row + dr) * width + global_column + dc]) < 0
-            and _inside(
-                *global_world_position(global_row + dr, global_column + dc),
-                geofence,
-            )
+            is_unknown_inside_geofence(global_row + dr, global_column + dc)
             for dr, dc in neighbours
         ):
             raw_frontiers.append(local_index)

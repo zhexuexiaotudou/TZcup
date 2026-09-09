@@ -495,6 +495,11 @@ def test_nonbaseline_world_uses_derived_dimensions_for_ground_geofence_and_start
         "y_m": 0.0,
         "yaw_rad": 0.0,
     }
+    assert manifest["vehicle_start_clearance_contract"] == {
+        "frame_id": "source_world",
+        "collision_free_radius_m": 1.5,
+        "semantics": "public_generator_reserved_collision_free_start",
+    }
     assert field["source_world_geofence"]["frame_id"] == "source_world"
     assert field["source_world_geofence"]["polygon_m"] == field["geofence_polygon_m"]
     assert field["geofence_frame"] == "source_world"
