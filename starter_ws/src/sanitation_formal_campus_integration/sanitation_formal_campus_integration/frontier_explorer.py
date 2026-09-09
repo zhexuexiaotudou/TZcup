@@ -48,9 +48,9 @@ class FormalFrontierExplorer(Node):
         self.declare_parameter("action_discovery_timeout_sec", 0.1)
         self.declare_parameter("goal_response_timeout_sec", 5.0)
         self.declare_parameter("goal_execution_timeout_sec", 900.0)
-        # A stalled visual demo must fail quickly enough to select the next
-        # reachable frontier rather than presenting a frozen vehicle.
-        self.declare_parameter("goal_progress_timeout_sec", 15.0)
+        # Full-campus Gazebo can run far below real time.  Give Nav2 enough
+        # wall time to make the 5 cm progress that refreshes this watchdog.
+        self.declare_parameter("goal_progress_timeout_sec", 120.0)
         self.declare_parameter("cancel_timeout_sec", 5.0)
         self._contract = load_campus_map_contract(
             str(self.get_parameter("episode_manifest").value)

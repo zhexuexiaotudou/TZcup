@@ -146,7 +146,7 @@ def test_frontier_action_discovery_and_goal_response_are_bounded():
     assert 'self.declare_parameter("action_discovery_timeout_sec", 0.1)' in source
     assert 'self.declare_parameter("goal_response_timeout_sec", 5.0)' in source
     assert 'self.declare_parameter("goal_execution_timeout_sec", 900.0)' in source
-    assert 'self.declare_parameter("goal_progress_timeout_sec", 15.0)' in source
+    assert 'self.declare_parameter("goal_progress_timeout_sec", 120.0)' in source
     assert 'self.declare_parameter("cancel_timeout_sec", 5.0)' in source
     assert '"frontier_goal_response_timeout"' in source
     assert '"frontier_cancel_requested"' in source

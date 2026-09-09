@@ -118,7 +118,7 @@ if interface is None or interface.attrib.get("name") != "lo" or maximum_element 
     print("FAIL cyclonedds_localhost_contract")
     raise SystemExit(1)
 maximum_participant = int(maximum_element.text)
-if maximum_participant != 120:
+if maximum_participant != 180:
     print(f"FAIL max_auto_participant_index actual={maximum_participant}")
     raise SystemExit(1)
 maximum_domain = base_domain + episode_count - 1

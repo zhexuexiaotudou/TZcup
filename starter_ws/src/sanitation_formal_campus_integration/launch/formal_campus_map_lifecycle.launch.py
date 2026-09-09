@@ -331,7 +331,7 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                 parameters=[{
                     "use_sim_time": True,
                     "episode_manifest": str(manifest_path),
-                    "goal_progress_timeout_sec": 15.0,
+                    "goal_progress_timeout_sec": 120.0,
                 }],
                 output="screen",
             ),
