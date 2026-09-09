@@ -75,3 +75,25 @@ def progress_deadline_after_feedback(
     if distance_remaining_m <= previous_best_distance_m - minimum_progress_m:
         return distance_remaining_m, now_monotonic + timeout_sec
     return previous_best_distance_m, None
+
+
+def revisions_after_baseline(
+    *,
+    map_revision: int,
+    scan_revision: int,
+    baseline_map_revision: int,
+    baseline_scan_revision: int,
+) -> tuple[bool, bool]:
+    """Return whether raw map and canonical scan advanced after one action."""
+    revisions = (
+        map_revision,
+        scan_revision,
+        baseline_map_revision,
+        baseline_scan_revision,
+    )
+    if any(not isinstance(value, int) or value < 0 for value in revisions):
+        raise ValueError("map and scan revisions must be nonnegative integers")
+    return (
+        map_revision > baseline_map_revision,
+        scan_revision > baseline_scan_revision,
+    )

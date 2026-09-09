@@ -11,6 +11,7 @@ from sanitation_formal_campus_integration.frontier_runtime_core import (
     bounded_action_server_ready,
     goal_response_timed_out,
     progress_deadline_after_feedback,
+    revisions_after_baseline,
 )
 
 
@@ -89,3 +90,54 @@ def test_progress_watchdog_refreshes_only_after_material_progress():
     )
     assert unchanged == pytest.approx(best)
     assert no_refresh is None
+
+
+def test_initial_scan_sweep_requires_both_raw_revisions_after_acceptance_baseline():
+    common = {
+        "baseline_map_revision": 17,
+        "baseline_scan_revision": 29,
+    }
+    assert revisions_after_baseline(
+        map_revision=17, scan_revision=29, **common
+    ) == (False, False)
+    assert revisions_after_baseline(
+        map_revision=18, scan_revision=29, **common
+    ) == (True, False)
+    assert revisions_after_baseline(
+        map_revision=17, scan_revision=30, **common
+    ) == (False, True)
+    assert revisions_after_baseline(
+        map_revision=18, scan_revision=30, **common
+    ) == (True, True)
+    with pytest.raises(ValueError, match="nonnegative integers"):
+        revisions_after_baseline(
+            map_revision=-1, scan_revision=30, **common
+        )
+
+
+def test_frontier_requires_nav2_spin_and_post_spin_raw_sensor_map_updates():
+    source = (
+        Path(__file__).resolve().parents[1]
+        / "sanitation_formal_campus_integration"
+        / "frontier_explorer.py"
+    ).read_text(encoding="utf-8")
+
+    assert "from nav2_msgs.action import NavigateToPose, Spin" in source
+    assert 'self.declare_parameter("spin_action", "/spin")' in source
+    assert "self._spin_client = ActionClient(" in source
+    assert "Spin.Goal()" in source
+    assert "goal.target_yaw = math.pi / 2.0" in source
+    assert "initial_scan_sweep_blocked" in source
+    assert "handle.cancel_goal_async()" in source
+    assert "self._spin_baseline_map_revision = self._map_revision" in source
+    assert "self._spin_baseline_scan_revision = self._scan_revision" in source
+    assert "revisions_after_baseline(" in source
+    assert "wrapped.result" in source
+    assert "Spin.Result.NONE" in source
+    assert "initial_scan_sweep_waiting_for_odom" in source
+    assert "initial_scan_sweep_waiting_for_scan" in source
+    assert "initial_scan_sweep_result_timeout_sec\", 180.0" in source
+    assert "initial_scan_sweep_update_timeout_sec\", 60.0" in source
+    assert 'self._block("blocked_excessive_nav2_failures"' in source
+    assert "from geometry_msgs.msg import Twist" not in source
+    assert "/ground_truth" not in source
