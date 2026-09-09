@@ -23,6 +23,11 @@ perception_artifact_root="${FORMAL_PERCEPTION_ARTIFACT_ROOT:-}"
 policy_checkpoint="${FORMAL_POLICY_CHECKPOINT:-}"
 maximum_task_distance_m="${FORMAL_FULL_COVERAGE_DISTANCE_M:-0.0}"
 cleaning_timeout_sec="${FORMAL_CLEANING_TIMEOUT_S:-86400}"
+FORMAL_VISUAL_GUI="${FORMAL_VISUAL_GUI:-false}"
+if [[ "${FORMAL_VISUAL_GUI}" != "false" && "${FORMAL_VISUAL_GUI}" != "true" ]]; then
+  echo "FORMAL_VISUAL_GUI must be the strict boolean true or false" >&2
+  exit 2
+fi
 if [[ ! "${cleaning_timeout_sec}" =~ ^[1-9][0-9]*$ ]]; then
   echo "FORMAL_CLEANING_TIMEOUT_S must be a positive integer" >&2
   exit 2
@@ -155,7 +160,7 @@ python3 "${repo_root}/scripts/prepare_formal_dynamic_runtime_world.py" \
 if [[ "${cleaning_planner}" == "rl_dirt_priority" ]]; then
   launch_command=(
     ros2 launch sanitation_product_demo_integration product_demo.launch.py
-    gui:=false
+    gui:="${FORMAL_VISUAL_GUI}"
     world:="${runtime_world}"
     episode_manifest:="${episode}/public/episode_manifest.json"
     saved_map_artifact_dir:="${map_root}"
@@ -172,7 +177,7 @@ else
     formal_campus_map_lifecycle.launch.py
     mission_mode:=cleaning
     cleaning_planner:=full_coverage
-    gui:=false
+    gui:="${FORMAL_VISUAL_GUI}"
     world:="${runtime_world}"
     episode_manifest:="${episode}/public/episode_manifest.json"
     map_artifact_dir:="${map_root}"

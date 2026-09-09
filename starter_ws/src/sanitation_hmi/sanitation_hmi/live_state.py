@@ -1,9 +1,10 @@
-"""Thread-safe mission telemetry model used by the AUTO-17 live dashboard."""
+"""Thread-safe mission telemetry model used by the final-product dashboard."""
 
 from __future__ import annotations
 
 from collections import deque
 from copy import deepcopy
+import json
 import math
 from threading import Lock
 import time
@@ -15,6 +16,17 @@ ACTIVE_COMPONENT_STATES = {
     "EXECUTING_SHIFT", "EXECUTING_BACKUP", "EXECUTING_BYPASS",
     "REPAIR_SWATH", "REPAIR_TRANSIT",
 }
+FINAL_DEMO_TOPIC = "/final_demo/state"
+FINAL_DEMO_STAGES = {
+    "MAPPING",
+    "MAP_SAVED",
+    "HARD_RESTART",
+    "RELOAD_LOCALIZE",
+    "COVERAGE",
+    "PRODUCT_TERMINAL",
+}
+FINAL_DEMO_PERCEPTION_PROVIDERS = {"s100p", "pc", "unavailable"}
+FINAL_DEMO_STALE_SECONDS = 5.0
 
 
 def _bounded_points(points, maximum: int = 320) -> list[list[float]]:
@@ -61,6 +73,17 @@ class LiveMissionState:
         self._cleaned_trajectory: deque[list[float]] = deque(maxlen=1200)
         self._events: deque[dict] = deque(maxlen=16)
         self._topics_seen: set[str] = set()
+        self._final_demo: dict = {
+            "status": "unavailable",
+            "reason": f"未收到 {FINAL_DEMO_TOPIC}",
+            "field_dimensions_m": None,
+            "vehicle": None,
+            "stage": None,
+            "map_sha256": None,
+            "perception_provider": None,
+            "formal_product_acceptance": None,
+            "received_monotonic": None,
+        }
         self._append_event("BOOTING", "等待 ROS 2 / Gazebo / Nav2 就绪")
 
     def _touch(self) -> None:
@@ -176,6 +199,87 @@ class LiveMissionState:
             self._topics_seen.add("/coverage/current_path")
             self._touch()
 
+    def update_final_demo_state(self, raw_payload: str) -> None:
+        """Accept only a live, self-describing final-product status record."""
+        with self._lock:
+            self._topics_seen.add(FINAL_DEMO_TOPIC)
+            now = self._clock()
+            try:
+                payload = json.loads(raw_payload)
+                normalized = self._normalize_final_demo_payload(payload)
+            except (TypeError, ValueError, json.JSONDecodeError) as exc:
+                self._final_demo = {
+                    "status": "error",
+                    "reason": f"无效 {FINAL_DEMO_TOPIC}：{exc}",
+                    "field_dimensions_m": None,
+                    "vehicle": None,
+                    "stage": None,
+                    "map_sha256": None,
+                    "perception_provider": None,
+                    "formal_product_acceptance": None,
+                    "received_monotonic": now,
+                }
+            else:
+                self._final_demo = {
+                    "status": "live",
+                    "reason": None,
+                    **normalized,
+                    "received_monotonic": now,
+                }
+            self._touch()
+
+    @staticmethod
+    def _normalize_final_demo_payload(payload: object) -> dict:
+        if not isinstance(payload, dict):
+            raise ValueError("payload must be a JSON object")
+        dimensions = payload.get("field_dimensions_m")
+        if (
+            not isinstance(dimensions, list)
+            or len(dimensions) != 2
+            or any(isinstance(value, bool) or not isinstance(value, (int, float)) for value in dimensions)
+            or not math.isclose(float(dimensions[0]), 200.0)
+            or not math.isclose(float(dimensions[1]), 100.0)
+        ):
+            raise ValueError("field_dimensions_m must be [200, 100]")
+        vehicle = payload.get("vehicle")
+        if vehicle != "A300":
+            raise ValueError("vehicle must be A300")
+        stage = payload.get("stage")
+        if stage not in FINAL_DEMO_STAGES:
+            raise ValueError("stage is not a final-product lifecycle stage")
+        map_sha256 = payload.get("map_sha256")
+        if map_sha256 is not None and (
+            not isinstance(map_sha256, str)
+            or len(map_sha256) != 64
+            or any(character not in "0123456789abcdef" for character in map_sha256.lower())
+        ):
+            raise ValueError("map_sha256 must be a SHA-256 string or null")
+        provider = payload.get("perception_provider")
+        if provider not in FINAL_DEMO_PERCEPTION_PROVIDERS:
+            raise ValueError("perception_provider must be s100p, pc, or unavailable")
+        acceptance = payload.get("formal_product_acceptance")
+        if not isinstance(acceptance, bool):
+            raise ValueError("formal_product_acceptance must be boolean")
+        return {
+            "field_dimensions_m": [float(dimensions[0]), float(dimensions[1])],
+            "vehicle": vehicle,
+            "stage": stage,
+            "map_sha256": map_sha256,
+            "perception_provider": provider,
+            "formal_product_acceptance": acceptance,
+        }
+
+    def _final_demo_snapshot(self, now: float) -> dict:
+        final_demo = deepcopy(self._final_demo)
+        received = final_demo.pop("received_monotonic", None)
+        age = None if received is None else round(now - received, 2)
+        if final_demo["status"] == "live" and age is not None and age > FINAL_DEMO_STALE_SECONDS:
+            final_demo["status"] = "stale"
+            final_demo["reason"] = f"{FINAL_DEMO_TOPIC} 超过 {FINAL_DEMO_STALE_SECONDS:g} 秒未更新"
+        final_demo["source_topic"] = FINAL_DEMO_TOPIC
+        final_demo["age_sec"] = age
+        return final_demo
+
     def snapshot(self) -> dict:
         with self._lock:
             now = self._clock()
@@ -223,6 +327,7 @@ class LiveMissionState:
                 "events": list(self._events),
                 "topics_seen": sorted(self._topics_seen),
                 "details": deepcopy(self._details),
+                "final_demo": self._final_demo_snapshot(now),
                 "claim_boundary": {
                     "source_level": "LIVE_GAZEBO_NAVIGATION_COVERAGE_DEMO",
                     "ground_truth_usage": "evaluation_and_visualization_only",

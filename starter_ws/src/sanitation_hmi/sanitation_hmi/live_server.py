@@ -1,4 +1,4 @@
-"""ROS 2 telemetry bridge and read-only HTTP dashboard for AUTO-17."""
+"""ROS 2 telemetry bridge and read-only final-product dashboard."""
 
 from __future__ import annotations
 
@@ -89,6 +89,7 @@ class LiveDashboardNode(Node):
         self.declare_parameter("output_dir", "")
         self.declare_parameter("mission_config", "")
         self.declare_parameter("expected_components", 17)
+        self.declare_parameter("web_root", "")
 
         mission_config = str(self.get_parameter("mission_config").value)
         mission_id = "demo_coverage_001"
@@ -147,11 +148,19 @@ class LiveDashboardNode(Node):
         self.create_subscription(
             Bool, "/emergency_stop", self._on_emergency_stop, 20
         )
+        self.create_subscription(
+            String, "/final_demo/state", self._on_final_demo_state, 20
+        )
         self.create_timer(1.0, self._write_snapshot)
 
+        web_root_value = str(self.get_parameter("web_root").value).strip()
         web_root = (
-            Path(get_package_share_directory("sanitation_hmi")) / "web"
+            Path(web_root_value)
+            if web_root_value
+            else Path(get_package_share_directory("sanitation_hmi")) / "web"
         )
+        if not (web_root / "demo.html").is_file():
+            raise RuntimeError(f"sanitation HMI web root is invalid: {web_root}")
         host = str(self.get_parameter("host").value)
         port = int(self.get_parameter("port").value)
         self.server = ThreadingHTTPServer(
@@ -228,6 +237,9 @@ class LiveDashboardNode(Node):
 
     def _on_emergency_stop(self, message: Bool) -> None:
         self.state.update_emergency_stop(message.data)
+
+    def _on_final_demo_state(self, message: String) -> None:
+        self.state.update_final_demo_state(message.data)
 
     def _write_snapshot(self) -> None:
         if self.output_dir is None:

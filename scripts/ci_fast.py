@@ -562,6 +562,8 @@ def run_ros_independent_tests() -> None:
         ROOT / "scripts" / "test_visual_demo_summary.py",
         ROOT / "scripts" / "test_dashboard_telemetry_frames.py",
         ROOT / "scripts" / "test_run_visual_demo_contract.py",
+        ROOT / "scripts" / "test_final_product_visual_demo_contract.py",
+        ROOT / "scripts" / "test_final_product_visual_state_publisher_contract.py",
         ROOT / "scripts" / "test_gazebo_cleaning_demo_contract.py",
         ROOT / "scripts" / "test_coverage_dynamic_matrix_report.py",
         ROOT / "scripts" / "test_gazebo_viewport_probe.py",

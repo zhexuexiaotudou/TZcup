@@ -94,3 +94,49 @@ def test_semantic_component_updates_dynamic_plan_size():
     snapshot = state.snapshot()
     assert snapshot["progress"]["expected_components"] == 25
     assert snapshot["progress"]["current_component"] == "connector-00-translate"
+
+
+def test_final_product_state_is_only_populated_by_valid_live_topic_payload():
+    clock = FakeClock()
+    state = LiveMissionState(clock=clock)
+    unavailable = state.snapshot()["final_demo"]
+    assert unavailable["status"] == "unavailable"
+    assert unavailable["field_dimensions_m"] is None
+
+    state.update_final_demo_state(
+        '{"field_dimensions_m":[200,100],"vehicle":"A300",'
+        '"stage":"MAP_SAVED","map_sha256":"' + "a" * 64 + '",'
+        '"perception_provider":"pc","formal_product_acceptance":false}'
+    )
+    snapshot = state.snapshot()["final_demo"]
+    assert snapshot == {
+        "status": "live",
+        "reason": None,
+        "field_dimensions_m": [200.0, 100.0],
+        "vehicle": "A300",
+        "stage": "MAP_SAVED",
+        "map_sha256": "a" * 64,
+        "perception_provider": "pc",
+        "formal_product_acceptance": False,
+        "source_topic": "/final_demo/state",
+        "age_sec": 0.0,
+    }
+
+
+def test_final_product_state_rejects_wrong_profile_and_becomes_stale():
+    clock = FakeClock()
+    state = LiveMissionState(clock=clock)
+    state.update_final_demo_state('{"field_dimensions_m":[16,12]}')
+    malformed = state.snapshot()["final_demo"]
+    assert malformed["status"] == "error"
+    assert malformed["field_dimensions_m"] is None
+
+    state.update_final_demo_state(
+        '{"field_dimensions_m":[200,100],"vehicle":"A300",'
+        '"stage":"MAPPING","map_sha256":null,'
+        '"perception_provider":"unavailable","formal_product_acceptance":false}'
+    )
+    clock.now = 5.1
+    stale = state.snapshot()["final_demo"]
+    assert stale["status"] == "stale"
+    assert stale["stage"] == "MAPPING"

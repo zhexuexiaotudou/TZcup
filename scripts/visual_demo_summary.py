@@ -8,13 +8,17 @@ from datetime import datetime, timezone
 import json
 from pathlib import Path
 
-import yaml
+from mcap_validation import inspect_mcap_bag
 
 
 def _load_json(path: Path) -> dict | None:
     if not path.is_file():
         return None
-    return json.loads(path.read_text(encoding="utf-8"))
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    return payload if isinstance(payload, dict) else None
 
 
 def _video_evidence(path: Path) -> dict:
@@ -29,27 +33,17 @@ def _video_evidence(path: Path) -> dict:
 
 
 def _mcap_evidence(directory: Path) -> dict:
-    metadata_path = directory / "metadata.yaml"
-    if not metadata_path.is_file():
-        return {
-            "path": directory.name,
-            "metadata_present": False,
-            "message_count": 0,
-            "duration_ns": 0,
-            "topics": [],
-        }
-    metadata = yaml.safe_load(metadata_path.read_text(encoding="utf-8"))
-    info = metadata.get("rosbag2_bagfile_information", {})
-    topics = [
-        row.get("topic_metadata", {}).get("name")
-        for row in info.get("topics_with_message_count", [])
-    ]
+    return inspect_mcap_bag(directory)
+
+
+def _rosbag_finalization_evidence(output_dir: Path) -> dict:
+    path = output_dir / "rosbag_finalization.json"
+    payload = _load_json(path)
     return {
-        "path": directory.name,
-        "metadata_present": True,
-        "message_count": int(info.get("message_count", 0)),
-        "duration_ns": int((info.get("duration") or {}).get("nanoseconds", 0)),
-        "topics": sorted(topic for topic in topics if topic),
+        "present": payload is not None,
+        "status": payload.get("status") if payload else None,
+        "escalation": payload.get("escalation") if payload else None,
+        "process_group": payload.get("process_group") if payload else None,
     }
 
 
@@ -67,6 +61,7 @@ def assemble(
     dashboard = _load_json(output_dir / "dashboard_telemetry.json")
     cleaning = _load_json(output_dir / "gazebo_cleaning_telemetry.json")
     mcap = _mcap_evidence(output_dir / "visual_demo_bag")
+    rosbag_finalization = _rosbag_finalization_evidence(output_dir)
     video = _video_evidence(output_dir / "visual_demo.mp4")
     screenshot = output_dir / "visual_demo_frame.png"
     coverage_success = bool(
@@ -126,6 +121,8 @@ def assemble(
             not mcap_required
             or (
                 mcap["metadata_present"]
+                and mcap["sealed"]
+                and rosbag_finalization["status"] == "FINALIZED"
                 and mcap["message_count"] > 0
                 and required_topics <= recorded_topics
             )
@@ -184,6 +181,7 @@ def assemble(
             "complete": targets_complete,
         },
         "mcap": mcap,
+        "rosbag_finalization": rosbag_finalization,
         "video": {
             **video,
             "mode": video_mode,

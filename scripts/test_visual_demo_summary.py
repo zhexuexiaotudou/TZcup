@@ -10,6 +10,12 @@ def _write_json(path: Path, payload: dict) -> None:
     path.write_text(json.dumps(payload), encoding="utf-8")
 
 
+def _write_complete_mcap(path: Path) -> None:
+    magic = b"\x89MCAP0\r\n"
+    footer = b"\x02" + (20).to_bytes(8, "little") + (b"\0" * 20) + magic
+    path.write_bytes(magic + footer)
+
+
 def test_visual_demo_summary_passes_with_coverage_dashboard_bag_and_video(tmp_path):
     _write_json(
         tmp_path / "coverage_report.json",
@@ -67,6 +73,11 @@ def test_visual_demo_summary_passes_with_coverage_dashboard_bag_and_video(tmp_pa
     (bag / "metadata.yaml").write_text(
         yaml.safe_dump(metadata), encoding="utf-8"
     )
+    _write_complete_mcap(bag / "visual_demo_bag_0.mcap")
+    _write_json(
+        tmp_path / "rosbag_finalization.json",
+        {"status": "FINALIZED", "escalation": "NONE", "process_group": "123"},
+    )
     (tmp_path / "visual_demo.mp4").write_bytes(b"0" * 100_000)
     (tmp_path / "visual_demo_frame.png").write_bytes(b"png")
     _write_json(
@@ -87,6 +98,65 @@ def test_visual_demo_summary_passes_with_coverage_dashboard_bag_and_video(tmp_pa
     assert report["mcap"]["message_count"] == 100
     assert report["claim_boundary"]["learned_perception_pass"] is False
     assert report["cleaning_targets"]["complete"] is True
+
+
+def test_visual_demo_summary_fails_closed_for_unsealed_mcap(tmp_path):
+    bag = tmp_path / "visual_demo_bag"
+    bag.mkdir()
+    (bag / "metadata.yaml").write_text(
+        yaml.safe_dump({
+            "rosbag2_bagfile_information": {
+                "message_count": 1,
+                "duration": {"nanoseconds": 1},
+                "relative_file_paths": ["visual_demo_bag_0.mcap"],
+                "topics_with_message_count": [],
+            }
+        }),
+        encoding="utf-8",
+    )
+    (bag / "visual_demo_bag_0.mcap").write_bytes(b"partial")
+
+    report = assemble(
+        tmp_path,
+        coverage_exit_code=0,
+        mcap_required=True,
+        video_mode="off",
+        camera_follow_requested=False,
+        camera_follow_required=False,
+    )
+
+    assert report["mcap"]["metadata_present"] is True
+    assert report["mcap"]["sealed"] is False
+    assert report["checks"]["mcap_requirement_satisfied"] is False
+
+
+def test_visual_demo_summary_requires_finalization_evidence(tmp_path):
+    bag = tmp_path / "visual_demo_bag"
+    bag.mkdir()
+    _write_complete_mcap(bag / "visual_demo_bag_0.mcap")
+    (bag / "metadata.yaml").write_text(
+        yaml.safe_dump({
+            "rosbag2_bagfile_information": {
+                "message_count": 1,
+                "duration": {"nanoseconds": 1},
+                "relative_file_paths": ["visual_demo_bag_0.mcap"],
+                "topics_with_message_count": [],
+            }
+        }),
+        encoding="utf-8",
+    )
+
+    report = assemble(
+        tmp_path,
+        coverage_exit_code=0,
+        mcap_required=True,
+        video_mode="off",
+        camera_follow_requested=False,
+        camera_follow_required=False,
+    )
+
+    assert report["mcap"]["sealed"] is True
+    assert report["checks"]["mcap_requirement_satisfied"] is False
 
 
 def test_visual_demo_summary_fails_closed_when_targets_are_incomplete(tmp_path):
