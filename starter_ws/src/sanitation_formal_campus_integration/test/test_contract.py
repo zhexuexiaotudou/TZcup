@@ -101,6 +101,10 @@ def test_nav2_costmaps_are_materialized_from_formal_motion_profile():
         assert controller[name]["allow_reversing"] is True
         assert controller[name]["use_rotate_to_heading"] is False
 
+    behavior = config["behavior_server"]["ros__parameters"]
+    assert behavior["min_rotational_vel"] == pytest.approx(0.25)
+    assert behavior["max_rotational_vel"] == pytest.approx(0.35)
+
 
 def test_materializer_rejects_ackermann_or_legacy_small_footprint(tmp_path):
     profile = yaml.safe_load(MOTION_PROFILE.read_text(encoding="utf-8"))

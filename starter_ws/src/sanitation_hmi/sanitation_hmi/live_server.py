@@ -20,10 +20,11 @@ from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from rclpy.time import Time
 from sensor_msgs.msg import Image
-from std_msgs.msg import Bool, String
+from std_msgs.msg import Bool, Float64MultiArray, String
 from tf2_ros import Buffer, TransformException, TransformListener
 import yaml
 
+from .cleaning_motor_telemetry import decode_cleaning_motor_snapshot
 from .live_state import LiveMissionState
 from .ros_adapter import encode_image_png
 
@@ -233,6 +234,21 @@ class LiveDashboardNode(Node):
             20,
         )
         self.create_subscription(
+            String, "/safety/status_json", self._on_safety_status, 20
+        )
+        self.create_subscription(
+            String,
+            "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/status",
+            self._on_drivetrain_status,
+            20,
+        )
+        self.create_subscription(
+            Float64MultiArray,
+            "/model/tzcup_formal_sanitation_vehicle/cleaning_motors/telemetry_snapshot",
+            self._on_cleaning_motor_status,
+            20,
+        )
+        self.create_subscription(
             Image,
             front_camera_topic,
             self._on_front_camera,
@@ -344,6 +360,9 @@ class LiveDashboardNode(Node):
             pose.position.y,
             _yaw_from_quaternion(pose.orientation),
         )
+        self.state.update_measured_velocity(
+            message.twist.twist.linear.x, message.twist.twist.angular.z
+        )
 
     def _on_map(self, message: OccupancyGrid) -> None:
         info = message.info
@@ -394,6 +413,21 @@ class LiveDashboardNode(Node):
 
     def _on_saved_map_coverage(self, message: String) -> None:
         self.state.update_saved_map_coverage(message.data)
+
+    def _on_safety_status(self, message: String) -> None:
+        self.state.update_safety_status(message.data)
+
+    def _on_drivetrain_status(self, message: String) -> None:
+        self.state.update_drivetrain_status(message.data)
+
+    def _on_cleaning_motor_status(self, message: Float64MultiArray) -> None:
+        try:
+            value = decode_cleaning_motor_snapshot(message.data)
+            self.state.update_cleaning_motor_status(
+                json.dumps(value, sort_keys=True, separators=(",", ":"))
+            )
+        except (TypeError, ValueError) as exc:
+            self.state.update_live_input_error("cleaning_motor_status", str(exc))
 
     def _on_front_camera(self, message: Image) -> None:
         try:

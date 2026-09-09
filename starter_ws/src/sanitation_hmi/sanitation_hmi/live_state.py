@@ -128,9 +128,11 @@ class LiveMissionState:
         # Never turn a missing command/actuator topic into a plausible zero or
         # false operator state.  These values become observable only after a
         # fresh ROS message has actually arrived.
-        self._linear_speed: float | None = None
-        self._angular_speed: float | None = None
-        self._speed_source = "unavailable"
+        self._commanded_linear_speed: float | None = None
+        self._commanded_angular_speed: float | None = None
+        self._command_source = "unavailable"
+        self._measured_linear_speed: float | None = None
+        self._measured_angular_speed: float | None = None
         self._formal_base_command_seen = False
         self._brush_enabled: bool | None = None
         self._emergency_stop: bool | None = None
@@ -169,8 +171,14 @@ class LiveMissionState:
                 "error": None,
                 "statuses": [],
             },
-            "speed": {
+            "commanded_speed": {
                 "topic": "/cmd_vel",
+                "received_monotonic": None,
+                "error": None,
+                "value": None,
+            },
+            "measured_speed": {
+                "topic": "/odom",
                 "received_monotonic": None,
                 "error": None,
                 "value": None,
@@ -183,6 +191,24 @@ class LiveMissionState:
             },
             "emergency_stop": {
                 "topic": "/emergency_stop",
+                "received_monotonic": None,
+                "error": None,
+                "value": None,
+            },
+            "safety_status": {
+                "topic": "/safety/status_json",
+                "received_monotonic": None,
+                "error": None,
+                "value": None,
+            },
+            "drivetrain_status": {
+                "topic": "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/status",
+                "received_monotonic": None,
+                "error": None,
+                "value": None,
+            },
+            "cleaning_motor_status": {
+                "topic": "/model/tzcup_formal_sanitation_vehicle/cleaning_motors/telemetry_snapshot",
                 "received_monotonic": None,
                 "error": None,
                 "value": None,
@@ -360,20 +386,33 @@ class LiveMissionState:
             # observed.  `/cmd_vel` is retained for older demos/fallback, but
             # must not race the final product command stream in the display.
             if not self._formal_base_command_seen:
-                self._linear_speed = float(linear)
-                self._angular_speed = float(angular)
-                self._speed_source = "/cmd_vel"
-                self._update_live_input("speed", value=self._linear_speed)
+                self._commanded_linear_speed = float(linear)
+                self._commanded_angular_speed = float(angular)
+                self._command_source = "/cmd_vel"
+                self._update_live_input(
+                    "commanded_speed", value=self._commanded_linear_speed
+                )
 
     def update_formal_base_command_velocity(self, linear: float, angular: float) -> None:
-        """Use the final drivetrain command stream as the speed-display source."""
+        """Record the safety-manager command; it is not measured velocity."""
         with self._lock:
-            self._linear_speed = float(linear)
-            self._angular_speed = float(angular)
-            self._speed_source = "/base_controller/cmd_vel"
+            self._commanded_linear_speed = float(linear)
+            self._commanded_angular_speed = float(angular)
+            self._command_source = "/base_controller/cmd_vel"
             self._formal_base_command_seen = True
-            self._live_inputs["speed"]["topic"] = "/base_controller/cmd_vel"
-            self._update_live_input("speed", value=self._linear_speed)
+            self._live_inputs["commanded_speed"]["topic"] = "/base_controller/cmd_vel"
+            self._update_live_input(
+                "commanded_speed", value=self._commanded_linear_speed
+            )
+
+    def update_measured_velocity(self, linear: float, angular: float) -> None:
+        """Record the odometry twist separately from any controller command."""
+        with self._lock:
+            self._measured_linear_speed = float(linear)
+            self._measured_angular_speed = float(angular)
+            self._update_live_input(
+                "measured_speed", value=self._measured_linear_speed
+            )
 
     def update_brush(self, enabled: bool) -> None:
         with self._lock:
@@ -445,6 +484,18 @@ class LiveMissionState:
     def update_saved_map_coverage(self, value: str) -> None:
         with self._lock:
             self._update_live_input("saved_map_coverage", value=str(value))
+
+    def update_safety_status(self, value: str) -> None:
+        with self._lock:
+            self._update_live_input("safety_status", value=str(value))
+
+    def update_drivetrain_status(self, value: str) -> None:
+        with self._lock:
+            self._update_live_input("drivetrain_status", value=str(value))
+
+    def update_cleaning_motor_status(self, value: str) -> None:
+        with self._lock:
+            self._update_live_input("cleaning_motor_status", value=str(value))
 
     def front_camera_png(self) -> bytes | None:
         """Return a frame only while its actual ROS source remains fresh."""
@@ -649,15 +700,23 @@ class LiveMissionState:
                     "estimated_pose_map": deepcopy(self._estimated_pose),
                     "odometry_preview_pose_odom": deepcopy(self._odometry_preview_pose),
                     "evaluation_only_pose_map": deepcopy(self._evaluation_pose),
-                    "linear_speed_m_s": (
-                        round(self._linear_speed, 4)
-                        if self._linear_speed is not None else None
+                    "commanded_linear_speed_m_s": (
+                        round(self._commanded_linear_speed, 4)
+                        if self._commanded_linear_speed is not None else None
                     ),
-                    "angular_speed_rad_s": (
-                        round(self._angular_speed, 4)
-                        if self._angular_speed is not None else None
+                    "commanded_angular_speed_rad_s": (
+                        round(self._commanded_angular_speed, 4)
+                        if self._commanded_angular_speed is not None else None
                     ),
-                    "speed_source": self._speed_source,
+                    "command_source": self._command_source,
+                    "measured_linear_speed_m_s": (
+                        round(self._measured_linear_speed, 4)
+                        if self._measured_linear_speed is not None else None
+                    ),
+                    "measured_angular_speed_rad_s": (
+                        round(self._measured_angular_speed, 4)
+                        if self._measured_angular_speed is not None else None
+                    ),
                 },
                 "cleaning": {
                     "brush_enabled": self._brush_enabled,

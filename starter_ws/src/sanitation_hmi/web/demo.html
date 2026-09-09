@@ -182,6 +182,9 @@
             <div><label>地图质量门</label><strong id="mapping-map-ready">未观测</strong></div>
             <div><label>前沿探索器</label><strong id="mapping-explorer">未观测</strong></div>
             <div><label>已存图清扫执行器</label><strong id="saved-map-coverage">未观测</strong></div>
+            <div><label>安全许可</label><strong id="safety-status">未观测</strong></div>
+            <div><label>A300 底盘状态</label><strong id="drivetrain-status">未观测</strong></div>
+            <div><label>清扫电机状态</label><strong id="cleaning-motor-status">未观测</strong></div>
             <div><label>SLAM 地图观测</label><strong id="map-observation">未观测</strong></div>
             <div><label>地图位姿观测</label><strong id="map-pose-observation">未观测</strong></div>
           </div>
@@ -190,8 +193,12 @@
 
         <section class="metrics">
           <div class="metric">
-            <label>线速度</label>
-            <strong id="speed" class="warn">未观测</strong>
+            <label>命令线速度</label>
+            <strong id="commanded-speed" class="warn">未观测</strong>
+          </div>
+          <div class="metric">
+            <label>实测线速度</label>
+            <strong id="measured-speed" class="warn">未观测</strong>
           </div>
           <div class="metric">
             <label id="pose-label">地图位姿</label>
@@ -394,15 +401,14 @@
         : progress.current_component
           ? `组件 ${progress.active_component_number}/${progress.expected_components} · ${progress.current_component}`
           : `等待组件 · 0/${progress.expected_components || "--"}`;
-      const speed = data.live_inputs?.speed || {};
-      const speedNode = document.querySelector("#speed");
-      if (speed.status === "live" && typeof data.vehicle?.linear_speed_m_s === "number") {
-        speedNode.innerHTML = `${data.vehicle.linear_speed_m_s.toFixed(2)} <small>m/s · ${data.vehicle.speed_source}</small>`;
-        speedNode.className = "ok";
-      } else {
-        speedNode.textContent = sourceStatusLabel(speed.status);
-        speedNode.className = "warn";
-      }
+      renderSpeed(
+        "#commanded-speed", data.live_inputs?.commanded_speed || {},
+        data.vehicle?.commanded_linear_speed_m_s, data.vehicle?.command_source,
+      );
+      renderSpeed(
+        "#measured-speed", data.live_inputs?.measured_speed || {},
+        data.vehicle?.measured_linear_speed_m_s, "/odom twist",
+      );
       const mapPose = data.vehicle?.estimated_pose_map;
       const odomPreview = data.vehicle?.odometry_preview_pose_odom;
       document.querySelector("#pose-label").textContent = mapPose ? "地图位姿" : odomPreview ? "Odom 位姿（预演）" : "地图位姿";
@@ -428,7 +434,7 @@
       events.innerHTML = [...(data.events || [])].reverse().map(event =>
         `<li><time>${duration(event.elapsed_sec)}</time><span>${event.label}</span></li>`
       ).join("");
-      const coreInputs = ["mapping_lifecycle", "mapping_map_ready", "mapping_explorer", "saved_map_coverage"];
+      const coreInputs = ["mapping_lifecycle", "mapping_map_ready", "mapping_explorer", "saved_map_coverage", "safety_status", "drivetrain_status", "cleaning_motor_status"];
       const freshCore = coreInputs.filter(name => data.live_inputs?.[name]?.status === "live").length;
       const observedCore = coreInputs.filter(name => ["live", "observed", "retained"].includes(data.live_inputs?.[name]?.status)).length;
       document.querySelector("#dot").classList.toggle("live", freshCore > 0);
@@ -454,6 +460,17 @@
       acceptance.className = data.formal_product_acceptance === true ? "ok" : data.formal_product_acceptance === false ? "danger" : "";
       document.querySelector("#final-demo-map-sha").textContent = data.map_sha256 || (live || status === "stale" ? "尚未报告" : "数据不可用");
       document.querySelector("#final-demo-reason").textContent = data.reason || `${data.source_topic || "/final_demo/state"} · ${data.age_sec === null || data.age_sec === undefined ? "等待首条消息" : `${data.age_sec.toFixed(1)} 秒前更新`}`;
+    }
+
+    function renderSpeed(selector, source, value, label) {
+      const node = document.querySelector(selector);
+      if (source.status === "live" && typeof value === "number") {
+        node.innerHTML = `${value.toFixed(2)} <small>m/s · ${label}</small>`;
+        node.className = "ok";
+      } else {
+        node.textContent = sourceStatusLabel(source.status);
+        node.className = "warn";
+      }
     }
 
     function sourceStatusLabel(status) {
@@ -506,6 +523,9 @@
         ["mapping_map_ready", "#mapping-map-ready"],
         ["mapping_explorer", "#mapping-explorer"],
         ["saved_map_coverage", "#saved-map-coverage"],
+        ["safety_status", "#safety-status"],
+        ["drivetrain_status", "#drivetrain-status"],
+        ["cleaning_motor_status", "#cleaning-motor-status"],
       ];
       const liveRuntime = runtimeSources.filter(([name]) => values[name]?.status === "live").length;
       const observedRuntime = runtimeSources.filter(([name]) => ["live", "observed", "retained"].includes(values[name]?.status)).length;
@@ -517,7 +537,16 @@
         if (["live", "observed", "retained"].includes(source.status)) {
           const value = runtimeValue(name, source.value);
           node.textContent = value || `${sourceStatusLabel(source.status)}（未报告值）`;
-          node.className = name === "mapping_map_ready" && !source.value ? "warn" : source.status === "live" ? "ok" : "";
+          let dangerous = false;
+          if (name === "cleaning_motor_status" && typeof source.value === "string") {
+            try {
+              const motor = JSON.parse(source.value);
+              dangerous = motor.fault_active === true || motor.physics_update_stale === true;
+            } catch (_error) {
+              dangerous = true;
+            }
+          }
+          node.className = dangerous ? "danger" : name === "mapping_map_ready" && !source.value ? "warn" : source.status === "live" ? "ok" : "";
         } else {
           node.textContent = sourceStatusLabel(source.status);
           node.className = "warn";
@@ -546,6 +575,18 @@
       if (typeof value !== "string") return value;
       try {
         const parsed = JSON.parse(value);
+        if (name === "safety_status") {
+          return `${parsed.state || "未知"} · permit=${parsed.safety_inputs_permit_actuators ?? "未报告"}`;
+        }
+        if (name === "drivetrain_status") {
+          return `permit=${parsed.drive_permitted ?? "未报告"} · ${parsed.stop_reason || "未知"} · v=${parsed.odom_twist?.linear_x_mps ?? "未报告"}`;
+        }
+        if (name === "cleaning_motor_status") {
+          const faults = Array.isArray(parsed.motors)
+            ? parsed.motors.filter(motor => motor.fault && motor.fault !== "none").map(motor => `${motor.name}:${motor.fault}`)
+            : [];
+          return `fault=${parsed.fault_active ?? "未报告"} · fresh=${parsed.command_fresh ?? "未报告"}${faults.length ? ` · ${faults.join(",")}` : ""}`;
+        }
         return parsed.status || parsed.state || value;
       } catch (_error) {
         return value;

@@ -19,6 +19,10 @@ forward_speed_mps="${FORMAL_VEHICLE_MOBILITY_FORWARD_SPEED_MPS:-0.25}"
 forward_duration_s="${FORMAL_VEHICLE_MOBILITY_FORWARD_DURATION_S:-4.0}"
 safety_max_linear_velocity="${FORMAL_VEHICLE_MOBILITY_SAFETY_MAX_LINEAR_VELOCITY:-0.45}"
 exercise_estop="${FORMAL_VEHICLE_MOBILITY_EXERCISE_ESTOP:-0}"
+exercise_rotation="${FORMAL_VEHICLE_MOBILITY_EXERCISE_ROTATION:-0}"
+rotation_angular_speed_rad_s="${FORMAL_VEHICLE_MOBILITY_ROTATION_ANGULAR_SPEED_RAD_S:-0.25}"
+rotation_duration_s="${FORMAL_VEHICLE_MOBILITY_ROTATION_DURATION_S:-4.0}"
+rotation_minimum_yaw_rad="${FORMAL_VEHICLE_MOBILITY_ROTATION_MINIMUM_YAW_RAD:-0.20}"
 if [[ "${FORMAL_DRY_SPEED_REQUALIFICATION:-}" == "1" ]]; then
   [[ "${FORMAL_DRY_SPEED_REQUALIFICATION:-}" == "1" && -n "${FORMAL_DRY_SPEED_REQUALIFICATION_MARKER:-}" && -n "${FORMAL_DRY_SPEED_REQUALIFICATION_ROOT:-}" ]] || {
     echo "speed requalification requires the run-scoped opt-in marker" >&2; exit 2;
@@ -103,6 +107,17 @@ if [[ "${exercise_estop}" == "1" ]]; then
   probe_args+=(--exercise-estop)
 elif [[ "${exercise_estop}" != "0" ]]; then
   echo "FORMAL_VEHICLE_MOBILITY_EXERCISE_ESTOP must be 0 or 1" >&2
+  exit 2
+fi
+if [[ "${exercise_rotation}" == "1" ]]; then
+  probe_args+=(
+    --exercise-rotation
+    --rotation-angular-speed "${rotation_angular_speed_rad_s}"
+    --rotation-duration "${rotation_duration_s}"
+    --rotation-minimum-yaw "${rotation_minimum_yaw_rad}"
+  )
+elif [[ "${exercise_rotation}" != "0" ]]; then
+  echo "FORMAL_VEHICLE_MOBILITY_EXERCISE_ROTATION must be 0 or 1" >&2
   exit 2
 fi
 

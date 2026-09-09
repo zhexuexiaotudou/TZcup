@@ -18,12 +18,13 @@ from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from rclpy.parameter import Parameter
 from sensor_msgs.msg import JointState
-from std_msgs.msg import Bool, Empty
+from std_msgs.msg import Bool, Empty, String
 
 from formal_vehicle_mobility_metrics import (
     WHEEL_JOINTS,
     evaluate_estop_stop,
     evaluate_motion,
+    evaluate_rotation,
     quaternion_yaw,
 )
 from formal_runtime_gate_binding import load_binding
@@ -32,6 +33,7 @@ from gazebo_ground_truth import read_named_model_pose
 MODEL_NAME = "tzcup_formal_sanitation_vehicle"
 DEFAULT_CLOCK_STALL_TIMEOUT_S = 20.0
 DEFAULT_PHASE_HARD_TIMEOUT_S = 600.0
+MAX_ROTATION_ANGULAR_SPEED_RAD_S = 0.35
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SNAPSHOT = ROOT / "reports/engineering/formal_vehicle_snapshot_manifest.json"
 DEFAULT_SESSION = ROOT / "artifacts/formal_final_acceptance_session.json"
@@ -162,6 +164,13 @@ class MobilityProbe(Node):
         self.create_subscription(
             DiagnosticArray, "/safety/status", self._safety_status, 20
         )
+        self.create_subscription(String, "/safety/status_json", self._safety_status_json, 20)
+        self.create_subscription(
+            String,
+            "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/status",
+            self._plant_status,
+            20,
+        )
         self.create_subscription(Bool, "/emergency_stop", self._estop_feedback, 20)
         self.controller_client = self.create_client(ListControllers, "/controller_manager/list_controllers")
         self.latest_odom: dict[str, Any] | None = None
@@ -169,14 +178,23 @@ class MobilityProbe(Node):
         self.odom_samples = 0
         self.joint_samples = 0
         self.actuator_enabled_samples = 0
+        self.actuator_enable_trace: list[dict[str, int | bool]] = []
         self.latest_safety_status: dict[str, str] = {}
         self.safety_status_trace: list[dict[str, Any]] = []
+        self.safety_status_json_trace: list[dict[str, Any]] = []
+        self.plant_status_trace: list[dict[str, Any]] = []
         self.estop_feedback_trace: list[dict[str, int | bool]] = []
         self.final_command_trace: list[dict[str, float | int]] = []
+        self.odom_trace: list[dict[str, Any]] = []
+        self.wheel_trace: list[dict[str, Any]] = []
 
     def _actuator_enabled(self, message: Bool) -> None:
         if message.data:
             self.actuator_enabled_samples += 1
+        self.actuator_enable_trace.append(
+            {"sim_time_ns": self.get_clock().now().nanoseconds, "enabled": bool(message.data)}
+        )
+        del self.actuator_enable_trace[:-5000]
 
     def _safety_status(self, message: DiagnosticArray) -> None:
         for status in message.status:
@@ -188,6 +206,22 @@ class MobilityProbe(Node):
                 {"sim_time_ns": self.get_clock().now().nanoseconds, "values": values}
             )
         del self.safety_status_trace[:-5000]
+
+    def _record_json_status(self, message: String, trace: list[dict[str, Any]]) -> None:
+        try:
+            payload = json.loads(message.data)
+        except json.JSONDecodeError:
+            payload = {"parse_error": True, "raw": message.data}
+        if not isinstance(payload, dict):
+            payload = {"parse_error": True, "raw": message.data}
+        trace.append({"sim_time_ns": self.get_clock().now().nanoseconds, "payload": payload})
+        del trace[:-5000]
+
+    def _safety_status_json(self, message: String) -> None:
+        self._record_json_status(message, self.safety_status_json_trace)
+
+    def _plant_status(self, message: String) -> None:
+        self._record_json_status(message, self.plant_status_trace)
 
     def _estop_feedback(self, message: Bool) -> None:
         self.estop_feedback_trace.append(
@@ -207,6 +241,10 @@ class MobilityProbe(Node):
             "linear_velocity_mps": {"x": twist.linear.x, "y": twist.linear.y},
             "angular_velocity_rad_s": twist.angular.z,
         }
+        self.odom_trace.append(
+            {"sim_time_ns": self.get_clock().now().nanoseconds, **self.latest_odom}
+        )
+        del self.odom_trace[:-5000]
         self.odom_samples += 1
 
     def _joints(self, message: JointState) -> None:
@@ -217,6 +255,10 @@ class MobilityProbe(Node):
                 "positions": {name: float(positions[name]) for name in WHEEL_JOINTS},
                 "velocities": {name: float(velocities[name]) for name in WHEEL_JOINTS},
             }
+            self.wheel_trace.append(
+                {"sim_time_ns": self.get_clock().now().nanoseconds, **self.latest_wheels}
+            )
+            del self.wheel_trace[:-5000]
             self.joint_samples += 1
 
     def _final_command(self, message: TwistStamped) -> None:
@@ -231,19 +273,23 @@ class MobilityProbe(Node):
         # without letting an unexpected long run consume unbounded memory.
         del self.final_command_trace[:-5000]
 
-    def publish_velocity(self, speed: float, *, estop_active: bool = False) -> None:
+    def publish_velocity(
+        self, speed: float, angular_speed: float = 0.0, *, estop_active: bool = False
+    ) -> None:
         self.main_power.publish(Bool(data=True))
         self.estop.publish(Bool(data=estop_active))
         self.estop_reset.publish(Bool(data=not estop_active))
         self.heartbeat.publish(Empty())
         command = Twist()
         command.linear.x = speed
+        command.angular.z = angular_speed
         self.command.publish(command)
 
     def spin_for(
         self,
         duration: float,
         speed: float,
+        angular_speed: float = 0.0,
         rate_hz: float = 20.0,
         estop_active: bool = False,
         clock_stall_timeout_s: float = DEFAULT_CLOCK_STALL_TIMEOUT_S,
@@ -265,7 +311,7 @@ class MobilityProbe(Node):
         simulated = 0.0
         while simulated < duration:
             watchdog.observe(self.get_clock().now().nanoseconds, time.monotonic())
-            self.publish_velocity(speed, estop_active=estop_active)
+            self.publish_velocity(speed, angular_speed, estop_active=estop_active)
             rclpy.spin_once(self, timeout_sec=period)
             sim_now = self.get_clock().now().nanoseconds
             wall_now = time.monotonic()
@@ -290,6 +336,11 @@ class MobilityProbe(Node):
             json.loads(json.dumps(self.latest_odom)),
             json.loads(json.dumps(self.latest_wheels)),
         )
+
+    def raw_snapshot(self) -> tuple[dict[str, Any], dict[str, dict[str, float]]]:
+        if self.latest_odom is None or self.latest_wheels is None:
+            raise RuntimeError("raw mobility evidence streams are incomplete")
+        return json.loads(json.dumps(self.latest_odom)), json.loads(json.dumps(self.latest_wheels))
 
     def final_command_writer_evidence(self) -> dict[str, Any]:
         writers = sorted(
@@ -354,11 +405,20 @@ def run(
     phase_hard_timeout: float = DEFAULT_PHASE_HARD_TIMEOUT_S,
     safety_max_linear_velocity: float = 0.45,
     exercise_estop: bool = False,
+    exercise_rotation: bool = False,
+    rotation_angular_speed: float = 0.25,
+    rotation_duration: float = 4.0,
+    rotation_minimum_yaw: float = 0.20,
 ) -> dict[str, Any]:
     if forward_speed <= 0.0 or forward_duration <= 0.0:
         raise ValueError("forward speed and duration must be positive")
     if forward_speed > safety_max_linear_velocity:
         raise ValueError("forward speed exceeds the safety envelope")
+    if exercise_rotation:
+        if not 0.0 < abs(rotation_angular_speed) <= MAX_ROTATION_ANGULAR_SPEED_RAD_S:
+            raise ValueError("rotation angular speed exceeds the bounded safety envelope")
+        if rotation_duration <= 0.0 or rotation_minimum_yaw <= 0.0:
+            raise ValueError("rotation duration and minimum yaw must be positive")
     rclpy.init()
     node = MobilityProbe()
     try:
@@ -385,6 +445,76 @@ def run(
             hard_wall_timeout_s=phase_hard_timeout,
         )
         ground_stopped, odom_stopped, wheels_stopped = node.snapshot()
+        rotation_evaluation: dict[str, Any] = {"checks": {}, "metrics": {}, "passed": True}
+        rotation_command: dict[str, Any] = {"exercise_rotation": False}
+        raw_rotation: dict[str, Any] | None = None
+        if exercise_rotation:
+            # This phase deliberately excludes Gazebo world pose: it proves the
+            # product command-to-plant path from raw telemetry only.
+            trace_start = {
+                "actuator": len(node.actuator_enable_trace),
+                "safety_json": len(node.safety_status_json_trace),
+                "plant": len(node.plant_status_trace),
+                "command": len(node.final_command_trace),
+                "odom": len(node.odom_trace),
+                "wheels": len(node.wheel_trace),
+            }
+            odom_rotation_start, wheels_rotation_start = node.raw_snapshot()
+            rotation_timing = node.spin_for(
+                rotation_duration,
+                0.0,
+                rotation_angular_speed,
+                clock_stall_timeout_s=clock_stall_timeout,
+                hard_wall_timeout_s=phase_hard_timeout,
+            )
+            odom_rotation_end, wheels_rotation_end = node.raw_snapshot()
+            rotation_zero_timing = node.spin_for(
+                3.0,
+                0.0,
+                clock_stall_timeout_s=clock_stall_timeout,
+                hard_wall_timeout_s=phase_hard_timeout,
+            )
+            odom_rotation_stopped, wheels_rotation_stopped = node.raw_snapshot()
+            raw_rotation = {
+                "actuator_enable_trace": [
+                    bool(sample["enabled"])
+                    for sample in node.actuator_enable_trace[trace_start["actuator"]:]
+                ],
+                "safety_status_json_trace": node.safety_status_json_trace[
+                    trace_start["safety_json"]:
+                ],
+                "plant_status_trace": node.plant_status_trace[trace_start["plant"]:],
+                "final_command_trace": node.final_command_trace[trace_start["command"]:],
+                "plant_odom": {
+                    "start": odom_rotation_start["pose"],
+                    "rotation_end": odom_rotation_end["pose"],
+                    "stopped_end": odom_rotation_stopped["pose"],
+                    "rotation_trace": node.odom_trace[trace_start["odom"]:],
+                    "stopped_angular_velocity_rad_s": odom_rotation_stopped[
+                        "angular_velocity_rad_s"
+                    ],
+                },
+                "wheel_state": {
+                    "start_positions_rad": wheels_rotation_start["positions"],
+                    "rotation_end_positions_rad": wheels_rotation_end["positions"],
+                    "stopped_velocities_rad_s": wheels_rotation_stopped["velocities"],
+                    "joint_state_trace": node.wheel_trace[trace_start["wheels"]:],
+                },
+            }
+            rotation_evaluation = evaluate_rotation(
+                raw_rotation,
+                commanded_angular_speed_rad_s=rotation_angular_speed,
+                minimum_yaw_rad=rotation_minimum_yaw,
+            )
+            rotation_command = {
+                "exercise_rotation": True,
+                "angular_speed_rad_s": rotation_angular_speed,
+                "duration_s": rotation_duration,
+                "minimum_yaw_rad": rotation_minimum_yaw,
+                "timing": rotation_timing,
+                "zero_timing": rotation_zero_timing,
+                "telemetry_only": True,
+            }
         estop_evaluation: dict[str, Any] = {"checks": {}, "metrics": {}, "passed": True}
         estop_command: dict[str, Any] = {"exercise_estop": False}
         if exercise_estop:
@@ -459,6 +589,8 @@ def run(
         }
         if exercise_estop:
             raw["estop"] = raw_estop
+        if raw_rotation is not None:
+            raw["rotation"] = raw_rotation
         evaluation = evaluate_motion(
             raw, expected_forward_distance_m=forward_speed * forward_duration
         )
@@ -468,10 +600,20 @@ def run(
             )
         evaluation["checks"].update(estop_evaluation["checks"])
         evaluation["metrics"].update(estop_evaluation["metrics"])
+        evaluation["checks"].update(rotation_evaluation["checks"])
+        evaluation["metrics"].update(rotation_evaluation["metrics"])
         evaluation["passed"] = all(evaluation["checks"].values())
         report = {
             "report_id": "tzcup_formal_a300_drivetrain_runtime_v1",
-            "status": "FORMAL_A300_DRIVETRAIN_FORWARD_STOP_RUNTIME_PASSED" if evaluation["passed"] else "FORMAL_A300_DRIVETRAIN_FORWARD_STOP_RUNTIME_FAILED",
+            "status": (
+                "FORMAL_A300_DRIVETRAIN_FORWARD_ROTATION_STOP_RUNTIME_PASSED"
+                if exercise_rotation and evaluation["passed"]
+                else "FORMAL_A300_DRIVETRAIN_FORWARD_ROTATION_STOP_RUNTIME_FAILED"
+                if exercise_rotation
+                else "FORMAL_A300_DRIVETRAIN_FORWARD_STOP_RUNTIME_PASSED"
+                if evaluation["passed"]
+                else "FORMAL_A300_DRIVETRAIN_FORWARD_STOP_RUNTIME_FAILED"
+            ),
             "command": {
                 "product_input_topic": "/cmd_vel_gate",
                 "safety_output_topic": "/base_controller/cmd_vel",
@@ -485,6 +627,7 @@ def run(
                 "forward_timing": forward_timing,
                 "zero_timing": stopped_timing,
                 "estop": estop_command,
+                "rotation": rotation_command,
             },
             "sample_counts": {
                 "gazebo_ground_truth_pose": 3,
@@ -496,7 +639,7 @@ def run(
             "runtime_gate_binding": runtime_gate_binding,
             "raw_evidence": raw,
             **evaluation,
-            "claim_boundary": "This proves commanded straight-ahead physical motion and stopping in Gazebo through the product Twist gate, sole whole-vehicle safety writer, typed A300 adapter, effort plant, independent world pose, raw plant odometry and all four wheel joints. It does not prove path tracking, obstacle avoidance, hardware-correlated traction or real-vehicle braking distance.",
+            "claim_boundary": "Forward evidence includes independent Gazebo world pose. When rotation is enabled, its gate uses only product-path safety status, plant status, joint states and raw plant odometry; it does not use world truth. Neither gate proves path tracking, obstacle avoidance, hardware-correlated traction or real-vehicle braking distance.",
         }
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -523,6 +666,10 @@ def main() -> None:
     parser.add_argument("--forward-duration", type=float, default=4.0)
     parser.add_argument("--safety-max-linear-velocity", type=float, default=0.45)
     parser.add_argument("--exercise-estop", action="store_true")
+    parser.add_argument("--exercise-rotation", action="store_true")
+    parser.add_argument("--rotation-angular-speed", type=float, default=0.25)
+    parser.add_argument("--rotation-duration", type=float, default=4.0)
+    parser.add_argument("--rotation-minimum-yaw", type=float, default=0.20)
     parser.add_argument(
         "--clock-stall-timeout",
         type=float,
@@ -551,6 +698,10 @@ def main() -> None:
         args.phase_hard_timeout,
         args.safety_max_linear_velocity,
         args.exercise_estop,
+        args.exercise_rotation,
+        args.rotation_angular_speed,
+        args.rotation_duration,
+        args.rotation_minimum_yaw,
     )
 
 

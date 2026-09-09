@@ -304,7 +304,11 @@ behavior_server:
     transform_tolerance: 0.2
     simulate_ahead_time: 2.0
     max_rotational_vel: 0.35
-    min_rotational_vel: 0.2
+    # The 160 kg A300 DART plant needs the validated 0.25 rad/s breakaway
+    # command to overcome static skid-steer contact without exceeding the
+    # 60 A continuous battery boundary.  At 0.20 rad/s the proportional
+    # counter-rotation plant remains below breakaway torque and Spin times out.
+    min_rotational_vel: 0.25
     rotational_acc_lim: 1.8
 
 waypoint_follower:

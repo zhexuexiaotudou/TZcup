@@ -160,9 +160,10 @@ def test_formal_odom_preview_and_base_command_are_distinct_from_map_and_truth():
 
     assert snapshot["vehicle"]["estimated_pose_map"] is None
     assert snapshot["vehicle"]["odometry_preview_pose_odom"] == [-97.5, 0.2, 0.05]
-    assert snapshot["vehicle"]["linear_speed_m_s"] == 0.4
-    assert snapshot["vehicle"]["angular_speed_rad_s"] == -0.1
-    assert snapshot["vehicle"]["speed_source"] == "/base_controller/cmd_vel"
+    assert snapshot["vehicle"]["commanded_linear_speed_m_s"] == 0.4
+    assert snapshot["vehicle"]["commanded_angular_speed_rad_s"] == -0.1
+    assert snapshot["vehicle"]["command_source"] == "/base_controller/cmd_vel"
+    assert snapshot["vehicle"]["measured_linear_speed_m_s"] is None
     assert snapshot["visualization"]["odometry_preview_trajectory_odom"] == [[-97.5, 0.2]]
     assert snapshot["claim_boundary"]["odometry_preview_usage"] == (
         "live_odom_frame_preview_not_map_localization_or_truth"
@@ -213,10 +214,12 @@ def test_operator_values_are_unknown_until_a_fresh_source_message_arrives():
     state = LiveMissionState(clock=clock)
 
     initial = state.snapshot()
-    assert initial["vehicle"]["linear_speed_m_s"] is None
+    assert initial["vehicle"]["commanded_linear_speed_m_s"] is None
+    assert initial["vehicle"]["measured_linear_speed_m_s"] is None
     assert initial["cleaning"]["brush_enabled"] is None
     assert initial["cleaning"]["emergency_stop"] is None
-    assert initial["live_inputs"]["speed"]["status"] == "unavailable"
+    assert initial["live_inputs"]["commanded_speed"]["status"] == "unavailable"
+    assert initial["live_inputs"]["measured_speed"]["status"] == "unavailable"
     assert initial["live_inputs"]["brush"]["status"] == "unavailable"
     assert initial["live_inputs"]["emergency_stop"]["status"] == "unavailable"
 
@@ -224,20 +227,50 @@ def test_operator_values_are_unknown_until_a_fresh_source_message_arrives():
     state.update_brush(False)
     state.update_emergency_stop(False)
     live = state.snapshot()
-    assert live["vehicle"]["linear_speed_m_s"] == 0.4
+    assert live["vehicle"]["commanded_linear_speed_m_s"] == 0.4
     assert live["cleaning"]["brush_enabled"] is False
     assert live["cleaning"]["emergency_stop"] is False
     assert all(
         live["live_inputs"][name]["status"] == "live"
-        for name in ("speed", "brush", "emergency_stop")
+        for name in ("commanded_speed", "brush", "emergency_stop")
     )
 
     clock.now = 5.1
     stale = state.snapshot()
     assert all(
         stale["live_inputs"][name]["status"] == "stale"
-        for name in ("speed", "brush", "emergency_stop")
+        for name in ("commanded_speed", "brush", "emergency_stop")
     )
+
+
+def test_odom_twist_is_measured_separately_from_command_and_live_status_json():
+    clock = FakeClock()
+    state = LiveMissionState(clock=clock)
+    state.update_formal_base_command_velocity(0.4, -0.1)
+    state.update_measured_velocity(0.03, 0.02)
+    state.update_safety_status('{"state":"SAFE","safety_inputs_permit_actuators":true}')
+    state.update_drivetrain_status('{"drive_permitted":true,"stop_reason":"none"}')
+    state.update_cleaning_motor_status('{"fault_active":false,"command_fresh":true}')
+
+    snapshot = state.snapshot()
+
+    assert snapshot["vehicle"]["commanded_linear_speed_m_s"] == 0.4
+    assert snapshot["vehicle"]["measured_linear_speed_m_s"] == 0.03
+    assert snapshot["vehicle"]["measured_angular_speed_rad_s"] == 0.02
+    assert snapshot["live_inputs"]["commanded_speed"]["topic"] == "/base_controller/cmd_vel"
+    assert snapshot["live_inputs"]["measured_speed"]["topic"] == "/odom"
+    assert snapshot["live_inputs"]["safety_status"]["status"] == "live"
+    assert snapshot["live_inputs"]["drivetrain_status"]["status"] == "live"
+    assert snapshot["live_inputs"]["cleaning_motor_status"]["status"] == "live"
+    assert snapshot["live_inputs"]["cleaning_motor_status"]["topic"].endswith(
+        "/cleaning_motors/telemetry_snapshot"
+    )
+
+    clock.now = 5.1
+    stale = state.snapshot()["live_inputs"]
+    assert stale["measured_speed"]["status"] == "stale"
+    assert stale["safety_status"]["status"] == "stale"
+    assert stale["drivetrain_status"]["status"] == "stale"
 
 
 def test_mapping_and_saved_map_runtime_sources_keep_observed_and_retained_semantics():

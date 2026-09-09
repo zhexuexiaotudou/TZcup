@@ -13,6 +13,9 @@ def test_runner_launches_real_formal_vehicle_and_runtime_probe() -> None:
     assert 'FORMAL_VEHICLE_MOBILITY_FORWARD_DURATION_S:-4.0' in source
     assert 'FORMAL_VEHICLE_MOBILITY_SAFETY_MAX_LINEAR_VELOCITY:-0.45' in source
     assert 'FORMAL_VEHICLE_MOBILITY_EXERCISE_ESTOP:-0' in source
+    assert 'FORMAL_VEHICLE_MOBILITY_EXERCISE_ROTATION:-0' in source
+    assert 'FORMAL_VEHICLE_MOBILITY_ROTATION_ANGULAR_SPEED_RAD_S:-0.25' in source
+    assert "--exercise-rotation" in source
     assert "--exercise-estop" in source
     assert 'ros2 param set /whole_vehicle_safety_manager max_linear_velocity' in source
     assert '"${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 launch' in source
@@ -49,6 +52,12 @@ def test_probe_reads_named_ground_truth_from_gazebo_transport() -> None:
     assert 'TwistStamped, "/base_controller/cmd_vel"' in source
     assert 'Bool, "/emergency_stop"' in source
     assert "final_command_writer_evidence" in source
+    assert 'String, "/safety/status_json"' in source
+    assert 'a300_drivetrain/status' in source
+    assert "evaluate_rotation" in source
+    assert "raw_snapshot" in source
+    assert "telemetry_only" in source
+    assert "joint_state_trace" in source
 
 
 def test_speed_qualification_runner_is_serial_and_simulation_only() -> None:

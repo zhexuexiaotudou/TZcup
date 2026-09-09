@@ -61,10 +61,12 @@ def test_final_dashboard_binds_only_live_camera_and_product_perception_inputs():
 
 
 def test_live_dashboard_does_not_present_default_values_or_evaluation_as_live_vehicle_state():
+    source = (ROOT / "sanitation_hmi/live_server.py").read_text(encoding="utf-8")
     state = (ROOT / "sanitation_hmi/live_state.py").read_text(encoding="utf-8")
     demo = (ROOT / "web/demo.html").read_text(encoding="utf-8")
 
-    assert "self._linear_speed: float | None = None" in state
+    assert "self._commanded_linear_speed: float | None = None" in state
+    assert "self._measured_linear_speed: float | None = None" in state
     assert "self._brush_enabled: bool | None = None" in state
     assert "self._emergency_stop: bool | None = None" in state
     assert 'return data?.vehicle?.estimated_pose_map || data?.vehicle?.odometry_preview_pose_odom;' in demo
@@ -72,6 +74,25 @@ def test_live_dashboard_does_not_present_default_values_or_evaluation_as_live_ve
     assert "HTTP 可达 · ROS 核心" in demo
     assert "sourceStatusLabel(brushInput.status)" in demo
     assert "sourceStatusLabel(safetyInput.status)" in demo
+    assert '"/base_controller/cmd_vel"' in source
+    assert "update_measured_velocity" in source
+    assert "message.twist.twist.linear.x" in source
+    assert '"/safety/status_json"' in source
+    assert 'a300_drivetrain/status' in source
+    assert 'cleaning_motors/telemetry_snapshot' in source
+    assert "Float64MultiArray" in source
+    assert "decode_cleaning_motor_snapshot" in source
+    assert "update_safety_status" in state
+    assert "update_drivetrain_status" in state
+    assert "update_cleaning_motor_status" in state
+    assert "cleaning_motor_status" in state
+    assert 'id="commanded-speed"' in demo
+    assert 'id="measured-speed"' in demo
+    assert 'id="safety-status"' in demo
+    assert 'id="drivetrain-status"' in demo
+    assert 'id="cleaning-motor-status"' in demo
+    assert "motor.fault_active === true || motor.physics_update_stale === true" in demo
+    assert "命令线速度" in demo and "实测线速度" in demo
 
 
 def test_mapping_statuses_keep_retained_or_observed_age_and_expose_map_pose_progress():

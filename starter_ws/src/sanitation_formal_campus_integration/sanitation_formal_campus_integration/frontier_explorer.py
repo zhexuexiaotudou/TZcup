@@ -60,8 +60,11 @@ class FormalFrontierExplorer(Node):
         # 90 degree scan-completion turn; this node never publishes Twist.
         self.declare_parameter("initial_scan_sweep_prepare_timeout_sec", 60.0)
         self.declare_parameter("initial_scan_sweep_response_timeout_sec", 5.0)
-        self.declare_parameter("initial_scan_sweep_time_allowance_sec", 20.0)
-        self.declare_parameter("initial_scan_sweep_result_timeout_sec", 180.0)
+        # The 160 kg four-wheel skid-steer reaches a lower physical yaw rate
+        # than Nav2's command under the continuous 60 A drivetrain envelope.
+        # Allow one 90 degree scan turn to complete at low simulation RTF.
+        self.declare_parameter("initial_scan_sweep_time_allowance_sec", 60.0)
+        self.declare_parameter("initial_scan_sweep_result_timeout_sec", 600.0)
         self.declare_parameter("initial_scan_sweep_update_timeout_sec", 60.0)
         self._contract = load_campus_map_contract(
             str(self.get_parameter("episode_manifest").value)

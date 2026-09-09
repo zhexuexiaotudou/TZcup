@@ -39,11 +39,38 @@ double MechanicalPower(
 
 }  // namespace
 
+std::array<double, kA300WheelCount> A300WheelSpeedsFromPlanarTwist(
+  const A300PlanarTwist & twist,
+  const double control_wheel_radius_m,
+  const double wheel_track_m)
+{
+  const double half_track_m = wheel_track_m * 0.5;
+  const double left_rad_s =
+    (twist.linear_x_mps - twist.angular_z_rad_s * half_track_m) /
+    control_wheel_radius_m;
+  const double right_rad_s =
+    (twist.linear_x_mps + twist.angular_z_rad_s * half_track_m) /
+    control_wheel_radius_m;
+  return {left_rad_s, right_rad_s, left_rad_s, right_rad_s};
+}
+
+A300PlanarTwist A300PlanarTwistFromWheelSpeeds(
+  const std::array<double, kA300WheelCount> & wheel_speed_rad_s,
+  const double control_wheel_radius_m,
+  const double wheel_track_m)
+{
+  const double left_rad_s = (wheel_speed_rad_s[0] + wheel_speed_rad_s[2]) * 0.5;
+  const double right_rad_s = (wheel_speed_rad_s[1] + wheel_speed_rad_s[3]) * 0.5;
+  return {
+    control_wheel_radius_m * (left_rad_s + right_rad_s) * 0.5,
+    control_wheel_radius_m * (right_rad_s - left_rad_s) / wheel_track_m};
+}
+
 A300DrivetrainPlantCore::A300DrivetrainPlantCore(
   A300DrivetrainPlantParameters parameters)
 : parameters_(parameters)
 {
-  const std::array<double, 17> finite_parameters{
+  const std::array<double, 18> finite_parameters{
     parameters_.physical_wheel_radius_m,
     parameters_.control_wheel_radius_m,
     parameters_.maximum_vehicle_speed_mps,
@@ -55,6 +82,7 @@ A300DrivetrainPlantCore::A300DrivetrainPlantCore(
     parameters_.wheel_side_torque_constant_nm_per_a,
     parameters_.low_speed_torque_limit_nm,
     parameters_.speed_error_gain_nm_per_rad_s,
+    parameters_.counter_rotation_speed_error_gain_nm_per_rad_s,
     parameters_.torque_slew_rate_nm_per_s,
     parameters_.service_brake_torque_limit_nm,
     parameters_.brake_response_delay_s,
@@ -75,6 +103,7 @@ A300DrivetrainPlantCore::A300DrivetrainPlantCore(
     !(parameters_.wheel_side_torque_constant_nm_per_a > 0.0) ||
     !(parameters_.low_speed_torque_limit_nm > 0.0) ||
     !(parameters_.speed_error_gain_nm_per_rad_s > 0.0) ||
+    !(parameters_.counter_rotation_speed_error_gain_nm_per_rad_s > 0.0) ||
     !(parameters_.torque_slew_rate_nm_per_s > 0.0) ||
     !(parameters_.service_brake_torque_limit_nm > 0.0) ||
     parameters_.brake_response_delay_s < 0.0 ||
@@ -136,6 +165,14 @@ A300DrivetrainPlantOutput A300DrivetrainPlantCore::Step(
     const double current_torque_limit_nm =
       parameters_.continuous_current_per_motor_a *
       parameters_.wheel_side_torque_constant_nm_per_a;
+    const double left_command_rad_s =
+      (input.commanded_speed_rad_s[0] + input.commanded_speed_rad_s[2]) * 0.5;
+    const double right_command_rad_s =
+      (input.commanded_speed_rad_s[1] + input.commanded_speed_rad_s[3]) * 0.5;
+    const bool counter_rotating = left_command_rad_s * right_command_rad_s < 0.0;
+    const double drive_speed_error_gain = counter_rotating ?
+      parameters_.counter_rotation_speed_error_gain_nm_per_rad_s :
+      parameters_.speed_error_gain_nm_per_rad_s;
     for (std::size_t index = 0; index < kA300WheelCount; ++index) {
       output.limited_command_rad_s[index] = ClampMagnitude(
         input.commanded_speed_rad_s[index], maximum_speed_rad_s);
@@ -145,7 +182,7 @@ A300DrivetrainPlantOutput A300DrivetrainPlantCore::Step(
         std::abs(input.measured_speed_rad_s[index]), 0.25);
       const double power_torque_limit_nm = per_motor_power_w / absolute_speed;
       const double raw_torque_nm =
-        parameters_.speed_error_gain_nm_per_rad_s * speed_error;
+        drive_speed_error_gain * speed_error;
       const double torque_limit_nm = std::min(
         {parameters_.low_speed_torque_limit_nm, current_torque_limit_nm,
           power_torque_limit_nm});

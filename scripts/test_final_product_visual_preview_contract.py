@@ -61,7 +61,13 @@ def test_preview_is_fresh_scoped_and_has_a_windows_preflight_entry() -> None:
     assert "Replace('\\', '/')" in WINDOWS
     assert "require_dashboard_port_available" in RUNNER
     assert 'sock.bind(("127.0.0.1", port))' in RUNNER
-    assert RUNNER.index("require_dashboard_port_available\n\nif") < RUNNER.index('if "${preflight_only}"')
+    assert RUNNER.index("require_dashboard_port_available") < RUNNER.index('if "${preflight_only}"')
+    assert RUNNER.index('formal_runtime_memory_preflight "${run_root}/windows_memory_preflight"') < RUNNER.index(
+        'if "${preflight_only}"'
+    )
+    assert RUNNER.index("require_runtime_package_provenance") < RUNNER.index('if "${preflight_only}"')
+    assert RUNNER.index("require_expanded_wheel_surface") < RUNNER.index('if "${preflight_only}"')
+    assert "A300_EXPANDED_WHEEL_SURFACE_PREFLIGHT_PASSED" in RUNNER
 
 
 def test_preview_uses_formal_dds_gazebo_isolation_with_safe_distinct_domains() -> None:
@@ -86,10 +92,14 @@ def test_preview_fails_closed_on_memory_or_process_cleanup_faults() -> None:
     assert "formal_runtime_memory_watchdog_tripped" in RUNNER
     assert 'return "${FORMAL_RUNTIME_MEMORY_BREACH_EXIT_CODE}"' in RUNNER
     assert "formal_runtime_install_traps cleanup" in RUNNER
-    assert 'formal_runtime_cleanup_groups "${mapping_partition}" "${mapping_launch_pid}" || exit 125' in RUNNER
-    assert RUNNER.index(
-        'formal_runtime_cleanup_groups "${mapping_partition}" "${mapping_launch_pid}" || exit 125'
-    ) < RUNNER.index('write_state HARD_RESTART "${map_sha256}"')
+    guarded_mapping_cleanup = (
+        'formal_runtime_cleanup_groups "${mapping_partition}" "${mapping_launch_pid}"'
+    )
+    assert guarded_mapping_cleanup in RUNNER
+    assert '"mapping process cleanup failed closed" "mapping_cleanup"' in RUNNER
+    assert RUNNER.index(guarded_mapping_cleanup, RUNNER.index('write_state MAP_SAVED')) < RUNNER.index(
+        'write_state HARD_RESTART "${map_sha256}"'
+    )
     assert 'echo "process group ${pid} survived TERM then KILL"' in RUNNER
     assert "require_phase_processes mapping" in RUNNER
     assert "require_phase_processes cleaning" in RUNNER
@@ -115,6 +125,13 @@ def test_preview_requires_observable_phase_progress_and_hmi_stage_receipts() -> 
     assert "mapping lifecycle stagnation watchdog timed out" in RUNNER
     assert "initial_scan_sweep_blocked" in RUNNER
     assert "blocked_excessive_nav2_failures" in RUNNER
+    assert 'value.get("terminal") is True' in RUNNER
+    assert 'reason = json.dumps(value.get("reason"), ensure_ascii=False)' in RUNNER
+    assert "publish_preview_terminal_with_hmi" in RUNNER
+    assert "guard_or_publish_terminal" in RUNNER
+    assert "mapping explorer terminal: state=${explorer_state}; reason=${explorer_reason}" in RUNNER
+    assert '"failure_source_state"' in RUNNER
+    assert '"failure_reason"' in RUNNER
     assert "initial_scan_sweep_complete" in RUNNER
     assert 'value.get("initial_scan_sweep_state")' in RUNNER
     assert '"${initial_scan_sweep_state}" == "complete"' in RUNNER
@@ -140,12 +157,16 @@ def test_preview_requires_observable_phase_progress_and_hmi_stage_receipts() -> 
     assert 'save_hmi_phase_snapshot cleaning RELOAD_LOCALIZE "${map_sha256}"' not in RUNNER
     assert "coverage report appeared without a verified live coverage HMI receipt and snapshot" in RUNNER
     assert "FAILED/COMPLETED remain governed by the" in RUNNER
-    assert 'wait_for_hmi_receipt PRODUCT_TERMINAL "${map_sha256}"' in RUNNER
+    assert 'wait_for_hmi_receipt PRODUCT_TERMINAL "${active_map_sha256}"' in RUNNER
+    assert 'write_state PRODUCT_TERMINAL "${active_map_sha256}"' in RUNNER
+    assert 'save_hmi_phase_snapshot terminal PRODUCT_TERMINAL "${active_map_sha256}"' in RUNNER
+    assert "hmi_terminal_telemetry.json" in RUNNER
+    assert "HMI PRODUCT_TERMINAL receipt was unavailable and no terminal snapshot was saved" in RUNNER
     assert RUNNER.index('write_state HARD_RESTART "${map_sha256}"') < RUNNER.rindex(
         'stop_pid "${state_publisher_pid}"'
     )
-    assert RUNNER.index('wait_for_hmi_receipt PRODUCT_TERMINAL "${map_sha256}"') < RUNNER.index(
-        'write_terminal "live mapping and same-map FullCoverage preview'
+    assert RUNNER.rindex("publish_preview_terminal_with_hmi") < RUNNER.index(
+        "FINAL_VISUAL_PREVIEW_TERMINAL="
     )
     assert '"hmi_terminal_telemetry_sha256"' in RUNNER
     assert '"hmi_phase_telemetry_sha256"' in RUNNER
@@ -154,3 +175,12 @@ def test_preview_requires_observable_phase_progress_and_hmi_stage_receipts() -> 
     assert "hmi_mapping_telemetry.json" in RUNNER
     assert "hmi_hard_restart_telemetry.json" in RUNNER
     assert "hmi_cleaning_telemetry.json" in RUNNER
+    assert "cleaning_progress_deadline" in RUNNER
+    assert "coverage_stage_not_observed" in RUNNER
+    assert 'dashboard["live_inputs"]["cleaning_motor_status"]' in RUNNER
+    assert '"${dashboard_output}/dashboard_telemetry.json"' in RUNNER
+    assert '"${dashboard_telemetry}"' not in RUNNER
+    assert "mapping_cleaning_motor_fault_deadline=$((SECONDS + 90))" in RUNNER
+    assert '"persistent_cleaning_motor_fault"' in RUNNER
+    assert '"mapping_cleaning_motor_fault"' in RUNNER
+    assert RUNNER.count("publish_preview_terminal_with_hmi") >= 15

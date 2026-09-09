@@ -143,7 +143,8 @@ def test_frontier_requires_nav2_spin_and_post_spin_raw_sensor_map_updates():
     assert source.index("if self._initial_scan_sweep_blocks_frontier():") < source.index(
         '"frontier_goal_requested"'
     )
-    assert "initial_scan_sweep_result_timeout_sec\", 180.0" in source
+    assert "initial_scan_sweep_time_allowance_sec\", 60.0" in source
+    assert "initial_scan_sweep_result_timeout_sec\", 600.0" in source
     assert "initial_scan_sweep_update_timeout_sec\", 60.0" in source
     assert 'self._block("blocked_excessive_nav2_failures"' in source
     assert "from geometry_msgs.msg import Twist" not in source

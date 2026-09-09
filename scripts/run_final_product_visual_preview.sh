@@ -160,12 +160,6 @@ PY
 # Make a dashboard collision fail before a live preview can create evidence.
 require_dashboard_port_available
 
-if "${preflight_only}"; then
-  printf 'FINAL_VISUAL_PREVIEW_PREFLIGHT_OK run_root=%s runtime_ws=%s episode=%s\n' \
-    "${run_root}" "${runtime_ws}" "${episode_root}"
-  exit 0
-fi
-
 mkdir -p "${run_root}" "${cleaning_root}" "${dashboard_output}"
 
 write_state() {
@@ -185,12 +179,13 @@ PY
 }
 
 write_terminal() {
-  local detail="$1"
-  python3 - "${terminal_output}" "${detail}" "${hmi_telemetry_sha256}" \
+  local detail="$1" failure_source_state="${2:-}" failure_reason="${3:-}"
+  python3 - "${terminal_output}" "${detail}" "${terminal_hmi_telemetry_sha256}" \
     "${mapping_hmi_telemetry_sha256}" "${hard_restart_hmi_telemetry_sha256}" \
-    "${cleaning_hmi_telemetry_sha256}" <<'PY'
-import datetime, json, pathlib, sys
-pathlib.Path(sys.argv[1]).write_text(json.dumps({
+    "${cleaning_hmi_telemetry_sha256}" "${failure_source_state}" "${failure_reason}" <<'PY'
+import datetime, json, os, pathlib, sys
+target = pathlib.Path(sys.argv[1])
+payload = {
   "schema_version": 1, "status": "FINAL_VISUAL_PREVIEW_NOT_PRODUCT_PASS",
   "product_pass": False, "perception_provider": "unavailable",
   "detail": sys.argv[2], "field_dimensions_m": [200, 100], "vehicle": "A300",
@@ -200,8 +195,16 @@ pathlib.Path(sys.argv[1]).write_text(json.dumps({
     "hard_restart": None if sys.argv[5] == "" else sys.argv[5],
     "cleaning": None if sys.argv[6] == "" else sys.argv[6],
   },
+  "failure_source_state": None if sys.argv[7] == "" else sys.argv[7],
+  "failure_reason": None if sys.argv[8] == "" else json.loads(sys.argv[8]),
   "completed_at_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-}, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+}
+temporary = target.with_name(f".{target.name}.{os.getpid()}.tmp")
+temporary.write_text(
+    json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+    encoding="utf-8",
+)
+os.replace(temporary, target)
 PY
 }
 
@@ -213,11 +216,13 @@ emergency_stop_pid=""
 main_power_pid=""
 terminal_written=false
 hmi_telemetry_sha256=""
+terminal_hmi_telemetry_sha256=""
 mapping_hmi_telemetry_sha256=""
 hard_restart_hmi_telemetry_sha256=""
 cleaning_hmi_telemetry_sha256=""
 mapping_partition="tzcup_final_visual_mapping_${mapping_ros_domain}_$$"
 cleaning_partition="tzcup_final_visual_cleaning_${cleaning_ros_domain}_$$"
+active_map_sha256=""
 stop_pid() {
   local pid="$1"
   [[ -n "${pid}" ]] || return 0
@@ -317,6 +322,9 @@ wait_for_hmi_receipt() {
       && kill -0 "${state_publisher_pid}" 2>/dev/null \
       && hmi_receipt_matches "${expected_stage}" "${expected_hash}"; then
       hmi_telemetry_sha256="$(sha256sum "${dashboard_output}/dashboard_telemetry.json" | awk '{print $1}')"
+      if [[ "${expected_stage}" == "PRODUCT_TERMINAL" ]]; then
+        terminal_hmi_telemetry_sha256="${hmi_telemetry_sha256}"
+      fi
       return 0
     fi
     sleep 1
@@ -345,6 +353,7 @@ save_hmi_phase_snapshot() {
     mapping) snapshot="${run_root}/hmi_mapping_telemetry.json" ;;
     hard_restart) snapshot="${run_root}/hmi_hard_restart_telemetry.json" ;;
     cleaning) snapshot="${run_root}/hmi_cleaning_telemetry.json" ;;
+    terminal) snapshot="${run_root}/hmi_terminal_telemetry.json" ;;
     *) echo "unknown HMI snapshot phase: ${phase}" >&2; return 125 ;;
   esac
   # Copy only a receipt which still matches the phase; no inferred HMI state
@@ -370,7 +379,44 @@ PY
     mapping) mapping_hmi_telemetry_sha256="${hmi_telemetry_sha256}" ;;
     hard_restart) hard_restart_hmi_telemetry_sha256="${hmi_telemetry_sha256}" ;;
     cleaning) cleaning_hmi_telemetry_sha256="${hmi_telemetry_sha256}" ;;
+    terminal) terminal_hmi_telemetry_sha256="${hmi_telemetry_sha256}" ;;
   esac
+}
+
+publish_preview_terminal_with_hmi() {
+  local detail="$1" failure_source_state="${2:-}" failure_reason="${3:-}" terminal_detail
+  # This runs before cleanup while the final-demo publisher and HMI are still
+  # alive.  It never claims a receipt or snapshot that was not observed.
+  write_state PRODUCT_TERMINAL "${active_map_sha256}"
+  terminal_detail="${detail}"
+  if [[ -n "${dashboard_pid}" && -n "${state_publisher_pid}" ]] \
+    && kill -0 "${dashboard_pid}" 2>/dev/null \
+    && kill -0 "${state_publisher_pid}" 2>/dev/null \
+    && wait_for_hmi_receipt PRODUCT_TERMINAL "${active_map_sha256}"; then
+    if ! save_hmi_phase_snapshot terminal PRODUCT_TERMINAL "${active_map_sha256}"; then
+      terminal_hmi_telemetry_sha256=""
+      terminal_detail="${detail}; matching HMI terminal receipt was observed but terminal snapshot was not saved"
+    fi
+  else
+    terminal_hmi_telemetry_sha256=""
+    terminal_detail="${detail}; HMI PRODUCT_TERMINAL receipt was unavailable and no terminal snapshot was saved"
+  fi
+  write_terminal "${terminal_detail}" "${failure_source_state}" "${failure_reason}"
+  terminal_written=true
+}
+
+guard_or_publish_terminal() {
+  local detail="$1" failure_source_state="$2" failure_reason="$3" status
+  shift 3
+  set +e
+  "$@"
+  status=$?
+  set -e
+  if (( status != 0 )); then
+    publish_preview_terminal_with_hmi \
+      "${detail}; guard_exit_code=${status}" "${failure_source_state}" "${failure_reason}"
+    exit "${status}"
+  fi
 }
 
 dashboard_has_first_map() {
@@ -399,6 +445,8 @@ import sys
 
 state = "unobserved"
 initial_scan_sweep_state = "unobserved"
+terminal = "false"
+reason = "null"
 try:
     record = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
     value = record["live_inputs"]["mapping_explorer"]["value"]
@@ -414,27 +462,40 @@ try:
             state = candidate_state
         if isinstance(candidate_sweep_state, str) and candidate_sweep_state:
             initial_scan_sweep_state = candidate_sweep_state
+        if value.get("terminal") is True:
+            terminal = "true"
+        reason = json.dumps(value.get("reason"), ensure_ascii=False)
 except (OSError, KeyError, TypeError, ValueError):
     pass
 # Use a delimiter that cannot occur in the published state vocabulary.  The
 # shell consumes both fields; it must not infer a completed sweep from a
 # short-lived, overwritten state event.
-print(f"{state}\t{initial_scan_sweep_state}")
+print(f"{state}\t{initial_scan_sweep_state}\t{terminal}\t{reason}")
 PY
 }
 
 observe_mapping_explorer_progress() {
-  local explorer_state initial_scan_sweep_state explorer_payload
+  local explorer_state initial_scan_sweep_state explorer_terminal explorer_reason explorer_payload
   explorer_payload="$(dashboard_mapping_explorer_state)"
-  IFS=$'\t' read -r explorer_state initial_scan_sweep_state <<< "${explorer_payload}"
+  IFS=$'\t' read -r explorer_state initial_scan_sweep_state explorer_terminal explorer_reason <<< "${explorer_payload}"
+  if [[ "${explorer_terminal}" == "true" ]]; then
+    publish_preview_terminal_with_hmi \
+      "mapping explorer terminal: state=${explorer_state}; reason=${explorer_reason}; initial_scan_sweep_state=${initial_scan_sweep_state}" \
+      "${explorer_state}" "${explorer_reason}"
+    exit 4
+  fi
   case "${explorer_state}" in
     initial_scan_sweep_blocked|blocked_excessive_nav2_failures)
-      echo "mapping explorer reached terminal ${explorer_state}" >&2
+      publish_preview_terminal_with_hmi \
+        "mapping explorer terminal state without terminal flag: state=${explorer_state}; reason=${explorer_reason}; initial_scan_sweep_state=${initial_scan_sweep_state}" \
+        "${explorer_state}" "${explorer_reason}"
       exit 4
       ;;
   esac
   if [[ "${initial_scan_sweep_state}" == "blocked" ]]; then
-    echo "mapping explorer retained a blocked initial scan sweep" >&2
+    publish_preview_terminal_with_hmi \
+      "mapping explorer retained a blocked initial scan sweep: state=${explorer_state}; reason=${explorer_reason}" \
+      "${explorer_state}" "${explorer_reason}"
     exit 4
   fi
   # The post-first-map proof window must not be satisfied by an event HMI
@@ -561,6 +622,10 @@ PY
     if (( SECONDS >= mapping_frontier_motion_deadline )) \
       && [[ "${mapping_frontier_motion_proven}" != "true" ]]; then
       echo "mapping frontier motion watchdog timed out: no live map-TF displacement >=0.05m" >&2
+      publish_preview_terminal_with_hmi \
+        "mapping frontier motion watchdog timed out" \
+        "mapping_frontier_motion_timeout" \
+        '{"code":"map_tf_displacement_not_observed","minimum_displacement_m":0.05}'
       exit 4
     fi
   fi
@@ -581,6 +646,10 @@ PY
       mapping_observed_fraction_deadline=$((SECONDS + 1200))
     elif (( SECONDS >= mapping_observed_fraction_deadline )); then
       echo "mapping lifecycle stagnation watchdog timed out: observed_fraction did not grow by >=0.001 in 1200s" >&2
+      publish_preview_terminal_with_hmi \
+        "mapping lifecycle stagnation watchdog timed out" \
+        "mapping_lifecycle_stagnation" \
+        '{"code":"observed_fraction_stalled","minimum_increment":0.001,"wall_timeout_sec":1200}'
       exit 4
     fi
   fi
@@ -616,14 +685,125 @@ source "${runtime_ws}/install/setup.bash"
 set -u
 export TZCUP_REPOSITORY_ROOT="${repo_root}"
 
+require_runtime_package_provenance() {
+  local package prefix expected_prefix="${runtime_ws}/install/"
+  for package in \
+    sanitation_campus_scenario sanitation_formal_campus_integration \
+    sanitation_gazebo_control sanitation_hmi sanitation_vehicle_description; do
+    prefix="$(ros2 pkg prefix "${package}")" || {
+      echo "runtime package is unavailable after sourcing install: ${package}" >&2
+      return 125
+    }
+    case "${prefix}/" in
+      "${expected_prefix}"*) ;;
+      *)
+        echo "runtime package resolved outside selected install: ${package}=${prefix}" >&2
+        return 125
+        ;;
+    esac
+  done
+}
+
+require_expanded_wheel_surface() {
+  local vehicle_xacro="${repo_root}/starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro"
+  local expanded_urdf="${run_root}/expanded_vehicle_preflight.urdf"
+  local expanded_sdf="${run_root}/expanded_vehicle_preflight.sdf"
+  local report="${run_root}/wheel_surface_preflight.json"
+  xacro "${vehicle_xacro}" >"${expanded_urdf}"
+  gz sdf -p "${expanded_urdf}" >"${expanded_sdf}"
+  python3 - "${expanded_sdf}" "${report}" <<'PY'
+import json
+import math
+import os
+import pathlib
+import sys
+import xml.etree.ElementTree as ET
+
+sdf_path, report_path = map(pathlib.Path, sys.argv[1:])
+root = ET.fromstring(sdf_path.read_text(encoding="utf-8"))
+expected = {
+    "mu": 0.9,
+    "mu2": 0.72,
+    "kp": 1_000_000.0,
+    "kd": 100.0,
+    "min_depth": 0.001,
+    "max_vel": 0.1,
+}
+observed = {}
+for side in ("front_left", "front_right", "rear_left", "rear_right"):
+    link_name = f"{side}_wheel_link"
+    links = root.findall(f".//link[@name='{link_name}']")
+    if len(links) != 1:
+        raise SystemExit(f"expanded SDF must contain exactly one {link_name}; found {len(links)}")
+    collisions = links[0].findall("collision")
+    if len(collisions) != 1:
+        raise SystemExit(f"expanded SDF must contain exactly one collision on {link_name}; found {len(collisions)}")
+    surface = collisions[0].find("surface")
+    if surface is None:
+        raise SystemExit(f"expanded SDF dropped wheel surface on {link_name}")
+    paths = {
+        "mu": "friction/ode/mu",
+        "mu2": "friction/ode/mu2",
+        "kp": "contact/ode/kp",
+        "kd": "contact/ode/kd",
+        "min_depth": "contact/ode/min_depth",
+        "max_vel": "contact/ode/max_vel",
+    }
+    values = {}
+    for key, element_path in paths.items():
+        text = surface.findtext(element_path)
+        if text is None:
+            raise SystemExit(f"expanded SDF lacks {key} on {link_name}")
+        value = float(text)
+        if not math.isclose(value, expected[key], rel_tol=0.0, abs_tol=1e-9):
+            raise SystemExit(
+                f"expanded SDF {link_name} {key} differs: expected {expected[key]}, found {value}"
+            )
+        values[key] = value
+    fdir1 = (surface.findtext("friction/ode/fdir1") or "").strip()
+    if fdir1 != "1 0 0":
+        raise SystemExit(f"expanded SDF {link_name} fdir1 differs: {fdir1!r}")
+    values["fdir1"] = fdir1
+    observed[side] = values
+
+payload = {
+    "schema_version": 1,
+    "status": "A300_EXPANDED_WHEEL_SURFACE_PREFLIGHT_PASSED",
+    "source_sdf": str(sdf_path),
+    "wheels": observed,
+}
+temporary = report_path.with_name(f".{report_path.name}.{os.getpid()}.tmp")
+temporary.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+os.replace(temporary, report_path)
+PY
+}
+
+require_runtime_package_provenance
+require_expanded_wheel_surface
+
+if "${preflight_only}"; then
+  terminal_written=true
+  printf 'FINAL_VISUAL_PREVIEW_PREFLIGHT_OK run_root=%s runtime_ws=%s episode=%s wheel_surface=%s\n' \
+    "${run_root}" "${runtime_ws}" "${episode_root}" "${run_root}/wheel_surface_preflight.json"
+  exit 0
+fi
+
 if [[ ! -f "${episode_root}/public/world.sdf" ]]; then
-  ROS_DOMAIN_ID="${mapping_ros_domain}" ros2 run sanitation_campus_scenario sanitation-campus-scenario generate \
-    --config "${repo_root}/starter_ws/src/sanitation_campus_scenario/config/default_scenario.yaml" \
-    --profile formal --split train --map-index 0 --mission-index 0 --output "${episode_root}" \
-    >"${run_root}/episode_generator.log" 2>&1
+  guard_or_publish_terminal \
+    "formal episode generation failed" "episode_generation" \
+    '{"code":"episode_generator_failed"}' \
+    env ROS_DOMAIN_ID="${mapping_ros_domain}" ros2 run sanitation_campus_scenario sanitation-campus-scenario generate \
+      --config "${repo_root}/starter_ws/src/sanitation_campus_scenario/config/default_scenario.yaml" \
+      --profile formal --split train --map-index 0 --mission-index 0 --output "${episode_root}" \
+      >"${run_root}/episode_generator.log" 2>&1
 fi
 for required in public/world.sdf public/episode_manifest.json environment/pedestrian_schedule.json; do
-  [[ -f "${episode_root}/${required}" ]] || { echo "episode generation failed: missing ${required}" >&2; exit 3; }
+  if [[ ! -f "${episode_root}/${required}" ]]; then
+    publish_preview_terminal_with_hmi \
+      "formal episode is incomplete: missing ${required}" "episode_generation" \
+      "{\"code\":\"episode_artifact_missing\",\"path\":\"${required}\"}"
+    exit 3
+  fi
 done
 
 # The HMI is read-only.  Give it the same public, declared map-frame geofence
@@ -697,10 +877,15 @@ prepare_cleaning_world() {
     --manifest "${cleaning_root}/cleaning_world_manifest.json"
 }
 
-prepare_mapping_world
+guard_or_publish_terminal \
+  "mapping world preparation failed" "mapping_world_preparation" \
+  '{"code":"mapping_world_preparation_failed"}' prepare_mapping_world
 write_state MAPPING
 start_dashboard "${mapping_ros_domain}" mapping
-wait_for_hmi_receipt MAPPING ""
+guard_or_publish_terminal \
+  "mapping HMI did not acknowledge startup" "mapping_hmi_startup" \
+  '{"code":"mapping_hmi_receipt_unavailable"}' \
+  wait_for_hmi_receipt MAPPING ""
 export ROS_DOMAIN_ID="${mapping_ros_domain}"
 export GZ_PARTITION="${mapping_partition}"
 "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 launch sanitation_formal_campus_integration formal_campus_map_lifecycle.launch.py \
@@ -711,8 +896,11 @@ export GZ_PARTITION="${mapping_partition}"
   pedestrian_schedule:="${episode_root}/environment/pedestrian_schedule.json" \
   start_pedestrians:=false start_coverage:=false operation_speed_profile:=mapping_safe \
   >"${run_root}/mapping.launch.log" 2>&1 & mapping_launch_pid=$!
-formal_runtime_start_memory_watchdog \
-  "${mapping_launch_pid}" "${run_root}/mapping.memory_watchdog"
+guard_or_publish_terminal \
+  "mapping memory watchdog did not start" "mapping_memory_watchdog_startup" \
+  '{"code":"memory_watchdog_start_failed"}' \
+  formal_runtime_start_memory_watchdog \
+    "${mapping_launch_pid}" "${run_root}/mapping.memory_watchdog"
 start_safety_heartbeat "${mapping_ros_domain}" mapping
 
 # The preview needs a real sealed map before it can demonstrate a hard restart,
@@ -732,12 +920,66 @@ mapping_frontier_motion_proven=false
 mapping_observed_fraction_baseline_set=false
 mapping_observed_fraction=""
 mapping_observed_fraction_deadline=0
+mapping_cleaning_motor_fault_deadline=0
 while [[ ! -f "${map_root}/map_lifecycle_manifest.json" ]]; do
-  kill -0 "${mapping_launch_pid}" 2>/dev/null || { echo "mapping launch exited; see ${run_root}/mapping.launch.log" >&2; exit 3; }
-  require_memory_watchdog
-  require_phase_processes mapping \
-    "${dashboard_pid}" "${state_publisher_pid}" "${emergency_stop_pid}" "${main_power_pid}"
-  require_hmi_receipt MAPPING ""
+  if ! kill -0 "${mapping_launch_pid}" 2>/dev/null; then
+    publish_preview_terminal_with_hmi \
+      "mapping launch exited before a sealed map" "mapping_launch_exited" \
+      '{"code":"mapping_launch_exited_before_map"}'
+    echo "mapping launch exited; see ${run_root}/mapping.launch.log" >&2
+    exit 3
+  fi
+  guard_or_publish_terminal \
+    "mapping memory watchdog failed" "mapping_memory_watchdog" \
+    '{"code":"memory_watchdog_failed"}' require_memory_watchdog
+  guard_or_publish_terminal \
+    "mapping support process exited" "mapping_support_process" \
+    '{"code":"required_process_exited"}' require_phase_processes mapping \
+      "${dashboard_pid}" "${state_publisher_pid}" "${emergency_stop_pid}" "${main_power_pid}"
+  guard_or_publish_terminal \
+    "mapping HMI receipt was lost" "mapping_hmi_liveness" \
+    '{"code":"mapping_hmi_receipt_lost"}' require_hmi_receipt MAPPING ""
+  cleaning_motor_status="$(python3 - "${dashboard_output}/dashboard_telemetry.json" <<'PY'
+import json
+import pathlib
+import sys
+
+try:
+    dashboard = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+    source = dashboard["live_inputs"]["cleaning_motor_status"]
+    value = json.loads(source["value"])
+except (KeyError, TypeError, ValueError, OSError, json.JSONDecodeError):
+    raise SystemExit(1)
+if source.get("status") != "live" or value.get("fault_active") is not True:
+    raise SystemExit(1)
+print(json.dumps(value, sort_keys=True, separators=(",", ":")))
+PY
+  )" || cleaning_motor_status=""
+  if [[ -n "${cleaning_motor_status}" ]]; then
+    if (( mapping_cleaning_motor_fault_deadline == 0 )); then
+      # Startup is deliberately fail-closed while physics feedback and command
+      # mirrors connect. A live fault for 90 wall seconds is no longer a
+      # transient and must not consume the complete Nav2 Spin timeout.
+      mapping_cleaning_motor_fault_deadline=$((SECONDS + 90))
+    elif (( SECONDS >= mapping_cleaning_motor_fault_deadline )); then
+      cleaning_fault_detail="$(python3 - "${cleaning_motor_status}" <<'PY'
+import json
+import sys
+print(json.dumps({
+    "code": "persistent_cleaning_motor_fault",
+    "wall_timeout_sec": 90,
+    "cleaning_motor_status": json.loads(sys.argv[1]),
+}, sort_keys=True, separators=(",", ":")))
+PY
+      )"
+      publish_preview_terminal_with_hmi \
+        "persistent cleaning motor fault blocked mapping traction" \
+        "mapping_cleaning_motor_fault" "${cleaning_fault_detail}"
+      exit 4
+    fi
+  else
+    mapping_cleaning_motor_fault_deadline=0
+  fi
   observe_mapping_explorer_progress
   if [[ "${mapping_scan_ready}" == "false" ]] \
     && grep -Fq "canonical scan ready; starting standard autostart SLAM lifecycle" \
@@ -757,15 +999,28 @@ while [[ ! -f "${map_root}/map_lifecycle_manifest.json" ]]; do
       && { [[ "${mapping_initial_scan_sweep_complete}" != "true" ]] \
         || [[ "${mapping_frontier_progress}" != "true" ]]; }; then
       echo "mapping explorer progress watchdog timed out after first map: initial_scan_sweep_complete=${mapping_initial_scan_sweep_complete} frontier_progress=${mapping_frontier_progress}" >&2
+      publish_preview_terminal_with_hmi \
+        "mapping explorer progress watchdog timed out after first map" \
+        "mapping_explorer_progress_timeout" \
+        "{\"code\":\"explorer_progress_not_observed\",\"initial_scan_sweep_complete\":${mapping_initial_scan_sweep_complete},\"frontier_progress\":${mapping_frontier_progress}}"
       exit 4
     fi
   fi
   if (( SECONDS >= mapping_progress_deadline )) \
     && { [[ "${mapping_scan_ready}" != "true" ]] || [[ "${mapping_first_map}" != "true" ]]; }; then
     echo "mapping progress watchdog timed out: scan_ready=${mapping_scan_ready} first_map=${mapping_first_map}" >&2
+    publish_preview_terminal_with_hmi \
+      "mapping scan/map startup watchdog timed out" "mapping_startup_progress_timeout" \
+      "{\"code\":\"scan_or_first_map_not_observed\",\"scan_ready\":${mapping_scan_ready},\"first_map\":${mapping_first_map}}"
     exit 4
   fi
-  (( SECONDS < deadline )) || { echo "preview mapping timed out before a sealed map" >&2; exit 4; }
+  if (( SECONDS >= deadline )); then
+    publish_preview_terminal_with_hmi \
+      "preview mapping timed out before a sealed map" "mapping_completion_timeout" \
+      "{\"code\":\"sealed_map_timeout\",\"wall_timeout_sec\":${mapping_timeout_sec}}"
+    echo "preview mapping timed out before a sealed map" >&2
+    exit 4
+  fi
   sleep 2
 done
 observe_mapping_explorer_progress
@@ -775,31 +1030,61 @@ if [[ "${mapping_scan_ready}" != "true" || "${mapping_first_map}" != "true" \
   || "${mapping_frontier_progress}" != "true" \
   || "${mapping_frontier_motion_proven}" != "true" ]]; then
   echo "sealed map arrived without scan, first-map, completed-sweep, frontier-progress, and map-TF motion proof" >&2
+  publish_preview_terminal_with_hmi \
+    "sealed map arrived without the complete live motion proof chain" \
+    "mapping_proof_incomplete" \
+    "{\"code\":\"sealed_map_without_live_motion_proof\",\"scan_ready\":${mapping_scan_ready},\"first_map\":${mapping_first_map},\"initial_scan_sweep_complete\":${mapping_initial_scan_sweep_complete},\"frontier_progress\":${mapping_frontier_progress},\"frontier_motion_proven\":${mapping_frontier_motion_proven}}"
   exit 4
 fi
 map_sha256="$(sha256sum "${map_root}/map_lifecycle_manifest.json" | awk '{print $1}')"
+active_map_sha256="${map_sha256}"
 write_state MAP_SAVED "${map_sha256}"
-wait_for_hmi_receipt MAP_SAVED "${map_sha256}"
-save_hmi_phase_snapshot mapping MAP_SAVED "${map_sha256}"
-formal_runtime_cleanup_groups "${mapping_partition}" "${mapping_launch_pid}" || exit 125
-finish_memory_watchdog || exit $?
+guard_or_publish_terminal \
+  "mapping HMI did not acknowledge the sealed map" "mapping_map_saved_receipt" \
+  '{"code":"map_saved_hmi_receipt_unavailable"}' wait_for_hmi_receipt MAP_SAVED "${map_sha256}"
+guard_or_publish_terminal \
+  "mapping HMI snapshot was not retained" "mapping_map_saved_snapshot" \
+  '{"code":"map_saved_hmi_snapshot_failed"}' save_hmi_phase_snapshot mapping MAP_SAVED "${map_sha256}"
+guard_or_publish_terminal \
+  "mapping process cleanup failed closed" "mapping_cleanup" \
+  '{"code":"mapping_process_cleanup_failed"}' formal_runtime_cleanup_groups "${mapping_partition}" "${mapping_launch_pid}"
+guard_or_publish_terminal \
+  "mapping memory watchdog did not finish cleanly" "mapping_memory_watchdog_finish" \
+  '{"code":"mapping_memory_watchdog_finish_failed"}' finish_memory_watchdog
 mapping_launch_pid=""
-stop_pid "${emergency_stop_pid}" || exit 125
-stop_pid "${main_power_pid}" || exit 125
+guard_or_publish_terminal \
+  "mapping emergency-stop heartbeat cleanup failed" "mapping_support_cleanup" \
+  '{"code":"mapping_estop_heartbeat_cleanup_failed"}' stop_pid "${emergency_stop_pid}"
+guard_or_publish_terminal \
+  "mapping main-power heartbeat cleanup failed" "mapping_support_cleanup" \
+  '{"code":"mapping_power_heartbeat_cleanup_failed"}' stop_pid "${main_power_pid}"
 wait "${emergency_stop_pid}" 2>/dev/null || true; wait "${main_power_pid}" 2>/dev/null || true
 emergency_stop_pid=""; main_power_pid=""
 write_state HARD_RESTART "${map_sha256}"
-wait_for_hmi_receipt HARD_RESTART "${map_sha256}"
-save_hmi_phase_snapshot hard_restart HARD_RESTART "${map_sha256}"
-stop_pid "${state_publisher_pid}" || exit 125
-stop_pid "${dashboard_pid}" || exit 125
+guard_or_publish_terminal \
+  "HMI did not acknowledge hard restart" "hard_restart_hmi_receipt" \
+  '{"code":"hard_restart_hmi_receipt_unavailable"}' wait_for_hmi_receipt HARD_RESTART "${map_sha256}"
+guard_or_publish_terminal \
+  "hard-restart HMI snapshot was not retained" "hard_restart_hmi_snapshot" \
+  '{"code":"hard_restart_hmi_snapshot_failed"}' save_hmi_phase_snapshot hard_restart HARD_RESTART "${map_sha256}"
+guard_or_publish_terminal \
+  "mapping state publisher cleanup failed" "hard_restart_cleanup" \
+  '{"code":"mapping_state_publisher_cleanup_failed"}' stop_pid "${state_publisher_pid}"
+guard_or_publish_terminal \
+  "mapping dashboard cleanup failed" "hard_restart_cleanup" \
+  '{"code":"mapping_dashboard_cleanup_failed"}' stop_pid "${dashboard_pid}"
 wait "${state_publisher_pid}" 2>/dev/null || true; wait "${dashboard_pid}" 2>/dev/null || true
 state_publisher_pid=""; dashboard_pid=""
 
-prepare_cleaning_world
+guard_or_publish_terminal \
+  "cleaning world preparation failed" "cleaning_world_preparation" \
+  '{"code":"cleaning_world_preparation_failed"}' prepare_cleaning_world
 write_state RELOAD_LOCALIZE "${map_sha256}"
 start_dashboard "${cleaning_ros_domain}" cleaning
-wait_for_hmi_receipt RELOAD_LOCALIZE "${map_sha256}"
+guard_or_publish_terminal \
+  "cleaning HMI did not acknowledge reload/localization" "cleaning_hmi_startup" \
+  '{"code":"cleaning_hmi_receipt_unavailable"}' \
+  wait_for_hmi_receipt RELOAD_LOCALIZE "${map_sha256}"
 export ROS_DOMAIN_ID="${cleaning_ros_domain}"
 export GZ_PARTITION="${cleaning_partition}"
 "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 launch sanitation_formal_campus_integration formal_campus_map_lifecycle.launch.py \
@@ -810,21 +1095,33 @@ export GZ_PARTITION="${cleaning_partition}"
   start_coverage:=true coverage_evidence_dir:="${cleaning_root}" \
   operation_speed_profile:=dry_cleaning_competition_candidate \
   >"${cleaning_root}/cleaning.launch.log" 2>&1 & cleaning_launch_pid=$!
-formal_runtime_start_memory_watchdog \
-  "${cleaning_launch_pid}" "${cleaning_root}/cleaning.memory_watchdog"
+guard_or_publish_terminal \
+  "cleaning memory watchdog did not start" "cleaning_memory_watchdog_startup" \
+  '{"code":"memory_watchdog_start_failed"}' \
+  formal_runtime_start_memory_watchdog \
+    "${cleaning_launch_pid}" "${cleaning_root}/cleaning.memory_watchdog"
 start_safety_heartbeat "${cleaning_ros_domain}" cleaning
 
 deadline=$((SECONDS + cleaning_timeout_sec))
 coverage_report="${cleaning_root}/coverage_execution.json"
 coverage_stage_published=false
+cleaning_progress_deadline=$((SECONDS + phase_progress_timeout_sec))
 while [[ ! -s "${coverage_report}" ]]; do
-  require_memory_watchdog
-  require_phase_processes cleaning \
-    "${dashboard_pid}" "${state_publisher_pid}" "${emergency_stop_pid}" "${main_power_pid}"
+  guard_or_publish_terminal \
+    "cleaning memory watchdog failed" "cleaning_memory_watchdog" \
+    '{"code":"memory_watchdog_failed"}' require_memory_watchdog
+  guard_or_publish_terminal \
+    "cleaning support process exited" "cleaning_support_process" \
+    '{"code":"required_process_exited"}' require_phase_processes cleaning \
+      "${dashboard_pid}" "${state_publisher_pid}" "${emergency_stop_pid}" "${main_power_pid}"
   if [[ "${coverage_stage_published}" == "true" ]]; then
-    require_hmi_receipt COVERAGE "${map_sha256}"
+    guard_or_publish_terminal \
+      "coverage HMI receipt was lost" "coverage_hmi_liveness" \
+      '{"code":"coverage_hmi_receipt_lost"}' require_hmi_receipt COVERAGE "${map_sha256}"
   else
-    require_hmi_receipt RELOAD_LOCALIZE "${map_sha256}"
+    guard_or_publish_terminal \
+      "reload/localization HMI receipt was lost" "reload_localize_hmi_liveness" \
+      '{"code":"reload_localize_hmi_receipt_lost"}' require_hmi_receipt RELOAD_LOCALIZE "${map_sha256}"
     # Only actual, fresh executor activity may promote the dashboard from
     # localization into coverage.  FAILED/COMPLETED remain governed by the
     # existing terminal report path below; they never fabricate coverage.
@@ -832,36 +1129,47 @@ while [[ ! -s "${coverage_report}" ]]; do
       case "${coverage_state}" in
         PLANNING|TRANSIT|CLEANING)
           write_state COVERAGE "${map_sha256}"
-          wait_for_hmi_receipt COVERAGE "${map_sha256}"
-          save_hmi_phase_snapshot cleaning COVERAGE "${map_sha256}"
+          guard_or_publish_terminal \
+            "HMI did not acknowledge live coverage" "coverage_hmi_receipt" \
+            '{"code":"coverage_hmi_receipt_unavailable"}' wait_for_hmi_receipt COVERAGE "${map_sha256}"
+          guard_or_publish_terminal \
+            "coverage HMI snapshot was not retained" "coverage_hmi_snapshot" \
+            '{"code":"coverage_hmi_snapshot_failed"}' save_hmi_phase_snapshot cleaning COVERAGE "${map_sha256}"
           coverage_stage_published=true
           ;;
       esac
     fi
+    if [[ "${coverage_stage_published}" != "true" ]] \
+      && (( SECONDS >= cleaning_progress_deadline )); then
+      publish_preview_terminal_with_hmi \
+        "cleaning progress watchdog timed out before live coverage" \
+        "coverage_startup_timeout" \
+        "{\"code\":\"coverage_stage_not_observed\",\"wall_timeout_sec\":${phase_progress_timeout_sec}}"
+      echo "cleaning progress watchdog timed out before live coverage" >&2
+      exit 4
+    fi
   fi
   if ! kill -0 "${cleaning_launch_pid}" 2>/dev/null; then
-    write_state PRODUCT_TERMINAL "${map_sha256}"
-    wait_for_hmi_receipt PRODUCT_TERMINAL "${map_sha256}"
-    write_terminal "same-map FullCoverage launch exited before a terminal report"
-    terminal_written=true
+    publish_preview_terminal_with_hmi \
+      "same-map FullCoverage launch exited before a terminal report" \
+      "coverage_launch_exited" '{"code":"coverage_launch_exited_before_report"}'
     echo "cleaning launch exited before coverage report; see ${cleaning_root}/cleaning.launch.log" >&2
     exit 5
   fi
   if (( SECONDS >= deadline )); then
-    write_state PRODUCT_TERMINAL "${map_sha256}"
-    wait_for_hmi_receipt PRODUCT_TERMINAL "${map_sha256}"
-    write_terminal "same-map FullCoverage timed out before a terminal report"
-    terminal_written=true
+    publish_preview_terminal_with_hmi \
+      "same-map FullCoverage timed out before a terminal report" \
+      "coverage_completion_timeout" \
+      "{\"code\":\"coverage_terminal_report_timeout\",\"wall_timeout_sec\":${cleaning_timeout_sec}}"
     echo "preview cleaning timed out; terminal remains NOT_PRODUCT_PASS" >&2
     exit 4
   fi
   sleep 2
 done
 if [[ "${coverage_stage_published}" != "true" ]]; then
-  write_state PRODUCT_TERMINAL "${map_sha256}"
-  wait_for_hmi_receipt PRODUCT_TERMINAL "${map_sha256}"
-  write_terminal "coverage report appeared without a verified live coverage HMI receipt and snapshot"
-  terminal_written=true
+  publish_preview_terminal_with_hmi \
+    "coverage report appeared without a verified live coverage HMI receipt and snapshot" \
+    "coverage_receipt_missing" '{"code":"coverage_report_without_live_receipt"}'
   echo "preview coverage report appeared before verified live coverage HMI receipt" >&2
   exit 5
 fi
@@ -875,10 +1183,9 @@ if report.get("success") is not True or report.get("terminal_state") != "COMPLET
     raise SystemExit(1)
 PY
 then
-  write_state PRODUCT_TERMINAL "${map_sha256}"
-  wait_for_hmi_receipt PRODUCT_TERMINAL "${map_sha256}"
-  write_terminal "same-map FullCoverage produced a non-success terminal report"
-  terminal_written=true
+  publish_preview_terminal_with_hmi \
+    "same-map FullCoverage produced a non-success terminal report" \
+    "coverage_non_success_terminal" '{"code":"coverage_terminal_report_non_success"}'
   echo "preview coverage report is non-success: ${coverage_report}" >&2
   exit 5
 fi
@@ -889,8 +1196,6 @@ stop_pid "${emergency_stop_pid}" || exit 125
 stop_pid "${main_power_pid}" || exit 125
 wait "${emergency_stop_pid}" 2>/dev/null || true; wait "${main_power_pid}" 2>/dev/null || true
 emergency_stop_pid=""; main_power_pid=""
-write_state PRODUCT_TERMINAL "${map_sha256}"
-wait_for_hmi_receipt PRODUCT_TERMINAL "${map_sha256}"
-write_terminal "live mapping and same-map FullCoverage preview; no formal closure/session/perception acceptance"
-terminal_written=true
+publish_preview_terminal_with_hmi \
+  "live mapping and same-map FullCoverage preview; no formal closure/session/perception acceptance"
 printf 'FINAL_VISUAL_PREVIEW_TERMINAL=%s\n' "${terminal_output}"

@@ -14,7 +14,10 @@ namespace
 {
 using sanitation_gazebo_control::A300DrivetrainPlantCore;
 using sanitation_gazebo_control::A300DrivetrainPlantInput;
+using sanitation_gazebo_control::A300PlanarTwist;
+using sanitation_gazebo_control::A300PlanarTwistFromWheelSpeeds;
 using sanitation_gazebo_control::A300DrivetrainStopReason;
+using sanitation_gazebo_control::A300WheelSpeedsFromPlanarTwist;
 
 void Require(const bool condition, const std::string & message)
 {
@@ -180,6 +183,77 @@ void TestInvalidInputCannotProduceNanOrDrive()
     Require(Near(torque, 0.0), "invalid input must produce zero torque");
   }
 }
+
+void TestPureSkidSteerSpinKinematics()
+{
+  constexpr double kControlWheelRadiusM = 0.1625;
+  constexpr double kWheelTrackM = 0.562;
+  constexpr double kTargetYawRateRadS = 0.35;
+  const auto wheelSpeeds = A300WheelSpeedsFromPlanarTwist(
+    A300PlanarTwist{0.0, kTargetYawRateRadS},
+    kControlWheelRadiusM, kWheelTrackM);
+  const double expectedSideSpeed =
+    kTargetYawRateRadS * (kWheelTrackM * 0.5) / kControlWheelRadiusM;
+  Require(Near(wheelSpeeds[0], -expectedSideSpeed),
+    "positive yaw must command the left front wheel negative");
+  Require(Near(wheelSpeeds[1], expectedSideSpeed),
+    "positive yaw must command the right front wheel positive");
+  Require(Near(wheelSpeeds[2], -expectedSideSpeed),
+    "positive yaw must command the left rear wheel negative");
+  Require(Near(wheelSpeeds[3], expectedSideSpeed),
+    "positive yaw must command the right rear wheel positive");
+
+  const auto reconstructed = A300PlanarTwistFromWheelSpeeds(
+    wheelSpeeds, kControlWheelRadiusM, kWheelTrackM);
+  Require(Near(reconstructed.linear_x_mps, 0.0),
+    "symmetric spin wheel speeds must not reconstruct linear motion");
+  Require(Near(reconstructed.angular_z_rad_s, kTargetYawRateRadS),
+    "spin wheel-speed inverse must reconstruct the requested yaw rate");
+}
+
+void TestCounterRotationUsesBreakawayGainOnly()
+{
+  constexpr double kWheelCommandRadS = 0.4323076923076923;
+
+  A300DrivetrainPlantCore spin_plant;
+  auto spin_input = NominalInput();
+  spin_input.step_s = 0.25;
+  spin_input.commanded_speed_rad_s = {
+    -kWheelCommandRadS, kWheelCommandRadS,
+    -kWheelCommandRadS, kWheelCommandRadS};
+  const auto spin = spin_plant.Step(spin_input);
+  const double expected_spin_torque_nm = 120.0 * kWheelCommandRadS;
+  Require(Near(spin.wheel_torque_nm[0], -expected_spin_torque_nm, 1e-8),
+    "counter-rotation must use the dedicated breakaway gain");
+  Require(Near(spin.wheel_torque_nm[1], expected_spin_torque_nm, 1e-8),
+    "counter-rotation torque signs must follow wheel commands");
+  Require(!spin.current_limited && !spin.power_limited,
+    "nominal spin breakaway must stay inside current and power boundaries");
+
+  A300DrivetrainPlantCore high_rate_spin_plant;
+  auto high_rate_spin_input = spin_input;
+  high_rate_spin_input.commanded_speed_rad_s = {-1.0, 1.0, -1.0, 1.0};
+  const auto high_rate_spin = high_rate_spin_plant.Step(high_rate_spin_input);
+  for (const double torque_nm : high_rate_spin.wheel_torque_nm) {
+    Require(Near(std::abs(torque_nm), 52.5, 1e-8),
+      "four-wheel counter-rotation must share the 60 A battery-current limit");
+  }
+  Require(high_rate_spin.current_limited,
+    "counter-rotation above the continuous envelope must report current limiting");
+  Require(Near(high_rate_spin.estimated_battery_current_a, 60.0, 1e-8),
+    "counter-rotation must not exceed the aggregate continuous battery current");
+
+  A300DrivetrainPlantCore straight_plant;
+  auto straight_input = NominalInput();
+  straight_input.step_s = 0.25;
+  straight_input.commanded_speed_rad_s.fill(kWheelCommandRadS);
+  const auto straight = straight_plant.Step(straight_input);
+  const double expected_straight_torque_nm = 12.0 * kWheelCommandRadS;
+  for (const double torque_nm : straight.wheel_torque_nm) {
+    Require(Near(torque_nm, expected_straight_torque_nm, 1e-8),
+      "straight drive must retain the general speed-error gain");
+  }
+}
 }  // namespace
 
 int main()
@@ -192,6 +266,8 @@ int main()
     TestEmergencyStopAndMotorFaultAreGlobal();
     TestDisabledBrakeCannotInjectEnergyNearZero();
     TestInvalidInputCannotProduceNanOrDrive();
+    TestPureSkidSteerSpinKinematics();
+    TestCounterRotationUsesBreakawayGainOnly();
   } catch (const std::exception & error) {
     std::cerr << "A300 drivetrain plant core test failed: " << error.what() << '\n';
     return EXIT_FAILURE;
