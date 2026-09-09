@@ -64,6 +64,23 @@ UTC/本地时间、S100P 系统版本、git revision 和文件哈希；不得把
   协议/速率、主从 ID、物理 frame、线束/接口图版本、厂商驱动来源及许可证。
 - 传感器只录制原始话题、消息类型、频率、时间戳单调性、时钟偏差、frame_id、外参/内参
   标定版本和掉线计数。G3 成功不允许发布非零控制量。
+- 对已运行的**传感器发布端**，可使用 `scripts/collect_s100p_g1_g3_read_only.py` 生成新的
+  JSON 收据；该脚本仅订阅调用者明确传入的真实话题，并只读枚举相机/TTY、`/dev/can*` 与
+  SocketCAN 接口、TROS/overlay setup 身份。它不 source setup、启动产品节点、打开 CAN/TTY/
+  相机设备、发布/调用 ROS 或写入既有收据。调用进程必须已由操作者独立准备 ROS 环境，且
+  `--output` 必须是已有非符号链接目录下从未存在过的绝对路径：
+
+  ```bash
+  python3 scripts/collect_s100p_g1_g3_read_only.py \
+    --tros-setup /opt/tros/humble/setup.bash \
+    --overlay-setup /opt/tzcup/s100p/overlay/install/setup.bash \
+    --topic /camera/color/image_raw \
+    --require-device camera --require-device can --require-device tty \
+    --output /opt/tzcup/evidence/g1_g3_interface_receipt.json
+  ```
+
+  该收据始终标记为未验收；缺少 setup、设备、真实新鲜带 header 的话题，或任何仿真/回放
+  标识都会 fail-closed，不能替代 G1 设备卡、G3 标定或 G0–G3 的现场放行。
 
 G2 必须通过实际断能测量，而非 ROS 日志。最低要求：急停为常闭安全回路；上电默认禁能；
 安全继电器/接触器切断驱动功率或使能；独立人工可触达断电方式；安全 MCU/继电器故障
