@@ -48,6 +48,9 @@ def generate_launch_description() -> LaunchDescription:
     start_power_system_simulators = LaunchConfiguration(
         "start_power_system_simulators"
     )
+    start_charge_interface_manager = LaunchConfiguration(
+        "start_charge_interface_manager"
+    )
     start_localization = LaunchConfiguration("start_localization")
     simulation_initial_estop_active = LaunchConfiguration(
         "simulation_initial_estop_active"
@@ -440,7 +443,7 @@ def generate_launch_description() -> LaunchDescription:
         name="charge_interface_manager",
         parameters=[{"use_sim_time": False}],
         output="screen",
-        condition=IfCondition(start_power_system_simulators),
+        condition=IfCondition(start_charge_interface_manager),
     )
     charge_receptacle_contact_bridge = Node(
         package="sanitation_gazebo_control",
@@ -587,6 +590,14 @@ def generate_launch_description() -> LaunchDescription:
                     "Start the A300 BMS and charge-interface simulators. "
                     "Defaults to the simulation-safety-input setting but can "
                     "be enabled independently for an in-process acceptance probe."
+                ),
+            ),
+            DeclareLaunchArgument(
+                "start_charge_interface_manager",
+                default_value="true",
+                description=(
+                    "Start the charging request and receptacle manager. The "
+                    "A300 BMS remains controlled by start_power_system_simulators."
                 ),
             ),
             DeclareLaunchArgument(

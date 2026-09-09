@@ -255,6 +255,8 @@ def test_launch_is_parseable_and_keeps_safety_and_controller_ownership_explicit(
     assert "formal_physical_grasp.launch.py" in source
     assert 'condition=IfCondition(LaunchConfiguration("start_manipulation_runtime"))' in source
     assert 'DeclareLaunchArgument(\n                "start_manipulation_runtime",\n                default_value="true",' in source
+    assert '"start_charge_interface_manager": LaunchConfiguration(' in source
+    assert 'DeclareLaunchArgument(\n                "start_charge_interface_manager",\n                default_value="true",' in source
     assert '"start_controllers": "false"' in source
     assert '"enable_safety_manager": "false"' in source
     assert 'executable="whole_vehicle_safety_manager"' in source
@@ -295,6 +297,15 @@ def test_launch_is_parseable_and_keeps_safety_and_controller_ownership_explicit(
     assert "mapping mode must retain the mapping_safe speed profile" in lifecycle
     assert "clean_path_speed_mps=speed_profile.maximum_linear_speed_mps" in lifecycle
     assert '"start_manipulation_runtime": "false" if mode == "mapping" else "true"' in lifecycle
+    assert '"start_charge_interface_manager": "false" if mode == "mapping" else "true"' in lifecycle
+
+    assert 'start_charge_interface_manager = LaunchConfiguration(' in formal_vehicle_launch
+    assert 'condition=IfCondition(start_charge_interface_manager)' in formal_vehicle_launch
+    assert 'DeclareLaunchArgument(\n                "start_charge_interface_manager",\n                default_value="true",' in formal_vehicle_launch
+    # The BMS remains tied to the existing safety-power flag; only charging is
+    # optional during mapping.
+    assert 'a300_bms = Node(' in formal_vehicle_launch
+    assert 'condition=IfCondition(start_power_system_simulators)' in formal_vehicle_launch
 
     navigation_launch = (
         ROOT / "starter_ws/src/sanitation_navigation/launch/navigation.launch.py"

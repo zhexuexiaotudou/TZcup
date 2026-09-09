@@ -246,6 +246,9 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                 "start_simulation_safety_inputs": LaunchConfiguration(
                     "start_simulation_safety_inputs"
                 ),
+                "start_charge_interface_manager": LaunchConfiguration(
+                    "start_charge_interface_manager"
+                ),
                 "start_localization": "true",
                 "simulation_initial_estop_active": LaunchConfiguration(
                     "simulation_initial_estop_active"
@@ -578,6 +581,14 @@ def generate_launch_description() -> LaunchDescription:
                     "Start MoveIt, the physical grasp executor, and its ROS-Gazebo "
                     "interfaces. Mapping lifecycle disables this only while the arm "
                     "remains physically stowed."
+                ),
+            ),
+            DeclareLaunchArgument(
+                "start_charge_interface_manager",
+                default_value="true",
+                description=(
+                    "Start the charging interface manager. Mapping lifecycle disables "
+                    "only this non-navigation runtime; cleaning retains it."
                 ),
             ),
             DeclareLaunchArgument("localization_backend", default_value="amcl"),

@@ -359,6 +359,10 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                 # grasp executor, and their ROS-Gazebo contact interfaces.
                 # Saved-map cleaning retains the full product runtime.
                 "start_manipulation_runtime": "false" if mode == "mapping" else "true",
+                # Mapping does not exercise charging. Keep the BMS and safety
+                # power chain active, but defer the charge request manager to
+                # saved-map cleaning where service interactions are accepted.
+                "start_charge_interface_manager": "false" if mode == "mapping" else "true",
                 "mission_mode": mode,
                 "localization_backend": "slam" if mode == "mapping" else "amcl",
                 "start_coverage": "false",

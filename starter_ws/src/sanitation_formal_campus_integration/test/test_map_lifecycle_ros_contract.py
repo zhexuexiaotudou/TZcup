@@ -64,6 +64,7 @@ def test_formal_launch_separates_mapping_and_saved_map_cleaning():
     assert '"materialize_static_maps": "false"' in source
     assert '"runtime_artifact_dir": str(artifact_root)' in source
     assert '"start_manipulation_runtime": "false" if mode == "mapping" else "true"' in source
+    assert '"start_charge_interface_manager": "false" if mode == "mapping" else "true"' in source
     assert '"start_velocity_gate": "false"' in source
     assert '"cmd_vel_in_topic": "/cmd_vel_smoothed"' in source
     assert '"cmd_vel_out_topic": "/cmd_vel_gate"' in source
