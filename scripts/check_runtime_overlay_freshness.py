@@ -20,9 +20,13 @@ from typing import Any
 
 
 PYTHON_PACKAGES = (
+    "sanitation_campus_scenario",
     "sanitation_formal_campus_integration",
     "sanitation_hmi",
 )
+SHARE_ONLY_PACKAGES = {
+    "sanitation_vehicle_description": ("launch", "config", "urdf", "worlds"),
+}
 CPP_PACKAGE = "sanitation_gazebo_control"
 CPP_SUFFIXES = {".c", ".cc", ".cpp", ".cxx", ".h", ".hh", ".hpp"}
 
@@ -168,13 +172,14 @@ def _check_python_package(
 
 
 def _check_share_payload(
-    report: dict[str, Any], runtime_root: Path, package: str
+    report: dict[str, Any], runtime_root: Path, package: str,
+    names: tuple[str, ...] = ("launch", "config"),
 ) -> None:
     result = report["packages"].setdefault(package, {"ok": False})
     all_current = bool(result.get("ok"))
     payloads: dict[str, Any] = {}
     result["share_payloads"] = payloads
-    for name in ("launch", "config"):
+    for name in names:
         source_path = runtime_root / "src" / package / name
         installed_path = runtime_root / "install" / package / "share" / package / name
         payload = {"ok": False}
@@ -304,6 +309,9 @@ def check(runtime_ws: Path) -> dict[str, Any]:
     for package in PYTHON_PACKAGES:
         _check_python_package(report, runtime_root, package, imported)
         _check_share_payload(report, runtime_root, package)
+    for package, payloads in SHARE_ONLY_PACKAGES.items():
+        report["packages"][package] = {"ok": True, "mode": "share-only"}
+        _check_share_payload(report, runtime_root, package, payloads)
     _check_cpp_package(report, runtime_root)
     report["ok"] = not report["errors"] and all(
         package.get("ok") for package in report["packages"].values()

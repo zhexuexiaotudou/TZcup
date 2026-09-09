@@ -225,18 +225,24 @@ cleaning_partition="tzcup_final_visual_cleaning_${cleaning_ros_domain}_$$"
 active_map_sha256=""
 stop_pid() {
   local pid="$1"
+  local pgid="" target=""
   [[ -n "${pid}" ]] || return 0
-  kill -TERM -- "-${pid}" 2>/dev/null || true
+  pgid="$(ps -o pgid= -p "${pid}" 2>/dev/null | tr -d '[:space:]' || true)"
+  target="${pid}"
+  if [[ "${pgid}" == "${pid}" ]]; then
+    target="-${pid}"
+  fi
+  kill -TERM -- "${target}" 2>/dev/null || true
   for _ in $(seq 1 50); do
-    kill -0 -- "-${pid}" 2>/dev/null || return 0
+    kill -0 -- "${pid}" 2>/dev/null || return 0
     sleep 0.1
   done
-  kill -KILL -- "-${pid}" 2>/dev/null || true
+  kill -KILL -- "${target}" 2>/dev/null || true
   for _ in $(seq 1 50); do
-    kill -0 -- "-${pid}" 2>/dev/null || return 0
+    kill -0 -- "${pid}" 2>/dev/null || return 0
     sleep 0.1
   done
-  echo "process group ${pid} survived TERM then KILL" >&2
+  echo "process ${pid} (target ${target}) survived TERM then KILL" >&2
   return 1
 }
 cleanup() {
@@ -909,7 +915,7 @@ export GZ_PARTITION="${mapping_partition}"
   episode_manifest:="${episode_root}/public/episode_manifest.json" map_artifact_dir:="${map_root}" \
   pedestrian_schedule:="${episode_root}/environment/pedestrian_schedule.json" \
   start_pedestrians:=false start_coverage:=false operation_speed_profile:=mapping_safe \
-  >"${run_root}/mapping.launch.log" 2>&1 & mapping_launch_pid=$!
+  9>&- >"${run_root}/mapping.launch.log" 2>&1 & mapping_launch_pid=$!
 guard_or_publish_terminal \
   "mapping memory watchdog did not start" "mapping_memory_watchdog_startup" \
   '{"code":"memory_watchdog_start_failed"}' \
@@ -1120,7 +1126,7 @@ export GZ_PARTITION="${cleaning_partition}"
   pedestrian_schedule:="${episode_root}/environment/pedestrian_schedule.json" start_pedestrians:=true \
   start_coverage:=true coverage_evidence_dir:="${cleaning_root}" \
   operation_speed_profile:=dry_cleaning_competition_candidate \
-  >"${cleaning_root}/cleaning.launch.log" 2>&1 & cleaning_launch_pid=$!
+  9>&- >"${cleaning_root}/cleaning.launch.log" 2>&1 & cleaning_launch_pid=$!
 guard_or_publish_terminal \
   "cleaning memory watchdog did not start" "cleaning_memory_watchdog_startup" \
   '{"code":"memory_watchdog_start_failed"}' \
@@ -1144,6 +1150,22 @@ while [[ ! -s "${coverage_report}" ]]; do
     guard_or_publish_terminal \
       "coverage HMI receipt was lost" "coverage_hmi_liveness" \
       '{"code":"coverage_hmi_receipt_lost"}' require_hmi_receipt COVERAGE "${map_sha256}"
+    if ! coverage_state="$(dashboard_live_coverage_state 2>/dev/null)"; then
+      publish_preview_terminal_with_hmi \
+        "coverage executor state became stale or unavailable" \
+        "coverage_executor_liveness" \
+        '{"code":"coverage_executor_state_unavailable"}'
+      echo "coverage executor state became stale or unavailable" >&2
+      exit 4
+    fi
+    if [[ "${coverage_state}" == "FAILED" ]]; then
+      publish_preview_terminal_with_hmi \
+        "coverage executor reported FAILED before its terminal report was observed" \
+        "coverage_executor_failed" \
+        '{"code":"coverage_executor_failed"}'
+      echo "coverage executor reported FAILED" >&2
+      exit 4
+    fi
   else
     guard_or_publish_terminal \
       "reload/localization HMI receipt was lost" "reload_localize_hmi_liveness" \

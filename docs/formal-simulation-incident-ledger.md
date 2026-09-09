@@ -151,6 +151,17 @@ root, then pass the smallest applicable gate before starting a long run.
 - A forced stale-run stop also proved that dashboard/support children inherited
   the Gazebo lease descriptor. They now close fd 9 at exec, so an orphaned HMI
   cannot retain `/tmp/tzcup_formal_gazebo.lock` after the simulator is gone.
+- Process cleanup must not assume every background helper is its own process
+  group.  The preview now resolves each helper's actual PGID, signals the group
+  only when `PGID == PID`, otherwise signals the exact PID, and bounds TERM and
+  KILL waits.  Both heavy launch children also close the Gazebo lease FD before
+  exec so a crashed parent cannot leave a survivor holding a ghost lock.
+- The saved-map coverage executor originally published only on phase changes;
+  a long Nav2 action therefore made its HMI source stale even while healthy,
+  while the preview stopped checking that source after the first CLEANING
+  receipt.  The executor now republishes its current state with a monotonic
+  sequence once per second, and the preview continuously rejects unavailable
+  or FAILED executor state instead of waiting for the 24-hour outer timeout.
 - A live Nav2 arc commanded `v=-0.12 m/s, w=0.35 rad/s`, corresponding to left
   and right wheel targets of about `-1.344` and `-0.133 rad/s`, while all four
   measured wheels collapsed to about `-0.725 rad/s` and measured yaw remained

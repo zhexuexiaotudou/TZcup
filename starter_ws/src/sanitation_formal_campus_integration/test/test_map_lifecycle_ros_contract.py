@@ -218,6 +218,9 @@ def test_saved_map_coverage_is_real_product_action_execution_with_fixed_envelope
     assert 'self.declare_parameter("operation_speed_profile", DRY_CLEANING_SPEED_PROFILE)' in executor
     assert 'self._set_brush(True)' in executor
     assert 'self._set_brush(False)' in executor
+    assert 'self._state_heartbeat = self.create_timer(1.0, self._republish_state)' in executor
+    assert '"sequence": self._state_sequence' in executor
+    assert '"heartbeat": heartbeat' in executor
     assert '"terminal_state": state' in executor
     assert "/ground_truth" not in executor
     assert "/model/" not in executor

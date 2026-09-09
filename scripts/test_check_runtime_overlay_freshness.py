@@ -20,7 +20,11 @@ def _write(path: Path, text: str = "payload\n") -> None:
 
 
 def _make_workspace(root: Path) -> Path:
-    for package in ("sanitation_formal_campus_integration", "sanitation_hmi"):
+    for package in (
+        "sanitation_campus_scenario",
+        "sanitation_formal_campus_integration",
+        "sanitation_hmi",
+    ):
         source_package = root / "src" / package / package
         _write(source_package / "__init__.py", f"NAME = {package!r}\n")
         _write(source_package / "runtime.py", "VALUE = 1\n")
@@ -31,6 +35,15 @@ def _make_workspace(root: Path) -> Path:
         _write(installed_package / "runtime.py", "VALUE = 1\n")
         _write(root / "install" / package / "share" / package / "launch" / "demo.launch.py", "LAUNCH = True\n")
         _write(root / "install" / package / "share" / package / "config" / "demo.yaml", "demo: true\n")
+
+    vehicle = root / "src" / "sanitation_vehicle_description"
+    for payload in ("launch", "config", "urdf", "worlds"):
+        _write(vehicle / payload / "payload.txt", f"{payload}\n")
+        _write(
+            root / "install" / "sanitation_vehicle_description" / "share"
+            / "sanitation_vehicle_description" / payload / "payload.txt",
+            f"{payload}\n",
+        )
 
     cpp = root / "src" / "sanitation_gazebo_control"
     _write(cpp / "CMakeLists.txt", "project(sanitation_gazebo_control)\n")
@@ -50,7 +63,11 @@ def _run(root: Path, extra_env: dict[str, str] | None = None) -> tuple[int, dict
     env = os.environ.copy()
     sites = [
         root / "install" / package / "lib" / "python3.12" / "site-packages"
-        for package in ("sanitation_formal_campus_integration", "sanitation_hmi")
+        for package in (
+            "sanitation_campus_scenario",
+            "sanitation_formal_campus_integration",
+            "sanitation_hmi",
+        )
     ]
     env["PYTHONPATH"] = os.pathsep.join(map(str, sites)) + os.pathsep + env.get("PYTHONPATH", "")
     if extra_env:
@@ -108,7 +125,11 @@ class RuntimeOverlayFreshnessTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = _make_workspace(Path(temporary))
             try:
-                for package in ("sanitation_formal_campus_integration", "sanitation_hmi"):
+                for package in (
+                    "sanitation_campus_scenario",
+                    "sanitation_formal_campus_integration",
+                    "sanitation_hmi",
+                ):
                     source_root = root / "src" / package
                     installed_package = root / "install" / package / "lib" / "python3.12" / "site-packages" / package
                     shutil.rmtree(installed_package)
@@ -130,7 +151,11 @@ class RuntimeOverlayFreshnessTests(unittest.TestCase):
             _write(external / "__init__.py", "NAME = 'external'\n")
             sites = [
                 root / "install" / package / "lib" / "python3.12" / "site-packages"
-                for package in ("sanitation_formal_campus_integration", "sanitation_hmi")
+                for package in (
+                    "sanitation_campus_scenario",
+                    "sanitation_formal_campus_integration",
+                    "sanitation_hmi",
+                )
             ]
             pythonpath = os.pathsep.join([str(external.parent), *map(str, sites)])
             code, report = _run(root, {"PYTHONPATH": pythonpath})

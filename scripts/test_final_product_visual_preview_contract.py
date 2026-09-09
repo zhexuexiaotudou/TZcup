@@ -55,7 +55,9 @@ def test_preview_is_fresh_scoped_and_has_a_windows_preflight_entry() -> None:
     assert '"${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 launch' in RUNNER
     assert 'coverage_report="${cleaning_root}/coverage_execution.json"' in RUNNER
     assert 'report.get("terminal_state") != "COMPLETED"' in RUNNER
-    assert 'kill -KILL -- "-${pid}"' in RUNNER
+    assert 'pgid="$(ps -o pgid= -p "${pid}"' in RUNNER
+    assert 'kill -KILL -- "${target}"' in RUNNER
+    assert RUNNER.count('9>&- >"${') >= 2
     assert "MappingRosDomain and CleaningRosDomain must differ" in WINDOWS
     assert "run_final_product_visual_preview.sh" in WINDOWS
     assert "Replace('\\', '/')" in WINDOWS
@@ -103,7 +105,7 @@ def test_preview_fails_closed_on_memory_or_process_cleanup_faults() -> None:
     assert RUNNER.index(guarded_mapping_cleanup, RUNNER.index('write_state MAP_SAVED')) < RUNNER.index(
         'write_state HARD_RESTART "${map_sha256}"'
     )
-    assert 'echo "process group ${pid} survived TERM then KILL"' in RUNNER
+    assert 'echo "process ${pid} (target ${target}) survived TERM then KILL"' in RUNNER
     assert "require_phase_processes mapping" in RUNNER
     assert "require_phase_processes cleaning" in RUNNER
     assert "except PermissionError" in HMI_SERVER
@@ -180,6 +182,8 @@ def test_preview_requires_observable_phase_progress_and_hmi_stage_receipts() -> 
     assert "hmi_cleaning_telemetry.json" in RUNNER
     assert "cleaning_progress_deadline" in RUNNER
     assert "coverage_stage_not_observed" in RUNNER
+    assert "coverage_executor_state_unavailable" in RUNNER
+    assert "coverage_executor_failed" in RUNNER
     assert 'dashboard["live_inputs"]["cleaning_motor_status"]' in RUNNER
     assert '"${dashboard_output}/dashboard_telemetry.json"' in RUNNER
     assert '"${dashboard_telemetry}"' not in RUNNER
