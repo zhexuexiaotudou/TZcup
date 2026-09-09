@@ -69,6 +69,10 @@ operation_speed_profile=dry_cleaning_competition_candidate
 formal_visual_gui=false
 dashboard_port=8878
 preflight_only=false
+# A visual short run must prove that the live graph has progressed; a healthy
+# PID or memory guard alone is not evidence that SLAM/HMI is advancing.
+phase_progress_timeout_sec=600
+hmi_receipt_timeout_sec=30
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -245,22 +249,123 @@ PY
 
 dashboard_pid=""
 state_publisher_pid=""
-coverage_stage_monitor_pid=""
-stop_visual_stack() {
-  local pid
-  for pid in "${coverage_stage_monitor_pid}" "${state_publisher_pid}" "${dashboard_pid}"; do
-    if [[ -n "${pid}" ]] && kill -0 "${pid}" 2>/dev/null; then
-      kill "${pid}" 2>/dev/null || true
+mapping_runner_pid=""
+cleaning_runner_pid=""
+hmi_telemetry_sha256=""
+
+stop_exact_child() {
+  local pid="$1" signal attempt
+  [[ -n "${pid}" ]] || return 0
+  for signal in INT TERM KILL; do
+    kill -0 "${pid}" 2>/dev/null || break
+    kill -"${signal}" "${pid}" 2>/dev/null || true
+    for attempt in {1..80}; do
+      kill -0 "${pid}" 2>/dev/null || break
+      sleep 0.25
+    done
+  done
+  wait "${pid}" 2>/dev/null || true
+  ! kill -0 "${pid}" 2>/dev/null
+}
+
+stop_exact_visual_pid() {
+  local pid="$1" attempt
+  [[ -n "${pid}" ]] || return 0
+  kill -TERM "${pid}" 2>/dev/null || true
+  for attempt in {1..40}; do
+    kill -0 "${pid}" 2>/dev/null || break
+    sleep 0.25
+  done
+  kill -KILL "${pid}" 2>/dev/null || true
+  wait "${pid}" 2>/dev/null || true
+  ! kill -0 "${pid}" 2>/dev/null
+}
+
+hmi_receipt_matches() {
+  local expected_stage="$1" expected_hash="$2"
+  python3 - "${dashboard_port}" "${dashboard_output}/dashboard_telemetry.json" \
+    "${expected_stage}" "${expected_hash}" <<'PY'
+import json
+import pathlib
+import sys
+import urllib.request
+
+port, telemetry_path, stage, digest = sys.argv[1:]
+try:
+    with urllib.request.urlopen(f"http://127.0.0.1:{port}/healthz", timeout=1.0) as response:
+        if response.status != 200:
+            raise RuntimeError("health status")
+    payload = json.loads(pathlib.Path(telemetry_path).read_text(encoding="utf-8"))
+    final_demo = payload["final_demo"]
+    expected_digest = None if digest == "" else digest
+    if (
+        final_demo.get("status") != "live"
+        or final_demo.get("stage") != stage
+        or final_demo.get("map_sha256") != expected_digest
+    ):
+        raise RuntimeError("telemetry stage/hash mismatch")
+except (OSError, KeyError, TypeError, ValueError, RuntimeError):
+    raise SystemExit(1)
+PY
+}
+
+wait_for_hmi_receipt() {
+  local expected_stage="$1" expected_hash="$2" deadline
+  [[ "${formal_visual_gui}" == "true" ]] || return 0
+  deadline=$((SECONDS + hmi_receipt_timeout_sec))
+  while (( SECONDS < deadline )); do
+    if kill -0 "${dashboard_pid}" 2>/dev/null \
+      && kill -0 "${state_publisher_pid}" 2>/dev/null \
+      && hmi_receipt_matches "${expected_stage}" "${expected_hash}"; then
+      hmi_telemetry_sha256="$(sha256sum "${dashboard_output}/dashboard_telemetry.json" | awk '{print $1}')"
+      return 0
     fi
+    sleep 1
   done
-  for pid in "${coverage_stage_monitor_pid}" "${state_publisher_pid}" "${dashboard_pid}"; do
-    [[ -n "${pid}" ]] && wait "${pid}" 2>/dev/null || true
-  done
+  echo "HMI receipt did not become healthy for ${expected_stage}" >&2
+  return 125
+}
+
+require_hmi_receipt() {
+  [[ "${formal_visual_gui}" == "true" ]] || return 0
+  kill -0 "${dashboard_pid}" 2>/dev/null \
+    && kill -0 "${state_publisher_pid}" 2>/dev/null \
+    && hmi_receipt_matches "$1" "$2" || {
+      echo "HMI health, PID, or telemetry receipt failed during $1" >&2
+      return 125
+    }
+}
+
+dashboard_has_first_map() {
+  python3 - "${dashboard_output}/dashboard_telemetry.json" <<'PY'
+import json
+import pathlib
+import sys
+
+try:
+    grid = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))["visualization"]["occupancy_grid"]
+    ok = int(grid["width"]) > 0 and int(grid["height"]) > 0 and len(grid["data"]) == int(grid["width"]) * int(grid["height"])
+except (OSError, KeyError, TypeError, ValueError):
+    ok = False
+raise SystemExit(0 if ok else 1)
+PY
+}
+
+stop_visual_stack() {
+  local cleanup_status=0
+  stop_exact_child "${cleaning_runner_pid}" || cleanup_status=1
+  stop_exact_child "${mapping_runner_pid}" || cleanup_status=1
+  stop_exact_visual_pid "${state_publisher_pid}" || cleanup_status=1
+  stop_exact_visual_pid "${dashboard_pid}" || cleanup_status=1
+  cleaning_runner_pid=""
+  mapping_runner_pid=""
   dashboard_pid=""
   state_publisher_pid=""
-  coverage_stage_monitor_pid=""
+  return "${cleanup_status}"
 }
-trap stop_visual_stack EXIT INT TERM
+trap stop_visual_stack EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 start_visual_stack() {
   local phase="$1"
@@ -300,6 +405,7 @@ cleaning_output="${run_root}/map_lifecycle_acceptance.json"
 if [[ "${formal_visual_gui}" == "true" ]]; then
   write_final_demo_state MAPPING ""
   start_visual_stack mapping "${mapping_ros_domain}"
+  wait_for_hmi_receipt MAPPING ""
 fi
 
 FORMAL_DYNAMIC_EPISODE_ROOT="${episode_root}" \
@@ -311,17 +417,48 @@ FORMAL_ACCEPTANCE_SESSION="${acceptance_session}" \
 FORMAL_MAPPING_TIMEOUT_S="${mapping_timeout_sec}" \
 ROS_DOMAIN_ID="${mapping_ros_domain}" \
 FORMAL_VISUAL_GUI="${formal_visual_gui}" \
-bash "${repo_root}/scripts/run_formal_first_map_dynamic_prerequisite.sh"
+bash "${repo_root}/scripts/run_formal_first_map_dynamic_prerequisite.sh" &
+mapping_runner_pid=$!
+mapping_progress_deadline=$((SECONDS + phase_progress_timeout_sec))
+mapping_scan_ready=false
+mapping_first_map=false
+while kill -0 "${mapping_runner_pid}" 2>/dev/null; do
+  require_hmi_receipt MAPPING ""
+  if [[ "${mapping_scan_ready}" == "false" ]] \
+    && grep -Fq "canonical scan ready; starting standard autostart SLAM lifecycle" \
+      "${map_root}/mapping.launch.log" 2>/dev/null; then
+    mapping_scan_ready=true
+  fi
+  if [[ "${formal_visual_gui}" == "true" && "${mapping_first_map}" == "false" ]] \
+    && dashboard_has_first_map; then
+    mapping_first_map=true
+  fi
+  if (( SECONDS >= mapping_progress_deadline )) \
+    && { [[ "${mapping_scan_ready}" != "true" ]] \
+      || { [[ "${formal_visual_gui}" == "true" && "${mapping_first_map}" != "true" ]]; }; }; then
+    echo "mapping progress watchdog timed out: scan_ready=${mapping_scan_ready} first_map=${mapping_first_map}" >&2
+    exit 4
+  fi
+  sleep 2
+done
+wait "${mapping_runner_pid}"
+mapping_runner_pid=""
+if [[ "${mapping_scan_ready}" != "true" ]] \
+  || { [[ "${formal_visual_gui}" == "true" ]] && [[ "${mapping_first_map}" != "true" ]]; }; then
+  echo "mapping ended without the required scan-ready and first-map progress" >&2
+  exit 4
+fi
 
 map_sha256="$(sha256sum "${map_root}/map_lifecycle_manifest.json" | awk '{print $1}')"
 if [[ "${formal_visual_gui}" == "true" ]]; then
   write_final_demo_state MAP_SAVED "${map_sha256}"
-  sleep 1
+  wait_for_hmi_receipt MAP_SAVED "${map_sha256}"
   write_final_demo_state HARD_RESTART "${map_sha256}"
-  sleep 1
+  wait_for_hmi_receipt HARD_RESTART "${map_sha256}"
   stop_visual_stack
-  start_visual_stack cleaning "${cleaning_ros_domain}"
   write_final_demo_state RELOAD_LOCALIZE "${map_sha256}"
+  start_visual_stack cleaning "${cleaning_ros_domain}"
+  wait_for_hmi_receipt RELOAD_LOCALIZE "${map_sha256}"
 fi
 
 cleaning_environment=(
@@ -348,39 +485,59 @@ if [[ "${perception_mode}" == "pc" ]]; then
 fi
 env "${cleaning_environment[@]}" bash "${repo_root}/scripts/run_formal_saved_map_cleaning_lifecycle.sh" &
 cleaning_runner_pid=$!
-if [[ "${formal_visual_gui}" == "true" ]]; then
-  (
-    while kill -0 "${cleaning_runner_pid}" 2>/dev/null; do
-      if [[ -s "${cleaning_runtime}/hard_restart_record.json" ]]; then
-        write_final_demo_state COVERAGE "${map_sha256}"
-        exit 0
-      fi
-      sleep 1
-    done
-  ) &
-  coverage_stage_monitor_pid=$!
-fi
+cleaning_progress_deadline=$((SECONDS + phase_progress_timeout_sec))
+coverage_stage_published=false
+while kill -0 "${cleaning_runner_pid}" 2>/dev/null; do
+  if [[ "${coverage_stage_published}" == "true" ]]; then
+    require_hmi_receipt COVERAGE "${map_sha256}"
+  else
+    require_hmi_receipt RELOAD_LOCALIZE "${map_sha256}"
+    if [[ -s "${cleaning_runtime}/hard_restart_record.json" ]]; then
+      write_final_demo_state COVERAGE "${map_sha256}"
+      wait_for_hmi_receipt COVERAGE "${map_sha256}"
+      coverage_stage_published=true
+    elif (( SECONDS >= cleaning_progress_deadline )); then
+      echo "cleaning progress watchdog timed out before hard-restart receipt" >&2
+      exit 4
+    fi
+  fi
+  sleep 2
+done
 wait "${cleaning_runner_pid}"
-if [[ -n "${coverage_stage_monitor_pid}" ]]; then
-  wait "${coverage_stage_monitor_pid}" 2>/dev/null || true
-  coverage_stage_monitor_pid=""
+cleaning_runner_pid=""
+if [[ "${coverage_stage_published}" != "true" ]]; then
+  echo "cleaning ended without a hard-restart coverage stage receipt" >&2
+  exit 4
 fi
 
 terminal_status="FORMAL_PC_PERCEPTION_COMPLETED_NOT_PRODUCT_PASS"
 if [[ "${perception_mode}" == "unavailable" ]]; then
   terminal_status="PERCEPTION_BLOCKED_NOT_PRODUCT_PASS"
 fi
+if [[ "${formal_visual_gui}" == "true" ]]; then
+  write_final_demo_state PRODUCT_TERMINAL "${map_sha256}"
+  wait_for_hmi_receipt PRODUCT_TERMINAL "${map_sha256}"
+fi
 python3 - "${terminal_output}" "${terminal_status}" "${perception_mode}" "${cleaning_planner}" \
   "${mapping_output}" "${cleaning_output}" "${formal_visual_gui}" "${runtime_ws}" \
   "${runtime_closure}" "${vehicle_snapshot}" "${acceptance_session}" "${episode_root}" \
-  "${mapping_ros_domain}" "${cleaning_ros_domain}" "${operation_speed_profile}" <<'PY'
+  "${mapping_ros_domain}" "${cleaning_ros_domain}" "${operation_speed_profile}" "${hmi_telemetry_sha256}" \
+  "${cleaning_runtime}" <<'PY'
 import datetime
+import hashlib
 import json
 import pathlib
 import sys
 
 output = pathlib.Path(sys.argv[1])
 output.parent.mkdir(parents=True, exist_ok=True)
+map_root = pathlib.Path(sys.argv[5])
+cleaning_output = pathlib.Path(sys.argv[6])
+cleaning_runtime = pathlib.Path(sys.argv[17])
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
 value = {
     "schema_version": 1,
     "status": sys.argv[2],
@@ -400,12 +557,17 @@ value = {
     "operation_speed_profile": sys.argv[15],
     "hard_restart_required": True,
     "final_demo_stage": "PRODUCT_TERMINAL",
+    "hmi_terminal_telemetry_sha256": None if sys.argv[16] == "" else sys.argv[16],
+    "artifact_sha256": {
+        "map_lifecycle_manifest": digest(map_root / "map_lifecycle_manifest.json"),
+        "mapping_runtime": digest(map_root / "mapping_runtime.json"),
+        "mapping_handoff": digest(map_root / "mapping_handoff_record.json"),
+        "hard_restart_record": digest(cleaning_runtime / "hard_restart_record.json"),
+        "cleaning_runtime_binding": digest(cleaning_runtime / "runtime_gate_binding.json"),
+        "map_lifecycle_acceptance": digest(cleaning_output),
+    },
     "completed_at_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
 }
 output.write_text(json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 PY
-if [[ "${formal_visual_gui}" == "true" ]]; then
-  write_final_demo_state PRODUCT_TERMINAL "${map_sha256}"
-  sleep 1
-fi
 printf 'FORMAL_FINAL_PRODUCT_VISUAL_TERMINAL=%s\n' "${terminal_output}"

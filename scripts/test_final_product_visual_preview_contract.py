@@ -91,3 +91,25 @@ def test_preview_fails_closed_on_memory_or_process_cleanup_faults() -> None:
     assert "require_phase_processes mapping" in RUNNER
     assert "require_phase_processes cleaning" in RUNNER
     assert "except PermissionError" in HMI_SERVER
+
+
+def test_preview_requires_observable_phase_progress_and_hmi_stage_receipts() -> None:
+    assert "phase_progress_timeout_sec=600" in RUNNER
+    assert 'canonical scan ready; starting standard autostart SLAM lifecycle' in RUNNER
+    assert "dashboard_has_first_map" in RUNNER
+    assert "mapping progress watchdog timed out" in RUNNER
+    assert "cleaning progress watchdog timed out before hard-restart receipt" in RUNNER
+    assert "urllib.request.urlopen" in RUNNER
+    assert 'wait_for_hmi_receipt MAPPING ""' in RUNNER
+    assert 'wait_for_hmi_receipt MAP_SAVED "${map_sha256}"' in RUNNER
+    assert 'wait_for_hmi_receipt HARD_RESTART "${map_sha256}"' in RUNNER
+    assert 'wait_for_hmi_receipt RELOAD_LOCALIZE "${map_sha256}"' in RUNNER
+    assert 'wait_for_hmi_receipt COVERAGE "${map_sha256}"' in RUNNER
+    assert 'wait_for_hmi_receipt PRODUCT_TERMINAL "${map_sha256}"' in RUNNER
+    assert RUNNER.index('write_state HARD_RESTART "${map_sha256}"') < RUNNER.rindex(
+        'stop_pid "${state_publisher_pid}"'
+    )
+    assert RUNNER.index('wait_for_hmi_receipt PRODUCT_TERMINAL "${map_sha256}"') < RUNNER.index(
+        'write_terminal "live mapping and same-map FullCoverage preview'
+    )
+    assert '"hmi_terminal_telemetry_sha256"' in RUNNER

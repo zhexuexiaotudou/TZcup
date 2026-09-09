@@ -76,3 +76,35 @@ def test_live_state_publisher_is_one_hz_and_refuses_acceptance_claims() -> None:
     assert 'payload.get("formal_product_acceptance") is not False' in PUBLISHER
     assert '"field_dimensions_m") != [200, 100]' in PUBLISHER
     assert 'DurabilityPolicy.TRANSIENT_LOCAL' in PUBLISHER
+
+
+def test_demo_runner_fails_closed_on_visual_progress_and_hmi_receipts() -> None:
+    assert "phase_progress_timeout_sec=600" in RUNNER
+    assert 'canonical scan ready; starting standard autostart SLAM lifecycle' in RUNNER
+    assert "dashboard_has_first_map" in RUNNER
+    assert "mapping progress watchdog timed out" in RUNNER
+    assert "cleaning progress watchdog timed out before hard-restart receipt" in RUNNER
+    assert "urllib.request.urlopen" in RUNNER
+    assert 'wait_for_hmi_receipt MAPPING ""' in RUNNER
+    assert 'wait_for_hmi_receipt HARD_RESTART "${map_sha256}"' in RUNNER
+    assert 'wait_for_hmi_receipt COVERAGE "${map_sha256}"' in RUNNER
+    assert 'wait_for_hmi_receipt PRODUCT_TERMINAL "${map_sha256}"' in RUNNER
+    assert RUNNER.index('wait_for_hmi_receipt PRODUCT_TERMINAL "${map_sha256}"') < RUNNER.index(
+        "FORMAL_FINAL_PRODUCT_VISUAL_TERMINAL"
+    )
+    assert '"hmi_terminal_telemetry_sha256"' in RUNNER
+    assert '"artifact_sha256"' in RUNNER
+    assert '"hard_restart_record"' in RUNNER
+    assert '"mapping_handoff"' in RUNNER
+
+
+def test_demo_runner_reaps_exact_child_runners_on_signal() -> None:
+    assert 'mapping_runner_pid=""' in RUNNER
+    assert 'cleaning_runner_pid=""' in RUNNER
+    assert "stop_exact_child()" in RUNNER
+    assert 'stop_exact_child "${cleaning_runner_pid}"' in RUNNER
+    assert 'stop_exact_child "${mapping_runner_pid}"' in RUNNER
+    assert "trap stop_visual_stack EXIT" in RUNNER
+    assert "trap 'exit 130' INT" in RUNNER
+    assert "trap 'exit 143' TERM" in RUNNER
+    assert "coverage_stage_monitor_pid" not in RUNNER
