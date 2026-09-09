@@ -339,8 +339,28 @@ def select_frontier_goal(
     seed_max_offset_m: float = 0.75,
     min_goal_distance_m: float = 1.0,
     max_search_radius_m: float = 14.0,
+    diagnostics: dict[str, Any] | None = None,
 ) -> tuple[float, float] | None:
     """Select a nearby, footprint-clear goal inside a reachable frontier."""
+    if diagnostics is not None:
+        diagnostics.clear()
+        diagnostics.update({
+            "source_dimensions": [width, height],
+            "source_resolution_m": resolution,
+            "seed_offset_m": None,
+            "seed_safe": None,
+            "seed_touches_boundary": None,
+            "anchor_found": False,
+            "raw_frontier_count": 0,
+            "candidate_count": 0,
+            "rejection_reason": None,
+        })
+
+    def reject(reason: str) -> tuple[float, float] | None:
+        if diagnostics is not None:
+            diagnostics["rejection_reason"] = reason
+        return None
+
     if (
         width <= 2
         or height <= 2
@@ -348,7 +368,7 @@ def select_frontier_goal(
         or not math.isfinite(resolution)
         or resolution <= 0.0
     ):
-        return None
+        return reject("invalid_grid")
     for name, value in (
         ("origin_x", origin_x),
         ("origin_y", origin_y),
@@ -397,7 +417,7 @@ def select_frontier_goal(
     min_row = max(0, robot_row - padding_cells)
     max_row = min(height - 1, robot_row + padding_cells)
     if min_column > max_column or min_row > max_row:
-        return None
+        return reject("robot_outside_search_window")
     local_width = max_column - min_column + 1
     local_height = max_row - min_row + 1
     local_size = local_width * local_height
@@ -475,8 +495,12 @@ def select_frontier_goal(
         offset = math.hypot(world_x - robot_x, world_y - robot_y)
         if offset < seed_offset:
             seed, seed_offset = local_index, offset
-    if seed is None or seed_offset > seed_max_offset_m:
-        return None
+    if seed is None:
+        return reject("no_known_free_seed")
+    if diagnostics is not None:
+        diagnostics["seed_offset_m"] = seed_offset
+    if seed_offset > seed_max_offset_m:
+        return reject("seed_offset_exceeds_max")
 
     neighbours = ((-1, 0), (1, 0), (0, -1), (0, 1))
     seed_local_row, seed_local_column = divmod(seed, local_width)
@@ -488,8 +512,11 @@ def select_frontier_goal(
         or seed_global_row + clearance_cells >= height
         or seed_global_column + clearance_cells >= width
     )
+    if diagnostics is not None:
+        diagnostics["seed_safe"] = is_safe(seed)
+        diagnostics["seed_touches_boundary"] = seed_touches_map_boundary
     if not is_safe(seed) and not seed_touches_map_boundary:
-        return None
+        return reject("internal_seed_not_footprint_safe")
 
     # The robot may sit just outside slam_toolbox's still-growing raster. Walk
     # only the shortest free bootstrap band to the first footprint-safe cell;
@@ -519,7 +546,9 @@ def select_frontier_goal(
                 bootstrap_steps[next_index] = distance + 1
                 queue.append(next_index)
     if anchor is None:
-        return None
+        return reject("no_footprint_safe_bootstrap_anchor")
+    if diagnostics is not None:
+        diagnostics["anchor_found"] = True
 
     reachable_steps = array("i", [-1]) * local_size
     reachable_steps[anchor] = bootstrap_steps[anchor]
@@ -558,7 +587,9 @@ def select_frontier_goal(
         ):
             raw_frontiers.append(local_index)
     if not raw_frontiers:
-        return None
+        return reject("no_raw_frontiers")
+    if diagnostics is not None:
+        diagnostics["raw_frontier_count"] = len(raw_frontiers)
 
     max_frontier_steps = math.ceil(frontier_standoff_m / resolution)
     frontier_steps = array("i", [-1]) * local_size
@@ -609,8 +640,10 @@ def select_frontier_goal(
             min_column + local_column
         ) % stride:
             sampled_candidates.append(candidate)
+    if diagnostics is not None:
+        diagnostics["candidate_count"] = len(candidates)
     if not candidates:
-        return None
+        return reject("no_reachable_footprint_clear_candidate")
     candidates = sampled_candidates or candidates
     distant = [
         candidate
@@ -619,7 +652,7 @@ def select_frontier_goal(
     ]
     pool = distant or [candidate for candidate in candidates if candidate[0] > 0]
     if not pool:
-        return None
+        return reject("no_candidate_after_min_goal_distance")
     return min(pool, key=lambda candidate: candidate[0])[1]
 
 

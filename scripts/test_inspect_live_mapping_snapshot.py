@@ -32,13 +32,22 @@ def _manifest(path: Path) -> None:
     }), encoding="utf-8")
 
 
-def _telemetry(path: Path, pose: list[float]) -> None:
+def _telemetry(
+    path: Path,
+    pose: list[float],
+    *,
+    downsample_stride: int | None = None,
+) -> None:
+    grid = {
+        "width": 5, "height": 5, "resolution": 1.0,
+        "origin": [-2.0, -2.0], "data": [0] * 25,
+    }
+    if downsample_stride is not None:
+        grid["downsample_stride"] = downsample_stride
+        grid["source_dimensions"] = [15, 15]
     path.write_text(json.dumps({
         "vehicle": {"estimated_pose_map": pose},
-        "visualization": {"occupancy_grid": {
-            "width": 5, "height": 5, "resolution": 1.0,
-            "origin": [-2.0, -2.0], "data": [0] * 25,
-        }},
+        "visualization": {"occupancy_grid": grid},
     }), encoding="utf-8")
 
 
@@ -59,3 +68,22 @@ def test_snapshot_reports_compact_counts_and_actionable_no_frontier_causes(tmp_p
 
     assert MODULE.main([str(telemetry), str(manifest)]) == 0
     assert json.loads(capsys.readouterr().out) == report
+
+
+def test_snapshot_rejects_downsampled_dashboard_projection_as_production_input(tmp_path):
+    telemetry = tmp_path / "dashboard_telemetry.json"
+    manifest = tmp_path / "episode_manifest.json"
+    _telemetry(telemetry, [0.0, 0.0, 0.0], downsample_stride=3)
+    _manifest(manifest)
+
+    report = MODULE.inspect_snapshot(telemetry, manifest)
+
+    assert report["status"] == "DASHBOARD_PROJECTION_NOT_PRODUCTION_INPUT"
+    assert report["frontier_goal_map"] is None
+    assert report["actionable_causes"] == [
+        "dashboard_projection_not_production_input"
+    ]
+    assert report["input"]["dashboard_projection"] == {
+        "downsample_stride": 3,
+        "source_dimensions": [15, 15],
+    }

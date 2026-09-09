@@ -199,7 +199,7 @@ def test_frontier_goal_is_known_free_inside_geofence():
     for row in range(2, 5):
         for column in range(2, 5):
             data[row * 7 + column] = 0
-    goal = select_frontier_goal(
+    baseline = select_frontier_goal(
         data,
         width=7,
         height=7,
@@ -216,9 +216,40 @@ def test_frontier_goal_is_known_free_inside_geofence():
         seed_max_offset_m=0.2,
         min_goal_distance_m=0.0,
     )
+    diagnostics: dict[str, object] = {}
+    goal = select_frontier_goal(
+        data,
+        width=7,
+        height=7,
+        resolution=0.1,
+        origin_x=0.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((0.0, 0.0), (0.7, 0.0), (0.7, 0.7), (0.0, 0.7)),
+        robot_x=0.35,
+        robot_y=0.35,
+        sample_spacing_m=0.1,
+        clearance_m=0.0,
+        frontier_standoff_m=0.2,
+        seed_max_offset_m=0.2,
+        min_goal_distance_m=0.0,
+        diagnostics=diagnostics,
+    )
     assert goal is not None
+    assert goal == baseline
     column, row = int(goal[0] / 0.1), int(goal[1] / 0.1)
     assert data[row * 7 + column] == 0
+    assert diagnostics == {
+        "source_dimensions": [7, 7],
+        "source_resolution_m": 0.1,
+        "seed_offset_m": pytest.approx(0.0),
+        "seed_safe": True,
+        "seed_touches_boundary": False,
+        "anchor_found": True,
+        "raw_frontier_count": 8,
+        "candidate_count": 9,
+        "rejection_reason": None,
+    }
 
 
 def test_axis_aligned_observation_fast_path_counts_only_field_cell_centers():
@@ -320,6 +351,7 @@ def test_frontier_goal_does_not_bootstrap_from_an_internal_narrow_corridor():
     for column in range(11, 20):
         data[7 * width + column] = 0
 
+    diagnostics: dict[str, object] = {}
     goal = select_frontier_goal(
         data,
         width=width,
@@ -336,9 +368,58 @@ def test_frontier_goal_does_not_bootstrap_from_an_internal_narrow_corridor():
         frontier_standoff_m=0.4,
         seed_max_offset_m=0.2,
         min_goal_distance_m=0.2,
+        diagnostics=diagnostics,
     )
 
     assert goal is None
+    assert diagnostics["source_dimensions"] == [30, 15]
+    assert diagnostics["source_resolution_m"] == pytest.approx(0.1)
+    assert diagnostics["seed_offset_m"] == pytest.approx(0.0)
+    assert diagnostics["seed_safe"] is False
+    assert diagnostics["seed_touches_boundary"] is False
+    assert diagnostics["anchor_found"] is False
+    assert diagnostics["raw_frontier_count"] == 0
+    assert diagnostics["candidate_count"] == 0
+    assert diagnostics["rejection_reason"] == "internal_seed_not_footprint_safe"
+
+
+def test_frontier_goal_does_not_expand_boundary_bootstrap_through_narrow_corridor():
+    """A map-edge exception must not become a long unfit-corridor traversal."""
+    width = height = 40
+    resolution = 0.1
+    data = [-1] * (width * height)
+    # The nearest free seed is at the left map edge.  A one-cell corridor is
+    # deliberately much narrower than the 0.2 m footprint envelope.
+    for column in range(7):
+        data[20 * width + column] = 0
+    for row in range(3, 37):
+        for column in range(7, 37):
+            data[row * width + column] = 0
+
+    diagnostics: dict[str, object] = {}
+    goal = select_frontier_goal(
+        data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=0.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((0.0, 0.0), (4.0, 0.0), (4.0, 4.0), (0.0, 4.0)),
+        robot_x=0.05,
+        robot_y=2.05,
+        sample_spacing_m=0.1,
+        clearance_m=0.2,
+        frontier_standoff_m=0.4,
+        seed_max_offset_m=0.75,
+        min_goal_distance_m=0.2,
+        diagnostics=diagnostics,
+    )
+
+    assert goal is None
+    assert diagnostics["seed_touches_boundary"] is True
+    assert diagnostics["anchor_found"] is False
+    assert diagnostics["rejection_reason"] == "no_footprint_safe_bootstrap_anchor"
 
 
 def test_frontier_goal_uses_a_bounded_nearest_free_seed_outside_the_map():

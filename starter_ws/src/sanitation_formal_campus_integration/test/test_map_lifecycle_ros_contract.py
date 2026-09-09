@@ -35,6 +35,9 @@ def test_frontier_goals_use_current_map_frame_pose_and_tangent_yaw():
     assert 'goal.pose.header.stamp.sec = 0' in source
     assert 'goal.pose.header.stamp.nanosec = 0' in source
     assert 'goal.pose.header.stamp = self.get_clock().now().to_msg()' not in source
+    assert "diagnostics=selector_diagnostics" in source
+    assert 'selector_diagnostics=selector_diagnostics' in source
+    assert '"Frontier selector has no target: %s"' in source
 
 
 def test_formal_launch_separates_mapping_and_saved_map_cleaning():

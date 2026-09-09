@@ -267,6 +267,7 @@ class FormalFrontierExplorer(Node):
             2.0 * (orientation.w * orientation.z + orientation.x * orientation.y),
             1.0 - 2.0 * (orientation.y * orientation.y + orientation.z * orientation.z),
         )
+        selector_diagnostics: dict[str, object] = {}
         target = select_frontier_goal(
             message.data,
             width=message.info.width,
@@ -280,9 +281,17 @@ class FormalFrontierExplorer(Node):
             robot_y=map_position[1],
             previous_goals=self._previous[-100:],
             sample_spacing_m=float(self.get_parameter("sample_spacing_m").value),
+            diagnostics=selector_diagnostics,
         )
         if target is None:
-            self._publish("waiting_for_reachable_frontier")
+            self._publish(
+                "waiting_for_reachable_frontier",
+                selector_diagnostics=selector_diagnostics,
+            )
+            self.get_logger().info(
+                "Frontier selector has no target: %s"
+                % json.dumps(selector_diagnostics, sort_keys=True)
+            )
             return
         if not bounded_action_server_ready(
             self._client,

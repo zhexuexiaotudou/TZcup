@@ -145,6 +145,29 @@ def inspect_snapshot(telemetry_path: Path, episode_manifest_path: Path) -> dict[
             origin_yaw=origin_yaw,
         ),
     }
+    downsample_stride = _integer(
+        telemetry["visualization"]["occupancy_grid"].get("downsample_stride", 1),
+        "occupancy downsample stride",
+    )
+    if downsample_stride < 1:
+        raise ValueError("occupancy downsample stride must be positive")
+    common["input"]["dashboard_projection"] = {
+        "downsample_stride": downsample_stride,
+        "source_dimensions": telemetry["visualization"]["occupancy_grid"].get(
+            "source_dimensions"
+        ),
+    }
+    # The browser state is intentionally a bounded visualization projection,
+    # not the OccupancyGrid consumed by the production frontier explorer.
+    # Applying the production selector to a coarsened raster can only diagnose
+    # that projection; it must not make a production safety conclusion.
+    if downsample_stride > 1:
+        common["status"] = "DASHBOARD_PROJECTION_NOT_PRODUCTION_INPUT"
+        common["frontier_goal_map"] = None
+        common["actionable_causes"] = [
+            "dashboard_projection_not_production_input"
+        ]
+        return common
     geometry_inputs = {
         "data": data, "width": width, "height": height,
         "resolution": resolution, "origin_x": origin_x, "origin_y": origin_y,
