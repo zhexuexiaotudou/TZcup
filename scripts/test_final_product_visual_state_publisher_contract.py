@@ -18,3 +18,8 @@ def test_publisher_fails_closed_on_nonfinal_product_state() -> None:
     assert 'payload.get("formal_product_acceptance") is not False' in PUBLISHER
     assert 'raise ValueError("visual state must not claim formal product acceptance")' in PUBLISHER
     assert 'args.period_sec != 1.0' in PUBLISHER
+
+
+def test_publisher_shutdown_is_idempotent_after_external_shutdown() -> None:
+    assert "if rclpy.ok():" in PUBLISHER
+    assert "            rclpy.shutdown()" in PUBLISHER

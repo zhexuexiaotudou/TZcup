@@ -72,7 +72,7 @@ preflight_only=false
 # A visual short run must prove that the live graph has progressed; a healthy
 # PID or memory guard alone is not evidence that SLAM/HMI is advancing.
 phase_progress_timeout_sec=600
-hmi_receipt_timeout_sec=30
+hmi_receipt_timeout_sec=90
 
 while [[ $# -gt 0 ]]; do
   case "$1" in

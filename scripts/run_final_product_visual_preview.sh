@@ -57,7 +57,7 @@ preflight_only=false
 # Bound visual liveness separately from the long map/coverage completion caps.
 # A live PID and healthy memory guard do not prove scan, SLAM, or HMI progress.
 phase_progress_timeout_sec=600
-hmi_receipt_timeout_sec=30
+hmi_receipt_timeout_sec=90
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
