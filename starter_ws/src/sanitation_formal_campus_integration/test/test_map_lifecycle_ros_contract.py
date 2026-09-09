@@ -1,4 +1,5 @@
 import ast
+import math
 from pathlib import Path
 
 import yaml
@@ -375,6 +376,16 @@ def test_scan_self_filter_is_installed_with_config_and_console_entry():
     assert '"no_return_replacement_m": normalized_no_return_range' in lifecycle
     assert 'slam_params["throttle_scans"] = 20' in lifecycle
     assert 'slam_params["minimum_time_interval"] = 0.5' in lifecycle
+    filter_params = yaml.safe_load(
+        (PACKAGE / "config" / "formal_utm30lx_self_filter.yaml").read_text(
+            encoding="utf-8"
+        )
+    )["formal_scan_self_filter"]["ros__parameters"]
+    masks = filter_params["angular_range_masks_rad"]
+    effective_fov = float(masks[3]) - float(masks[1])
+    required_sweep = 2.0 * math.pi - effective_fov
+    assert math.isclose(required_sweep, math.radians(117.5), abs_tol=2e-6)
+    assert 3.0 * math.pi / 4.0 - required_sweep > math.radians(17.49)
     source = (
         PACKAGE
         / "sanitation_formal_campus_integration"

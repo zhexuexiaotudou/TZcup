@@ -126,7 +126,12 @@ def test_frontier_requires_nav2_spin_and_post_spin_raw_sensor_map_updates():
     assert 'self.declare_parameter("spin_action", "/spin")' in source
     assert "self._spin_client = ActionClient(" in source
     assert "Spin.Goal()" in source
-    assert "goal.target_yaw = math.pi / 2.0" in source
+    assert '"initial_scan_sweep_target_yaw_rad", 3.0 * math.pi / 4.0' in source
+    assert (
+        'target_yaw = self._positive_timeout("initial_scan_sweep_target_yaw_rad")'
+        in source
+    )
+    assert "goal.target_yaw = target_yaw" in source
     assert "initial_scan_sweep_blocked" in source
     assert "handle.cancel_goal_async()" in source
     assert "self._spin_baseline_map_revision = self._map_revision" in source

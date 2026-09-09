@@ -131,6 +131,16 @@ root, then pass the smallest applicable gate before starting a long run.
   `0.95 + resolution/sqrt(2)`; it still rejects every unknown/occupied cell
   inside that mask and retains the bounded known-free bootstrap.  Do not
   restore a square approximation or extend the bootstrap through unknown.
+- A subsequent live map proved that the remaining unknown cells were not an
+  excuse to enlarge the bootstrap.  The UTM-30LX is nominally 270 degrees, but
+  the two mesh-derived rear-edge self-return masks leave only about 242.5
+  degrees of contiguous usable scan.  The original 90-degree Spin therefore
+  covered only about 332.5 degrees and deterministically left a 27.5-degree
+  unknown wedge beside the vehicle.  The initial Nav2 Spin is now 135 degrees,
+  covering the 117.5-degree effective blind sector with 17.5 degrees of margin
+  for action tolerance, beam discretization and mount uncertainty.
+  If the masks change, recompute the sweep; do not bypass unknown cells or
+  shrink the physical footprint.
 - Position-controller spawning and brush/recovery loading previously raced
   each other while the safety manager already attempted strict activation.
   This produced deterministic `controller does not exist` and strict-switch

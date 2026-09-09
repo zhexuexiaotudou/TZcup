@@ -56,13 +56,21 @@ class FormalFrontierExplorer(Node):
         # wall time to make the 5 cm progress that refreshes this watchdog.
         self.declare_parameter("goal_progress_timeout_sec", 120.0)
         self.declare_parameter("cancel_timeout_sec", 5.0)
-        # The UTM-30LX has a 270 degree field of view.  Nav2 owns this one
-        # 90 degree scan-completion turn; this node never publishes Twist.
+        # The nominal UTM-30LX field of view is 270 degrees, but the two
+        # mesh-proven self-return masks remove 27.5 degrees at its rear edges.
+        # A 90 degree turn therefore leaves a 27.5 degree world wedge unseen.
+        # Nav2 owns a 135 degree turn, which covers the 117.5 degree effective
+        # blind sector plus 17.5 degrees of margin for action tolerance, scan
+        # discretization and mount uncertainty; this node never publishes
+        # Twist directly.
+        self.declare_parameter(
+            "initial_scan_sweep_target_yaw_rad", 3.0 * math.pi / 4.0
+        )
         self.declare_parameter("initial_scan_sweep_prepare_timeout_sec", 60.0)
         self.declare_parameter("initial_scan_sweep_response_timeout_sec", 5.0)
         # The 160 kg four-wheel skid-steer reaches a lower physical yaw rate
         # than Nav2's command under the continuous 60 A drivetrain envelope.
-        # Allow one 90 degree scan turn to complete at low simulation RTF.
+        # Allow the one 135 degree scan turn to complete at low simulation RTF.
         self.declare_parameter("initial_scan_sweep_time_allowance_sec", 60.0)
         self.declare_parameter("initial_scan_sweep_result_timeout_sec", 600.0)
         self.declare_parameter("initial_scan_sweep_update_timeout_sec", 60.0)
@@ -217,8 +225,11 @@ class FormalFrontierExplorer(Node):
 
     def _start_initial_scan_sweep(self) -> None:
         allowance = self._positive_timeout("initial_scan_sweep_time_allowance_sec")
+        target_yaw = self._positive_timeout("initial_scan_sweep_target_yaw_rad")
+        if target_yaw > math.pi:
+            raise ValueError("initial scan sweep target yaw must not exceed pi")
         goal = Spin.Goal()
-        goal.target_yaw = math.pi / 2.0
+        goal.target_yaw = target_yaw
         goal.time_allowance.sec = int(allowance)
         goal.time_allowance.nanosec = int((allowance % 1.0) * 1_000_000_000)
         self._initial_scan_sweep_state = "waiting_for_spin_response"
