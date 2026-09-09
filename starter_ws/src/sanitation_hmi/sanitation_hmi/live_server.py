@@ -92,7 +92,7 @@ class LiveDashboardNode(Node):
         self.declare_parameter("web_root", "")
 
         mission_config = str(self.get_parameter("mission_config").value)
-        mission_id = "demo_coverage_001"
+        mission_id = "final_product_visualization"
         geometry: dict = {}
         if mission_config and Path(mission_config).is_file():
             config = yaml.safe_load(

@@ -278,12 +278,11 @@ def audit(root: Path = ROOT) -> dict[str, object]:
     }
     sensor_transports = {
         "single_line_lidar": (
-            (_check(product_native_bridge,
-                    "GazeboToRosEndpoint<sensor_msgs::msg::LaserScan, gz::msgs::LaserScan> kLidarScan",
-                    '"/sensors/lidar_2d/scan"'), product_native_bridge, "kLidarScan"),
-            (_check(sim_launch, 'name="formal_vehicle_product_bridge"',
-                    'executable="formal_vehicle_product_native_bridge"'), sim_launch,
-             "formal_vehicle_product_native_bridge"),
+            (_check(sim_launch, 'name="formal_vehicle_lidar_bridge"',
+                    'package="ros_gz_bridge"',
+                    'executable="parameter_bridge"',
+                    '"/sensors/lidar_2d/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan"'),
+             sim_launch, "formal_vehicle_lidar_bridge"),
         ),
         "mid360": ((_check(sensor_bridge, "/sensors/lidar_3d/points"), sensor_bridge, "/sensors/lidar_3d/points"),),
         "front_rgbd": ((_check(sensor_bridge, "/sensors/front_rgbd/depth/image_rect_raw/image"), sensor_bridge, "/sensors/front_rgbd/depth/image_rect_raw/image"),),

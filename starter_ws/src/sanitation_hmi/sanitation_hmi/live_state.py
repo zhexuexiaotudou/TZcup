@@ -47,7 +47,7 @@ class LiveMissionState:
         self,
         *,
         expected_components: int = 17,
-        mission_id: str = "demo_coverage_001",
+        mission_id: str = "final_product_visualization",
         geometry: dict | None = None,
         clock=time.monotonic,
     ) -> None:
@@ -329,7 +329,7 @@ class LiveMissionState:
                 "details": deepcopy(self._details),
                 "final_demo": self._final_demo_snapshot(now),
                 "claim_boundary": {
-                    "source_level": "LIVE_GAZEBO_NAVIGATION_COVERAGE_DEMO",
+                    "source_level": "LIVE_FINAL_PRODUCT_VISUALIZATION_PREVIEW",
                     "ground_truth_usage": "evaluation_and_visualization_only",
                     "learned_perception_pass": False,
                     "real_domain_pass": False,

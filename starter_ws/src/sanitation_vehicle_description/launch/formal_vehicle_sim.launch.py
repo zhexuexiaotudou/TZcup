@@ -772,6 +772,21 @@ def generate_launch_description() -> LaunchDescription:
                 output="screen",
                 condition=IfCondition(start_product_bridge),
             ),
+            # The formal UTM-30LX is a single, bounded-rate sensor but its
+            # native bridge callback can stall under the complete campus graph.
+            # Keep this GZ-to-ROS leg on ros_gz_bridge's tested transport path.
+            # FormalVehicleProductNativeBridge deliberately does not own this
+            # endpoint, so this is the sole ROS publisher for the raw scan.
+            Node(
+                package="ros_gz_bridge",
+                executable="parameter_bridge",
+                name="formal_vehicle_lidar_bridge",
+                arguments=[
+                    "/sensors/lidar_2d/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan"
+                ],
+                output="screen",
+                condition=IfCondition(start_product_bridge),
+            ),
             # Raw images and point clouds dwarf the control-plane traffic.  A
             # dedicated lazy bridge preserves every product topic, resolution
             # and source update rate while avoiding conversion / DDS queues for

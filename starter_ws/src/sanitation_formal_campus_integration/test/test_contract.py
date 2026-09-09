@@ -397,19 +397,28 @@ def test_topic_adapter_contract_covers_formal_sensor_and_legacy_odom_names():
         row["ros_topic_name"] for row in high_bandwidth_bridges
     }
     for topic in [
-        *contract["topic_aliases"].keys(),
         *native.keys(),
     ]:
         assert (
             topic in product_bridge
             or topic in configured_high_bandwidth_topics
         )
-    # Control-plane aliases moved from parameter_bridge into the native
-    # product bridge; the high-bandwidth topics remain governed by the YAML
-    # contract above.
+    # The raw 2D lidar deliberately uses the standard GZ-to-ROS bridge.  The
+    # native product bridge retains the remaining control-plane telemetry.
+    lidar_node_start = formal_launch.index('name="formal_vehicle_lidar_bridge"')
+    lidar_node = formal_launch[
+        formal_launch.rfind("Node(", 0, lidar_node_start) :
+        formal_launch.index("# Raw images and point clouds", lidar_node_start)
+    ]
+    assert 'package="ros_gz_bridge"' in lidar_node
+    assert 'executable="parameter_bridge"' in lidar_node
+    assert '"/sensors/lidar_2d/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan"' in lidar_node
+    assert 'condition=IfCondition(start_product_bridge)' in lidar_node
+    assert "kLidarScan" not in product_bridge
+    assert "/sensors/lidar_2d/scan" not in product_bridge
+    assert "/sensors/lidar_2d/scan" in contract["topic_aliases"]
     assert 'NativeBridgeSupport("formal_vehicle_product_native_bridge")' in product_bridge
     for ros_type, gazebo_type in (
-        ("sensor_msgs::msg::LaserScan", "gz::msgs::LaserScan"),
         ("sensor_msgs::msg::NavSatFix", "gz::msgs::NavSat"),
         ("sensor_msgs::msg::Imu", "gz::msgs::IMU"),
     ):
