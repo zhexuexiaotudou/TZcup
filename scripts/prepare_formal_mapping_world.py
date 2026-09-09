@@ -10,16 +10,49 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 from pathlib import Path
 import xml.etree.ElementTree as ET
 
 
 CONTACT_PLUGIN_FILENAME = "gz-sim-contact-system"
 CONTACT_PLUGIN_NAME = "gz::sim::systems::Contact"
+MAPPING_PHYSICS_STEP_S = 0.005
 
 
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _ensure_mapping_physics(world: ET.Element) -> float:
+    """Require the bounded 5 ms mapping physics profile exactly once."""
+    physics_nodes = world.findall("physics")
+    if len(physics_nodes) > 1:
+        raise ValueError("mapping world contains multiple physics profiles")
+    if not physics_nodes:
+        physics = ET.Element("physics", {"name": "mapping_5ms", "type": "ignored"})
+        ET.SubElement(physics, "max_step_size").text = str(MAPPING_PHYSICS_STEP_S)
+        ET.SubElement(physics, "real_time_factor").text = "1.0"
+        # Keep the SDF physics declaration ahead of systems/plugins and retain
+        # every source-world model, collision and visual unchanged.
+        world.insert(0, physics)
+        return MAPPING_PHYSICS_STEP_S
+
+    step_text = physics_nodes[0].findtext("max_step_size")
+    if step_text is None:
+        raise ValueError("mapping world physics profile has no max_step_size")
+    try:
+        step = float(step_text)
+    except ValueError as exc:
+        raise ValueError("mapping world physics max_step_size is invalid") from exc
+    if not math.isfinite(step) or not math.isclose(
+        step, MAPPING_PHYSICS_STEP_S, rel_tol=0.0, abs_tol=1e-12
+    ):
+        raise ValueError(
+            "mapping world physics max_step_size must be "
+            f"{MAPPING_PHYSICS_STEP_S:g}, got {step_text!r}"
+        )
+    return step
 
 
 def prepare(source: Path, episode_manifest: Path, output: Path) -> dict:
@@ -65,6 +98,9 @@ def prepare(source: Path, episode_manifest: Path, output: Path) -> dict:
                 {"filename": CONTACT_PLUGIN_FILENAME, "name": CONTACT_PLUGIN_NAME},
             ),
         )
+    physics_step = _ensure_mapping_physics(world)
+    if len(world.findall("physics")) != 1:
+        raise ValueError("mapping world must contain exactly one physics profile")
     output.parent.mkdir(parents=True, exist_ok=True)
     tree.write(output, encoding="utf-8", xml_declaration=True)
     check_world = ET.parse(output).getroot().find("world")
@@ -82,6 +118,9 @@ def prepare(source: Path, episode_manifest: Path, output: Path) -> dict:
     ]
     if len(check_contacts) != 1:
         raise ValueError("mapping world must contain exactly one Contact system")
+    check_physics = [] if check_world is None else check_world.findall("physics")
+    if len(check_physics) != 1:
+        raise ValueError("mapping world must contain exactly one physics profile")
     return {
         "schema_version": 1,
         "status": "FORMAL_MAPPING_WORLD_PEDESTRIAN_EXCLUSION_PASSED",
@@ -102,6 +141,7 @@ def prepare(source: Path, episode_manifest: Path, output: Path) -> dict:
         "remaining_pedestrian_count": 0,
         "contact_system_plugin_count": 1,
         "contact_system_added": contact_added,
+        "physics_step": physics_step,
     }
 
 
