@@ -203,17 +203,22 @@ class LiveDashboardNode(Node):
         # status streams.  Keep them separate from coverage-probe telemetry:
         # an unavailable phase is not silently represented as a completed
         # mapping or cleaning step.
+        lifecycle_qos = QoSProfile(
+            depth=1,
+            reliability=ReliabilityPolicy.RELIABLE,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+        )
         self.create_subscription(
             String,
             "/formal_mapping/lifecycle_status",
             self._on_mapping_lifecycle,
-            20,
+            lifecycle_qos,
         )
         self.create_subscription(
             Bool,
             "/formal_mapping/map_ready",
             self._on_mapping_map_ready,
-            20,
+            lifecycle_qos,
         )
         self.create_subscription(
             String,
@@ -326,6 +331,7 @@ class LiveDashboardNode(Node):
             pose.position.x,
             pose.position.y,
             _yaw_from_quaternion(pose.orientation),
+            source_topic="/localization/fused_pose",
         )
 
     def _on_velocity(self, message: Twist) -> None:
@@ -368,6 +374,7 @@ class LiveDashboardNode(Node):
             pose.translation.x,
             pose.translation.y,
             _yaw_from_quaternion(pose.rotation),
+            source_topic="/tf map->base_footprint",
         )
 
     def _on_brush(self, message: Bool) -> None:

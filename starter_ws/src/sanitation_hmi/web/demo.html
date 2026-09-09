@@ -113,7 +113,7 @@
           <h2>任务地图与车辆轨迹</h2>
           <button class="map-view-toggle" id="map-view-toggle" type="button">全场视图</button>
           <div class="legend">
-            <span><i style="background:#69d7ff"></i>当前规划</span>
+            <span id="planned-path-legend"><i style="background:#69d7ff"></i>覆盖路径（未观测）</span>
             <span><i style="background:#657b76"></i>SLAM 占据栅格（下采样）</span>
             <span><i style="background:#b49aff"></i>Odom 预演轨迹（非真值/非地图定位）</span>
             <span><i style="background:#536d65"></i>实际轨迹（评估）</span>
@@ -182,6 +182,8 @@
             <div><label>地图质量门</label><strong id="mapping-map-ready">未观测</strong></div>
             <div><label>前沿探索器</label><strong id="mapping-explorer">未观测</strong></div>
             <div><label>已存图清扫执行器</label><strong id="saved-map-coverage">未观测</strong></div>
+            <div><label>SLAM 地图观测</label><strong id="map-observation">未观测</strong></div>
+            <div><label>地图位姿观测</label><strong id="map-pose-observation">未观测</strong></div>
           </div>
           <p class="source-copy" id="runtime-chain-copy">逐项展示 formal mapping 与 saved-map coverage 的实际话题；阶段未启动时保持未观测。</p>
         </section>
@@ -373,6 +375,14 @@
       telemetry = data;
       const finalStage = data?.final_demo?.status === "live" ? data.final_demo.stage : null;
       const preCleaningStage = ["MAPPING", "MAP_SAVED", "HARD_RESTART", "RELOAD_LOCALIZE"].includes(finalStage);
+      const mappingStage = finalStage === "MAPPING";
+      const plannedPathLegend = document.querySelector("#planned-path-legend");
+      const pathCount = Array.isArray(data.visualization?.planned_path) ? data.visualization.planned_path.length : 0;
+      plannedPathLegend.innerHTML = mappingStage
+        ? '<i style="background:#69d7ff"></i>覆盖路径（建图阶段不适用）'
+        : pathCount > 0
+          ? '<i style="background:#69d7ff"></i>覆盖路径（当前组件）'
+          : '<i style="background:#69d7ff"></i>覆盖路径（未观测）';
       document.querySelector("#state").textContent = preCleaningStage ? finalStage : (data.status || "UNKNOWN");
       document.querySelector("#elapsed").textContent = duration(data.elapsed_sec);
       const progress = data.progress || {};
@@ -420,8 +430,9 @@
       ).join("");
       const coreInputs = ["mapping_lifecycle", "mapping_map_ready", "mapping_explorer", "saved_map_coverage"];
       const freshCore = coreInputs.filter(name => data.live_inputs?.[name]?.status === "live").length;
+      const observedCore = coreInputs.filter(name => ["live", "observed", "retained"].includes(data.live_inputs?.[name]?.status)).length;
       document.querySelector("#dot").classList.toggle("live", freshCore > 0);
-      document.querySelector("#connection").textContent = `HTTP 可达 · ROS 核心 ${freshCore}/${coreInputs.length} 新鲜`;
+      document.querySelector("#connection").textContent = `HTTP 可达 · ROS 核心 ${freshCore} 新鲜 · ${observedCore}/${coreInputs.length} 最近观测`;
       draw();
     }
 
@@ -446,7 +457,7 @@
     }
 
     function sourceStatusLabel(status) {
-      return status === "live" ? "实时" : status === "stale" ? "过期" : status === "error" ? "错误" : "不可用";
+      return status === "live" ? "实时" : status === "observed" ? "最后观测" : status === "retained" ? "保留状态" : status === "stale" ? "过期" : status === "error" ? "错误" : "不可用";
     }
 
     function sourceAgeCopy(data) {
@@ -497,21 +508,48 @@
         ["saved_map_coverage", "#saved-map-coverage"],
       ];
       const liveRuntime = runtimeSources.filter(([name]) => values[name]?.status === "live").length;
+      const observedRuntime = runtimeSources.filter(([name]) => ["live", "observed", "retained"].includes(values[name]?.status)).length;
       document.querySelector("#runtime-chain-dot").classList.toggle("live", liveRuntime > 0);
-      document.querySelector("#runtime-chain-status").textContent = `ROS ${liveRuntime}/${runtimeSources.length} 新鲜`;
+      document.querySelector("#runtime-chain-status").textContent = `ROS ${liveRuntime} 新鲜 · ${observedRuntime}/${runtimeSources.length} 最近观测`;
       runtimeSources.forEach(([name, selector]) => {
         const source = values[name] || {};
         const node = document.querySelector(selector);
-        if (source.status === "live") {
-          const value = name === "mapping_map_ready" ? (source.value ? "已就绪" : "未就绪") : source.value;
-          node.textContent = value || "实时（未报告值）";
-          node.className = name === "mapping_map_ready" && !source.value ? "warn" : "ok";
+        if (["live", "observed", "retained"].includes(source.status)) {
+          const value = runtimeValue(name, source.value);
+          node.textContent = value || `${sourceStatusLabel(source.status)}（未报告值）`;
+          node.className = name === "mapping_map_ready" && !source.value ? "warn" : source.status === "live" ? "ok" : "";
         } else {
           node.textContent = sourceStatusLabel(source.status);
           node.className = "warn";
         }
       });
       document.querySelector("#runtime-chain-copy").textContent = runtimeSources.map(([name]) => sourceAgeCopy(values[name])).join(" · ");
+
+      const map = values.map || {};
+      const mapNode = document.querySelector("#map-observation");
+      if (map.status === "live") {
+        const delta = map.known_cell_delta === null || map.known_cell_delta === undefined ? "首次" : `Δ${map.known_cell_delta >= 0 ? "+" : ""}${map.known_cell_delta}`;
+        mapNode.textContent = `第 ${map.revision} 帧 · 已知 ${map.known_cell_count} · ${delta}`;
+        mapNode.className = "ok";
+      } else {
+        mapNode.textContent = sourceStatusLabel(map.status);
+        mapNode.className = "warn";
+      }
+      const mapPose = values.map_pose || {};
+      const mapPoseNode = document.querySelector("#map-pose-observation");
+      mapPoseNode.textContent = mapPose.status === "live" ? sourceAgeCopy(mapPose) : sourceStatusLabel(mapPose.status);
+      mapPoseNode.className = mapPose.status === "live" ? "ok" : "warn";
+    }
+
+    function runtimeValue(name, value) {
+      if (name === "mapping_map_ready") return value ? "已就绪（保留）" : "未就绪（保留）";
+      if (typeof value !== "string") return value;
+      try {
+        const parsed = JSON.parse(value);
+        return parsed.status || parsed.state || value;
+      } catch (_error) {
+        return value;
+      }
     }
 
     async function refresh() {

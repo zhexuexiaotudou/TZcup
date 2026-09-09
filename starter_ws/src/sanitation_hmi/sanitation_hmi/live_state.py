@@ -136,6 +136,8 @@ class LiveMissionState:
         self._emergency_stop: bool | None = None
         self._planned_path: list[list[float]] = []
         self._occupancy_grid: dict | None = None
+        self._map_revision = 0
+        self._map_known_cell_count: int | None = None
         self._odometry_preview_trajectory: deque[list[float]] = deque(maxlen=1200)
         self._trajectory: deque[list[float]] = deque(maxlen=1200)
         self._cleaned_trajectory: deque[list[float]] = deque(maxlen=1200)
@@ -190,24 +192,45 @@ class LiveMissionState:
                 "received_monotonic": None,
                 "error": None,
                 "value": None,
+                # Mapping evaluates on simulated time.  Preserve the last
+                # status and its wall-clock receipt age instead of declaring a
+                # low-RTF run failed after an arbitrary dashboard timeout.
+                "freshness_mode": "observed",
             },
             "mapping_map_ready": {
                 "topic": "/formal_mapping/map_ready",
                 "received_monotonic": None,
                 "error": None,
                 "value": None,
+                # This is a transient-local, retained lifecycle fact, not a
+                # periodic heartbeat.
+                "freshness_mode": "retained",
             },
             "mapping_explorer": {
                 "topic": "/formal_mapping/explorer_status",
                 "received_monotonic": None,
                 "error": None,
                 "value": None,
+                "freshness_mode": "observed",
             },
             "saved_map_coverage": {
                 "topic": "/formal_saved_map_coverage/state",
                 "received_monotonic": None,
                 "error": None,
                 "value": None,
+            },
+            "map": {
+                "topic": "/map",
+                "received_monotonic": None,
+                "error": None,
+                "revision": 0,
+                "known_cell_count": None,
+                "known_cell_delta": None,
+            },
+            "map_pose": {
+                "topic": "/tf map->base_footprint",
+                "received_monotonic": None,
+                "error": None,
             },
         }
         self._final_demo: dict = {
@@ -280,11 +303,18 @@ class LiveMissionState:
             self._topics_seen.add("/coverage/component_state")
             self._touch()
 
-    def update_estimated_pose(self, x: float, y: float, yaw: float) -> None:
+    def update_estimated_pose(
+        self,
+        x: float,
+        y: float,
+        yaw: float,
+        *,
+        source_topic: str = "/localization/fused_pose",
+    ) -> None:
         with self._lock:
             self._estimated_pose = [float(x), float(y), float(yaw)]
-            self._topics_seen.add("/localization/fused_pose")
-            self._touch()
+            self._live_inputs["map_pose"]["topic"] = str(source_topic)
+            self._update_live_input("map_pose")
 
     def update_formal_odometry_preview(self, x: float, y: float, yaw: float) -> None:
         """Record the live formal `/odom` preview without claiming map alignment."""
@@ -447,6 +477,10 @@ class LiveMissionState:
                 entry["status"] = "error"
             elif received is None:
                 entry["status"] = "unavailable"
+            elif entry.get("freshness_mode") == "retained":
+                entry["status"] = "retained"
+            elif entry.get("freshness_mode") == "observed":
+                entry["status"] = "observed"
             elif age is not None and age > LIVE_INPUT_STALE_SECONDS:
                 entry["status"] = "stale"
             else:
@@ -486,9 +520,23 @@ class LiveMissionState:
         if compact is None:
             return
         with self._lock:
+            known_cells = sum(value >= 0 for value in compact["data"])
+            previous_known_cells = self._map_known_cell_count
+            self._map_revision += 1
+            self._map_known_cell_count = known_cells
+            compact["revision"] = self._map_revision
+            compact["known_cell_count"] = known_cells
+            compact["known_cell_delta"] = (
+                None if previous_known_cells is None
+                else known_cells - previous_known_cells
+            )
             self._occupancy_grid = compact
-            self._topics_seen.add("/map")
-            self._touch()
+            self._update_live_input(
+                "map",
+                revision=self._map_revision,
+                known_cell_count=known_cells,
+                known_cell_delta=compact["known_cell_delta"],
+            )
 
     def update_final_demo_state(self, raw_payload: str) -> None:
         """Accept only a live, self-describing final-product status record."""

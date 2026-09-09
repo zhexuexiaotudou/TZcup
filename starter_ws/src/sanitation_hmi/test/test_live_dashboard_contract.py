@@ -52,6 +52,8 @@ def test_final_dashboard_binds_only_live_camera_and_product_perception_inputs():
     assert '"/formal_saved_map_coverage/state"' in source
     assert "update_mapping_lifecycle" in source
     assert "update_saved_map_coverage" in source
+    assert "lifecycle_qos = QoSProfile(" in source
+    assert "durability=DurabilityPolicy.TRANSIENT_LOCAL" in source
     assert 'id="front-camera-image"' in demo
     assert 'id="perception-targets"' in demo
     assert 'id="perception-diagnostics"' in demo
@@ -70,6 +72,19 @@ def test_live_dashboard_does_not_present_default_values_or_evaluation_as_live_ve
     assert "HTTP 可达 · ROS 核心" in demo
     assert "sourceStatusLabel(brushInput.status)" in demo
     assert "sourceStatusLabel(safetyInput.status)" in demo
+
+
+def test_mapping_statuses_keep_retained_or_observed_age_and_expose_map_pose_progress():
+    state = (ROOT / "sanitation_hmi/live_state.py").read_text(encoding="utf-8")
+    demo = (ROOT / "web/demo.html").read_text(encoding="utf-8")
+
+    assert '"freshness_mode": "retained"' in state
+    assert '"freshness_mode": "observed"' in state
+    assert '"map_pose"' in state
+    assert '"known_cell_delta"' in state
+    assert 'id="map-observation"' in demo
+    assert 'id="map-pose-observation"' in demo
+    assert "覆盖路径（建图阶段不适用）" in demo
 
 
 def test_live_dashboard_shutdown_is_idempotent_after_sigint():

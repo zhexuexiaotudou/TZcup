@@ -240,7 +240,7 @@ def test_operator_values_are_unknown_until_a_fresh_source_message_arrives():
     )
 
 
-def test_mapping_and_saved_map_runtime_sources_are_independent_and_freshness_tracked():
+def test_mapping_and_saved_map_runtime_sources_keep_observed_and_retained_semantics():
     clock = FakeClock()
     state = LiveMissionState(clock=clock)
 
@@ -254,20 +254,58 @@ def test_mapping_and_saved_map_runtime_sources_are_independent_and_freshness_tra
     assert live["mapping_map_ready"]["value"] is False
     assert live["mapping_explorer"]["value"] == "navigating_frontier"
     assert live["saved_map_coverage"]["value"] == "TRANSIT"
-    assert all(
-        live[name]["status"] == "live"
-        for name in (
-            "mapping_lifecycle",
-            "mapping_map_ready",
-            "mapping_explorer",
-            "saved_map_coverage",
-        )
-    )
+    assert live["mapping_lifecycle"]["status"] == "observed"
+    assert live["mapping_map_ready"]["status"] == "retained"
+    assert live["mapping_explorer"]["status"] == "observed"
+    assert live["saved_map_coverage"]["status"] == "live"
 
     clock.now = 5.1
     stale = state.snapshot()["live_inputs"]
-    assert stale["mapping_lifecycle"]["status"] == "stale"
+    assert stale["mapping_lifecycle"]["status"] == "observed"
+    assert stale["mapping_map_ready"]["status"] == "retained"
+    assert stale["mapping_explorer"]["status"] == "observed"
     assert stale["saved_map_coverage"]["status"] == "stale"
+
+
+def test_live_map_and_map_pose_report_independent_receipt_age_and_displayed_growth():
+    clock = FakeClock()
+    state = LiveMissionState(clock=clock)
+    state.update_occupancy_grid(
+        width=2,
+        height=2,
+        resolution=1.0,
+        origin_x=0.0,
+        origin_y=0.0,
+        data=[0, -1, -1, 100],
+    )
+    state.update_estimated_pose(1.0, 2.0, 0.3)
+    first = state.snapshot()["live_inputs"]
+    assert first["map"] == {
+        "topic": "/map",
+        "error": None,
+        "revision": 1,
+        "known_cell_count": 2,
+        "known_cell_delta": None,
+        "age_sec": 0.0,
+        "status": "live",
+    }
+    assert first["map_pose"]["topic"] == "/localization/fused_pose"
+    assert first["map_pose"]["status"] == "live"
+
+    clock.now = 1.0
+    state.update_occupancy_grid(
+        width=2,
+        height=2,
+        resolution=1.0,
+        origin_x=0.0,
+        origin_y=0.0,
+        data=[0, 0, -1, 100],
+    )
+    second = state.snapshot()["live_inputs"]
+    assert second["map"]["revision"] == 2
+    assert second["map"]["known_cell_count"] == 3
+    assert second["map"]["known_cell_delta"] == 1
+    assert second["map_pose"]["age_sec"] == 1.0
 
 
 def test_live_inputs_are_freshness_tracked_without_any_synthetic_fallback():
