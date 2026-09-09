@@ -38,7 +38,7 @@ function ConvertTo-WslPath {
     if ($fullPath -notmatch '^([A-Za-z]):\\(.*)$') {
         throw "Only local Windows drive paths or absolute WSL paths are accepted: $fullPath"
     }
-    return "/mnt/$($Matches[1].ToLowerInvariant())/$($Matches[2].Replace('\\', '/'))"
+    return "/mnt/$($Matches[1].ToLowerInvariant())/$($Matches[2].Replace('\', '/'))"
 }
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path

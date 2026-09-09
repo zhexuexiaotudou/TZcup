@@ -66,6 +66,7 @@ def test_windows_entry_preserves_the_explicit_mode_and_wsl_forwarding_contract()
     assert '"--formal-visual-gui", $FormalVisualGui' in WINDOWS
     assert '"--s100p-board-bridge"' in WINDOWS
     assert 'run_final_product_visual_demo.sh' in WINDOWS
+    assert "Replace('\\', '/')" in WINDOWS
 
 
 def test_live_state_publisher_is_one_hz_and_refuses_acceptance_claims() -> None:

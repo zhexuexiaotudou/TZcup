@@ -41,3 +41,4 @@ def test_preview_is_fresh_scoped_and_has_a_windows_preflight_entry() -> None:
     assert 'kill -KILL -- "-${pid}"' in RUNNER
     assert "MappingRosDomain and CleaningRosDomain must differ" in WINDOWS
     assert "run_final_product_visual_preview.sh" in WINDOWS
+    assert "Replace('\\', '/')" in WINDOWS
