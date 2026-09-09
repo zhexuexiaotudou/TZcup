@@ -75,5 +75,7 @@ def test_live_dashboard_does_not_present_default_values_or_evaluation_as_live_ve
 def test_live_dashboard_shutdown_is_idempotent_after_sigint():
     source = (ROOT / "sanitation_hmi/live_server.py").read_text(encoding="utf-8")
 
+    assert "ExternalShutdownException" in source
+    assert "except (KeyboardInterrupt, ExternalShutdownException):" in source
     assert "if rclpy.ok():" in source
     assert "            rclpy.shutdown()" in source

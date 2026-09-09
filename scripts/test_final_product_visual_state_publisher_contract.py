@@ -21,5 +21,7 @@ def test_publisher_fails_closed_on_nonfinal_product_state() -> None:
 
 
 def test_publisher_shutdown_is_idempotent_after_external_shutdown() -> None:
+    assert "ExternalShutdownException" in PUBLISHER
+    assert "except (KeyboardInterrupt, ExternalShutdownException):" in PUBLISHER
     assert "if rclpy.ok():" in PUBLISHER
     assert "            rclpy.shutdown()" in PUBLISHER

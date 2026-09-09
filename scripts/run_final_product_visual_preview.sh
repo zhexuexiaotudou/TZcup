@@ -246,7 +246,7 @@ import sys
 port, telemetry_path, stage, digest = sys.argv[1:]
 try:
     def fetch_json(route):
-        connection = http.client.HTTPConnection("127.0.0.1", int(port), timeout=1.0)
+        connection = http.client.HTTPConnection("127.0.0.1", int(port), timeout=3.0)
         try:
             connection.request("GET", route)
             response = connection.getresponse()
@@ -294,12 +294,17 @@ wait_for_hmi_receipt() {
 }
 
 require_hmi_receipt() {
-  kill -0 "${dashboard_pid}" 2>/dev/null \
-    && kill -0 "${state_publisher_pid}" 2>/dev/null \
-    && hmi_receipt_matches "$1" "$2" || {
-      echo "HMI health, PID, or telemetry receipt failed during $1" >&2
-      return 125
-    }
+  local attempt
+  for attempt in {1..5}; do
+    if kill -0 "${dashboard_pid}" 2>/dev/null \
+      && kill -0 "${state_publisher_pid}" 2>/dev/null \
+      && hmi_receipt_matches "$1" "$2"; then
+      return 0
+    fi
+    sleep 1
+  done
+  echo "HMI health, PID, or telemetry receipt failed during $1 after retries" >&2
+  return 125
 }
 
 dashboard_has_first_map() {

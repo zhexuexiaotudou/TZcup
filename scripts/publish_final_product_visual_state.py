@@ -9,6 +9,7 @@ import math
 from pathlib import Path
 
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from std_msgs.msg import String
@@ -70,6 +71,8 @@ def main() -> int:
     node = FinalProductVisualStatePublisher(args.state_file, args.period_sec)
     try:
         rclpy.spin(node)
+    except (KeyboardInterrupt, ExternalShutdownException):
+        pass
     finally:
         node.destroy_node()
         if rclpy.ok():
