@@ -355,6 +355,13 @@ def test_scan_self_filter_is_installed_with_config_and_console_entry():
     assert '"/scan/navigation"' in startup_gate
     assert "has_usable_scan" in startup_gate
     assert "neither publishes data nor controls motion" in startup_gate
+    assert (
+        "QoSProfile(depth=1, reliability=ReliabilityPolicy.RELIABLE)"
+        in startup_gate
+    )
+    assert "self._scan_subscription = self.create_subscription" in startup_gate
+    assert "ClockType.STEADY_TIME" in startup_gate
+    assert "canonical scan startup gate waiting:" in startup_gate
     lifecycle = (
         PACKAGE / "launch" / "formal_campus_map_lifecycle.launch.py"
     ).read_text(encoding="utf-8")
