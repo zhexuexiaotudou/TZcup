@@ -152,6 +152,12 @@ class FormalFrontierExplorer(Node):
                 "world_truth_used_for_control": False,
                 "direct_velocity_control": False,
                 "planner": "nav2_navigate_to_pose",
+                # The HMI retains the latest status only.  Keep this state on
+                # every later event so a frontier request cannot hide a
+                # successful initial sweep receipt.
+                "initial_scan_sweep_state": getattr(
+                    self, "_initial_scan_sweep_state", "initializing"
+                ),
                 **values,
             },
             sort_keys=True,
