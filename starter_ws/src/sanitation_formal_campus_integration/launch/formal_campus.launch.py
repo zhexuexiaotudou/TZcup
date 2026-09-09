@@ -227,6 +227,9 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                 "gui": LaunchConfiguration("gui"),
                 "world": LaunchConfiguration("world"),
                 "model": manipulation_model,
+                "controller_config_path": LaunchConfiguration(
+                    "controller_config_path"
+                ),
                 # Mapping keeps the physical arm in the vehicle model but does
                 # not need grasp/contact ROS interfaces.  The lifecycle selects
                 # that lean runtime explicitly; direct/cleaning launches retain
@@ -500,6 +503,7 @@ def generate_launch_description() -> LaunchDescription:
         [
             DeclareLaunchArgument("gui", default_value="true"),
             DeclareLaunchArgument("world", description="Generated public/world.sdf path"),
+            DeclareLaunchArgument("controller_config_path", default_value=""),
             DeclareLaunchArgument("world_name", default_value="campus_formal"),
             DeclareLaunchArgument(
                 "episode_manifest",

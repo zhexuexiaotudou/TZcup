@@ -275,6 +275,55 @@ def test_clean_path_and_velocity_smoother_share_formal_speed_ceiling():
     assert smoother["max_velocity"][0] == 0.45
 
 
+def test_mapping_relaxes_only_the_bt_action_acknowledgement_deadline():
+    base_nav2 = yaml.safe_load(
+        (
+            PACKAGE.parent / "sanitation_navigation" / "config" / "nav2.yaml"
+        ).read_text(encoding="utf-8")
+    )
+    lifecycle = (
+        PACKAGE / "launch" / "formal_campus_map_lifecycle.launch.py"
+    ).read_text(encoding="utf-8")
+
+    assert base_nav2["bt_navigator"]["ros__parameters"][
+        "default_server_timeout"
+    ] == 20
+    assert 'if mode == "mapping":' in lifecycle
+    assert '"default_server_timeout"\n        ] = 2000' in lifecycle
+
+
+def test_mapping_controller_period_matches_the_5ms_physics_step_only():
+    controller_config = yaml.safe_load(
+        (
+            PACKAGE.parent
+            / "sanitation_vehicle_description"
+            / "config"
+            / "formal_vehicle_controllers.yaml"
+        ).read_text(encoding="utf-8")
+    )
+    lifecycle = (
+        PACKAGE / "launch" / "formal_campus_map_lifecycle.launch.py"
+    ).read_text(encoding="utf-8")
+    campus = (PACKAGE / "launch" / "formal_campus.launch.py").read_text(
+        encoding="utf-8"
+    )
+    vehicle = (
+        PACKAGE.parent
+        / "sanitation_vehicle_description"
+        / "launch"
+        / "formal_vehicle_sim.launch.py"
+    ).read_text(encoding="utf-8")
+
+    assert controller_config["controller_manager"]["ros__parameters"][
+        "update_rate"
+    ] == 250
+    assert 'controller_manager_params["update_rate"] = 200' in lifecycle
+    assert 'if mode == "mapping":' in lifecycle
+    assert '"controller_config_path": controller_config_path' in lifecycle
+    assert '"controller_config_path": LaunchConfiguration(' in campus
+    assert '" controller_config_path:=", controller_config_path' in vehicle
+
+
 def test_slam_launch_can_disable_legacy_velocity_gate():
     source = (
         PACKAGE.parent

@@ -59,6 +59,7 @@ def generate_launch_description() -> LaunchDescription:
         "lidar_bridge_ready_timeout_sec"
     )
     use_sim_time = LaunchConfiguration("use_sim_time")
+    controller_config_path = LaunchConfiguration("controller_config_path")
     physics_engine = LaunchConfiguration("physics_engine")
     bodywork_visible = LaunchConfiguration("bodywork_visible")
     high_bandwidth_sensor_runtime = LaunchConfiguration(
@@ -165,6 +166,7 @@ def generate_launch_description() -> LaunchDescription:
     robot_description = ParameterValue(
         Command([
             "xacro ", model,
+            " controller_config_path:=", controller_config_path,
             " use_sim:=true dry_load_mass_kg:=", dry_load_mass_kg,
             " dry_accounting_mode:=", dry_accounting_mode,
             " wastewater_load_mass_kg:=", wastewater_load_mass_kg,
@@ -723,6 +725,14 @@ def generate_launch_description() -> LaunchDescription:
             ),
             DeclareLaunchArgument("world", default_value=default_world),
             DeclareLaunchArgument("model", default_value=default_model),
+            DeclareLaunchArgument(
+                "controller_config_path",
+                default_value="",
+                description=(
+                    "Optional simulation-only ros2_control YAML override; an empty "
+                    "value retains the canonical vehicle controller configuration."
+                ),
+            ),
             DeclareLaunchArgument(
                 "spawn_robot",
                 default_value="true",

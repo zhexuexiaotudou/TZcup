@@ -87,6 +87,34 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
     base_slam_params = Path(
         context.perform_substitution(LaunchConfiguration("base_slam_params_file"))
     )
+    controller_config_path = ""
+    if mode == "mapping":
+        base_controller_params = Path(
+            context.perform_substitution(
+                LaunchConfiguration("base_controller_params_file")
+            )
+        )
+        controller_config = yaml.safe_load(
+            base_controller_params.read_text(encoding="utf-8")
+        )
+        controller_manager_params = controller_config["controller_manager"][
+            "ros__parameters"
+        ]
+        if controller_manager_params.get("update_rate") != 250:
+            raise RuntimeError(
+                "canonical formal controller update_rate must be exactly 250 Hz"
+            )
+        # The optimized mapping world advances in exact 5 ms steps.  Match
+        # ros2_control to that 200 Hz ceiling rather than requesting the
+        # impossible canonical 4 ms period and burdening the mapping runtime.
+        controller_manager_params["update_rate"] = 200
+        generated_controller = Path(tempfile.gettempdir()) / (
+            f"tzcup_map_lifecycle_controllers_{os.getpid()}.yaml"
+        )
+        generated_controller.write_text(
+            yaml.safe_dump(controller_config, sort_keys=False), encoding="utf-8"
+        )
+        controller_config_path = str(generated_controller)
     motion_profile = Path(
         context.perform_substitution(LaunchConfiguration("motion_profile_file"))
     )
@@ -153,6 +181,14 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
         high_bandwidth_sensor_runtime=mapping_high_bandwidth_sensor_runtime == "true",
     )
     if mode == "mapping":
+        # Nav2 interprets this value in milliseconds.  The 20 ms upstream
+        # default is too narrow when Gazebo and SLAM share a loaded CPU: the
+        # controller accepts FollowPath shortly after the BT has already
+        # aborted it.  Keep the relaxed acknowledgement deadline local to
+        # live mapping; cleaning retains the base configuration.
+        nav2["bt_navigator"]["ros__parameters"][
+            "default_server_timeout"
+        ] = 2000
         # slam_toolbox initially sizes /map around laser returns.  At the
         # fixed open-boundary start, the physical base can lie just outside
         # that first tiny grid even though the lidar origin is inside it.  A
@@ -353,6 +389,7 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                 "world": LaunchConfiguration("world"),
                 "world_name": LaunchConfiguration("world_name"),
                 "episode_manifest": LaunchConfiguration("episode_manifest"),
+                "controller_config_path": controller_config_path,
                 "pedestrian_schedule": LaunchConfiguration("pedestrian_schedule"),
                 "start_pedestrians": LaunchConfiguration("start_pedestrians"),
                 "enable_dynamic_footprint_runtime_test_override": LaunchConfiguration(
@@ -617,6 +654,14 @@ def generate_launch_description() -> LaunchDescription:
             "base_slam_params_file",
             default_value=PathJoinSubstitution([
                 FindPackageShare("sanitation_navigation"), "config", "slam.yaml"
+            ]),
+        ),
+        DeclareLaunchArgument(
+            "base_controller_params_file",
+            default_value=PathJoinSubstitution([
+                FindPackageShare("sanitation_vehicle_description"),
+                "config",
+                "formal_vehicle_controllers.yaml",
             ]),
         ),
         DeclareLaunchArgument(
