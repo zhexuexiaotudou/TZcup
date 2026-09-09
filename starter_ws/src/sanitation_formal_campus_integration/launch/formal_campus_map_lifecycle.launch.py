@@ -244,6 +244,11 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
     navigation_launch = PathJoinSubstitution([
         FindPackageShare("sanitation_navigation"), "launch", "navigation.launch.py"
     ])
+    frontier_mapping_navigation_launch = PathJoinSubstitution([
+        FindPackageShare("sanitation_navigation"),
+        "launch",
+        "frontier_mapping.launch.py",
+    ])
     slam_launch = PathJoinSubstitution([
         FindPackageShare("sanitation_navigation"), "launch", "slam.launch.py"
     ])
@@ -289,7 +294,7 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
         period=8.0,
         actions=[
             IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(navigation_launch),
+                PythonLaunchDescriptionSource(frontier_mapping_navigation_launch),
                 launch_arguments={
                     "use_sim_time": "true",
                     "params_file": str(generated_nav2),

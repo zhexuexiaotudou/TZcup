@@ -1,3 +1,4 @@
+import ast
 from pathlib import Path
 
 import yaml
@@ -118,6 +119,32 @@ def test_formal_launch_separates_mapping_and_saved_map_cleaning():
         PACKAGE.parent / "sanitation_navigation" / "launch" / "navigation.launch.py"
     ).read_text(encoding="utf-8")
     assert "SetRemap(src='/cmd_vel', dst='/cmd_vel_nav')" in navigation
+    frontier_navigation = (
+        PACKAGE.parent
+        / "sanitation_navigation"
+        / "launch"
+        / "frontier_mapping.launch.py"
+    ).read_text(encoding="utf-8")
+    ast.parse(frontier_navigation)
+    assert 'package="nav2_route"' not in frontier_navigation
+    assert 'package="nav2_waypoint_follower"' not in frontier_navigation
+    assert 'package="opennav_docking"' not in frontier_navigation
+    for package, executable in (
+        ("nav2_planner", "planner_server"),
+        ("nav2_controller", "controller_server"),
+        ("nav2_smoother", "smoother_server"),
+        ("nav2_behaviors", "behavior_server"),
+        ("nav2_bt_navigator", "bt_navigator"),
+        ("nav2_velocity_smoother", "velocity_smoother"),
+        ("nav2_collision_monitor", "collision_monitor"),
+    ):
+        assert f'package="{package}"' in frontier_navigation
+        assert f'executable="{executable}"' in frontier_navigation
+    assert '"navigators": ["navigate_to_pose"]' in frontier_navigation
+    assert 'name="filter_lifecycle_manager"' in frontier_navigation
+    assert 'name="keepout_filter_mask_server"' in frontier_navigation
+    assert 'name="speed_filter_mask_server"' in frontier_navigation
+    assert "frontier_mapping_navigation_launch" in source
     vehicle = (
         PACKAGE.parent
         / "sanitation_vehicle_description"
