@@ -106,6 +106,18 @@ root, then pass the smallest applicable gate before starting a long run.
   long-step regression proves the seated offset stays idle. Do not clear a
   live latch from its post-stop zero-current frame, and do not weaken the
   100 mm deployment stall test or the safety latch/reset semantics.
+- After the corrected Spin completed, the frontier selector rejected the
+  nearest known-free seed as `internal_seed_not_footprint_safe`. A live full
+  `/map` probe showed the current vehicle footprint contained 486 free cells,
+  160 unknown cells and zero occupied cells: lidar cannot ray-clear the cells
+  hidden under its own body. The selector now permits only a clearance-bounded
+  bootstrap through known-free center cells to the first fully safe anchor;
+  goal/reachable traversal still rejects unknown, and the narrow-corridor test
+  remains fail-closed. Do not solve this incident by enabling Navfn unknown
+  traversal or by unconditionally shrinking the vehicle clearance.
+- A forced stale-run stop also proved that dashboard/support children inherited
+  the Gazebo lease descriptor. They now close fd 9 at exec, so an orphaned HMI
+  cannot retain `/tmp/tzcup_formal_gazebo.lock` after the simulator is gone.
 
 ## Runtime interpretation traps
 

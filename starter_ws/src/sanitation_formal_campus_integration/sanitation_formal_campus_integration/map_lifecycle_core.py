@@ -512,15 +512,17 @@ def select_frontier_goal(
         or seed_global_row + clearance_cells >= height
         or seed_global_column + clearance_cells >= width
     )
+    seed_safe = is_safe(seed)
     if diagnostics is not None:
-        diagnostics["seed_safe"] = is_safe(seed)
+        diagnostics["seed_safe"] = seed_safe
         diagnostics["seed_touches_boundary"] = seed_touches_map_boundary
-    if not is_safe(seed) and not seed_touches_map_boundary:
-        return reject("internal_seed_not_footprint_safe")
 
-    # The robot may sit just outside slam_toolbox's still-growing raster. Walk
-    # only the shortest free bootstrap band to the first footprint-safe cell;
-    # after that, never propagate through a corridor the vehicle cannot fit.
+    # The robot may sit just outside slam_toolbox's still-growing raster, or
+    # its own body may cover cells that a lidar can never ray-clear. Walk only
+    # a single bounded clearance band through known-free center cells to the
+    # first footprint-safe anchor. A genuinely narrow corridor still cannot
+    # produce an anchor inside this bound; after the anchor, traversal remains
+    # footprint-safe and never propagates through unknown space.
     bootstrap_steps = array("i", [-1]) * local_size
     bootstrap_steps[seed] = 0
     queue: deque[int] = deque([seed])

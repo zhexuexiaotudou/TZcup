@@ -340,7 +340,7 @@ def test_frontier_goal_never_crosses_a_vehicle_width_blocking_corridor():
     assert goal[0] < 1.1
 
 
-def test_frontier_goal_does_not_bootstrap_from_an_internal_narrow_corridor():
+def test_frontier_goal_does_not_escape_an_internal_narrow_corridor():
     width, height, resolution = 30, 15, 0.1
     data = [-1] * (width * height)
     for row in range(2, 13):
@@ -380,7 +380,47 @@ def test_frontier_goal_does_not_bootstrap_from_an_internal_narrow_corridor():
     assert diagnostics["anchor_found"] is False
     assert diagnostics["raw_frontier_count"] == 0
     assert diagnostics["candidate_count"] == 0
-    assert diagnostics["rejection_reason"] == "internal_seed_not_footprint_safe"
+    assert diagnostics["rejection_reason"] == "no_footprint_safe_bootstrap_anchor"
+
+
+def test_frontier_goal_bootstraps_past_lidar_unknown_cells_under_robot_body():
+    width, height, resolution = 60, 40, 0.1
+    data = [-1] * (width * height)
+    for row in range(4, 36):
+        for column in range(5, 55):
+            data[row * width + column] = 0
+    # The center cell is known-free, but one unobservable under-body cell lies
+    # on the seed clearance edge. Moving the anchor one cell away makes the
+    # complete clearance window known-free without crossing unknown space.
+    robot_row, robot_column = 20, 30
+    data[(robot_row + 3) * width + robot_column] = -1
+
+    diagnostics: dict[str, object] = {}
+    goal = select_frontier_goal(
+        data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=0.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((0.0, 0.0), (6.0, 0.0), (6.0, 4.0), (0.0, 4.0)),
+        robot_x=(robot_column + 0.5) * resolution,
+        robot_y=(robot_row + 0.5) * resolution,
+        sample_spacing_m=0.1,
+        clearance_m=0.2,
+        frontier_standoff_m=0.4,
+        seed_max_offset_m=0.2,
+        min_goal_distance_m=0.2,
+        diagnostics=diagnostics,
+    )
+
+    assert goal is not None
+    assert diagnostics["seed_safe"] is False
+    assert diagnostics["seed_touches_boundary"] is False
+    assert diagnostics["anchor_found"] is True
+    assert diagnostics["candidate_count"] > 0
+    assert diagnostics["rejection_reason"] is None
 
 
 def test_frontier_goal_does_not_expand_boundary_bootstrap_through_narrow_corridor():

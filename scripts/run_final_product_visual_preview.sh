@@ -843,12 +843,12 @@ start_dashboard() {
     exec "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" python3 -m sanitation_hmi.live_server --ros-args \
       -p use_sim_time:=true -p port:="${dashboard_port}" -p output_dir:="${dashboard_output}" \
       -p mission_config:="${preview_hmi_mission}" \
-      -p web_root:="${repo_root}/starter_ws/src/sanitation_hmi/web"
+      -p web_root:="${repo_root}/starter_ws/src/sanitation_hmi/web" 9>&-
   ) >"${dashboard_output}/dashboard.${phase}.log" 2>&1 & dashboard_pid=$!
   (
     export ROS_DOMAIN_ID="${domain}"
     exec "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" python3 "${repo_root}/scripts/publish_final_product_visual_state.py" \
-      --state-file "${state_file}" --period-sec 1.0
+      --state-file "${state_file}" --period-sec 1.0 9>&-
   ) >"${dashboard_output}/state.${phase}.log" 2>&1 & state_publisher_pid=$!
 }
 
@@ -857,12 +857,12 @@ start_safety_heartbeat() {
   (
     export ROS_DOMAIN_ID="${domain}"
     exec "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 topic pub /formal_vehicle/simulation/command/emergency_stop \
-      std_msgs/msg/Bool "{data: false}" -r 10
+      std_msgs/msg/Bool "{data: false}" -r 10 9>&-
   ) >"${run_root}/emergency_stop.${phase}.log" 2>&1 & emergency_stop_pid=$!
   (
     export ROS_DOMAIN_ID="${domain}"
     exec "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 topic pub /formal_vehicle/simulation/command/main_power \
-      std_msgs/msg/Bool "{data: true}" -r 10
+      std_msgs/msg/Bool "{data: true}" -r 10 9>&-
   ) >"${run_root}/main_power.${phase}.log" 2>&1 & main_power_pid=$!
 }
 
