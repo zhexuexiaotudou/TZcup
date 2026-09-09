@@ -151,6 +151,17 @@ root, then pass the smallest applicable gate before starting a long run.
 - A forced stale-run stop also proved that dashboard/support children inherited
   the Gazebo lease descriptor. They now close fd 9 at exec, so an orphaned HMI
   cannot retain `/tmp/tzcup_formal_gazebo.lock` after the simulator is gone.
+- A live Nav2 arc commanded `v=-0.12 m/s, w=0.35 rad/s`, corresponding to left
+  and right wheel targets of about `-1.344` and `-0.133 rad/s`, while all four
+  measured wheels collapsed to about `-0.725 rad/s` and measured yaw remained
+  zero.  The plant selected its high tyre-scrub breakaway gain only when side
+  commands had opposite signs, so same-direction skid-steer arcs incorrectly
+  used the weak straight-line gain.  The selector now treats every unequal
+  left/right side command as differential steering; equal-side straight motion
+  still uses the general gain, and the existing torque, current, power and slew
+  limits remain authoritative.  Retain the captured same-direction arc as a
+  regression case; do not wait for a Nav2 progress timeout to diagnose this
+  signature again.
 
 ## Runtime interpretation traps
 

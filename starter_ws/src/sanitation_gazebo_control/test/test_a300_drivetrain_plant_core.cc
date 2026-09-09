@@ -211,7 +211,7 @@ void TestPureSkidSteerSpinKinematics()
     "spin wheel-speed inverse must reconstruct the requested yaw rate");
 }
 
-void TestCounterRotationUsesBreakawayGainOnly()
+void TestDifferentialSteeringUsesBreakawayGain()
 {
   constexpr double kWheelCommandRadS = 0.4323076923076923;
 
@@ -253,6 +253,28 @@ void TestCounterRotationUsesBreakawayGainOnly()
     Require(Near(torque_nm, expected_straight_torque_nm, 1e-8),
       "straight drive must retain the general speed-error gain");
   }
+
+  // Regression from the final-product runtime: this same-direction arc was
+  // previously misclassified as straight drive.  The weak 12 Nm/(rad/s)
+  // controller could not overcome four-wheel lateral scrub, so every measured
+  // wheel converged to the side-command mean and yaw stayed approximately zero.
+  A300DrivetrainPlantCore arc_plant;
+  auto arc_input = NominalInput();
+  arc_input.step_s = 0.25;
+  arc_input.commanded_speed_rad_s = {
+    -1.34369, -0.133231, -1.34369, -0.133231};
+  arc_input.measured_speed_rad_s.fill(-0.72514);
+  const auto arc = arc_plant.Step(arc_input);
+  Require(arc.wheel_torque_nm[0] < 0.0 && arc.wheel_torque_nm[2] < 0.0,
+    "same-direction arc must drive the left wheels below their coupled mean");
+  Require(arc.wheel_torque_nm[1] > 0.0 && arc.wheel_torque_nm[3] > 0.0,
+    "same-direction arc must drive the right wheels above their coupled mean");
+  for (const double torque_nm : arc.wheel_torque_nm) {
+    Require(Near(std::abs(torque_nm), 52.5, 1e-8),
+      "same-direction arc steering must retain the aggregate 60 A boundary");
+  }
+  Require(arc.current_limited,
+    "same-direction arc breakaway must report aggregate current limiting");
 }
 }  // namespace
 
@@ -267,7 +289,7 @@ int main()
     TestDisabledBrakeCannotInjectEnergyNearZero();
     TestInvalidInputCannotProduceNanOrDrive();
     TestPureSkidSteerSpinKinematics();
-    TestCounterRotationUsesBreakawayGainOnly();
+    TestDifferentialSteeringUsesBreakawayGain();
   } catch (const std::exception & error) {
     std::cerr << "A300 drivetrain plant core test failed: " << error.what() << '\n';
     return EXIT_FAILURE;

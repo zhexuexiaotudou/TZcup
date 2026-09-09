@@ -169,8 +169,16 @@ A300DrivetrainPlantOutput A300DrivetrainPlantCore::Step(
       (input.commanded_speed_rad_s[0] + input.commanded_speed_rad_s[2]) * 0.5;
     const double right_command_rad_s =
       (input.commanded_speed_rad_s[1] + input.commanded_speed_rad_s[3]) * 0.5;
-    const bool counter_rotating = left_command_rad_s * right_command_rad_s < 0.0;
-    const double drive_speed_error_gain = counter_rotating ?
+    // Any skid-steer curve must overcome lateral tyre scrub.  Testing only for
+    // opposite wheel signs misses ordinary arcs where both sides move in the
+    // same direction at different speeds; those arcs then use the weak
+    // straight-line gain and can collapse to equal wheel speeds under contact
+    // coupling.  Keep the straight-line gain only for a genuinely equal side
+    // command.  Existing torque, current, power and slew limits still bound
+    // the steering effort below.
+    const bool differential_steering =
+      std::abs(left_command_rad_s - right_command_rad_s) > 1.0e-9;
+    const double drive_speed_error_gain = differential_steering ?
       parameters_.counter_rotation_speed_error_gain_nm_per_rad_s :
       parameters_.speed_error_gain_nm_per_rad_s;
     for (std::size_t index = 0; index < kA300WheelCount; ++index) {
