@@ -240,13 +240,17 @@ hmi_receipt_matches() {
 import json
 import pathlib
 import sys
-import urllib.request
+import http.client
 
 port, telemetry_path, stage, digest = sys.argv[1:]
 try:
-    with urllib.request.urlopen(f"http://127.0.0.1:{port}/healthz", timeout=1.0) as response:
-        if response.status != 200:
-            raise RuntimeError("health status")
+    connection = http.client.HTTPConnection("127.0.0.1", int(port), timeout=1.0)
+    connection.request("GET", "/healthz")
+    response = connection.getresponse()
+    response.read()
+    connection.close()
+    if response.status != 200:
+        raise RuntimeError("health status")
     payload = json.loads(pathlib.Path(telemetry_path).read_text(encoding="utf-8"))
     final_demo = payload["final_demo"]
     expected_digest = None if digest == "" else digest

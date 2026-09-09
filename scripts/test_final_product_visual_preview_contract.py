@@ -99,7 +99,8 @@ def test_preview_requires_observable_phase_progress_and_hmi_stage_receipts() -> 
     assert "dashboard_has_first_map" in RUNNER
     assert "mapping progress watchdog timed out" in RUNNER
     assert "cleaning progress watchdog timed out before hard-restart receipt" in RUNNER
-    assert "urllib.request.urlopen" in RUNNER
+    assert 'http.client.HTTPConnection("127.0.0.1", int(port), timeout=1.0)' in RUNNER
+    assert "urllib.request" not in RUNNER
     assert 'wait_for_hmi_receipt MAPPING ""' in RUNNER
     assert 'wait_for_hmi_receipt MAP_SAVED "${map_sha256}"' in RUNNER
     assert 'wait_for_hmi_receipt HARD_RESTART "${map_sha256}"' in RUNNER
