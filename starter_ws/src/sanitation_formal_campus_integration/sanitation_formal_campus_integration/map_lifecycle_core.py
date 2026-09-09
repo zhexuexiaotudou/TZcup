@@ -458,23 +458,31 @@ def select_frontier_goal(
         return None
 
     neighbours = ((-1, 0), (1, 0), (0, -1), (0, 1))
+    seed_local_row, seed_local_column = divmod(seed, local_width)
+    seed_global_row = min_row + seed_local_row
+    seed_global_column = min_column + seed_local_column
+    seed_touches_map_boundary = (
+        seed_global_row - clearance_cells < 0
+        or seed_global_column - clearance_cells < 0
+        or seed_global_row + clearance_cells >= height
+        or seed_global_column + clearance_cells >= width
+    )
+    if not is_safe(seed) and not seed_touches_map_boundary:
+        return None
+
     # The robot may sit just outside slam_toolbox's still-growing raster. Walk
     # only the shortest free bootstrap band to the first footprint-safe cell;
     # after that, never propagate through a corridor the vehicle cannot fit.
     bootstrap_steps = array("i", [-1]) * local_size
     bootstrap_steps[seed] = 0
     queue: deque[int] = deque([seed])
-    anchors: list[int] = []
-    anchor_distance: int | None = None
+    anchor: int | None = None
     while queue:
         current = queue.popleft()
         distance = bootstrap_steps[current]
-        if anchor_distance is not None and distance > anchor_distance:
-            break
         if is_safe(current):
-            anchor_distance = distance
-            anchors.append(current)
-            continue
+            anchor = current
+            break
         if distance >= clearance_cells:
             continue
         local_row, local_column = divmod(current, local_width)
@@ -489,13 +497,12 @@ def select_frontier_goal(
             if bootstrap_steps[next_index] < 0 and free[next_index]:
                 bootstrap_steps[next_index] = distance + 1
                 queue.append(next_index)
-    if not anchors or anchor_distance is None:
+    if anchor is None:
         return None
 
     reachable_steps = array("i", [-1]) * local_size
-    queue = deque(anchors)
-    for anchor in anchors:
-        reachable_steps[anchor] = anchor_distance
+    reachable_steps[anchor] = bootstrap_steps[anchor]
+    queue = deque([anchor])
     while queue:
         current = queue.popleft()
         local_row, local_column = divmod(current, local_width)

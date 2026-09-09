@@ -285,6 +285,38 @@ def test_frontier_goal_never_crosses_a_vehicle_width_blocking_corridor():
     assert goal[0] < 1.1
 
 
+def test_frontier_goal_does_not_bootstrap_from_an_internal_narrow_corridor():
+    width, height, resolution = 30, 15, 0.1
+    data = [-1] * (width * height)
+    for row in range(2, 13):
+        for column in range(2, 11):
+            data[row * width + column] = 0
+        for column in range(20, 28):
+            data[row * width + column] = 0
+    for column in range(11, 20):
+        data[7 * width + column] = 0
+
+    goal = select_frontier_goal(
+        data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=0.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((0.0, 0.0), (3.0, 0.0), (3.0, 1.5), (0.0, 1.5)),
+        robot_x=1.55,
+        robot_y=0.75,
+        sample_spacing_m=0.1,
+        clearance_m=0.2,
+        frontier_standoff_m=0.4,
+        seed_max_offset_m=0.2,
+        min_goal_distance_m=0.2,
+    )
+
+    assert goal is None
+
+
 def test_frontier_goal_uses_a_bounded_nearest_free_seed_outside_the_map():
     width, height, resolution = 40, 20, 0.1
     data = [-1] * (width * height)
@@ -423,7 +455,7 @@ def test_frontier_clearance_includes_the_raster_cell_half_diagonal():
         origin_y=0.0,
         origin_yaw=0.0,
         geofence=((0.0, 0.0), (3.0, 0.0), (3.0, 3.0), (0.0, 3.0)),
-        robot_x=1.45,
+        robot_x=1.55,
         robot_y=1.55,
         sample_spacing_m=0.1,
         clearance_m=0.95,
@@ -454,7 +486,7 @@ def test_frontier_vehicle_clearance_stays_inside_the_geofence():
         origin_yaw=0.0,
         geofence=((0.0, 1.0), (4.0, 1.0), (4.0, 2.0), (0.0, 2.0)),
         robot_x=2.0,
-        robot_y=1.05,
+        robot_y=1.45,
         sample_spacing_m=0.1,
         clearance_m=0.3,
         frontier_standoff_m=0.5,
