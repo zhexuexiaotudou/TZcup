@@ -7,6 +7,7 @@
 set -euo pipefail
 
 repo_root="${TZCUP_REPOSITORY_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+source "${repo_root}/scripts/run_formal_runtime_isolation.sh"
 # A linked worktree has a .git *file*.  Walk upward to the repository that
 # owns the .git directory instead of accepting the Windows-formatted path some
 # git.exe builds print for --git-common-dir inside WSL.
@@ -37,6 +38,9 @@ absolute_path() { realpath -m -- "$1"; }
 path_is_below() { [[ "$1" == "$2"/* ]]; }
 require_positive_integer() {
   [[ "$2" =~ ^[1-9][0-9]*$ ]] || { echo "$1 must be a positive integer" >&2; exit 2; }
+}
+require_nonnegative_integer() {
+  [[ "$2" =~ ^[0-9]+$ ]] || { echo "$1 must be a non-negative integer" >&2; exit 2; }
 }
 
 run_root=""
@@ -70,12 +74,15 @@ done
 [[ -n "${run_root}" && -n "${runtime_ws}" ]] || { usage >&2; exit 2; }
 for pair in \
   "--mapping-timeout-sec:${mapping_timeout_sec}" "--cleaning-timeout-sec:${cleaning_timeout_sec}" \
-  "--mapping-ros-domain:${mapping_ros_domain}" "--cleaning-ros-domain:${cleaning_ros_domain}" \
   "--dashboard-port:${dashboard_port}"; do
   require_positive_integer "${pair%%:*}" "${pair#*:}"
 done
-if (( mapping_ros_domain > 232 || cleaning_ros_domain > 232 || mapping_ros_domain == cleaning_ros_domain )); then
-  echo "mapping and cleaning ROS domains must be distinct integers in 1..232" >&2
+require_nonnegative_integer "--mapping-ros-domain" "${mapping_ros_domain}"
+require_nonnegative_integer "--cleaning-ros-domain" "${cleaning_ros_domain}"
+if [[ "${mapping_ros_domain}" == "${cleaning_ros_domain}" ]] \
+  || ! formal_runtime_domain_is_linux_safe "${mapping_ros_domain}" \
+  || ! formal_runtime_domain_is_linux_safe "${cleaning_ros_domain}"; then
+  echo "mapping and cleaning ROS domains must be distinct Linux-safe domains: 0..101 or 215..231" >&2
   exit 2
 fi
 if (( dashboard_port > 65535 )); then
@@ -126,6 +133,11 @@ if "${preflight_only}"; then
 fi
 
 mkdir -p "${run_root}" "${cleaning_root}" "${dashboard_output}"
+# Pin ROS discovery to the loopback CycloneDDS profile and acquire the shared
+# formal Gazebo lease before any DDS participant exists.  This prevents the
+# FastDDS shared-memory lock collisions that made concurrent local Gazebo
+# runs nondeterministic, while still keeping this preview outside acceptance.
+formal_runtime_configure "${mapping_ros_domain}"
 
 write_state() {
   local stage="$1" map_sha256="${2:-}"
@@ -163,6 +175,8 @@ cleaning_launch_pid=""
 emergency_stop_pid=""
 main_power_pid=""
 terminal_written=false
+mapping_partition="tzcup_final_visual_mapping_${mapping_ros_domain}_$$"
+cleaning_partition="tzcup_final_visual_cleaning_${cleaning_ros_domain}_$$"
 stop_pid() {
   local pid="$1"
   [[ -n "${pid}" ]] || return 0
@@ -174,9 +188,10 @@ stop_pid() {
   kill -KILL -- "-${pid}" 2>/dev/null || true
 }
 cleanup() {
-  # Each launch is in a separate process group; terminate only the processes
-  # created by this runner, never a broad ROS/Gazebo process match.
-  stop_pid "${mapping_launch_pid}"; stop_pid "${cleaning_launch_pid}"
+  # The formal helper owns exact process-group plus exact GZ_PARTITION
+  # cleanup.  It never relies on a broad ros2/gz process match.
+  formal_runtime_cleanup_groups "${mapping_partition}" "${mapping_launch_pid}" || true
+  formal_runtime_cleanup_groups "${cleaning_partition}" "${cleaning_launch_pid}" || true
   stop_pid "${emergency_stop_pid}"; stop_pid "${main_power_pid}"
   stop_pid "${state_publisher_pid}"; stop_pid "${dashboard_pid}"
   for pid in "${mapping_launch_pid}" "${cleaning_launch_pid}" "${emergency_stop_pid}" "${main_power_pid}" "${state_publisher_pid}" "${dashboard_pid}"; do
@@ -209,13 +224,13 @@ start_dashboard() {
   (
     export ROS_DOMAIN_ID="${domain}"
     export PYTHONPATH="${repo_root}/starter_ws/src/sanitation_hmi${PYTHONPATH:+:${PYTHONPATH}}"
-    exec setsid python3 -m sanitation_hmi.live_server --ros-args \
+    exec "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" python3 -m sanitation_hmi.live_server --ros-args \
       -p use_sim_time:=true -p port:="${dashboard_port}" -p output_dir:="${dashboard_output}" \
       -p web_root:="${repo_root}/starter_ws/src/sanitation_hmi/web"
   ) >"${dashboard_output}/dashboard.${phase}.log" 2>&1 & dashboard_pid=$!
   (
     export ROS_DOMAIN_ID="${domain}"
-    exec setsid python3 "${repo_root}/scripts/publish_final_product_visual_state.py" \
+    exec "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" python3 "${repo_root}/scripts/publish_final_product_visual_state.py" \
       --state-file "${state_file}" --period-sec 1.0
   ) >"${dashboard_output}/state.${phase}.log" 2>&1 & state_publisher_pid=$!
 }
@@ -224,12 +239,12 @@ start_safety_heartbeat() {
   local domain="$1" phase="$2"
   (
     export ROS_DOMAIN_ID="${domain}"
-    exec setsid ros2 topic pub /formal_vehicle/simulation/command/emergency_stop \
+    exec "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 topic pub /formal_vehicle/simulation/command/emergency_stop \
       std_msgs/msg/Bool "{data: false}" -r 10
   ) >"${run_root}/emergency_stop.${phase}.log" 2>&1 & emergency_stop_pid=$!
   (
     export ROS_DOMAIN_ID="${domain}"
-    exec setsid ros2 topic pub /formal_vehicle/simulation/command/main_power \
+    exec "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 topic pub /formal_vehicle/simulation/command/main_power \
       std_msgs/msg/Bool "{data: true}" -r 10
   ) >"${run_root}/main_power.${phase}.log" 2>&1 & main_power_pid=$!
 }
@@ -249,8 +264,8 @@ prepare_mapping_world
 write_state MAPPING
 start_dashboard "${mapping_ros_domain}" mapping
 export ROS_DOMAIN_ID="${mapping_ros_domain}"
-export GZ_PARTITION="tzcup_final_visual_mapping_${mapping_ros_domain}_$$"
-setsid ros2 launch sanitation_formal_campus_integration formal_campus_map_lifecycle.launch.py \
+export GZ_PARTITION="${mapping_partition}"
+"${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 launch sanitation_formal_campus_integration formal_campus_map_lifecycle.launch.py \
   mission_mode:=mapping gui:=true world:="${mapping_world}" \
   episode_manifest:="${episode_root}/public/episode_manifest.json" map_artifact_dir:="${map_root}" \
   pedestrian_schedule:="${episode_root}/environment/pedestrian_schedule.json" \
@@ -270,7 +285,8 @@ map_sha256="$(sha256sum "${map_root}/map_lifecycle_manifest.json" | awk '{print 
 write_state MAP_SAVED "${map_sha256}"
 sleep 1
 write_state HARD_RESTART "${map_sha256}"
-stop_pid "${mapping_launch_pid}"; wait "${mapping_launch_pid}" 2>/dev/null || true; mapping_launch_pid=""
+formal_runtime_cleanup_groups "${mapping_partition}" "${mapping_launch_pid}" || true
+mapping_launch_pid=""
 stop_pid "${emergency_stop_pid}"; stop_pid "${main_power_pid}"
 wait "${emergency_stop_pid}" 2>/dev/null || true; wait "${main_power_pid}" 2>/dev/null || true
 emergency_stop_pid=""; main_power_pid=""
@@ -282,8 +298,8 @@ prepare_cleaning_world
 write_state RELOAD_LOCALIZE "${map_sha256}"
 start_dashboard "${cleaning_ros_domain}" cleaning
 export ROS_DOMAIN_ID="${cleaning_ros_domain}"
-export GZ_PARTITION="tzcup_final_visual_cleaning_${cleaning_ros_domain}_$$"
-setsid ros2 launch sanitation_formal_campus_integration formal_campus_map_lifecycle.launch.py \
+export GZ_PARTITION="${cleaning_partition}"
+"${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 launch sanitation_formal_campus_integration formal_campus_map_lifecycle.launch.py \
   mission_mode:=cleaning cleaning_planner:=full_coverage gui:=true world:="${cleaning_world}" \
   episode_manifest:="${episode_root}/public/episode_manifest.json" map_artifact_dir:="${map_root}" \
   pedestrian_schedule:="${episode_root}/environment/pedestrian_schedule.json" start_pedestrians:=true \
