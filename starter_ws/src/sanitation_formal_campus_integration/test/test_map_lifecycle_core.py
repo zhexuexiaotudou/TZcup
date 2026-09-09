@@ -242,6 +242,9 @@ def test_frontier_goal_is_known_free_inside_geofence():
     assert diagnostics == {
         "source_dimensions": [7, 7],
         "source_resolution_m": 0.1,
+        "clearance_model": "conservative_cell_intersection_circle",
+        "clearance_mask_cell_count": 1,
+        "bootstrap_step_limit": 0,
         "seed_offset_m": pytest.approx(0.0),
         "seed_safe": True,
         "seed_touches_boundary": False,
@@ -393,7 +396,7 @@ def test_frontier_goal_bootstraps_past_lidar_unknown_cells_under_robot_body():
     # on the seed clearance edge. Moving the anchor one cell away makes the
     # complete clearance window known-free without crossing unknown space.
     robot_row, robot_column = 20, 30
-    data[(robot_row + 3) * width + robot_column] = -1
+    data[(robot_row + 2) * width + robot_column] = -1
 
     diagnostics: dict[str, object] = {}
     goal = select_frontier_goal(
@@ -420,6 +423,46 @@ def test_frontier_goal_bootstraps_past_lidar_unknown_cells_under_robot_body():
     assert diagnostics["seed_touches_boundary"] is False
     assert diagnostics["anchor_found"] is True
     assert diagnostics["candidate_count"] > 0
+    assert diagnostics["rejection_reason"] is None
+
+
+def test_frontier_circle_does_not_require_square_only_corner_cells():
+    width = height = 60
+    resolution = 0.1
+    data = [-1] * (width * height)
+    for row in range(5, 55):
+        for column in range(5, 55):
+            data[row * width + column] = 0
+    robot_row = robot_column = 30
+    # With clearance=0.2 m, a cell centered 0.2 m in both axes is outside the
+    # conservative cell-intersection circle (radius 0.2707 m), but the former
+    # square query rejected it. Unknown remains forbidden everywhere in-mask.
+    data[(robot_row + 2) * width + robot_column + 2] = -1
+
+    diagnostics: dict[str, object] = {}
+    goal = select_frontier_goal(
+        data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=0.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((0.0, 0.0), (6.0, 0.0), (6.0, 6.0), (0.0, 6.0)),
+        robot_x=(robot_column + 0.5) * resolution,
+        robot_y=(robot_row + 0.5) * resolution,
+        sample_spacing_m=0.1,
+        clearance_m=0.2,
+        frontier_standoff_m=0.4,
+        seed_max_offset_m=0.2,
+        min_goal_distance_m=0.2,
+        diagnostics=diagnostics,
+    )
+
+    assert goal is not None
+    assert diagnostics["seed_safe"] is True
+    assert diagnostics["clearance_model"] == "conservative_cell_intersection_circle"
+    assert diagnostics["clearance_mask_cell_count"] == 21
     assert diagnostics["rejection_reason"] is None
 
 

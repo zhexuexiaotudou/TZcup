@@ -115,6 +115,29 @@ root, then pass the smallest applicable gate before starting a long run.
   goal/reachable traversal still rejects unknown, and the narrow-corridor test
   remains fail-closed. Do not solve this incident by enabling Navfn unknown
   traversal or by unconditionally shrinking the vehicle clearance.
+- The first retry still emitted the old `internal_seed_not_footprint_safe`
+  result although the source no longer contained that return.  The selected
+  install copy was about three hours older than the source.  Every preview now
+  writes `runtime_overlay_freshness.json` and refuses to launch unless the
+  current interpreter's complete Python packages, installed launch/config
+  payloads, and successful C++ build receipt all resolve below and match the
+  selected runtime workspace.  A package-prefix check alone cannot prove that
+  the code inside that prefix is current.
+- Once the fresh bootstrap code ran, its next diagnostic was
+  `no_footprint_safe_bootstrap_anchor`.  The nominal 0.95 m circular envelope
+  had been implemented as a 41-by-41 square at 0.05 m resolution, requiring
+  corner cells as far as 1.414 m from the candidate to be known-free.  The
+  selector now checks a conservative cell-intersection circle with radius
+  `0.95 + resolution/sqrt(2)`; it still rejects every unknown/occupied cell
+  inside that mask and retains the bounded known-free bootstrap.  Do not
+  restore a square approximation or extend the bootstrap through unknown.
+- Position-controller spawning and brush/recovery loading previously raced
+  each other while the safety manager already attempted strict activation.
+  This produced deterministic `controller does not exist` and strict-switch
+  rejection noise and could hide a missing cleaning controller.  The launch
+  is now sequenced as position group completion, then inactive brush/recovery
+  loading, then the sole safety manager.  Keep strict switching; do not replace
+  this ordering with `BEST_EFFORT`.
 - A forced stale-run stop also proved that dashboard/support children inherited
   the Gazebo lease descriptor. They now close fd 9 at exec, so an orphaned HMI
   cannot retain `/tmp/tzcup_formal_gazebo.lock` after the simulator is gone.
@@ -136,10 +159,10 @@ root, then pass the smallest applicable gate before starting a long run.
   fail on setup variables such as `AMENT_TRACE_SETUP_FILES`; the runner
   temporarily disables nounset only around the two setup files and immediately
   restores it.
-- Early `controller switch was rejected` messages can occur while the cleaning
-  controllers are loading.  They are only transient when a later controller
-  state query proves both managed controllers active.  The effective safety
-  permit must still be recorded during motion.
+- With the sequenced campus launch, `controller does not exist` or strict
+  switch rejection during loading is no longer an accepted transient.  Treat
+  either as a startup regression and require both managed controllers plus the
+  effective safety permit before motion.
 - An explorer terminal state must be published to the HMI before teardown.
   The runner records `PRODUCT_TERMINAL`, waits for its HMI receipt, saves a
   terminal telemetry snapshot, and preserves the original explorer state and

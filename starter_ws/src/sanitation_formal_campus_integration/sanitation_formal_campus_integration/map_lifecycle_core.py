@@ -347,6 +347,9 @@ def select_frontier_goal(
         diagnostics.update({
             "source_dimensions": [width, height],
             "source_resolution_m": resolution,
+            "clearance_model": "conservative_cell_intersection_circle",
+            "clearance_mask_cell_count": 0,
+            "bootstrap_step_limit": 0,
             "seed_offset_m": None,
             "seed_safe": None,
             "seed_touches_boundary": None,
@@ -445,12 +448,29 @@ def select_frontier_goal(
                 + blocked_in_row
             )
 
-    # A square clearance query is a cheap, conservative envelope of the
-    # yaw-invariant 0.95 m vehicle circle. The additional half cell ensures a
-    # blocked raster cell touching the envelope cannot be missed by its center.
-    clearance_cells = (
-        0 if clearance_m == 0.0 else math.ceil(clearance_m / resolution + 0.5)
+    # Check the declared yaw-invariant circle, not its much larger enclosing
+    # square.  Expanding by a cell's half diagonal is conservative: every cell
+    # whose area can intersect the circle is required to be known-free.  At the
+    # formal 0.05 m resolution this retains the 0.95 m vehicle envelope while
+    # avoiding square-only corner cells as far as 1.414 m from the candidate.
+    cell_intersection_radius = (
+        0.0 if clearance_m == 0.0 else clearance_m + resolution / math.sqrt(2.0)
     )
+    clearance_cells = math.ceil(cell_intersection_radius / resolution)
+    clearance_row_spans: list[tuple[int, int]] = []
+    radius_squared = cell_intersection_radius * cell_intersection_radius
+    for row_offset in range(-clearance_cells, clearance_cells + 1):
+        dy = abs(row_offset) * resolution
+        if dy > cell_intersection_radius + 1e-12:
+            continue
+        remaining = max(0.0, radius_squared - dy * dy)
+        half_width = math.floor(math.sqrt(remaining) / resolution + 1e-12)
+        clearance_row_spans.append((row_offset, half_width))
+    if diagnostics is not None:
+        diagnostics["clearance_mask_cell_count"] = sum(
+            2 * half_width + 1 for _, half_width in clearance_row_spans
+        )
+        diagnostics["bootstrap_step_limit"] = clearance_cells
     safe_cache = bytearray(local_size)
 
     def is_safe(local_index: int) -> bool:
@@ -458,25 +478,30 @@ def select_frontier_goal(
         if cached:
             return cached == 2
         local_row, local_column = divmod(local_index, local_width)
-        row0, row1 = local_row - clearance_cells, local_row + clearance_cells
-        column0 = local_column - clearance_cells
-        column1 = local_column + clearance_cells
-        safe = (
-            row0 >= 0
-            and column0 >= 0
-            and row1 < local_height
-            and column1 < local_width
-        )
-        if safe:
-            top = row0 * prefix_width
-            bottom = (row1 + 1) * prefix_width
+        safe = True
+        for row_offset, half_width in clearance_row_spans:
+            row = local_row + row_offset
+            column0 = local_column - half_width
+            column1 = local_column + half_width
+            if (
+                row < 0
+                or row >= local_height
+                or column0 < 0
+                or column1 >= local_width
+            ):
+                safe = False
+                break
+            top = row * prefix_width
+            bottom = (row + 1) * prefix_width
             blocked = (
                 blocked_prefix[bottom + column1 + 1]
                 - blocked_prefix[top + column1 + 1]
                 - blocked_prefix[bottom + column0]
                 + blocked_prefix[top + column0]
             )
-            safe = blocked == 0
+            if blocked:
+                safe = False
+                break
         safe_cache[local_index] = 2 if safe else 1
         return safe
 
