@@ -20,6 +20,17 @@ def test_competition_profile_is_full_scale_but_truthfully_zone_bounded(tmp_path:
     pgm = (tmp_path / "competition_map.pgm").read_bytes()
     assert pgm.startswith(b"P5\n2000 1000\n255\n")
     assert len(pgm) == len(b"P5\n2000 1000\n255\n") + 2_000_000
+    pixels = pgm[len(b"P5\n2000 1000\n255\n"):]
+
+    def map_pixel(x_m: float, y_m: float) -> int:
+        column = int(x_m / 0.1)
+        row_from_top = 1000 - 1 - int(y_m / 0.1)
+        return pixels[row_from_top * 2000 + column]
+
+    # These are physical SDF collision bodies alongside R9 swath-05.  The
+    # generated map must not claim their cells are free.
+    assert map_pixel(102.9, 37.3) == 0  # tree_17 trunk
+    assert map_pixel(106.8, 39.6) == 0  # waste_bin_1
     mission = (tmp_path / "competition_zone_auto12.yaml").read_text(encoding="utf-8")
     assert "operation_width_m: 1.32" in mission
     assert "full_map_area_m2: 20000.0" in mission
@@ -53,6 +64,8 @@ def test_competition_profile_is_full_scale_but_truthfully_zone_bounded(tmp_path:
     assert "ackermann_staging_offset_m: 1.0" in efficiency
     assert "CLEAN: {linear_mps: 1.00" in efficiency
     assert "    operation_width: 1.20" in efficiency_coverage
+    assert "- name: tree_17" in efficiency
+    assert "- name: waste_bin_1" in efficiency
     assert "  - [10.0, 45.5]" in ackermann
     assert manifest["live_demonstration"]["ackermann_bounds_xyxy_m"] == [
         10.0, 45.5, 22.0, 54.5
