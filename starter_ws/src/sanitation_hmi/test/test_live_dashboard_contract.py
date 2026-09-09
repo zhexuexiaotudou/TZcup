@@ -24,3 +24,7 @@ def test_final_demo_renders_downsampled_grid_and_has_local_view_without_losing_o
     assert "局部实时视图" in demo
     assert 'mapView === "local"' in demo
     assert 'mapView === "overview"' in demo
+    # Keep the first live image immediate while bounding repeated full-state
+    # JSON serialization to one update per second.
+    assert 'fetch("/api/v1/telemetry", {cache: "no-store"})' in demo
+    assert "setInterval(refresh, 1000);\n    refresh();" in demo
