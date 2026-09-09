@@ -227,10 +227,18 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
     slam_params["use_scan_matching"] = True
     slam_params["use_scan_barycenter"] = True
     slam_params["do_loop_closing"] = True
-    # Karto accepts physical +Inf as no-return.  The self filter must preserve
-    # those sparse no-return samples: converting nearly every open-space ray
-    # to a finite 12 m endpoint makes scan matching fall behind simulation
-    # time and starves the navigation transform chain.
+    # The 40 Hz UTM scan is much faster than the vehicle can create new map
+    # information.  Limit Karto to 2 Hz in mapping mode: this bounds the cost
+    # of expanding physical no-return rays while retaining a fresh scan every
+    # 0.15 m or less at the qualified 0.30 m/s mapping speed.
+    slam_params["throttle_scans"] = 20
+    slam_params["minimum_time_interval"] = 0.5
+    # In the open starting area, preserving every +Inf ray leaves only thin
+    # obstacle-return corridors and no footprint-clear cell for Nav2.  The
+    # self-filter therefore maps +Inf to Karto's exact 12 m raster threshold
+    # during mapping only. Karto marks the ray free but does not create an
+    # occupied endpoint at that exact threshold. Saved-map cleaning retains
+    # the physical +Inf representation for collision and costmap consumers.
     expected_sensor_range_max = 30.0
     slam_max_laser_range = float(slam_params["max_laser_range"])
     normalized_no_return_range = 12.0
@@ -446,6 +454,7 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                 scan_filter_params,
                 {
                     "use_sim_time": True,
+                    "normalize_positive_infinity": mode == "mapping",
                     "no_return_replacement_m": normalized_no_return_range,
                 },
             ],

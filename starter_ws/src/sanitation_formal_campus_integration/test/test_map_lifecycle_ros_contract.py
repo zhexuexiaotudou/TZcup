@@ -368,7 +368,10 @@ def test_scan_self_filter_is_installed_with_config_and_console_entry():
     assert 'FindPackageShare("sanitation_formal_campus_integration")' in lifecycle
     assert '"formal_utm30lx_self_filter.yaml"' in lifecycle
     assert "scan_filter_params," in lifecycle
+    assert '"normalize_positive_infinity": mode == "mapping"' in lifecycle
     assert '"no_return_replacement_m": normalized_no_return_range' in lifecycle
+    assert 'slam_params["throttle_scans"] = 20' in lifecycle
+    assert 'slam_params["minimum_time_interval"] = 0.5' in lifecycle
     source = (
         PACKAGE
         / "sanitation_formal_campus_integration"
