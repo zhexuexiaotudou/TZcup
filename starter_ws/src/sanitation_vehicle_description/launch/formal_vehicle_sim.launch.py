@@ -52,6 +52,9 @@ def generate_launch_description() -> LaunchDescription:
     simulation_initial_estop_active = LaunchConfiguration(
         "simulation_initial_estop_active"
     )
+    lidar_bridge_ready_timeout_sec = LaunchConfiguration(
+        "lidar_bridge_ready_timeout_sec"
+    )
     use_sim_time = LaunchConfiguration("use_sim_time")
     physics_engine = LaunchConfiguration("physics_engine")
     bodywork_visible = LaunchConfiguration("bodywork_visible")
@@ -500,6 +503,32 @@ def generate_launch_description() -> LaunchDescription:
         output="screen",
         condition=IfCondition(manipulation_sim_interfaces),
     )
+    create_vehicle = Node(
+        package="ros_gz_sim",
+        executable="create",
+        parameters=[{"robot_description": robot_description}],
+        # base_footprint is the wheel-ground projection; use only a
+        # 5 mm contact-settling clearance instead of lifting the car.
+        arguments=[
+            "-param", "robot_description", "-name", "tzcup_formal_sanitation_vehicle",
+            "-x", spawn_x, "-y", spawn_y, "-Y", spawn_yaw, "-z", "0.005",
+        ],
+        output="screen",
+        condition=IfCondition(spawn_robot),
+    )
+    # The readiness wrapper observes one physical Gazebo UTM frame before it
+    # execs the standard bridge. It is the sole ROS writer of /scan; the
+    # formal self-filter remains the sole writer of /scan/navigation.
+    formal_vehicle_lidar_bridge = Node(
+        package="sanitation_vehicle_description",
+        executable="formal_lidar_bridge_when_ready.sh",
+        name="formal_vehicle_lidar_bridge",
+        arguments=[
+            "--timeout-sec", lidar_bridge_ready_timeout_sec,
+        ],
+        output="screen",
+        condition=IfCondition(start_product_bridge),
+    )
 
     return LaunchDescription(
         [
@@ -572,6 +601,14 @@ def generate_launch_description() -> LaunchDescription:
                 "simulation_initial_estop_active",
                 default_value="true",
                 description="Power-up E-stop state for simulation inputs.",
+            ),
+            DeclareLaunchArgument(
+                "lidar_bridge_ready_timeout_sec",
+                default_value="600",
+                description=(
+                    "Bounded wait for the first physical UTM-30LX Gazebo "
+                    "frame before starting the sole ROS raw-scan bridge."
+                ),
             ),
             DeclareLaunchArgument("use_sim_time", default_value="true"),
             DeclareLaunchArgument("bodywork_visible", default_value="true"),
@@ -747,19 +784,7 @@ def generate_launch_description() -> LaunchDescription:
                 parameters=[{"use_sim_time": use_sim_time}],
                 output="screen",
             ),
-            Node(
-                package="ros_gz_sim",
-                executable="create",
-                parameters=[{"robot_description": robot_description}],
-                # base_footprint is the wheel-ground projection; use only a
-                # 5 mm contact-settling clearance instead of lifting the car.
-                arguments=[
-                    "-param", "robot_description", "-name", "tzcup_formal_sanitation_vehicle",
-                    "-x", spawn_x, "-y", spawn_y, "-Y", spawn_yaw, "-z", "0.005",
-                ],
-                output="screen",
-                condition=IfCondition(spawn_robot),
-            ),
+            create_vehicle,
             # Payload mass remains owned by physical simulation, and water
             # service-drain commands remain fail-closed through the safety
             # manager and plugin watchdog.  The native product bridge exposes
@@ -772,20 +797,16 @@ def generate_launch_description() -> LaunchDescription:
                 output="screen",
                 condition=IfCondition(start_product_bridge),
             ),
-            # The formal UTM-30LX is a single, bounded-rate sensor but its
-            # native bridge callback can stall under the complete campus graph.
-            # Keep this GZ-to-ROS leg on ros_gz_bridge's tested transport path.
-            # FormalVehicleProductNativeBridge deliberately does not own this
-            # endpoint, so this is the sole ROS publisher for the raw scan.
-            Node(
-                package="ros_gz_bridge",
-                executable="parameter_bridge",
-                name="formal_vehicle_lidar_bridge",
-                arguments=[
-                    "/sensors/lidar_2d/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan"
-                ],
-                output="screen",
-                condition=IfCondition(start_product_bridge),
+            RegisterEventHandler(
+                OnProcessExit(
+                    target_action=create_vehicle,
+                    on_exit=[
+                        OpaqueFunction(
+                            function=_start_actions_unless_shutdown,
+                            args=[formal_vehicle_lidar_bridge],
+                        )
+                    ],
+                )
             ),
             # Raw images and point clouds dwarf the control-plane traffic.  A
             # dedicated lazy bridge preserves every product topic, resolution

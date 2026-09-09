@@ -244,6 +244,9 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                 "simulation_initial_estop_active": LaunchConfiguration(
                     "simulation_initial_estop_active"
                 ),
+                "lidar_bridge_ready_timeout_sec": LaunchConfiguration(
+                    "lidar_bridge_ready_timeout_sec"
+                ),
                 "high_bandwidth_sensor_runtime": LaunchConfiguration(
                     "high_bandwidth_sensor_runtime"
                 ),
@@ -502,6 +505,14 @@ def generate_launch_description() -> LaunchDescription:
             # and emergency_stop=false before motion is allowed.
             DeclareLaunchArgument(
                 "simulation_initial_estop_active", default_value="true"
+            ),
+            DeclareLaunchArgument(
+                "lidar_bridge_ready_timeout_sec",
+                default_value="600",
+                description=(
+                    "Bounded wait for the first physical UTM frame before the "
+                    "sole ROS raw-scan bridge starts."
+                ),
             ),
             DeclareLaunchArgument(
                 "high_bandwidth_sensor_runtime", default_value="true"

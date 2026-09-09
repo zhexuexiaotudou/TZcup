@@ -140,6 +140,14 @@ def audit(root: Path = ROOT) -> dict[str, object]:
     sensors = _read(root, "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/sensor_suite.xacro")
     controllers = _read(root, "starter_ws/src/sanitation_vehicle_description/config/formal_vehicle_controllers.yaml")
     sim_launch = _read(root, "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py")
+    lidar_ready_wrapper = _read(
+        root,
+        "starter_ws/src/sanitation_vehicle_description/scripts/formal_lidar_bridge_when_ready.sh",
+    )
+    lidar_native_bridge = _read(
+        root,
+        "starter_ws/src/sanitation_gazebo_control/src/FormalLidarNativeBridge.cc",
+    )
     cube_launch = _read(root, "starter_ws/src/sanitation_manipulation/launch/formal_cube_pick_place.launch.py")
     sensor_bridge = _read(root, "starter_ws/src/sanitation_vehicle_description/config/formal_high_bandwidth_sensor_bridge.yaml")
     drivetrain = _read(root, "starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainPlantSystem.cc")
@@ -279,10 +287,24 @@ def audit(root: Path = ROOT) -> dict[str, object]:
     sensor_transports = {
         "single_line_lidar": (
             (_check(sim_launch, 'name="formal_vehicle_lidar_bridge"',
-                    'package="ros_gz_bridge"',
-                    'executable="parameter_bridge"',
-                    '"/sensors/lidar_2d/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan"'),
+                    'package="sanitation_vehicle_description"',
+                    'executable="formal_lidar_bridge_when_ready.sh"',
+                    'target_action=create_vehicle',
+                    '"lidar_bridge_ready_timeout_sec"',
+                    'args=[formal_vehicle_lidar_bridge]'),
              sim_launch, "formal_vehicle_lidar_bridge"),
+            (_check(lidar_ready_wrapper,
+                    "gz topic -e -t \"$LIDAR_GZ_TOPIC\" -n 1",
+                    "timeout --foreground --signal=INT",
+                    "exec ros2 run sanitation_gazebo_control formal_lidar_native_bridge"),
+             lidar_ready_wrapper, "first_frame_gated_native_bridge"),
+            (_check(lidar_native_bridge,
+                    'NativeBridgeSupport("formal_vehicle_lidar_bridge")',
+                    '"/sensors/lidar_2d/scan"',
+                    'kRosScanTopic[] = "/scan"',
+                    'rclcpp::KeepLast(1)',
+                    'sensor_qos.best_effort().durability_volatile()'),
+             lidar_native_bridge, "dedicated_sensor_data_native_bridge"),
         ),
         "mid360": ((_check(sensor_bridge, "/sensors/lidar_3d/points"), sensor_bridge, "/sensors/lidar_3d/points"),),
         "front_rgbd": ((_check(sensor_bridge, "/sensors/front_rgbd/depth/image_rect_raw/image"), sensor_bridge, "/sensors/front_rgbd/depth/image_rect_raw/image"),),

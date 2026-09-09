@@ -48,7 +48,9 @@ class FormalFrontierExplorer(Node):
         self.declare_parameter("action_discovery_timeout_sec", 0.1)
         self.declare_parameter("goal_response_timeout_sec", 5.0)
         self.declare_parameter("goal_execution_timeout_sec", 900.0)
-        self.declare_parameter("goal_progress_timeout_sec", 120.0)
+        # A stalled visual demo must fail quickly enough to select the next
+        # reachable frontier rather than presenting a frozen vehicle.
+        self.declare_parameter("goal_progress_timeout_sec", 15.0)
         self.declare_parameter("cancel_timeout_sec", 5.0)
         self._contract = load_campus_map_contract(
             str(self.get_parameter("episode_manifest").value)
@@ -293,7 +295,12 @@ class FormalFrontierExplorer(Node):
         goal = NavigateToPose.Goal()
         goal.pose = PoseStamped()
         goal.pose.header.frame_id = "map"
-        goal.pose.header.stamp = self.get_clock().now().to_msg()
+        # A frontier can be selected while a low-real-time-factor simulation
+        # advances beyond Nav2's transform cache.  A zero PoseStamped stamp is
+        # the ROS/Nav2 "latest transform" convention: it keeps this map-frame
+        # target from becoming stale before NavigateToPose consumes it.
+        goal.pose.header.stamp.sec = 0
+        goal.pose.header.stamp.nanosec = 0
         goal.pose.pose.position.x = target[0]
         goal.pose.pose.position.y = target[1]
         target_yaw = goal_tangent_yaw(

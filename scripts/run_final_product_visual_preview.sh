@@ -25,7 +25,8 @@ usage() {
   cat <<'EOF'
 Usage: run_final_product_visual_preview.sh --run-root ABS --runtime-ws ABS \
   [--episode-root ABS] [--mapping-timeout-sec N --cleaning-timeout-sec N] \
-  [--mapping-ros-domain N --cleaning-ros-domain N --dashboard-port N] [--preflight]
+  [--mapping-ros-domain N --cleaning-ros-domain N --dashboard-port N] \
+  [--gazebo-gui true|false] [--preflight]
 
 This is a live final-product visual preview, not a formal acceptance run. It
 generates a fresh formal episode when --episode-root is omitted, maps the
@@ -51,11 +52,12 @@ cleaning_timeout_sec=86400
 mapping_ros_domain=99
 cleaning_ros_domain=60
 dashboard_port=8879
+gazebo_gui=false
 preflight_only=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --run-root|--runtime-ws|--episode-root|--mapping-timeout-sec|--cleaning-timeout-sec|--mapping-ros-domain|--cleaning-ros-domain|--dashboard-port)
+    --run-root|--runtime-ws|--episode-root|--mapping-timeout-sec|--cleaning-timeout-sec|--mapping-ros-domain|--cleaning-ros-domain|--dashboard-port|--gazebo-gui)
       [[ $# -ge 2 ]] || { echo "$1 requires a value" >&2; exit 2; }
       case "$1" in
         --run-root) run_root="$2" ;; --runtime-ws) runtime_ws="$2" ;;
@@ -63,6 +65,7 @@ while [[ $# -gt 0 ]]; do
         --cleaning-timeout-sec) cleaning_timeout_sec="$2" ;;
         --mapping-ros-domain) mapping_ros_domain="$2" ;; --cleaning-ros-domain) cleaning_ros_domain="$2" ;;
         --dashboard-port) dashboard_port="$2" ;;
+        --gazebo-gui) gazebo_gui="$2" ;;
       esac
       shift 2 ;;
     --preflight) preflight_only=true; shift ;;
@@ -89,6 +92,10 @@ if (( dashboard_port > 65535 )); then
   echo "dashboard port must be in 1..65535" >&2
   exit 2
 fi
+[[ "${gazebo_gui}" == "true" || "${gazebo_gui}" == "false" ]] || {
+  echo "--gazebo-gui must be true or false" >&2
+  exit 2
+}
 
 run_root="$(absolute_path "${run_root}")"
 runtime_ws="$(absolute_path "${runtime_ws}")"
@@ -125,6 +132,7 @@ cleaning_world="${cleaning_root}/cleaning_world.sdf"
 dashboard_output="${run_root}/dashboard"
 state_file="${run_root}/final_demo_state.json"
 terminal_output="${run_root}/terminal.json"
+preview_hmi_mission="${run_root}/preview_hmi_mission.yaml"
 
 if "${preflight_only}"; then
   printf 'FINAL_VISUAL_PREVIEW_PREFLIGHT_OK run_root=%s runtime_ws=%s episode=%s\n' \
@@ -219,6 +227,34 @@ for required in public/world.sdf public/episode_manifest.json environment/pedest
   [[ -f "${episode_root}/${required}" ]] || { echo "episode generation failed: missing ${required}" >&2; exit 3; }
 done
 
+# The HMI is read-only.  Give it the same public, declared map-frame geofence
+# that starts this episode so an otherwise quiet mapping phase still renders
+# the real 200x100m campus rather than the legacy empty-canvas fallback.  It
+# does not add world/evaluator truth, a path, or a vehicle pose.
+python3 - "${episode_root}/public/episode_manifest.json" "${preview_hmi_mission}" <<'PY'
+import json
+import pathlib
+import sys
+import yaml
+
+episode = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+field = episode.get("field", {})
+polygon = field.get("localization_map_geofence", {}).get("polygon_m")
+if (
+    episode.get("profile") != "formal"
+    or field.get("area_m2") != 20000.0
+    or not isinstance(polygon, list)
+    or len(polygon) < 3
+):
+    raise SystemExit("preview HMI requires the declared formal 200x100m episode geofence")
+pathlib.Path(sys.argv[2]).write_text(yaml.safe_dump({
+    "mission_id": episode.get("episode_id", "formal-preview"),
+    "outer_polygon": polygon,
+    "keepout_polygons": [],
+    "exclusion_polygons": [],
+}, allow_unicode=True, sort_keys=True), encoding="utf-8")
+PY
+
 start_dashboard() {
   local domain="$1" phase="$2"
   (
@@ -226,6 +262,7 @@ start_dashboard() {
     export PYTHONPATH="${repo_root}/starter_ws/src/sanitation_hmi${PYTHONPATH:+:${PYTHONPATH}}"
     exec "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" python3 -m sanitation_hmi.live_server --ros-args \
       -p use_sim_time:=true -p port:="${dashboard_port}" -p output_dir:="${dashboard_output}" \
+      -p mission_config:="${preview_hmi_mission}" \
       -p web_root:="${repo_root}/starter_ws/src/sanitation_hmi/web"
   ) >"${dashboard_output}/dashboard.${phase}.log" 2>&1 & dashboard_pid=$!
   (
@@ -266,7 +303,9 @@ start_dashboard "${mapping_ros_domain}" mapping
 export ROS_DOMAIN_ID="${mapping_ros_domain}"
 export GZ_PARTITION="${mapping_partition}"
 "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 launch sanitation_formal_campus_integration formal_campus_map_lifecycle.launch.py \
-  mission_mode:=mapping gui:=true world:="${mapping_world}" \
+  mission_mode:=mapping gui:="${gazebo_gui}" world:="${mapping_world}" \
+  simulation_initial_estop_active:=false \
+  lidar_bridge_ready_timeout_sec:=600 \
   episode_manifest:="${episode_root}/public/episode_manifest.json" map_artifact_dir:="${map_root}" \
   pedestrian_schedule:="${episode_root}/environment/pedestrian_schedule.json" \
   start_pedestrians:=false start_coverage:=false operation_speed_profile:=mapping_safe \
@@ -300,7 +339,8 @@ start_dashboard "${cleaning_ros_domain}" cleaning
 export ROS_DOMAIN_ID="${cleaning_ros_domain}"
 export GZ_PARTITION="${cleaning_partition}"
 "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 launch sanitation_formal_campus_integration formal_campus_map_lifecycle.launch.py \
-  mission_mode:=cleaning cleaning_planner:=full_coverage gui:=true world:="${cleaning_world}" \
+  mission_mode:=cleaning cleaning_planner:=full_coverage gui:="${gazebo_gui}" world:="${cleaning_world}" \
+  simulation_initial_estop_active:=false \
   episode_manifest:="${episode_root}/public/episode_manifest.json" map_artifact_dir:="${map_root}" \
   pedestrian_schedule:="${episode_root}/environment/pedestrian_schedule.json" start_pedestrians:=true \
   start_coverage:=true coverage_evidence_dir:="${cleaning_root}" \

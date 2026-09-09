@@ -4,6 +4,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 RUNNER = (ROOT / "scripts/run_final_product_visual_preview.sh").read_text(encoding="utf-8")
 WINDOWS = (ROOT / "scripts/run_final_product_visual_preview.ps1").read_text(encoding="utf-8")
+HMI = (ROOT / "starter_ws/src/sanitation_hmi/web/demo.html").read_text(encoding="utf-8")
+HMI_SERVER = (ROOT / "starter_ws/src/sanitation_hmi/sanitation_hmi/live_server.py").read_text(encoding="utf-8")
+HMI_STATE = (ROOT / "starter_ws/src/sanitation_hmi/sanitation_hmi/live_state.py").read_text(encoding="utf-8")
 
 
 def test_preview_uses_final_a300_map_then_hard_restart_topology() -> None:
@@ -12,8 +15,11 @@ def test_preview_uses_final_a300_map_then_hard_restart_topology() -> None:
     assert '"field_dimensions_m": [200, 100]' in RUNNER
     assert '"vehicle": "A300"' in RUNNER
     assert RUNNER.count("formal_campus_map_lifecycle.launch.py") == 2
-    assert "mission_mode:=mapping gui:=true" in RUNNER
-    assert "mission_mode:=cleaning cleaning_planner:=full_coverage gui:=true" in RUNNER
+    assert RUNNER.count("lidar_bridge_ready_timeout_sec:=600") == 1
+    assert 'gazebo_gui=false' in RUNNER
+    assert '--gazebo-gui true|false' in RUNNER
+    assert 'mission_mode:=mapping gui:="${gazebo_gui}"' in RUNNER
+    assert 'mission_mode:=cleaning cleaning_planner:=full_coverage gui:="${gazebo_gui}"' in RUNNER
     assert RUNNER.index("mission_mode:=mapping") < RUNNER.index("mission_mode:=cleaning")
     assert "write_state HARD_RESTART" in RUNNER
     assert 'formal_runtime_cleanup_groups "${mapping_partition}" "${mapping_launch_pid}"' in RUNNER
@@ -27,6 +33,17 @@ def test_preview_reuses_live_hmi_and_refuses_formal_acceptance_claims() -> None:
     assert "run_formal_first_map_dynamic_prerequisite.sh" not in RUNNER
     assert "run_formal_saved_map_cleaning_lifecycle.sh" not in RUNNER
     assert "AUTO-17" not in RUNNER and "Ackermann" not in RUNNER
+    assert RUNNER.count("simulation_initial_estop_active:=false") == 2
+    assert 'mission_config:="${preview_hmi_mission}"' in RUNNER
+    assert "preview HMI requires the declared formal 200x100m episode geofence" in RUNNER
+    assert "首次建图中；清扫组件将在重启后的清扫阶段开始统计" in HMI
+    assert "公开 geofence" in HMI
+    assert 'Odometry, "/odom", self._on_formal_odometry' in HMI_SERVER
+    assert 'TwistStamped,\n            "/base_controller/cmd_vel"' in HMI_SERVER
+    assert 'lookup_transform(\n                "map", "base_footprint", Time()' in HMI_SERVER
+    assert "odometry_preview_pose_odom" in HMI_STATE
+    assert "/base_controller/cmd_vel" in HMI_STATE
+    assert "Odom 预演轨迹（非真值/非地图定位）" in HMI
 
 
 def test_preview_is_fresh_scoped_and_has_a_windows_preflight_entry() -> None:

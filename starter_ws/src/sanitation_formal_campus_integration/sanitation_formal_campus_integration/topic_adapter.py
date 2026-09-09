@@ -5,7 +5,7 @@ from __future__ import annotations
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
-from sensor_msgs.msg import CameraInfo, Image, Imu, LaserScan, NavSatFix, PointCloud2
+from sensor_msgs.msg import CameraInfo, Image, Imu, NavSatFix, PointCloud2
 
 
 class FormalLegacyTopicAdapter(Node):
@@ -13,9 +13,6 @@ class FormalLegacyTopicAdapter(Node):
 
     def __init__(self) -> None:
         super().__init__("formal_legacy_topic_adapter")
-        self._relay_sensor(
-            LaserScan, "/sensors/lidar_2d/scan", "/scan"
-        )
         self._relay_sensor(Imu, "/sensors/imu/data", "/imu/data")
         self._relay_sensor(NavSatFix, "/sensors/gnss/fix", "/gnss/fix")
         self._relay_sensor(

@@ -1,4 +1,8 @@
-from sanitation_hmi.live_state import LiveMissionState, _bounded_points
+from sanitation_hmi.live_state import (
+    OCCUPANCY_GRID_MAX_AXIS,
+    LiveMissionState,
+    _bounded_points,
+)
 
 
 class FakeClock:
@@ -140,3 +144,51 @@ def test_final_product_state_rejects_wrong_profile_and_becomes_stale():
     stale = state.snapshot()["final_demo"]
     assert stale["status"] == "stale"
     assert stale["stage"] == "MAPPING"
+
+
+def test_formal_odom_preview_and_base_command_are_distinct_from_map_and_truth():
+    state = LiveMissionState()
+    state.update_velocity(0.2, 0.1)
+    state.update_formal_odometry_preview(-97.5, 0.2, 0.05)
+    state.update_formal_base_command_velocity(0.4, -0.1)
+    # The generic command can still arrive, but cannot make the live formal
+    # base-command display oscillate between two command sources.
+    state.update_velocity(0.1, 0.2)
+
+    snapshot = state.snapshot()
+
+    assert snapshot["vehicle"]["estimated_pose_map"] is None
+    assert snapshot["vehicle"]["odometry_preview_pose_odom"] == [-97.5, 0.2, 0.05]
+    assert snapshot["vehicle"]["linear_speed_m_s"] == 0.4
+    assert snapshot["vehicle"]["angular_speed_rad_s"] == -0.1
+    assert snapshot["vehicle"]["speed_source"] == "/base_controller/cmd_vel"
+    assert snapshot["visualization"]["odometry_preview_trajectory_odom"] == [[-97.5, 0.2]]
+    assert snapshot["claim_boundary"]["odometry_preview_usage"] == (
+        "live_odom_frame_preview_not_map_localization_or_truth"
+    )
+
+
+def test_live_map_is_compact_and_keeps_occupied_cells_conservatively():
+    state = LiveMissionState()
+    width, height = 500, 400
+    data = [-1] * (width * height)
+    # A grid-aligned occupied point must survive beside free and unknown cells.
+    data[9 * width + 12] = 100
+    data[50 * width + 50] = 0
+    state.update_occupancy_grid(
+        width=width,
+        height=height,
+        resolution=0.05,
+        origin_x=-3.0,
+        origin_y=2.0,
+        data=data,
+    )
+
+    grid = state.snapshot()["visualization"]["occupancy_grid"]
+
+    assert grid["width"] <= OCCUPANCY_GRID_MAX_AXIS
+    assert grid["height"] <= OCCUPANCY_GRID_MAX_AXIS
+    assert len(grid["data"]) == grid["width"] * grid["height"]
+    assert grid["downsample_stride"] > 1
+    assert 100 in grid["data"]
+    assert grid["source_dimensions"] == [500, 400]

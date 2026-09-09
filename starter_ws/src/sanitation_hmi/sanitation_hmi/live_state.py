@@ -27,6 +27,7 @@ FINAL_DEMO_STAGES = {
 }
 FINAL_DEMO_PERCEPTION_PROVIDERS = {"s100p", "pc", "unavailable"}
 FINAL_DEMO_STALE_SECONDS = 5.0
+OCCUPANCY_GRID_MAX_AXIS = 192
 
 
 def _bounded_points(points, maximum: int = 320) -> list[list[float]]:
@@ -38,6 +39,61 @@ def _bounded_points(points, maximum: int = 320) -> list[list[float]]:
     if sampled[-1] != normalized[-1]:
         sampled.append(normalized[-1])
     return sampled
+
+
+def _compact_occupancy_grid(
+    *,
+    width: int,
+    height: int,
+    resolution: float,
+    origin_x: float,
+    origin_y: float,
+    data,
+) -> dict | None:
+    """Keep a bounded, conservative `/map` image for the browser.
+
+    SLAM maps can contain millions of cells.  The HMI needs a display layer,
+    not a second full-resolution map cache, so it samples at most nine points
+    per output cell and retains the highest known sampled occupancy.
+    """
+    source_width = int(width)
+    source_height = int(height)
+    if (
+        source_width <= 0
+        or source_height <= 0
+        or float(resolution) <= 0.0
+        or len(data) != source_width * source_height
+    ):
+        return None
+    stride = max(1, math.ceil(max(source_width, source_height) / OCCUPANCY_GRID_MAX_AXIS))
+    compact_width = math.ceil(source_width / stride)
+    compact_height = math.ceil(source_height / stride)
+    compact_data: list[int] = []
+    for compact_y in range(compact_height):
+        y_start = compact_y * stride
+        y_stop = min(source_height, y_start + stride)
+        for compact_x in range(compact_width):
+            x_start = compact_x * stride
+            x_stop = min(source_width, x_start + stride)
+            sample_rows = {y_start, y_start + (y_stop - y_start) // 2, y_stop - 1}
+            sample_columns = {x_start, x_start + (x_stop - x_start) // 2, x_stop - 1}
+            highest_known = -1
+            for source_y in sample_rows:
+                row_start = source_y * source_width
+                for source_x in sample_columns:
+                    value = int(data[row_start + source_x])
+                    if value >= 0:
+                        highest_known = max(highest_known, min(100, value))
+            compact_data.append(highest_known)
+    return {
+        "width": compact_width,
+        "height": compact_height,
+        "resolution": float(resolution) * stride,
+        "origin": [float(origin_x), float(origin_y)],
+        "data": compact_data,
+        "downsample_stride": stride,
+        "source_dimensions": [source_width, source_height],
+    }
 
 
 class LiveMissionState:
@@ -63,12 +119,20 @@ class LiveMissionState:
         self._seen_components: list[str] = []
         self._current_component: str | None = None
         self._estimated_pose: list[float] | None = None
+        # `/odom` is useful before SLAM emits a map pose.  It remains a
+        # clearly-labelled preview in odom coordinates, not a localization or
+        # evaluator-truth substitute.
+        self._odometry_preview_pose: list[float] | None = None
         self._evaluation_pose: list[float] | None = None
         self._linear_speed = 0.0
         self._angular_speed = 0.0
+        self._speed_source = "unavailable"
+        self._formal_base_command_seen = False
         self._brush_enabled = False
         self._emergency_stop = False
         self._planned_path: list[list[float]] = []
+        self._occupancy_grid: dict | None = None
+        self._odometry_preview_trajectory: deque[list[float]] = deque(maxlen=1200)
         self._trajectory: deque[list[float]] = deque(maxlen=1200)
         self._cleaned_trajectory: deque[list[float]] = deque(maxlen=1200)
         self._events: deque[dict] = deque(maxlen=16)
@@ -149,6 +213,19 @@ class LiveMissionState:
             self._topics_seen.add("/localization/fused_pose")
             self._touch()
 
+    def update_formal_odometry_preview(self, x: float, y: float, yaw: float) -> None:
+        """Record the live formal `/odom` preview without claiming map alignment."""
+        point = [float(x), float(y)]
+        with self._lock:
+            self._odometry_preview_pose = [point[0], point[1], float(yaw)]
+            if (
+                not self._odometry_preview_trajectory
+                or math.dist(self._odometry_preview_trajectory[-1], point) >= 0.025
+            ):
+                self._odometry_preview_trajectory.append(point)
+            self._topics_seen.add("/odom")
+            self._touch()
+
     def update_evaluation_sample(
         self,
         x: float,
@@ -176,9 +253,24 @@ class LiveMissionState:
 
     def update_velocity(self, linear: float, angular: float) -> None:
         with self._lock:
+            # Keep the formal base-controller command stable once it has been
+            # observed.  `/cmd_vel` is retained for older demos/fallback, but
+            # must not race the final product command stream in the display.
+            if not self._formal_base_command_seen:
+                self._linear_speed = float(linear)
+                self._angular_speed = float(angular)
+                self._speed_source = "/cmd_vel"
+            self._topics_seen.add("/cmd_vel")
+            self._touch()
+
+    def update_formal_base_command_velocity(self, linear: float, angular: float) -> None:
+        """Use the final drivetrain command stream as the speed-display source."""
+        with self._lock:
             self._linear_speed = float(linear)
             self._angular_speed = float(angular)
-            self._topics_seen.add("/cmd_vel")
+            self._speed_source = "/base_controller/cmd_vel"
+            self._formal_base_command_seen = True
+            self._topics_seen.add("/base_controller/cmd_vel")
             self._touch()
 
     def update_brush(self, enabled: bool) -> None:
@@ -197,6 +289,32 @@ class LiveMissionState:
         with self._lock:
             self._planned_path = _bounded_points(points)
             self._topics_seen.add("/coverage/current_path")
+            self._touch()
+
+    def update_occupancy_grid(
+        self,
+        *,
+        width: int,
+        height: int,
+        resolution: float,
+        origin_x: float,
+        origin_y: float,
+        data,
+    ) -> None:
+        """Store only a bounded visualization projection of the live `/map`."""
+        compact = _compact_occupancy_grid(
+            width=width,
+            height=height,
+            resolution=resolution,
+            origin_x=origin_x,
+            origin_y=origin_y,
+            data=data,
+        )
+        if compact is None:
+            return
+        with self._lock:
+            self._occupancy_grid = compact
+            self._topics_seen.add("/map")
             self._touch()
 
     def update_final_demo_state(self, raw_payload: str) -> None:
@@ -308,9 +426,11 @@ class LiveMissionState:
                 },
                 "vehicle": {
                     "estimated_pose_map": deepcopy(self._estimated_pose),
+                    "odometry_preview_pose_odom": deepcopy(self._odometry_preview_pose),
                     "evaluation_only_pose_map": deepcopy(self._evaluation_pose),
                     "linear_speed_m_s": round(self._linear_speed, 4),
                     "angular_speed_rad_s": round(self._angular_speed, 4),
+                    "speed_source": self._speed_source,
                 },
                 "cleaning": {
                     "brush_enabled": self._brush_enabled,
@@ -318,6 +438,10 @@ class LiveMissionState:
                 },
                 "visualization": {
                     "planned_path": deepcopy(self._planned_path),
+                    "occupancy_grid": deepcopy(self._occupancy_grid),
+                    "odometry_preview_trajectory_odom": list(
+                        self._odometry_preview_trajectory
+                    ),
                     "evaluation_only_trajectory": list(self._trajectory),
                     "evaluation_only_cleaned_trajectory": list(
                         self._cleaned_trajectory
@@ -331,6 +455,7 @@ class LiveMissionState:
                 "claim_boundary": {
                     "source_level": "LIVE_FINAL_PRODUCT_VISUALIZATION_PREVIEW",
                     "ground_truth_usage": "evaluation_and_visualization_only",
+                    "odometry_preview_usage": "live_odom_frame_preview_not_map_localization_or_truth",
                     "learned_perception_pass": False,
                     "real_domain_pass": False,
                     "j6_runtime_pass": False,

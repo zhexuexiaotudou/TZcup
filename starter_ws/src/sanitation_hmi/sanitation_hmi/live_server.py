@@ -9,11 +9,14 @@ from pathlib import Path
 import threading
 
 from ament_index_python.packages import get_package_share_directory
-from geometry_msgs.msg import PoseWithCovarianceStamped, Twist
-from nav_msgs.msg import Path as NavPath
+from geometry_msgs.msg import PoseWithCovarianceStamped, Twist, TwistStamped
+from nav_msgs.msg import OccupancyGrid, Odometry, Path as NavPath
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
+from rclpy.time import Time
 from std_msgs.msg import Bool, String
+from tf2_ros import Buffer, TransformException, TransformListener
 import yaml
 
 from .live_state import LiveMissionState
@@ -141,7 +144,31 @@ class LiveDashboardNode(Node):
             self._on_estimated_pose,
             20,
         )
+        self.create_subscription(Odometry, "/odom", self._on_formal_odometry, 20)
+        # `/map` is normally reliable/transient-local.  Matching that QoS lets
+        # a dashboard opened after mapping receive the latest grid immediately.
+        self.create_subscription(
+            OccupancyGrid,
+            "/map",
+            self._on_map,
+            QoSProfile(
+                depth=1,
+                reliability=ReliabilityPolicy.RELIABLE,
+                durability=DurabilityPolicy.TRANSIENT_LOCAL,
+            ),
+        )
         self.create_subscription(Twist, "/cmd_vel", self._on_velocity, 20)
+        self.create_subscription(
+            TwistStamped,
+            "/base_controller/cmd_vel",
+            self._on_formal_base_command_velocity,
+            20,
+        )
+        self._tf_buffer = Buffer()
+        self._tf_listener = TransformListener(
+            self._tf_buffer, self, spin_thread=False
+        )
+        self.create_timer(0.2, self._update_formal_map_pose)
         self.create_subscription(
             Bool, "/brush_enabled", self._on_brush, 20
         )
@@ -231,6 +258,45 @@ class LiveDashboardNode(Node):
 
     def _on_velocity(self, message: Twist) -> None:
         self.state.update_velocity(message.linear.x, message.angular.z)
+
+    def _on_formal_odometry(self, message: Odometry) -> None:
+        pose = message.pose.pose
+        self.state.update_formal_odometry_preview(
+            pose.position.x,
+            pose.position.y,
+            _yaw_from_quaternion(pose.orientation),
+        )
+
+    def _on_map(self, message: OccupancyGrid) -> None:
+        info = message.info
+        self.state.update_occupancy_grid(
+            width=info.width,
+            height=info.height,
+            resolution=info.resolution,
+            origin_x=info.origin.position.x,
+            origin_y=info.origin.position.y,
+            data=message.data,
+        )
+
+    def _on_formal_base_command_velocity(self, message: TwistStamped) -> None:
+        self.state.update_formal_base_command_velocity(
+            message.twist.linear.x, message.twist.angular.z
+        )
+
+    def _update_formal_map_pose(self) -> None:
+        """Expose the latest SLAM map pose without using simulator truth."""
+        try:
+            transform = self._tf_buffer.lookup_transform(
+                "map", "base_footprint", Time()
+            )
+        except TransformException:
+            return
+        pose = transform.transform
+        self.state.update_estimated_pose(
+            pose.translation.x,
+            pose.translation.y,
+            _yaw_from_quaternion(pose.rotation),
+        )
 
     def _on_brush(self, message: Bool) -> None:
         self.state.update_brush(message.data)

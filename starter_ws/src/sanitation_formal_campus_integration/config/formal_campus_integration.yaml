@@ -38,7 +38,6 @@ command_contract:
   converter_owner: sanitation_safety/whole_vehicle_safety_manager
 
 topic_aliases:
-  /sensors/lidar_2d/scan: /scan
   /sensors/imu/data: /imu/data
   /sensors/gnss/fix: /gnss/fix
   /sensors/front_rgbd/depth/image_rect_raw/image: /camera/color/image_raw

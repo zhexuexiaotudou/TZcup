@@ -12,6 +12,7 @@ install(
 
 install(
   PROGRAMS
+    scripts/formal_lidar_bridge_when_ready.sh
     scripts/formal_encoder_feedback_publisher.py
     scripts/formal_encoder_quantization.py
     scripts/formal_fisheye_camera_info_publisher.py

@@ -9,8 +9,15 @@ from pathlib import Path
 import tempfile
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction, TimerAction
+from launch.actions import (
+    DeclareLaunchArgument,
+    IncludeLaunchDescription,
+    OpaqueFunction,
+    RegisterEventHandler,
+    TimerAction,
+)
 from launch.conditions import IfCondition
+from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import EnvironmentVariable, LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch_ros.actions import Node
@@ -184,10 +191,10 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
     slam_params["use_scan_matching"] = True
     slam_params["use_scan_barycenter"] = True
     slam_params["do_loop_closing"] = True
-    # Karto builds each scan's map bounding box from readings at or below its
-    # raster threshold, while an endpoint is occupied only below threshold by
-    # KT_TOLERANCE.  Normalize physical +Inf no-return samples to the exact
-    # threshold: the ray expands known free space but cannot form a 12 m ring.
+    # Karto accepts physical +Inf as no-return.  The self filter must preserve
+    # those sparse no-return samples: converting nearly every open-space ray
+    # to a finite 12 m endpoint makes scan matching fall behind simulation
+    # time and starves the navigation transform chain.
     expected_sensor_range_max = 30.0
     slam_max_laser_range = float(slam_params["max_laser_range"])
     normalized_no_return_range = 12.0
@@ -248,12 +255,87 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
     mapping = IfCondition(
         PythonExpression(["'", LaunchConfiguration("mission_mode"), "' == 'mapping'"])
     )
+    cleaning = IfCondition(
+        PythonExpression(["'", LaunchConfiguration("mission_mode"), "' == 'cleaning'"])
+    )
     cleaning_coverage = IfCondition(
         PythonExpression([
             "'", LaunchConfiguration("mission_mode"), "' == 'cleaning' and '",
             LaunchConfiguration("cleaning_planner"), "' == 'full_coverage' and '",
             LaunchConfiguration("start_coverage"), "'.lower() in ('1','true','yes','on')",
         ])
+    )
+    scan_startup_gate = Node(
+        package="sanitation_formal_campus_integration",
+        executable="formal-slam-scan-startup-gate",
+        name="formal_slam_scan_startup_gate",
+        condition=mapping,
+        parameters=[{"use_sim_time": True, "scan_topic": "/scan/navigation"}],
+        output="screen",
+    )
+    slam_after_valid_scan = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(slam_launch),
+        launch_arguments={
+            "use_sim_time": "true",
+            "params_file": str(generated_slam),
+            # Use slam_toolbox's standard autostart lifecycle.  The scan gate
+            # makes this deterministic without a manual lifecycle restart.
+            "autostart": "true",
+            "use_lifecycle_manager": "false",
+            "start_velocity_gate": "false",
+        }.items(),
+    )
+    mapping_navigation_after_slam = TimerAction(
+        period=8.0,
+        actions=[
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(navigation_launch),
+                launch_arguments={
+                    "use_sim_time": "true",
+                    "params_file": str(generated_nav2),
+                    "footprint_profile": "formal_transport_stowed",
+                    "map_file": str(artifact_root / "occupancy.yaml"),
+                    "keepout_map": str(support["keepout_map"]),
+                    "speed_map": str(support["speed_map"]),
+                    "initial_pose_x": "0.0",
+                    "initial_pose_y": "0.0",
+                    "initial_pose_yaw": "0.0",
+                    "localization_backend": "external",
+                    "start_velocity_gate": "false",
+                }.items(),
+            )
+        ],
+    )
+    mapping_runtime_after_navigation = TimerAction(
+        period=18.0,
+        actions=[
+            Node(
+                package="sanitation_formal_campus_integration",
+                executable="formal-map-lifecycle-manager",
+                name="formal_map_lifecycle_manager",
+                parameters=[{
+                    "use_sim_time": True,
+                    "mode": "mapping",
+                    "episode_manifest": str(manifest_path),
+                    "artifact_directory": str(artifact_root),
+                    "support_artifacts_prepared": True,
+                    "mapping_pose_source": (
+                        "wheel_imu_ekf_lidar_scan_matching_gnss_consistency"
+                    ),
+                }],
+                output="screen",
+            ),
+            Node(
+                package="sanitation_formal_campus_integration",
+                executable="formal-frontier-explorer",
+                parameters=[{
+                    "use_sim_time": True,
+                    "episode_manifest": str(manifest_path),
+                    "goal_progress_timeout_sec": 15.0,
+                }],
+                output="screen",
+            ),
+        ],
     )
     return [
         # Reuse the formal physical vehicle, sensors, safety and pedestrians.
@@ -277,6 +359,12 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                 "start_coverage": "false",
                 "materialize_static_maps": "false",
                 "runtime_artifact_dir": str(artifact_root),
+                # Wait for the first physical UTM frame before starting the
+                # sole /scan bridge. The self-filter remains the only writer
+                # of /scan/navigation.
+                "lidar_bridge_ready_timeout_sec": LaunchConfiguration(
+                    "lidar_bridge_ready_timeout_sec"
+                ),
                 "high_bandwidth_sensor_runtime": (
                     LaunchConfiguration("mapping_high_bandwidth_sensor_runtime")
                     if mode == "mapping" else "true"
@@ -312,22 +400,26 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
             ],
             output="screen",
         ),
+        # Start SLAM only after an actual canonical scan has reached ROS.  The
+        # standard slam_toolbox online launch owns Configure/Activate itself;
+        # Nav2 and the frontier planner follow after it has a startup window.
+        scan_startup_gate,
+        RegisterEventHandler(
+            OnProcessExit(
+                target_action=scan_startup_gate,
+                on_exit=[
+                    slam_after_valid_scan,
+                    mapping_navigation_after_slam,
+                    mapping_runtime_after_navigation,
+                ],
+            )
+        ),
         TimerAction(
             period=20.0,
             actions=[
                 IncludeLaunchDescription(
-                    PythonLaunchDescriptionSource(slam_launch),
-                    condition=mapping,
-                    launch_arguments={
-                        "use_sim_time": "true",
-                        "params_file": str(generated_slam),
-                        # whole_vehicle_safety_manager is the sole final writer;
-                        # never start the legacy /cmd_vel republisher here.
-                        "start_velocity_gate": "false",
-                    }.items(),
-                ),
-                IncludeLaunchDescription(
                     PythonLaunchDescriptionSource(navigation_launch),
+                    condition=cleaning,
                     launch_arguments={
                         "use_sim_time": "true",
                         "params_file": str(generated_nav2),
@@ -338,7 +430,7 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                         "initial_pose_x": "0.0",
                         "initial_pose_y": "0.0",
                         "initial_pose_yaw": "0.0",
-                        "localization_backend": "external" if mode == "mapping" else "amcl",
+                        "localization_backend": "amcl",
                         "start_velocity_gate": "false",
                     }.items(),
                 ),
@@ -355,25 +447,16 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                     package="sanitation_formal_campus_integration",
                     executable="formal-map-lifecycle-manager",
                     name="formal_map_lifecycle_manager",
+                    condition=cleaning,
                     parameters=[{
                         "use_sim_time": True,
-                        "mode": mode,
+                        "mode": "cleaning",
                         "episode_manifest": str(manifest_path),
                         "artifact_directory": str(artifact_root),
                         "support_artifacts_prepared": True,
                         "mapping_pose_source": (
                             "wheel_imu_ekf_lidar_scan_matching_gnss_consistency"
                         ),
-                    }],
-                    output="screen",
-                ),
-                Node(
-                    package="sanitation_formal_campus_integration",
-                    executable="formal-frontier-explorer",
-                    condition=mapping,
-                    parameters=[{
-                        "use_sim_time": True,
-                        "episode_manifest": str(manifest_path),
                     }],
                     output="screen",
                 ),
@@ -434,6 +517,14 @@ def generate_launch_description() -> LaunchDescription:
     repository_root = EnvironmentVariable("TZCUP_REPOSITORY_ROOT", default_value=".")
     return LaunchDescription([
         DeclareLaunchArgument("mission_mode", default_value="mapping"),
+        DeclareLaunchArgument(
+            "lidar_bridge_ready_timeout_sec",
+            default_value="600",
+            description=(
+                "Bounded wait for the first physical UTM Gazebo frame before "
+                "the sole raw bridge; steady state remains self-filtered."
+            ),
+        ),
         DeclareLaunchArgument(
             "mapping_high_bandwidth_sensor_runtime", default_value="false",
             description="Mapping defaults to scan-only; public mobile calibration opts in explicitly.",

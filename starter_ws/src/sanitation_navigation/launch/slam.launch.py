@@ -34,12 +34,16 @@ def generate_launch_description():
             DeclareLaunchArgument('use_sim_time', default_value='true'),
             DeclareLaunchArgument('rviz', default_value='false'),
             DeclareLaunchArgument('start_velocity_gate', default_value='true'),
+            DeclareLaunchArgument('autostart', default_value='true'),
+            DeclareLaunchArgument('use_lifecycle_manager', default_value='false'),
             DeclareLaunchArgument('params_file', default_value=slam_params),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(slam_launch),
                 launch_arguments={
                     'use_sim_time': LaunchConfiguration('use_sim_time'),
                     'slam_params_file': LaunchConfiguration('params_file'),
+                    'autostart': LaunchConfiguration('autostart'),
+                    'use_lifecycle_manager': LaunchConfiguration('use_lifecycle_manager'),
                 }.items(),
             ),
             Node(

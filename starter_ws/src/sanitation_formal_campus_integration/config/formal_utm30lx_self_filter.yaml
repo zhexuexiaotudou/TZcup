@@ -18,11 +18,9 @@ formal_scan_self_filter:
     mesh_ray_occluded_count: 110
     mesh_ray_total_count: 1081
     geometry_source: reports/engineering/formal_vehicle_fov_occlusion_report.json
-    # Gazebo uses +Inf for a physical no-return over the complete 30 m UTM
-    # range. Karto includes a reading equal to its raster threshold in the scan
-    # bounding box, while its occupied-endpoint predicate requires a value
-    # strictly below that threshold. Publishing exactly the sealed 12 m SLAM
-    # threshold therefore expands open free space without a false 12 m ring.
-    normalize_positive_infinity: true
+    # Preserve Gazebo's physical +Inf no-return samples. Converting the mostly
+    # open 1081-ray scan into finite 12 m endpoints overloads Karto and makes
+    # map->odom lag behind the navigation clock.
+    normalize_positive_infinity: false
     expected_sensor_range_max_m: 30.0
     no_return_replacement_m: 12.0

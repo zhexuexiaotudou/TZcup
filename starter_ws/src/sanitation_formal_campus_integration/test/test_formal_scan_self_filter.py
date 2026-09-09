@@ -31,7 +31,7 @@ def test_committed_filter_contract_matches_mesh_ray_audit():
     assert params["output_topic"] == "/scan/navigation"
     assert params["mesh_ray_occluded_count"] == 110
     assert params["mesh_ray_total_count"] == 1081
-    assert params["normalize_positive_infinity"] is True
+    assert params["normalize_positive_infinity"] is False
     assert params["expected_sensor_range_max_m"] == pytest.approx(30.0)
     assert params["no_return_replacement_m"] == pytest.approx(12.0)
     committed = parse_masks(params["angular_range_masks_rad"])

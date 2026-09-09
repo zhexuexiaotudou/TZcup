@@ -356,7 +356,6 @@ def test_formal_campus_runner_locks_local_dds_and_fails_closed():
 def test_topic_adapter_contract_covers_formal_sensor_and_legacy_odom_names():
     contract = yaml.safe_load(INTEGRATION_CONFIG.read_text(encoding="utf-8"))
     assert contract["topic_aliases"] == {
-        "/sensors/lidar_2d/scan": "/scan",
         "/sensors/imu/data": "/imu/data",
         "/sensors/gnss/fix": "/gnss/fix",
         "/sensors/front_rgbd/depth/image_rect_raw/image": "/camera/color/image_raw",
@@ -370,6 +369,9 @@ def test_topic_adapter_contract_covers_formal_sensor_and_legacy_odom_names():
     ).read_text(encoding="utf-8")
     ast.parse(source)
     assert "Odometry" not in source
+    assert "LaserScan" not in source
+    assert '"/sensors/lidar_2d/scan"' not in source
+    assert '"/scan"' not in source
     assert "base_controller/odom" not in source
     assert "publish_selected_odom" not in source
     assert "odom/unfiltered" not in source
@@ -403,21 +405,59 @@ def test_topic_adapter_contract_covers_formal_sensor_and_legacy_odom_names():
             topic in product_bridge
             or topic in configured_high_bandwidth_topics
         )
-    # The raw 2D lidar deliberately uses the standard GZ-to-ROS bridge.  The
-    # native product bridge retains the remaining control-plane telemetry.
+    # The raw 2D lidar waits for a physical GZ sample before it execs its
+    # dedicated native bridge. The product bridge retains only the remaining
+    # control-plane telemetry.
     lidar_node_start = formal_launch.index('name="formal_vehicle_lidar_bridge"')
     lidar_node = formal_launch[
         formal_launch.rfind("Node(", 0, lidar_node_start) :
         formal_launch.index("# Raw images and point clouds", lidar_node_start)
     ]
-    assert 'package="ros_gz_bridge"' in lidar_node
-    assert 'executable="parameter_bridge"' in lidar_node
-    assert '"/sensors/lidar_2d/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan"' in lidar_node
+    assert 'package="sanitation_vehicle_description"' in lidar_node
+    assert 'executable="formal_lidar_bridge_when_ready.sh"' in lidar_node
+    assert '"--timeout-sec", lidar_bridge_ready_timeout_sec' in lidar_node
     assert 'condition=IfCondition(start_product_bridge)' in lidar_node
+    assert "create_vehicle = Node(" in formal_launch
+    assert "target_action=create_vehicle" in formal_launch
+    assert '"lidar_bridge_ready_timeout_sec"' in formal_launch
+    assert 'default_value="600"' in formal_launch
+    assert "args=[formal_vehicle_lidar_bridge]" in formal_launch
+    lidar_wrapper = (
+        ROOT
+        / "starter_ws/src/sanitation_vehicle_description/scripts"
+        / "formal_lidar_bridge_when_ready.sh"
+    ).read_text(encoding="utf-8")
+    assert 'gz topic -e -t "$LIDAR_GZ_TOPIC" -n 1' in lidar_wrapper
+    assert 'timeout --foreground --signal=INT' in lidar_wrapper
+    assert 'exec ros2 run sanitation_gazebo_control formal_lidar_native_bridge' in lidar_wrapper
+    assert ":=/scan/navigation" not in lidar_wrapper
+    lidar_bridge = (
+        ROOT
+        / "starter_ws/src/sanitation_gazebo_control/src/FormalLidarNativeBridge.cc"
+    ).read_text(encoding="utf-8")
+    assert 'NativeBridgeSupport("formal_vehicle_lidar_bridge")' in lidar_bridge
+    assert '"/sensors/lidar_2d/scan"' in lidar_bridge
+    assert 'kRosScanTopic[] = "/scan"' in lidar_bridge
+    assert 'sensor_qos.reliable().durability_volatile()' in lidar_bridge
+    assert 'rclcpp::KeepLast(1)' in lidar_bridge
+    assert 'health: gazebo_scans=%llu ros_scans=%llu' in lidar_bridge
+    assert 'kPublishPeriod = std::chrono::milliseconds(20)' in lidar_bridge
+    assert 'latest_scan_.CopyFrom(message)' in lidar_bridge
+    assert 'latest_scan_.Swap(&latest)' in lidar_bridge
+    assert 'coalesced_scan_count_.fetch_add(1' in lidar_bridge
+    assert 'PublishLatestScan();' in lidar_bridge
+    assert 'invented current timestamp' in lidar_bridge
+    map_lifecycle = (
+        PACKAGE / "launch" / "formal_campus_map_lifecycle.launch.py"
+    ).read_text(encoding="utf-8")
+    assert '"lidar_bridge_ready_timeout_sec"' in map_lifecycle
+    assert 'default_value="600"' in map_lifecycle
+    assert '"lidar_bridge_ready_timeout_sec": LaunchConfiguration(' in map_lifecycle
     assert "kLidarScan" not in product_bridge
     assert "/sensors/lidar_2d/scan" not in product_bridge
-    assert "/sensors/lidar_2d/scan" in contract["topic_aliases"]
+    assert "/sensors/lidar_2d/scan" not in contract["topic_aliases"]
     assert 'NativeBridgeSupport("formal_vehicle_product_native_bridge")' in product_bridge
+    assert "LaserScan" not in product_bridge
     for ros_type, gazebo_type in (
         ("sensor_msgs::msg::NavSatFix", "gz::msgs::NavSat"),
         ("sensor_msgs::msg::Imu", "gz::msgs::IMU"),

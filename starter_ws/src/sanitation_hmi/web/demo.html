@@ -41,6 +41,7 @@
     .panel { border: 1px solid var(--line); background: #0b1714e8; box-shadow: 0 22px 70px #0006; }
     .map-panel { min-height: 650px; padding: 18px; display: grid; grid-template-rows: auto 1fr; }
     .panel-head { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-bottom: 14px; }
+    .map-view-toggle { color: var(--mint); background: #123126; border: 1px solid #35634f; padding: 7px 10px; cursor: pointer; }
     h2 { font-size: 16px; margin: 0; font-weight: 650; }
     .legend { display: flex; flex-wrap: wrap; gap: 12px; color: var(--muted); font-size: 12px; }
     .legend i { width: 18px; height: 3px; display: inline-block; vertical-align: middle; margin-right: 5px; }
@@ -97,7 +98,8 @@
       </div>
       <div class="boundary">
         正式产品口径：A300 四轮滑移底盘，串联首次建图、封图、硬重启重载和清扫。
-        界面只展示实时话题；“正式产品验收”未通过时不得以原型、真值或历史回放替代。
+        车辆、轨迹和阶段来自实时话题；画布边界只读取本次 episode 的公开 geofence。
+        “正式产品验收”未通过时不得以原型、真值或历史回放替代。
       </div>
     </header>
 
@@ -105,8 +107,11 @@
       <article class="panel map-panel">
         <div class="panel-head">
           <h2>任务地图与车辆轨迹</h2>
+          <button class="map-view-toggle" id="map-view-toggle" type="button">全场视图</button>
           <div class="legend">
             <span><i style="background:#69d7ff"></i>当前规划</span>
+            <span><i style="background:#657b76"></i>SLAM 占据栅格（下采样）</span>
+            <span><i style="background:#b49aff"></i>Odom 预演轨迹（非真值/非地图定位）</span>
             <span><i style="background:#536d65"></i>实际轨迹（评估）</span>
             <span><i style="background:#66f1b5"></i>刷盘开启轨迹</span>
             <span><i style="background:#ffc66d"></i>车辆</span>
@@ -153,7 +158,7 @@
             <strong id="speed">0.00 <small>m/s</small></strong>
           </div>
           <div class="metric">
-            <label>地图位姿</label>
+            <label id="pose-label">地图位姿</label>
             <strong id="pose">—</strong>
           </div>
           <div class="metric">
@@ -184,6 +189,11 @@
     const canvas = document.querySelector("#map");
     const ctx = canvas.getContext("2d");
     let telemetry = null;
+    // The 200 x 100 m overview is useful for acceptance, but during live
+    // mapping it makes the currently explored cells and vehicle motion nearly
+    // invisible.  Start with the local, live view and retain a one-click
+    // switch to the full competition field.
+    let mapView = "local";
 
     function resizeCanvas() {
       const ratio = window.devicePixelRatio || 1;
@@ -194,11 +204,39 @@
       draw();
     }
 
+    function occupancyGridCorners(grid) {
+      if (!grid || !Array.isArray(grid.origin) || !grid.width || !grid.height || !grid.resolution) return [];
+      const [x, y] = grid.origin;
+      return [[x, y], [x + grid.width * grid.resolution, y + grid.height * grid.resolution]];
+    }
+
+    function livePose(data) {
+      return data?.vehicle?.evaluation_only_pose_map || data?.vehicle?.estimated_pose_map || data?.vehicle?.odometry_preview_pose_odom;
+    }
+
     function bounds(data) {
+      const visual = data?.visualization || {};
+      const pose = livePose(data);
+      if (mapView === "local" && pose) {
+        const recentTrajectory = [
+          ...(visual.evaluation_only_trajectory || []),
+          ...(visual.odometry_preview_trajectory_odom || []),
+        ].slice(-160);
+        const local = [pose, ...recentTrajectory];
+        const xs = local.map(point => point[0]);
+        const ys = local.map(point => point[1]);
+        const span = Math.max(10, Math.max(...xs) - Math.min(...xs) + 4, Math.max(...ys) - Math.min(...ys) + 4);
+        return {
+          minX: pose[0] - span / 2, maxX: pose[0] + span / 2,
+          minY: pose[1] - span / 2, maxY: pose[1] + span / 2,
+        };
+      }
       const geometry = data?.visualization?.geometry || {};
       const all = [
         ...(geometry.outer_polygon || []),
+        ...occupancyGridCorners(visual.occupancy_grid),
         ...(data?.visualization?.planned_path || []),
+        ...(data?.visualization?.odometry_preview_trajectory_odom || []),
         ...(data?.visualization?.evaluation_only_trajectory || [])
       ];
       if (!all.length) return {minX: -3, maxX: 7, minY: -5, maxY: 5};
@@ -246,6 +284,21 @@
       ctx.strokeStyle = stroke; ctx.lineWidth = 1.5; ctx.stroke();
     }
 
+    function drawOccupancyGrid(grid, map) {
+      if (!grid || !Array.isArray(grid.data) || grid.data.length !== grid.width * grid.height) return;
+      const origin = grid.origin;
+      const cellSize = Math.max(1, Math.abs(map([origin[0] + grid.resolution, origin[1]])[0] - map(origin)[0]));
+      for (let row = 0; row < grid.height; row += 1) {
+        for (let col = 0; col < grid.width; col += 1) {
+          const value = grid.data[row * grid.width + col];
+          if (value < 0) continue;
+          const [x, y] = map([origin[0] + col * grid.resolution, origin[1] + row * grid.resolution]);
+          ctx.fillStyle = value >= 65 ? "#aebbb8b8" : "#1a5141a0";
+          ctx.fillRect(x, y - cellSize, cellSize + .5, cellSize + .5);
+        }
+      }
+    }
+
     function draw() {
       const rect = canvas.getBoundingClientRect();
       ctx.clearRect(0, 0, rect.width, rect.height);
@@ -257,17 +310,21 @@
       polygon(geometry.outer_polygon, "#10231d", "#315d4d", map);
       (geometry.keepout_polygons || []).forEach(poly => polygon(poly, "#4a2525aa", "#ff7b7b", map));
       (geometry.exclusion_polygons || []).forEach(poly => polygon(poly, "#3b301baa", "#ffc66d", map));
+      // The field polygon is the background.  Draw the live SLAM grid after
+      // it so explored free cells and occupied returns remain visible.
+      drawOccupancyGrid(visual.occupancy_grid, map);
+      path(visual.odometry_preview_trajectory_odom, "#b49aff", 2.5, map, true);
       path(visual.evaluation_only_trajectory, "#536d65", 3, map);
       path(visual.evaluation_only_cleaned_trajectory, "#66f1b5", 9, map);
       path(visual.planned_path, "#69d7ff", 2.5, map, true);
 
-      const pose = telemetry.vehicle?.evaluation_only_pose_map || telemetry.vehicle?.estimated_pose_map;
+      const pose = livePose(telemetry);
       if (pose) {
         const [x, y] = map(pose);
         const yaw = -(pose[2] || 0);
         ctx.save(); ctx.translate(x, y); ctx.rotate(yaw);
         ctx.beginPath(); ctx.moveTo(15, 0); ctx.lineTo(-10, -9); ctx.lineTo(-6, 0); ctx.lineTo(-10, 9); ctx.closePath();
-        ctx.fillStyle = "#ffc66d"; ctx.fill();
+        ctx.fillStyle = telemetry.vehicle?.odometry_preview_pose_odom && !telemetry.vehicle?.estimated_pose_map && !telemetry.vehicle?.evaluation_only_pose_map ? "#b49aff" : "#ffc66d"; ctx.fill();
         ctx.strokeStyle = "#fff1c9"; ctx.lineWidth = 1.5; ctx.stroke();
         ctx.restore();
       }
@@ -280,19 +337,27 @@
 
     function render(data) {
       telemetry = data;
-      document.querySelector("#state").textContent = data.status || "UNKNOWN";
+      const finalStage = data?.final_demo?.status === "live" ? data.final_demo.stage : null;
+      const preCleaningStage = ["MAPPING", "MAP_SAVED", "HARD_RESTART", "RELOAD_LOCALIZE"].includes(finalStage);
+      document.querySelector("#state").textContent = preCleaningStage ? finalStage : (data.status || "UNKNOWN");
       document.querySelector("#elapsed").textContent = duration(data.elapsed_sec);
       const progress = data.progress || {};
       const percent = Math.round((progress.ratio || 0) * 100);
-      document.querySelector("#progress-bar").style.width = `${percent}%`;
-      document.querySelector("#progress-value").textContent = `${percent}%`;
-      document.querySelector("#component").textContent = progress.current_component
-        ? `组件 ${progress.active_component_number}/${progress.expected_components} · ${progress.current_component}`
-        : `等待组件 · 0/${progress.expected_components || "--"}`;
-      document.querySelector("#speed").innerHTML = `${(data.vehicle?.linear_speed_m_s || 0).toFixed(2)} <small>m/s</small>`;
-      const pose = data.vehicle?.estimated_pose_map;
+      document.querySelector("#progress-bar").style.width = `${preCleaningStage ? 0 : percent}%`;
+      document.querySelector("#progress-value").textContent = preCleaningStage ? "建图阶段" : `${percent}%`;
+      document.querySelector("#component").textContent = preCleaningStage
+        ? "首次建图中；清扫组件将在重启后的清扫阶段开始统计"
+        : progress.current_component
+          ? `组件 ${progress.active_component_number}/${progress.expected_components} · ${progress.current_component}`
+          : `等待组件 · 0/${progress.expected_components || "--"}`;
+      const speedSource = data.vehicle?.speed_source || "unavailable";
+      document.querySelector("#speed").innerHTML = `${(data.vehicle?.linear_speed_m_s || 0).toFixed(2)} <small>m/s · ${speedSource}</small>`;
+      const mapPose = data.vehicle?.estimated_pose_map;
+      const odomPreview = data.vehicle?.odometry_preview_pose_odom;
+      document.querySelector("#pose-label").textContent = mapPose ? "地图位姿" : odomPreview ? "Odom 位姿（预演）" : "地图位姿";
+      const pose = mapPose || odomPreview;
       document.querySelector("#pose").innerHTML = pose
-        ? `${pose[0].toFixed(2)}, ${pose[1].toFixed(2)} <small>m</small>`
+        ? `${pose[0].toFixed(2)}, ${pose[1].toFixed(2)} <small>${mapPose ? "m" : "m · odom 非真值"}</small>`
         : "—";
       const brush = document.querySelector("#brush");
       brush.textContent = data.cleaning?.brush_enabled ? "开启" : "关闭";
@@ -343,6 +408,11 @@
 
     window.addEventListener("resize", resizeCanvas);
     new ResizeObserver(resizeCanvas).observe(canvas);
+    document.querySelector("#map-view-toggle").addEventListener("click", (event) => {
+      mapView = mapView === "overview" ? "local" : "overview";
+      event.currentTarget.textContent = mapView === "local" ? "全场视图" : "局部实时视图";
+      draw();
+    });
     setInterval(refresh, 500);
     refresh();
   </script>
