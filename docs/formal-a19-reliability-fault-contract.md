@@ -20,11 +20,13 @@ PC 感知节点还订阅受控的 `/formal_a19/perception_fault`：CUDA 故障�
 可用时创建该 provider 的会话，CPU-only runtime 如实回读没有 CUDA；DOSOD hash 对真实文件
 重算后以错误期望值验证；EdgeSAM 只复制到临时 shadow 后篡改并交给真实 ORT loader，原模型
 不会写入；慢推理在真实推理回调中 sleep 并报告观测延迟。四者均由产品 diagnostics 独立确认
-active/recovered。profile 切换绝不停止、重启或替换产品进程：同一 PID/PGID 保持整个 7200 秒，
-仅在代理入口动态施加延迟/确定性 dropout，并由每档 ingress/egress 和样本中的
-`unexpected_model_reload_count=0` 读回。该正式 vehicle 图当前没有可在同一 Gazebo 运行中独立
-读回的 wheel-slip 或 actuator-gain 控制面，因此任一 non-nominal profile 会在能力握手阶段明确
-`UNSUPPORTED` 并 fail-closed；不能用传感器扰动替代物理字段，也不会启动两小时正式运行。
+active/recovered。profile 切换绝不停止、重启或替换产品进程：同一 PID/PGID 保持整个 7200 秒。
+`wheel_slip_ratio` 和 `actuator_gain` 经现有 A300 ROS-to-Gazebo 原生桥进入同一 drivetrain plant：
+前者改变实际轮端速度参考，后者缩放实际 `JointForceCmd` 扭矩。plant 的原生 status 回传原始/有效
+轮速命令、未缩放/实际扭矩与实测轮速；adapter 只有在收到该独立回传且数值符合指定 profile 时才确认
+切档。每个 non-nominal profile 还必须观察到非零轮端命令和非零未缩放扭矩，故写入配置或静止状态不能
+充当物理证据；恢复 nominal 也重新下发并读回。传感器延迟/确定性 dropout 仍由代理入口处理，并由每档
+ingress/egress 和样本中的 `unexpected_model_reload_count=0` 读回。
 动态障碍恢复必须以 `SetEntityPose` 真实回原位，并同时以服务结果、原生 Gazebo `Pose_V` 和恢复后
 的导航 scan 读回确认；仅清除本地状态不能报告 RECOVERED。18 项 fault 均有实际控制面与 readback；
 完整 A19 仍须新鲜两小时运行才能通过。

@@ -136,13 +136,35 @@ def test_frozen_non_nominal_profiles_mutate_real_proxy_ingress(profile: str, mon
     assert readback["dropped_messages"] >= 1
 
 
-def test_non_nominal_profile_without_physical_hooks_is_explicitly_unsupported() -> None:
+def test_native_physical_profile_readback_requires_command_to_output_binding() -> None:
     profiles = adapter.load_profile_settings(ROOT / adapter.PROFILE_CONFIG)
-    assert adapter.unsupported_physical_profile_fields("nominal", profiles["nominal"]) == []
-    for profile in ("transport_stress", "wet_surface", "degraded_drive"):
-        assert adapter.unsupported_physical_profile_fields(profile, profiles[profile]) == [
-            "wheel_slip_ratio", "actuator_gain"
-        ]
+    settings = profiles["wet_surface"]
+    command = [2.0, 3.0, 2.0, 3.0]
+    unscaled_torque = [4.0, 5.0, 4.0, 5.0]
+    payload = {
+        "profile": {
+            "wheel_slip_ratio": settings["wheel_slip_ratio"],
+            "actuator_gain": settings["actuator_gain"],
+        },
+        "commanded_wheel_speed_rad_s": command,
+        "effective_wheel_speed_rad_s": [value / (1.0 - settings["wheel_slip_ratio"]) for value in command],
+        "unscaled_wheel_torque_nm": unscaled_torque,
+        "applied_wheel_torque_nm": [value * settings["actuator_gain"] for value in unscaled_torque],
+        "measured_wheel_speed_rad_s": [1.0, 1.5, 1.0, 1.5],
+    }
+    readback = adapter.physical_profile_readback_from_status(payload, settings)
+    assert readback["wheel_slip_ratio"] == 0.15
+    assert readback["actuator_gain"] == 0.85
+    payload["applied_wheel_torque_nm"][0] = 4.0
+    with pytest.raises(adapter.AdapterError, match="actuator output"):
+        adapter.physical_profile_readback_from_status(payload, settings)
+    payload["applied_wheel_torque_nm"] = [value * settings["actuator_gain"] for value in unscaled_torque]
+    payload["commanded_wheel_speed_rad_s"] = [0.0] * 4
+    payload["effective_wheel_speed_rad_s"] = [0.0] * 4
+    payload["unscaled_wheel_torque_nm"] = [0.0] * 4
+    payload["applied_wheel_torque_nm"] = [0.0] * 4
+    with pytest.raises(adapter.AdapterError, match="no live wheel command"):
+        adapter.physical_profile_readback_from_status(payload, settings)
 
 
 def test_adapter_forbids_profile_restart_and_operator_fault_spoofing() -> None:
@@ -150,7 +172,8 @@ def test_adapter_forbids_profile_restart_and_operator_fault_spoofing() -> None:
     profile_branch = source[source.index('elif kind == "set_profile":'):source.index('elif kind == "inject_fault":')]
     fault_branch = source[source.index('elif kind == "inject_fault":'):source.index('elif kind == "shutdown":')]
     assert "stop_product()" not in profile_branch
-    assert "profile_unsupported" in profile_branch
+    assert "command_drive_profile" in profile_branch
+    assert "physical_profile_readback" in profile_branch
     assert "command_operator(" not in fault_branch
     assert "dynamic_blocker_recovery_readback" in fault_branch
     assert "read_named_model_pose" in source
@@ -209,3 +232,5 @@ def test_product_launch_threads_all_proxy_topics_into_the_pc_adapter() -> None:
     assert "ProductFaultHooks" in perception
     assert '"CameraInfo and RGB dimensions differ"' in perception
     assert '"depth image has no finite positive samples"' in perception
+    assert adapter.DRIVETRAIN_PROFILE_TOPIC in source
+    assert adapter.DRIVETRAIN_STATUS_TOPIC in source

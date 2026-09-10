@@ -58,7 +58,8 @@ SENSOR_PROXY_FAULTS = frozenset({
 MODEL_PROVIDER_FAULT_TOPIC = "/formal_a19/perception_fault"
 PROFILE_CONFIG = "starter_ws/src/sanitation_tasks/config/sim2real_fault_profiles.yaml"
 PROFILE_NAMES = ("nominal", "transport_stress", "wet_surface", "degraded_drive")
-PHYSICAL_PROFILE_FIELDS = ("wheel_slip_ratio", "actuator_gain")
+DRIVETRAIN_PROFILE_TOPIC = "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/profile"
+DRIVETRAIN_STATUS_TOPIC = "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/status"
 PROXY_TOPICS = {
     "front_rgb": (
         "/sensors/front_rgbd/depth/image_rect_raw/image",
@@ -138,14 +139,49 @@ def load_profile_settings(path: Path) -> dict[str, dict[str, float]]:
     return result
 
 
-def unsupported_physical_profile_fields(
-    profile: str, settings: Mapping[str, float], available_fields: Sequence[str] = ()
-) -> list[str]:
-    """Return non-baseline physical perturbations without a live readback hook."""
-    if profile == "nominal":
-        return []
-    available = set(available_fields)
-    return [field for field in PHYSICAL_PROFILE_FIELDS if field not in available]
+def physical_profile_readback_from_status(
+    payload: str | Mapping[str, Any], settings: Mapping[str, float]
+) -> dict[str, Any]:
+    """Accept only the native plant's command-to-output profile telemetry."""
+    try:
+        row = json.loads(payload) if isinstance(payload, str) else dict(payload)
+        profile = row["profile"]
+        slip_ratio = float(profile["wheel_slip_ratio"])
+        actuator_gain = float(profile["actuator_gain"])
+        command = [float(value) for value in row["commanded_wheel_speed_rad_s"]]
+        effective = [float(value) for value in row["effective_wheel_speed_rad_s"]]
+        unscaled_torque = [float(value) for value in row["unscaled_wheel_torque_nm"]]
+        applied_torque = [float(value) for value in row["applied_wheel_torque_nm"]]
+        measured_speed = [float(value) for value in row["measured_wheel_speed_rad_s"]]
+    except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        raise AdapterError(f"malformed native drivetrain profile readback: {exc}") from exc
+    arrays = (command, effective, unscaled_torque, applied_torque, measured_speed)
+    if any(len(values) != 4 or not all(math.isfinite(value) for value in values) for values in arrays):
+        raise AdapterError("native drivetrain profile readback requires four finite wheel values")
+    expected_slip = float(settings["wheel_slip_ratio"])
+    expected_gain = float(settings["actuator_gain"])
+    if not math.isclose(slip_ratio, expected_slip, abs_tol=1e-9) or not math.isclose(actuator_gain, expected_gain, abs_tol=1e-9):
+        raise AdapterError("native drivetrain profile values do not match the requested product profile")
+    slip_scale = 1.0 / (1.0 - slip_ratio)
+    if any(not math.isclose(actual, requested * slip_scale, abs_tol=1e-7) for requested, actual in zip(command, effective)):
+        raise AdapterError("native wheel-end command does not reflect requested slip ratio")
+    if any(not math.isclose(actual, requested * actuator_gain, abs_tol=1e-7) for requested, actual in zip(unscaled_torque, applied_torque)):
+        raise AdapterError("native actuator output does not reflect requested gain")
+    if (slip_ratio != 0.0 or actuator_gain != 1.0) and (
+        not any(abs(value) > 1e-6 for value in command)
+        or not any(abs(value) > 1e-6 for value in unscaled_torque)
+    ):
+        raise AdapterError("non-nominal profile has no live wheel command and actuator output readback")
+    return {
+        "source": DRIVETRAIN_STATUS_TOPIC,
+        "wheel_slip_ratio": slip_ratio,
+        "actuator_gain": actuator_gain,
+        "commanded_wheel_speed_rad_s": command,
+        "effective_wheel_speed_rad_s": effective,
+        "unscaled_wheel_torque_nm": unscaled_torque,
+        "applied_wheel_torque_nm": applied_torque,
+        "measured_wheel_speed_rad_s": measured_speed,
+    }
 
 
 def validate_fault_expectations(contract: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
@@ -587,6 +623,9 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
             self.model_provider_fault = self.create_publisher(
                 String, MODEL_PROVIDER_FAULT_TOPIC, 10
             )
+            self.drivetrain_profile = self.create_publisher(
+                Float64MultiArray, DRIVETRAIN_PROFILE_TOPIC, 10
+            )
             message_types = {
                 "front_rgb": Image, "front_depth": Image, "front_info": CameraInfo,
                 "wrist_rgb": Image, "wrist_depth": Image, "wrist_info": CameraInfo,
@@ -603,6 +642,7 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
                     qos_profile_sensor_data,
                 )
             self.create_subscription(String, "/safety/status_json", lambda m: self._remember("safety", m.data), 20)
+            self.create_subscription(String, DRIVETRAIN_STATUS_TOPIC, lambda m: self._remember("drivetrain", m.data), 20)
             self.create_subscription(Bool, "/safety/actuators_enabled", self._on_actuators, 20)
             self.create_subscription(Bool, "/active_cleaning/cleaning_requested", self._on_cleaning, 20)
             self.create_subscription(Float64MultiArray, "/brush_controller/commands", self._on_cleaning_output, 20)
@@ -824,6 +864,20 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
         def command_operator(self, armed: bool) -> None:
             self.operator.publish(Bool(data=armed))
 
+        def command_drive_profile(self, settings: Mapping[str, float]) -> None:
+            self.drivetrain_profile.publish(Float64MultiArray(data=[
+                float(settings["wheel_slip_ratio"]), float(settings["actuator_gain"]),
+            ]))
+
+        def physical_profile_readback(self, settings: Mapping[str, float]) -> dict[str, Any] | None:
+            raw = self.value("drivetrain", 1.0)
+            if raw is None:
+                return None
+            try:
+                return physical_profile_readback_from_status(raw, settings)
+            except AdapterError:
+                return None
+
         def safety_state(self) -> str:
             if self.safety_stopped():
                 return "STOPPED"
@@ -1036,10 +1090,13 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
         # startup only; fault injection and recovery never toggle it.
         probe.command_operator(True); initial_operator_arm_commands += 1
         wait_for(probe.safety_running, args.readback_timeout_s, "armed safety")
+        probe.command_drive_profile(profiles["nominal"])
         wait_for(lambda: probe.controller.profile_readback() is not None, args.readback_timeout_s, "nominal profile ingress")
+        wait_for(lambda: probe.physical_profile_readback(profiles["nominal"]) is not None, args.readback_timeout_s, "nominal physical profile")
         readback = probe.controller.profile_readback()
-        assert readback is not None
-        return {"product_pid": product.pid, "product_pgid": os.getpgid(product.pid), "product_log": str(log_path), "frozen_product_argv_sha256": hashlib.sha256("\0".join(argv).encode("utf-8")).hexdigest(), "profile_config": PROFILE_CONFIG, "profile_config_sha256": profile_config_sha256, "proxy_readback": readback, "operator_control": {"initial_arm_commands": initial_operator_arm_commands, "post_start_commands": 0}}
+        physical_readback = probe.physical_profile_readback(profiles["nominal"])
+        assert readback is not None and physical_readback is not None
+        return {"product_pid": product.pid, "product_pgid": os.getpgid(product.pid), "product_log": str(log_path), "frozen_product_argv_sha256": hashlib.sha256("\0".join(argv).encode("utf-8")).hexdigest(), "profile_config": PROFILE_CONFIG, "profile_config_sha256": profile_config_sha256, "proxy_readback": readback, "physical_readback": physical_readback, "operator_control": {"initial_arm_commands": initial_operator_arm_commands, "post_start_commands": 0}}
 
     try:
         for line in sys.stdin:
@@ -1065,16 +1122,15 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
                 requested = command.get("profile")
                 if requested not in profiles:
                     raise AdapterError(f"UNSUPPORTED live product profile: {requested}")
-                unsupported_fields = unsupported_physical_profile_fields(requested, profiles[requested])
-                if unsupported_fields:
-                    emitter.emit({"type": "profile_unsupported", "command_id": command["command_id"], "profile": requested, "missing_physical_readback_fields": unsupported_fields, "product_pid": product.pid if product else None, "product_pgid": os.getpgid(product.pid) if product else None, "reason": "no_live_gazebo_or_control_readback_hook"})
-                    raise AdapterError(f"UNSUPPORTED live product profile {requested}: missing physical readback for {', '.join(unsupported_fields)}")
                 profile = requested
                 probe.controller.set_profile(profile, profiles[profile])
+                probe.command_drive_profile(profiles[profile])
                 wait_for(lambda: probe.controller.profile_readback() is not None, args.readback_timeout_s, f"{profile} profile ingress")
+                wait_for(lambda: probe.physical_profile_readback(profiles[profile]) is not None, args.readback_timeout_s, f"{profile} physical profile")
                 readback = probe.controller.profile_readback()
-                assert readback is not None and product is not None
-                readback.update({"product_pid": product.pid, "product_pgid": os.getpgid(product.pid), "physical_readback": {field: {"configured": profiles[profile][field], "baseline": True} for field in PHYSICAL_PROFILE_FIELDS}})
+                physical_readback = probe.physical_profile_readback(profiles[profile])
+                assert readback is not None and physical_readback is not None and product is not None
+                readback.update({"product_pid": product.pid, "product_pgid": os.getpgid(product.pid), "physical_readback": physical_readback})
                 emitter.emit({"type": "profile_activated", "command_id": command["command_id"], "profile": profile, "configured_values": profiles[profile], "readback": readback})
             elif kind == "inject_fault":
                 fault = str(command.get("fault"))
