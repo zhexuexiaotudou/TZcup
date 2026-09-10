@@ -47,9 +47,10 @@ def test_current_formal_contract_exposes_only_live_product_fault_consumers() -> 
         "classifier_timeout", "action_verifier_failure", "reobserve_timeout",
         "cuda_provider_failure", "model_hash_mismatch", "corrupt_model",
         "sustained_slow_inference",
+        "nav2_path_unavailable", "dynamic_obstacle_blocks_observation",
     ]
     assert unsupported == [row["fault"] for row in contract["fault_schedule"] if row["fault"] not in adapter.SUPPORTED_FAULTS]
-    assert len(unsupported) == 2
+    assert unsupported == []
 
 
 def test_product_argv_requires_real_product_launch_and_every_proxy_binding(monkeypatch) -> None:
@@ -118,6 +119,21 @@ def test_live_inner_pipeline_faults_require_strict_parameters() -> None:
         adapter.validate_fault_parameters("proposal_dropout", {"drop_probability": 0.5, "duration_s": 10})
     with pytest.raises(adapter.AdapterError, match="only an observed 1.0"):
         adapter.validate_fault_parameters("invalid_depth", {"invalid_fraction": 0.5, "duration_s": 10})
+    adapter.validate_fault_parameters("nav2_path_unavailable", {"duration_s": 10})
+    adapter.validate_fault_parameters("dynamic_obstacle_blocks_observation", {"duration_s": 15, "minimum_block_distance_m": 0.5})
+
+
+@pytest.mark.parametrize("profile", ["transport_stress", "wet_surface", "degraded_drive"])
+def test_frozen_non_nominal_profiles_mutate_real_proxy_ingress(profile: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    profiles = adapter.load_profile_settings(ROOT / adapter.PROFILE_CONFIG)
+    monkeypatch.setattr(adapter.time, "sleep", lambda _: None)
+    controller = adapter.SensorFaultController(); controller.set_profile(profile, profiles[profile])
+    for _ in range(max(200, int(1.0 / profiles[profile]["sensor_dropout_probability"]))):
+        controller.apply("front_rgb", message())
+    readback = controller.profile_readback()
+    assert readback is not None and readback["profile"] == profile
+    assert readback["sensor_latency_ms"] == profiles[profile]["sensor_latency_ms"]
+    assert readback["dropped_messages"] >= 1
 
 
 def test_provider_and_model_hooks_use_real_files_but_never_mutate_them(tmp_path: Path) -> None:
@@ -166,6 +182,9 @@ def test_product_launch_threads_all_proxy_topics_into_the_pc_adapter() -> None:
     assert '"capability_blocked"' in source
     assert '"unsupported_faults"' in source
     assert '"cuda_provider_failure"' in source
+    assert '"/planner_server/change_state"' in source
+    assert '"/compute_path_to_pose"' in source
+    assert '"/world/{world}/set_pose"' in source
     assert '"/formal_a19/perception_fault"' in perception
     assert "ProductFaultHooks" in perception
     assert '"CameraInfo and RGB dimensions differ"' in perception

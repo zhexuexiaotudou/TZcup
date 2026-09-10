@@ -7,7 +7,10 @@
 `scripts/formal_a19_product_adapter.py` 现已提供真实产品图的传感器输入控制面：它强制
 `product_demo.launch.py` 的 PC 感知只消费代理后的八路 RGB-D/CameraInfo 图像，并对
 RGB/Depth 断流、时间戳偏移、CameraInfo 尺寸错配、不可达 TF frame 和全无效深度保留
-实际消息变换及输入/输出计数 readback。STOPPED/RECOVERED 还必须从产品 Safety、Nav2、
+实际消息变换及输入/输出计数 readback。`nav2_path_unavailable` 通过真实
+`/planner_server/change_state` 使 `/compute_path_to_pose` endpoint 消失后再恢复；
+`dynamic_obstacle_blocks_observation` 通过冻结 pedestrian schedule 的模型与 Gazebo
+`/world/<world>/set_pose` 置位，并以 service 成功和导航 scan 回读确认。STOPPED/RECOVERED 还必须从产品 Safety、Nav2、
 Perception 和 cleaning diagnostics 独立观察，定位误差由 `/odom` 与物理
 `/odom/unfiltered` 计算，RSS 来自同一 PGID 的 `/proc`。proposal_flood、proposal_dropout、
 classifier_exception、classifier_timeout、action_verifier_failure 和 reobserve_timeout
@@ -17,9 +20,11 @@ PC 感知节点还订阅受控的 `/formal_a19/perception_fault`：CUDA 故障�
 可用时创建该 provider 的会话，CPU-only runtime 如实回读没有 CUDA；DOSOD hash 对真实文件
 重算后以错误期望值验证；EdgeSAM 只复制到临时 shadow 后篡改并交给真实 ORT loader，原模型
 不会写入；慢推理在真实推理回调中 sleep 并报告观测延迟。四者均由产品 diagnostics 独立确认
-active/recovered。当前产品仍没有其余 2 类故障和三种非 nominal profile 的运行时注入接口；adapter 会在正式 start 握手立即列出
-`UNSUPPORTED` 并失败关闭，不会以命令回显冒充实测，也不会先浪费两小时再失败。因此
-完整 A19 仍被剩余产品 fault hooks 与 profile 注入阻断。
+active/recovered。三种非 nominal profile 从既有 `sim2real_fault_profiles.yaml` 读取，重启
+相同冻结 argv 的产品图，在代理入口实际施加延迟/确定性 dropout 并留存 ingress/egress 读回；
+world、配置路径和 episode seed 不随 profile 改写。该正式 vehicle 图当前没有 wheel-slip 或
+actuator-gain 的运行时物理控制面，readback 会明确标记这两个冻结配置字段为未注入，不能当作
+物理扰动证据。18 项 fault 均有实际控制面与 readback；完整 A19 仍须新鲜两小时运行才能通过。
 
 ## 不可缩短的正式口径
 
