@@ -188,35 +188,6 @@ def test_retains_contact_sensor_on_reduced_collision_owner():
     }]
 
 
-def test_service_contact_proxy_checks_overlap_without_ejecting_fixture():
-    urdf = ET.fromstring(
-        "<robot name='fixture'><link name='charge_receptacle_contact_collision_link'/>"
-        "<gazebo reference='charge_receptacle_contact_collision_link'>"
-        "<sensor name='charge_receptacle_contact_sensor' type='contact'>"
-        "<contact><collision>folded_charge_proxy</collision></contact>"
-        "</sensor></gazebo></robot>"
-    )
-    model = ET.fromstring(
-        "<model name='fixture'><link name='base_footprint'>"
-        "<collision name='folded_charge_proxy'/><sensor "
-        "name='charge_receptacle_contact_sensor' type='contact'>"
-        "<contact><collision>folded_charge_proxy</collision></contact>"
-        "</sensor></link></model>"
-    )
-
-    MODULE.restore_sensor_attachments(
-        model, MODULE.sensor_attachment_contract(urdf), urdf
-    )
-
-    contact = model.find(
-        "link[@name='base_footprint']/collision[@name='folded_charge_proxy']"
-        "/surface/contact"
-    )
-    assert contact is not None
-    assert contact.findtext("collide_without_contact") == "true"
-    assert contact.findtext("collide_without_contact_bitmask") == "1"
-
-
 def test_build_can_make_single_sensor_source_diagnostic(tmp_path: Path):
     world = tmp_path / "world.sdf"
     urdf = tmp_path / "vehicle.urdf"

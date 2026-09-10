@@ -42,12 +42,6 @@ FORMAL_WATER_CONTACT_SENSOR_LINKS = {
     "left_side_brush_ground_contact": "left_side_brush_link",
     "right_side_brush_ground_contact": "right_side_brush_link",
     "central_roller_ground_contact": "central_roller_link",
-    "charge_receptacle_contact_sensor": "base_footprint",
-    "wastewater_drain_coupling_contact_sensor": "base_footprint",
-}
-NON_RESOLVING_SERVICE_CONTACT_SENSORS = {
-    "charge_receptacle_contact_sensor",
-    "wastewater_drain_coupling_contact_sensor",
 }
 
 
@@ -289,31 +283,6 @@ def restore_sensor_attachments(
                 if collision.get("name") == selector
             ]
             if len(matching_collisions) == 1:
-                if name in NON_RESOLVING_SERVICE_CONTACT_SENSORS:
-                    # The evaluation fixture is inserted into these proxy
-                    # volumes and must remain there while the service action
-                    # runs.  Ask sdformat to keep collision checks (and hence
-                    # real Contact samples) without generating an impulse that
-                    # ejects the static plug / hose from the proxy volume.
-                    collision = matching_collisions[0]
-                    surface = collision.find("surface")
-                    if surface is None:
-                        surface = ET.SubElement(collision, "surface")
-                    contact = surface.find("contact")
-                    if contact is None:
-                        contact = ET.SubElement(surface, "contact")
-                    non_resolving = contact.find("collide_without_contact")
-                    if non_resolving is None:
-                        non_resolving = ET.SubElement(
-                            contact, "collide_without_contact"
-                        )
-                    non_resolving.text = "true"
-                    bitmask = contact.find("collide_without_contact_bitmask")
-                    if bitmask is None:
-                        bitmask = ET.SubElement(
-                            contact, "collide_without_contact_bitmask"
-                        )
-                    bitmask.text = "1"
                 restored.append(
                     {
                         "sensor": name,
