@@ -4,6 +4,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -16,6 +17,15 @@ import materialize_formal_opennav_source as materializer
 _REAL_ROS_GZ_IMAGE_SYSTEM_IDENTITY = closure._ros_gz_image_system_identity
 _REAL_NVIDIA_EGL_RUNTIME_IDENTITY = closure._nvidia_egl_runtime_identity
 _REAL_FIELDS2COVER_SYSTEM_IDENTITY = closure._fields2cover_system_identity
+
+
+def test_identity_command_can_accept_expected_empty_output() -> None:
+    assert (
+        closure._identity_command(
+            [sys.executable, "-c", ""], "clean working tree", allow_empty=True
+        )
+        == ""
+    )
 
 
 @pytest.fixture(autouse=True)
@@ -205,6 +215,7 @@ def _fake_closure(tmp_path: Path) -> tuple[Path, Path, Path, Path, Path]:
                     "docker_private_at_most_configured_maximum": True,
                     "wsl_vm_stopped_when_required": True,
                     "wsl_vm_running_when_required": True,
+                    "no_suspected_ndis_nonpaged_pool_leak": True,
                 },
                 "docker_was_signalled_or_stopped": False,
             }
