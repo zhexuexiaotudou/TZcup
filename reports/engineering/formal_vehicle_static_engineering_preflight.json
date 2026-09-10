@@ -239,7 +239,7 @@
       "source_snapshot_sha256": {
         "config/high_fidelity_vehicle/formal_vehicle_component_register.yaml": "688b72f49b7bd06ba6adc3d080c190f04f613b76ed05cbb69bf7a55580cff61a",
         "config/high_fidelity_vehicle/formal_vehicle_layout.yaml": "3c9c10da558c116bcbedf39a516093ca20c1e3eb590e2bb2d121ebd491cf10a9",
-        "reports/engineering/formal_competition_vehicle.urdf": "7df8007432272a69357f55920a9ba675a922e4a2c6aa020f1fcee04dab1ac04a"
+        "reports/engineering/formal_competition_vehicle.urdf": "015f484af59d40bb9af1abb985d6df82a38d0ae829a07c6e0506bef4767ad218"
       },
       "status": "STATIC_DERIVED_SNAPSHOT_BOUND_NOT_MANUFACTURING_RELEASE"
     },
@@ -4542,7 +4542,7 @@
             },
             {
               "evidence": {
-                "line": 246,
+                "line": 296,
                 "path": "starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainPlantSystem.cc",
                 "token": "resistive_brake_active"
               },
@@ -4600,7 +4600,7 @@
             },
             {
               "evidence": {
-                "line": 97,
+                "line": 98,
                 "path": "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro",
                 "token": "libGripperMimicEffortSystem.so"
               },
@@ -4742,7 +4742,7 @@
           "checks": [
             {
               "evidence": {
-                "line": 212,
+                "line": 213,
                 "path": "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro",
                 "token": "libGroundDirtCleaningSystem.so"
               },
@@ -4784,7 +4784,7 @@
           "checks": [
             {
               "evidence": {
-                "line": 238,
+                "line": 239,
                 "path": "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro",
                 "token": "libWaterRecoverySystem.so"
               },

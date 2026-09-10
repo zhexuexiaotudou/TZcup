@@ -6950,6 +6950,7 @@
       <emergency_stop_topic>/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/emergency_stop</emergency_stop_topic>
       <motor_fault_topic>/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/motor_fault</motor_fault_topic>
       <bus_voltage_topic>/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/bus_voltage_v</bus_voltage_topic>
+      <profile_topic>/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/profile</profile_topic>
       <status_topic>/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/status</status_topic>
       <odometry_topic>/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/odom</odometry_topic>
       <odometry_frame_id>odom</odometry_frame_id>
