@@ -4,6 +4,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 import time
 import types
 from pathlib import Path
@@ -89,6 +90,49 @@ def test_orchestrator_defaults_to_formal_perception_matrix_and_rejects_smoke_sca
     assert "context.episode_count >= 30" in source
     assert "timeout=context.integrated_source_build_preflight_timeout_seconds" in source
     assert "timeout=55" not in source
+
+
+def test_a19_preflight_builds_complete_adapter_and_product_argv(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    context = _context()
+    monkeypatch.setenv(
+        "FORMAL_A19_ADAPTER_ARGV_JSON",
+        json.dumps([sys.executable, str(ROOT / "scripts/formal_a19_product_adapter.py")]),
+    )
+    argv = orchestration._a19_adapter_argv(context, runtime_inputs=False)
+    assert argv[:2] == [sys.executable, str(ROOT / "scripts/formal_a19_product_adapter.py")]
+    assert argv[2:4] == ["--repository-root", str(ROOT)]
+    product = json.loads(argv[argv.index("--product-argv-json") + 1])
+    required = {
+        "world", "episode_manifest", "pedestrian_schedule",
+        "saved_map_artifact_dir", "perception_artifact_root", "policy_checkpoint",
+        "maximum_task_distance_m", "episode_seed",
+    }
+    bound = {item.split(":=", 1)[0] for item in product if ":=" in item}
+    assert required <= bound
+    assert "start_pedestrians:=true" in product
+    assert "operation_speed_profile:=dry_cleaning_competition_candidate" in product
+    assert "max_linear_velocity:=0.45" in product
+    assert product.count("gui:=false") == 1
+    assert argv[argv.index("--product-log") + 1] == str(context.run_root / "a19_product_demo.log")
+
+
+@pytest.mark.parametrize(
+    "base",
+    [
+        [],
+        [sys.executable],
+        [sys.executable, str(ROOT / "scripts/formal_a19_product_adapter.py"), "--product-log", "x"],
+        [sys.executable, str(ROOT / "scripts/fixtures/formal_a19_adapter_fixture.py")],
+    ],
+)
+def test_a19_preflight_rejects_partial_or_fixture_adapter_argv(
+    monkeypatch: pytest.MonkeyPatch, base: list[str],
+) -> None:
+    monkeypatch.setenv("FORMAL_A19_ADAPTER_ARGV_JSON", json.dumps(base))
+    with pytest.raises(orchestration.OrchestrationError):
+        orchestration._a19_adapter_argv(_context(), runtime_inputs=False)
 
 
 @pytest.mark.parametrize("value", [60, 300, 900])

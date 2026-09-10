@@ -33,6 +33,24 @@ A19_PERCEPTION_FAULTS = frozenset({
 })
 
 
+def preferred_onnx_providers(available_providers) -> list[str]:
+    """Prefer the actual CUDA product path, retaining a CPU-only fallback."""
+    available = set(available_providers)
+    if "CUDAExecutionProvider" in available:
+        return ["CUDAExecutionProvider", "CPUExecutionProvider"]
+    return ["CPUExecutionProvider"]
+
+
+def live_session_provider_readback(session, available_providers) -> dict[str, object]:
+    """Describe the already-running product session; never create a probe session."""
+    session_providers = list(session.get_providers())
+    return {
+        "available_providers": list(available_providers),
+        "selected_provider": session_providers[0] if session_providers else None,
+        "session_providers": session_providers,
+    }
+
+
 class FormalA19PerceptionFaultGate:
     """Small, live-only fault gate on the actual PC inference consumers."""
 
@@ -381,6 +399,11 @@ def main() -> None:
             if not artifact_root:
                 raise RuntimeError("artifact_root is required; refusing placeholder inference")
             root = Path(artifact_root)
+            import onnxruntime as ort
+
+            self.inference_providers = preferred_onnx_providers(
+                ort.get_available_providers()
+            )
             capture_root = str(self.get_parameter("intermediate_capture_root").value)
             self.intermediate_capture = (
                 ProductIntermediateCapture(
@@ -413,10 +436,12 @@ def main() -> None:
                     "puddle": float(self.get_parameter("puddle_score_threshold").value),
                 },
                 nms_threshold=float(self.get_parameter("nms_threshold").value),
+                providers=self.inference_providers,
             )
             self.segmenter = EdgeSamOnnxSegmenter(
                 root / "edgesam" / "edge_sam_3x_encoder.onnx",
                 root / "edgesam" / "edge_sam_3x_decoder.onnx",
+                providers=self.inference_providers,
             )
             self._a19_model_faults = ProductFaultHooks(
                 {
@@ -597,21 +622,13 @@ def main() -> None:
                 return
             self._diagnostic(1, "formal_a19_fault_control_updated", self._formal_a19_fault.telemetry())
 
-        @staticmethod
-        def _probe_cuda_provider(provider: str, model_path: Path) -> dict[str, object]:
+        def _probe_cuda_provider(self, provider: str, model_path: Path) -> dict[str, object]:
+            del provider, model_path
             import onnxruntime as ort
 
-            available = list(ort.get_available_providers())
-            result: dict[str, object] = {
-                "available_providers": available, "selected_provider": None,
-            }
-            if provider in available:
-                session = ort.InferenceSession(str(model_path), providers=[provider])
-                result.update(
-                    selected_provider=provider,
-                    session_providers=list(session.get_providers()),
-                )
-            return result
+            return live_session_provider_readback(
+                self.detector.session, ort.get_available_providers()
+            )
 
         @staticmethod
         def _probe_model_load(path: Path) -> dict[str, object]:
@@ -1034,7 +1051,9 @@ def main() -> None:
             status = DiagnosticStatus()
             set_diagnostic_level(status, level)
             status.name = "formal_open_vocab_perception/pc_product_adapter"
-            status.hardware_id = "pc_cpu_onnxruntime"
+            status.hardware_id = "pc_onnxruntime_" + str(
+                self.detector.session.get_providers()[0]
+            )
             status.message = message
             values = {
                 **values,

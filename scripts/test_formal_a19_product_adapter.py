@@ -31,6 +31,14 @@ def product_argv() -> list[str]:
     return [
         "ros2", "launch", "sanitation_product_demo_integration",
         "product_demo.launch.py", "gui:=false",
+        "world:=/tmp/world.sdf", "episode_manifest:=/tmp/episode_manifest.json",
+        "pedestrian_schedule:=/tmp/pedestrians.json", "start_pedestrians:=true",
+        "saved_map_artifact_dir:=/tmp/saved_map",
+        "perception_artifact_root:=/tmp/perception",
+        "policy_checkpoint:=/tmp/q_policy.json",
+        "maximum_task_distance_m:=1.0", "episode_seed:=1",
+        "operation_speed_profile:=dry_cleaning_competition_candidate",
+        "max_linear_velocity:=0.45",
         *[f"{name}:={topic}" for name, topic in adapter.PRODUCT_TOPIC_OVERRIDES.items()],
     ]
 
@@ -61,6 +69,9 @@ def test_product_argv_requires_real_product_launch_and_every_proxy_binding(monke
         adapter.parse_product_argv(json.dumps(argv[:-1]))
     with pytest.raises(adapter.AdapterError, match="canonical product_demo"):
         adapter.parse_product_argv(json.dumps(["ros2", "launch", "other", "other.launch.py", "gui:=false"]))
+    incomplete = [item for item in argv if not item.startswith("episode_seed:=")]
+    with pytest.raises(adapter.AdapterError, match="episode_seed"):
+        adapter.parse_product_argv(json.dumps(incomplete))
 
 
 @pytest.mark.parametrize("channel", ["front_rgb", "wrist_rgb", "rear_left_rgb", "rear_right_rgb"])

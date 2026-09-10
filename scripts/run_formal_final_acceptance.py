@@ -1198,6 +1198,130 @@ def _lock_available() -> tuple[bool, str | None]:
         os.close(descriptor)
 
 
+def _a19_adapter_base_argv(context: Context, raw: str | None = None) -> list[str]:
+    """Accept only the frozen adapter executable plus its source file.
+
+    The orchestrator owns all run-specific arguments.  This prevents an
+    environment-provided JSON fragment from omitting a product input or
+    redirecting the product log while preserving a shell-free argv boundary.
+    """
+
+    raw = os.environ.get("FORMAL_A19_ADAPTER_ARGV_JSON", "") if raw is None else raw
+    try:
+        argv = json.loads(raw)
+    except (TypeError, json.JSONDecodeError) as exc:
+        raise OrchestrationError(
+            "FORMAL_A19_ADAPTER_ARGV_JSON must be the JSON array "
+            "[adapter-python, frozen-formal_a19_product_adapter.py]"
+        ) from exc
+    if (
+        not isinstance(argv, list)
+        or len(argv) != 2
+        or any(not isinstance(item, str) or not item for item in argv)
+    ):
+        raise OrchestrationError(
+            "FORMAL_A19_ADAPTER_ARGV_JSON must contain exactly the adapter "
+            "executable and frozen formal_a19_product_adapter.py path"
+        )
+    executable = Path(argv[0])
+    resolved_executable = (
+        executable if executable.is_absolute() else Path(shutil.which(argv[0]) or "")
+    )
+    adapter = Path(argv[1])
+    if not resolved_executable.is_file():
+        raise OrchestrationError(f"A19 adapter executable is unavailable: {argv[0]}")
+    if adapter.is_symlink() or not adapter.is_file():
+        raise OrchestrationError(f"A19 adapter source is unavailable or linked: {adapter}")
+    expected_adapter = (context.root / "scripts/formal_a19_product_adapter.py").resolve()
+    if adapter.resolve() != expected_adapter:
+        raise OrchestrationError(
+            "A19 adapter source must be the frozen current "
+            "scripts/formal_a19_product_adapter.py"
+        )
+    if "fixture" in "\0".join(argv).lower():
+        raise OrchestrationError("A19 adapter argv must not reference a fixture")
+    return argv
+
+
+def _a19_product_argv(
+    context: Context, *, runtime_inputs: bool
+) -> list[str]:
+    """Build the sole headless product graph argv used by the A19 adapter."""
+
+    world = context.episode_root / "public/world.sdf"
+    episode_manifest = context.episode_root / "public/episode_manifest.json"
+    pedestrian_schedule = context.episode_root / "environment/pedestrian_schedule.json"
+    policy_checkpoint = context.rl_evidence_root / "formal_planning/q_policy.json"
+    if runtime_inputs:
+        required_files = (
+            world,
+            episode_manifest,
+            pedestrian_schedule,
+            policy_checkpoint,
+            context.same_map_baseline,
+        )
+        for path in required_files:
+            if path.is_symlink() or not path.is_file():
+                raise OrchestrationError(f"A19 product input is missing or linked: {path}")
+        for path in (context.map_root, context.perception_artifacts):
+            if path.is_symlink() or not path.is_dir():
+                raise OrchestrationError(f"A19 product input directory is missing or linked: {path}")
+        try:
+            evaluator = _read_json(context.episode_root / "evaluator/episode_manifest.json")
+            baseline = _read_json(context.same_map_baseline)
+            seed = evaluator["seeds"]["dirt"]
+            maximum_distance = baseline["successful_distance_m"]
+        except (KeyError, TypeError, OrchestrationError) as exc:
+            raise OrchestrationError(
+                "A19 product inputs lack the frozen evaluator dirt seed or "
+                "same-map FullCoverage distance"
+            ) from exc
+        if type(seed) is not int or seed <= 0:
+            raise OrchestrationError("A19 product evaluator dirt seed is invalid")
+        if type(maximum_distance) not in (int, float) or not math.isfinite(float(maximum_distance)) or float(maximum_distance) <= 0:
+            raise OrchestrationError("A19 product same-map FullCoverage distance is invalid")
+        episode_seed, distance = str(seed), str(float(maximum_distance))
+    else:
+        # Preflight validates the launch shape before the fresh episode exists;
+        # execution replaces these placeholders only after earlier gates seal it.
+        episode_seed, distance = "1", "1.0"
+    argv = [
+        "ros2", "launch", "sanitation_product_demo_integration", "product_demo.launch.py",
+        "gui:=false", f"world:={world}", f"episode_manifest:={episode_manifest}",
+        f"pedestrian_schedule:={pedestrian_schedule}", "start_pedestrians:=true",
+        f"saved_map_artifact_dir:={context.map_root}",
+        f"perception_artifact_root:={context.perception_artifacts}",
+        f"policy_checkpoint:={policy_checkpoint}",
+        f"maximum_task_distance_m:={distance}", f"episode_seed:={episode_seed}",
+        "operation_speed_profile:=dry_cleaning_competition_candidate",
+        "max_linear_velocity:=0.45",
+    ]
+    argv.extend(f"{name}:={topic}" for name, topic in {
+        "perception_front_rgb_topic": "/formal_a19/proxy/front_rgb",
+        "perception_front_depth_topic": "/formal_a19/proxy/front_depth",
+        "perception_front_camera_info_topic": "/formal_a19/proxy/front_camera_info",
+        "perception_wrist_rgb_topic": "/formal_a19/proxy/wrist_rgb",
+        "perception_wrist_depth_topic": "/formal_a19/proxy/wrist_depth",
+        "perception_wrist_camera_info_topic": "/formal_a19/proxy/wrist_camera_info",
+        "perception_rear_left_rgb_topic": "/formal_a19/proxy/rear_left_rgb",
+        "perception_rear_right_rgb_topic": "/formal_a19/proxy/rear_right_rgb",
+    }.items())
+    return argv
+
+
+def _a19_adapter_argv(context: Context, *, runtime_inputs: bool) -> list[str]:
+    base = _a19_adapter_base_argv(context)
+    product_log = context.run_root / "a19_product_demo.log"
+    if runtime_inputs and (product_log.exists() or product_log.is_symlink()):
+        raise OrchestrationError(f"refusing stale A19 product log: {product_log}")
+    return [
+        *base,
+        "--repository-root", str(context.root),
+        "--product-argv-json", json.dumps(_a19_product_argv(context, runtime_inputs=runtime_inputs)),
+        "--product-log", str(product_log),
+    ]
+
+
 def preflight(context: Context) -> dict[str, Any]:
     checks: list[dict[str, Any]] = []
 
@@ -1233,21 +1357,17 @@ def preflight(context: Context) -> dict[str, Any]:
     add("perception_artifact_manifest", (context.perception_artifacts / "artifact_manifest.json").is_file(), str(context.perception_artifacts / "artifact_manifest.json"))
     add("onnxruntime_overlay", (context.onnx_pythonpath / "onnxruntime/__init__.py").is_file(), str(context.onnx_pythonpath))
     add("episode_count", context.episode_count >= 30, f"episode_count={context.episode_count}; formal_minimum=30")
-    a19_adapter_argv_json = os.environ.get("FORMAL_A19_ADAPTER_ARGV_JSON", "")
     try:
-        a19_adapter_argv = json.loads(a19_adapter_argv_json)
-    except json.JSONDecodeError:
+        a19_adapter_argv = _a19_adapter_argv(context, runtime_inputs=False)
+    except OrchestrationError as exc:
         a19_adapter_argv = None
-    a19_adapter_valid = (
-        isinstance(a19_adapter_argv, list)
-        and bool(a19_adapter_argv)
-        and all(isinstance(item, str) and item for item in a19_adapter_argv)
-        and "/fixtures/" not in "\0".join(a19_adapter_argv).replace("\\", "/").lower()
-    )
+        a19_adapter_error = str(exc)
+    else:
+        a19_adapter_error = None
     add(
         "a19_production_adapter_argv",
-        a19_adapter_valid,
-        "configured as a non-fixture JSON argv" if a19_adapter_valid else "set FORMAL_A19_ADAPTER_ARGV_JSON to the frozen non-fixture adapter argv JSON array",
+        a19_adapter_argv is not None,
+        "frozen adapter plus complete shell-free product argv" if a19_adapter_argv is not None else a19_adapter_error or "invalid A19 adapter argv",
     )
     add(
         "final_output_archive_plan",
@@ -2010,17 +2130,22 @@ def _step_command(
             "--output", multisite_output,
         ]), environment
     if step_id == "a19_reliability":
-        adapter_argv_json = os.environ.get("FORMAL_A19_ADAPTER_ARGV_JSON")
-        if not adapter_argv_json and execution_environment:
-            raise OrchestrationError(
-                "A19 requires FORMAL_A19_ADAPTER_ARGV_JSON from the preflighted execution environment"
+        if execution_environment:
+            adapter_argv_json = json.dumps(
+                _a19_adapter_argv(context, runtime_inputs=True)
             )
-        if not adapter_argv_json:
+        else:
+            # Static command rendering deliberately does not manufacture a
+            # runnable adapter.  Native preflight and execute must validate the
+            # frozen two-token base argv before any runtime starts.
             adapter_argv_json = '["__A19_ADAPTER_REQUIRES_EXECUTION_PREFLIGHT__"]'
         a19_output = gate_output("a19_two_hour_reliability_fault")
         environment.update(
             FORMAL_VEHICLE_RUNTIME_WS=str(context.runtime_ws),
             FORMAL_A19_ADAPTER_ARGV_JSON=adapter_argv_json,
+            TZCUP_FORMAL_A19_CONTRACT=str(
+                context.root / "config/high_fidelity_vehicle/formal_a19_reliability_fault_contract.json"
+            ),
             FORMAL_A19_EVIDENCE_ROOT=str(
                 context.root / "artifacts/formal_a19_reliability_fault_raw"
             ),

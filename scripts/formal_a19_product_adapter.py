@@ -113,6 +113,16 @@ PRODUCT_TOPIC_OVERRIDES = {
     "perception_rear_left_rgb_topic": PROXY_TOPICS["rear_left_rgb"][1],
     "perception_rear_right_rgb_topic": PROXY_TOPICS["rear_right_rgb"][1],
 }
+PRODUCT_REQUIRED_LAUNCH_ARGUMENTS = (
+    "world",
+    "episode_manifest",
+    "pedestrian_schedule",
+    "saved_map_artifact_dir",
+    "perception_artifact_root",
+    "policy_checkpoint",
+    "maximum_task_distance_m",
+    "episode_seed",
+)
 
 
 class AdapterError(RuntimeError):
@@ -257,6 +267,14 @@ def parse_product_argv(raw: str) -> list[str]:
     for name, topic in PRODUCT_TOPIC_OVERRIDES.items():
         if f"{name}:={topic}" not in value:
             raise AdapterError(f"product argv does not bind the A19 proxy output: {name}")
+    for name in PRODUCT_REQUIRED_LAUNCH_ARGUMENTS:
+        launch_argument(value, name)
+    if "start_pedestrians:=true" not in value:
+        raise AdapterError("product argv must retain live pedestrian startup")
+    if "operation_speed_profile:=dry_cleaning_competition_candidate" not in value:
+        raise AdapterError("product argv must retain the frozen dry-cleaning profile")
+    if "max_linear_velocity:=0.45" not in value:
+        raise AdapterError("product argv must retain the whole-vehicle 0.45 m/s cap")
     if any("fixture" in token.lower() for token in value):
         raise AdapterError("product argv may not reference a fixture")
     if "eval" in joined or "bash -c" in joined or "sh -c" in joined:

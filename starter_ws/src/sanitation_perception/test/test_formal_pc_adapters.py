@@ -16,6 +16,8 @@ from sanitation_perception.pc_open_vocab_adapter import (
     FormalA19PerceptionFaultGate,
     _ground_dirt_prompt_indices,
     _projection_masks,
+    live_session_provider_readback,
+    preferred_onnx_providers,
     select_source_stamp,
     serialize_wrist_grasp_recheck,
 )
@@ -50,6 +52,36 @@ def test_a19_fault_gate_changes_live_inference_consumption_and_clears() -> None:
         "fault": "classifier_timeout", "parameters": {"timeout_s": 2.0, "occurrences": 1}, "active": False,
     }))
     assert gate.telemetry()["formal_a19_fault"] == ""
+
+
+class _ProviderSession:
+    def __init__(self, providers):
+        self._providers = providers
+
+    def get_providers(self):
+        return list(self._providers)
+
+
+def test_formal_product_prefers_cuda_and_a19_reads_the_live_dosod_session() -> None:
+    available = ["TensorrtExecutionProvider", "CUDAExecutionProvider", "CPUExecutionProvider"]
+    assert preferred_onnx_providers(available) == [
+        "CUDAExecutionProvider", "CPUExecutionProvider"
+    ]
+    assert preferred_onnx_providers(["CPUExecutionProvider"]) == ["CPUExecutionProvider"]
+    readback = live_session_provider_readback(
+        _ProviderSession(["CUDAExecutionProvider", "CPUExecutionProvider"]), available
+    )
+    assert readback == {
+        "available_providers": available,
+        "selected_provider": "CUDAExecutionProvider",
+        "session_providers": ["CUDAExecutionProvider", "CPUExecutionProvider"],
+    }
+    source = (PACKAGE / "sanitation_perception" / "pc_open_vocab_adapter.py").read_text(
+        encoding="utf-8"
+    )
+    probe = source[source.index("def _probe_cuda_provider"):source.index("def _probe_model_load")]
+    assert "self.detector.session" in probe
+    assert "InferenceSession" not in probe
 
 
 def test_dosod_inverse_roi_golden_vectors_cover_padding_and_odd_remainder():
