@@ -24,15 +24,109 @@ ROOT = Path(__file__).resolve().parents[1]
 CONTRACT = ROOT / "config/high_fidelity_vehicle/a20_release_replay_receipt_contract.json"
 
 
-def test_a20_is_blocked_without_a_canonical_formal_product_replay_producer() -> None:
+def test_a20_contract_names_canonical_formal_product_replay_producer() -> None:
     contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
     report = validate_receipt({"handwritten": "PASS"})
 
-    assert contract["canonical_product_replay_producer"] is None
+    assert contract["canonical_product_replay_producer"] == "scripts/formal_product_mcap_replay.py"
     assert report["valid"] is False
     assert report["status"] == "A20_RECEIPT_STATIC_BLOCKED"
-    assert report["errors"] == [BLOCKER]
+    assert "repository root is required" in report["errors"][0]
     assert report["release_runtime_pass"] is False
+
+
+def test_a20_accepts_five_distinct_current_canonical_replays_and_real_release_files(tmp_path: Path) -> None:
+    root = tmp_path.resolve()
+    producer = root / "scripts/formal_product_mcap_replay.py"
+    producer.parent.mkdir()
+    producer.write_text("# canonical producer\n", encoding="utf-8")
+    producer_hash = __import__("hashlib").sha256(producer.read_bytes()).hexdigest()
+    source_hash = "a" * 64
+    hashes = {"source": source_hash, "model": "b" * 64, "config": "c" * 64, "dataset": "d" * 64, "dependency": "e" * 64}
+    snapshot_file = root / "snapshot.json"
+    snapshot_file.write_text('{"snapshot":"fixture"}', encoding="utf-8")
+    snapshot_file_hash = __import__("hashlib").sha256(snapshot_file.read_bytes()).hexdigest()
+    snapshot = {"snapshot_manifest_sha256": snapshot_file_hash, "source_inventory_sha256": source_hash, "expanded_urdf_sha256": "2" * 64}
+    closure = {"status": "FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED", "closure_sha256": "3" * 64}
+    session = root / "session.json"
+    session.write_text(json.dumps({
+        "report_id": "tzcup_formal_final_acceptance_session_v1",
+        "status": "FORMAL_FINAL_ACCEPTANCE_SESSION_COMPLETE",
+        "started_epoch_ns": 123,
+        "snapshot": snapshot,
+        "runtime_closure_binding": closure,
+    }), encoding="utf-8")
+    runtime_binding = root / "runtime-binding.json"
+    runtime_binding.write_text(json.dumps({
+        "status": "FORMAL_RUNTIME_GATE_BOUND",
+        "runtime_closure_binding": closure,
+        "acceptance_session_binding": {"snapshot": snapshot, "session_started_epoch_ns": 123},
+    }), encoding="utf-8")
+
+    def ref(path: Path) -> dict[str, str]:
+        return {"path": str(path), "sha256": __import__("hashlib").sha256(path.read_bytes()).hexdigest()}
+
+    replay_refs = []
+    provenance_refs = {}
+    for name in ("model", "config", "dataset", "dependency"):
+        path = root / f"provenance-{name}"
+        path.write_text(name, encoding="utf-8")
+        hashes[name] = __import__("hashlib").sha256(path.read_bytes()).hexdigest()
+        provenance_refs[name] = {"path": str(path), "sha256": hashes[name]}
+    for index in range(5):
+        bag = root / f"bag-{index}"
+        bag.mkdir()
+        (bag / "metadata.yaml").write_text(f"bag: {index}\n", encoding="utf-8")
+        from formal_product_mcap_replay import artifact_sha256
+        replay = root / f"replay-{index}.json"
+        replay.write_text(json.dumps({
+            "schema": "tzcup.formal_product_mcap_replay.v1",
+            "status": "FORMAL_PRODUCT_MCAP_REPLAY_PASS",
+            "pass": True,
+            "producer": {"id": "scripts/formal_product_mcap_replay.py", "sha256": producer_hash},
+                "formal_context": {
+                    "session": {"path": str(session), "started_epoch_ns": 123},
+                    "snapshot": snapshot,
+                    "snapshot_manifest": ref(snapshot_file),
+                    "runtime_closure_binding": closure,
+                    "runtime_gate_binding": ref(runtime_binding),
+                },
+            "input_hashes": {"model": hashes["model"], "config": hashes["config"], "dataset": hashes["dataset"], "dependency": hashes["dependency"], "container": "f" * 64},
+            "input_artifacts": provenance_refs,
+            "checks": {"actual_mcap_read": True, "coverage_recalculated": True},
+            "bag": {"path": str(bag), "sha256": artifact_sha256(bag)},
+        }), encoding="utf-8")
+        replay_refs.append(ref(replay))
+    release_refs = {}
+    for name in ("archive", "sha256sums", "sbom", "dependency_lock", "licenses"):
+        path = root / name
+        path.write_text(name, encoding="utf-8")
+        release_refs[name] = ref(path)
+    rollback_report = root / "rollback.json"
+    rollback_report.write_text('{"verified":true}', encoding="utf-8")
+    receipt = {
+        "schema": "tzcup.a20_release_replay_receipt.v1",
+        "input_hashes": hashes,
+        "sealed_final_session": ref(session),
+        "product_replays": replay_refs,
+        "container_sha256": "f" * 64,
+        "release_artifact": {
+            "status": "RELEASE_PACKAGE_ARTIFACT_RECORDED",
+            "main_commit": "1" * 40,
+            "rollback_commit": "2" * 40,
+            "container_sha256": "f" * 64,
+            **release_refs,
+        },
+        "verified_rollback_exercise": {
+            "status": "ROLLBACK_EXERCISE_VERIFIED",
+            "verified": True,
+            "rollback_commit": "2" * 40,
+            "verification_report": ref(rollback_report),
+        },
+    }
+    report = validate_receipt(receipt, root)
+    assert report["valid"] is True, report
+    assert report["release_runtime_pass"] is True
 
 
 def test_cli_paths_reject_escape_symlink_and_existing_output(tmp_path: Path) -> None:

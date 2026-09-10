@@ -189,8 +189,11 @@ def main() -> int:
     output.mkdir()
     state = json.loads(_sealed_regular_bytes(state_path, "AUTO-15 state input").decode("utf-8"))
     try:
-        # Receipt intake is disabled; do not open an untrusted arbitrary ledger.
-        execution_evidence = {} if args.execution_evidence else None
+        execution_evidence = (
+            json.loads(_sealed_regular_bytes(args.execution_evidence, "AUTO-15 canonical evidence ledger").decode("utf-8"))
+            if args.execution_evidence
+            else None
+        )
         matrix = build_matrix(
             state, execution_evidence, args.evidence_root, args.authoritative_source
         )

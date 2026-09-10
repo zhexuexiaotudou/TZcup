@@ -6,6 +6,12 @@
 - 独立 validator 会重算样本连续性、首末 300 秒 RSS 增长、定位 RMSE/P95、全部零计数、每项故障时序/安全/恢复，再复核当前 Git commit/tree、canonical snapshot、RUNNING session、frozen runtime closure、producer/contract 和所有原始文件摘要。正式测试 fixture 被生产入口显式拒绝。
 - `a19_reliability` 已接入总编排的 multisite 之后、S100/finalize 之前；静态审计更新为 `32 steps / 27 gates / 22 runtime-bound / failures=[]`。当前没有新鲜 7200 秒 receipt，故只可标记 `READY_FOR_FRESH_TWO_HOUR_RUNTIME`，不能标记 A19 PASS；本轮未申请或占用 Gazebo 锁。
 
+## 2026-09-07：A12/A20 canonical 产品证据 producer（源码闭合，fresh runtime 待验）
+
+- 新 canonical MCAP replay producer 在隔离 `ROS_DOMAIN_ID`/localhost 域执行真实 `ros2 bag play`，并直接用 `rosbag2_py` 读取同一 MCAP，重算 coverage、localization 以及 observation、track/DynamicTrashMap、scheduler、clean decision、post-clean 消息汇总；报告绑定当前 RUNNING formal session、snapshot、source commit/tree、VERIFIED runtime closure 和 model/config/dataset/container/dependency 哈希，不启动 Gazebo 或争用全局锁。
+- 新 AUTO-15 evidence producer 对真实 MP4 执行 `ffprobe`，以 fresh/no-replace 原子方式生成 execution、mission-group 和总账回执；总账严格要求固定 `18×10=180` 个唯一 scenario-seed、每执行独立 video/MCAP/replay，以及至少 30 个不重叠且覆盖全部执行的任务组。既有合同/矩阵入口只接受当前 producer 哈希和引用文件的重新散列，媒体复用、跨 session/run-root 拼接、符号链接与手写假报告均 fail closed。
+- A20 validator 现只接受至少五个不同 canonical 产品 MCAP replay，并重新核对实际 bag、COMPLETE session/snapshot/closure、source/model/config/dataset/dependency、release ZIP/SHA256SUMS/SBOM/container/dependency lock/licenses 和真实 rollback report。AUTO-02/AUTO-03、coverage-only、嵌入 JSON 与历史 AUTO-16 仍不可替代。当前只是源码与本地测试闭合，尚未产生 fresh 正式 180+30 或五包/发布/回滚证据，因此 A12/A20 均为 `NOT_RUN_CURRENT_SNAPSHOT`，所有产品状态仍为 false。
+
 ## 2026-09-07：W2 单次只读 map TF 就绪门（源码完成，fresh W2 runtime 待验）
 
 - W2 旧 runner 把持续 `tf2_echo` 的非超时返回当作就绪，不能证明 exact `map -> base_footprint`、仿真时钟、非零 stamp 或 freshness，故 timeout `124` 与任意控制台文本均不再具有正向语义。新 helper 只使用一次 `rclpy` Buffer/TransformListener，要求 advancing `use_sim_time` clock、strict frame、nonzero/nonfuture/fresh stamp，并原子写 PASS/BLOCKED JSON；它不创建 TF publisher、执行器/控制接口、truth 或控制命令。

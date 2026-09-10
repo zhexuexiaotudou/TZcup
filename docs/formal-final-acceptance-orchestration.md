@@ -362,3 +362,18 @@ non-cryptographic** 的证据链，不是 TPM、远程签名或针对恶意持�
 
 静态覆盖审计见
 `reports/engineering/formal_final_acceptance_orchestration_audit.json`。
+
+## A12/A20 产品证据侧车
+
+AUTO-15 大矩阵不会塞进 31 步单 Gazebo 正式编排中与主世界争锁。主编排的每个产品回合应在
+同一 RUNNING session 下保留 video、MCAP 和源 metrics，然后调用
+`scripts/formal_product_mcap_replay.py`；该侧车只在隔离 ROS domain 回放，不启动 Gazebo。
+随后调用 `scripts/auto15_product_evidence.py execution` 原子封存一次执行，按真实独立任务边界
+调用 `mission-group`，最终以 `ledger` 形成严格 180 execution/至少 30 group 总账。总账可直接
+交给 `validate_product_acceptance_contract.py --execution-evidence ... --evidence-root ...`，不得把
+缺失回执降级为旧 Stage/AUTO 报告。
+
+session finalize 为 COMPLETE 后，A20 receipt 引用至少五份上述 replay、当前 release archive、
+SHA256SUMS、SBOM、container、dependency lock、licenses 与真实 rollback report，再由
+`scripts/a20_release_replay_receipt.py` 校验。侧车失败只阻断 A12/A20 依赖结果，不得复用旧运行根，
+也不得修改或补写已封存证据。

@@ -56,7 +56,7 @@ def test_crosswalk_keeps_external_and_historical_claims_fail_closed() -> None:
     by_id = {item["id"]: item for item in payload["requirements"]}
 
     assert by_id["A16"]["state"] == "HISTORICAL_COMPONENT_PASS_NOT_FORMAL_INTEGRATED"
-    assert by_id["A12"]["state"] == "BLOCKED_NO_CANONICAL_PRODUCER"
+    assert by_id["A12"]["state"] == "NOT_RUN_CURRENT_SNAPSHOT"
     assert "canonical producer" in by_id["A12"]["blockers"][0]
     assert by_id["A15"]["state"] == "NOT_RUN_CURRENT_SNAPSHOT"
     assert "blockers" not in by_id["A15"]
@@ -64,7 +64,7 @@ def test_crosswalk_keeps_external_and_historical_claims_fail_closed() -> None:
     assert by_id["A18"]["state"] == "BLOCKED_EXTERNAL_INPUT_AND_ARTIFACTS"
     assert by_id["A19"]["state"] == "READY_FOR_FRESH_TWO_HOUR_RUNTIME"
     assert by_id["A19"]["evidence_gates"] == ["a19_two_hour_reliability_fault"]
-    assert by_id["A20"]["state"] == "BLOCKED"
+    assert by_id["A20"]["state"] == "NOT_RUN_CURRENT_SNAPSHOT"
     assert by_id["A20"]["evidence_gates"] == []
     assert by_id["A20"]["receipt_validator"] == "scripts/a20_release_replay_receipt.py"
     assert by_id["A21"]["state"] == "BLOCKED_EXTERNAL_INPUT_AND_ARTIFACTS"
