@@ -4,6 +4,16 @@
 当前源码已经包含 canonical producer、独立 validator 和正式 runner，但尚未执行新鲜的
 7200 秒产品长跑，因此状态是 `READY_FOR_FRESH_TWO_HOUR_RUNTIME`，不是 PASS。
 
+`scripts/formal_a19_product_adapter.py` 现已提供真实产品图的传感器输入控制面：它强制
+`product_demo.launch.py` 的 PC 感知只消费代理后的八路 RGB-D/CameraInfo 图像，并对
+RGB/Depth 断流、时间戳偏移、CameraInfo 尺寸错配、不可达 TF frame 和全无效深度保留
+实际消息变换及输入/输出计数 readback。STOPPED/RECOVERED 还必须从产品 Safety、Nav2、
+Perception 和 cleaning diagnostics 独立观察，定位误差由 `/odom` 与物理
+`/odom/unfiltered` 计算，RSS 来自同一 PGID 的 `/proc`。当前产品没有其余 12 类故障和
+三种非 nominal profile 的运行时注入接口；adapter 会在正式 start 握手立即列出
+`UNSUPPORTED` 并失败关闭，不会以命令回显冒充实测，也不会先浪费两小时再失败。因此
+完整 A19 仍被产品 fault hooks 阻断。
+
 ## 不可缩短的正式口径
 
 同一个冻结产品进程组必须连续运行至少 7200 个真实 monotonic 秒，1 Hz 采集 Coverage、

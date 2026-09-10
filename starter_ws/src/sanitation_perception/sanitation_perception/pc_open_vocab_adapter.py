@@ -295,6 +295,18 @@ def main() -> None:
             self.declare_parameter("intermediate_capture_max_frames", 12)
             self.declare_parameter("intermediate_capture_interval_s", 1.0)
             self.declare_parameter("intermediate_capture_max_bytes", 268435456)
+            sensor_topics = {
+                "front_rgb_topic": "/sensors/front_rgbd/depth/image_rect_raw/image",
+                "front_depth_topic": "/sensors/front_rgbd/depth/image_rect_raw/depth_image",
+                "front_camera_info_topic": "/sensors/front_rgbd/depth/image_rect_raw/camera_info",
+                "wrist_rgb_topic": "/sensors/wrist_rgbd/depth/image_rect_raw/image",
+                "wrist_depth_topic": "/sensors/wrist_rgbd/depth/image_rect_raw/depth_image",
+                "wrist_camera_info_topic": "/sensors/wrist_rgbd/depth/image_rect_raw/camera_info",
+                "rear_left_rgb_topic": "/sensors/rear_left_fisheye/image_raw",
+                "rear_right_rgb_topic": "/sensors/rear_right_fisheye/image_raw",
+            }
+            for name, value in sensor_topics.items():
+                self.declare_parameter(name, value)
             artifact_root = str(self.get_parameter("artifact_root").value)
             if not artifact_root:
                 raise RuntimeError("artifact_root is required; refusing placeholder inference")
@@ -407,21 +419,21 @@ def main() -> None:
             )
             self._subscribe_rgbd(
                 "front",
-                "/sensors/front_rgbd/depth/image_rect_raw/image",
-                "/sensors/front_rgbd/depth/image_rect_raw/depth_image",
-                "/sensors/front_rgbd/depth/image_rect_raw/camera_info",
+                str(self.get_parameter("front_rgb_topic").value),
+                str(self.get_parameter("front_depth_topic").value),
+                str(self.get_parameter("front_camera_info_topic").value),
             )
             self._subscribe_rgbd(
                 "wrist",
-                "/sensors/wrist_rgbd/depth/image_rect_raw/image",
-                "/sensors/wrist_rgbd/depth/image_rect_raw/depth_image",
-                "/sensors/wrist_rgbd/depth/image_rect_raw/camera_info",
+                str(self.get_parameter("wrist_rgb_topic").value),
+                str(self.get_parameter("wrist_depth_topic").value),
+                str(self.get_parameter("wrist_camera_info_topic").value),
             )
             self._subscribe_rgb_only(
-                "rear_left", "/sensors/rear_left_fisheye/image_raw"
+                "rear_left", str(self.get_parameter("rear_left_rgb_topic").value)
             )
             self._subscribe_rgb_only(
-                "rear_right", "/sensors/rear_right_fisheye/image_raw"
+                "rear_right", str(self.get_parameter("rear_right_rgb_topic").value)
             )
             self._diagnostic(0, "ready", {"ground_truth_input_used": False})
             # The evaluator starts after this node. A one-shot volatile ready
@@ -582,6 +594,11 @@ def main() -> None:
                 depth = self.bridge.imgmsg_to_cv2(depth_message, desired_encoding="passthrough")
                 if depth.shape != rgb.shape[:2]:
                     raise ValueError("RGB and depth dimensions differ")
+                if int(info.width) != rgb.shape[1] or int(info.height) != rgb.shape[0]:
+                    raise ValueError("CameraInfo and RGB dimensions differ")
+                valid_depth = np.isfinite(depth) & (depth > 0)
+                if not bool(np.any(valid_depth)):
+                    raise ValueError("depth image has no finite positive samples")
                 results = self.detector.infer(rgb)
                 boxes = np.asarray([item.xyxy for item in results], dtype=np.float32).reshape(-1, 4)
                 product = self._detections_message(image_message, results)

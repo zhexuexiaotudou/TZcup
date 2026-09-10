@@ -1,0 +1,133 @@
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+from types import SimpleNamespace
+
+import pytest
+
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+
+import formal_a19_product_adapter as adapter
+
+
+def message(*, sec: int = 2, nanosec: int = 900_000_000, frame: str = "camera", width: int = 8, data: bytes = b"\x01\x02"):
+    return SimpleNamespace(
+        header=SimpleNamespace(
+            stamp=SimpleNamespace(sec=sec, nanosec=nanosec),
+            frame_id=frame,
+        ),
+        width=width,
+        data=data,
+    )
+
+
+def product_argv() -> list[str]:
+    return [
+        "ros2", "launch", "sanitation_product_demo_integration",
+        "product_demo.launch.py", "gui:=false",
+        *[f"{name}:={topic}" for name, topic in adapter.PRODUCT_TOPIC_OVERRIDES.items()],
+    ]
+
+
+def test_current_formal_contract_is_explicitly_partial_and_fail_closed() -> None:
+    contract = json.loads(
+        (ROOT / "config/high_fidelity_vehicle/formal_a19_reliability_fault_contract.json").read_text(encoding="utf-8")
+    )
+    supported, unsupported = adapter.contract_capabilities(contract)
+    assert supported == [
+        "rgb_freeze", "depth_freeze", "timestamp_skew",
+        "camera_info_mismatch", "tf_unavailable", "invalid_depth",
+    ]
+    assert unsupported == [row["fault"] for row in contract["fault_schedule"] if row["fault"] not in adapter.SUPPORTED_FAULTS]
+    assert len(unsupported) == 12
+
+
+def test_product_argv_requires_real_product_launch_and_every_proxy_binding(monkeypatch) -> None:
+    monkeypatch.setattr(adapter.shutil, "which", lambda name: sys.executable if name == "ros2" else None)
+    argv = product_argv()
+    assert adapter.parse_product_argv(json.dumps(argv)) == argv
+    with pytest.raises(adapter.AdapterError, match="A19 proxy output"):
+        adapter.parse_product_argv(json.dumps(argv[:-1]))
+    with pytest.raises(adapter.AdapterError, match="canonical product_demo"):
+        adapter.parse_product_argv(json.dumps(["ros2", "launch", "other", "other.launch.py", "gui:=false"]))
+
+
+@pytest.mark.parametrize("channel", ["front_rgb", "wrist_rgb", "rear_left_rgb", "rear_right_rgb"])
+def test_rgb_freeze_drops_real_proxy_ingress(channel: str) -> None:
+    forwarded, readback = adapter.transform_sensor_message(channel, message(), "rgb_freeze", {"duration_s": 10})
+    assert forwarded is None
+    assert readback == {"action": "dropped", "channel": channel}
+
+
+def test_depth_freeze_controller_requires_observed_ingress_before_ack() -> None:
+    controller = adapter.SensorFaultController()
+    controller.begin("depth_freeze", {"duration_s": 10})
+    assert controller.readback() is None
+    assert controller.apply("front_depth", message()) is None
+    readback = controller.readback()
+    assert readback is not None and readback["observed"] is True
+    assert readback["dropped_channels"] == ["front_depth"]
+    assert controller.clear()["cleared"] is True
+    assert controller.recovery_readback() is None
+    assert controller.apply("front_depth", message()) is not None
+    assert controller.recovery_readback()["forwarded_channels"] == ["front_depth"]
+
+
+def test_timestamp_camera_tf_and_invalid_depth_mutate_forwarded_messages() -> None:
+    shifted, shifted_readback = adapter.transform_sensor_message(
+        "front_rgb", message(), "timestamp_skew", {"skew_ms": 250, "duration_s": 10}
+    )
+    assert (shifted.header.stamp.sec, shifted.header.stamp.nanosec) == (3, 150_000_000)
+    assert shifted_readback["action"] == "timestamp_shifted"
+
+    mismatched, mismatch_readback = adapter.transform_sensor_message(
+        "front_info", message(width=640), "camera_info_mismatch", {"width_delta_px": 8, "duration_s": 10}
+    )
+    assert mismatched.width == 648
+    assert mismatch_readback["before"] == 640
+
+    unavailable, tf_readback = adapter.transform_sensor_message(
+        "front_rgb", message(frame="camera_color_optical_frame"), "tf_unavailable",
+        {"frame": "camera_color_optical_frame", "duration_s": 10},
+    )
+    assert unavailable.header.frame_id == "formal_a19_missing_camera_color_optical_frame"
+    assert tf_readback["action"] == "frame_rewritten_to_unavailable"
+
+    invalid, invalid_readback = adapter.transform_sensor_message(
+        "front_depth", message(data=b"\x01\x02\x03"), "invalid_depth",
+        {"invalid_fraction": 1.0, "duration_s": 10},
+    )
+    assert invalid.data == b"\0\0\0"
+    assert invalid_readback["after_nonzero_bytes"] == 0
+
+
+def test_unsupported_inner_pipeline_faults_are_never_acked() -> None:
+    with pytest.raises(adapter.AdapterError, match="UNSUPPORTED"):
+        adapter.validate_fault_parameters("classifier_exception", {"exception_count": 1})
+    with pytest.raises(adapter.AdapterError, match="only an observed 1.0"):
+        adapter.validate_fault_parameters("invalid_depth", {"invalid_fraction": 0.5, "duration_s": 10})
+
+
+def test_product_launch_threads_all_proxy_topics_into_the_pc_adapter() -> None:
+    product = (ROOT / "starter_ws/src/sanitation_product_demo_integration/launch/product_demo.launch.py").read_text(encoding="utf-8")
+    perception_launch = (ROOT / "starter_ws/src/sanitation_perception/launch/formal_pc_open_vocab.launch.py").read_text(encoding="utf-8")
+    perception = (ROOT / "starter_ws/src/sanitation_perception/sanitation_perception/pc_open_vocab_adapter.py").read_text(encoding="utf-8")
+    for name in {
+        "front_rgb_topic", "front_depth_topic", "front_camera_info_topic",
+        "wrist_rgb_topic", "wrist_depth_topic", "wrist_camera_info_topic",
+        "rear_left_rgb_topic", "rear_right_rgb_topic",
+    }:
+        assert f'"{name}"' in perception_launch
+        assert f'"{name}"' in perception
+        assert f'"perception_{name}"' in product or "f\"perception_{name}\"" in product
+    source = (ROOT / "scripts/formal_a19_product_adapter.py").read_text(encoding="utf-8")
+    assert "process_group_rss_bytes" in source
+    assert '"/odom/unfiltered"' in source
+    assert '"capability_blocked"' in source
+    assert '"unsupported_faults"' in source
+    assert '"CameraInfo and RGB dimensions differ"' in perception
+    assert '"depth image has no finite positive samples"' in perception
