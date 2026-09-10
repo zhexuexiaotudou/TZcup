@@ -417,6 +417,15 @@ def generate_launch_description() -> LaunchDescription:
                 "initial_estop_active": ParameterValue(
                     simulation_initial_estop_active, value_type=bool
                 ),
+                # This engineering node evaluates freshness in wall time while
+                # high-fidelity Gazebo can run far below real time.  Its
+                # product feedback and BMS streams therefore need the same
+                # bounded scheduling margin as the downstream safety manager;
+                # production/hardware defaults are not changed here.
+                "operator_command_timeout_sec": 2.0,
+                "battery_state_timeout_sec": 2.0,
+                "charge_connected_timeout_sec": 2.0,
+                "physical_power_feedback_timeout_sec": 2.0,
             }
         ],
         output="screen",

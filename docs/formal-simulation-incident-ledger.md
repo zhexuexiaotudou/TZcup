@@ -203,6 +203,15 @@ root, then pass the smallest applicable gate before starting a long run.
   tolerate CPU scheduling at low RTF; the command timeout and hardware
   defaults remain unchanged.  Repeated activate/deactivate cycles or STRICT
   rejection are therefore runtime regressions, not harmless startup noise.
+- The next fresh run removed STRICT re-entry but still toggled the relay often
+  enough to produce hundreds of brush/recovery switch log events.  The source
+  was one level upstream: `simulation_safety_inputs` checks operator commands,
+  BMS state and physical isolator/contactor feedback in wall time, while its
+  launch retained 0.25-0.5 second defaults during low-RTF Gazebo execution.
+  The simulator launch now gives those four inputs a bounded two-second
+  freshness window, matching the downstream simulator-only margin.  Keep the
+  product/hardware defaults unchanged; diagnose `safety_relay_disabled`
+  frequency before altering controller switching again.
 
 ## Runtime interpretation traps
 

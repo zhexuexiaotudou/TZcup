@@ -426,6 +426,19 @@ def test_launch_materializes_maps_and_keeps_power_on_estop_latched():
     assert '"speed_map": str(artifacts.speed_map)' in source
     assert '"initial_pose_x": str(artifacts.start_pose[0])' in source
     assert '"start_simulation_safety_inputs": LaunchConfiguration(' in source
+    vehicle_launch = (
+        ROOT
+        / "starter_ws/src/sanitation_vehicle_description"
+        / "launch"
+        / "formal_vehicle_sim.launch.py"
+    ).read_text(encoding="utf-8")
+    for timeout_name in (
+        "operator_command_timeout_sec",
+        "battery_state_timeout_sec",
+        "charge_connected_timeout_sec",
+        "physical_power_feedback_timeout_sec",
+    ):
+        assert f'"{timeout_name}": 2.0' in vehicle_launch
     assert "publish_selected_odom" not in source
     assert '"simulation_initial_estop_active": LaunchConfiguration(' in source
     assert 'DeclareLaunchArgument("start_pedestrians", default_value="true")' in source
