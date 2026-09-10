@@ -4393,9 +4393,9 @@
           "valid": true
         },
         "diagnostic_compat_source": {
-          "byte_size": 323,
+          "byte_size": 826,
           "path": "starter_ws/src/sanitation_perception/sanitation_perception/diagnostic_compat.py",
-          "sha256": "ef2a9099d3f8c85fe941ac86ec02761ab94137fe7d586b07cd201c7b142ff5e4",
+          "sha256": "6b4c0d62bd68164f09a6d422c2e38f1f74610f8e43d64ba53030108f0b56c716",
           "valid": true
         },
         "dosod_edgesam_s100_profile": {
