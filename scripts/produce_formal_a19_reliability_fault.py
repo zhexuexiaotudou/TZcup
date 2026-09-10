@@ -77,6 +77,17 @@ def validate_contract(contract: Mapping[str, Any]) -> None:
     fault_ids = [row.get("fault") for row in faults if isinstance(row, Mapping)]
     if len(faults) != 18 or len(fault_ids) != 18 or len(set(fault_ids)) != 18:
         raise A19ProducerError("A19 must schedule exactly 18 unique faults")
+    expectations = contract.get("fault_expectations")
+    if not isinstance(expectations, Mapping) or set(expectations) != set(fault_ids):
+        raise A19ProducerError("A19 must declare one exact fault expectation per scheduled fault")
+    for fault, expectation in expectations.items():
+        if not isinstance(expectation, Mapping) or expectation.get("state") not in {"STOPPED", "DEGRADED"}:
+            raise A19ProducerError(f"A19 fault expectation is malformed: {fault}")
+        for field in ("requires_global_safety_stop", "requires_perception_degraded", "requires_cleaning_inhibit"):
+            if type(expectation.get(field)) is not bool:
+                raise A19ProducerError(f"A19 fault expectation {fault}.{field} must be boolean")
+        if expectation["state"] == "STOPPED" and expectation["requires_global_safety_stop"] is not True:
+            raise A19ProducerError(f"A19 STOPPED expectation lacks a real safety-stop requirement: {fault}")
     timing = contract.get("fault_timing")
     if not isinstance(timing, Mapping) or timing.get("required_fault_count") != 18:
         raise A19ProducerError("A19 fault timing contract must require 18 faults")

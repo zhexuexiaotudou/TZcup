@@ -20,11 +20,14 @@ PC 感知节点还订阅受控的 `/formal_a19/perception_fault`：CUDA 故障�
 可用时创建该 provider 的会话，CPU-only runtime 如实回读没有 CUDA；DOSOD hash 对真实文件
 重算后以错误期望值验证；EdgeSAM 只复制到临时 shadow 后篡改并交给真实 ORT loader，原模型
 不会写入；慢推理在真实推理回调中 sleep 并报告观测延迟。四者均由产品 diagnostics 独立确认
-active/recovered。三种非 nominal profile 从既有 `sim2real_fault_profiles.yaml` 读取，重启
-相同冻结 argv 的产品图，在代理入口实际施加延迟/确定性 dropout 并留存 ingress/egress 读回；
-world、配置路径和 episode seed 不随 profile 改写。该正式 vehicle 图当前没有 wheel-slip 或
-actuator-gain 的运行时物理控制面，readback 会明确标记这两个冻结配置字段为未注入，不能当作
-物理扰动证据。18 项 fault 均有实际控制面与 readback；完整 A19 仍须新鲜两小时运行才能通过。
+active/recovered。profile 切换绝不停止、重启或替换产品进程：同一 PID/PGID 保持整个 7200 秒，
+仅在代理入口动态施加延迟/确定性 dropout，并由每档 ingress/egress 和样本中的
+`unexpected_model_reload_count=0` 读回。该正式 vehicle 图当前没有可在同一 Gazebo 运行中独立
+读回的 wheel-slip 或 actuator-gain 控制面，因此任一 non-nominal profile 会在能力握手阶段明确
+`UNSUPPORTED` 并 fail-closed；不能用传感器扰动替代物理字段，也不会启动两小时正式运行。
+动态障碍恢复必须以 `SetEntityPose` 真实回原位，并同时以服务结果、原生 Gazebo `Pose_V` 和恢复后
+的导航 scan 读回确认；仅清除本地状态不能报告 RECOVERED。18 项 fault 均有实际控制面与 readback；
+完整 A19 仍须新鲜两小时运行才能通过。
 
 ## 不可缩短的正式口径
 
@@ -35,10 +38,13 @@ Perception、Tracking、DynamicTrashMap、Spot Cleaning、Post-Clean Verificatio
 短跑均不能生成正式通过。
 
 18 类故障由 producer 按合同固定时间表下发，不由 adapter 自行宣称已经注入。每项命令都带
-随机 run nonce、唯一 command ID、profile 和完整参数；adapter 必须回显同一命令，并分别上报
-时间有序的 `STOPPED` 和 `RECOVERED`。STOPPED 期间必须证明：安全态为 STOPPED，待执行清扫
-已 CANCELLED/DEFERRED，感知为 DEGRADED/ERROR，Nav2 与 Watchdog 仍可运行，unsafe cleaning
-计数为零，制动延迟不超过 1 秒。RECOVERED 后 Coverage 必须回到 RUNNING/RESUMED。
+随机 run nonce、唯一 command ID、profile 和完整参数；adapter 必须回显同一命令，并按合同的
+fault-specific `DEGRADED` 或 `STOPPED` 期望及 `RECOVERED` 上报独立 readback。产品没有把某个
+故障接入整车安全链时，不能借 operator disarm/arm 人为伪造 STOPPED；该故障必须验证其实际的
+感知、Nav2 或执行器降级 readback，同时全程维持 crash/deadlock/unsafe cleaning 等全局零门。
+只有已接入真实安全链的故障才可声明 STOPPED，且必须证明安全态、清扫抑制和制动读回。RECOVERED
+后 Coverage 必须回到 RUNNING/RESUMED；operator 指令只允许产品启动时那一次显式记录的人工 arm，
+不参与故障或自然恢复。
 
 长稳硬门仍为 crash/deadlock/queue growth/意外模型重载/持续 TF 失败/不可恢复 watchdog/
 不安全清扫均为零，首末 300 秒窗口的 RSS 中位数增长不超过 5%，定位 XY RMSE/P95 均不超过

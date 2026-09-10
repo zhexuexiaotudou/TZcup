@@ -198,6 +198,9 @@ def _validate_semantics(receipt: Mapping[str, Any], events: Sequence[dict[str, A
     expected_profiles = [row["profile"] for row in contract["profile_schedule"]]
     if len(hello) != 1 or hello[0].get("components") != contract["required_pipeline_components"] or hello[0].get("faults") != expected_faults or hello[0].get("profiles") != expected_profiles:
         errors.append("adapter hello does not bind the exact component/profile/fault inventory")
+    elif (not isinstance(hello[0].get("product_pid"), int) or not isinstance(hello[0].get("product_pgid"), int)
+          or hello[0].get("operator_control") != {"initial_arm_commands": 1, "post_start_commands": 0}):
+        errors.append("adapter did not prove one product identity and startup-only operator arm")
     try:
         commands = _command_map(receipt)
     except ValueError as exc:
@@ -307,12 +310,20 @@ def _validate_semantics(receipt: Mapping[str, Any], events: Sequence[dict[str, A
     fault_results: list[dict[str, Any]] = []
     timing = contract["fault_timing"]
     evidence = contract["required_fault_evidence"]
+    expectations = contract.get("fault_expectations")
+    if not isinstance(expectations, Mapping):
+        errors.append("fault-specific expectations are missing")
+        expectations = {}
     for scheduled in contract["fault_schedule"]:
         fault = scheduled["fault"]
+        expectation = expectations.get(fault)
         command_rows = [row for row in commands.values() if row["command"].get("type") == "inject_fault" and row["command"].get("fault") == fault]
         injected = [event for event in adapters if event.get("type") == "fault_injected" and event.get("fault") == fault]
         states = [(envelope, envelope["adapter"]) for envelope in events if envelope["adapter"].get("type") == "fault_state" and envelope["adapter"].get("fault") == fault]
         fault_errors: list[str] = []
+        if not isinstance(expectation, Mapping):
+            fault_errors.append("fault-specific expectation is missing")
+            expectation = {}
         if len(command_rows) != 1 or len(injected) != 1:
             fault_errors.append("requires exactly one producer command and injection acknowledgement")
         else:
@@ -324,7 +335,7 @@ def _validate_semantics(receipt: Mapping[str, Any], events: Sequence[dict[str, A
             lateness = (command_row["sent_monotonic_ns"] - planned) / 1e9
             if lateness < -0.25 or lateness > float(timing["maximum_injection_lateness_s"]):
                 fault_errors.append("injection command missed its producer-owned schedule")
-        stopped = [(row, event) for row, event in states if event.get("state") == "STOPPED"]
+        stopped = [(row, event) for row, event in states if event.get("state") == expectation.get("state")]
         recovered = [(row, event) for row, event in states if event.get("state") == "RECOVERED"]
         if len(stopped) != 1 or len(recovered) != 1:
             fault_errors.append("requires exactly one STOPPED then one RECOVERED event")
@@ -338,21 +349,29 @@ def _validate_semantics(receipt: Mapping[str, Any], events: Sequence[dict[str, A
                 recovery_latency = (recovered[0][0]["received_monotonic_ns"] - stopped[0][0]["received_monotonic_ns"]) / 1e9
                 if stop_latency < 0 or stop_latency > float(timing["maximum_safe_stop_latency_s"]): fault_errors.append("safe STOPPED latency exceeds contract")
                 if recovery_latency < 0 or recovery_latency > float(timing["maximum_recovery_latency_s"]): fault_errors.append("RECOVERED latency exceeds contract")
-            if stop_event.get("safety_state") != evidence["required_safety_state"]:
-                fault_errors.append("fault did not force safety STOPPED")
-            if stop_event.get("pending_clean_outcome") not in evidence["unsafe_pending_clean_outcomes"]:
-                fault_errors.append("unsafe pending clean was not cancelled/deferred")
-            if stop_event.get("perception_health") not in evidence["perception_health_states"]:
+            if not isinstance(stop_event.get("injection_readback"), Mapping):
+                fault_errors.append("fault has no independently observed injection readback")
+            if expectation.get("requires_global_safety_stop") is True:
+                if stop_event.get("safety_state") != evidence["required_safety_state"]:
+                    fault_errors.append("fault did not force safety STOPPED")
+                if expectation.get("requires_cleaning_inhibit") is True and stop_event.get("pending_clean_outcome") not in evidence["unsafe_pending_clean_outcomes"]:
+                    fault_errors.append("unsafe pending clean was not cancelled/deferred")
+            elif stop_event.get("safety_state") != "RUNNING":
+                fault_errors.append("non-stopping fault did not retain independently observed running safety")
+            if expectation.get("requires_perception_degraded") is True and stop_event.get("perception_health") not in evidence["perception_health_states"]:
                 fault_errors.append("perception health did not degrade/error")
             if stop_event.get("nav2_operational") is not True or stop_event.get("watchdog_operational") is not True:
                 fault_errors.append("Safety/Nav2/Watchdog did not remain operational")
             if stop_event.get("unsafe_cleaning_action_count") != 0:
                 fault_errors.append("unsafe cleaning action occurred during fault")
-            try:
-                brake = _strict_number(stop_event.get("brake_latency_s"), "brake latency")
-                if brake > float(gates["maximum_estop_brake_latency_s"]): fault_errors.append("brake latency exceeds A19 gate")
-            except ValueError as exc:
-                fault_errors.append(str(exc))
+            if expectation.get("requires_global_safety_stop") is True:
+                try:
+                    brake = _strict_number(stop_event.get("brake_latency_s"), "brake latency")
+                    if brake > float(gates["maximum_estop_brake_latency_s"]): fault_errors.append("brake latency exceeds A19 gate")
+                except ValueError as exc:
+                    fault_errors.append(str(exc))
+            if not isinstance(recover_event.get("recovery_readback"), Mapping):
+                fault_errors.append("fault recovery has no independently observed readback")
             if recover_event.get("coverage_state") not in evidence["required_recovered_coverage_states"] or recover_event.get("safety_state") != "RUNNING":
                 fault_errors.append("safe Coverage recovery was not observed")
         if fault_errors:
@@ -367,6 +386,26 @@ def _validate_semantics(receipt: Mapping[str, Any], events: Sequence[dict[str, A
             command = command_row["command"]
             if acknowledgement.get("command_id") != command.get("command_id") or acknowledgement.get("profile") != command.get("profile"):
                 errors.append("profile activation does not acknowledge the matching producer command")
+                continue
+            configured = acknowledgement.get("configured_values")
+            readback = acknowledgement.get("readback")
+            if not isinstance(configured, Mapping) or not isinstance(readback, Mapping):
+                errors.append("profile activation has no full configured/readback record")
+                continue
+            if hello and (readback.get("product_pid") != hello[0].get("product_pid") or readback.get("product_pgid") != hello[0].get("product_pgid")):
+                errors.append("profile activation restarted or replaced the product process")
+            physical = readback.get("physical_readback")
+            if not isinstance(physical, Mapping) or set(physical) != {"wheel_slip_ratio", "actuator_gain"}:
+                errors.append("profile activation lacks complete physical readback")
+                continue
+            for field in ("wheel_slip_ratio", "actuator_gain"):
+                row = physical.get(field)
+                if not isinstance(row, Mapping) or row.get("configured") != configured.get(field):
+                    errors.append(f"profile {acknowledgement.get('profile')} physical field {field} drifted")
+                if acknowledgement.get("profile") != "nominal" and row.get("observed") is not True:
+                    errors.append(f"non-nominal profile {acknowledgement.get('profile')} lacks live physical readback for {field}")
+    if any(event.get("type") == "profile_unsupported" for event in adapters):
+        errors.append("A19 run encountered an unsupported physical profile")
     complete = [event for event in adapters if event.get("type") == "complete"]
     if len(complete) != 1 or complete[0].get("reason") != "formal_duration_complete":
         errors.append("adapter did not emit one formal-duration completion event")

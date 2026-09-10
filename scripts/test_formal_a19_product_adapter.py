@@ -136,6 +136,26 @@ def test_frozen_non_nominal_profiles_mutate_real_proxy_ingress(profile: str, mon
     assert readback["dropped_messages"] >= 1
 
 
+def test_non_nominal_profile_without_physical_hooks_is_explicitly_unsupported() -> None:
+    profiles = adapter.load_profile_settings(ROOT / adapter.PROFILE_CONFIG)
+    assert adapter.unsupported_physical_profile_fields("nominal", profiles["nominal"]) == []
+    for profile in ("transport_stress", "wet_surface", "degraded_drive"):
+        assert adapter.unsupported_physical_profile_fields(profile, profiles[profile]) == [
+            "wheel_slip_ratio", "actuator_gain"
+        ]
+
+
+def test_adapter_forbids_profile_restart_and_operator_fault_spoofing() -> None:
+    source = (ROOT / "scripts/formal_a19_product_adapter.py").read_text(encoding="utf-8")
+    profile_branch = source[source.index('elif kind == "set_profile":'):source.index('elif kind == "inject_fault":')]
+    fault_branch = source[source.index('elif kind == "inject_fault":'):source.index('elif kind == "shutdown":')]
+    assert "stop_product()" not in profile_branch
+    assert "profile_unsupported" in profile_branch
+    assert "command_operator(" not in fault_branch
+    assert "dynamic_blocker_recovery_readback" in fault_branch
+    assert "read_named_model_pose" in source
+
+
 def test_provider_and_model_hooks_use_real_files_but_never_mutate_them(tmp_path: Path) -> None:
     dosod, edgesam = tmp_path / "dosod.onnx", tmp_path / "edgesam.onnx"
     dosod.write_bytes(b"dosod-model")

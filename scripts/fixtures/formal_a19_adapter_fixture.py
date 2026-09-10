@@ -65,28 +65,34 @@ for line in sys.stdin:
             "components": contract["required_pipeline_components"],
             "profiles": [row["profile"] for row in contract["profile_schedule"]],
             "faults": [row["fault"] for row in contract["fault_schedule"]],
+            "product_pid": 1, "product_pgid": 1,
+            "operator_control": {"initial_arm_commands": 1, "post_start_commands": 0},
         })
         threading.Thread(target=sample_loop, daemon=True).start()
     elif command_type == "set_profile":
         profile = command["profile"]
-        emit({"type": "profile_activated", "command_id": command["command_id"], "profile": profile})
+        configured = {"sensor_latency_ms": 0.0, "sensor_dropout_probability": 0.0, "wheel_slip_ratio": 0.0, "actuator_gain": 1.0}
+        emit({"type": "profile_activated", "command_id": command["command_id"], "profile": profile, "configured_values": configured, "readback": {"product_pid": 1, "product_pgid": 1, "physical_readback": {"wheel_slip_ratio": {"configured": configured["wheel_slip_ratio"], "observed": True}, "actuator_gain": {"configured": configured["actuator_gain"], "observed": True}}}})
     elif command_type == "inject_fault":
+        expectation = contract["fault_expectations"][command["fault"]]
         emit({
             "type": "fault_injected", "command_id": command["command_id"],
             "fault": command["fault"], "profile": command["profile"],
             "parameters": command["parameters"],
         })
         emit({
-            "type": "fault_state", "fault": command["fault"], "state": "STOPPED",
-            "safety_state": "STOPPED", "pending_clean_outcome": "CANCELLED",
-            "perception_health": "DEGRADED", "nav2_operational": True,
+            "type": "fault_state", "fault": command["fault"], "state": expectation["state"],
+            "safety_state": "STOPPED" if expectation["requires_global_safety_stop"] else "RUNNING", "pending_clean_outcome": "CANCELLED" if expectation["requires_cleaning_inhibit"] else None,
+            "perception_health": "DEGRADED" if expectation["requires_perception_degraded"] else "OPERATIONAL", "nav2_operational": True,
             "watchdog_operational": True, "unsafe_cleaning_action_count": 0,
-            "brake_latency_s": 0.01,
+            "brake_latency_s": 0.01 if expectation["requires_global_safety_stop"] else None,
+            "injection_readback": {"fixture": True},
         })
         time.sleep(0.001)
         emit({
             "type": "fault_state", "fault": command["fault"], "state": "RECOVERED",
             "safety_state": "RUNNING", "coverage_state": "RESUMED",
+            "recovery_readback": {"fixture": True},
         })
     elif command_type == "shutdown":
         running = False

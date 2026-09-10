@@ -57,6 +57,26 @@
     "maximum_recovery_latency_s": 60,
     "required_fault_count": 18
   },
+  "fault_expectations": {
+    "rgb_freeze": {"state": "DEGRADED", "requires_global_safety_stop": false, "requires_perception_degraded": true, "requires_cleaning_inhibit": false},
+    "depth_freeze": {"state": "DEGRADED", "requires_global_safety_stop": false, "requires_perception_degraded": true, "requires_cleaning_inhibit": false},
+    "timestamp_skew": {"state": "DEGRADED", "requires_global_safety_stop": false, "requires_perception_degraded": true, "requires_cleaning_inhibit": false},
+    "camera_info_mismatch": {"state": "DEGRADED", "requires_global_safety_stop": false, "requires_perception_degraded": true, "requires_cleaning_inhibit": false},
+    "tf_unavailable": {"state": "DEGRADED", "requires_global_safety_stop": false, "requires_perception_degraded": true, "requires_cleaning_inhibit": false},
+    "invalid_depth": {"state": "DEGRADED", "requires_global_safety_stop": false, "requires_perception_degraded": true, "requires_cleaning_inhibit": false},
+    "proposal_flood": {"state": "DEGRADED", "requires_global_safety_stop": false, "requires_perception_degraded": true, "requires_cleaning_inhibit": false},
+    "proposal_dropout": {"state": "DEGRADED", "requires_global_safety_stop": false, "requires_perception_degraded": true, "requires_cleaning_inhibit": false},
+    "classifier_exception": {"state": "DEGRADED", "requires_global_safety_stop": false, "requires_perception_degraded": true, "requires_cleaning_inhibit": false},
+    "classifier_timeout": {"state": "DEGRADED", "requires_global_safety_stop": false, "requires_perception_degraded": true, "requires_cleaning_inhibit": false},
+    "action_verifier_failure": {"state": "DEGRADED", "requires_global_safety_stop": false, "requires_perception_degraded": false, "requires_cleaning_inhibit": false},
+    "reobserve_timeout": {"state": "DEGRADED", "requires_global_safety_stop": false, "requires_perception_degraded": false, "requires_cleaning_inhibit": false},
+    "cuda_provider_failure": {"state": "DEGRADED", "requires_global_safety_stop": false, "requires_perception_degraded": true, "requires_cleaning_inhibit": false},
+    "model_hash_mismatch": {"state": "DEGRADED", "requires_global_safety_stop": false, "requires_perception_degraded": true, "requires_cleaning_inhibit": false},
+    "corrupt_model": {"state": "DEGRADED", "requires_global_safety_stop": false, "requires_perception_degraded": true, "requires_cleaning_inhibit": false},
+    "sustained_slow_inference": {"state": "DEGRADED", "requires_global_safety_stop": false, "requires_perception_degraded": true, "requires_cleaning_inhibit": false},
+    "nav2_path_unavailable": {"state": "DEGRADED", "requires_global_safety_stop": false, "requires_perception_degraded": false, "requires_cleaning_inhibit": false},
+    "dynamic_obstacle_blocks_observation": {"state": "DEGRADED", "requires_global_safety_stop": false, "requires_perception_degraded": false, "requires_cleaning_inhibit": false}
+  },
   "fault_schedule": [
     {"fault": "rgb_freeze", "offset_s": 300, "profile": "nominal", "parameters": {"duration_s": 10}},
     {"fault": "depth_freeze", "offset_s": 600, "profile": "nominal", "parameters": {"duration_s": 10}},

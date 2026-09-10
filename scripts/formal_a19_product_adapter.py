@@ -58,6 +58,7 @@ SENSOR_PROXY_FAULTS = frozenset({
 MODEL_PROVIDER_FAULT_TOPIC = "/formal_a19/perception_fault"
 PROFILE_CONFIG = "starter_ws/src/sanitation_tasks/config/sim2real_fault_profiles.yaml"
 PROFILE_NAMES = ("nominal", "transport_stress", "wet_surface", "degraded_drive")
+PHYSICAL_PROFILE_FIELDS = ("wheel_slip_ratio", "actuator_gain")
 PROXY_TOPICS = {
     "front_rgb": (
         "/sensors/front_rgbd/depth/image_rect_raw/image",
@@ -134,6 +135,34 @@ def load_profile_settings(path: Path) -> dict[str, dict[str, float]]:
         if not 0 <= parsed["wheel_slip_ratio"] < 1 or not 0 < parsed["actuator_gain"] <= 1:
             raise AdapterError(f"A19 profile {name} has invalid drive settings")
         result[name] = parsed
+    return result
+
+
+def unsupported_physical_profile_fields(
+    profile: str, settings: Mapping[str, float], available_fields: Sequence[str] = ()
+) -> list[str]:
+    """Return non-baseline physical perturbations without a live readback hook."""
+    if profile == "nominal":
+        return []
+    available = set(available_fields)
+    return [field for field in PHYSICAL_PROFILE_FIELDS if field not in available]
+
+
+def validate_fault_expectations(contract: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
+    rows = contract.get("fault_expectations")
+    if not isinstance(rows, Mapping) or set(rows) != SUPPORTED_FAULTS:
+        raise AdapterError("A19 contract must declare one fault-specific expectation per supported fault")
+    result: dict[str, dict[str, Any]] = {}
+    for fault in SUPPORTED_FAULTS:
+        row = rows[fault]
+        if not isinstance(row, Mapping) or row.get("state") not in {"STOPPED", "DEGRADED"}:
+            raise AdapterError(f"A19 fault expectation is malformed: {fault}")
+        for key in ("requires_global_safety_stop", "requires_perception_degraded", "requires_cleaning_inhibit"):
+            if type(row.get(key)) is not bool:
+                raise AdapterError(f"A19 fault expectation {fault}.{key} must be boolean")
+        if row["state"] == "STOPPED" and not row["requires_global_safety_stop"]:
+            raise AdapterError(f"A19 STOPPED expectation must require a real safety stop: {fault}")
+        result[fault] = dict(row)
     return result
 
 
@@ -524,6 +553,7 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
         raise AdapterError("producer protocol environment is missing")
     emitter = JsonEmitter(nonce)
     supported, unsupported = contract_capabilities(contract)
+    fault_expectations = validate_fault_expectations(contract)
     profiles = load_profile_settings(args.repository_root / PROFILE_CONFIG)
     profile_config_sha256 = hashlib.sha256((args.repository_root / PROFILE_CONFIG).read_bytes()).hexdigest()
 
@@ -544,6 +574,7 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
             self.model_provider_fault_events: dict[tuple[str, str], dict[str, Any]] = {}
             self.raw_odom_pose: tuple[float, float, float] | None = None
             self.nearest_scan_m = math.inf
+            self.navigation_scan_at = 0.0
             self.blocker: dict[str, Any] | None = None
             self.planner_change = self.create_client(ChangeState, "/planner_server/change_state")
             self.planner_state = self.create_client(GetState, "/planner_server/get_state")
@@ -609,6 +640,7 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
             values = [float(value) for value in message.ranges if math.isfinite(float(value))]
             if values:
                 self.nearest_scan_m = min(values)
+            self.navigation_scan_at = time.monotonic()
             self._remember("navigation_scan", self.nearest_scan_m)
 
         def _wait_future(self, future: Any, timeout_s: float, label: str) -> Any:
@@ -641,23 +673,36 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
             raise AdapterError("planner lifecycle transition had no independent action-server readback")
 
         def begin_dynamic_blocker(self, *, world: str, model: str, start: tuple[float, float, float], minimum_distance_m: float) -> None:
+            from gazebo_ground_truth import read_named_model_pose
+            if not math.isfinite(self.nearest_scan_m) or time.monotonic() - self.navigation_scan_at > 1.0:
+                raise AdapterError("fresh navigation scan is required before dynamic blocker injection")
             client = self.set_pose_clients.get(world)
             if client is None:
                 client = self.create_client(SetEntityPose, f"/world/{world}/set_pose"); self.set_pose_clients[world] = client
             if not client.wait_for_service(timeout_sec=5.0):
                 raise AdapterError("Gazebo SetEntityPose service unavailable for A19 blocker")
-            self.blocker = {"world": world, "model": model, "start": start, "minimum_distance_m": minimum_distance_m, "success_count": 0}
+            try:
+                original_pose = read_named_model_pose(world_name=world, model_name=model, timeout_s=5.0)
+            except (OSError, RuntimeError, subprocess.SubprocessError) as exc:
+                raise AdapterError(f"cannot independently read dynamic blocker origin: {exc}") from exc
+            self.blocker = {
+                "world": world, "model": model, "start": start,
+                "minimum_distance_m": minimum_distance_m, "success_count": 0,
+                "restore_success_count": 0, "original_pose": original_pose,
+                "baseline_scan_m": self.nearest_scan_m, "active": True,
+            }
             self._set_dynamic_blocker()
 
         def _set_dynamic_blocker(self) -> None:
             blocker = self.blocker
-            if blocker is None or self.raw_odom_pose is None:
+            if blocker is None or not blocker["active"] or self.raw_odom_pose is None:
                 return
             ox, oy, oyaw = self.raw_odom_pose; sx, sy, syaw = blocker["start"]
             x = sx + math.cos(syaw) * ox - math.sin(syaw) * oy
             y = sy + math.sin(syaw) * ox + math.cos(syaw) * oy
             distance = float(blocker["minimum_distance_m"])
             x += math.cos(syaw + oyaw) * distance; y += math.sin(syaw + oyaw) * distance
+            blocker["target_pose"] = {"x": x, "y": y, "z": 0.0, "yaw": syaw + oyaw}
             request = SetEntityPose.Request(); request.entity.name = str(blocker["model"]); request.entity.type = Entity.MODEL
             request.pose.position.x = x; request.pose.position.y = y; request.pose.position.z = 0.0
             request.pose.orientation.z = math.sin((syaw + oyaw) / 2.0); request.pose.orientation.w = math.cos((syaw + oyaw) / 2.0)
@@ -677,13 +722,54 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
             nearest = self.value("navigation_scan", 1.0)
             if blocker is None or int(blocker["success_count"]) <= 0 or nearest is None or float(nearest) > float(blocker["minimum_distance_m"]) + 0.2:
                 return None
-            return {"observed": True, "set_pose_success_count": int(blocker["success_count"]), "nearest_navigation_scan_m": float(nearest), "model": blocker["model"], "world": blocker["world"]}
+            try:
+                from gazebo_ground_truth import read_named_model_pose
+                native_pose = read_named_model_pose(world_name=str(blocker["world"]), model_name=str(blocker["model"]), timeout_s=5.0)
+            except (OSError, RuntimeError, subprocess.SubprocessError):
+                return None
+            target = blocker.get("target_pose")
+            if not isinstance(target, Mapping) or math.dist((native_pose["x"], native_pose["y"], native_pose["z"]), (target["x"], target["y"], target["z"])) > 0.05:
+                return None
+            return {"observed": True, "set_pose_success_count": int(blocker["success_count"]), "nearest_navigation_scan_m": float(nearest), "native_pose": native_pose, "target_pose": dict(target), "model": blocker["model"], "world": blocker["world"]}
 
         def clear_dynamic_blocker(self) -> dict[str, Any]:
             blocker = self.blocker
             if blocker is None: raise AdapterError("dynamic blocker is not active")
+            blocker["active"] = False
+            blocker["restore_started_at"] = time.monotonic()
+            original = blocker["original_pose"]
+            request = SetEntityPose.Request(); request.entity.name = str(blocker["model"]); request.entity.type = Entity.MODEL
+            request.pose.position.x = float(original["x"]); request.pose.position.y = float(original["y"]); request.pose.position.z = float(original["z"])
+            request.pose.orientation.z = math.sin(float(original["yaw"]) / 2.0); request.pose.orientation.w = math.cos(float(original["yaw"]) / 2.0)
+            future = self.set_pose_clients[str(blocker["world"])].call_async(request)
+            def recorded(done: Any) -> None:
+                try:
+                    if done.result() is not None and done.result().success: blocker["restore_success_count"] += 1
+                except Exception:
+                    pass
+            future.add_done_callback(recorded)
+            return {"restore_requested": True, "model": blocker["model"]}
+
+        def dynamic_blocker_recovery_readback(self) -> dict[str, Any] | None:
+            blocker = self.blocker
+            if blocker is None or blocker["active"] or int(blocker["restore_success_count"]) <= 0:
+                return None
+            restored_at = float(blocker["restore_started_at"])
+            if self.navigation_scan_at <= restored_at:
+                return None
+            try:
+                from gazebo_ground_truth import read_named_model_pose
+                native_pose = read_named_model_pose(world_name=str(blocker["world"]), model_name=str(blocker["model"]), timeout_s=5.0)
+            except (OSError, RuntimeError, subprocess.SubprocessError):
+                return None
+            original = blocker["original_pose"]
+            pose_error = math.dist((native_pose["x"], native_pose["y"], native_pose["z"]), (original["x"], original["y"], original["z"]))
+            scan = self.value("navigation_scan", 1.0)
+            if pose_error > 0.05 or scan is None or float(scan) + 0.05 < float(blocker["baseline_scan_m"]):
+                return None
+            readback = {"observed": True, "restore_set_pose_success_count": int(blocker["restore_success_count"]), "native_pose": native_pose, "original_pose": original, "native_position_error_m": pose_error, "post_restore_navigation_scan_m": float(scan), "model": blocker["model"], "world": blocker["world"]}
             self.blocker = None
-            return {"cleared": True, "model": blocker["model"], "set_pose_success_count": int(blocker["success_count"])}
+            return readback
 
         def _diagnostic(self, name: str, message: Any) -> None:
             rows = [{
@@ -737,6 +823,13 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
 
         def command_operator(self, armed: bool) -> None:
             self.operator.publish(Bool(data=armed))
+
+        def safety_state(self) -> str:
+            if self.safety_stopped():
+                return "STOPPED"
+            if self.safety_running():
+                return "RUNNING"
+            return "UNKNOWN"
 
         @staticmethod
         def _fault_values(rows: Any) -> tuple[str, int] | None:
@@ -863,7 +956,7 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
     sampling = threading.Event()
     profile = "nominal"
     sampler: threading.Thread | None = None
-    product_launch_count = 0
+    initial_operator_arm_commands = 0
 
     def wait_for(predicate, timeout: float, label: str) -> None:
         deadline = time.monotonic() + timeout
@@ -927,26 +1020,26 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
         if product_log is not None:
             product_log.flush(); os.fsync(product_log.fileno()); product_log.close(); product_log = None
 
-    def start_product(selected_profile: str) -> dict[str, Any]:
-        nonlocal product, product_log, product_launch_count
+    def start_product() -> dict[str, Any]:
+        nonlocal product, product_log, initial_operator_arm_commands
         argv = parse_product_argv(args.product_argv_json)
         base_log = Path(args.product_log).resolve()
-        log_path = base_log.with_name(f"{base_log.stem}.{selected_profile}.{product_launch_count}{base_log.suffix}")
-        product_launch_count += 1
+        log_path = base_log
         if log_path.exists() or log_path.is_symlink():
             raise AdapterError(f"refusing stale product log: {log_path}")
         log_path.parent.mkdir(parents=True, exist_ok=True)
         product_log = log_path.open("xb")
         product = subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=product_log, stderr=subprocess.STDOUT, cwd=args.repository_root)
         wait_for(lambda: all(value == "OPERATIONAL" for value in probe.components().values()), args.startup_timeout_s, "product component readiness")
-        probe.controller.set_profile(selected_profile, profiles[selected_profile])
-        for _ in range(12):
-            probe.command_operator(True); time.sleep(0.1)
+        probe.controller.set_profile("nominal", profiles["nominal"])
+        # The product graph has an explicit human/operator arm gate.  This is
+        # startup only; fault injection and recovery never toggle it.
+        probe.command_operator(True); initial_operator_arm_commands += 1
         wait_for(probe.safety_running, args.readback_timeout_s, "armed safety")
-        wait_for(lambda: probe.controller.profile_readback() is not None, args.readback_timeout_s, f"{selected_profile} profile ingress")
+        wait_for(lambda: probe.controller.profile_readback() is not None, args.readback_timeout_s, "nominal profile ingress")
         readback = probe.controller.profile_readback()
         assert readback is not None
-        return {"product_pid": product.pid, "product_log": str(log_path), "frozen_product_argv_sha256": hashlib.sha256("\0".join(argv).encode("utf-8")).hexdigest(), "profile_config": PROFILE_CONFIG, "profile_config_sha256": profile_config_sha256, "proxy_readback": readback, "unapplied_physical_fields": ["wheel_slip_ratio", "actuator_gain"]}
+        return {"product_pid": product.pid, "product_pgid": os.getpgid(product.pid), "product_log": str(log_path), "frozen_product_argv_sha256": hashlib.sha256("\0".join(argv).encode("utf-8")).hexdigest(), "profile_config": PROFILE_CONFIG, "profile_config_sha256": profile_config_sha256, "proxy_readback": readback, "operator_control": {"initial_arm_commands": initial_operator_arm_commands, "post_start_commands": 0}}
 
     try:
         for line in sys.stdin:
@@ -964,19 +1057,24 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
                         "reason": "product_fault_injection_points_missing",
                     })
                     raise AdapterError("formal A19 contract contains unsupported product faults")
-                start_readback = start_product(profile)
+                start_readback = start_product()
                 probe.product_started = True
-                emitter.emit({"type": "hello", "command_id": command["command_id"], "components": contract["required_pipeline_components"], "profiles": [row["profile"] for row in contract["profile_schedule"]], "faults": [row["fault"] for row in contract["fault_schedule"]], "product_pid": product.pid, "sensor_proxy_topics": PROXY_TOPICS, "initial_profile_readback": start_readback})
+                emitter.emit({"type": "hello", "command_id": command["command_id"], "components": contract["required_pipeline_components"], "profiles": [row["profile"] for row in contract["profile_schedule"]], "faults": [row["fault"] for row in contract["fault_schedule"]], "product_pid": product.pid, "product_pgid": os.getpgid(product.pid), "sensor_proxy_topics": PROXY_TOPICS, "initial_profile_readback": start_readback, "operator_control": start_readback["operator_control"]})
                 start_sampling()
             elif kind == "set_profile":
                 requested = command.get("profile")
                 if requested not in profiles:
                     raise AdapterError(f"UNSUPPORTED live product profile: {requested}")
-                if requested != profile:
-                    stop_product()
+                unsupported_fields = unsupported_physical_profile_fields(requested, profiles[requested])
+                if unsupported_fields:
+                    emitter.emit({"type": "profile_unsupported", "command_id": command["command_id"], "profile": requested, "missing_physical_readback_fields": unsupported_fields, "product_pid": product.pid if product else None, "product_pgid": os.getpgid(product.pid) if product else None, "reason": "no_live_gazebo_or_control_readback_hook"})
+                    raise AdapterError(f"UNSUPPORTED live product profile {requested}: missing physical readback for {', '.join(unsupported_fields)}")
                 profile = requested
-                readback = start_product(profile) if product is None else {"product_pid": product.pid, "profile_config": PROFILE_CONFIG, "profile_config_sha256": profile_config_sha256, "proxy_readback": probe.controller.profile_readback(), "unapplied_physical_fields": ["wheel_slip_ratio", "actuator_gain"]}
-                start_sampling()
+                probe.controller.set_profile(profile, profiles[profile])
+                wait_for(lambda: probe.controller.profile_readback() is not None, args.readback_timeout_s, f"{profile} profile ingress")
+                readback = probe.controller.profile_readback()
+                assert readback is not None and product is not None
+                readback.update({"product_pid": product.pid, "product_pgid": os.getpgid(product.pid), "physical_readback": {field: {"configured": profiles[profile][field], "baseline": True} for field in PHYSICAL_PROFILE_FIELDS}})
                 emitter.emit({"type": "profile_activated", "command_id": command["command_id"], "profile": profile, "configured_values": profiles[profile], "readback": readback})
             elif kind == "inject_fault":
                 fault = str(command.get("fault"))
@@ -985,6 +1083,7 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
                     raise AdapterError("fault parameters are not an object")
                 started = time.monotonic()
                 validate_fault_parameters(fault, parameters)
+                expectation = fault_expectations[fault]
                 nav2_fault = fault == "nav2_path_unavailable"
                 dynamic_obstacle_fault = fault == "dynamic_obstacle_blocks_observation"
                 if fault in SENSOR_PROXY_FAULTS:
@@ -1001,8 +1100,6 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
                     probe.product_fault_baseline[fault] = 0 if prior is None else int(prior["events"])
                     probe.command_product_fault(fault, parameters, True)
                 emitter.emit({"type": "fault_injected", "command_id": command["command_id"], "fault": fault, "profile": command["profile"], "parameters": dict(parameters)})
-                for _ in range(10):
-                    probe.command_operator(False); time.sleep(0.05)
                 wait_for(
                     lambda: (
                         probe.controller.readback() is not None
@@ -1018,10 +1115,12 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
                     args.readback_timeout_s,
                     f"{fault} injection",
                 )
-                wait_for(probe.safety_stopped, args.readback_timeout_s, f"{fault} safety stop")
-                brake_latency_s = time.monotonic() - started
-                wait_for(probe.cleaning_safe, args.readback_timeout_s, f"{fault} cleaning inhibit")
-                wait_for(probe.perception_degraded, args.readback_timeout_s, f"{fault} perception degradation")
+                if expectation["requires_global_safety_stop"]:
+                    wait_for(probe.safety_stopped, args.readback_timeout_s, f"{fault} safety stop")
+                    wait_for(probe.cleaning_safe, args.readback_timeout_s, f"{fault} cleaning inhibit")
+                if expectation["requires_perception_degraded"]:
+                    wait_for(probe.perception_degraded, args.readback_timeout_s, f"{fault} perception degradation")
+                brake_latency_s = time.monotonic() - started if expectation["requires_global_safety_stop"] else None
                 readback = (
                     probe.controller.readback()
                     if fault in SENSOR_PROXY_FAULTS
@@ -1031,7 +1130,7 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
                         else (nav2_injection if nav2_fault else (probe.dynamic_blocker_readback() if dynamic_obstacle_fault else probe.product_fault_readback(fault)))
                     )
                 )
-                emitter.emit({"type": "fault_state", "fault": fault, "state": "STOPPED", "safety_state": "STOPPED", "pending_clean_outcome": "DEFERRED", "perception_health": "DEGRADED", "nav2_operational": probe.value("nav2") is not None, "watchdog_operational": probe.value("safety", 1.0) is not None, "unsafe_cleaning_action_count": probe.unsafe_cleaning_action_count, "brake_latency_s": brake_latency_s, "injection_readback": readback, "cleaning_inhibit_readback": probe.value("spot_cleaning")})
+                emitter.emit({"type": "fault_state", "fault": fault, "state": expectation["state"], "safety_state": probe.safety_state(), "pending_clean_outcome": "DEFERRED" if probe.cleaning_safe() else None, "perception_health": "DEGRADED" if probe.perception_degraded() else "OPERATIONAL", "nav2_operational": probe.value("nav2") is not None, "watchdog_operational": probe.value("safety", 1.0) is not None, "unsafe_cleaning_action_count": probe.unsafe_cleaning_action_count, "brake_latency_s": brake_latency_s, "injection_readback": readback, "cleaning_inhibit_readback": probe.value("spot_cleaning")})
                 # The wrist fault must remain active through the product's
                 # existing bounded re-observation wait; clearing it at the
                 # first dropped message would merely defer the same request.
@@ -1053,8 +1152,6 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
                     recovery_readback = probe.clear_dynamic_blocker()
                 elif fault not in SENSOR_PROXY_FAULTS:
                     probe.command_product_fault(fault, parameters, False)
-                for _ in range(12):
-                    probe.command_operator(True); time.sleep(0.1)
                 recovered: dict[str, Any] = {}
                 def sensor_recovered() -> bool:
                     readback = (
@@ -1065,7 +1162,7 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
                                 fault, "a19_fault_recovered"
                             )
                             if fault in MODEL_PROVIDER_FAULTS
-                            else (recovery_readback if nav2_fault or dynamic_obstacle_fault else probe.product_fault_readback(fault, recovered=True))
+                            else (recovery_readback if nav2_fault else (probe.dynamic_blocker_recovery_readback() if dynamic_obstacle_fault else probe.product_fault_readback(fault, recovered=True)))
                         )
                     )
                     if readback is None:
@@ -1073,9 +1170,10 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
                     recovered.update(readback)
                     return True
                 wait_for(sensor_recovered, args.readback_timeout_s, f"{fault} sensor recovery")
-                wait_for(probe.safety_running, args.readback_timeout_s, f"{fault} safety recovery")
+                if expectation["requires_global_safety_stop"]:
+                    wait_for(probe.safety_running, args.readback_timeout_s, f"{fault} safety recovery")
                 wait_for(probe.coverage_running, args.readback_timeout_s, f"{fault} coverage recovery")
-                emitter.emit({"type": "fault_state", "fault": fault, "state": "RECOVERED", "safety_state": "RUNNING", "coverage_state": "RUNNING", "recovery_readback": recovered})
+                emitter.emit({"type": "fault_state", "fault": fault, "state": "RECOVERED", "safety_state": probe.safety_state(), "coverage_state": "RUNNING", "recovery_readback": recovered})
             elif kind == "shutdown":
                 stop_product()
                 emitter.emit({"type": "complete", "command_id": command["command_id"], "reason": command["reason"]})

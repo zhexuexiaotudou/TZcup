@@ -73,6 +73,17 @@ def test_contract_preserves_two_hours_four_profiles_and_all_18_faults() -> None:
     assert len(contract["fault_schedule"]) == 18
     assert len({row["fault"] for row in contract["fault_schedule"]}) == 18
     assert contract["canonical_producer"]["available_on_current_source"] is True
+    expectations = contract["fault_expectations"]
+    assert set(expectations) == {row["fault"] for row in contract["fault_schedule"]}
+    assert all(row["state"] in {"STOPPED", "DEGRADED"} for row in expectations.values())
+
+
+def test_validator_requires_live_profile_and_fault_readbacks() -> None:
+    source = (ROOT / "scripts/validate_formal_a19_reliability_fault.py").read_text(encoding="utf-8")
+    assert "profile activation restarted or replaced the product process" in source
+    assert "lacks live physical readback" in source
+    assert "fault has no independently observed injection readback" in source
+    assert "fault recovery has no independently observed readback" in source
 
 
 def test_formal_cli_rejects_the_test_fixture_adapter() -> None:
