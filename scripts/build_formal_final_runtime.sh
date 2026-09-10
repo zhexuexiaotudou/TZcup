@@ -214,7 +214,18 @@ mv -- "${proot_compat_pending}" "${proot_compat_install}"
 }
 
 build_started_epoch_ns="$(date +%s%N)"
-LD_PRELOAD="${proot_compat_install}${LD_PRELOAD:+:${LD_PRELOAD}}" setsid bash -c '
+build_ld_preload_was_set=false
+build_ld_preload_saved="${LD_PRELOAD:-}"
+[[ -v LD_PRELOAD ]] && build_ld_preload_was_set=true
+if [[ -z "${cold_gate_evidence}" ]]; then
+  # The statx shim is required by the validated native-Linux/PRoot route.
+  # Loading it in ordinary WSL makes GNU make's executable probe fail with
+  # EOPNOTSUPP even though the same tool runs normally without the shim.
+  export LD_PRELOAD="${proot_compat_install}${LD_PRELOAD:+:${LD_PRELOAD}}"
+else
+  unset LD_PRELOAD
+fi
+setsid bash -c '
 set -euo pipefail
 repo_root="$1"
 runtime_ws="$2"
@@ -329,6 +340,11 @@ exec colcon --log-base "${runtime_ws}/log" build --merge-install \
     opennav_coverage_msgs opennav_coverage
 ' formal-final-build "${repo_root}" "${runtime_ws}" "${vendor_work_root}" "${vendor_build_report}" "${parallel_workers}" "${frozen_source_root}" "${opennav_bundle}" "${opennav_provenance_report}" "${fields2cover_binding_report}" &
 build_pid=$!
+if [[ "${build_ld_preload_was_set}" == true ]]; then
+  export LD_PRELOAD="${build_ld_preload_saved}"
+else
+  unset LD_PRELOAD
+fi
 
 set +e
 formal_runtime_start_memory_watchdog "${build_pid}" "${watchdog_prefix}"

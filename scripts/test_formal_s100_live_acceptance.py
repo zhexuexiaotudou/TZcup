@@ -11,6 +11,7 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import yaml
 
@@ -56,7 +57,18 @@ class FormalS100LiveAcceptanceTests(unittest.TestCase):
         self.root = Path(self.temporary.name)
         self.snapshot = self.root / "snapshot.json"
         self.snapshot.write_text(
-            json.dumps({"source_inventory_sha256": "1" * 64}) + "\n", encoding="utf-8"
+            json.dumps(
+                {
+                    "source_inventory_sha256": "1" * 64,
+                    "outputs": {
+                        "reports/engineering/formal_competition_vehicle.urdf": {
+                            "sha256": "6" * 64
+                        }
+                    },
+                }
+            )
+            + "\n",
+            encoding="utf-8",
         )
         self.identity = snapshot_identity(self.snapshot)
         self.runtime_closure = self.root / "runtime-closure.json"
@@ -103,6 +115,81 @@ class FormalS100LiveAcceptanceTests(unittest.TestCase):
 
     def tearDown(self) -> None:
         self.temporary.cleanup()
+
+    def test_snapshot_identity_matches_the_formal_session_three_field_contract(self) -> None:
+        self.assertEqual(
+            self.identity,
+            {
+                "snapshot_manifest_sha256": sha256_path(self.snapshot),
+                "source_inventory_sha256": "1" * 64,
+                "expanded_urdf_sha256": "6" * 64,
+            },
+        )
+
+    def test_snapshot_identity_rejects_missing_expanded_urdf_hash(self) -> None:
+        invalid = self.root / "snapshot-without-expanded-urdf.json"
+        invalid.write_text(
+            json.dumps({"source_inventory_sha256": "1" * 64}), encoding="utf-8"
+        )
+        with self.assertRaisesRegex(ValueError, "expanded URDF SHA-256"):
+            snapshot_identity(invalid)
+
+    def test_missing_formal_receipts_are_retained_with_active_session_bindings(self) -> None:
+        output = self.root / "missing-formal-receipts.raw.json"
+        models = []
+        for name in (
+            "dosod.hbm",
+            "vocabulary.json",
+            "edgesam-encoder.hbm",
+            "edgesam-decoder.hbm",
+        ):
+            path = self.root / name
+            path.write_bytes(b"formal-board-input")
+            models.append(path)
+        argv = [
+            "collect_formal_s100_live_runtime.py",
+            "--output",
+            str(output),
+            "--snapshot",
+            str(self.snapshot),
+            "--acceptance-session",
+            str(self.session),
+            "--runtime-closure",
+            str(self.runtime_closure),
+            "--dosod-hbm",
+            str(models[0]),
+            "--dosod-vocabulary",
+            str(models[1]),
+            "--edgesam-encoder-hbm",
+            str(models[2]),
+            "--edgesam-decoder-hbm",
+            str(models[3]),
+        ]
+        hardware = {
+            "architecture": "aarch64",
+            "attested": True,
+            "blockers": [],
+            "board": "RDK S100P",
+            "device_tree_compatible": "drobot,s100-rdk",
+            "device_tree_compatible_sha256": "7" * 64,
+            "device_tree_model": "D-Robotics RDK S100P V1P0",
+            "device_tree_model_sha256": "8" * 64,
+            "sku": "D-Robotics RDK S100P V1P0",
+            "soc": "Journey 6P",
+            "soc_identity_basis": "s100p_model_plus_drobot_s100_rdk_compatible",
+        }
+        with mock.patch.object(sys, "argv", argv), mock.patch.object(
+            collector, "probe_hardware", return_value=hardware
+        ):
+            self.assertEqual(collector.main(), 4)
+        payload = json.loads(output.read_text(encoding="utf-8"))
+        self.assertEqual(payload["source_binding"], self.identity)
+        self.assertEqual(payload["acceptance_session_binding"], self.session_binding)
+        self.assertEqual(payload["runtime_closure_binding"], self.closure_binding)
+        self.assertIn(
+            "required on-board input missing: dosod_compile_receipt",
+            payload["blockers"],
+        )
 
     def valid_short_diagnostic(self) -> dict:
         stamp = 4_000_000_000
@@ -346,6 +433,28 @@ boxes: float32 [1, 8400, 4]
             {"scores": [1, 8400, 4], "boxes": [1, 8400, 4]},
         )
         self.assertEqual(collector.parse_dosod_model_info("scores [1,8400,4]\nunknown [1,8400,4]"), {"scores": [1, 8400, 4]})
+        journey6_stdout = """output[0]:
+name: scores
+valid shape: (1,8400,4)
+tensor type: HB_DNN_TENSOR_TYPE_S16
+
+output[1]:
+name: boxes
+valid shape: (1,8400,4)
+tensor type: HB_DNN_TENSOR_TYPE_S16
+---------------------------------------------------------------------
+"""
+        self.assertEqual(
+            collector.parse_dosod_model_info(journey6_stdout),
+            {"scores": [1, 8400, 4], "boxes": [1, 8400, 4]},
+        )
+        self.assertEqual(
+            collector.parse_dosod_model_info(
+                'model desc: {"OUTPUT_NODES":"scores [1,8400,4]"}\n'
+                "output[0]:\nname: boxes\nvalid shape: (1,8400,4)\n"
+            ),
+            {"boxes": [1, 8400, 4]},
+        )
         hbm = self.root / "dosod.hbm"
         hbm.write_bytes(b"fake-hbm")
         original = collector.run_text

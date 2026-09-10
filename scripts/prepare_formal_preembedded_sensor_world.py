@@ -42,6 +42,12 @@ FORMAL_WATER_CONTACT_SENSOR_LINKS = {
     "left_side_brush_ground_contact": "left_side_brush_link",
     "right_side_brush_ground_contact": "right_side_brush_link",
     "central_roller_ground_contact": "central_roller_link",
+    "charge_receptacle_contact_sensor": "base_footprint",
+    "wastewater_drain_coupling_contact_sensor": "base_footprint",
+}
+NON_RESOLVING_SERVICE_CONTACT_SENSORS = {
+    "charge_receptacle_contact_sensor",
+    "wastewater_drain_coupling_contact_sensor",
 }
 
 
@@ -265,12 +271,59 @@ def restore_sensor_attachments(
 
     restored: list[dict[str, str]] = []
     for name in sorted(attachments):
-        target_link, source_pose, _sensor_type = attachments[name]
+        target_link, source_pose, sensor_type = attachments[name]
         target = links.get(target_link)
         sensor = converted[name]
         current = parents.get(sensor)
         if current is None or current.tag != "link":
             raise PreparationError(f"converted sensor {name} has no owning link")
+        # A reduced fixed link takes its collision with it.  Keep a contact
+        # sensor on that converted collision owner when its selector resolves
+        # there; moving only the sensor back would leave it on a collision-free
+        # reconstructed holder and Gazebo would publish no contacts.
+        selector = (sensor.findtext("contact/collision") or "").strip()
+        if sensor_type == "contact" and selector:
+            matching_collisions = [
+                collision
+                for collision in current.findall("collision")
+                if collision.get("name") == selector
+            ]
+            if len(matching_collisions) == 1:
+                if name in NON_RESOLVING_SERVICE_CONTACT_SENSORS:
+                    # The evaluation fixture is inserted into these proxy
+                    # volumes and must remain there while the service action
+                    # runs.  Ask sdformat to keep collision checks (and hence
+                    # real Contact samples) without generating an impulse that
+                    # ejects the static plug / hose from the proxy volume.
+                    collision = matching_collisions[0]
+                    surface = collision.find("surface")
+                    if surface is None:
+                        surface = ET.SubElement(collision, "surface")
+                    contact = surface.find("contact")
+                    if contact is None:
+                        contact = ET.SubElement(surface, "contact")
+                    non_resolving = contact.find("collide_without_contact")
+                    if non_resolving is None:
+                        non_resolving = ET.SubElement(
+                            contact, "collide_without_contact"
+                        )
+                    non_resolving.text = "true"
+                    bitmask = contact.find("collide_without_contact_bitmask")
+                    if bitmask is None:
+                        bitmask = ET.SubElement(
+                            contact, "collide_without_contact_bitmask"
+                        )
+                    bitmask.text = "1"
+                restored.append(
+                    {
+                        "sensor": name,
+                        "converted_link": current.get("name", ""),
+                        "restored_link": current.get("name", ""),
+                        "local_pose": sensor.findtext("pose", default="0 0 0 0 0 0"),
+                        "attachment_status": "retained_on_converted_collision_owner",
+                    }
+                )
+                continue
         attachment_status = "restored_urdf_reference_link"
         # sdformat reduces fixed joint chains, including camera and lidar
         # brackets, and bakes their initial poses into a surviving link.  Restore

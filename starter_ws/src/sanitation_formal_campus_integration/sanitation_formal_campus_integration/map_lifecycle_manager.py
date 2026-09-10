@@ -20,6 +20,7 @@ from .map_lifecycle_core import (
     MapLifecycleError,
     assess_grid_observation,
     load_campus_map_contract,
+    materialize_saved_map_coverage_geometry,
     prepare_public_lifecycle_artifacts,
     sha256,
     validate_saved_map_artifact,
@@ -281,6 +282,7 @@ class FormalMapLifecycleManager(Node):
             image_path = self._root / image_name
             if not image_path.is_file():
                 raise MapLifecycleError("saved map image is missing")
+            materialize_saved_map_coverage_geometry(self._root, self._contract)
             hashes = {
                 map_yaml.name: sha256(map_yaml),
                 image_path.name: sha256(image_path),
@@ -299,6 +301,12 @@ class FormalMapLifecycleManager(Node):
                 ),
                 "neutral_speed.pgm": sha256(
                     self._root / "neutral_speed.pgm"
+                ),
+                "coverage_geometry.yaml": sha256(
+                    self._root / "coverage_geometry.yaml"
+                ),
+                "coverage_free_space.pgm": sha256(
+                    self._root / "coverage_free_space.pgm"
                 ),
             }
             manifest = {

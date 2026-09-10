@@ -315,7 +315,9 @@ def _assert_regular(path: Path, label: str) -> None:
         raise ClosureError(f"{label} is missing or not a regular file: {path}")
 
 
-def _identity_command(arguments: Sequence[str], label: str) -> str:
+def _identity_command(
+    arguments: Sequence[str], label: str, *, allow_empty: bool = False
+) -> str:
     try:
         result = subprocess.run(
             list(arguments),
@@ -332,7 +334,7 @@ def _identity_command(arguments: Sequence[str], label: str) -> str:
             f"cannot query {label}: exit={result.returncode} detail={detail!r}"
         )
     output = result.stdout.strip()
-    if not output:
+    if not output and not allow_empty:
         raise ClosureError(f"cannot query {label}: empty output")
     return output
 
@@ -602,6 +604,7 @@ def _opennav_coverage_provenance_identity(runtime_ws: Path) -> dict[str, Any]:
     clean = _identity_command(
         ["git", "-C", str(source_root), "status", "--porcelain"],
         "frozen OpenNav Coverage working tree",
+        allow_empty=True,
     )
     if head != OPENNAV_COVERAGE_PATCHED_COMMIT or tree != OPENNAV_COVERAGE_PATCHED_TREE:
         raise ClosureError("frozen OpenNav Coverage checkout does not match patched identity")

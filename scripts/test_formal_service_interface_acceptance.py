@@ -59,11 +59,17 @@ def test_evaluation_joint_plugins_are_default_off_and_isolated() -> None:
         "/formal_vehicle/evaluation/service/drain_cap_position_rad",
     ):
         assert topic in power
+    assert "<p_gain>700.0</p_gain>" in power
+    assert "<p_gain>10.0</p_gain>" in power
 
 
 def test_acceptance_launch_uses_only_ros_to_gz_evaluation_commands() -> None:
     source = LAUNCH.read_text(encoding="utf-8")
     assert "formal_vehicle_sim.launch.py" in source
+    assert "world = LaunchConfiguration('world')" in source
+    assert "'world': world" in source
+    assert "'spawn_robot': 'false'" in source
+    assert "DeclareLaunchArgument('world')" in source
     assert "formal_service_station.sdf" in source
     assert source.count("@std_msgs/msg/Float64]gz.msgs.Double") == 3
     assert "@std_msgs/msg/Float64[gz.msgs.Double" not in source
@@ -91,6 +97,11 @@ def test_runner_executes_every_scenario_with_fresh_vehicle_model() -> None:
         assert scenario in source
     assert "service_acceptance_interfaces:=true" in source
     assert "wastewater_load_mass_kg:=8.30" in source
+    assert "controller_config_path:=package://sanitation_vehicle_description/config/formal_vehicle_controllers.yaml" in source
+    assert "prepare_formal_preembedded_sensor_world.py" in source
+    assert '--output-world "${preembedded_world}" --report "${preembedded_report}"' in source
+    assert 'world:="${preembedded_world}"' in source
+    assert '"${preembedded_world}" "${preembedded_report}"' in source
     assert "FORMAL_SERVICE_SETUP" in source
     assert "formal service overlay is missing" in source
     assert 'station_x_offset="4.0"' in source

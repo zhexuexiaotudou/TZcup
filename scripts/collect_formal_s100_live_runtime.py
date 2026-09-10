@@ -254,9 +254,31 @@ def _node_identities() -> dict[str, dict[str, Any]]:
 def parse_dosod_model_info(stdout: str) -> dict[str, list[int]]:
     """Accept only explicit named DOSOD score/box shapes from official model_info."""
     rows: dict[str, list[int]] = {}
+    # Current Journey 6 ``hrt_model_exec`` prints each tensor as a bounded
+    # multiline output block (``name:`` followed by ``valid shape:``).  Parse
+    # those blocks first so an ONNX path or model description cannot be
+    # mistaken for a runtime output declaration.
+    for match in re.finditer(
+        r"(?ims)^output\[\d+\]:\s*(.*?)(?=^output\[\d+\]:|^-{10,}\s*$|\Z)",
+        stdout,
+    ):
+        block = match.group(1)
+        name_match = re.search(r"(?im)^name:\s*(scores|boxes)\s*$", block)
+        shape_match = re.search(
+            r"(?im)^valid shape:\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)\s*$",
+            block,
+        )
+        if name_match and shape_match:
+            rows[name_match.group(1).lower()] = [
+                int(value) for value in shape_match.groups()
+            ]
+    # Retain compatibility with older official builds that emitted one-line
+    # square-bracket shapes.  Never overwrite a parsed current-format block.
     for name in ("scores", "boxes"):
+        if name in rows:
+            continue
         match = re.search(
-            rf"(?im)\b{name}\b[^\n]*?\[\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\]",
+            rf"(?im)^(?:name:\s*)?{name}\b[^\n]*?\[\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\]",
             stdout,
         )
         if match:
@@ -741,6 +763,35 @@ def main() -> int:
         {name: required_paths[name] for name in short_required_names}
         if args.short_diagnostic_only else required_paths
     )
+    binding_names = ("snapshot", "acceptance_session", "runtime_closure")
+    missing_bindings = [
+        name
+        for name in binding_names
+        if required_paths[name] is None or not required_paths[name].is_file()
+    ]
+    if missing_bindings:
+        base["blockers"] = [
+            f"required on-board input missing: {name}" for name in missing_bindings
+        ]
+        atomic_json(args.output, base)
+        return 4
+    try:
+        # Bind every board-side failure that occurs after the immutable formal
+        # hand-off has been supplied.  In particular, a missing compile/parity/
+        # metric chain must not produce an anonymous artifact that cannot be
+        # associated with the active snapshot and runtime closure.
+        base["source_binding"] = snapshot_identity(args.snapshot)
+        base["runtime_closure_binding"] = runtime_closure_binding(args.runtime_closure)
+        base["acceptance_session_binding"] = acceptance_session_binding(
+            args.acceptance_session,
+            base["source_binding"],
+            base["runtime_closure_binding"],
+        )
+    except Exception as exc:  # fail closed while retaining diagnostic evidence
+        base["blockers"] = [f"live collection failed: {type(exc).__name__}: {exc}"]
+        atomic_json(args.output, base)
+        print(json.dumps(base, indent=2, sort_keys=True))
+        return 4
     missing = [
         name for name, path in required_for_mode.items()
         if path is None or (not path.is_dir() if name == "dosod_admission_bundle" else not path.is_file())
@@ -767,13 +818,6 @@ def main() -> int:
         return 4
 
     try:
-        base["source_binding"] = snapshot_identity(args.snapshot)
-        base["runtime_closure_binding"] = runtime_closure_binding(args.runtime_closure)
-        base["acceptance_session_binding"] = acceptance_session_binding(
-            args.acceptance_session,
-            base["source_binding"],
-            base["runtime_closure_binding"],
-        )
         model_paths = {role: required_paths[role] for role in REQUIRED_MODEL_ROLES}
         if args.short_diagnostic_only:
             # This is intentionally a separate retained receipt.  The 1800s

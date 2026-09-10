@@ -158,6 +158,65 @@ def test_reconstructs_fixed_sensor_holder_when_sdformat_reduces_reference_link()
     assert restored[0]["attachment_status"] == "restored_reconstructed_fixed_reference_link"
 
 
+def test_retains_contact_sensor_on_reduced_collision_owner():
+    urdf = ET.fromstring(
+        """<robot name='fixture'><link name='base'/><link name='service_link'/>
+        <joint name='service_mount' type='fixed'><parent link='base'/><child link='service_link'/></joint>
+        <gazebo reference='service_link'><sensor name='service_contact' type='contact'/>
+        </gazebo></robot>"""
+    )
+    converted = ET.fromstring(
+        """<model name='fixture'><link name='base'>
+        <collision name='base_fixed_joint_lump__service_collision_collision'/>
+        <sensor name='service_contact' type='contact'><pose>1 2 3 0 0 0</pose>
+        <contact><collision>base_fixed_joint_lump__service_collision_collision</collision></contact>
+        </sensor></link></model>"""
+    )
+
+    restored = MODULE.restore_sensor_attachments(
+        converted, MODULE.sensor_attachment_contract(urdf), urdf
+    )
+
+    assert converted.find("link[@name='service_link']") is None
+    assert converted.find("link[@name='base']/sensor[@name='service_contact']") is not None
+    assert restored == [{
+        "sensor": "service_contact",
+        "converted_link": "base",
+        "restored_link": "base",
+        "local_pose": "1 2 3 0 0 0",
+        "attachment_status": "retained_on_converted_collision_owner",
+    }]
+
+
+def test_service_contact_proxy_checks_overlap_without_ejecting_fixture():
+    urdf = ET.fromstring(
+        "<robot name='fixture'><link name='charge_receptacle_contact_collision_link'/>"
+        "<gazebo reference='charge_receptacle_contact_collision_link'>"
+        "<sensor name='charge_receptacle_contact_sensor' type='contact'>"
+        "<contact><collision>folded_charge_proxy</collision></contact>"
+        "</sensor></gazebo></robot>"
+    )
+    model = ET.fromstring(
+        "<model name='fixture'><link name='base_footprint'>"
+        "<collision name='folded_charge_proxy'/><sensor "
+        "name='charge_receptacle_contact_sensor' type='contact'>"
+        "<contact><collision>folded_charge_proxy</collision></contact>"
+        "</sensor></link></model>"
+    )
+
+    MODULE.restore_sensor_attachments(
+        model, MODULE.sensor_attachment_contract(urdf), urdf
+    )
+
+    contact = model.find(
+        "link[@name='base_footprint']/collision[@name='folded_charge_proxy']"
+        "/surface/contact"
+    )
+    assert contact is not None
+    assert contact.findtext("collide_without_contact") == "true"
+    assert contact.findtext("collide_without_contact_bitmask") == "1"
+
+
 def test_build_can_make_single_sensor_source_diagnostic(tmp_path: Path):
     world = tmp_path / "world.sdf"
     urdf = tmp_path / "vehicle.urdf"
