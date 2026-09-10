@@ -10,8 +10,10 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
+sys.path.insert(0, str(ROOT / "starter_ws/src/sanitation_perception"))
 
 import formal_a19_product_adapter as adapter
+from sanitation_perception.a19_fault_hooks import ProductFaultHooks
 
 
 def message(*, sec: int = 2, nanosec: int = 900_000_000, frame: str = "camera", width: int = 8, data: bytes = b"\x01\x02"):
@@ -43,9 +45,11 @@ def test_current_formal_contract_exposes_only_live_product_fault_consumers() -> 
         "camera_info_mismatch", "tf_unavailable", "invalid_depth",
         "proposal_flood", "proposal_dropout", "classifier_exception",
         "classifier_timeout", "action_verifier_failure", "reobserve_timeout",
+        "cuda_provider_failure", "model_hash_mismatch", "corrupt_model",
+        "sustained_slow_inference",
     ]
     assert unsupported == [row["fault"] for row in contract["fault_schedule"] if row["fault"] not in adapter.SUPPORTED_FAULTS]
-    assert len(unsupported) == 6
+    assert len(unsupported) == 2
 
 
 def test_product_argv_requires_real_product_launch_and_every_proxy_binding(monkeypatch) -> None:
@@ -116,6 +120,34 @@ def test_live_inner_pipeline_faults_require_strict_parameters() -> None:
         adapter.validate_fault_parameters("invalid_depth", {"invalid_fraction": 0.5, "duration_s": 10})
 
 
+def test_provider_and_model_hooks_use_real_files_but_never_mutate_them(tmp_path: Path) -> None:
+    dosod, edgesam = tmp_path / "dosod.onnx", tmp_path / "edgesam.onnx"
+    dosod.write_bytes(b"dosod-model")
+    edgesam.write_bytes(b"edgesam-model")
+    calls: list[Path] = []
+    hooks = ProductFaultHooks(
+        {"dosod": dosod, "edgesam": edgesam},
+        provider_probe=lambda provider: {"available_providers": ["CPUExecutionProvider"], "selected_provider": None, "requested": provider},
+        model_probe=lambda path: calls.append(path) or {"shadow_bytes": path.read_bytes().hex()},
+    )
+    original = {path: path.read_bytes() for path in (dosod, edgesam)}
+    provider = hooks.begin("cuda_provider_failure", {"provider": "CUDAExecutionProvider", "duration_s": 10})
+    assert provider["selected_provider"] is None
+    with pytest.raises(RuntimeError, match="cuda_provider_failure"):
+        hooks.before_inference()
+    assert hooks.clear()["original_model_hashes_restored"] == {"dosod": True, "edgesam": True}
+    mismatch = hooks.begin("model_hash_mismatch", {"model": "dosod", "mismatch_count": 1})
+    assert mismatch["actual_sha256"] != mismatch["expected_sha256"]
+    hooks.clear()
+    corrupt = hooks.begin("corrupt_model", {"model": "edgesam", "corrupt_bytes": 4})
+    assert corrupt["shadow_only"] is True and calls and not calls[-1].exists()
+    hooks.clear()
+    hooks.begin("sustained_slow_inference", {"latency_ms": 1, "duration_s": 10})
+    assert hooks.before_inference()["observed_delay_ms"] >= 1
+    hooks.clear()
+    assert {path: path.read_bytes() for path in (dosod, edgesam)} == original
+
+
 def test_product_launch_threads_all_proxy_topics_into_the_pc_adapter() -> None:
     product = (ROOT / "starter_ws/src/sanitation_product_demo_integration/launch/product_demo.launch.py").read_text(encoding="utf-8")
     perception_launch = (ROOT / "starter_ws/src/sanitation_perception/launch/formal_pc_open_vocab.launch.py").read_text(encoding="utf-8")
@@ -133,5 +165,8 @@ def test_product_launch_threads_all_proxy_topics_into_the_pc_adapter() -> None:
     assert '"/odom/unfiltered"' in source
     assert '"capability_blocked"' in source
     assert '"unsupported_faults"' in source
+    assert '"cuda_provider_failure"' in source
+    assert '"/formal_a19/perception_fault"' in perception
+    assert "ProductFaultHooks" in perception
     assert '"CameraInfo and RGB dimensions differ"' in perception
     assert '"depth image has no finite positive samples"' in perception

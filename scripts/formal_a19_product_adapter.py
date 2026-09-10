@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Run the real product graph behind a fail-closed A19 sensor-fault proxy.
 
-This adapter never turns a producer command into evidence by echoing it.  The
-six supported input faults are applied to ROS messages consumed by the real PC
-perception node and are acknowledged only after the proxy observes the effect.
+This adapter never turns a producer command into evidence by echoing it.  Its
+sensor faults alter messages consumed by the real PC perception node; product
+faults drive that node's real model/provider hooks and await diagnostics.
 Faults without a product-side injection point are reported UNSUPPORTED before
 the expensive soak starts.
 """
@@ -39,11 +39,20 @@ SUPPORTED_FAULTS = frozenset({
     "classifier_timeout",
     "action_verifier_failure",
     "reobserve_timeout",
+    "cuda_provider_failure",
+    "model_hash_mismatch",
+    "corrupt_model",
+    "sustained_slow_inference",
+})
+MODEL_PROVIDER_FAULTS = frozenset({
+    "cuda_provider_failure", "model_hash_mismatch", "corrupt_model",
+    "sustained_slow_inference",
 })
 SENSOR_PROXY_FAULTS = frozenset({
     "rgb_freeze", "depth_freeze", "timestamp_skew", "camera_info_mismatch",
     "tf_unavailable", "invalid_depth",
 })
+MODEL_PROVIDER_FAULT_TOPIC = "/formal_a19/perception_fault"
 PROXY_TOPICS = {
     "front_rgb": (
         "/sensors/front_rgbd/depth/image_rect_raw/image",
@@ -176,6 +185,19 @@ def validate_fault_parameters(fault: str, parameters: Mapping[str, Any]) -> None
         _positive_number(parameters.get("occurrences"), f"{fault}.occurrences")
     elif fault == "action_verifier_failure":
         _positive_number(parameters.get("reject_count"), "action_verifier_failure.reject_count")
+    elif fault == "cuda_provider_failure":
+        if parameters.get("provider") != "CUDAExecutionProvider":
+            raise AdapterError("cuda_provider_failure requires CUDAExecutionProvider")
+        _positive_number(parameters.get("duration_s"), "cuda_provider_failure.duration_s")
+    elif fault == "model_hash_mismatch":
+        if parameters.get("model") != "dosod" or parameters.get("mismatch_count") != 1:
+            raise AdapterError("model_hash_mismatch requires dosod and mismatch_count=1")
+    elif fault == "corrupt_model":
+        if parameters.get("model") != "edgesam" or int(parameters.get("corrupt_bytes", 0)) <= 0:
+            raise AdapterError("corrupt_model requires edgesam and positive corrupt_bytes")
+    elif fault == "sustained_slow_inference":
+        _positive_number(parameters.get("latency_ms"), "sustained_slow_inference.latency_ms")
+        _positive_number(parameters.get("duration_s"), "sustained_slow_inference.duration_s")
 
 
 def _shift_stamp(stamp: Any, skew_ms: float) -> None:
@@ -408,9 +430,13 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
             self.tf_failure_since: float | None = None
             self.initial_perception_pids: set[int] | None = None
             self.product_fault_baseline: dict[str, int] = {}
+            self.model_provider_fault_events: dict[tuple[str, str], dict[str, Any]] = {}
             latched = QoSProfile(depth=1, reliability=ReliabilityPolicy.RELIABLE, durability=DurabilityPolicy.TRANSIENT_LOCAL)
             self.operator = self.create_publisher(Bool, "/product_demo/operator_start", latched)
             self.fault_control = self.create_publisher(String, "/formal_a19/fault_control", latched)
+            self.model_provider_fault = self.create_publisher(
+                String, MODEL_PROVIDER_FAULT_TOPIC, 10
+            )
             message_types = {
                 "front_rgb": Image, "front_depth": Image, "front_info": CameraInfo,
                 "wrist_rgb": Image, "wrist_depth": Image, "wrist_info": CameraInfo,
@@ -468,6 +494,12 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
                         self.tf_failure_since = now
                     elif succeeded:
                         self.tf_failure_since = None
+                    for row in rows:
+                        if row["message"] not in {"a19_fault_active", "a19_fault_recovered"}:
+                            continue
+                        fault = row["values"].get("fault")
+                        if isinstance(fault, str):
+                            self.model_provider_fault_events[(fault, row["message"])] = dict(row)
             self._remember(name, rows)
 
         def _on_actuators(self, message: Any) -> None:
@@ -524,6 +556,16 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
             self.fault_control.publish(String(data=json.dumps({
                 "fault": fault, "parameters": dict(parameters), "active": active,
             }, sort_keys=True, separators=(",", ":"))))
+
+        def command_model_provider_fault(self, action: str, fault: str, parameters: Mapping[str, Any]) -> None:
+            self.model_provider_fault.publish(String(data=json.dumps({
+                "action": action, "fault": fault, "parameters": dict(parameters),
+            }, sort_keys=True)))
+
+        def model_provider_fault_readback(self, fault: str, message: str) -> dict[str, Any] | None:
+            with self.lock:
+                row = self.model_provider_fault_events.get((fault, message))
+            return copy.deepcopy(row) if row is not None else None
 
         def product_fault_readback(self, fault: str, *, recovered: bool = False) -> dict[str, Any] | None:
             source = "post_clean_verification" if fault == "action_verifier_failure" else "perception"
@@ -714,8 +756,12 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
                 if not isinstance(parameters, Mapping):
                     raise AdapterError("fault parameters are not an object")
                 started = time.monotonic()
-                probe.controller.begin(fault, parameters)
-                if fault not in SENSOR_PROXY_FAULTS:
+                validate_fault_parameters(fault, parameters)
+                if fault not in MODEL_PROVIDER_FAULTS:
+                    probe.controller.begin(fault, parameters)
+                if fault in MODEL_PROVIDER_FAULTS:
+                    probe.command_model_provider_fault("begin", fault, parameters)
+                elif fault not in SENSOR_PROXY_FAULTS:
                     prior = probe.product_fault_readback(fault)
                     probe.product_fault_baseline[fault] = 0 if prior is None else int(prior["events"])
                     probe.command_product_fault(fault, parameters, True)
@@ -726,7 +772,13 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
                     lambda: (
                         probe.controller.readback() is not None
                         if fault in SENSOR_PROXY_FAULTS
-                        else probe.product_fault_readback(fault) is not None
+                        else (
+                            probe.model_provider_fault_readback(
+                                fault, "a19_fault_active"
+                            ) is not None
+                            if fault in MODEL_PROVIDER_FAULTS
+                            else probe.product_fault_readback(fault) is not None
+                        )
                     ),
                     args.readback_timeout_s,
                     f"{fault} injection",
@@ -738,7 +790,11 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
                 readback = (
                     probe.controller.readback()
                     if fault in SENSOR_PROXY_FAULTS
-                    else probe.product_fault_readback(fault)
+                    else (
+                        probe.model_provider_fault_readback(fault, "a19_fault_active")
+                        if fault in MODEL_PROVIDER_FAULTS
+                        else probe.product_fault_readback(fault)
+                    )
                 )
                 emitter.emit({"type": "fault_state", "fault": fault, "state": "STOPPED", "safety_state": "STOPPED", "pending_clean_outcome": "DEFERRED", "perception_health": "DEGRADED", "nav2_operational": probe.value("nav2") is not None, "watchdog_operational": probe.value("safety", 1.0) is not None, "unsafe_cleaning_action_count": probe.unsafe_cleaning_action_count, "brake_latency_s": brake_latency_s, "injection_readback": readback, "cleaning_inhibit_readback": probe.value("spot_cleaning")})
                 # The wrist fault must remain active through the product's
@@ -752,8 +808,11 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
                     )
                 )
                 time.sleep(max(0.0, duration - (time.monotonic() - started)))
-                probe.controller.clear()
-                if fault not in SENSOR_PROXY_FAULTS:
+                if fault not in MODEL_PROVIDER_FAULTS:
+                    probe.controller.clear()
+                if fault in MODEL_PROVIDER_FAULTS:
+                    probe.command_model_provider_fault("clear", fault, parameters)
+                elif fault not in SENSOR_PROXY_FAULTS:
                     probe.command_product_fault(fault, parameters, False)
                 for _ in range(12):
                     probe.command_operator(True); time.sleep(0.1)
@@ -762,7 +821,13 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
                     readback = (
                         probe.controller.recovery_readback()
                         if fault in SENSOR_PROXY_FAULTS
-                        else probe.product_fault_readback(fault, recovered=True)
+                        else (
+                            probe.model_provider_fault_readback(
+                                fault, "a19_fault_recovered"
+                            )
+                            if fault in MODEL_PROVIDER_FAULTS
+                            else probe.product_fault_readback(fault, recovered=True)
+                        )
                     )
                     if readback is None:
                         return False

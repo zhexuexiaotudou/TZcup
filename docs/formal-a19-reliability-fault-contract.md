@@ -12,8 +12,12 @@ Perception 和 cleaning diagnostics 独立观察，定位误差由 `/odom` 与�
 `/odom/unfiltered` 计算，RSS 来自同一 PGID 的 `/proc`。proposal_flood、proposal_dropout、
 classifier_exception、classifier_timeout、action_verifier_failure 和 reobserve_timeout
 现通过受控主题实际改变 PC 推理或物理抓取消费者，并由这些节点自己的 diagnostics/status
-回传消费计数；adapter 只在该计数增长后确认 STOPPED。当前产品仍没有其余 6 类故障和
-三种非 nominal profile 的运行时注入接口；adapter 会在正式 start 握手立即列出
+回传消费计数；adapter 只在该计数增长后确认 STOPPED。
+PC 感知节点还订阅受控的 `/formal_a19/perception_fault`：CUDA 故障只在实际 ORT provider
+可用时创建该 provider 的会话，CPU-only runtime 如实回读没有 CUDA；DOSOD hash 对真实文件
+重算后以错误期望值验证；EdgeSAM 只复制到临时 shadow 后篡改并交给真实 ORT loader，原模型
+不会写入；慢推理在真实推理回调中 sleep 并报告观测延迟。四者均由产品 diagnostics 独立确认
+active/recovered。当前产品仍没有其余 2 类故障和三种非 nominal profile 的运行时注入接口；adapter 会在正式 start 握手立即列出
 `UNSUPPORTED` 并失败关闭，不会以命令回显冒充实测，也不会先浪费两小时再失败。因此
 完整 A19 仍被剩余产品 fault hooks 与 profile 注入阻断。
 

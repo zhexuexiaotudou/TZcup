@@ -11,10 +11,12 @@ import json
 import math
 import threading
 import time
+from pathlib import Path
 
 import numpy as np
 
 from .dosod_ros_adapter import DosodOnnxDetector
+from .a19_fault_hooks import A19ProductFaultError, ProductFaultHooks
 from .diagnostic_compat import set_diagnostic_level
 from .edgesam_ros_adapter import EdgeSamOnnxSegmenter
 from .product_intermediate_capture import ProductIntermediateCapture
@@ -371,8 +373,6 @@ def main() -> None:
             artifact_root = str(self.get_parameter("artifact_root").value)
             if not artifact_root:
                 raise RuntimeError("artifact_root is required; refusing placeholder inference")
-            from pathlib import Path
-
             root = Path(artifact_root)
             capture_root = str(self.get_parameter("intermediate_capture_root").value)
             self.intermediate_capture = (
@@ -410,6 +410,16 @@ def main() -> None:
             self.segmenter = EdgeSamOnnxSegmenter(
                 root / "edgesam" / "edge_sam_3x_encoder.onnx",
                 root / "edgesam" / "edge_sam_3x_decoder.onnx",
+            )
+            self._a19_model_faults = ProductFaultHooks(
+                {
+                    "dosod": root / "dosod" / "dosod_mlp3x_s_tzcup_rep.onnx",
+                    "edgesam": root / "edgesam" / "edge_sam_3x_encoder.onnx",
+                },
+                provider_probe=lambda provider: self._probe_cuda_provider(
+                    provider, root / "dosod" / "dosod_mlp3x_s_tzcup_rep.onnx"
+                ),
+                model_probe=self._probe_model_load,
             )
             self.bridge = CvBridge()
             self.tf_buffer = Buffer(cache_time=Duration(seconds=10.0))
@@ -467,6 +477,12 @@ def main() -> None:
                 self._on_formal_a19_fault_control,
                 10,
                 callback_group=self.cache_callback_group,
+            )
+            self.create_subscription(
+                String,
+                "/formal_a19/perception_fault",
+                self._on_a19_model_fault,
+                10,
             )
             self._last_success_diagnostic_s = float("-inf")
 
@@ -574,10 +590,59 @@ def main() -> None:
                 return
             self._diagnostic(1, "formal_a19_fault_control_updated", self._formal_a19_fault.telemetry())
 
+        @staticmethod
+        def _probe_cuda_provider(provider: str, model_path: Path) -> dict[str, object]:
+            import onnxruntime as ort
+
+            available = list(ort.get_available_providers())
+            result: dict[str, object] = {
+                "available_providers": available, "selected_provider": None,
+            }
+            if provider in available:
+                session = ort.InferenceSession(str(model_path), providers=[provider])
+                result.update(
+                    selected_provider=provider,
+                    session_providers=list(session.get_providers()),
+                )
+            return result
+
+        @staticmethod
+        def _probe_model_load(path: Path) -> dict[str, object]:
+            import onnxruntime as ort
+
+            session = ort.InferenceSession(str(path), providers=["CPUExecutionProvider"])
+            return {
+                "loader_accepted_shadow": True,
+                "session_providers": list(session.get_providers()),
+            }
+
+        def _on_a19_model_fault(self, message: String) -> None:
+            try:
+                command = json.loads(message.data)
+                if not isinstance(command, dict) or command.get("action") not in {"begin", "clear"}:
+                    raise A19ProductFaultError("invalid A19 product fault command")
+                if command["action"] == "begin":
+                    readback = self._a19_model_faults.begin(
+                        str(command.get("fault")), command.get("parameters", {})
+                    )
+                    self._diagnostic(2, "a19_fault_active", readback)
+                else:
+                    self._diagnostic(
+                        0, "a19_fault_recovered", self._a19_model_faults.clear()
+                    )
+            except (A19ProductFaultError, ValueError, TypeError) as exc:
+                self._diagnostic(2, "a19_fault_command_rejected", {"error": str(exc)})
+
+        def _a19_before_inference(self) -> None:
+            readback = self._a19_model_faults.before_inference()
+            if readback is not None:
+                self._diagnostic(2, "a19_slow_inference_active", readback)
+
         def _infer(self, rgb):
             # These branches sit immediately at the DOSOD consumer, so each
             # accepted command changes the product data path rather than an
             # evidence-only side channel.
+            self._a19_before_inference()
             if self._formal_a19_fault.consume("classifier_exception"):
                 raise RuntimeError("formal_a19_classifier_exception")
             if self._formal_a19_fault.consume("classifier_timeout"):
