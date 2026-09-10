@@ -12,8 +12,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import json
-from math import isfinite
+from math import floor, isfinite
 from pathlib import Path
+import struct
 from types import MappingProxyType
 from typing import Any, Iterable, Mapping, Sequence
 from collections import OrderedDict
@@ -42,6 +43,8 @@ FORMAL_S100P_MARCH = "nash-m"
 FORMAL_S100P_BOARD = "RDK S100P"
 FORMAL_S100P_SOC = "Journey 6P"
 FORMAL_S100P_PLATFORM = "rdk_s100"
+S100P_EDGESAM_MODEL_INPUT_WIDTH = 512
+S100P_EDGESAM_MODEL_INPUT_HEIGHT = 512
 DOSOD_VOCABULARY_RELATIVE_PATH = "dosod/tzcup_offline_vocabulary.json"
 BOARD_ARTIFACT_SPECS = {
     "dosod/dosod_mlp3x_s_tzcup_rep-int16.hbm": (
@@ -579,7 +582,7 @@ def validate_exact_rgbd_projection_binding(
     camera_info_frame_id: str,
     camera_info_width: int,
     camera_info_height: int,
-    camera_k: Sequence[Any],
+    camera_k: Iterable[Any],
 ) -> None:
     """Reject any RGB-D/CameraInfo tuple not bound to one source frame."""
     stamp = _stamp_ns(rgb_stamp_ns, "RGB stamp")
@@ -594,17 +597,24 @@ def validate_exact_rgbd_projection_binding(
         or depth_encoding not in {"16UC1", "32FC1"}
     ):
         raise S100PProductAdapterError("depth is not exactly bound to the RGB frame")
+    try:
+        # RCLPY exposes CameraInfo.k as a numpy.ndarray on the S100P.  Freeze
+        # any iterable before validation so its contents are checked exactly
+        # once; this accepts that runtime representation without weakening any
+        # of the projection-binding invariants below.
+        camera_values = tuple(camera_k)
+    except TypeError as exc:
+        raise S100PProductAdapterError("CameraInfo.K must be an iterable of nine values") from exc
     if (
         _stamp_ns(camera_info_stamp_ns, "CameraInfo stamp") != stamp
         or _nonempty_string(camera_info_frame_id, "CameraInfo frame id") != frame_id
         or _positive_int(camera_info_width, "CameraInfo width") != width
         or _positive_int(camera_info_height, "CameraInfo height") != height
-        or not isinstance(camera_k, Sequence)
         or isinstance(camera_k, (str, bytes))
-        or len(camera_k) != 9
+        or len(camera_values) != 9
     ):
         raise S100PProductAdapterError("CameraInfo is not exactly bound to the RGB frame")
-    values = tuple(_finite_number(value, "CameraInfo.K") for value in camera_k)
+    values = tuple(_finite_number(value, "CameraInfo.K") for value in camera_values)
     if values[0] <= 0.0 or values[4] <= 0.0:
         raise S100PProductAdapterError("CameraInfo focal lengths must be positive")
 
@@ -689,23 +699,222 @@ def ground_dirt_prompt_batch(
     return EdgeSamPromptBatch(stamp, width, height, tuple(selected))
 
 
-def _same_roi(left: Roi, right: Roi) -> bool:
-    left_x1, left_y1, left_x2, left_y2 = left.xyxy
-    right_x1, right_y1, right_x2, right_y2 = right.xyxy
-    intersection = max(0.0, min(left_x2, right_x2) - max(left_x1, right_x1)) * max(
-        0.0, min(left_y2, right_y2) - max(left_y1, right_y1)
+def _float32(value: float | int, label: str) -> float:
+    """Replay the official S100 C++ ``float`` rounding without NumPy."""
+
+    try:
+        result = struct.unpack("<f", struct.pack("<f", float(value)))[0]
+    except (OverflowError, struct.error) as exc:
+        raise S100PProductAdapterError(
+            f"{label} is not representable as binary32"
+        ) from exc
+    if not isfinite(result):
+        raise S100PProductAdapterError(f"{label} must be finite")
+    return result
+
+
+def _roi_integer(value: float, label: str) -> int:
+    if not isfinite(value) or value != floor(value):
+        raise S100PProductAdapterError(
+            f"{label} must be an integral pixel coordinate"
+        )
+    return int(value)
+
+
+def canonicalize_official_s100p_edgesam_roi(
+    roi: Roi,
+    *,
+    source_image_width: int,
+    source_image_height: int,
+    model_input_width: int = S100P_EDGESAM_MODEL_INPUT_WIDTH,
+    model_input_height: int = S100P_EDGESAM_MODEL_INPUT_HEIGHT,
+) -> Roi:
+    """Replay the official S100 ``mono_edgesam`` ROI publication exactly.
+
+    This is the upstream chain from ``AiMsgManage::GetTargetRois`` through
+    ``ResizeNV12Img``, ``GenScaleBox`` and the integer ROS ROI fields.  It is
+    deliberately not an overlap heuristic: a non-canonical observed ROI is a
+    different prompt and must be rejected.
+    """
+
+    if not isinstance(roi, Roi):
+        raise S100PProductAdapterError("EdgeSAM prompt ROI must be a Roi")
+    source_width = _positive_int(source_image_width, "EdgeSAM source image width")
+    source_height = _positive_int(source_image_height, "EdgeSAM source image height")
+    model_width = _positive_int(model_input_width, "EdgeSAM model input width")
+    model_height = _positive_int(model_input_height, "EdgeSAM model input height")
+    if (model_width, model_height) != (
+        S100P_EDGESAM_MODEL_INPUT_WIDTH,
+        S100P_EDGESAM_MODEL_INPUT_HEIGHT,
+    ):
+        raise S100PProductAdapterError(
+            "EdgeSAM model input shape is not the frozen 512x512 S100 contract"
+        )
+
+    x = _roi_integer(roi.x_offset, "EdgeSAM prompt ROI x_offset")
+    y = _roi_integer(roi.y_offset, "EdgeSAM prompt ROI y_offset")
+    width = _roi_integer(roi.width, "EdgeSAM prompt ROI width")
+    height = _roi_integer(roi.height, "EdgeSAM prompt ROI height")
+    right = x + width
+    bottom = y + height
+    if (
+        x < 0
+        or y < 0
+        or width <= 0
+        or height <= 0
+        or right > source_width
+        or bottom > source_height
+    ):
+        raise S100PProductAdapterError("EdgeSAM prompt ROI is outside the source image")
+
+    ratio_width = _float32(
+        _float32(source_width, "EdgeSAM source image width")
+        / _float32(model_width, "EdgeSAM model input width"),
+        "EdgeSAM width resize ratio",
     )
-    union = left.width * left.height + right.width * right.height - intersection
-    if union <= 0.0 or intersection / union < 0.90:
-        return False
-    left_cx = left.x_offset + left.width / 2.0
-    left_cy = left.y_offset + left.height / 2.0
-    right_cx = right.x_offset + right.width / 2.0
-    right_cy = right.y_offset + right.height / 2.0
-    return (
-        abs(left_cx - right_cx) <= max(2.0, right.width * 0.02)
-        and abs(left_cy - right_cy) <= max(2.0, right.height * 0.02)
+    ratio_height = _float32(
+        _float32(source_height, "EdgeSAM source image height")
+        / _float32(model_height, "EdgeSAM model input height"),
+        "EdgeSAM height resize ratio",
     )
+    ratio = max(ratio_width, ratio_height)
+    if ratio <= 0.0:
+        raise S100PProductAdapterError("EdgeSAM resize ratio must be positive")
+    if ratio == ratio_width:
+        resized_width = model_width
+        resized_height = int(
+            _float32(
+                _float32(source_height, "EdgeSAM source image height") / ratio,
+                "EdgeSAM resized height",
+            )
+        )
+    else:
+        resized_width = int(
+            _float32(
+                _float32(source_width, "EdgeSAM source image width") / ratio,
+                "EdgeSAM resized width",
+            )
+        )
+        resized_height = model_height
+    remainder = resized_width % 16
+    if remainder:
+        resized_width -= remainder
+        if resized_width <= 0:
+            raise S100PProductAdapterError("EdgeSAM aligned resize width is invalid")
+        ratio = _float32(
+            _float32(source_width, "EdgeSAM source image width")
+            / _float32(resized_width, "EdgeSAM aligned resize width"),
+            "EdgeSAM aligned resize ratio",
+        )
+        resized_height = int(
+            _float32(
+                _float32(source_height, "EdgeSAM source image height") / ratio,
+                "EdgeSAM aligned resized height",
+            )
+        )
+    if resized_height % 2:
+        resized_height -= 1
+    if (
+        resized_width <= 0
+        or resized_height <= 0
+        or resized_width > model_width
+        or resized_height > model_height
+    ):
+        raise S100PProductAdapterError("EdgeSAM official resize geometry is invalid")
+
+    # Official AiMsgManage makes left/top even and right/bottom odd before the
+    # prompt reaches GenScaleBox.  Keep the product boundary fail-closed when
+    # that produces a degenerate source ROI.
+    left = x + (x % 2)
+    top = y + (y % 2)
+    right -= 0 if right % 2 else 1
+    bottom -= 0 if bottom % 2 else 1
+    if (
+        left < 0
+        or top < 0
+        or right > source_width
+        or bottom > source_height
+        or right <= left
+        or bottom <= top
+    ):
+        raise S100PProductAdapterError(
+            "EdgeSAM parity canonicalization makes the ROI invalid"
+        )
+
+    q_left, q_top, q_right, q_bottom = (
+        _float32(
+            _float32(endpoint, "EdgeSAM canonical endpoint") / ratio,
+            "EdgeSAM model-space endpoint",
+        )
+        for endpoint in (left, top, right, bottom)
+    )
+    # ``src/s100/edgesam_node.cpp`` clamps the floating model-space Bbox
+    # before it assigns the four integer ROI fields.  The assignment then
+    # truncates the offset and the (right - left)/(bottom - top) extents
+    # independently; only after that does it multiply those integer fields
+    # back by the float ratio.  Do not reject a valid source ROI merely
+    # because the official node takes this boundary-clamp path.
+    q_left = max(q_left, 0.0)
+    q_top = max(q_top, 0.0)
+    q_right = min(q_right, float(model_width - 1))
+    q_bottom = min(q_bottom, float(model_height - 1))
+    pre_x = int(floor(q_left))
+    pre_y = int(floor(q_top))
+    pre_width = int(
+        floor(_float32(q_right - q_left, "EdgeSAM model-space width"))
+    )
+    pre_height = int(
+        floor(_float32(q_bottom - q_top, "EdgeSAM model-space height"))
+    )
+    if pre_x < 0 or pre_y < 0 or pre_width <= 0 or pre_height <= 0:
+        raise S100PProductAdapterError("EdgeSAM model-space ROI is invalid")
+
+    output = Roi(
+        float(
+            int(
+                _float32(
+                    _float32(pre_x, "EdgeSAM pre-ROI x") * ratio,
+                    "EdgeSAM output ROI x",
+                )
+            )
+        ),
+        float(
+            int(
+                _float32(
+                    _float32(pre_y, "EdgeSAM pre-ROI y") * ratio,
+                    "EdgeSAM output ROI y",
+                )
+            )
+        ),
+        float(
+            int(
+                _float32(
+                    _float32(pre_width, "EdgeSAM pre-ROI width") * ratio,
+                    "EdgeSAM output ROI width",
+                )
+            )
+        ),
+        float(
+            int(
+                _float32(
+                    _float32(pre_height, "EdgeSAM pre-ROI height") * ratio,
+                    "EdgeSAM output ROI height",
+                )
+            )
+        ),
+    )
+    if (
+        output.width <= 0.0
+        or output.height <= 0.0
+        or output.x_offset < 0.0
+        or output.y_offset < 0.0
+        or output.x_offset + output.width > source_width
+        or output.y_offset + output.height > source_height
+    ):
+        raise S100PProductAdapterError(
+            "EdgeSAM canonical output ROI is outside the source image"
+        )
+    return output
 
 
 def decode_edgesam_label_features(
@@ -748,7 +957,14 @@ def decode_edgesam_label_features(
         )
 
     output_rois = tuple(roi_from_ai_like(row) for row in output_prompt_rois)
-    expected_rois = tuple(row.roi for row in batch.prompts)
+    expected_rois = tuple(
+        canonicalize_official_s100p_edgesam_roi(
+            row.roi,
+            source_image_width=batch.image_width,
+            source_image_height=batch.image_height,
+        )
+        for row in batch.prompts
+    )
     output_classes = tuple(
         _nonempty_string(value, "EdgeSAM output prompt class")
         for value in output_prompt_class_ids
@@ -758,8 +974,8 @@ def decode_edgesam_label_features(
         raise S100PProductAdapterError("EdgeSAM output ROI count does not match prompt batch")
     if output_classes != expected_classes:
         raise S100PProductAdapterError("EdgeSAM output class order does not match prompt batch")
-    if any(not _same_roi(observed, expected) for observed, expected in zip(output_rois, expected_rois)):
-        raise S100PProductAdapterError("EdgeSAM output ROI geometry does not overlap its prompt")
+    if output_rois != expected_rois:
+        raise S100PProductAdapterError("EdgeSAM output ROIs do not exactly match official S100 canonical prompts")
 
     values = tuple(feature_values)
     if not values:

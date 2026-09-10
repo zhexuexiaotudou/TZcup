@@ -1,6 +1,7 @@
 """Static contract for the real S100P product launch graph."""
 
 import ast
+import hashlib
 import json
 from pathlib import Path
 import shutil
@@ -13,6 +14,7 @@ import yaml
 PACKAGE = Path(__file__).resolve().parents[1]
 REPOSITORY_ROOT = PACKAGE.parents[2]
 LAUNCH = PACKAGE / "launch" / "formal_s100p_open_vocab.launch.py"
+DEVELOPMENT_LAUNCH = PACKAGE / "launch" / "development_s100p_open_vocab.launch.py"
 
 
 def test_s100p_launch_uses_real_official_parameter_names_and_project_topics():
@@ -174,6 +176,72 @@ def test_s100p_adapter_receives_the_frozen_board_artifact_manifest():
     assert 'LaunchConfiguration("artifact_manifest_path")' in source
     assert 'DeclareLaunchArgument(\n                "artifact_manifest_path"' in source
     assert '"artifact_manifest_path": artifact_manifest_path' in source
+
+
+def test_development_artifact_mode_is_explicit_and_cannot_leak_into_formal_launch():
+    formal = LAUNCH.read_text(encoding="utf-8")
+    development = DEVELOPMENT_LAUNCH.read_text(encoding="utf-8")
+    adapter = (PACKAGE / "sanitation_perception" / "s100p_product_adapter.py").read_text(encoding="utf-8")
+    assert "development" not in formal
+    assert '"artifact_mode": "development"' in development
+    assert "NON_FORMAL" in development
+    assert '"artifact_mode": "formal"' in adapter
+    assert "NON_FORMAL_ABI_DEVELOPMENT" in adapter
+    assert "load_verified_board_artifact_contract(**artifact_kwargs)" in adapter
+    assert "from .s100p_development_artifact_contract import" in adapter
+    core = PACKAGE / "sanitation_perception" / "s100p_product_adapter_core.py"
+    assert hashlib.sha256(core.read_bytes()).hexdigest() == "bbc3a0f865c2cd4a11d46de9aa86431f374a1bd0dbf1a7ac8b51c28ec75d1b5c"
+
+
+def test_development_launch_is_ast_identical_to_formal_except_for_its_mode():
+    class StripDevelopmentMode(ast.NodeTransformer):
+        def visit_Dict(self, node):
+            node = self.generic_visit(node)
+            pairs = [
+                (key, value)
+                for key, value in zip(node.keys, node.values, strict=True)
+                if not (isinstance(key, ast.Constant) and key.value == "artifact_mode")
+            ]
+            node.keys, node.values = [pair[0] for pair in pairs], [pair[1] for pair in pairs]
+            return node
+
+    formal, development = ast.parse(LAUNCH.read_text(encoding="utf-8")), ast.parse(DEVELOPMENT_LAUNCH.read_text(encoding="utf-8"))
+    for tree in (formal, development):
+        if isinstance(tree.body[0], ast.Expr) and isinstance(tree.body[0].value, ast.Constant):
+            tree.body.pop(0)
+    development = StripDevelopmentMode().visit(development)
+    assert ast.dump(formal, include_attributes=False) == ast.dump(development, include_attributes=False)
+
+
+def test_formal_bundle_rebinds_both_product_adapter_runtime_sources():
+    manifest = json.loads((REPOSITORY_ROOT / "config/s100p_formal_board_bundle_manifest.json").read_text(encoding="utf-8"))
+    assert manifest["status"] == "COPYABLE_MANIFEST_ONLY_BLOCKED_DEPLOYMENT"
+    assert manifest["copy_boundary"]["payload_copy_authorized"] is False
+    rows = {row["role"]: row for row in manifest["bound_sources"]}
+    assert set(rows) == {
+        "dosod_hbm_compile_contract", "offline_predeploy_product_bundle", "board_launch_parameter_record",
+        "board_overlay_package_contract", "dosod_edgesam_s100_profile", "formal_ros2_launch",
+        "project_perception_package_manifest", "diagnostic_compat_source", "nv12_adapter_source",
+        "product_adapter_source", "product_adapter_core_source", "project_perception_entry_points",
+        "perception_interfaces_package_manifest",
+    }
+    adapter = PACKAGE / "sanitation_perception" / "s100p_product_adapter.py"
+    assert rows["product_adapter_source"] == {
+        "path": "starter_ws/src/sanitation_perception/sanitation_perception/s100p_product_adapter.py",
+        "byte_size": adapter.stat().st_size,
+        "sha256": hashlib.sha256(adapter.read_bytes()).hexdigest(),
+        "role": "product_adapter_source",
+    }
+    core = PACKAGE / "sanitation_perception" / "s100p_product_adapter_core.py"
+    assert rows["product_adapter_core_source"] == {
+        "path": "starter_ws/src/sanitation_perception/sanitation_perception/s100p_product_adapter_core.py",
+        "byte_size": core.stat().st_size,
+        "sha256": hashlib.sha256(core.read_bytes()).hexdigest(),
+        "role": "product_adapter_core_source",
+    }
+    assert rows["formal_ros2_launch"]["sha256"] == "cbe73e72bb3dbb76131766ed6d241602a74b4dc1ccc4467c1ebc26454507a7c5"
+    assert rows["dosod_hbm_compile_contract"]["sha256"] == "05a10c9d427a7836366f355e455dda96f3c7a1aa6d5aad2ca087d21065a3dd7d"
+    assert rows["offline_predeploy_product_bundle"]["sha256"] == "b9719f78d0947cd6a834e111ecc9b3c3a3d33f4dde8915ca13885208bd62689e"
 
 
 def test_s100p_packaged_board_configs_match_the_authoritative_root_records():

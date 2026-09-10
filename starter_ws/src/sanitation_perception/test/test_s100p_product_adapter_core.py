@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
 from types import SimpleNamespace
 
+import numpy as np
 import pytest
 
-from sanitation_perception.s100p_product_adapter import _perf_latency_ms
+from sanitation_perception.s100p_product_adapter import _partition_dosod_source_rois, _perf_latency_ms
 from sanitation_perception.s100p_product_adapter_core import (
     Detection,
     EdgeSamPromptBatch,
@@ -29,6 +31,11 @@ from sanitation_perception.s100p_product_adapter_core import (
     validate_exact_tf_binding,
     validate_dosod_source_rois,
     validate_public_map_binding,
+)
+import sanitation_perception.s100p_product_adapter_core as core
+import sanitation_perception.s100p_development_artifact_contract as development
+from sanitation_perception.s100p_development_artifact_contract import (
+    load_verified_development_artifact_contract,
 )
 
 
@@ -118,6 +125,66 @@ def _write_frozen_board_artifacts(tmp_path: Path) -> tuple[Path, dict[str, Path]
     return manifest, paths
 
 
+def _write_development_artifacts(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, dict[str, Path]]:
+    vocabulary_rows = [["small litter cube"], ["fallen leaves"], ["dust patch"], ["puddle"]]
+    blobs = {
+        "dosod/dosod_mlp3x_s_tzcup_rep-int16.hbm": b"A2 development HBM",
+        "dosod/tzcup_offline_vocabulary.json": (json.dumps(vocabulary_rows) + "\n").encode(),
+        "edgesam/edgesam_encoder_512.hbm": b"development encoder",
+        "edgesam/edgesam_decoder_512.hbm": b"development decoder",
+    }
+    paths: dict[str, Path] = {}
+    for relative, contents in blobs.items():
+        path = tmp_path / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(contents)
+        paths[relative] = path
+    disas = tmp_path / "hbrt4-disas.json"
+    disas.write_text('{"capture":"hbrt4-disas"}', encoding="utf-8")
+    hbm_sha = _sha256(paths["dosod/dosod_mlp3x_s_tzcup_rep-int16.hbm"])
+    abi_gate = tmp_path / "abi_gate.json"
+    abi_gate.write_text(json.dumps({
+        "status": "NON_FORMAL_ABI_GATE_PASSED",
+        "classification": "NON_FORMAL_ABI_DEVELOPMENT",
+        "pass": True,
+        "hbm": {"sha256": hbm_sha, "byte_size": paths["dosod/dosod_mlp3x_s_tzcup_rep-int16.hbm"].stat().st_size},
+        "tool": {"argv": ["hbrt4-disas", "--json"], "returncode": 0, "path": "/tool/hbrt4-disas", "sha256": "a" * 64, "version": "fixture"},
+        "disas": {"sha256": _sha256(disas)},
+        "outputs": [
+            {"name": "scores", "dtype": "TYPE_TAG_SI16", "dims": [1, 8400, 4], "strides_bytes": [67200, 8, 2]},
+            {"name": "boxes", "dtype": "TYPE_TAG_SI16", "dims": [1, 8400, 4], "strides_bytes": [67200, 8, 2]},
+        ],
+    }), encoding="utf-8")
+    monkeypatch.setattr(development, "DEVELOPMENT_DOSOD_HBM_SHA256", hbm_sha)
+    monkeypatch.setattr(development, "DEVELOPMENT_DOSOD_HBM_BYTE_SIZE", paths["dosod/dosod_mlp3x_s_tzcup_rep-int16.hbm"].stat().st_size)
+    monkeypatch.setattr(development, "DEVELOPMENT_VOCABULARY_SHA256", _sha256(paths["dosod/tzcup_offline_vocabulary.json"]))
+    monkeypatch.setattr(development, "DEVELOPMENT_EDGESAM_ENCODER_SHA256", _sha256(paths["edgesam/edgesam_encoder_512.hbm"]))
+    monkeypatch.setattr(development, "DEVELOPMENT_EDGESAM_ENCODER_BYTE_SIZE", paths["edgesam/edgesam_encoder_512.hbm"].stat().st_size)
+    monkeypatch.setattr(development, "DEVELOPMENT_EDGESAM_DECODER_SHA256", _sha256(paths["edgesam/edgesam_decoder_512.hbm"]))
+    monkeypatch.setattr(development, "DEVELOPMENT_EDGESAM_DECODER_BYTE_SIZE", paths["edgesam/edgesam_decoder_512.hbm"].stat().st_size)
+    monkeypatch.setattr(development, "DEVELOPMENT_ABI_GATE_SHA256", _sha256(abi_gate))
+    monkeypatch.setattr(development, "DEVELOPMENT_DISAS_SHA256", _sha256(disas))
+    artifacts = {
+        relative: {
+            "path": str(path.resolve()), "sha256": _sha256(path), "byte_size": path.stat().st_size,
+            "model_role": development.DEVELOPMENT_DOSOD_ROLE if relative.startswith("dosod/dosod") else core.BOARD_ARTIFACT_SPECS[relative][0],
+            "source_revision": development.DEVELOPMENT_DOSOD_SOURCE_REVISION if relative.startswith("dosod/dosod") else core.BOARD_ARTIFACT_SPECS[relative][1],
+        }
+        for relative, path in paths.items()
+    }
+    manifest = tmp_path / "development_artifact_manifest.json"
+    manifest.write_text(json.dumps({
+        "schema_version": 1, "manifest_id": development.DEVELOPMENT_MANIFEST_ID,
+        "status": development.DEVELOPMENT_STATUS, "classification": development.DEVELOPMENT_CLASSIFICATION,
+        "formal": False, "board_acceptance": False, "claim_scope": development.DEVELOPMENT_CLAIM_SCOPE,
+        "artifacts": artifacts,
+        "custom_vocabulary": {"artifact": "dosod/tzcup_offline_vocabulary.json", "kind": "CUSTOM4", "semantic_class_ids": list(core.FROZEN_CLASS_ORDER), "emitted_labels": [row[0] for row in vocabulary_rows]},
+        "abi_gate": {"path": str(abi_gate.resolve()), "sha256": _sha256(abi_gate), "byte_size": abi_gate.stat().st_size},
+        "disas": {"path": str(disas.resolve()), "sha256": _sha256(disas), "byte_size": disas.stat().st_size},
+    }), encoding="utf-8")
+    return manifest, paths
+
+
 def test_flatten_ai_like_targets_rejects_unknown_or_conflicting_classes_fail_closed():
     with pytest.raises(S100PProductAdapterError, match="unknown frozen"):
         detections_from_ai_like([{"type": "person", "rois": [_roi(1, 2, 3, 4, 0.8)]}])
@@ -191,11 +258,107 @@ def test_projection_inputs_require_one_exact_rgb_depth_camerainfo_frame():
             validate_exact_rgbd_projection_binding(**(valid | update))
 
 
+@pytest.mark.parametrize(
+    "camera_k",
+    (
+        [1.0, 0.0, 2.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0],
+        (1.0, 0.0, 2.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0),
+        np.asarray((1.0, 0.0, 2.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0)),
+        (value for value in (1.0, 0.0, 2.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0)),
+    ),
+)
+def test_projection_inputs_freeze_iterable_camerainfo_k_representations(camera_k):
+    """Generators are intentionally accepted because the validator freezes them first."""
+    valid = {
+        "rgb_stamp_ns": 42,
+        "rgb_frame_id": "front_camera_optical",
+        "rgb_width": 4,
+        "rgb_height": 2,
+        "depth_stamp_ns": 42,
+        "depth_frame_id": "front_camera_optical",
+        "depth_width": 4,
+        "depth_height": 2,
+        "depth_encoding": "16UC1",
+        "camera_info_stamp_ns": 42,
+        "camera_info_frame_id": "front_camera_optical",
+        "camera_info_width": 4,
+        "camera_info_height": 2,
+        "camera_k": camera_k,
+    }
+    assert validate_exact_rgbd_projection_binding(**valid) is None
+
+
+@pytest.mark.parametrize(
+    "camera_k",
+    (
+        1.0,
+        "123456789",
+        (1.0,) * 8,
+        (1.0, 0.0, 2.0, 0.0, float("nan"), 1.0, 0.0, 0.0, 1.0),
+        (-1.0, 0.0, 2.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0),
+        (1.0, 0.0, 2.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0),
+        (value for value in (1.0,) * 8),
+    ),
+)
+def test_projection_inputs_reject_malformed_nonfinite_or_invalid_focal_camerainfo_k(camera_k):
+    valid = {
+        "rgb_stamp_ns": 42,
+        "rgb_frame_id": "front_camera_optical",
+        "rgb_width": 4,
+        "rgb_height": 2,
+        "depth_stamp_ns": 42,
+        "depth_frame_id": "front_camera_optical",
+        "depth_width": 4,
+        "depth_height": 2,
+        "depth_encoding": "16UC1",
+        "camera_info_stamp_ns": 42,
+        "camera_info_frame_id": "front_camera_optical",
+        "camera_info_width": 4,
+        "camera_info_height": 2,
+        "camera_k": camera_k,
+    }
+    with pytest.raises(S100PProductAdapterError):
+        validate_exact_rgbd_projection_binding(**valid)
+
+
 def test_dosod_rois_are_already_bound_to_the_original_848x480_source_frame():
     source = Detection("puddle", 0.8, Roi(0.0, 0.0, 84.8, 84.8), 0)
     assert validate_dosod_source_rois((source,)) == (source,)
     with pytest.raises(S100PProductAdapterError, match="848x480"):
         validate_dosod_source_rois((Detection("puddle", 0.8, Roi(800, 0, 64, 64), 0),))
+
+
+def test_dosod_roi_partition_keeps_legal_rois_and_rejects_only_real_r9_overflows():
+    legal = Detection("litter_cube", 0.9, Roi(1.0, 2.0, 3.0, 4.0), 3)
+    # r9: post-threshold candidates 12 and 26 crossed the 848x480 source edge.
+    r9_index_12 = Detection("dust_or_soil", 0.00540, Roi(10.0, 478.0, 20.0, 368.0), 12)
+    r9_index_26 = Detection("dust_or_soil", 0.00253, Roi(10.0, 499.0, 20.0, 335.0), 26)
+
+    accepted, rejected = _partition_dosod_source_rois(
+        (legal, r9_index_12, r9_index_26), source_width=848, source_height=480
+    )
+
+    assert accepted == (legal,)
+    assert rejected == ((12, "outside_source_frame"), (26, "outside_source_frame"))
+    assert len(accepted) + len(rejected) == 3
+
+
+def test_dosod_roi_partition_preserves_all_legal_or_returns_empty_for_all_invalid():
+    legal = (
+        Detection("puddle", 0.8, Roi(0.0, 0.0, 84.8, 84.8), 0),
+        Detection("dust_or_soil", 0.9, Roi(800.0, 470.0, 48.0, 10.0), 1),
+    )
+    accepted, rejected = _partition_dosod_source_rois(legal, source_width=848, source_height=480)
+    assert accepted == legal
+    assert not rejected
+
+    invalid = (
+        Detection("puddle", 0.8, Roi(848.0, 0.0, 1.0, 1.0), 2),
+        Detection("dust_or_soil", 0.9, Roi(0.0, 480.0, 1.0, 1.0), 3),
+    )
+    accepted, rejected = _partition_dosod_source_rois(invalid, source_width=848, source_height=480)
+    assert accepted == ()
+    assert rejected == ((2, "outside_source_frame"), (3, "outside_source_frame"))
 
 
 def test_exact_stamp_rgbd_cache_preserves_n_until_dosod_n_then_consumes_it_once():
@@ -364,6 +527,93 @@ def test_board_artifact_contract_rejects_tampered_model_bytes(tmp_path):
         )
 
 
+def test_development_artifact_mode_loads_only_a_trust_anchored_manifest(tmp_path, monkeypatch):
+    manifest, paths = _write_development_artifacts(tmp_path, monkeypatch)
+    contract = load_verified_development_artifact_contract(artifact_manifest_path=manifest, artifact_paths=paths)
+    assert contract.model_hashes["dosod/dosod_mlp3x_s_tzcup_rep-int16.hbm"] == _sha256(
+        paths["dosod/dosod_mlp3x_s_tzcup_rep-int16.hbm"]
+    )
+    assert dict(contract.emitted_label_to_class_id) == {
+        "small litter cube": "litter_cube", "fallen leaves": "fallen_leaves",
+        "dust patch": "dust_or_soil", "puddle": "puddle",
+    }
+
+
+def test_development_mode_keeps_the_version_controlled_a2_trust_anchors():
+    assert development.DEVELOPMENT_DOSOD_SOURCE_REVISION == "55b5525e0df3dff35e9ba75fa601601dff057b81"
+    assert development.DEVELOPMENT_DOSOD_HBM_BYTE_SIZE == 13055760
+    assert development.DEVELOPMENT_DOSOD_HBM_SHA256 == "5a17357c8dd52769a1ef0829a12ed03f1253139315f7b272441013aa50979f9b"
+    assert development.DEVELOPMENT_VOCABULARY_SHA256 == "c5b10ba0e26ee28cdbf5192775e7d2ddb3f5852e515f59a074b38b7ed69d7ffd"
+    assert development.DEVELOPMENT_ABI_GATE_SHA256 == "7cc1877c42f3de88fdae53c949460a2d30812141a4b086c945ae67b1be03ca4b"
+    assert development.DEVELOPMENT_DISAS_SHA256 == "85d6048c1fb68ce53f238258df1aa83f8656fe9362d2e9942706267c5874f2b0"
+    assert core.BOARD_ARTIFACT_SPECS["edgesam/edgesam_encoder_512.hbm"][1] == "d24d99671f41a9c0003061248bded64a481e9059"
+
+
+def test_formal_and_development_artifact_modes_explicitly_reject_each_other(tmp_path, monkeypatch):
+    development_manifest, development_paths = _write_development_artifacts(tmp_path, monkeypatch)
+    with pytest.raises(S100PProductAdapterError, match="formal S100P nash-m contract"):
+        load_verified_board_artifact_contract(
+            artifact_manifest_path=development_manifest, artifact_paths=development_paths
+        )
+    formal_manifest, formal_paths = _write_frozen_board_artifacts(tmp_path / "formal")
+    with pytest.raises(S100PProductAdapterError, match="classification"):
+        load_verified_development_artifact_contract(
+            artifact_manifest_path=formal_manifest, artifact_paths=formal_paths
+        )
+
+
+@pytest.mark.parametrize(
+    "mutation, match",
+    [
+        (lambda payload: payload["artifacts"]["dosod/dosod_mlp3x_s_tzcup_rep-int16.hbm"].update(model_role="formal_role"), "provenance"),
+        (lambda payload: payload["artifacts"]["dosod/dosod_mlp3x_s_tzcup_rep-int16.hbm"].update(source_revision="c50129b5"), "provenance"),
+        (lambda payload: payload.update(status="PREPARED_NOT_DEPLOYED"), "classification"),
+        (lambda payload: payload["custom_vocabulary"].update(kind="FORMAL"), "custom vocabulary"),
+    ],
+)
+def test_development_artifact_manifest_rejects_role_revision_status_and_vocabulary_drift(tmp_path, monkeypatch, mutation, match):
+    manifest, paths = _write_development_artifacts(tmp_path, monkeypatch)
+    payload = json.loads(manifest.read_text(encoding="utf-8")); mutation(payload)
+    manifest.write_text(json.dumps(payload), encoding="utf-8")
+    with pytest.raises(S100PProductAdapterError, match=match):
+        load_verified_development_artifact_contract(artifact_manifest_path=manifest, artifact_paths=paths)
+
+
+def test_development_artifact_manifest_rejects_tamper_and_abi_receipt_drift(tmp_path, monkeypatch):
+    manifest, paths = _write_development_artifacts(tmp_path, monkeypatch)
+    paths["dosod/dosod_mlp3x_s_tzcup_rep-int16.hbm"].write_bytes(b"tampered")
+    with pytest.raises(S100PProductAdapterError, match="hash or byte size"):
+        load_verified_development_artifact_contract(artifact_manifest_path=manifest, artifact_paths=paths)
+
+    manifest, paths = _write_development_artifacts(tmp_path / "abi", monkeypatch)
+    payload = json.loads(manifest.read_text(encoding="utf-8"))
+    abi_gate = Path(payload["abi_gate"]["path"])
+    receipt = json.loads(abi_gate.read_text(encoding="utf-8")); receipt["outputs"][1]["strides_bytes"] = [67200, 16, 2]
+    abi_gate.write_text(json.dumps(receipt), encoding="utf-8")
+    payload["abi_gate"]["sha256"] = _sha256(abi_gate)
+    payload["abi_gate"]["byte_size"] = abi_gate.stat().st_size
+    manifest.write_text(json.dumps(payload), encoding="utf-8")
+    monkeypatch.setattr(development, "DEVELOPMENT_ABI_GATE_SHA256", _sha256(abi_gate))
+    with pytest.raises(S100PProductAdapterError, match="output ABI"):
+        load_verified_development_artifact_contract(artifact_manifest_path=manifest, artifact_paths=paths)
+
+
+def test_development_artifact_manifest_rejects_symlinked_payload(tmp_path, monkeypatch):
+    manifest, paths = _write_development_artifacts(tmp_path, monkeypatch)
+    target = paths["edgesam/edgesam_encoder_512.hbm"]
+    link = target.with_name("encoder-link.hbm")
+    try:
+        os.symlink(target, link)
+    except OSError as exc:
+        pytest.skip(f"symlink creation is unavailable: {exc}")
+    payload = json.loads(manifest.read_text(encoding="utf-8"))
+    row = payload["artifacts"]["edgesam/edgesam_encoder_512.hbm"]
+    row["path"] = str(link.absolute())
+    manifest.write_text(json.dumps(payload), encoding="utf-8")
+    with pytest.raises(S100PProductAdapterError, match="no symlink components"):
+        load_verified_development_artifact_contract(artifact_manifest_path=manifest, artifact_paths=(paths | {"edgesam/edgesam_encoder_512.hbm": link}))
+
+
 def test_ground_dirt_prompt_batch_excludes_cube_bounds_per_class_and_large_rois():
     detections = (
         Detection("litter_cube", 0.99, Roi(0, 0, 1, 1), 0),
@@ -384,8 +634,8 @@ def test_decode_edgesam_labels_requires_exact_stamp_dimensions_roi_order_and_lab
         Detection("puddle", 0.8, Roi(1, 2, 3, 2), 10),
         Detection("dust_or_soil", 0.7, Roi(5, 2, 2, 2), 11),
     )
-    batch = EdgeSamPromptBatch(1000, 4, 2, prompts)
-    rois = [_roi(1, 2, 3, 2, 0.8), _roi(5, 2, 2, 2, 0.7)]
+    batch = EdgeSamPromptBatch(1000, 8, 4, prompts)
+    rois = [_roi(2, 2, 1, 1, 0.8), _roi(6, 2, 1, 1, 0.7)]
     decoded = decode_edgesam_label_features(
         batch,
         output_stamp_ns=1000,
@@ -441,11 +691,17 @@ def test_decode_edgesam_rejects_empty_prompt_batch_and_short_capture():
         )
 
 
-def test_decode_accepts_real_s100p_network_mask_shape_and_segment_bbox_adjustment():
-    prompt = Detection("puddle", 0.8, Roi(1020, 300, 432, 600), 0)
-    batch = EdgeSamPromptBatch(55, 1920, 1080, (prompt,))
+def test_decode_replays_r13_official_s100p_roi_canonicalization_exactly():
+    prompts = (
+        Detection("puddle", 0.8, Roi(135, 384, 710, 90), 0),
+        Detection("dust_or_soil", 0.7, Roi(696, 368, 144, 35), 1),
+        Detection("fallen_leaves", 0.6, Roi(683, 352, 132, 37), 2),
+    )
+    batch = EdgeSamPromptBatch(55, 848, 480, prompts)
     values = [0.0] * (512 * 288)
     values[123] = 1.0
+    values[124] = 2.0
+    values[125] = 3.0
     decoded = decode_edgesam_label_features(
         batch,
         output_stamp_ns=55,
@@ -454,18 +710,24 @@ def test_decode_accepts_real_s100p_network_mask_shape_and_segment_bbox_adjustmen
         capture_height=288,
         expected_capture_width=512,
         expected_capture_height=288,
-        output_prompt_rois=[_roi(1020, 300, 427, 596, 0.8, "puddle")],
-        output_prompt_class_ids=["puddle"],
+        output_prompt_rois=[
+            _roi(135, 382, 708, 87, 0.8, "puddle"),
+            _roi(695, 367, 142, 34, 0.7, "dust_or_soil"),
+            _roi(682, 351, 130, 36, 0.6, "fallen_leaves"),
+        ],
+        output_prompt_class_ids=["puddle", "dust_or_soil", "fallen_leaves"],
     )
     assert decoded.image_width == 512
     assert decoded.image_height == 288
     assert decoded.masks[0][123]
+    assert decoded.masks[1][124]
+    assert decoded.masks[2][125]
 
 
-def test_decode_rejects_weak_roi_overlap_even_with_correct_class_order():
-    prompt = Detection("puddle", 0.8, Roi(100, 100, 100, 100), 0)
-    batch = EdgeSamPromptBatch(9, 1920, 1080, (prompt,))
-    with pytest.raises(S100PProductAdapterError, match="geometry"):
+def test_decode_rejects_noncanonical_roi_even_when_it_is_a_nearby_overlap():
+    prompt = Detection("puddle", 0.8, Roi(135, 384, 710, 90), 0)
+    batch = EdgeSamPromptBatch(9, 848, 480, (prompt,))
+    with pytest.raises(S100PProductAdapterError, match="exactly match"):
         decode_edgesam_label_features(
             batch,
             output_stamp_ns=9,
@@ -474,9 +736,49 @@ def test_decode_rejects_weak_roi_overlap_even_with_correct_class_order():
             capture_height=288,
             expected_capture_width=512,
             expected_capture_height=288,
-            output_prompt_rois=[_roi(150, 100, 100, 100, 0.8, "puddle")],
+            output_prompt_rois=[_roi(136, 382, 708, 87, 0.8, "puddle")],
             output_prompt_class_ids=["puddle"],
         )
+
+
+def test_official_s100p_roi_canonicalizer_rejects_unsupported_shapes_and_parity_collapse():
+    with pytest.raises(S100PProductAdapterError, match="512x512"):
+        core.canonicalize_official_s100p_edgesam_roi(
+            Roi(135, 384, 710, 90),
+            source_image_width=848,
+            source_image_height=480,
+            model_input_width=1024,
+            model_input_height=1024,
+        )
+    with pytest.raises(S100PProductAdapterError, match="parity canonicalization"):
+        core.canonicalize_official_s100p_edgesam_roi(
+            Roi(847, 100, 1, 3),
+            source_image_width=848,
+            source_image_height=480,
+        )
+
+
+@pytest.mark.parametrize(
+    "roi, source_width, source_height, expected",
+    [
+        # q_right is exactly 512, so upstream clamps it to 511 before it
+        # truncates width and rescales the integer fields back to source space.
+        (Roi(0, 0, 849, 480), 849, 480, Roi(0, 0, 847, 477)),
+        # q_bottom is exactly 512; this independently exercises the Y clamp.
+        (Roi(0, 0, 451, 481), 451, 481, Roi(0, 0, 450, 480)),
+        # Height dominates.  ResizeNV12Img aligns width 289 down to 288 and
+        # recomputes ratio as 480 / 288 before the two ROI quantizations.
+        (Roi(0, 0, 480, 849), 480, 849, Roi(0, 0, 478, 848)),
+    ],
+)
+def test_official_s100p_roi_canonicalizer_replays_clamp_and_resize_alignment(
+    roi, source_width, source_height, expected
+):
+    assert core.canonicalize_official_s100p_edgesam_roi(
+        roi,
+        source_image_width=source_width,
+        source_image_height=source_height,
+    ) == expected
 
 
 def test_perf_latency_accepts_only_positive_predict_infer_metric():
@@ -497,3 +799,12 @@ def test_pending_dosod_expiry_timer_uses_steady_clock_not_ros_sim_time():
     source = adapter.read_text(encoding="utf-8")
     assert "from rclpy.clock import Clock, ClockType" in source
     assert "clock=Clock(clock_type=ClockType.STEADY_TIME)" in source
+
+
+def test_inference_diagnostics_preserve_the_exact_source_stamp():
+    adapter = Path(__file__).parents[1] / "sanitation_perception" / "s100p_product_adapter.py"
+    source = adapter.read_text(encoding="utf-8")
+    assert source.count("source_stamp_ns=stamp") == 2
+    assert '"source_stamp_ns": source_stamp_ns' in source
+    assert "array.header.stamp.sec = source_stamp_ns // 1_000_000_000" in source
+    assert "array.header.stamp.nanosec = source_stamp_ns % 1_000_000_000" in source
