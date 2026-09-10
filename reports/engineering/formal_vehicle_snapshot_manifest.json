@@ -1,13 +1,13 @@
 {
   "kind": "tzcup_formal_vehicle_snapshot_manifest",
-  "output_inventory_sha256": "4a834ec221b605e389dd1eacb780542f8664f63ffd873c052583baa8facdd0c6",
+  "output_inventory_sha256": "bb96ca37a521fda3ab7e65a602f1f3e3930837e3d66c4c66bde4d1e22b30c2fb",
   "outputs": {
     "reports/engineering/formal_competition_vehicle.urdf": {
-      "sha256": "e2fbbbe51c562160dfb813f4559042f98cee75f32b5ce039621766fe1ae02dd6",
-      "size_bytes": 278291
+      "sha256": "7df8007432272a69357f55920a9ba675a922e4a2c6aa020f1fcee04dab1ac04a",
+      "size_bytes": 278295
     },
     "reports/engineering/formal_vehicle_component_register_report.json": {
-      "sha256": "ff4e31703c5a0587063d6e0247b7743974816fac89eeb8ea6479090878b1e7fc",
+      "sha256": "7f52bdad1bc801afc82ea938cef25d6b1437ba9e635367ebff1ef0f468605044",
       "size_bytes": 12648
     },
     "reports/engineering/formal_vehicle_layout_report.json": {
@@ -991,8 +991,8 @@
       "size_bytes": 15152
     },
     "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/power_service_hardware.xacro": {
-      "sha256": "3a4f0921ee5cbf0b46dba6b1f091614734ca0b6467922bbf5f200e43a507f26f",
-      "size_bytes": 18106
+      "sha256": "d2826fde3faf384726adc12d3b9185e3d7bf26558f6b650c0cc3f8fb230514e8",
+      "size_bytes": 18150
     },
     "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/sensor_suite.xacro": {
       "sha256": "36de63218a6ab2d4f34d915a4c546362dbea4e9c496cda7bbba72e2d0a58b2b9",
@@ -1003,5 +1003,5 @@
       "size_bytes": 26704
     }
   },
-  "source_inventory_sha256": "4ace4a4d625352ce475684612dd5b7195cbae07dbc14a0978d9be615ef91511f"
+  "source_inventory_sha256": "b7a9bbebe6b36df8b6861b1fb871f329b1bd2d58b6402e2350a283ea874ff6bd"
 }

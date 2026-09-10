@@ -5231,12 +5231,12 @@
   <gazebo reference="charge_receptacle_link">
     <preserveFixedJoint>true</preserveFixedJoint>
     <sensor name="charge_receptacle_contact_sensor" type="contact">
-      <topic>/formal_vehicle/gazebo/charge_receptacle/contact</topic>
       <update_rate>50</update_rate>
       <always_on>true</always_on>
       <!-- sdformat folds this fixed service link into base_footprint and
              renames the collision in the expanded formal SDF. -->
       <contact>
+        <topic>/formal_vehicle/gazebo/charge_receptacle/contact</topic>
         <collision>base_footprint_fixed_joint_lump__charge_receptacle_contact_collision_collision_49</collision>
       </contact>
     </sensor>
@@ -5518,12 +5518,12 @@
   <gazebo reference="wastewater_drain_coupling_link">
     <preserveFixedJoint>true</preserveFixedJoint>
     <sensor name="wastewater_drain_coupling_contact_sensor" type="contact">
-      <topic>/formal_vehicle/gazebo/wastewater_drain_coupling/contact</topic>
       <update_rate>50</update_rate>
       <always_on>true</always_on>
       <!-- sdformat folds this fixed service link into base_footprint and
              renames the collision in the expanded formal SDF. -->
       <contact>
+        <topic>/formal_vehicle/gazebo/wastewater_drain_coupling/contact</topic>
         <collision>base_footprint_fixed_joint_lump__wastewater_drain_coupling_contact_collision_collision_120</collision>
       </contact>
     </sensor>
