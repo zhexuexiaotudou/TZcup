@@ -64,6 +64,37 @@ def test_final_preembedded_world_binds_each_formal_water_contact_sensor() -> Non
     assert world.find("model[@name='vehicle']") is not None
 
 
+def _service_contact_model(*, nested_topic: bool) -> ET.Element:
+    sensor_name = "charge_receptacle_contact_sensor"
+    topic = MODULE.FORMAL_SERVICE_CONTACT_TOPICS[sensor_name]
+    topic_xml = (
+        f"<contact><topic>{topic}</topic><collision>proxy</collision></contact>"
+        if nested_topic
+        else f"<topic>{topic}</topic><contact><collision>proxy</collision></contact>"
+    )
+    return ET.fromstring(
+        "<model><link name='base_footprint'><collision name='proxy'/>"
+        f"<sensor name='{sensor_name}' type='contact'>{topic_xml}</sensor>"
+        "</link></model>"
+    )
+
+
+def test_final_service_contact_binding_requires_nested_topic() -> None:
+    sensor_name = "charge_receptacle_contact_sensor"
+    model = _service_contact_model(nested_topic=True)
+    MODULE.validate_formal_water_contact_sensor_bindings(model, {sensor_name})
+    sensor = model.find(".//sensor")
+    assert sensor is not None and sensor.find("topic") is None
+
+
+def test_final_service_contact_binding_rejects_direct_sensor_topic() -> None:
+    with pytest.raises(MODULE.PreparationError, match="misplaced direct topic"):
+        MODULE.validate_formal_water_contact_sensor_bindings(
+            _service_contact_model(nested_topic=False),
+            {"charge_receptacle_contact_sensor"},
+        )
+
+
 def test_rejects_historical_squeegee_stale_collision_selector() -> None:
     urdf, converted = _formal_water_contact_fixture()
     selector = converted.find(

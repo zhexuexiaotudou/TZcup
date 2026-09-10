@@ -42,6 +42,12 @@ FORMAL_WATER_CONTACT_SENSOR_LINKS = {
     "left_side_brush_ground_contact": "left_side_brush_link",
     "right_side_brush_ground_contact": "right_side_brush_link",
     "central_roller_ground_contact": "central_roller_link",
+    "charge_receptacle_contact_sensor": "base_footprint",
+    "wastewater_drain_coupling_contact_sensor": "base_footprint",
+}
+FORMAL_SERVICE_CONTACT_TOPICS = {
+    "charge_receptacle_contact_sensor": "/formal_vehicle/gazebo/charge_receptacle/contact",
+    "wastewater_drain_coupling_contact_sensor": "/formal_vehicle/gazebo/wastewater_drain_coupling/contact",
 }
 
 
@@ -389,6 +395,18 @@ def validate_formal_water_contact_sensor_bindings(
                 f"formal contact sensor {sensor_name} selector {selector!r} must match "
                 f"exactly one collision on {expected_link}, found {len(matches)}"
             )
+        expected_topic = FORMAL_SERVICE_CONTACT_TOPICS.get(sensor_name)
+        if expected_topic is not None:
+            if sensor.find("topic") is not None:
+                raise PreparationError(
+                    f"formal contact sensor {sensor_name} has a misplaced direct topic"
+                )
+            actual_topic = (sensor.findtext("contact/topic") or "").strip()
+            if actual_topic != expected_topic:
+                raise PreparationError(
+                    f"formal contact sensor {sensor_name} contact topic must be "
+                    f"{expected_topic!r}, found {actual_topic or '<empty>'!r}"
+                )
 
 
 def build_preembedded_world(

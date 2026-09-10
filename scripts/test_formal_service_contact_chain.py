@@ -58,7 +58,8 @@ def test_service_fittings_have_named_collisions_and_contact_sensors() -> None:
         sensor = gazebo.find(f"sensor[@name='{sensor_name}']")
         assert sensor is not None
         assert sensor.get("type") == "contact"
-        assert sensor.findtext("topic") == topic
+        assert sensor.findtext("topic") is None
+        assert sensor.findtext("contact/topic") == topic
         assert sensor.findtext("always_on") == "true"
         assert float(sensor.findtext("update_rate", "0")) >= 50.0
         # The fixed service links are folded into base_footprint by sdformat;
