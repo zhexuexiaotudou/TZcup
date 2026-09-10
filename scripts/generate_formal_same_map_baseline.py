@@ -82,6 +82,82 @@ def _strict_number(row: dict[str, Any], key: str, label: str) -> float:
     return _number(row, key, label)
 
 
+def _strict_positive_int(row: dict[str, Any], key: str, label: str) -> int:
+    value = row.get(key)
+    if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+        raise BaselineError(f"{label}.{key} must be a positive integer JSON scalar")
+    return value
+
+
+def _same(left: float, right: float, label: str) -> None:
+    if not math.isclose(left, right, rel_tol=1.0e-9, abs_tol=1.0e-9):
+        raise BaselineError(label)
+
+
+def _saved_coverage_binding(
+    mission_path: Path, mission: dict[str, Any], manifest: dict[str, Any]
+) -> dict[str, float | int | str]:
+    """Load the sealed saved-SLAM geometry shared by executor and telemetry."""
+    coverage = mission.get("saved_occupancy_coverage")
+    if not isinstance(coverage, dict):
+        raise BaselineError("mission geometry has no saved occupancy coverage binding")
+    geometry_name = coverage.get("geometry")
+    free_map_name = coverage.get("free_space_map")
+    geometry_sha = coverage.get("sha256")
+    if (
+        geometry_name != "coverage_geometry.yaml"
+        or free_map_name != "coverage_free_space.pgm"
+        or not isinstance(geometry_sha, str)
+        or len(geometry_sha) != 64
+    ):
+        raise BaselineError("saved occupancy coverage binding is incomplete")
+    geometry_path = mission_path.parent / geometry_name
+    free_map_path = mission_path.parent / free_map_name
+    hashes = manifest.get("sha256")
+    if (
+        not geometry_path.is_file()
+        or not free_map_path.is_file()
+        or not isinstance(hashes, dict)
+        or hashes.get(geometry_name) != geometry_sha
+        or hashes.get(free_map_name) != _sha256(free_map_path)
+        or _sha256(geometry_path) != geometry_sha
+    ):
+        raise BaselineError("saved occupancy coverage artifacts are not sealed in map manifest")
+    geometry = _yaml(geometry_path)
+    if geometry.get("source") != "saved_slam_occupancy_only":
+        raise BaselineError("coverage geometry is not derived from the saved SLAM occupancy")
+    if geometry.get("free_space_map") != free_map_name or geometry.get(
+        "free_space_map_sha256"
+    ) != _sha256(free_map_path):
+        raise BaselineError("coverage geometry free-space map binding is invalid")
+    resolution = _strict_number(geometry, "resolution_m", "coverage_geometry")
+    clearance = _strict_number(
+        geometry, "planning_clearance_m", "coverage_geometry"
+    )
+    cells = _strict_positive_int(
+        geometry, "reachable_cleanable_cells", "coverage_geometry"
+    )
+    area = _strict_number(
+        geometry, "reachable_cleanable_area_m2", "coverage_geometry"
+    )
+    if resolution <= 0.0 or clearance <= 0.0 or geometry.get(
+        "obstacle_inflation_m"
+    ) != clearance:
+        raise BaselineError("coverage geometry clearance/resolution is invalid")
+    _same(
+        area,
+        cells * resolution * resolution,
+        "coverage geometry cleanable area disagrees with cells and resolution",
+    )
+    return {
+        "geometry_sha256": geometry_sha,
+        "planning_clearance_m": clearance,
+        "raster_resolution_m": resolution,
+        "reachable_cleanable_cells": cells,
+        "cleanable_area_m2": area,
+    }
+
+
 def _true(row: dict[str, Any], key: str, label: str) -> None:
     if row.get(key) is not True:
         raise BaselineError(f"{label}.{key} must be explicitly true")
@@ -292,6 +368,7 @@ def build_report(
     _true(manifest, "mapping_ignored_dirt", "map_manifest")
     _false(manifest, "world_truth_used_for_control", "map_manifest")
     _hashes_valid(map_root, manifest)
+    coverage_binding = _saved_coverage_binding(mission_path, mission, manifest)
 
     public_pose = episode.get("vehicle_start_pose_source_world") or episode.get("vehicle_start_pose_map")
     if not isinstance(public_pose, dict):
@@ -345,42 +422,127 @@ def build_report(
     if not isinstance(checks, dict) or not checks or any(value is not True for value in checks.values()):
         raise BaselineError("map lifecycle acceptance checks are incomplete")
 
-    if coverage.get("schema_version") != 2 or coverage.get("planner") != PLANNER:
-        raise BaselineError("coverage evidence is not the live OpenNav/Fields2Cover planner")
-    if coverage.get("mission_id") != mission.get("mission_id"):
-        raise BaselineError("coverage mission differs from saved-map mission geometry")
-    for key in ("success", "planning_success", "full_execution_success", "coverage_quality_success", "safety_success", "localization_success"):
-        _true(coverage, key, "coverage_runtime")
-    injection = coverage.get("evaluation_injection")
-    if not isinstance(injection, dict):
-        raise BaselineError("coverage report has no evaluation truth boundary")
-    _false(injection, "ground_truth_used_for_control", "coverage_runtime.evaluation_injection")
-    empirical = coverage.get("empirical_metrics")
-    planned = coverage.get("planned_metrics")
-    if not isinstance(empirical, dict) or not isinstance(planned, dict):
-        raise BaselineError("coverage report lacks planned/empirical metrics")
-    actual_distance = _number(empirical, "actual_path_length_m", "coverage_runtime.empirical_metrics")
-    planned_distance = _number(planned, "path_length_m", "coverage_runtime.planned_metrics")
-    if actual_distance <= 0.0 or planned_distance <= 0.0:
-        raise BaselineError("FullCoverage distances must be positive")
-    covered_area = _strict_number(empirical, "covered_area_m2", "coverage_runtime.empirical_metrics")
-    actual_duration = _strict_number(empirical, "actual_duration_sec", "coverage_runtime.empirical_metrics")
-    measured_efficiency = _strict_number(
-        empirical, "net_efficiency_m2_h", "coverage_runtime.empirical_metrics"
+    # schema-1 is the retained receipt emitted by the lifecycle-owned product
+    # executor.  It proves planning/action completion only; distance, swept
+    # cells and duration come independently from the collector's live AMCL and
+    # /brush_enabled observations below.  Do not accept the older synthetic
+    # schema-2 empirical-metrics object here.
+    if coverage.get("schema_version") != 1:
+        raise BaselineError("coverage execution report must use schema_version 1")
+    for key in ("success", "ground_truth_used_for_control", "brush_disabled_on_exit"):
+        if key == "ground_truth_used_for_control":
+            _false(coverage, key, "coverage_runtime")
+        else:
+            _true(coverage, key, "coverage_runtime")
+    if coverage.get("terminal_state") != "COMPLETED":
+        raise BaselineError("coverage execution did not reach COMPLETED")
+    planned_swaths = _strict_positive_int(
+        coverage, "planned_swath_count", "coverage_runtime"
     )
-    _true(coverage, "competition_efficiency_pass", "coverage_runtime")
-    if covered_area <= 0.0 or actual_duration <= 0.0:
-        raise BaselineError("FullCoverage competition coverage area/duration must be positive")
-    recomputed_efficiency = covered_area / actual_duration * 3600.0
-    if not math.isclose(
-        measured_efficiency,
-        recomputed_efficiency,
-        rel_tol=1.0e-9,
-        abs_tol=1.0e-6,
-    ):
-        raise BaselineError("FullCoverage competition efficiency differs from area/duration recomputation")
+    if coverage.get("completed_swath_count") != planned_swaths:
+        raise BaselineError("coverage execution did not complete every planned swath")
+    _same(
+        _strict_number(coverage, "operation_width_m", "coverage_runtime"),
+        1.32,
+        "coverage execution operation width differs from formal brush width",
+    )
+    for key, expected in coverage_binding.items():
+        actual = coverage.get({
+            "geometry_sha256": "coverage_geometry_sha256",
+            "planning_clearance_m": "planning_clearance_m",
+            "raster_resolution_m": "coverage_raster_resolution_m",
+            "reachable_cleanable_cells": "reachable_cleanable_cells",
+            "cleanable_area_m2": "cleanable_area_m2",
+        }[key])
+        if isinstance(expected, str):
+            if actual != expected:
+                raise BaselineError(f"coverage execution {key} differs from sealed geometry")
+        elif isinstance(expected, int):
+            if actual != expected:
+                raise BaselineError(f"coverage execution {key} differs from sealed geometry")
+        else:
+            _same(
+                _strict_number(coverage, {
+                    "planning_clearance_m": "planning_clearance_m",
+                    "raster_resolution_m": "coverage_raster_resolution_m",
+                    "cleanable_area_m2": "cleanable_area_m2",
+                }[key], "coverage_runtime"),
+                expected,
+                f"coverage execution {key} differs from sealed geometry",
+            )
+
+    actual_distance = _strict_number(
+        cleaning, "trajectory_total_distance_m", "cleaning_runtime"
+    )
+    if actual_distance <= 0.0:
+        raise BaselineError("live AMCL trajectory distance must be positive")
+    if cleaning.get("coverage_pose_source") != "amcl_pose_product_estimate":
+        raise BaselineError("coverage trajectory is not sourced from live AMCL poses")
+    if cleaning.get("brush_state_source") != "/brush_enabled_product_runtime":
+        raise BaselineError("coverage brush state is not product runtime telemetry")
+    for key, expected in coverage_binding.items():
+        actual_key = {
+            "geometry_sha256": "coverage_geometry_sha256",
+            "planning_clearance_m": "coverage_planning_clearance_m",
+            "raster_resolution_m": "coverage_raster_resolution_m",
+            "reachable_cleanable_cells": "estimated_field_cells",
+        }.get(key)
+        if actual_key is None:
+            continue
+        actual = cleaning.get(actual_key)
+        if isinstance(expected, str) or isinstance(expected, int):
+            if actual != expected:
+                raise BaselineError(f"cleaning telemetry {key} differs from sealed geometry")
+        else:
+            _same(
+                _strict_number(cleaning, actual_key, "cleaning_runtime"),
+                expected,
+                f"cleaning telemetry {key} differs from sealed geometry",
+            )
+    covered_cells = _strict_positive_int(
+        cleaning, "estimated_covered_cells", "cleaning_runtime"
+    )
+    free_cells = int(coverage_binding["reachable_cleanable_cells"])
+    if covered_cells > free_cells:
+        raise BaselineError("estimated covered cells exceed sealed cleanable cells")
+    covered_area = covered_cells * float(coverage_binding["raster_resolution_m"]) ** 2
+    coverage_fraction = _strict_number(
+        cleaning, "estimated_coverage_fraction", "cleaning_runtime"
+    )
+    _same(
+        coverage_fraction,
+        covered_cells / free_cells,
+        "coverage fraction differs from live covered/free cell counts",
+    )
+    if coverage_fraction < 0.95:
+        raise BaselineError("live AMCL coverage fraction is below 95 percent")
+    first_brush = _strict_number(
+        cleaning, "coverage_first_brush_enabled_monotonic_s", "cleaning_runtime"
+    )
+    terminal = _strict_number(
+        cleaning, "coverage_terminal_monotonic_s", "cleaning_runtime"
+    )
+    if terminal <= first_brush:
+        raise BaselineError("coverage terminal monotonic time must follow first brush enable")
+    actual_duration = _strict_number(
+        cleaning, "coverage_actual_duration_sec", "cleaning_runtime"
+    )
+    _same(
+        actual_duration,
+        terminal - first_brush,
+        "coverage duration differs from first-brush to terminal monotonic interval",
+    )
+    if actual_duration <= 0.0:
+        raise BaselineError("FullCoverage competition coverage duration must be positive")
+    measured_efficiency = covered_area / actual_duration * 3600.0
+    recomputed_efficiency = measured_efficiency
     if measured_efficiency < COMPETITION_EFFICIENCY_THRESHOLD_M2_H:
         raise BaselineError("FullCoverage competition efficiency is below 3500 m2/h")
+    planned_distance = _strict_number(
+        coverage, "planned_swath_length_m", "coverage_runtime"
+    )
+    if planned_distance <= 0.0:
+        raise BaselineError("coverage execution planned swath length must be positive")
 
     evidence_paths = {
         "episode_manifest": episode_manifest,

@@ -3,16 +3,16 @@ status: NOT_READY_FOR_FABRICATION_OR_REAL_WORLD_ACCEPTANCE
 ready: false
 last_expanded_artifact:
   path: reports/engineering/formal_competition_vehicle.urdf
-  sha256: 34257c2ed840a6f8f25933bdf37c6130c3db397d0aa1211c561bff528bd621d1
+  sha256: 7df8007432272a69357f55920a9ba675a922e4a2c6aa020f1fcee04dab1ac04a
   links: 196
   joints: 195
   mass_kg: 160.007583
   source_snapshot_state: current_verified_snapshot
 current_snapshot:
   path: reports/engineering/formal_vehicle_snapshot_manifest.json
-  sha256: 2b25b7cca0b896e088c322099fb3d3852983373f6befc995db80e4755655bf03
-  source_inventory_sha256: e3176b2e70b73d273f3799cb2988b449dc86ddbd1f611e153f7807fe7827bf66
-  output_inventory_sha256: 1b851ad66b5d3dc8a85d08825a1d31741e945f66d618374965ec3c3a2dc8eb0c
+  sha256: 235273c97c20ded6d62d42d682536a06b29892d0d13ff7f6d48887341283b9f5
+  source_inventory_sha256: b7a9bbebe6b36df8b6861b1fb871f329b1bd2d58b6402e2350a283ea874ff6bd
+  output_inventory_sha256: bb96ca37a521fda3ab7e65a602f1f3e3930837e3d66c4c66bde4d1e22b30c2fb
 mass_budget:
   a300_design_load_kg: 91.35
   a300_base_mass_kg: 78.5
@@ -70,28 +70,28 @@ evidence_paths:
   last_expanded_urdf:
     path: reports/engineering/formal_competition_vehicle.urdf
     state: current_snapshot_output
-    sha256: 34257c2ed840a6f8f25933bdf37c6130c3db397d0aa1211c561bff528bd621d1
+    sha256: 7df8007432272a69357f55920a9ba675a922e4a2c6aa020f1fcee04dab1ac04a
   source_snapshot:
     path: reports/engineering/formal_vehicle_snapshot_manifest.json
     state: current_verified_snapshot
-    sha256: 2b25b7cca0b896e088c322099fb3d3852983373f6befc995db80e4755655bf03
+    sha256: 235273c97c20ded6d62d42d682536a06b29892d0d13ff7f6d48887341283b9f5
   component_register:
     path: reports/engineering/formal_vehicle_component_register_report.json
     state: current_snapshot_output
-    sha256: edeead91c4b3655f92b5a2e11d9ae1c6ec10882ce7883498b132a89fe224ea60
+    sha256: 7f52bdad1bc801afc82ea938cef25d6b1437ba9e635367ebff1ef0f468605044
   fov_occlusion:
     path: reports/engineering/formal_vehicle_fov_occlusion_report.json
     state: current_static_analysis
-    sha256: e055a2ae52934975872806c95b1fc20421fb9fc85865f75d76b87cab4ceb9c4d
-    urdf_sha256: 34257c2ed840a6f8f25933bdf37c6130c3db397d0aa1211c561bff528bd621d1
+    sha256: bf0b78bdaa3fa59912366c4d276bcdfeb28a3204120f1bb0d156a34fcab8a095
+    urdf_sha256: 7df8007432272a69357f55920a9ba675a922e4a2c6aa020f1fcee04dab1ac04a
     layout_sha256: 3c9c10da558c116bcbedf39a516093ca20c1e3eb590e2bb2d121ebd491cf10a9
     validator_path: scripts/validate_formal_fov_occlusion.py
     validator_sha256: 92900a3a79845c7645507129af6ab1cd87664d6e837ed00bd35ab225397d04f2
   inertia_swept_volume:
     path: reports/engineering/formal_vehicle_inertia_and_swept_volume_report.json
     state: current_static_analysis
-    sha256: b9de5cbcbf8b9b770ec214d85ff86c3ca3f6cc7560c73972219687cc0ddf437b
-    urdf_sha256: 34257c2ed840a6f8f25933bdf37c6130c3db397d0aa1211c561bff528bd621d1
+    sha256: 0f7dd079d49018274bd4c6028ab13d8b79f0d49fff4a76a848d3d107c3eed23b
+    urdf_sha256: 7df8007432272a69357f55920a9ba675a922e4a2c6aa020f1fcee04dab1ac04a
     layout_sha256: 3c9c10da558c116bcbedf39a516093ca20c1e3eb590e2bb2d121ebd491cf10a9
     scanner_path: scripts/scan_formal_vehicle_inertia_and_swept_volume.py
     scanner_sha256: 6b1e611094578bd51f190c32f9d085ae479127a1fbb043b0ab5bffc5f8dd6dcf

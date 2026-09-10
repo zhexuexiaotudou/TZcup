@@ -174,10 +174,10 @@
       "id": "A19",
       "title": "长稳、故障注入与恢复",
       "source": ["COMPETITION_REQUIREMENTS.md", "config/high_fidelity_vehicle/formal_a19_reliability_fault_contract.json"],
-      "step_ids": ["single_episode", "multisite_product", "s100_live"],
+      "step_ids": ["a19_reliability"],
       "evidence_gates": ["a19_two_hour_reliability_fault"],
-      "state": "BLOCKED_MISSING_CANONICAL_A19_RUNTIME_PRODUCER",
-      "blockers": ["The A19 product-standard contract has no current-main canonical producer for a two-hour full-pipeline receipt with raw time series, command/exit/survivor evidence, all 18 faults, and current commit/session/runtime-closure bindings."]
+      "state": "READY_FOR_FRESH_TWO_HOUR_RUNTIME",
+      "blockers": ["The canonical producer, validator and formal runner are present, but no fresh current-session 7200-second product run has been executed. Fixtures, preflight and shorter runs cannot pass A19."]
     },
     {
       "id": "A20",

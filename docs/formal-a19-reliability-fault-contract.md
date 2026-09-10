@@ -1,23 +1,69 @@
-# A19 两小时长稳、故障注入与恢复合同
+# A19 两小时长稳、故障注入与恢复
 
-`config/high_fidelity_vehicle/formal_a19_reliability_fault_contract.json` 单独定义 A19，当前状态固定为 `BLOCKED_MISSING_CANONICAL_A19_RUNTIME_PRODUCER`。它不改变 A12、AUTO-15 或任何标定结论。
+`config/high_fidelity_vehicle/formal_a19_reliability_fault_contract.json` 定义 A19 的固定产品门。
+当前源码已经包含 canonical producer、独立 validator 和正式 runner，但尚未执行新鲜的
+7200 秒产品长跑，因此状态是 `READY_FOR_FRESH_TWO_HOUR_RUNTIME`，不是 PASS。
 
-产品标准 `docs/product-acceptance-spec-v1.md` §36–37（commit `e1d900f`，尚未合入当前 main）要求冻结后的 Coverage、Perception、Tracking、DynamicTrashMap、Spot Cleaning 和 Post-Clean Verification 连续运行不少于两小时。它要求 crash/deadlock/持续队列增长/意外模型重载/持续 TF 故障/不可恢复 watchdog/不安全清扫均为零、内存增长不超过 5%，定位 RMSE/P95 均不超过 50 mm，并覆盖 nominal、transport_stress、wet_surface、degraded_drive 以及 18 个明确故障。
+## 不可缩短的正式口径
 
-当前 main 没有规范 A19 runtime producer 或 receipt schema：没有任何收据能同时绑定同提交的 snapshot/session/runtime closure、可解析的实时连续 wall-clock 序列、启动命令、退出码、零 survivor、全故障注入记录及基于时间戳的 STOPPED/RECOVERED 状态。因此校验器不会把任意“路径 + 哈希 + size”文件解释为上述语义，也刻意不会产生 PASS；手写 JSON、65 秒 water soak 或历史产物都只能得到 BLOCKED。这是缺少生产器的真实边界，不是运行通过结论。
+同一个冻结产品进程组必须连续运行至少 7200 个真实 monotonic 秒，1 Hz 采集 Coverage、
+Perception、Tracking、DynamicTrashMap、Spot Cleaning、Post-Clean Verification 的原始
+时序。nominal、transport_stress、wet_surface、degraded_drive 四档必须各有至少 1500 秒
+可复核样本；最大采样间隔为 2.5 秒，至少保留 7000 个样本。fixture、虚拟时间、历史报告和
+短跑均不能生成正式通过。
 
-未来 canonical producer 的责任已冻结在合同中：解析并交叉验证连续 wall-clock 序列和 cadence、启动命令/零退出、零 survivor、18 个带参数的故障记录及 STOPPED 后 RECOVERED 的时间顺序，并将它们绑定到同一提交的 snapshot/session/runtime closure。生产器与 schema 未落地前，当前 validator 不声称检查这些语义。
+18 类故障由 producer 按合同固定时间表下发，不由 adapter 自行宣称已经注入。每项命令都带
+随机 run nonce、唯一 command ID、profile 和完整参数；adapter 必须回显同一命令，并分别上报
+时间有序的 `STOPPED` 和 `RECOVERED`。STOPPED 期间必须证明：安全态为 STOPPED，待执行清扫
+已 CANCELLED/DEFERRED，感知为 DEGRADED/ERROR，Nav2 与 Watchdog 仍可运行，unsafe cleaning
+计数为零，制动延迟不超过 1 秒。RECOVERED 后 Coverage 必须回到 RUNNING/RESUMED。
 
-离线核验：
+长稳硬门仍为 crash/deadlock/queue growth/意外模型重载/持续 TF 失败/不可恢复 watchdog/
+不安全清扫均为零，首末 300 秒窗口的 RSS 中位数增长不超过 5%，定位 XY RMSE/P95 均不超过
+50 mm。最终进程必须自然返回 0；producer 不允许用 INT/TERM/KILL 换取 PASS，并在 `/proc`
+按精确 PGID 复核零 survivor。
+
+## 证据链
+
+`scripts/produce_formal_a19_reliability_fault.py` 监督一个冻结的非 fixture adapter。adapter 使用
+逐行 JSON 的 `tzcup.formal_a19.adapter.v1` 协议；producer 自己记录接收 wall/monotonic 时间、
+下发命令、启动 argv、PID/PGID、退出码、清理信号和 survivor。原始目录包含：
+
+- `adapter_events.jsonl`：producer 封装的逐条原始事件与接收时间；
+- `adapter_stderr.log`：未经摘要替换的 adapter stderr；
+- `runtime_gate_binding.json`：当前 RUNNING session、canonical snapshot 和 frozen runtime closure；
+- `raw_receipt.json`：上述文件的 SHA-256/字节数/行数、当前 Git commit/tree 与进程终态。
+
+`scripts/validate_formal_a19_reliability_fault.py` 不信任 raw receipt 的 PASS 声明，而是重新读取
+JSONL、重新计算时长/连续性/内存/定位/18 故障顺序与安全语义，再复核 producer、contract、
+当前 Git、session、snapshot、closure 和全部原始文件摘要。正式输出为
+`artifacts/formal_a19_reliability_fault_acceptance.json`，其 runtime-binding sidecar 也由最终
+functional aggregate 再次读取并纳入 session 密封。
+
+## 先做不占 Gazebo 锁的预检
+
+adapter argv 使用 JSON 数组传递，禁止 shell `eval`。例如：
 
 ```bash
-python3 scripts/validate_formal_a19_reliability_fault.py \
-  --report <collector-report.json> \
-  --snapshot reports/engineering/formal_vehicle_snapshot_manifest.json \
-  --acceptance-session artifacts/formal_final_acceptance_session.json \
-  --runtime-closure <final-runtime-closure-manifest.json> \
-  --evidence-root <fresh-a19-evidence-directory> \
-  --output <fresh-a19-validation.json>
+export FORMAL_A19_ADAPTER_ARGV_JSON='["/absolute/frozen/bin/tzcup-a19-product-adapter"]'
+export FORMAL_VEHICLE_RUNTIME_WS=/absolute/fresh/final_runtime_ws
+bash scripts/run_formal_a19_reliability_fault.sh --preflight
 ```
 
-它拒绝覆盖已有输出，并对 contract/report/snapshot/session/closure 及 output parent 做规范化路径、无 symlink ancestor、resolve 后仍 in-root、regular-file、稳定双读和最终重读检查。现有 65 秒 `run_formal_water_safety_soak.sh` 输出只能保留为独立水安全证据，不能作为 A19 输入或改标为两小时通过。
+预检只验证合同、argv、干净 Git commit/tree、canonical snapshot、RUNNING session 和 frozen
+runtime closure；不会获取 `/tmp/tzcup_formal_gazebo.lock`，不会启动 adapter 或 Gazebo，输出中的
+`minimum_remaining_runtime_s` 固定为 7200。`scripts/fixtures/formal_a19_adapter_fixture.py` 只用于
+POSIX 单元测试，正式入口按路径片段硬拒绝它。
+
+## 独占窗口执行
+
+总控分配独占 Gazebo 窗口后，在与预检完全相同的环境中执行：
+
+```bash
+bash scripts/run_formal_a19_reliability_fault.sh
+```
+
+runner 先取得统一 Gazebo 锁，再运行 snapshot 前检、producer、snapshot 后检和独立 validator。
+已有 raw 目录、最终 receipt 或 runtime-binding sidecar 均会拒绝覆盖；失败 attempt 会保留为诊断
+证据。A19 已作为 `a19_reliability` 接入正式 32 步编排，位于 multisite product 之后、S100 外部门
+和 session finalize 之前。没有真实两小时 receipt 时，最终 aggregate 必须保持 pending。

@@ -545,6 +545,7 @@ def test_static_audit_covers_each_contract_gate_exactly_once() -> None:
             "verified_before_and_after_every_step": True,
             "functional_aggregate_revalidates_runtime_binding_sidecars": True,
             "runtime_gate_bindings_required": [
+            "a19_two_hour_reliability_fault",
             "a300_drivetrain_runtime",
             "auxiliary_power_lighting",
             "cleaning_actuators",
@@ -608,7 +609,7 @@ def test_runtime_binding_gate_contract_and_retained_sidecars_have_one_authority(
 
 def test_requested_whole_vehicle_order_is_preserved() -> None:
     order = [step.step_id for step in orchestration.STEP_SPECS]
-    assert len(order) == 31
+    assert len(order) == 32
     required = [
         "freeze_snapshot",
         "start_session",
@@ -624,18 +625,50 @@ def test_requested_whole_vehicle_order_is_preserved() -> None:
         "charge_and_drain",
             "manipulator",
             "twenty_cubes",
-            "rl_policy",
             "first_map",
         "saved_map_reuse",
+            "same_map_baseline",
         "perception",
         "dynamic_obstacle",
+            "rl_policy",
         "single_episode",
         "multisite_product",
+        "a19_reliability",
         "s100_live",
         "finalize_session",
         "functional_aggregate",
     ]
     assert [order.index(step) for step in required] == sorted(order.index(step) for step in required)
+    audit = orchestration.static_audit()
+    assert audit["required_lifecycle_order"] == [
+        "episode_materialization",
+        "first_map",
+        "saved_map_reuse",
+        "same_map_baseline",
+        "perception",
+        "dynamic_obstacle",
+        "rl_policy",
+        "single_episode",
+        "multisite_product",
+        "a19_reliability",
+        "s100_live",
+        "finalize_session",
+        "functional_aggregate",
+    ]
+    assert audit["runtime_evidence_state"] == {
+        "status": "NOT_EVALUATED_STATIC_AUDIT_ONLY",
+        "runtime_execution_eligible": False,
+        "fresh_frozen_runtime_required": True,
+        "native_preflight_required_before_execute": True,
+        "current_session_bound_gazebo_evidence_verified": False,
+        "s100_board_evidence_verified": False,
+    }
+    assert audit["s100_collection_semantics"] == {
+        "collection_must_follow_session_start": True,
+        "collection_started_automatically_by_orchestrator": False,
+        "terminal_validation_step": "s100_live",
+        "all_local_gates_required_before_final_acceptance": True,
+    }
 
 
 def test_every_gazebo_step_has_one_shared_lock_strategy() -> None:
@@ -1611,7 +1644,7 @@ def test_resume_s100_updates_only_the_three_terminal_rows_without_gazebo_runners
     result, code = orchestration.resume_s100(context)
     assert code == 0
     assert result["status"] == "FORMAL_FINAL_ACCEPTANCE_ORCHESTRATION_COMPLETE"
-    assert len(result["steps"]) == 31
+    assert len(result["steps"]) == 32
     assert [row["id"] for row in result["steps"]] == [
         spec.step_id for spec in orchestration.STEP_SPECS
     ]
@@ -1792,7 +1825,7 @@ def test_resume_s100_recovers_phase_two_after_prior_finalize_then_aggregate_fail
     assert len(aggregate_attempts) == 2
     assert len(complete_verifications) == 2
     assert all(len(gate_results) == 25 for gate_results in complete_verifications)
-    assert len(second["steps"]) == 31
+    assert len(second["steps"]) == 32
 
 
 def test_run_root_must_be_fresh_and_inside_the_formal_run_namespace(
@@ -2367,6 +2400,7 @@ def test_each_local_gate_is_routed_to_its_contract_output_before_execution(
         "saved_map_reuse": ("FORMAL_MAP_LIFECYCLE_OUTPUT",),
         "perception": ("FORMAL_PERCEPTION_FINAL_ARTIFACT",),
         "dynamic_obstacle": ("FORMAL_DYNAMIC_OUTPUT",),
+        "a19_reliability": ("FORMAL_A19_OUTPUT",),
     }
     for step in orchestration.STEP_SPECS:
         if not step.produces_gates or step.step_id == "s100_live":

@@ -47,7 +47,7 @@ def test_crosswalk_covers_current_goal_runner_and_gate_contract() -> None:
     assert mapped_steps == _runner_step_ids()
     formal_gates = set(contract["evidence_gates"])
     assert formal_gates <= mapped_gates
-    assert mapped_gates - formal_gates == {"a19_two_hour_reliability_fault"}
+    assert mapped_gates == formal_gates
     assert all(item["state"] != "PASS" for item in requirements)
 
 
@@ -62,7 +62,7 @@ def test_crosswalk_keeps_external_and_historical_claims_fail_closed() -> None:
     assert "blockers" not in by_id["A15"]
     assert by_id["A17"]["state"] == "BLOCKED"
     assert by_id["A18"]["state"] == "BLOCKED_EXTERNAL_INPUT_AND_ARTIFACTS"
-    assert by_id["A19"]["state"] == "BLOCKED_MISSING_CANONICAL_A19_RUNTIME_PRODUCER"
+    assert by_id["A19"]["state"] == "READY_FOR_FRESH_TWO_HOUR_RUNTIME"
     assert by_id["A19"]["evidence_gates"] == ["a19_two_hour_reliability_fault"]
     assert by_id["A20"]["state"] == "BLOCKED"
     assert by_id["A20"]["evidence_gates"] == []

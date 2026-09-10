@@ -3,11 +3,22 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import hashlib
+import json
 import math
 from pathlib import Path
 from typing import Any, Sequence
 
 import yaml
+
+from .map_lifecycle_core import (
+    FORMAL_COVERAGE_STATIC_OBSTACLE_INFLATION_M,
+    MapLifecycleError,
+    REQUIRED_SAVED_MAP_SUPPORT_FILES,
+    _artifact_basename,
+    _read_artifact_snapshot,
+    parse_binary_pgm,
+)
 
 
 FORMAL_OPERATION_WIDTH_M = 1.32
@@ -29,6 +40,20 @@ FORMAL_MAX_LINEAR_SPEED_MPS = 0.45
 
 class SavedMapCoverageError(RuntimeError):
     """Raised when product coverage evidence is incomplete or inconsistent."""
+
+
+@dataclass(frozen=True)
+class SavedMapCoverageGeometry:
+    outer_polygon: tuple[tuple[float, float], ...]
+    planning_outer_polygon: tuple[tuple[float, float], ...]
+    planning_hole_polygons: tuple[tuple[tuple[float, float], ...], ...]
+    keepout_polygons: tuple[tuple[tuple[float, float], ...], ...]
+    free_cells: frozenset[tuple[int, int]]
+    raster_resolution_m: float
+    origin_x: float
+    origin_y: float
+    planning_clearance_m: float
+    sha256: str
 
 
 def load_formal_operation_speed_profile(
@@ -101,15 +126,59 @@ def point_in_polygon(
     return inside
 
 
-def load_product_mission_geometry(path: str | Path) -> tuple[tuple[float, float], ...]:
+def _polygon(raw: object, label: str) -> tuple[tuple[float, float], ...]:
     try:
-        value = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
-        raw = value["outer_polygon"]
-        polygon = tuple((float(point[0]), float(point[1])) for point in raw)
-    except (OSError, yaml.YAMLError, KeyError, TypeError, ValueError, IndexError) as exc:
-        raise SavedMapCoverageError("public mission geometry is missing or invalid") from exc
+        polygon = tuple((float(point[0]), float(point[1])) for point in raw)  # type: ignore[arg-type]
+    except (TypeError, ValueError, IndexError) as exc:
+        raise SavedMapCoverageError(f"{label} is missing or invalid") from exc
     if not all(math.isfinite(item) for point in polygon for item in point):
-        raise SavedMapCoverageError("coverage polygon contains non-finite coordinates")
+        raise SavedMapCoverageError(f"{label} contains non-finite coordinates")
+    polygon_area(polygon)
+    return polygon
+
+
+def _sealed_snapshot(
+    root: Path, name: str, hashes: dict[str, object], label: str
+) -> bytes:
+    try:
+        snapshot = _read_artifact_snapshot(root, name, label=label)
+    except MapLifecycleError as exc:
+        raise SavedMapCoverageError(f"{label} is missing or invalid") from exc
+    expected = hashes.get(name)
+    if not isinstance(expected, str) or hashlib.sha256(snapshot).hexdigest() != expected:
+        raise SavedMapCoverageError(f"{label} is not sealed by the lifecycle manifest")
+    return snapshot
+
+
+def load_product_mission_geometry(path: str | Path) -> SavedMapCoverageGeometry:
+    mission_path = Path(path)
+    root = mission_path.parent
+    try:
+        if _artifact_basename(mission_path.name, label="mission geometry") != "mission_geometry.yaml":
+            raise SavedMapCoverageError("formal mission geometry must use mission_geometry.yaml")
+        manifest_bytes = _read_artifact_snapshot(
+            root, "map_lifecycle_manifest.json", label="saved-map lifecycle manifest"
+        )
+        manifest = json.loads(manifest_bytes)
+        hashes = manifest["sha256"]
+        required_files = {"occupancy.yaml", "occupancy.pgm", *REQUIRED_SAVED_MAP_SUPPORT_FILES}
+        if not isinstance(hashes, dict) or set(hashes) != required_files:
+            raise SavedMapCoverageError("saved-map lifecycle manifest hash seal is incomplete")
+        mission_bytes = _sealed_snapshot(root, mission_path.name, hashes, "mission geometry")
+        value = yaml.safe_load(mission_bytes)
+        polygon = _polygon(value["outer_polygon"], "public mission geometry")
+        coverage = value["saved_occupancy_coverage"]
+        if not isinstance(coverage, dict):
+            raise TypeError("saved occupancy coverage must be a mapping")
+        geometry_name = _artifact_basename(coverage["geometry"], label="coverage geometry")
+        free_name = _artifact_basename(coverage["free_space_map"], label="coverage free-space map")
+        geometry_bytes = _sealed_snapshot(root, geometry_name, hashes, "coverage geometry")
+        free_bytes = _sealed_snapshot(root, free_name, hashes, "coverage free-space map")
+        geometry = yaml.safe_load(geometry_bytes)
+    except SavedMapCoverageError:
+        raise
+    except (MapLifecycleError, OSError, json.JSONDecodeError, yaml.YAMLError, KeyError, TypeError, ValueError, IndexError) as exc:
+        raise SavedMapCoverageError("public mission geometry is missing or invalid") from exc
     area = polygon_area(polygon)
     if abs(area - 20_000.0) > 1e-3:
         raise SavedMapCoverageError("formal saved-map coverage requires 20000 m2")
@@ -123,7 +192,74 @@ def load_product_mission_geometry(path: str | Path) -> tuple[tuple[float, float]
         )
     ):
         raise SavedMapCoverageError("product mission geometry violates truth isolation")
-    return polygon
+    if (
+        geometry_name != "coverage_geometry.yaml"
+        or free_name != "coverage_free_space.pgm"
+        or coverage.get("sha256") != hashes[geometry_name]
+        or coverage.get("planning_clearance_preapplied") is not True
+        or not isinstance(geometry, dict)
+        or geometry.get("source") != "saved_slam_occupancy_only"
+        or geometry.get("occupancy_map") != "occupancy.yaml"
+        or geometry.get("occupancy_image") != "occupancy.pgm"
+        or geometry.get("occupancy_map_sha256") != hashes["occupancy.yaml"]
+        or geometry.get("occupancy_image_sha256") != hashes["occupancy.pgm"]
+        or geometry.get("free_space_map") != free_name
+        or geometry.get("free_space_map_sha256") != hashes[free_name]
+        or geometry.get("planning_clearance_preapplied") is not True
+        or geometry.get("world_truth_used_for_product_map") is not False
+    ):
+        raise SavedMapCoverageError("saved occupancy coverage geometry is missing or invalid")
+    planning_outer = _polygon(geometry.get("planning_outer_polygon"), "saved occupancy planning outer polygon")
+    planning_holes = tuple(_polygon(item, "saved occupancy planning hole polygon") for item in geometry.get("planning_hole_polygons", ()))
+    keepouts = tuple(_polygon(item, "saved occupancy keepout polygon") for item in geometry.get("keepout_polygons", ()))
+    if value.get("keepout_polygons") != [list(map(list, item)) for item in keepouts]:
+        raise SavedMapCoverageError("mission does not use its saved occupancy coverage geometry")
+    if any(
+        not point_in_polygon(
+            sum(point[0] for point in hole) / len(hole),
+            sum(point[1] for point in hole) / len(hole), planning_outer,
+        )
+        for hole in planning_holes
+    ):
+        raise SavedMapCoverageError("saved occupancy planning hole is outside its outer region")
+    try:
+        resolution = float(geometry["resolution_m"])
+        origin_x, origin_y, origin_yaw = (float(item) for item in geometry["origin"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise SavedMapCoverageError("saved occupancy coverage raster metadata is invalid") from exc
+    if not 0.0 < resolution <= 0.25 or not all(math.isfinite(item) for item in (origin_x, origin_y, origin_yaw)) or abs(origin_yaw) > 1e-9:
+        raise SavedMapCoverageError("saved occupancy coverage raster metadata is invalid")
+    try:
+        width, height, rows = parse_binary_pgm(free_bytes)
+    except Exception as exc:
+        raise SavedMapCoverageError("saved coverage free-space PGM is invalid") from exc
+    if any(pixel not in (0, 255) for row in rows for pixel in row):
+        raise SavedMapCoverageError("saved coverage free-space PGM must be binary")
+    free_cells = frozenset((column, row) for row in range(height) for column in range(width) if rows[row][column] == 255)
+    expected_cells = geometry.get("reachable_cleanable_cells")
+    if not isinstance(expected_cells, int) or expected_cells <= 0 or len(free_cells) != expected_cells:
+        raise SavedMapCoverageError("saved occupancy coverage free-space count is invalid")
+    try:
+        clearance = float(geometry["planning_clearance_m"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise SavedMapCoverageError("saved occupancy planning clearance is invalid") from exc
+    if (
+        not math.isclose(clearance, FORMAL_COVERAGE_STATIC_OBSTACLE_INFLATION_M, abs_tol=1e-12)
+        or geometry.get("obstacle_inflation_m") != clearance
+    ):
+        raise SavedMapCoverageError("saved occupancy planning clearance is invalid")
+    return SavedMapCoverageGeometry(
+        outer_polygon=polygon,
+        planning_outer_polygon=planning_outer,
+        planning_hole_polygons=planning_holes,
+        keepout_polygons=keepouts,
+        free_cells=free_cells,
+        raster_resolution_m=resolution,
+        origin_x=origin_x,
+        origin_y=origin_y,
+        planning_clearance_m=clearance,
+        sha256=hashes[geometry_name],
+    )
 
 
 def validate_execution_parameters(
@@ -154,6 +290,12 @@ class ProductCoverageTelemetry:
     """Integrate estimated motion and brush sweep without simulator truth."""
 
     polygon: tuple[tuple[float, float], ...]
+    keepout_polygons: tuple[tuple[tuple[float, float], ...], ...] = ()
+    cleanable_cells: frozenset[tuple[int, int]] | None = None
+    raster_origin_x: float | None = None
+    raster_origin_y: float | None = None
+    coverage_geometry_sha256: str | None = None
+    planning_clearance_m: float | None = None
     operation_width_m: float = FORMAL_OPERATION_WIDTH_M
     operation_speed_profile: str = MAPPING_SAFE_SPEED_PROFILE
     maximum_linear_speed_mps: float = FORMAL_MAX_LINEAR_SPEED_MPS
@@ -176,14 +318,32 @@ class ProductCoverageTelemetry:
         )
         if not 0.0 < self.raster_resolution_m <= 0.25:
             raise SavedMapCoverageError("coverage evidence raster must be <=0.25 m")
-        self._min_x = min(point[0] for point in self.polygon)
-        self._min_y = min(point[1] for point in self.polygon)
-        self._field_cells = max(
-            1,
-            round(
-                polygon_area(self.polygon)
-                / (self.raster_resolution_m * self.raster_resolution_m)
-            ),
+        self._min_x = self.raster_origin_x if self.cleanable_cells is not None else min(point[0] for point in self.polygon)
+        self._min_y = self.raster_origin_y if self.cleanable_cells is not None else min(point[1] for point in self.polygon)
+        if self.cleanable_cells is not None:
+            if self.raster_origin_x is None or self.raster_origin_y is None or not self.cleanable_cells:
+                raise SavedMapCoverageError("saved occupancy coverage raster is incomplete")
+            self._field_cells = len(self.cleanable_cells)
+        else:
+            self._field_cells = max(
+                1,
+                round(
+                    polygon_area(self.polygon)
+                    / (self.raster_resolution_m * self.raster_resolution_m)
+                ),
+            )
+
+    @classmethod
+    def from_mission_geometry(cls, geometry: SavedMapCoverageGeometry) -> "ProductCoverageTelemetry":
+        return cls(
+            polygon=geometry.outer_polygon,
+            keepout_polygons=geometry.keepout_polygons,
+            cleanable_cells=geometry.free_cells,
+            raster_resolution_m=geometry.raster_resolution_m,
+            raster_origin_x=geometry.origin_x,
+            raster_origin_y=geometry.origin_y,
+            coverage_geometry_sha256=geometry.sha256,
+            planning_clearance_m=geometry.planning_clearance_m,
         )
 
     def set_brush(self, enabled: bool) -> None:
@@ -234,7 +394,14 @@ class ProductCoverageTelemetry:
                 cx = self._min_x + (column + 0.5) * self.raster_resolution_m
                 if (
                     math.hypot(cx - x, cy - y) <= radius
-                    and point_in_polygon(cx, cy, self.polygon)
+                    and (
+                        (column, row) in self.cleanable_cells
+                        if self.cleanable_cells is not None
+                        else point_in_polygon(cx, cy, self.polygon) and not any(
+                            point_in_polygon(cx, cy, polygon)
+                            for polygon in self.keepout_polygons
+                        )
+                    )
                 ):
                     self._covered_cells.add((column, row))
 
@@ -254,6 +421,8 @@ class ProductCoverageTelemetry:
             "estimated_field_cells": self._field_cells,
             "estimated_coverage_fraction": self.estimated_coverage_fraction,
             "coverage_raster_resolution_m": self.raster_resolution_m,
+            "coverage_geometry_sha256": self.coverage_geometry_sha256,
+            "coverage_planning_clearance_m": self.planning_clearance_m,
             "coverage_pose_source": "amcl_pose_product_estimate",
             "operation_speed_profile": self.operation_speed_profile,
             "maximum_linear_speed_mps": self.maximum_linear_speed_mps,
@@ -273,4 +442,7 @@ def coverage_execution_passed(report: dict) -> bool:
         in {FORMAL_MAX_LINEAR_SPEED_MPS, 1.0}
         and int(report.get("planned_swath_count", 0)) > 0
         and report.get("completed_swath_count") == report.get("planned_swath_count")
+        and isinstance(report.get("coverage_geometry_sha256"), str)
+        and len(report["coverage_geometry_sha256"]) == 64
+        and float(report.get("cleanable_area_m2", 0.0)) > 0.0
     )

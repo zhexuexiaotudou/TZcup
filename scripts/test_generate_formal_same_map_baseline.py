@@ -49,12 +49,32 @@ def _fixture(tmp_path: Path) -> argparse.Namespace:
     map_root = tmp_path / "map"
     map_root.mkdir()
     (map_root / "occupancy.yaml").write_text("image: occupancy.pgm\n", encoding="utf-8")
+    (map_root / "occupancy.pgm").write_bytes(b"P5\n1 1\n255\n\xff")
+    (map_root / "coverage_free_space.pgm").write_bytes(b"P5\n1 1\n255\n\xff")
+    coverage_geometry = {
+        "source": "saved_slam_occupancy_only",
+        "free_space_map": "coverage_free_space.pgm",
+        "free_space_map_sha256": _sha(map_root / "coverage_free_space.pgm"),
+        "resolution_m": 0.1,
+        "planning_clearance_m": 1.70,
+        "obstacle_inflation_m": 1.70,
+        "reachable_cleanable_cells": 2_000_000,
+        "reachable_cleanable_area_m2": 20_000.0,
+    }
+    (map_root / "coverage_geometry.yaml").write_text(
+        yaml.safe_dump(coverage_geometry), encoding="utf-8"
+    )
     mission = {
         "mission_id": "formal-lifecycle-episode-7",
         "source_fixed_start_pose": [-98., 3., .1],
         "vehicle_start_pose_map": {"x_m": 0., "y_m": 0., "yaw_rad": 0.},
         "truth_boundary": {"world_geometry_used_for_product_map": False,
             "evaluator_truth_used": False, "dirt_truth_used": False},
+        "saved_occupancy_coverage": {
+            "geometry": "coverage_geometry.yaml",
+            "free_space_map": "coverage_free_space.pgm",
+            "sha256": _sha(map_root / "coverage_geometry.yaml"),
+        },
     }
     (map_root / "mission_geometry.yaml").write_text(
         yaml.safe_dump(mission), encoding="utf-8"
@@ -64,8 +84,10 @@ def _fixture(tmp_path: Path) -> argparse.Namespace:
         "map_id": "map-7", "observed_fraction": .97,
         "fixed_start_verified": True, "mapping_ignored_dirt": True,
         "world_truth_used_for_control": False,
-        "sha256": {name: _sha(map_root / name)
-            for name in ("occupancy.yaml", "mission_geometry.yaml")},
+        "sha256": {name: _sha(map_root / name) for name in (
+            "occupancy.yaml", "occupancy.pgm", "mission_geometry.yaml",
+            "coverage_geometry.yaml", "coverage_free_space.pgm",
+        )},
     })
     mapping = _json(tmp_path / "mapping.json", {
         "passed": True, "truth_used_for_control": False,
@@ -77,6 +99,18 @@ def _fixture(tmp_path: Path) -> argparse.Namespace:
         "saved_map_sha256_verified": True, "hard_restart_verified": True,
         "cleaning_stack_ready": True, "coverage_server_ready": True,
         "world_derived_map_fallback": False,
+        "trajectory_total_distance_m": 1200.0,
+        "coverage_pose_source": "amcl_pose_product_estimate",
+        "brush_state_source": "/brush_enabled_product_runtime",
+        "coverage_geometry_sha256": _sha(map_root / "coverage_geometry.yaml"),
+        "coverage_planning_clearance_m": 1.70,
+        "coverage_raster_resolution_m": 0.1,
+        "estimated_field_cells": 2_000_000,
+        "estimated_covered_cells": 1_950_000,
+        "estimated_coverage_fraction": 0.975,
+        "coverage_first_brush_enabled_monotonic_s": 100.0,
+        "coverage_terminal_monotonic_s": 19_600.0,
+        "coverage_actual_duration_sec": 19_500.0,
         "hard_restart_record": {"mapping_stopped_before_cleaning": True,
             "mapping_process_count_before_cleaning": 0,
             "restart_type": "separate_process_hard_restart"},
@@ -87,20 +121,18 @@ def _fixture(tmp_path: Path) -> argparse.Namespace:
         "checks": {"map": True, "mapping": True, "cleaning": True},
     })
     coverage = _json(tmp_path / "coverage.json", {
-        "schema_version": 2, "mission_id": mission["mission_id"],
-        "planner": "OpenNav Coverage + Fields2Cover", "success": True,
-        "planning_success": True, "full_execution_success": True,
-        "coverage_quality_success": True, "safety_success": True,
-        "localization_success": True,
-        "competition_efficiency_pass": True,
-        "evaluation_injection": {"ground_truth_used_for_control": False},
-        "planned_metrics": {"path_length_m": 1100.},
-        "empirical_metrics": {
-            "actual_path_length_m": 1200.,
-            "covered_area_m2": 20000.,
-            "actual_duration_sec": 20000.,
-            "net_efficiency_m2_h": 3600.,
-        },
+        "schema_version": 1, "success": True, "terminal_state": "COMPLETED",
+        "ground_truth_used_for_control": False, "brush_disabled_on_exit": True,
+        "operation_width_m": 1.32,
+        "operation_speed_profile": "dry_cleaning_competition_candidate",
+        "maximum_linear_speed_mps": 1.0,
+        "planned_swath_count": 100, "completed_swath_count": 100,
+        "planned_swath_length_m": 1100.0,
+        "coverage_geometry_sha256": _sha(map_root / "coverage_geometry.yaml"),
+        "planning_clearance_m": 1.70,
+        "coverage_raster_resolution_m": 0.1,
+        "reachable_cleanable_cells": 2_000_000,
+        "cleanable_area_m2": 20_000.0,
     })
     return argparse.Namespace(
         episode_manifest=episode, map_root=map_root, mapping_runtime=mapping,
@@ -205,9 +237,9 @@ def _mutate(path: Path, key: str, value) -> None:
     path.write_text(json.dumps(row), encoding="utf-8")
 
 
-def _mutate_efficiency(path: Path, key: str, value) -> None:
+def _mutate_cleaning(path: Path, key: str, value) -> None:
     row = json.loads(path.read_text(encoding="utf-8"))
-    row["empirical_metrics"][key] = value
+    row[key] = value
     path.write_text(json.dumps(row), encoding="utf-8")
 
 
@@ -220,10 +252,10 @@ def test_generate_and_revalidate_complete_same_map_baseline(tmp_path: Path) -> N
     assert report["return_distance_included"] is False
     assert report["competition_efficiency"] == {
         "threshold_m2_h": 3500.0,
-        "covered_area_m2": 20000.0,
-        "actual_duration_sec": 20000.0,
-        "measured_net_efficiency_m2_h": 3600.0,
-        "recomputed_net_efficiency_m2_h": 3600.0,
+        "covered_area_m2": pytest.approx(19500.0),
+        "actual_duration_sec": 19500.0,
+        "measured_net_efficiency_m2_h": pytest.approx(3600.0),
+        "recomputed_net_efficiency_m2_h": pytest.approx(3600.0),
         "return_distance_included": False,
         "passed": True,
     }
@@ -455,15 +487,13 @@ def test_rejects_wrong_fixed_start_or_snapshot(tmp_path: Path) -> None:
 
 def test_rejects_failed_coverage_and_post_generation_tamper(tmp_path: Path) -> None:
     args = _fixture(tmp_path / "failed")
-    _mutate(args.coverage_runtime, "full_execution_success", False)
-    with pytest.raises(BaselineError, match="full_execution_success"):
+    _mutate(args.coverage_runtime, "success", False)
+    with pytest.raises(BaselineError, match="coverage_runtime.success"):
         generate(args)
 
     args = _fixture(tmp_path / "tamper")
     generate(args)
-    coverage = json.loads(args.coverage_runtime.read_text())
-    coverage["empirical_metrics"]["actual_path_length_m"] = 1.
-    _json(args.coverage_runtime, coverage)
+    _mutate_cleaning(args.cleaning_runtime, "trajectory_total_distance_m", 1.0)
     with pytest.raises(BaselineError, match="changed after generation"):
         validate(args.output, args.session, args.snapshot)
 
@@ -479,8 +509,8 @@ def test_rejects_runtime_evidence_that_predates_session(tmp_path: Path) -> None:
 
 def test_rejects_competition_efficiency_below_threshold(tmp_path: Path) -> None:
     args = _fixture(tmp_path)
-    _mutate_efficiency(args.coverage_runtime, "net_efficiency_m2_h", 3499.0)
-    _mutate_efficiency(args.coverage_runtime, "actual_duration_sec", 20000.0 / 3499.0 * 3600.0)
+    _mutate_cleaning(args.cleaning_runtime, "coverage_terminal_monotonic_s", 20_162.0)
+    _mutate_cleaning(args.cleaning_runtime, "coverage_actual_duration_sec", 20_062.0)
     with pytest.raises(BaselineError, match="below 3500"):
         generate(args)
 
@@ -488,28 +518,56 @@ def test_rejects_competition_efficiency_below_threshold(tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     ("key", "value", "message"),
     [
-        ("covered_area_m2", True, "numeric JSON scalar"),
-        ("covered_area_m2", "20000", "numeric JSON scalar"),
-        ("actual_duration_sec", float("nan"), "must be finite"),
-        ("net_efficiency_m2_h", float("inf"), "must be finite"),
+        ("estimated_covered_cells", True, "positive integer JSON scalar"),
+        ("estimated_covered_cells", "1950000", "positive integer JSON scalar"),
+        ("coverage_actual_duration_sec", float("nan"), "must be finite"),
+        ("trajectory_total_distance_m", float("inf"), "must be finite"),
     ],
 )
 def test_rejects_non_type_strict_or_nonfinite_competition_metrics(
     tmp_path: Path, key: str, value, message: str
 ) -> None:
     args = _fixture(tmp_path)
-    _mutate_efficiency(args.coverage_runtime, key, value)
+    _mutate_cleaning(args.cleaning_runtime, key, value)
     with pytest.raises(BaselineError, match=message):
         generate(args)
 
 
-def test_rejects_competition_efficiency_formula_mismatch_or_false_flag(tmp_path: Path) -> None:
-    args = _fixture(tmp_path / "formula")
-    _mutate_efficiency(args.coverage_runtime, "net_efficiency_m2_h", 3601.0)
-    with pytest.raises(BaselineError, match="differs from area/duration"):
+def test_rejects_mismatched_live_duration_or_geometry_binding(tmp_path: Path) -> None:
+    args = _fixture(tmp_path / "duration")
+    _mutate_cleaning(args.cleaning_runtime, "coverage_actual_duration_sec", 1.0)
+    with pytest.raises(BaselineError, match="first-brush to terminal"):
         generate(args)
 
-    args = _fixture(tmp_path / "flag")
-    _mutate(args.coverage_runtime, "competition_efficiency_pass", False)
-    with pytest.raises(BaselineError, match="explicitly true"):
+    args = _fixture(tmp_path / "geometry")
+    _mutate(args.coverage_runtime, "coverage_geometry_sha256", "0" * 64)
+    with pytest.raises(BaselineError, match="geometry_sha256"):
+        generate(args)
+
+
+@pytest.mark.parametrize(
+    ("path_name", "key", "value", "message"),
+    [
+        ("coverage_runtime", "planning_clearance_m", 1.69, "planning_clearance_m"),
+        ("coverage_runtime", "coverage_raster_resolution_m", 0.2, "raster_resolution_m"),
+        ("coverage_runtime", "reachable_cleanable_cells", 1, "reachable_cleanable_cells"),
+        ("coverage_runtime", "cleanable_area_m2", 1.0, "cleanable_area_m2"),
+        ("cleaning_runtime", "coverage_planning_clearance_m", 1.69, "planning_clearance_m"),
+        ("cleaning_runtime", "coverage_raster_resolution_m", 0.2, "raster_resolution_m"),
+        ("cleaning_runtime", "estimated_field_cells", 1, "reachable_cleanable_cells"),
+    ],
+)
+def test_rejects_schema1_or_cleaning_telemetry_geometry_mismatch(
+    tmp_path: Path, path_name: str, key: str, value, message: str
+) -> None:
+    args = _fixture(tmp_path)
+    _mutate(getattr(args, path_name), key, value)
+    with pytest.raises(BaselineError, match=message):
+        generate(args)
+
+
+def test_rejects_old_synthetic_schema2_coverage_receipt(tmp_path: Path) -> None:
+    args = _fixture(tmp_path)
+    _mutate(args.coverage_runtime, "schema_version", 2)
+    with pytest.raises(BaselineError, match="schema_version 1"):
         generate(args)

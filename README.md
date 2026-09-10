@@ -92,7 +92,7 @@ ros2 launch sanitation_bringup gazebo_scene.launch.py
 - 人类可读的园区道路、路缘、人行道、绿化、积水、垃圾、落叶和静态/动态障碍 Gazebo 场景；
 - SLAM、AMCL、混合定位、Nav2、keepout/speed filter、碰撞监控和急停；
 - 全覆盖规划、任务几何、覆盖率/定位/安全指标与 rosbag 回放审计；
-- 五类清扫目标链；另有多长宽比园区、belief-only主动清扫/RL、3 cm方块投箱占位闭环，以及已完成[正式 URDF/CAD 名义整车](docs/formal-vehicle-urdf-cad.md)的竞赛级高保真链；后者采用锁定许可的 A300/UR5e/2F-85/传感器 mesh、项目参数化清扫/分仓 CAD 和完整产品车身，[部件与连接台账](docs/formal-vehicle-component-architecture.md)把 38 个移动、感知、抓取、投放、清扫、回收、配电和安全功能位置绑定到实体 link、关节、控制器与话题合同；视觉入口为产品/检修十九视图 Gazebo Ogre2 验收，每张 PNG 均绑定 SHA-256、字节数、尺寸和目标实体投影。20 块 3 cm 垃圾采用 5×4 单层布置，纸板、PP、PET、铝各 5 块并逐块核对抓投与动态质量；[正式整车最终验收编排](docs/formal-final-acceptance-orchestration.md)要求单一非符号链接 merged overlay，并在 31 个步骤前后逐次复核全部运行包、插件与模型冻结闭包，再串行重跑全部本地门，其中单场 E2E 与 8+12 多场产品泛化是两个独立门；S100 实板、实物标定、连续全关节空间和园区端到端闭环不得提前写成通过；
+- 五类清扫目标链；另有多长宽比园区、belief-only主动清扫/RL、3 cm方块投箱占位闭环，以及已完成[正式 URDF/CAD 名义整车](docs/formal-vehicle-urdf-cad.md)的竞赛级高保真链；后者采用锁定许可的 A300/UR5e/2F-85/传感器 mesh、项目参数化清扫/分仓 CAD 和完整产品车身，[部件与连接台账](docs/formal-vehicle-component-architecture.md)把 38 个移动、感知、抓取、投放、清扫、回收、配电和安全功能位置绑定到实体 link、关节、控制器与话题合同；视觉入口为产品/检修十九视图 Gazebo Ogre2 验收，每张 PNG 均绑定 SHA-256、字节数、尺寸和目标实体投影。20 块 3 cm 垃圾采用 5×4 单层布置，纸板、PP、PET、铝各 5 块并逐块核对抓投与动态质量；[正式整车最终验收编排](docs/formal-final-acceptance-orchestration.md)要求单一非符号链接 merged overlay，并在 32 个步骤前后逐次复核全部运行包、插件与模型冻结闭包，再串行重跑全部本地门，其中单场 E2E、8+12 多场产品泛化和 A19 两小时长稳/18 故障恢复是独立门；S100 实板、实物标定、连续全关节空间和园区端到端闭环不得提前写成通过；
 - APP/API、语音入口和受限任务 DSL；
 - RViz 调试图层与 Gazebo 三维物理界面；
 - 分阶段验收、紧凑证据、SBOM、许可清单和发布打包工具。
