@@ -1,5 +1,11 @@
 # 项目推进记录
 
+## 2026-09-10：A19 canonical 两小时长稳/18 故障生产器（源码与 fixture 完成，真实长跑待独占窗口）
+
+- A19 不再是永久 BLOCKED 的占位校验器：v3 合同固定 7200 秒真实 monotonic 时长、1 Hz 原始时序、四个 profile、六段完整产品组件、18 个带参数故障及 STOPPED→RECOVERED 安全顺序；producer 自己记录接收时间、命令、argv、PID/PGID、退出码、清理信号和 `/proc` survivor，adapter 摘要不能代替原始证据。
+- 独立 validator 会重算样本连续性、首末 300 秒 RSS 增长、定位 RMSE/P95、全部零计数、每项故障时序/安全/恢复，再复核当前 Git commit/tree、canonical snapshot、RUNNING session、frozen runtime closure、producer/contract 和所有原始文件摘要。正式测试 fixture 被生产入口显式拒绝。
+- `a19_reliability` 已接入总编排的 multisite 之后、S100/finalize 之前；静态审计更新为 `32 steps / 27 gates / 22 runtime-bound / failures=[]`。当前没有新鲜 7200 秒 receipt，故只可标记 `READY_FOR_FRESH_TWO_HOUR_RUNTIME`，不能标记 A19 PASS；本轮未申请或占用 Gazebo 锁。
+
 ## 2026-09-07：W2 单次只读 map TF 就绪门（源码完成，fresh W2 runtime 待验）
 
 - W2 旧 runner 把持续 `tf2_echo` 的非超时返回当作就绪，不能证明 exact `map -> base_footprint`、仿真时钟、非零 stamp 或 freshness，故 timeout `124` 与任意控制台文本均不再具有正向语义。新 helper 只使用一次 `rclpy` Buffer/TransformListener，要求 advancing `use_sim_time` clock、strict frame、nonzero/nonfuture/fresh stamp，并原子写 PASS/BLOCKED JSON；它不创建 TF publisher、执行器/控制接口、truth 或控制命令。

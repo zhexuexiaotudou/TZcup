@@ -1,5 +1,5 @@
 {
-  "contract_gate_count": 26,
+  "contract_gate_count": 27,
   "crosswalk_function_position_count": 38,
   "failures": [],
   "formal_multimap_training_contract": {
@@ -36,7 +36,7 @@
       "train": 6400,
       "validation": 800
     },
-    "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\starter_ws\\src\\sanitation_active_cleaning\\config\\formal_rl_budget_contract.yaml",
+    "path": "C:\\Users\\zhexu\\.codex\\worktrees\\7155\\TZcup\\starter_ws\\src\\sanitation_active_cleaning\\config\\formal_rl_budget_contract.yaml",
     "policy_seeds": [
       7,
       17,
@@ -207,6 +207,9 @@
     ]
   },
   "gate_producers": {
+    "a19_two_hour_reliability_fault": [
+      "a19_reliability"
+    ],
     "a300_drivetrain_runtime": [
       "chassis"
     ],
@@ -308,10 +311,11 @@
     "perception",
     "dynamic_obstacle",
     "single_episode",
-    "multisite_product"
+    "multisite_product",
+    "a19_reliability"
   ],
-  "gazebo_step_count": 22,
-  "local_gate_count": 25,
+  "gazebo_step_count": 23,
+  "local_gate_count": 26,
   "old_evidence_reuse_allowed": false,
   "passed": true,
   "recursive_interface_contract": {
@@ -324,7 +328,27 @@
   },
   "registered_function_position_count": 38,
   "report_id": "tzcup_formal_final_acceptance_orchestration_static_audit_v1",
+  "required_lifecycle_order": [
+    "episode_materialization",
+    "first_map",
+    "saved_map_reuse",
+    "same_map_baseline",
+    "perception",
+    "dynamic_obstacle",
+    "rl_policy",
+    "single_episode",
+    "multisite_product",
+    "a19_reliability",
+    "s100_live",
+    "finalize_session",
+    "functional_aggregate"
+  ],
   "runner_inventory": {
+    "a19_reliability": {
+      "exists": true,
+      "gazebo_lock_strategy": "runner_internal",
+      "path": "scripts/run_formal_a19_reliability_fault.sh"
+    },
     "charge_and_drain": {
       "exists": true,
       "gazebo_lock_strategy": "runner_internal",
@@ -481,6 +505,7 @@
     "manifest_required": true,
     "merged_overlay_required": true,
     "runtime_gate_bindings_required": [
+      "a19_two_hour_reliability_fault",
       "a300_drivetrain_runtime",
       "auxiliary_power_lighting",
       "cleaning_actuators",
@@ -503,13 +528,27 @@
       "water_recovery",
       "whole_vehicle_interlock"
     ],
-    "runtime_package_count": 16,
+    "runtime_package_count": 19,
     "side_brush_surface_preflight_required": true,
     "symlink_install_allowed": false,
     "typed_cleaning_telemetry_source_manifest_required": true,
     "verified_before_and_after_every_step": true,
     "water_normal_full_surface_hash_reverification_required": true,
     "water_typed_transport_evidence_required": true
+  },
+  "runtime_evidence_state": {
+    "current_session_bound_gazebo_evidence_verified": false,
+    "fresh_frozen_runtime_required": true,
+    "native_preflight_required_before_execute": true,
+    "runtime_execution_eligible": false,
+    "s100_board_evidence_verified": false,
+    "status": "NOT_EVALUATED_STATIC_AUDIT_ONLY"
+  },
+  "s100_collection_semantics": {
+    "all_local_gates_required_before_final_acceptance": true,
+    "collection_must_follow_session_start": true,
+    "collection_started_automatically_by_orchestrator": false,
+    "terminal_validation_step": "s100_live"
   },
   "s100_live_gate": {
     "cryptographic_hardware_attestation": false,
@@ -524,6 +563,6 @@
   "shared_gazebo_lock": "/tmp/tzcup_formal_gazebo.lock",
   "snapshot_checked_after_every_post_session_step": true,
   "status": "FORMAL_FINAL_ACCEPTANCE_ORCHESTRATION_STATIC_AUDIT_PASSED",
-  "step_count": 31,
-  "unique_gate_output_path_count": 26
+  "step_count": 32,
+  "unique_gate_output_path_count": 27
 }
