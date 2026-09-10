@@ -624,11 +624,12 @@ def test_requested_whole_vehicle_order_is_preserved() -> None:
         "charge_and_drain",
             "manipulator",
             "twenty_cubes",
-            "rl_policy",
             "first_map",
         "saved_map_reuse",
+            "same_map_baseline",
         "perception",
         "dynamic_obstacle",
+            "rl_policy",
         "single_episode",
         "multisite_product",
         "s100_live",
@@ -636,6 +637,35 @@ def test_requested_whole_vehicle_order_is_preserved() -> None:
         "functional_aggregate",
     ]
     assert [order.index(step) for step in required] == sorted(order.index(step) for step in required)
+    audit = orchestration.static_audit()
+    assert audit["required_lifecycle_order"] == [
+        "episode_materialization",
+        "first_map",
+        "saved_map_reuse",
+        "same_map_baseline",
+        "perception",
+        "dynamic_obstacle",
+        "rl_policy",
+        "single_episode",
+        "multisite_product",
+        "s100_live",
+        "finalize_session",
+        "functional_aggregate",
+    ]
+    assert audit["runtime_evidence_state"] == {
+        "status": "NOT_EVALUATED_STATIC_AUDIT_ONLY",
+        "runtime_execution_eligible": False,
+        "fresh_frozen_runtime_required": True,
+        "native_preflight_required_before_execute": True,
+        "current_session_bound_gazebo_evidence_verified": False,
+        "s100_board_evidence_verified": False,
+    }
+    assert audit["s100_collection_semantics"] == {
+        "collection_must_follow_session_start": True,
+        "collection_started_automatically_by_orchestrator": False,
+        "terminal_validation_step": "s100_live",
+        "all_local_gates_required_before_final_acceptance": True,
+    }
 
 
 def test_every_gazebo_step_has_one_shared_lock_strategy() -> None:

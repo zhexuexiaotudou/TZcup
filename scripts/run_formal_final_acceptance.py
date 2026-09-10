@@ -216,13 +216,13 @@ STEP_SPECS: tuple[StepSpec, ...] = (
     StepSpec("physical_grasp", "gazebo", "validate contact-gated grasp and physical bin deposit", "run_formal_grasp_executor_runtime.sh", ("physical_grasp_and_bin",)),
     StepSpec("twenty_cubes", "gazebo", "validate all twenty material cubes and dynamic bin mass", "run_formal_20_cube_grasp_acceptance.sh", ("formal_20_cube_grasp_and_dynamic_mass",)),
     StepSpec("integrated_basic_physics", "gazebo", "repeat the source-bound basic physics bundle", "run_integrated_functional_acceptance.sh", ("integrated_basic_physics",), True),
-    StepSpec("rl_policy", "static", "freeze and evaluate the belief-only cross-map policy before any held-out final episode", "generate_formal_rl_multimap_report.py", ("rl_cross_map_policy",)),
     StepSpec("episode_materialization", "static", "materialize a fresh formal hidden episode"),
     StepSpec("first_map", "gazebo", "explore once and seal the first-task SLAM map", "run_formal_first_map_dynamic_prerequisite.sh"),
     StepSpec("saved_map_reuse", "gazebo", "hard-restart and clean using only the saved map", "run_formal_saved_map_cleaning_lifecycle.sh", ("first_map_then_clean",)),
     StepSpec("same_map_baseline", "gazebo", "measure the same-episode FullCoverage distance baseline", "run_formal_same_map_full_coverage_baseline.sh"),
     StepSpec("perception", "gazebo", "run fresh random-scene DOSOD plus EdgeSAM episodes", "run_formal_random_scene_perception.sh", ("random_scene_perception",)),
     StepSpec("dynamic_obstacle", "gazebo", "validate saved-map pedestrian avoidance", "run_formal_dynamic_obstacle_avoidance.sh", ("dynamic_obstacle_avoidance",)),
+    StepSpec("rl_policy", "static", "freeze and evaluate the belief-only cross-map policy before any held-out final episode", "generate_formal_rl_multimap_report.py", ("rl_cross_map_policy",)),
     StepSpec("single_episode", "gazebo", "run the complete product single-episode mission", "run_formal_single_episode_cleaning_mission.sh", ("end_to_end_cleaning_mission",)),
     StepSpec(
         "multisite_product",
@@ -821,6 +821,31 @@ def static_audit(root: Path = ROOT) -> dict[str, Any]:
     positions = {name: gazebo_order.index(name) for name in required_order if name in gazebo_order}
     if len(positions) != len(required_order) or list(positions.values()) != sorted(positions.values()):
         failures.append("requested_gazebo_order_is_not_preserved")
+    lifecycle_order = [step.step_id for step in STEP_SPECS]
+    required_lifecycle_order = [
+        "episode_materialization",
+        "first_map",
+        "saved_map_reuse",
+        "same_map_baseline",
+        "perception",
+        "dynamic_obstacle",
+        "rl_policy",
+        "single_episode",
+        "multisite_product",
+        "s100_live",
+        "finalize_session",
+        "functional_aggregate",
+    ]
+    lifecycle_positions = {
+        step_id: lifecycle_order.index(step_id)
+        for step_id in required_lifecycle_order
+        if step_id in lifecycle_order
+    }
+    if (
+        len(lifecycle_positions) != len(required_lifecycle_order)
+        or list(lifecycle_positions.values()) != sorted(lifecycle_positions.values())
+    ):
+        failures.append("requested_lifecycle_order_is_not_preserved")
     return {
         "report_id": "tzcup_formal_final_acceptance_orchestration_static_audit_v1",
         "status": (
@@ -839,6 +864,7 @@ def static_audit(root: Path = ROOT) -> dict[str, Any]:
         "gate_producers": producers,
         "runner_inventory": runner_rows,
         "gazebo_execution_order": gazebo_order,
+        "required_lifecycle_order": required_lifecycle_order,
         "serial_execution": True,
         "shared_gazebo_lock": LOCK_FILE.as_posix(),
         "snapshot_checked_after_every_post_session_step": True,
@@ -866,6 +892,12 @@ def static_audit(root: Path = ROOT) -> dict[str, Any]:
             # non-cryptographic evidence chain cannot be forged by a malicious PC.
             "pc_substitution_allowed": False,
         },
+        "s100_collection_semantics": {
+            "collection_must_follow_session_start": True,
+            "collection_started_automatically_by_orchestrator": False,
+            "terminal_validation_step": "s100_live",
+            "all_local_gates_required_before_final_acceptance": True,
+        },
         "runtime_closure": {
             "manifest_required": True,
             "merged_overlay_required": True,
@@ -878,6 +910,14 @@ def static_audit(root: Path = ROOT) -> dict[str, Any]:
             "verified_before_and_after_every_step": True,
             "runtime_gate_bindings_required": sorted(RUNTIME_GATE_BINDING_GATES),
             "functional_aggregate_revalidates_runtime_binding_sidecars": True,
+        },
+        "runtime_evidence_state": {
+            "status": "NOT_EVALUATED_STATIC_AUDIT_ONLY",
+            "runtime_execution_eligible": False,
+            "fresh_frozen_runtime_required": True,
+            "native_preflight_required_before_execute": True,
+            "current_session_bound_gazebo_evidence_verified": False,
+            "s100_board_evidence_verified": False,
         },
         "failures": failures,
     }

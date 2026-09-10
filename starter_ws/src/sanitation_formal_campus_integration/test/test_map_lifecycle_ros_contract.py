@@ -177,7 +177,7 @@ def test_saved_map_executor_fields_match_pinned_jazzy_action_contracts():
         / "saved_map_coverage_executor.py"
     ).read_text(encoding="utf-8")
     for assignment in (
-        "goal.generate_headland = True",
+            "goal.generate_headland = False",
         "goal.generate_route = True",
         "goal.generate_path = True",
         'goal.frame_id = "map"',
@@ -187,7 +187,8 @@ def test_saved_map_executor_fields_match_pinned_jazzy_action_contracts():
         'goal.route_mode.mode = "BOUSTROPHEDON"',
         'goal.path_mode.mode = "DUBIN"',
         'goal.path_mode.continuity_mode = "DISCONTINUOUS"',
-        "goal.polygons = [coordinates]",
+            "goal.polygons.append(coordinates)",
+            "geometry.planning_outer_polygon, *geometry.planning_hole_polygons",
         "transit.pose = self._pose(",
         "follow.path = path",
         'follow.controller_id = "CleanPath"',
