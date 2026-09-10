@@ -8,13 +8,13 @@
 
 当前冻结展开产物记录为 **196 links、195 joints、160.007583 kg**，其 SHA-256 为
 `34257c2ed840a6f8f25933bdf37c6130c3db397d0aa1211c561bff528bd621d1`。快照的 source inventory
-摘要为 `c1d018eef04b55b2de7c9645b103c4ecc7ba7b7b95361cfec802d22da084718c`，output inventory 摘要为
-`1b851ad66b5d3dc8a85d08825a1d31741e945f66d618374965ec3c3a2dc8eb0c`；只读校验会在任一源或输出
+摘要为 `a7e3fbd02fe88bd6eb5a7f52cb210bf73cab9dbc6bd47dc7eef6d892b1c258a0`，output inventory 摘要为
+`87ec151a7d2daef8bc1e81e470953463474da61590545c654e43a061a6743448`；只读校验会在任一源或输出
 漂移时失效。这证明的是当前**数字快照**而非可制造或实物状态，不能据此关闭任何 Gazebo、赛题或实车门。
 
 与该快照相同 URDF/布局哈希绑定的静态 FOV 报告为
-`e055a2ae52934975872806c95b1fc20421fb9fc85865f75d76b87cab4ceb9c4d`，静态惯量/扫掠报告为
-`b9de5cbcbf8b9b770ec214d85ff86c3ca3f6cc7560c73972219687cc0ddf437b`。它们可作为当前数字样机的
+`2b827b83d7ee0b1292c10055bd317028045b3a7636f6feadc6c5c13aabbea691`，静态惯量/扫掠报告为
+`11689c4ff3c14c98ee7275235259bed50c825ba97aaedc68c3b0fdc934d9c0a4`。它们可作为当前数字样机的
 静态分析输入，但明确不替代运动中可见性、实物安装标定、实测重心/惯量、结构试验或动态稳定性验收。
 
 ## 质量与吞吐量边界

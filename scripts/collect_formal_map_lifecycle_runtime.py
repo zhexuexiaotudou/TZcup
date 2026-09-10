@@ -41,11 +41,13 @@ import yaml
 from sanitation_formal_campus_integration.saved_map_coverage_core import (
     ProductCoverageTelemetry,
     coverage_execution_passed,
+    coverage_geometry_contract,
     load_product_mission_geometry,
 )
 from sanitation_formal_campus_integration.map_lifecycle_core import (
     hard_restart_record_valid,
 )
+from sanitation_formal_campus_integration.dynamic_footprint_core import load_footprints
 from sanitation_formal_campus_integration.runtime_evidence_core import (
     COMMAND_CHAIN_RECEIPT_REORDER_TOLERANCE_S,
     COMMAND_CHAIN_TOPICS,
@@ -119,8 +121,21 @@ class Collector(Node):
         restart_record: Path | None,
         mission_geometry: Path | None,
         coverage_report: Path | None,
+        motion_profile: Path,
     ) -> None:
         super().__init__("formal_map_lifecycle_runtime_collector")
+        transport = load_footprints(motion_profile)["transport_stowed"]
+        self._transport_bounds = (
+            min(point[0] for point in transport),
+            max(point[0] for point in transport),
+            min(point[1] for point in transport),
+            max(point[1] for point in transport),
+        )
+        min_x, max_x, min_y, max_y = self._transport_bounds
+        if set(map(tuple, transport)) != {
+            (min_x, min_y), (min_x, max_y), (max_x, min_y), (max_x, max_y)
+        }:
+            raise ValueError("transport collision diagnostic requires a rectangular footprint")
         self.mode = mode
         self.map_root = map_root
         self.timeout_sec = timeout_sec
@@ -392,15 +407,25 @@ class Collector(Node):
         )
 
     def _collision_points(self, message: MarkerArray) -> None:
+        min_x, max_x, min_y, max_y = self._transport_bounds
         points = [point for marker in message.markers for point in marker.points]
+        # These two URDF frames differ only in height. Do not apply a local
+        # vehicle rectangle to map/odom/unlabelled marker coordinates. This is
+        # a diagnostic count, not the collision monitor's safety decision.
+        vehicle_frame_points = [
+            point
+            for marker in message.markers
+            if marker.header.frame_id in {"base_footprint", "base_link"}
+            for point in marker.points
+        ]
         self.collision_marker_samples += 1
         self.collision_points_max = max(self.collision_points_max, len(points))
         self.collision_points_inside_transport_max = max(
             self.collision_points_inside_transport_max,
             sum(
-                -0.540 <= point.x <= 0.620
-                and -0.675 <= point.y <= 0.675
-                for point in points
+                min_x <= point.x <= max_x
+                and min_y <= point.y <= max_y
+                for point in vehicle_frame_points
             ),
         )
         if points:
@@ -583,7 +608,8 @@ class Collector(Node):
             else {}
         )
         coverage_terminal_passed = (
-            coverage_execution_passed(coverage_execution)
+            coverage_geometry_contract()["actual_cleaned_area_qualified"]
+            and coverage_execution_passed(coverage_execution)
             and self.coverage_state.get("state") == "COMPLETED"
             and float(product_coverage.get("trajectory_total_distance_m", 0.0)) > 0.0
             and float(product_coverage.get("brush_enabled_distance_m", 0.0)) > 0.0
@@ -750,6 +776,11 @@ def main() -> int:
     parser.add_argument("--restart-record", type=Path)
     parser.add_argument("--mission-geometry", type=Path)
     parser.add_argument("--coverage-report", type=Path)
+    parser.add_argument(
+        "--motion-profile", type=Path,
+        default=Path(__file__).resolve().parents[1]
+        / "config/high_fidelity_vehicle/formal_motion_cleaning_profile.yaml",
+    )
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if args.mode == "cleaning" and args.restart_record is None:
@@ -768,6 +799,7 @@ def main() -> int:
         restart_record=args.restart_record,
         mission_geometry=args.mission_geometry,
         coverage_report=args.coverage_report,
+        motion_profile=args.motion_profile,
     )
     value: dict | None = None
     last_live_snapshot: dict | None = None

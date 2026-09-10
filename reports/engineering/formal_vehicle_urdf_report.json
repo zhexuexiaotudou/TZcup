@@ -92,8 +92,8 @@
   "status": "FORMAL_URDF_DETERMINISTIC_CHECKS_PASSED_EXTERNAL_GATES_PENDING",
   "transport_envelope_m": {
     "height": 1.4,
-    "length": 1.16,
-    "width": 1.35
+    "length": 1.23,
+    "width": 1.39
   },
   "urdf_validation": {
     "all_physical_links_have_positive_mass_and_positive_definite_physical_inertia": true,

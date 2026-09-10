@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import hashlib
 import math
 from pathlib import Path
 from typing import Any, Sequence
@@ -14,6 +15,26 @@ FORMAL_OPERATION_WIDTH_M = 1.32
 MAPPING_SAFE_SPEED_PROFILE = "mapping_safe"
 DRY_CLEANING_SPEED_PROFILE = "dry_cleaning_competition_candidate"
 WET_PUDDLE_SPEED_PROFILE = "wet_puddle_recovery"
+
+
+def coverage_geometry_contract() -> dict[str, Any]:
+    """Describe the implemented estimator, never a caller-supplied qualification.
+
+    _mark_disk covers a solid nominal disk at the base origin. The vehicle has
+    two offset side brushes and a central roller with transverse gaps, and
+    effective cleaning width is still physically unqualified. This diagnostic
+    model cannot certify actual cleaned area, regardless of its percentage.
+    Replacing this status requires implementing and validating the actual sweep;
+    a report field or launch boolean cannot opt out of the acceptance boundary.
+    """
+    source = Path(__file__)
+    return {
+        "model": "nominal_base_centered_disk_v1",
+        "actual_cleaned_area_qualified": False,
+        "blocker": "nominal_disk_does_not_model_disjoint_physical_cleaning_sweeps",
+        "implementation_source": source.name,
+        "implementation_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+    }
 
 
 @dataclass(frozen=True)
@@ -255,6 +276,7 @@ class ProductCoverageTelemetry:
             "estimated_coverage_fraction": self.estimated_coverage_fraction,
             "coverage_raster_resolution_m": self.raster_resolution_m,
             "coverage_pose_source": "amcl_pose_product_estimate",
+            "coverage_geometry_contract": coverage_geometry_contract(),
             "operation_speed_profile": self.operation_speed_profile,
             "maximum_linear_speed_mps": self.maximum_linear_speed_mps,
             "simulator_truth_used": False,

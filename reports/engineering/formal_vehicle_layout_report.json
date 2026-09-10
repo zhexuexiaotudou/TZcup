@@ -85,8 +85,8 @@
   "status": "LAYOUT_CONTRACT_VALID_RESOLVED_ENGINEERING_GATES_WITH_DECLARED_EXTERNAL_PENDING",
   "transport_envelope_m": {
     "height": 1.4,
-    "length": 1.16,
-    "width": 1.35
+    "length": 1.23,
+    "width": 1.39
   },
   "urdf_validation": {
     "evaluated": false,

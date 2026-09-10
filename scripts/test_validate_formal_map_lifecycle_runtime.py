@@ -127,8 +127,21 @@ def test_validator_passes_only_complete_real_runtime_contract(tmp_path):
         "estimated_coverage_fraction": 0.95,
     })
     result = MODULE.validate(root, mapping, cleaning)
-    assert result["passed"] is True
-    assert result["status"] == MODULE.PASS_STATUS
+    # A nominal 1.32 m disk reports 95%, but fills the physical brush/roller
+    # gaps. Preserve all map/runtime checks while rejecting area certification.
+    assert result["passed"] is False
+    assert result["status"] == MODULE.BLOCKED_STATUS
+    assert result["blockers"] == ["actual_cleaned_area_geometry_qualified"]
+    assert result["coverage_geometry_contract"]["model"] == "nominal_base_centered_disk_v1"
+    fabricated = json.loads(cleaning.read_text(encoding="utf-8"))
+    fabricated["coverage_geometry_contract"] = {
+        "model": "qualified_physical_sweep",
+        "actual_cleaned_area_qualified": True,
+        "implementation_sha256": "0" * 64,
+    }
+    fabricated["estimated_coverage_fraction"] = 1.0
+    rejected = MODULE.validate(root, mapping, _write(tmp_path / "forged-geometry.json", fabricated))
+    assert rejected["checks"]["actual_cleaned_area_geometry_qualified"] is False
     assert result["operation_speed_profiles"] == {
         "mapping_safe": pytest.approx(0.45),
         "dry_cleaning": pytest.approx(1.0),
@@ -287,7 +300,12 @@ def test_validator_blocks_missing_or_tampered_evidence(tmp_path):
     result = MODULE.validate(tmp_path / "map", tmp_path / "m.json", tmp_path / "c.json")
     assert result["passed"] is False
     assert result["status"] == MODULE.BLOCKED_STATUS
-    assert len(result["blockers"]) == 3
+    assert set(result["blockers"]) == {
+        "actual_cleaned_area_geometry_qualified",
+        "quality_gated_map_manifest",
+        "mapping_runtime_passed",
+        "saved_map_cleaning_runtime_passed",
+    }
 
 
 def test_bound_report_preserves_existing_binding_and_writes_canonical_sidecar(

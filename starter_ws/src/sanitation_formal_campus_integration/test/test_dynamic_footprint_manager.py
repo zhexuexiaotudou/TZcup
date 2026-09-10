@@ -71,6 +71,23 @@ def test_missing_or_nonfinite_cleaning_lift_never_shrinks_to_transport() -> None
     )
 
 
+def test_intermediate_and_out_of_range_lift_never_shrinks_to_transport() -> None:
+    joints = _stowed()
+    for lift in (-1.0, -0.006, 0.006, 0.05, 0.09, 0.106, 0.2):
+        joints["cleaning_lift_joint"] = lift
+        assert profile_decision(joints, False) == (
+            "cleaning_deployed",
+            "cleaning_lift_not_confirmed_raised",
+        ), lift
+
+
+def test_transport_requires_raised_pose_within_declared_tolerance() -> None:
+    joints = _stowed()
+    for lift in (-0.005, 0.0, 0.005):
+        joints["cleaning_lift_joint"] = lift
+        assert select_profile(joints, False) == "transport_stowed"
+
+
 def test_fail_closed_cleanup_preserves_primary_failure_and_adds_cleanup_note() -> None:
     def fail_operation() -> None:
         raise RuntimeError("primary readback failure")
@@ -106,20 +123,20 @@ def test_formal_profile_defines_all_runtime_envelopes() -> None:
         ROOT / "config/high_fidelity_vehicle/formal_motion_cleaning_profile.yaml"
     )
     assert set(profile) == {"transport_stowed", "cleaning_deployed", "arm_deployed"}
-    assert max(y for _, y in profile["cleaning_deployed"]) > max(
+    assert max(y for _, y in profile["cleaning_deployed"]) == max(
         y for _, y in profile["transport_stowed"]
     )
     assert profile["transport_stowed"] == [
-        [0.620, 0.675],
-        [0.620, -0.675],
-        [-0.540, -0.675],
-        [-0.540, 0.675],
+        [0.620, 0.695],
+        [0.620, -0.695],
+        [-0.610, -0.695],
+        [-0.610, 0.695],
     ]
     assert profile["cleaning_deployed"] == [
         [0.620, 0.695],
         [0.620, -0.695],
-        [-0.540, -0.695],
-        [-0.540, 0.695],
+        [-0.610, -0.695],
+        [-0.610, 0.695],
     ]
     assert profile["arm_deployed"] == [
         [1.300, 1.050],

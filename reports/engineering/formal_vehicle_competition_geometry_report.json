@@ -1,0 +1,122 @@
+{
+  "report_id": "formal_vehicle_competition_geometry_v1",
+  "evidence_level": "STATIC_COLLISION_AND_STRAIGHT_PASS_GEOMETRY_ONLY",
+  "urdf_sha256": "34257c2ed840a6f8f25933bdf37c6130c3db397d0aa1211c561bff528bd621d1",
+  "profile_sha256": "68fe1d16bc17a70da88fa97a928a0593c3d081f289883acaa9780bf5dc12ccb0",
+  "profile_source_consistency_error": null,
+  "snapshot_binding": {
+    "passed": true,
+    "error": null,
+    "manifest_sha256": "24d0ab0ac81aff94ce4cd926cc5ef9fae8e1e6d84656fff8111622f6368a219a",
+    "source_inventory_sha256": "a7e3fbd02fe88bd6eb5a7f52cb210bf73cab9dbc6bd47dc7eef6d892b1c258a0",
+    "output_inventory_sha256": "87ec151a7d2daef8bc1e81e470953463474da61590545c654e43a061a6743448"
+  },
+  "motion_states": {
+    "transport_stowed": {
+      "collision_count": 258,
+      "collision_min_xyz_m": [
+        -0.603334639,
+        -0.695,
+        0.0
+      ],
+      "collision_max_xyz_m": [
+        0.599760946,
+        0.695,
+        1.2706
+      ],
+      "outside_footprint_links": [],
+      "passed": true
+    },
+    "cleaning_deployed": {
+      "collision_count": 258,
+      "collision_min_xyz_m": [
+        -0.603334639,
+        -0.695,
+        -0.0
+      ],
+      "collision_max_xyz_m": [
+        0.599760946,
+        0.695,
+        1.2706
+      ],
+      "outside_footprint_links": [],
+      "passed": true
+    }
+  },
+  "roller_front_wheel_interference": [
+    {
+      "state": "transport_stowed",
+      "roller_link": "central_roller_link",
+      "wheel_link": "front_left_wheel_link",
+      "axial_overlap_m": 0.08425,
+      "radial_axis_distance_m": 0.106859768,
+      "radial_separation_margin_m": -0.158240232,
+      "positive_volume_intersection": true
+    },
+    {
+      "state": "transport_stowed",
+      "roller_link": "central_roller_link",
+      "wheel_link": "front_right_wheel_link",
+      "axial_overlap_m": 0.08425,
+      "radial_axis_distance_m": 0.106859768,
+      "radial_separation_margin_m": -0.158240232,
+      "positive_volume_intersection": true
+    },
+    {
+      "state": "cleaning_deployed",
+      "roller_link": "central_roller_link",
+      "wheel_link": "front_left_wheel_link",
+      "axial_overlap_m": 0.08425,
+      "radial_axis_distance_m": 0.120162432,
+      "radial_separation_margin_m": -0.144937568,
+      "positive_volume_intersection": true
+    },
+    {
+      "state": "cleaning_deployed",
+      "roller_link": "central_roller_link",
+      "wheel_link": "front_right_wheel_link",
+      "axial_overlap_m": 0.08425,
+      "radial_axis_distance_m": 0.120162432,
+      "radial_separation_margin_m": -0.144937568,
+      "positive_volume_intersection": true
+    }
+  ],
+  "model_mechanical_layout_clear": false,
+  "mechanical_blockers": [
+    "central_roller_intersects_both_front_wheel_collision_solids_in_raised_and_work_poses"
+  ],
+  "dry_cleaning": {
+    "transverse_intervals_m": [
+      [
+        -0.695,
+        -0.395
+      ],
+      [
+        -0.31,
+        0.31
+      ],
+      [
+        0.395,
+        0.695
+      ]
+    ],
+    "uncovered_internal_gaps_m": [
+      0.085,
+      0.085
+    ],
+    "union_width_m": 1.22,
+    "largest_contiguous_width_m": 0.62,
+    "competition_minimum_width_m": 0.6,
+    "minimum_width_geometry_supported": true,
+    "declared_target_width_m": 1.32,
+    "declared_target_supported_by_straight_pass_geometry": false,
+    "runtime_cleaning_and_efficiency_passed": false,
+    "claim_guard_passed": true
+  },
+  "passed": true,
+  "passed_scope": "audit_consistency_navigation_envelope_and_claim_guard_only_not_mechanical_acceptance",
+  "limitations": [
+    "No flexible-bristle or inward-debris-transport proof",
+    "No continuous arm/service-door sweep or runtime contact acceptance"
+  ]
+}

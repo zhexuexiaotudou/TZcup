@@ -76,7 +76,13 @@ def profile_decision(
         abs(lift - cleaning_work_position_m) <= cleaning_tolerance_m
     ):
         return "cleaning_deployed", "cleaning_lift_at_work_position"
-    return "transport_stowed", "transport_stowed"
+    # A partially lowered, overshooting or invalid encoder position is not a
+    # raised mechanism. Only a measured position near the declared zero
+    # transport pose may select transport; retain the cleaning envelope
+    # throughout both directions of the lift transition.
+    if abs(lift) <= cleaning_tolerance_m:
+        return "transport_stowed", "transport_stowed"
+    return "cleaning_deployed", "cleaning_lift_not_confirmed_raised"
 
 
 def select_profile(

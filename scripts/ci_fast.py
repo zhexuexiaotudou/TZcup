@@ -668,6 +668,7 @@ def run_ros_independent_tests() -> None:
         ROOT / "scripts" / "test_dynamic_payload_lumped_inertia_contract.py",
         ROOT / "scripts" / "test_dry_bin_monitor_system.py",
         ROOT / "scripts" / "test_ground_dirt_cleaning_system.py",
+        ROOT / "scripts" / "test_audit_formal_vehicle_competition_geometry.py",
         ROOT / "scripts" / "test_cleaning_actuator_motor_contract.py",
         ROOT / "scripts" / "test_validate_formal_cleaning_actuator_motor_runtime.py",
         ROOT / "scripts" / "test_run_formal_cleaning_actuator_motor_runtime.py",

@@ -74,8 +74,8 @@ def test_nav2_costmaps_are_materialized_from_formal_motion_profile():
     global_parameters = config["global_costmap"]["global_costmap"]["ros__parameters"]
     assert local_parameters["footprint_padding"] == pytest.approx(0.01)
     assert global_parameters["footprint_padding"] == pytest.approx(0.01)
-    assert local_parameters["inflation_layer"]["inflation_radius"] == pytest.approx(0.56)
-    assert global_parameters["inflation_layer"]["inflation_radius"] == pytest.approx(0.56)
+    assert local_parameters["inflation_layer"]["inflation_radius"] == pytest.approx(0.63)
+    assert global_parameters["inflation_layer"]["inflation_radius"] == pytest.approx(0.63)
     assert "0.4,0.36" not in local.lower()
     assert cleaning_width == pytest.approx(1.32)
 
@@ -155,33 +155,33 @@ def test_materializer_rejects_duplicate_top_level_footprint_padding(tmp_path):
 
 def test_materializer_rejects_costmap_inflation_at_or_below_enabled_inset_boundary(tmp_path):
     profile = yaml.safe_load(MOTION_PROFILE.read_text(encoding="utf-8"))
-    # The disabled arm has a 1.05 m inradius and must not make the 0.56 m
+    # The disabled arm has a 1.05 m inradius and must not make the 0.63 m
     # navigation costmaps fail.  Only navigation_allowed footprints contribute.
     assert profile["motion_footprints"]["arm_deployed"]["navigation_allowed"] is False
     base = yaml.safe_load(BASE_NAV2.read_text(encoding="utf-8"))
     local = base["local_costmap"]["local_costmap"]["ros__parameters"]
     global_ = base["global_costmap"]["global_costmap"]["ros__parameters"]
-    local["inflation_layer"]["inflation_radius"] = 0.55
-    global_["inflation_layer"]["inflation_radius"] = 0.56
+    local["inflation_layer"]["inflation_radius"] = 0.62
+    global_["inflation_layer"]["inflation_radius"] = 0.63
     boundary = tmp_path / "boundary-nav2.yaml"
     boundary.write_text(yaml.safe_dump(base), encoding="utf-8")
     with pytest.raises(IntegrationContractError, match="local_costmap inflation_radius"):
         materialize_nav2_config(boundary, MOTION_PROFILE)
 
-    local["inflation_layer"]["inflation_radius"] = 0.56
-    global_["inflation_layer"]["inflation_radius"] = 0.55
+    local["inflation_layer"]["inflation_radius"] = 0.63
+    global_["inflation_layer"]["inflation_radius"] = 0.62
     inconsistent = tmp_path / "inconsistent-nav2.yaml"
     inconsistent.write_text(yaml.safe_dump(base), encoding="utf-8")
     with pytest.raises(IntegrationContractError, match="global_costmap inflation_radius"):
         materialize_nav2_config(inconsistent, MOTION_PROFILE)
 
-    global_["inflation_layer"]["inflation_radius"] = 0.56
+    global_["inflation_layer"]["inflation_radius"] = 0.63
     accepted = tmp_path / "accepted-nav2.yaml"
     accepted.write_text(yaml.safe_dump(base), encoding="utf-8")
     config, _ = materialize_nav2_config(accepted, MOTION_PROFILE)
     assert config["local_costmap"]["local_costmap"]["ros__parameters"]["inflation_layer"][
         "inflation_radius"
-    ] == pytest.approx(0.56)
+    ] == pytest.approx(0.63)
 
 
 def test_navigation_inset_radius_uses_nav2_sign_padded_vertices_not_plain_addition():

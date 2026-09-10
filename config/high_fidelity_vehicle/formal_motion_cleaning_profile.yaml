@@ -64,10 +64,10 @@ nav2_footprint_padding_m: 0.01
 motion_footprints:
   transport_stowed:
     footprint_xy_m:
-      - [0.620, 0.675]
-      - [0.620, -0.675]
-      - [-0.540, -0.675]
-      - [-0.540, 0.675]
+      - [0.620, 0.695]
+      - [0.620, -0.695]
+      - [-0.610, -0.695]
+      - [-0.610, 0.695]
     source: formal_vehicle_layout.vehicle_envelopes.transport_stowed
     navigation_allowed: true
     geometry_status: conservative_envelope_pending_exact_mesh_sweep
@@ -75,8 +75,8 @@ motion_footprints:
     footprint_xy_m:
       - [0.620, 0.695]
       - [0.620, -0.695]
-      - [-0.540, -0.695]
-      - [-0.540, 0.695]
+      - [-0.610, -0.695]
+      - [-0.610, 0.695]
     source: union_of_transport_envelope_and_side_brush_collision_sweeps
     navigation_allowed: true
     geometry_status: urdf_collision_union_contact_validation_pending

@@ -1,6 +1,6 @@
 {
   "kind": "tzcup_formal_vehicle_snapshot_manifest",
-  "output_inventory_sha256": "1b851ad66b5d3dc8a85d08825a1d31741e945f66d618374965ec3c3a2dc8eb0c",
+  "output_inventory_sha256": "87ec151a7d2daef8bc1e81e470953463474da61590545c654e43a061a6743448",
   "outputs": {
     "reports/engineering/formal_competition_vehicle.urdf": {
       "sha256": "34257c2ed840a6f8f25933bdf37c6130c3db397d0aa1211c561bff528bd621d1",
@@ -11,7 +11,7 @@
       "size_bytes": 12648
     },
     "reports/engineering/formal_vehicle_layout_report.json": {
-      "sha256": "f770a791c2a74a9499fbe6fcba43f7c2077eed9c7a9659fe3649a7f89d430601",
+      "sha256": "8ceb3d7ee68b4e8b0db1ea1cb427c02a513b08c93bf4feab896d02a4001f2ff5",
       "size_bytes": 3164
     },
     "reports/engineering/formal_vehicle_product_design_report.json": {
@@ -19,7 +19,7 @@
       "size_bytes": 586
     },
     "reports/engineering/formal_vehicle_urdf_report.json": {
-      "sha256": "24c91c4187b14e9a805c8acef32df2cf1e47948a7c577d3368b39ea994feff9f",
+      "sha256": "4ee6f10237b02f4f4e748904b133be0a0cd1a70457725184c3784b44d2648ee4",
       "size_bytes": 5647
     }
   },
@@ -47,7 +47,7 @@
       "size_bytes": 3807
     },
     "config/high_fidelity_vehicle/formal_motion_cleaning_profile.yaml": {
-      "sha256": "1e1a4cbcc2aa1125dd76b85c87cf8170453fca402aeaa037c0a5aadfbf24ebb2",
+      "sha256": "68fe1d16bc17a70da88fa97a928a0593c3d081f289883acaa9780bf5dc12ccb0",
       "size_bytes": 5181
     },
     "config/high_fidelity_vehicle/formal_vehicle_component_register.yaml": {
@@ -55,8 +55,8 @@
       "size_bytes": 80395
     },
     "config/high_fidelity_vehicle/formal_vehicle_layout.yaml": {
-      "sha256": "3c9c10da558c116bcbedf39a516093ca20c1e3eb590e2bb2d121ebd491cf10a9",
-      "size_bytes": 13854
+      "sha256": "efa5af24c53fd50297387822d0b0295aa442ba386e77247fe45675b66f1fe44e",
+      "size_bytes": 13868
     },
     "config/high_fidelity_vehicle/mass_budget.csv": {
       "sha256": "1c0debeacb8f9c5f2ae88cffd6c593077b0b99f4b3ce6c4700f64d3de69dcf7e",
@@ -1003,5 +1003,5 @@
       "size_bytes": 26704
     }
   },
-  "source_inventory_sha256": "74a251a5d13e8afca5ff548284712472cba0a407032770205ec798daaff01ced"
+  "source_inventory_sha256": "a7e3fbd02fe88bd6eb5a7f52cb210bf73cab9dbc6bd47dc7eef6d892b1c258a0"
 }

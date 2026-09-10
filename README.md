@@ -84,7 +84,7 @@ ros2 launch sanitation_bringup gazebo_scene.launch.py
 | 真实域 | 外部阻断 | 缺少满足数量、标定和独立真值要求的真实数据集 |
 | J6P/S100P 部署 | 进行中、正式门未通过 | 历史记录显示真实 RDK S100P 曾连接并运行官方 DOSOD/EdgeSAM 参考模型、项目 adapter、RGB→NV12 桥和 BPU smoke，但当前已核验的可读取 Git refs 中没有该 smoke 原始 JSON，不能作为当前可追溯证据；项目 DOSOD HBM、冻结词表、EdgeSAM encoder/decoder HBM、板端 manifest、真实 RGB-D/TF/map 输入、非空产品输出与 1800 秒正式证据仍未通过 |
 
-权威机器状态见 [`reports/release/FINAL_AUTONOMOUS_STATUS.json`](reports/release/FINAL_AUTONOMOUS_STATUS.json) 和 [`reports/release/FINAL_BLOCKER_REGISTER.json`](reports/release/FINAL_BLOCKER_REGISTER.json)。详细阶段过程、指标和失败边界保存在 [`docs/progress.md`](docs/progress.md)，不在本页重复记录逐步变更。
+权威机器状态见 [`reports/release/FINAL_AUTONOMOUS_STATUS.json`](reports/release/FINAL_AUTONOMOUS_STATUS.json) 和 [`reports/release/FINAL_BLOCKER_REGISTER.json`](reports/release/FINAL_BLOCKER_REGISTER.json)。详细过程见 [`docs/progress.md`](docs/progress.md)。[比赛模型审计](docs/competition-model-audit-20260908.md)已修正地图投影、限速编码和碰撞包络，但确认滚刷与前轮存在实体干涉、清扫区间有两条 8.5 cm 空隙；连续名义宽度仅 0.62 m，1.32 m 仍是待验证目标，不能用实心圆盘估算宣称实际清扫达标。机械布局整改和 fresh Gazebo 复验尚未完成。
 
 ## 主要能力
 

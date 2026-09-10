@@ -103,6 +103,12 @@ def _load_public_manifest(path: str | Path) -> dict[str, Any]:
 
 
 def _pose_values(element: ET.Element | None) -> tuple[float, ...]:
+    if element is not None and (
+        element.get("relative_to")
+        or element.get("rotation_format", "euler_rpy") != "euler_rpy"
+        or element.get("degrees", "false").lower() not in {"false", "0"}
+    ):
+        raise IntegrationContractError("static raster requires parent-relative Euler poses in radians")
     text = "" if element is None or element.text is None else element.text
     try:
         values = tuple(float(value) for value in text.split())
@@ -112,6 +118,8 @@ def _pose_values(element: ET.Element | None) -> tuple[float, ...]:
         return (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
     if len(values) != 6 or not all(math.isfinite(value) for value in values):
         raise IntegrationContractError(f"SDF pose must contain six finite values: {text!r}")
+    if abs(values[3]) > 1e-9 or abs(values[4]) > 1e-9:
+        raise IntegrationContractError("static raster does not support tilted collision frames")
     return values
 
 
@@ -134,6 +142,10 @@ def extract_static_collisions(world_path: str | Path) -> tuple[str, list[StaticC
     world = root.find("world")
     if world is None or not world.get("name"):
         raise IntegrationContractError("scenario SDF has no named world")
+    # This parser does not resolve included assets or nested model frames.
+    # Silently omitting them would turn physical obstacles into free map cells.
+    if world.find(".//include") is not None or world.find(".//model/model") is not None:
+        raise IntegrationContractError("static raster does not support included or nested models")
     collisions: list[StaticCollision] = []
     for model in world.findall("model"):
         if (model.findtext("static") or "false").strip().lower() != "true":
@@ -157,11 +169,14 @@ def extract_static_collisions(world_path: str | Path) -> tuple[str, list[StaticC
             link_pose = _pose_values(link.find("pose"))
             for collision in link.findall("collision"):
                 collision_pose = _pose_values(collision.find("pose"))
+                # SDF offsets are expressed in the immediate parent frame.
+                # Rotate collision translation by the link before composing
+                # with the model; adding offsets first displaces rotated links.
+                local_x = link_pose[0] + math.cos(link_pose[5]) * collision_pose[0] - math.sin(link_pose[5]) * collision_pose[1]
+                local_y = link_pose[1] + math.sin(link_pose[5]) * collision_pose[0] + math.cos(link_pose[5]) * collision_pose[1]
                 center = (
-                    model_pose[0] + math.cos(model_pose[5]) * (link_pose[0] + collision_pose[0])
-                    - math.sin(model_pose[5]) * (link_pose[1] + collision_pose[1]),
-                    model_pose[1] + math.sin(model_pose[5]) * (link_pose[0] + collision_pose[0])
-                    + math.cos(model_pose[5]) * (link_pose[1] + collision_pose[1]),
+                    model_pose[0] + math.cos(model_pose[5]) * local_x - math.sin(model_pose[5]) * local_y,
+                    model_pose[1] + math.sin(model_pose[5]) * local_x + math.cos(model_pose[5]) * local_y,
                 )
                 yaw = model_pose[5] + link_pose[5] + collision_pose[5]
                 geometry = collision.find("geometry")
@@ -318,7 +333,9 @@ def _validated_grid(manifest: dict[str, Any], resolution: float) -> GridSpec:
 def _collision_polygon(collision: StaticCollision, margin: float) -> Polygon:
     cx, cy = collision.center
     if collision.shape == "cylinder":
-        radius = collision.size[0] / 2.0 + margin
+        # Circumscribe the physical disk: an inscribed polygon cuts corners
+        # out of the physical cylinder and its requested safety clearance.
+        radius = (collision.size[0] / 2.0 + margin) / math.cos(math.pi / 16.0)
         return [
             (
                 cx + radius * math.cos(collision.yaw + 2.0 * math.pi * index / 16.0),
@@ -436,8 +453,10 @@ def _write_map_yaml(path: Path, image_name: str, spec: GridSpec, mode: str) -> N
         "resolution": spec.resolution,
         "origin": [spec.origin_x, spec.origin_y, 0.0],
         "negate": 0,
-        "occupied_thresh": 0.65,
-        "free_thresh": 0.25,
+        # Scale maps already encode percentages across the full 0..255
+        # intensity range. Nav2 rescales between these two thresholds.
+        "occupied_thresh": 1.0 if mode == "scale" else 0.65,
+        "free_thresh": 0.0 if mode == "scale" else 0.25,
     }
     path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
 
