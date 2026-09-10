@@ -13,7 +13,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 sys.path.insert(0, str(ROOT / "starter_ws/src/sanitation_perception"))
 
 import formal_a19_product_adapter as adapter
-from sanitation_perception.a19_fault_hooks import ProductFaultHooks
+from sanitation_perception.a19_fault_hooks import A19ProductFaultError, ProductFaultHooks
 
 
 def message(*, sec: int = 2, nanosec: int = 900_000_000, frame: str = "camera", width: int = 8, data: bytes = b"\x01\x02"):
@@ -165,6 +165,10 @@ def test_native_physical_profile_readback_requires_command_to_output_binding() -
     payload["applied_wheel_torque_nm"] = [0.0] * 4
     with pytest.raises(adapter.AdapterError, match="no live wheel command"):
         adapter.physical_profile_readback_from_status(payload, settings)
+    contract = json.loads((ROOT / "config/high_fidelity_vehicle/formal_a19_reliability_fault_contract.json").read_text(encoding="utf-8"))
+    blocked = adapter.capability_blockers(contract, profiles, ["CPUExecutionProvider"])
+    assert blocked["unsupported_faults"] == ["cuda_provider_failure"]
+    assert blocked["unsupported_profiles"] == {}
 
 
 def test_adapter_forbids_profile_restart_and_operator_fault_spoofing() -> None:
@@ -184,22 +188,35 @@ def test_provider_and_model_hooks_use_real_files_but_never_mutate_them(tmp_path:
     dosod.write_bytes(b"dosod-model")
     edgesam.write_bytes(b"edgesam-model")
     calls: list[Path] = []
-    hooks = ProductFaultHooks(
+    cpu_only = ProductFaultHooks(
         {"dosod": dosod, "edgesam": edgesam},
         provider_probe=lambda provider: {"available_providers": ["CPUExecutionProvider"], "selected_provider": None, "requested": provider},
-        model_probe=lambda path: calls.append(path) or {"shadow_bytes": path.read_bytes().hex()},
+        model_probe=lambda path: {"loader_accepted_shadow": True},
+    )
+    with pytest.raises(A19ProductFaultError, match="UNSUPPORTED cuda_provider_failure"):
+        cpu_only.begin("cuda_provider_failure", {"provider": "CUDAExecutionProvider", "duration_s": 10})
+    def model_probe(path: Path):
+        calls.append(path)
+        if path != dosod:
+            raise RuntimeError("invalid protobuf")
+        return {"loader_accepted_shadow": True}
+    hooks = ProductFaultHooks(
+        {"dosod": dosod, "edgesam": edgesam},
+        provider_probe=lambda provider: {"available_providers": [provider, "CPUExecutionProvider"], "selected_provider": provider, "session_providers": [provider]},
+        model_probe=model_probe,
     )
     original = {path: path.read_bytes() for path in (dosod, edgesam)}
     provider = hooks.begin("cuda_provider_failure", {"provider": "CUDAExecutionProvider", "duration_s": 10})
-    assert provider["selected_provider"] is None
+    assert provider["selected_provider"] == "CUDAExecutionProvider"
     with pytest.raises(RuntimeError, match="cuda_provider_failure"):
         hooks.before_inference()
-    assert hooks.clear()["original_model_hashes_restored"] == {"dosod": True, "edgesam": True}
+    assert hooks.trigger_readback()["inference_path_triggered"] is True
+    assert hooks.clear()["trigger_was_observed"] is True
     mismatch = hooks.begin("model_hash_mismatch", {"model": "dosod", "mismatch_count": 1})
     assert mismatch["actual_sha256"] != mismatch["expected_sha256"]
     hooks.clear()
     corrupt = hooks.begin("corrupt_model", {"model": "edgesam", "corrupt_bytes": 4})
-    assert corrupt["shadow_only"] is True and calls and not calls[-1].exists()
+    assert corrupt["shadow_only"] is True and corrupt["loader_error"] == "invalid protobuf" and calls and not calls[-1].exists()
     hooks.clear()
     hooks.begin("sustained_slow_inference", {"latency_ms": 1, "duration_s": 10})
     assert hooks.before_inference()["observed_delay_ms"] >= 1

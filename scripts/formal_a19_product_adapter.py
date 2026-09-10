@@ -60,6 +60,15 @@ PROFILE_CONFIG = "starter_ws/src/sanitation_tasks/config/sim2real_fault_profiles
 PROFILE_NAMES = ("nominal", "transport_stress", "wet_surface", "degraded_drive")
 DRIVETRAIN_PROFILE_TOPIC = "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/profile"
 DRIVETRAIN_STATUS_TOPIC = "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/status"
+PHYSICAL_PROFILE_FIELDS = ("wheel_slip_ratio", "actuator_gain")
+PRODUCT_FAULT_OUTCOMES = {
+    "proposal_flood": "proposal_output_expansion_observed",
+    "proposal_dropout": "proposal_output_drop_observed",
+    "classifier_exception": "classifier_exception_observed",
+    "classifier_timeout": "classifier_timeout_observed",
+    "action_verifier_failure": "verified_result_rejection_observed",
+    "reobserve_timeout": "wrist_reobservation_drop_observed",
+}
 PROXY_TOPICS = {
     "front_rgb": (
         "/sensors/front_rgbd/depth/image_rect_raw/image",
@@ -184,6 +193,18 @@ def physical_profile_readback_from_status(
     }
 
 
+def capability_blockers(
+    contract: Mapping[str, Any], profiles: Mapping[str, Mapping[str, float]],
+    available_providers: Sequence[str],
+) -> dict[str, Any]:
+    del profiles
+    scheduled_faults = {row.get("fault") for row in contract.get("fault_schedule", []) if isinstance(row, Mapping)}
+    unsupported_faults = []
+    if "cuda_provider_failure" in scheduled_faults and "CUDAExecutionProvider" not in available_providers:
+        unsupported_faults.append("cuda_provider_failure")
+    return {"unsupported_faults": unsupported_faults, "unsupported_profiles": {}}
+
+
 def validate_fault_expectations(contract: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
     rows = contract.get("fault_expectations")
     if not isinstance(rows, Mapping) or set(rows) != SUPPORTED_FAULTS:
@@ -200,6 +221,14 @@ def validate_fault_expectations(contract: Mapping[str, Any]) -> dict[str, dict[s
             raise AdapterError(f"A19 STOPPED expectation must require a real safety stop: {fault}")
         result[fault] = dict(row)
     return result
+
+
+def onnx_available_providers() -> list[str]:
+    try:
+        import onnxruntime as ort
+    except ImportError:
+        return []
+    return list(ort.get_available_providers())
 
 
 def parse_product_argv(raw: str) -> list[str]:
@@ -591,6 +620,9 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
     supported, unsupported = contract_capabilities(contract)
     fault_expectations = validate_fault_expectations(contract)
     profiles = load_profile_settings(args.repository_root / PROFILE_CONFIG)
+    if contract.get("profile_expectations") != profiles:
+        raise AdapterError("A19 frozen profile contract differs from the live profile configuration")
+    blockers = capability_blockers(contract, profiles, onnx_available_providers())
     profile_config_sha256 = hashlib.sha256((args.repository_root / PROFILE_CONFIG).read_bytes()).hexdigest()
 
     class Probe(Node):
@@ -770,7 +802,7 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
             target = blocker.get("target_pose")
             if not isinstance(target, Mapping) or math.dist((native_pose["x"], native_pose["y"], native_pose["z"]), (target["x"], target["y"], target["z"])) > 0.05:
                 return None
-            return {"observed": True, "set_pose_success_count": int(blocker["success_count"]), "nearest_navigation_scan_m": float(nearest), "native_pose": native_pose, "target_pose": dict(target), "model": blocker["model"], "world": blocker["world"]}
+            return {"fault": "dynamic_obstacle_blocks_observation", "observed": True, "expected_outcome": "native_obstacle_pose_and_scan_block_observed", "set_pose_success_count": int(blocker["success_count"]), "nearest_navigation_scan_m": float(nearest), "native_pose": native_pose, "target_pose": dict(target), "model": blocker["model"], "world": blocker["world"], "pose_source_type": "native gz.msgs.Pose_V", "scan_source_topic": "/scan/navigation", "set_pose_service": f"/world/{blocker['world']}/set_pose"}
 
         def clear_dynamic_blocker(self) -> dict[str, Any]:
             blocker = self.blocker
@@ -807,7 +839,7 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
             scan = self.value("navigation_scan", 1.0)
             if pose_error > 0.05 or scan is None or float(scan) + 0.05 < float(blocker["baseline_scan_m"]):
                 return None
-            readback = {"observed": True, "restore_set_pose_success_count": int(blocker["restore_success_count"]), "native_pose": native_pose, "original_pose": original, "native_position_error_m": pose_error, "post_restore_navigation_scan_m": float(scan), "model": blocker["model"], "world": blocker["world"]}
+            readback = {"fault": "dynamic_obstacle_blocks_observation", "observed": True, "restore_set_pose_success_count": int(blocker["restore_success_count"]), "native_pose": native_pose, "original_pose": original, "native_position_error_m": pose_error, "post_restore_navigation_scan_m": float(scan), "model": blocker["model"], "world": blocker["world"], "pose_source_type": "native gz.msgs.Pose_V", "scan_source_topic": "/scan/navigation", "set_pose_service": f"/world/{blocker['world']}/set_pose"}
             self.blocker = None
             return readback
 
@@ -886,7 +918,7 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
             return "UNKNOWN"
 
         @staticmethod
-        def _fault_values(rows: Any) -> tuple[str, int] | None:
+        def _fault_values(rows: Any) -> tuple[str, int, dict[str, Any]] | None:
             if not isinstance(rows, list):
                 return None
             for row in rows:
@@ -896,14 +928,16 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
                 try:
                     fault = json.loads(str(values.get("formal_a19_fault", '""')))
                     events = json.loads(str(values.get("formal_a19_fault_events", "0")))
+                    effect = json.loads(str(values.get("formal_a19_fault_effect", "{}")))
                 except json.JSONDecodeError:
                     fault = str(values.get("formal_a19_fault", ""))
                     try:
                         events = int(str(values.get("formal_a19_fault_events", "0")))
                     except ValueError:
                         continue
-                if isinstance(fault, str) and type(events) is int:
-                    return fault, events
+                    effect = {}
+                if isinstance(fault, str) and type(events) is int and isinstance(effect, dict):
+                    return fault, events, effect
             return None
 
         def command_product_fault(self, fault: str, parameters: Mapping[str, Any], active: bool) -> None:
@@ -927,13 +961,18 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
             parsed = self._fault_values(rows)
             if parsed is None:
                 return None
-            active_fault, events = parsed
+            active_fault, events, effect = parsed
             if recovered:
                 if active_fault:
                     return None
             elif active_fault != fault or events <= self.product_fault_baseline.get(fault, 0):
                 return None
-            return {"fault": fault, "observed": True, "source": source, "active_fault": active_fault, "events": events, "rows": rows}
+            if not recovered and (
+                effect.get("fault") != fault or effect.get("observed") is not True
+                or effect.get("expected_outcome") != PRODUCT_FAULT_OUTCOMES[fault]
+            ):
+                return None
+            return {"fault": fault, "observed": True, "source": source, "active_fault": active_fault, "events": events, "effect": effect, "rows": rows}
 
         def safety_stopped(self) -> bool:
             raw = self.value("safety", 1.0)
@@ -1105,15 +1144,16 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
                 raise AdapterError("producer command protocol or nonce mismatch")
             kind = command.get("type")
             if kind == "start":
-                if unsupported:
+                if unsupported or blockers["unsupported_faults"] or blockers["unsupported_profiles"]:
                     emitter.emit({
                         "type": "capability_blocked",
                         "command_id": command.get("command_id"),
                         "supported_faults": supported,
-                        "unsupported_faults": unsupported,
-                        "reason": "product_fault_injection_points_missing",
+                        "unsupported_faults": sorted(set(unsupported) | set(blockers["unsupported_faults"])),
+                        "unsupported_profiles": blockers["unsupported_profiles"],
+                        "reason": "required_live_fault_or_profile_control_is_unavailable",
                     })
-                    raise AdapterError("formal A19 contract contains unsupported product faults")
+                    raise AdapterError("formal A19 runtime capability handshake is UNSUPPORTED")
                 start_readback = start_product()
                 probe.product_started = True
                 emitter.emit({"type": "hello", "command_id": command["command_id"], "components": contract["required_pipeline_components"], "profiles": [row["profile"] for row in contract["profile_schedule"]], "faults": [row["fault"] for row in contract["fault_schedule"]], "product_pid": product.pid, "product_pgid": os.getpgid(product.pid), "sensor_proxy_topics": PROXY_TOPICS, "initial_profile_readback": start_readback, "operator_control": start_readback["operator_control"]})
@@ -1148,6 +1188,7 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
                     probe.command_model_provider_fault("begin", fault, parameters)
                 elif nav2_fault:
                     nav2_injection = probe.set_planner_active(False)
+                    nav2_injection.update({"fault": fault, "observed": True, "expected_outcome": "planner_inactive_and_path_server_absent"})
                 elif dynamic_obstacle_fault:
                     world, model, start = frozen_obstacle_target(parse_product_argv(args.product_argv_json))
                     probe.begin_dynamic_blocker(world=world, model=model, start=start, minimum_distance_m=float(parameters["minimum_block_distance_m"]))
@@ -1204,6 +1245,7 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
                     probe.command_model_provider_fault("clear", fault, parameters)
                 elif nav2_fault:
                     recovery_readback = probe.set_planner_active(True)
+                    recovery_readback.update({"fault": fault, "observed": True})
                 elif dynamic_obstacle_fault:
                     recovery_readback = probe.clear_dynamic_blocker()
                 elif fault not in SENSOR_PROXY_FAULTS:
@@ -1261,9 +1303,19 @@ def main(argv: Sequence[str] | None = None) -> int:
             raise AdapterError("TZCUP_FORMAL_A19_CONTRACT is unavailable")
         contract = json.loads(contract_path.read_text(encoding="utf-8"))
         supported, unsupported = contract_capabilities(contract)
+        profiles = load_profile_settings(args.repository_root / PROFILE_CONFIG)
+        if contract.get("profile_expectations") != profiles:
+            raise AdapterError("A19 frozen profile contract differs from the live profile configuration")
         if args.capabilities_json:
-            print(json.dumps({"supported_faults": supported, "unsupported_faults": unsupported}, sort_keys=True))
-            return 0 if not unsupported else 4
+            blockers = capability_blockers(contract, profiles, onnx_available_providers())
+            result = {
+                "supported_faults": supported,
+                "unsupported_faults": sorted(set(unsupported) | set(blockers["unsupported_faults"])),
+                "unsupported_profiles": blockers["unsupported_profiles"],
+                "available_providers": onnx_available_providers(),
+            }
+            print(json.dumps(result, sort_keys=True))
+            return 0 if not result["unsupported_faults"] and not result["unsupported_profiles"] else 4
         parse_product_argv(args.product_argv_json)
         return _run_ros_adapter(args, contract)
     except (AdapterError, OSError, ValueError, json.JSONDecodeError) as exc:

@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
 import secrets
 import selectors
@@ -31,6 +32,27 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CONTRACT = ROOT / "config/high_fidelity_vehicle/formal_a19_reliability_fault_contract.json"
 RAW_RECEIPT = "tzcup_a19_canonical_runtime_raw_receipt_v1"
 PROTOCOL = "tzcup.formal_a19.adapter.v1"
+
+FAULT_READBACK_CONTRACT = {
+    "rgb_freeze": ("rgb_proxy_drop_observed", "sensor_drop", "sensor_forwarding"),
+    "depth_freeze": ("depth_proxy_drop_observed", "sensor_drop", "sensor_forwarding"),
+    "timestamp_skew": ("rgb_timestamp_shift_observed", "sensor_mutation", "sensor_forwarding"),
+    "camera_info_mismatch": ("camera_info_width_change_observed", "sensor_mutation", "sensor_forwarding"),
+    "tf_unavailable": ("unavailable_frame_rewrite_observed", "sensor_mutation", "sensor_forwarding"),
+    "invalid_depth": ("depth_payload_invalidation_observed", "sensor_mutation", "sensor_forwarding"),
+    "proposal_flood": ("proposal_output_expansion_observed", "product_consumer", "product_consumer_cleared"),
+    "proposal_dropout": ("proposal_output_drop_observed", "product_consumer", "product_consumer_cleared"),
+    "classifier_exception": ("classifier_exception_observed", "product_consumer", "product_consumer_cleared"),
+    "classifier_timeout": ("classifier_timeout_observed", "product_consumer", "product_consumer_cleared"),
+    "action_verifier_failure": ("verified_result_rejection_observed", "product_consumer", "product_consumer_cleared"),
+    "reobserve_timeout": ("wrist_reobservation_drop_observed", "product_consumer", "product_consumer_cleared"),
+    "cuda_provider_failure": ("selected_cuda_inference_failure_observed", "model_provider", "model_provider_cleared"),
+    "model_hash_mismatch": ("dosod_hash_mismatch_observed", "model_provider", "model_provider_cleared"),
+    "corrupt_model": ("edgesam_shadow_loader_rejection_observed", "model_provider", "model_provider_cleared"),
+    "sustained_slow_inference": ("inference_delay_observed", "model_provider", "model_provider_cleared"),
+    "nav2_path_unavailable": ("planner_inactive_and_path_server_absent", "nav2_lifecycle", "nav2_lifecycle_recovered"),
+    "dynamic_obstacle_blocks_observation": ("native_obstacle_pose_and_scan_block_observed", "dynamic_obstacle", "dynamic_obstacle_restored"),
+}
 
 
 class A19ProducerError(RuntimeError):
@@ -88,6 +110,25 @@ def validate_contract(contract: Mapping[str, Any]) -> None:
                 raise A19ProducerError(f"A19 fault expectation {fault}.{field} must be boolean")
         if expectation["state"] == "STOPPED" and expectation["requires_global_safety_stop"] is not True:
             raise A19ProducerError(f"A19 STOPPED expectation lacks a real safety-stop requirement: {fault}")
+    readbacks = contract.get("fault_readback_contract")
+    expected_readbacks = {
+        fault: {
+            "expected_outcome": row[0],
+            "injection_readback_kind": row[1],
+            "recovery_readback_kind": row[2],
+        }
+        for fault, row in FAULT_READBACK_CONTRACT.items()
+    }
+    if readbacks != expected_readbacks:
+        raise A19ProducerError("A19 fault readback contract is incomplete or drifted")
+    profile_expectations = contract.get("profile_expectations")
+    if not isinstance(profile_expectations, Mapping) or set(profile_expectations) != set(expected_profiles):
+        raise A19ProducerError("A19 frozen profile expectations are incomplete")
+    for profile, values in profile_expectations.items():
+        if not isinstance(values, Mapping) or set(values) != {
+            "sensor_latency_ms", "sensor_dropout_probability", "wheel_slip_ratio", "actuator_gain"
+        } or any(type(value) not in (int, float) or not math.isfinite(float(value)) for value in values.values()):
+            raise A19ProducerError(f"A19 frozen profile expectation is malformed: {profile}")
     timing = contract.get("fault_timing")
     if not isinstance(timing, Mapping) or timing.get("required_fault_count") != 18:
         raise A19ProducerError("A19 fault timing contract must require 18 faults")

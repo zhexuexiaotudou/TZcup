@@ -183,6 +183,251 @@ def _command_map(receipt: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
     return result
 
 
+def _json_value(value: Any) -> Any:
+    if not isinstance(value, str):
+        return value
+    try:
+        return json.loads(value)
+    except json.JSONDecodeError:
+        return value
+
+
+def _product_telemetry_matches(readback: Mapping[str, Any]) -> bool:
+    for row in readback.get("rows", []):
+        values = row.get("values") if isinstance(row, Mapping) else None
+        if not isinstance(values, Mapping):
+            continue
+        if (
+            _json_value(values.get("formal_a19_fault")) == readback.get("active_fault")
+            and _json_value(values.get("formal_a19_fault_events")) == readback.get("events")
+            and _json_value(values.get("formal_a19_fault_effect")) == readback.get("effect")
+        ):
+            return True
+    return False
+
+
+def _pose(readback: Mapping[str, Any], name: str) -> tuple[float, float, float] | None:
+    value = readback.get(name)
+    if not isinstance(value, Mapping):
+        return None
+    try:
+        return tuple(_strict_number(value.get(axis), f"{name}.{axis}") for axis in ("x", "y", "z"))
+    except ValueError:
+        return None
+
+
+def _validate_fault_readbacks(
+    fault: str, injection: Any, recovery: Any, scheduled: Mapping[str, Any],
+    readback_contract: Mapping[str, Any],
+) -> list[str]:
+    errors: list[str] = []
+    if not isinstance(injection, Mapping) or not injection:
+        return ["fault has no non-empty independently observed injection readback"]
+    if not isinstance(recovery, Mapping) or not recovery:
+        return ["fault recovery has no non-empty independently observed readback"]
+    kind = readback_contract.get("injection_readback_kind")
+    recovery_kind = readback_contract.get("recovery_readback_kind")
+    outcome = readback_contract.get("expected_outcome")
+    parameters = scheduled["parameters"]
+
+    if kind in {"sensor_drop", "sensor_mutation", "product_consumer", "nav2_lifecycle", "dynamic_obstacle"}:
+        if injection.get("fault") != fault or injection.get("observed") is not True:
+            errors.append("injection readback fault identity/observed flag is invalid")
+    if recovery_kind != "model_provider_cleared" and (
+        recovery.get("fault") != fault or recovery.get("observed") is not True
+    ):
+        errors.append("recovery readback fault identity/observed flag is invalid")
+
+    if kind == "sensor_drop":
+        suffix = "rgb" if fault == "rgb_freeze" else "depth"
+        channels, counts = injection.get("dropped_channels"), injection.get("counts")
+        if not isinstance(channels, list) or not channels or any(not isinstance(x, str) or not x.endswith(suffix) for x in channels):
+            errors.append("sensor drop readback has no matching dropped channel")
+        if not isinstance(counts, Mapping):
+            errors.append("sensor drop readback has no channel counters")
+    elif kind == "sensor_mutation":
+        mutation = injection.get("mutation")
+        actions = {
+            "timestamp_skew": "timestamp_shifted", "camera_info_mismatch": "camera_info_width_changed",
+            "tf_unavailable": "frame_rewritten_to_unavailable", "invalid_depth": "depth_payload_invalidated",
+        }
+        if not isinstance(mutation, Mapping) or mutation.get("fault") != fault or mutation.get("action") != actions.get(fault) or injection.get("parameters") != parameters:
+            errors.append("sensor mutation readback does not match the scheduled fault")
+        elif fault == "timestamp_skew" and mutation.get("before") == mutation.get("after"):
+            errors.append("timestamp mutation did not change the stamp")
+        elif fault == "camera_info_mismatch" and not (
+            type(mutation.get("before")) is int and type(mutation.get("after")) is int and mutation["after"] > mutation["before"]
+        ):
+            errors.append("CameraInfo mutation did not increase width")
+        elif fault == "tf_unavailable" and not str(mutation.get("after", "")).startswith("formal_a19_missing_"):
+            errors.append("TF mutation did not bind an unavailable frame")
+        elif fault == "invalid_depth" and not (
+            mutation.get("after_nonzero_bytes") == 0 and type(mutation.get("size_bytes")) is int and mutation["size_bytes"] > 0
+        ):
+            errors.append("depth mutation did not invalidate a non-empty payload")
+    elif kind == "product_consumer":
+        expected_source = "post_clean_verification" if fault == "action_verifier_failure" else "perception"
+        effect = injection.get("effect")
+        if (
+            injection.get("source") != expected_source or injection.get("active_fault") != fault
+            or type(injection.get("events")) is not int or injection["events"] <= 0
+            or not isinstance(effect, Mapping) or effect.get("fault") != fault
+            or effect.get("observed") is not True or effect.get("expected_outcome") != outcome
+            or not _product_telemetry_matches(injection)
+        ):
+            errors.append("product consumer readback is not bound to the real fault effect telemetry")
+        elif fault == "proposal_flood" and not (
+            type(effect.get("input_proposal_count")) is int and effect["input_proposal_count"] > 0
+            and effect.get("output_proposal_count") == parameters["proposals_per_frame"]
+            and effect["output_proposal_count"] > effect["input_proposal_count"]
+        ):
+            errors.append("proposal flood did not prove real output expansion")
+        elif fault == "proposal_dropout" and not (
+            type(effect.get("input_proposal_count")) is int and effect["input_proposal_count"] > 0
+            and effect.get("output_proposal_count") == 0
+        ):
+            errors.append("proposal dropout did not prove real output removal")
+        elif fault in {"action_verifier_failure", "reobserve_timeout"} and not isinstance(effect.get("target_id"), str):
+            errors.append("product consumer fault has no real target identity")
+        if (
+            recovery.get("source") != expected_source or recovery.get("active_fault") != ""
+            or type(recovery.get("events")) is not int or recovery["events"] < injection.get("events", 0)
+            or recovery.get("effect") != effect or not _product_telemetry_matches(recovery)
+        ):
+            errors.append("product consumer recovery is not bound to cleared live telemetry")
+    elif kind == "model_provider":
+        values = injection.get("values")
+        decoded = {key: _json_value(value) for key, value in values.items()} if isinstance(values, Mapping) else {}
+        if (
+            injection.get("message") != "a19_fault_active" or injection.get("level") != 2
+            or decoded.get("fault") != fault or decoded.get("observed") is not True
+            or decoded.get("active") is not True or decoded.get("inference_path_triggered") is not True
+        ):
+            errors.append("model/provider fault was not triggered in the real inference path")
+        elif fault == "cuda_provider_failure" and not (
+            decoded.get("requested_provider") == "CUDAExecutionProvider"
+            and decoded.get("selected_provider") == "CUDAExecutionProvider"
+            and "CUDAExecutionProvider" in decoded.get("available_providers", [])
+            and "CUDAExecutionProvider" in decoded.get("session_providers", [])
+        ):
+            errors.append("CUDA provider failure lacks an actually selected CUDA provider")
+        elif fault == "model_hash_mismatch" and not (
+            isinstance(decoded.get("actual_sha256"), str) and len(decoded["actual_sha256"]) == 64
+            and isinstance(decoded.get("expected_sha256"), str) and len(decoded["expected_sha256"]) == 64
+            and decoded["actual_sha256"] != decoded["expected_sha256"]
+        ):
+            errors.append("DOSOD model hash mismatch was not independently demonstrated")
+        elif fault == "corrupt_model" and not (
+            decoded.get("shadow_only") is True and isinstance(decoded.get("loader_error"), str) and decoded["loader_error"]
+            and decoded.get("original_sha256") != decoded.get("shadow_sha256")
+        ):
+            errors.append("EdgeSAM corrupt shadow was not rejected by the real loader")
+        elif fault == "sustained_slow_inference":
+            try:
+                if _strict_number(decoded.get("observed_delay_ms"), "observed delay") < _strict_number(parameters.get("latency_ms"), "requested delay"):
+                    errors.append("slow inference did not reach the scheduled delay")
+            except ValueError as exc:
+                errors.append(str(exc))
+        recovered_values = recovery.get("values")
+        recovered = {key: _json_value(value) for key, value in recovered_values.items()} if isinstance(recovered_values, Mapping) else {}
+        if (
+            recovery.get("message") != "a19_fault_recovered" or recovery.get("level") != 0
+            or recovered.get("fault") != fault or recovered.get("cleared") is not True
+            or recovered.get("trigger_was_observed") is not True
+            or recovered.get("original_model_hashes_restored") != {"dosod": True, "edgesam": True}
+        ):
+            errors.append("model/provider recovery lacks trigger-bound model restoration")
+    elif kind == "nav2_lifecycle":
+        if not (injection.get("expected_outcome") == outcome and injection.get("planner_state_before") == 3 and injection.get("planner_state_after") == 2 and injection.get("compute_path_server_ready") is False):
+            errors.append("Nav2 injection lacks active-to-inactive action-server readback")
+        if not (recovery.get("planner_state_before") == 2 and recovery.get("planner_state_after") == 3 and recovery.get("compute_path_server_ready") is True):
+            errors.append("Nav2 recovery lacks inactive-to-active action-server readback")
+    elif kind == "dynamic_obstacle":
+        native, target = _pose(injection, "native_pose"), _pose(injection, "target_pose")
+        try:
+            scan = _strict_number(injection.get("nearest_navigation_scan_m"), "navigation scan")
+        except ValueError:
+            scan = math.inf
+        if (
+            injection.get("expected_outcome") != outcome or injection.get("pose_source_type") != "native gz.msgs.Pose_V"
+            or injection.get("scan_source_topic") != "/scan/navigation"
+            or type(injection.get("set_pose_success_count")) is not int or injection["set_pose_success_count"] <= 0
+            or native is None or target is None or math.dist(native, target) > 0.05
+            or scan > float(parameters["minimum_block_distance_m"]) + 0.2
+        ):
+            errors.append("dynamic obstacle injection lacks SetEntityPose, native Pose_V and scan agreement")
+        restored, original = _pose(recovery, "native_pose"), _pose(recovery, "original_pose")
+        try:
+            scan = _strict_number(recovery.get("post_restore_navigation_scan_m"), "post-restore scan")
+            position_error = _strict_number(recovery.get("native_position_error_m"), "restore position error")
+        except ValueError:
+            scan, position_error = math.inf, math.inf
+        if (
+            recovery.get("pose_source_type") != "native gz.msgs.Pose_V" or recovery.get("scan_source_topic") != "/scan/navigation"
+            or type(recovery.get("restore_set_pose_success_count")) is not int or recovery["restore_set_pose_success_count"] <= 0
+            or restored is None or original is None or math.dist(restored, original) > 0.05
+            or position_error > 0.05 or not math.isfinite(scan)
+            or injection.get("model") != recovery.get("model") or injection.get("world") != recovery.get("world")
+        ):
+            errors.append("dynamic obstacle recovery lacks real return pose and fresh scan agreement")
+    else:
+        errors.append("fault readback kind is unsupported")
+
+    if recovery_kind == "sensor_forwarding":
+        channels = recovery.get("forwarded_channels")
+        if not isinstance(channels, list) or not channels or not isinstance(recovery.get("counts"), Mapping):
+            errors.append("sensor recovery did not prove resumed forwarding")
+    return errors
+
+
+def _validate_profile_readback(
+    acknowledgement: Mapping[str, Any], command: Mapping[str, Any],
+    hello: Mapping[str, Any], expected: Mapping[str, Any],
+) -> list[str]:
+    profile = acknowledgement.get("profile")
+    errors: list[str] = []
+    if acknowledgement.get("command_id") != command.get("command_id") or profile != command.get("profile"):
+        return ["profile activation does not acknowledge the matching producer command"]
+    configured, readback = acknowledgement.get("configured_values"), acknowledgement.get("readback")
+    if not isinstance(configured, Mapping) or not isinstance(readback, Mapping):
+        return ["profile activation has no full configured/readback record"]
+    if configured != expected:
+        errors.append(f"profile {profile} configured values differ from the frozen contract")
+    if readback.get("profile") != profile or any(readback.get(field) != configured.get(field) for field in ("sensor_latency_ms", "sensor_dropout_probability")):
+        errors.append(f"profile {profile} sensor readback drifted")
+    if readback.get("product_pid") != hello.get("product_pid") or readback.get("product_pgid") != hello.get("product_pgid"):
+        errors.append("profile activation restarted or replaced the product process")
+    physical = readback.get("physical_readback")
+    required_physical = {
+        "source", "wheel_slip_ratio", "actuator_gain", "commanded_wheel_speed_rad_s",
+        "effective_wheel_speed_rad_s", "unscaled_wheel_torque_nm",
+        "applied_wheel_torque_nm", "measured_wheel_speed_rad_s",
+    }
+    if not isinstance(physical, Mapping) or set(physical) != required_physical:
+        return errors + ["profile activation lacks complete physical readback"]
+    if (
+        physical.get("source") != "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/status"
+        or physical.get("wheel_slip_ratio") != configured.get("wheel_slip_ratio")
+        or physical.get("actuator_gain") != configured.get("actuator_gain")
+    ):
+        errors.append(f"profile {profile} physical fields drifted")
+    arrays = [physical.get(name) for name in (
+        "commanded_wheel_speed_rad_s", "effective_wheel_speed_rad_s",
+        "unscaled_wheel_torque_nm", "applied_wheel_torque_nm", "measured_wheel_speed_rad_s",
+    )]
+    if any(not isinstance(values, list) or len(values) != 4 or any(type(value) not in (int, float) or not math.isfinite(float(value)) for value in values) for values in arrays):
+        return errors + [f"profile {profile} lacks four-wheel finite plant readback"]
+    command, effective, unscaled, applied, _ = arrays
+    slip, gain = float(configured["wheel_slip_ratio"]), float(configured["actuator_gain"])
+    if any(not math.isclose(float(actual), float(requested) / (1.0 - slip), abs_tol=1e-7) for requested, actual in zip(command, effective)):
+        errors.append(f"profile {profile} wheel-slip plant readback drifted")
+    if any(not math.isclose(float(actual), float(requested) * gain, abs_tol=1e-7) for requested, actual in zip(unscaled, applied)):
+        errors.append(f"profile {profile} actuator-gain plant readback drifted")
+    if profile != "nominal" and (not any(abs(float(value)) > 1e-6 for value in command) or not any(abs(float(value)) > 1e-6 for value in unscaled)):
+        errors.append(f"non-nominal profile {profile} lacks live physical actuation")
+    return errors
+
+
 def _validate_semantics(receipt: Mapping[str, Any], events: Sequence[dict[str, Any]], contract: Mapping[str, Any]) -> tuple[list[str], dict[str, Any]]:
     errors: list[str] = []
     metrics: dict[str, Any] = {}
@@ -349,8 +594,10 @@ def _validate_semantics(receipt: Mapping[str, Any], events: Sequence[dict[str, A
                 recovery_latency = (recovered[0][0]["received_monotonic_ns"] - stopped[0][0]["received_monotonic_ns"]) / 1e9
                 if stop_latency < 0 or stop_latency > float(timing["maximum_safe_stop_latency_s"]): fault_errors.append("safe STOPPED latency exceeds contract")
                 if recovery_latency < 0 or recovery_latency > float(timing["maximum_recovery_latency_s"]): fault_errors.append("RECOVERED latency exceeds contract")
-            if not isinstance(stop_event.get("injection_readback"), Mapping):
-                fault_errors.append("fault has no independently observed injection readback")
+            fault_errors.extend(_validate_fault_readbacks(
+                fault, stop_event.get("injection_readback"), recover_event.get("recovery_readback"),
+                scheduled, contract["fault_readback_contract"][fault],
+            ))
             if expectation.get("requires_global_safety_stop") is True:
                 if stop_event.get("safety_state") != evidence["required_safety_state"]:
                     fault_errors.append("fault did not force safety STOPPED")
@@ -370,8 +617,6 @@ def _validate_semantics(receipt: Mapping[str, Any], events: Sequence[dict[str, A
                     if brake > float(gates["maximum_estop_brake_latency_s"]): fault_errors.append("brake latency exceeds A19 gate")
                 except ValueError as exc:
                     fault_errors.append(str(exc))
-            if not isinstance(recover_event.get("recovery_readback"), Mapping):
-                fault_errors.append("fault recovery has no independently observed readback")
             if recover_event.get("coverage_state") not in evidence["required_recovered_coverage_states"] or recover_event.get("safety_state") != "RUNNING":
                 fault_errors.append("safe Coverage recovery was not observed")
         if fault_errors:
@@ -384,26 +629,10 @@ def _validate_semantics(receipt: Mapping[str, Any], events: Sequence[dict[str, A
         profile_commands = typed_commands["set_profile"]
         for acknowledgement, command_row in zip(profile_acks, profile_commands):
             command = command_row["command"]
-            if acknowledgement.get("command_id") != command.get("command_id") or acknowledgement.get("profile") != command.get("profile"):
-                errors.append("profile activation does not acknowledge the matching producer command")
-                continue
-            configured = acknowledgement.get("configured_values")
-            readback = acknowledgement.get("readback")
-            if not isinstance(configured, Mapping) or not isinstance(readback, Mapping):
-                errors.append("profile activation has no full configured/readback record")
-                continue
-            if hello and (readback.get("product_pid") != hello[0].get("product_pid") or readback.get("product_pgid") != hello[0].get("product_pgid")):
-                errors.append("profile activation restarted or replaced the product process")
-            physical = readback.get("physical_readback")
-            if not isinstance(physical, Mapping) or set(physical) != {"wheel_slip_ratio", "actuator_gain"}:
-                errors.append("profile activation lacks complete physical readback")
-                continue
-            for field in ("wheel_slip_ratio", "actuator_gain"):
-                row = physical.get(field)
-                if not isinstance(row, Mapping) or row.get("configured") != configured.get(field):
-                    errors.append(f"profile {acknowledgement.get('profile')} physical field {field} drifted")
-                if acknowledgement.get("profile") != "nominal" and row.get("observed") is not True:
-                    errors.append(f"non-nominal profile {acknowledgement.get('profile')} lacks live physical readback for {field}")
+            errors.extend(_validate_profile_readback(
+                acknowledgement, command, hello[0] if hello else {},
+                contract["profile_expectations"].get(acknowledgement.get("profile"), {}),
+            ))
     if any(event.get("type") == "profile_unsupported" for event in adapters):
         errors.append("A19 run encountered an unsupported physical profile")
     complete = [event for event in adapters if event.get("type") == "complete"]

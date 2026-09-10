@@ -28,6 +28,8 @@ from produce_formal_a19_reliability_fault import (
 from validate_formal_a19_reliability_fault import (
     _parse_events,
     _safe_output,
+    _validate_fault_readbacks,
+    _validate_profile_readback,
     _validate_semantics,
 )
 
@@ -51,7 +53,7 @@ def _fast_contract() -> dict:
     starts = [0.0, 0.2, 0.4, 0.6]
     for row, start in zip(contract["profile_schedule"], starts):
         row["start_offset_s"] = start
-        row["minimum_observed_duration_s"] = 0.12
+        row["minimum_observed_duration_s"] = 0.05
     for index, row in enumerate(contract["fault_schedule"], start=1):
         row["offset_s"] = index * 0.04
     contract["fault_timing"].update(
@@ -81,9 +83,31 @@ def test_contract_preserves_two_hours_four_profiles_and_all_18_faults() -> None:
 def test_validator_requires_live_profile_and_fault_readbacks() -> None:
     source = (ROOT / "scripts/validate_formal_a19_reliability_fault.py").read_text(encoding="utf-8")
     assert "profile activation restarted or replaced the product process" in source
-    assert "lacks live physical readback" in source
-    assert "fault has no independently observed injection readback" in source
-    assert "fault recovery has no independently observed readback" in source
+    assert "lacks complete physical readback" in source
+    assert "fault has no non-empty independently observed injection readback" in source
+    assert "fault recovery has no non-empty independently observed readback" in source
+
+
+@pytest.mark.parametrize("scheduled", _contract()["fault_schedule"], ids=lambda row: row["fault"])
+def test_validator_rejects_empty_or_fixture_only_fault_readbacks(scheduled: dict) -> None:
+    contract = _contract()
+    fault = scheduled["fault"]
+    schema = contract["fault_readback_contract"][fault]
+    assert _validate_fault_readbacks(fault, {}, {}, scheduled, schema)
+    assert _validate_fault_readbacks(fault, {"fixture": True}, {"fixture": True}, scheduled, schema)
+
+
+def test_validator_rejects_profile_values_not_bound_to_frozen_contract() -> None:
+    expected = _contract()["profile_expectations"]["wet_surface"]
+    acknowledgement = {
+        "command_id": "p", "profile": "wet_surface",
+        "configured_values": {key: 999 for key in expected},
+        "readback": {"profile": "wet_surface", "sensor_latency_ms": 999, "sensor_dropout_probability": 999,
+                     "product_pid": 7, "product_pgid": 7,
+                     "physical_readback": {field: {"configured": 999, "observed": True} for field in ("wheel_slip_ratio", "actuator_gain")}},
+    }
+    errors = _validate_profile_readback(acknowledgement, {"command_id": "p", "profile": "wet_surface"}, {"product_pid": 7, "product_pgid": 7}, expected)
+    assert any("frozen contract" in error for error in errors)
 
 
 def test_formal_cli_rejects_the_test_fixture_adapter() -> None:

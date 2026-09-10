@@ -239,6 +239,7 @@ def main() -> None:
             self._wrist_rechecks: dict[str, tuple[GraspRequest, float]] = {}
             self._formal_a19_fault: str | None = None
             self._formal_a19_fault_events = 0
+            self._formal_a19_fault_effect: dict[str, Any] = {}
             self._motion_inhibited = False
             self._state = "IDLE"
             self._reason = "awaiting_perceived_target"
@@ -311,6 +312,7 @@ def main() -> None:
                 if active:
                     self._formal_a19_fault = fault
                     self._formal_a19_fault_events = 0
+                    self._formal_a19_fault_effect = {}
                 elif self._formal_a19_fault == fault:
                     self._formal_a19_fault = None
             self._publish_status()
@@ -332,6 +334,8 @@ def main() -> None:
                 # Drop the real wrist observation before the safety-critical
                 # wait consumes it; the existing bounded wait then produces
                 # the product's genuine timeout and safe recovery path.
+                with self._lock:
+                    self._formal_a19_fault_effect = {"fault": "reobserve_timeout", "observed": True, "expected_outcome": "wrist_reobservation_drop_observed", "target_id": request.target_id}
                 self._publish_status()
                 return
             with self._lock:
@@ -1151,6 +1155,8 @@ def main() -> None:
             self, target_id: str, verified: bool, reason: str, evidence: dict[str, Any]
         ) -> None:
             if verified and self._consume_formal_a19_fault("action_verifier_failure"):
+                with self._lock:
+                    self._formal_a19_fault_effect = {"fault": "action_verifier_failure", "observed": True, "expected_outcome": "verified_result_rejection_observed", "target_id": target_id, "original_verified": True, "final_verified": False}
                 verified = False
                 reason = "formal_a19_action_verifier_rejected"
                 evidence = {**evidence, "formal_a19_action_verifier_rejected": True}
@@ -1187,6 +1193,7 @@ def main() -> None:
                 KeyValue(key="truth_used_for_control", value="false"),
                 KeyValue(key="formal_a19_fault", value=self._formal_a19_fault or ""),
                 KeyValue(key="formal_a19_fault_events", value=str(self._formal_a19_fault_events)),
+                KeyValue(key="formal_a19_fault_effect", value=json.dumps(self._formal_a19_fault_effect, sort_keys=True)),
             ]
             message = DiagnosticArray()
             message.header.stamp = self.get_clock().now().to_msg()

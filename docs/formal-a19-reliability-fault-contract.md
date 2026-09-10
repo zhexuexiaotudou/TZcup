@@ -17,7 +17,8 @@ classifier_exception、classifier_timeout、action_verifier_failure 和 reobserv
 现通过受控主题实际改变 PC 推理或物理抓取消费者，并由这些节点自己的 diagnostics/status
 回传消费计数；adapter 只在该计数增长后确认 STOPPED。
 PC 感知节点还订阅受控的 `/formal_a19/perception_fault`：CUDA 故障只在实际 ORT provider
-可用时创建该 provider 的会话，CPU-only runtime 如实回读没有 CUDA；DOSOD hash 对真实文件
+可用且会话确实选中该 provider 时进入真实推理故障路径，CPU-only runtime 在 capability 握手即
+`UNSUPPORTED`；DOSOD hash 对真实文件
 重算后以错误期望值验证；EdgeSAM 只复制到临时 shadow 后篡改并交给真实 ORT loader，原模型
 不会写入；慢推理在真实推理回调中 sleep 并报告观测延迟。四者均由产品 diagnostics 独立确认
 active/recovered。profile 切换绝不停止、重启或替换产品进程：同一 PID/PGID 保持整个 7200 秒。

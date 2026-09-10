@@ -41,6 +41,7 @@ class FormalA19PerceptionFaultGate:
         self.fault: str | None = None
         self.parameters: dict[str, object] = {}
         self.events = 0
+        self.effect: dict[str, object] = {}
 
     def configure(self, raw: str) -> None:
         value = json.loads(raw)
@@ -62,7 +63,7 @@ class FormalA19PerceptionFaultGate:
             if any(type(parameters.get(name)) not in (int, float) or float(parameters[name]) <= 0.0 for name in required):
                 raise ValueError("formal A19 fault parameters are invalid")
             with self._lock:
-                self.fault, self.parameters, self.events = fault, dict(parameters), 0
+                self.fault, self.parameters, self.events, self.effect = fault, dict(parameters), 0, {}
         else:
             with self._lock:
                 if self.fault == fault:
@@ -82,7 +83,13 @@ class FormalA19PerceptionFaultGate:
 
     def telemetry(self) -> dict[str, object]:
         with self._lock:
-            return {"formal_a19_fault": self.fault or "", "formal_a19_fault_events": self.events}
+            return {"formal_a19_fault": self.fault or "", "formal_a19_fault_events": self.events, "formal_a19_fault_effect": dict(self.effect)}
+
+    def record_effect(self, fault: str, expected_outcome: str, **details: object) -> None:
+        with self._lock:
+            if self.fault != fault or self.events <= 0:
+                raise RuntimeError(f"formal A19 effect without consumed fault: {fault}")
+            self.effect = {"fault": fault, "observed": True, "expected_outcome": expected_outcome, **details}
 
     def number(self, name: str) -> int:
         with self._lock:
@@ -625,7 +632,7 @@ def main() -> None:
                     readback = self._a19_model_faults.begin(
                         str(command.get("fault")), command.get("parameters", {})
                     )
-                    self._diagnostic(2, "a19_fault_active", readback)
+                    self._diagnostic(1, "a19_fault_armed", readback)
                 else:
                     self._diagnostic(
                         0, "a19_fault_recovered", self._a19_model_faults.clear()
@@ -634,9 +641,15 @@ def main() -> None:
                 self._diagnostic(2, "a19_fault_command_rejected", {"error": str(exc)})
 
         def _a19_before_inference(self) -> None:
-            readback = self._a19_model_faults.before_inference()
+            try:
+                readback = self._a19_model_faults.before_inference()
+            except A19ProductFaultError:
+                readback = self._a19_model_faults.trigger_readback()
+                if readback is not None:
+                    self._diagnostic(2, "a19_fault_active", readback)
+                raise
             if readback is not None:
-                self._diagnostic(2, "a19_slow_inference_active", readback)
+                self._diagnostic(2, "a19_fault_active", readback)
 
         def _infer(self, rgb):
             # These branches sit immediately at the DOSOD consumer, so each
@@ -644,16 +657,22 @@ def main() -> None:
             # evidence-only side channel.
             self._a19_before_inference()
             if self._formal_a19_fault.consume("classifier_exception"):
+                self._formal_a19_fault.record_effect("classifier_exception", "classifier_exception_observed")
                 raise RuntimeError("formal_a19_classifier_exception")
             if self._formal_a19_fault.consume("classifier_timeout"):
+                self._formal_a19_fault.record_effect("classifier_timeout", "classifier_timeout_observed")
                 raise TimeoutError("formal_a19_classifier_deadline_exceeded")
             results = list(self.detector.infer(rgb))
             if self._formal_a19_fault.consume("proposal_dropout"):
+                if not results:
+                    raise RuntimeError("formal_a19_proposal_dropout_requires_live_proposal")
+                self._formal_a19_fault.record_effect("proposal_dropout", "proposal_output_drop_observed", input_proposal_count=len(results), output_proposal_count=0)
                 return []
             if self._formal_a19_fault.consume("proposal_flood"):
                 if not results:
                     raise RuntimeError("formal_a19_proposal_flood_requires_live_proposal")
                 count = self._formal_a19_fault.number("proposals_per_frame")
+                self._formal_a19_fault.record_effect("proposal_flood", "proposal_output_expansion_observed", input_proposal_count=len(results), output_proposal_count=count)
                 return (results * ((count + len(results) - 1) // len(results)))[:count]
             return results
 
@@ -887,6 +906,7 @@ def main() -> None:
                 if sensor == "wrist":
                     for target in target_array.targets:
                         if self._formal_a19_fault.consume("reobserve_timeout"):
+                            self._formal_a19_fault.record_effect("reobserve_timeout", "wrist_reobservation_drop_observed", target_id=str(target.uuid))
                             continue
                         position = target.map_pose.pose.position
                         orientation = target.map_pose.pose.orientation

@@ -58,6 +58,7 @@ class ProductFaultHooks:
         self._hashes = {name: sha256_file(path) for name, path in self._paths.items()}
         self._provider_probe, self._model_probe = provider_probe, model_probe
         self._active: tuple[str, dict[str, Any]] | None = None
+        self._trigger_readback: dict[str, Any] | None = None
 
     def begin(self, fault: str, parameters: Mapping[str, Any]) -> dict[str, Any]:
         validate_product_fault(fault, parameters)
@@ -67,6 +68,17 @@ class ProductFaultHooks:
         if fault == "cuda_provider_failure":
             details = dict(self._provider_probe(str(parameters["provider"])))
             details.update(requested_provider=parameters["provider"])
+            provider = parameters["provider"]
+            available = details.get("available_providers")
+            session = details.get("session_providers")
+            if (
+                not isinstance(available, list) or provider not in available
+                or details.get("selected_provider") != provider
+                or not isinstance(session, list) or provider not in session
+            ):
+                raise A19ProductFaultError(
+                    "UNSUPPORTED cuda_provider_failure: CUDAExecutionProvider was not actually selected"
+                )
         elif fault == "model_hash_mismatch":
             actual = sha256_file(self._paths["dosod"])
             expected = "0" * 64 if actual != "0" * 64 else "f" * 64
@@ -91,10 +103,13 @@ class ProductFaultHooks:
                     probe = dict(self._model_probe(shadow))
                 except Exception as exc:  # The actual ONNX loader rejection is the desired readback.
                     probe = {"loader_error": str(exc)}
+                else:
+                    raise A19ProductFaultError("corrupt_model shadow was accepted by the real loader")
             details = {"model": "edgesam", "original_sha256": self._hashes["edgesam"], "shadow_sha256": corrupted_sha, "shadow_only": True, **probe}
         else:
             details = {"requested_latency_ms": float(parameters["latency_ms"]), "duration_s": float(parameters["duration_s"])}
         self._active = (fault, {**dict(parameters), **details})
+        self._trigger_readback = None
         return {"fault": fault, "active": True, **details}
 
     def before_inference(self) -> dict[str, Any] | None:
@@ -102,10 +117,23 @@ class ProductFaultHooks:
             return None
         fault, details = self._active
         if fault != "sustained_slow_inference":
+            self._trigger_readback = {
+                "fault": fault, "active": True, "observed": True,
+                "inference_path_triggered": True, **details,
+            }
             raise A19ProductFaultError(f"A19 injected {fault} is active")
         started = time.monotonic()
         time.sleep(float(details["latency_ms"]) / 1000.0)
-        return {"fault": fault, "observed_delay_ms": (time.monotonic() - started) * 1000.0, "requested_latency_ms": details["latency_ms"]}
+        self._trigger_readback = {
+            "fault": fault, "active": True, "observed": True,
+            "inference_path_triggered": True,
+            "observed_delay_ms": (time.monotonic() - started) * 1000.0,
+            "requested_latency_ms": details["latency_ms"],
+        }
+        return dict(self._trigger_readback)
+
+    def trigger_readback(self) -> dict[str, Any] | None:
+        return None if self._trigger_readback is None else dict(self._trigger_readback)
 
     def clear(self) -> dict[str, Any]:
         if self._active is None:
@@ -118,4 +146,6 @@ class ProductFaultHooks:
         if not all(restored.values()):
             raise A19ProductFaultError("original model hash changed during A19 fault injection")
         self._active = None
-        return {"fault": fault, "cleared": True, "original_model_hashes_restored": restored}
+        triggered = self._trigger_readback is not None
+        self._trigger_readback = None
+        return {"fault": fault, "cleared": True, "trigger_was_observed": triggered, "original_model_hashes_restored": restored}

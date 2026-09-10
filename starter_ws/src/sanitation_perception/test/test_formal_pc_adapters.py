@@ -44,6 +44,7 @@ def test_a19_fault_gate_changes_live_inference_consumption_and_clears() -> None:
     assert gate.consume("classifier_timeout") is False
     assert gate.telemetry() == {
         "formal_a19_fault": "classifier_timeout", "formal_a19_fault_events": 1,
+        "formal_a19_fault_effect": {},
     }
     gate.configure(json.dumps({
         "fault": "classifier_timeout", "parameters": {"timeout_s": 2.0, "occurrences": 1}, "active": False,

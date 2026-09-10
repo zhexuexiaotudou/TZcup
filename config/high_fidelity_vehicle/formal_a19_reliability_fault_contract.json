@@ -51,6 +51,12 @@
     {"profile": "wet_surface", "start_offset_s": 3600, "minimum_observed_duration_s": 1500},
     {"profile": "degraded_drive", "start_offset_s": 5400, "minimum_observed_duration_s": 1500}
   ],
+  "profile_expectations": {
+    "nominal": {"sensor_latency_ms": 0, "sensor_dropout_probability": 0.0, "wheel_slip_ratio": 0.0, "actuator_gain": 1.0},
+    "transport_stress": {"sensor_latency_ms": 100, "sensor_dropout_probability": 0.01, "wheel_slip_ratio": 0.02, "actuator_gain": 0.95},
+    "wet_surface": {"sensor_latency_ms": 20, "sensor_dropout_probability": 0.002, "wheel_slip_ratio": 0.15, "actuator_gain": 0.85},
+    "degraded_drive": {"sensor_latency_ms": 40, "sensor_dropout_probability": 0.005, "wheel_slip_ratio": 0.08, "actuator_gain": 0.65}
+  },
   "fault_timing": {
     "maximum_injection_lateness_s": 30,
     "maximum_safe_stop_latency_s": 5,
@@ -76,6 +82,26 @@
     "sustained_slow_inference": {"state": "DEGRADED", "requires_global_safety_stop": false, "requires_perception_degraded": true, "requires_cleaning_inhibit": false},
     "nav2_path_unavailable": {"state": "DEGRADED", "requires_global_safety_stop": false, "requires_perception_degraded": false, "requires_cleaning_inhibit": false},
     "dynamic_obstacle_blocks_observation": {"state": "DEGRADED", "requires_global_safety_stop": false, "requires_perception_degraded": false, "requires_cleaning_inhibit": false}
+  },
+  "fault_readback_contract": {
+    "rgb_freeze": {"expected_outcome": "rgb_proxy_drop_observed", "injection_readback_kind": "sensor_drop", "recovery_readback_kind": "sensor_forwarding"},
+    "depth_freeze": {"expected_outcome": "depth_proxy_drop_observed", "injection_readback_kind": "sensor_drop", "recovery_readback_kind": "sensor_forwarding"},
+    "timestamp_skew": {"expected_outcome": "rgb_timestamp_shift_observed", "injection_readback_kind": "sensor_mutation", "recovery_readback_kind": "sensor_forwarding"},
+    "camera_info_mismatch": {"expected_outcome": "camera_info_width_change_observed", "injection_readback_kind": "sensor_mutation", "recovery_readback_kind": "sensor_forwarding"},
+    "tf_unavailable": {"expected_outcome": "unavailable_frame_rewrite_observed", "injection_readback_kind": "sensor_mutation", "recovery_readback_kind": "sensor_forwarding"},
+    "invalid_depth": {"expected_outcome": "depth_payload_invalidation_observed", "injection_readback_kind": "sensor_mutation", "recovery_readback_kind": "sensor_forwarding"},
+    "proposal_flood": {"expected_outcome": "proposal_output_expansion_observed", "injection_readback_kind": "product_consumer", "recovery_readback_kind": "product_consumer_cleared"},
+    "proposal_dropout": {"expected_outcome": "proposal_output_drop_observed", "injection_readback_kind": "product_consumer", "recovery_readback_kind": "product_consumer_cleared"},
+    "classifier_exception": {"expected_outcome": "classifier_exception_observed", "injection_readback_kind": "product_consumer", "recovery_readback_kind": "product_consumer_cleared"},
+    "classifier_timeout": {"expected_outcome": "classifier_timeout_observed", "injection_readback_kind": "product_consumer", "recovery_readback_kind": "product_consumer_cleared"},
+    "action_verifier_failure": {"expected_outcome": "verified_result_rejection_observed", "injection_readback_kind": "product_consumer", "recovery_readback_kind": "product_consumer_cleared"},
+    "reobserve_timeout": {"expected_outcome": "wrist_reobservation_drop_observed", "injection_readback_kind": "product_consumer", "recovery_readback_kind": "product_consumer_cleared"},
+    "cuda_provider_failure": {"expected_outcome": "selected_cuda_inference_failure_observed", "injection_readback_kind": "model_provider", "recovery_readback_kind": "model_provider_cleared"},
+    "model_hash_mismatch": {"expected_outcome": "dosod_hash_mismatch_observed", "injection_readback_kind": "model_provider", "recovery_readback_kind": "model_provider_cleared"},
+    "corrupt_model": {"expected_outcome": "edgesam_shadow_loader_rejection_observed", "injection_readback_kind": "model_provider", "recovery_readback_kind": "model_provider_cleared"},
+    "sustained_slow_inference": {"expected_outcome": "inference_delay_observed", "injection_readback_kind": "model_provider", "recovery_readback_kind": "model_provider_cleared"},
+    "nav2_path_unavailable": {"expected_outcome": "planner_inactive_and_path_server_absent", "injection_readback_kind": "nav2_lifecycle", "recovery_readback_kind": "nav2_lifecycle_recovered"},
+    "dynamic_obstacle_blocks_observation": {"expected_outcome": "native_obstacle_pose_and_scan_block_observed", "injection_readback_kind": "dynamic_obstacle", "recovery_readback_kind": "dynamic_obstacle_restored"}
   },
   "fault_schedule": [
     {"fault": "rgb_freeze", "offset_s": 300, "profile": "nominal", "parameters": {"duration_s": 10}},
