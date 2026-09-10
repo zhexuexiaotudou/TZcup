@@ -265,12 +265,34 @@ def restore_sensor_attachments(
 
     restored: list[dict[str, str]] = []
     for name in sorted(attachments):
-        target_link, source_pose, _sensor_type = attachments[name]
+        target_link, source_pose, sensor_type = attachments[name]
         target = links.get(target_link)
         sensor = converted[name]
         current = parents.get(sensor)
         if current is None or current.tag != "link":
             raise PreparationError(f"converted sensor {name} has no owning link")
+        # A reduced fixed link takes its collision with it.  Keep a contact
+        # sensor on that converted collision owner when its selector resolves
+        # there; moving only the sensor back would leave it on a collision-free
+        # reconstructed holder and Gazebo would publish no contacts.
+        selector = (sensor.findtext("contact/collision") or "").strip()
+        if sensor_type == "contact" and selector:
+            matching_collisions = [
+                collision
+                for collision in current.findall("collision")
+                if collision.get("name") == selector
+            ]
+            if len(matching_collisions) == 1:
+                restored.append(
+                    {
+                        "sensor": name,
+                        "converted_link": current.get("name", ""),
+                        "restored_link": current.get("name", ""),
+                        "local_pose": sensor.findtext("pose", default="0 0 0 0 0 0"),
+                        "attachment_status": "retained_on_converted_collision_owner",
+                    }
+                )
+                continue
         attachment_status = "restored_urdf_reference_link"
         # sdformat reduces fixed joint chains, including camera and lidar
         # brackets, and bakes their initial poses into a surviving link.  Restore
