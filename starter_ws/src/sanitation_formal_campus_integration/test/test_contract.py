@@ -101,6 +101,10 @@ def test_nav2_costmaps_are_materialized_from_formal_motion_profile():
         assert controller[name]["allow_reversing"] is True
         assert controller[name]["use_rotate_to_heading"] is False
 
+    behavior = config["behavior_server"]["ros__parameters"]
+    assert behavior["min_rotational_vel"] == pytest.approx(0.25)
+    assert behavior["max_rotational_vel"] == pytest.approx(0.35)
+
 
 def test_materializer_rejects_ackermann_or_legacy_small_footprint(tmp_path):
     profile = yaml.safe_load(MOTION_PROFILE.read_text(encoding="utf-8"))
@@ -250,14 +254,27 @@ def test_launch_is_parseable_and_keeps_safety_and_controller_ownership_explicit(
     ast.parse(source)
     assert "formal_vehicle_sim.launch.py" in source
     assert "formal_manipulation_acceptance.urdf.xacro" in source
-    assert '"manipulation_sim_interfaces": "true"' in source
+    assert '"manipulation_sim_interfaces": LaunchConfiguration(' in source
+    assert '"start_manipulation_runtime"' in source
     assert "formal_physical_grasp.launch.py" in source
+    assert 'condition=IfCondition(LaunchConfiguration("start_manipulation_runtime"))' in source
+    assert 'DeclareLaunchArgument(\n                "start_manipulation_runtime",\n                default_value="true",' in source
+    assert '"start_charge_interface_manager": LaunchConfiguration(' in source
+    assert 'DeclareLaunchArgument(\n                "start_charge_interface_manager",\n                default_value="true",' in source
     assert '"start_controllers": "false"' in source
     assert '"enable_safety_manager": "false"' in source
     assert 'executable="whole_vehicle_safety_manager"' in source
     assert '"command_input_topic": "/cmd_vel_gate"' in source
     assert '"base_command_output_topic": "/base_controller/cmd_vel"' in source
     assert '"--inactive"' in source
+    assert "actions=[position_controller_spawner]" in source
+    assert "target_action=position_controller_spawner" in source
+    assert "args=[velocity_controller_loader]" in source
+    assert "target_action=velocity_controller_loader" in source
+    assert "args=[safety_manager]" in source
+    assert source.index("target_action=position_controller_spawner") < source.index(
+        "target_action=velocity_controller_loader"
+    )
     assert '"service_controller"' in source
     assert 'DeclareLaunchArgument("spawn_x"' in source
     assert 'DeclareLaunchArgument("spawn_y"' in source
@@ -291,6 +308,16 @@ def test_launch_is_parseable_and_keeps_safety_and_controller_ownership_explicit(
     assert "default_value=DRY_CLEANING_SPEED_PROFILE" in lifecycle
     assert "mapping mode must retain the mapping_safe speed profile" in lifecycle
     assert "clean_path_speed_mps=speed_profile.maximum_linear_speed_mps" in lifecycle
+    assert '"start_manipulation_runtime": "false" if mode == "mapping" else "true"' in lifecycle
+    assert '"start_charge_interface_manager": "false" if mode == "mapping" else "true"' in lifecycle
+
+    assert 'start_charge_interface_manager = LaunchConfiguration(' in formal_vehicle_launch
+    assert 'condition=IfCondition(start_charge_interface_manager)' in formal_vehicle_launch
+    assert 'DeclareLaunchArgument(\n                "start_charge_interface_manager",\n                default_value="true",' in formal_vehicle_launch
+    # The BMS remains tied to the existing safety-power flag; only charging is
+    # optional during mapping.
+    assert 'a300_bms = Node(' in formal_vehicle_launch
+    assert 'condition=IfCondition(start_power_system_simulators)' in formal_vehicle_launch
 
     navigation_launch = (
         ROOT / "starter_ws/src/sanitation_navigation/launch/navigation.launch.py"
@@ -356,7 +383,6 @@ def test_formal_campus_runner_locks_local_dds_and_fails_closed():
 def test_topic_adapter_contract_covers_formal_sensor_and_legacy_odom_names():
     contract = yaml.safe_load(INTEGRATION_CONFIG.read_text(encoding="utf-8"))
     assert contract["topic_aliases"] == {
-        "/sensors/lidar_2d/scan": "/scan",
         "/sensors/imu/data": "/imu/data",
         "/sensors/gnss/fix": "/gnss/fix",
         "/sensors/front_rgbd/depth/image_rect_raw/image": "/camera/color/image_raw",
@@ -370,6 +396,9 @@ def test_topic_adapter_contract_covers_formal_sensor_and_legacy_odom_names():
     ).read_text(encoding="utf-8")
     ast.parse(source)
     assert "Odometry" not in source
+    assert "LaserScan" not in source
+    assert '"/sensors/lidar_2d/scan"' not in source
+    assert '"/scan"' not in source
     assert "base_controller/odom" not in source
     assert "publish_selected_odom" not in source
     assert "odom/unfiltered" not in source
@@ -397,19 +426,66 @@ def test_topic_adapter_contract_covers_formal_sensor_and_legacy_odom_names():
         row["ros_topic_name"] for row in high_bandwidth_bridges
     }
     for topic in [
-        *contract["topic_aliases"].keys(),
         *native.keys(),
     ]:
         assert (
             topic in product_bridge
             or topic in configured_high_bandwidth_topics
         )
-    # Control-plane aliases moved from parameter_bridge into the native
-    # product bridge; the high-bandwidth topics remain governed by the YAML
-    # contract above.
+    # The raw 2D lidar waits for a physical GZ sample before it execs its
+    # dedicated native bridge. The product bridge retains only the remaining
+    # control-plane telemetry.
+    lidar_node_start = formal_launch.index('name="formal_vehicle_lidar_bridge"')
+    lidar_node = formal_launch[
+        formal_launch.rfind("Node(", 0, lidar_node_start) :
+        formal_launch.index("# Raw images and point clouds", lidar_node_start)
+    ]
+    assert 'package="sanitation_vehicle_description"' in lidar_node
+    assert 'executable="formal_lidar_bridge_when_ready.sh"' in lidar_node
+    assert '"--timeout-sec", lidar_bridge_ready_timeout_sec' in lidar_node
+    assert 'condition=IfCondition(start_product_bridge)' in lidar_node
+    assert "create_vehicle = Node(" in formal_launch
+    assert "target_action=create_vehicle" in formal_launch
+    assert '"lidar_bridge_ready_timeout_sec"' in formal_launch
+    assert 'default_value="600"' in formal_launch
+    assert "args=[formal_vehicle_lidar_bridge]" in formal_launch
+    lidar_wrapper = (
+        ROOT
+        / "starter_ws/src/sanitation_vehicle_description/scripts"
+        / "formal_lidar_bridge_when_ready.sh"
+    ).read_text(encoding="utf-8")
+    assert 'gz topic -e -t "$LIDAR_GZ_TOPIC" -n 1' in lidar_wrapper
+    assert 'timeout --foreground --signal=INT' in lidar_wrapper
+    assert 'exec ros2 run sanitation_gazebo_control formal_lidar_native_bridge' in lidar_wrapper
+    assert ":=/scan/navigation" not in lidar_wrapper
+    lidar_bridge = (
+        ROOT
+        / "starter_ws/src/sanitation_gazebo_control/src/FormalLidarNativeBridge.cc"
+    ).read_text(encoding="utf-8")
+    assert 'NativeBridgeSupport("formal_vehicle_lidar_bridge")' in lidar_bridge
+    assert '"/sensors/lidar_2d/scan"' in lidar_bridge
+    assert 'kRosScanTopic[] = "/scan"' in lidar_bridge
+    assert 'sensor_qos.reliable().durability_volatile()' in lidar_bridge
+    assert 'rclcpp::KeepLast(1)' in lidar_bridge
+    assert 'health: gazebo_scans=%llu ros_scans=%llu' in lidar_bridge
+    assert 'kPublishPeriod = std::chrono::milliseconds(20)' in lidar_bridge
+    assert 'latest_scan_.CopyFrom(message)' in lidar_bridge
+    assert 'latest_scan_.Swap(&latest)' in lidar_bridge
+    assert 'coalesced_scan_count_.fetch_add(1' in lidar_bridge
+    assert 'PublishLatestScan();' in lidar_bridge
+    assert 'invented current timestamp' in lidar_bridge
+    map_lifecycle = (
+        PACKAGE / "launch" / "formal_campus_map_lifecycle.launch.py"
+    ).read_text(encoding="utf-8")
+    assert '"lidar_bridge_ready_timeout_sec"' in map_lifecycle
+    assert 'default_value="600"' in map_lifecycle
+    assert '"lidar_bridge_ready_timeout_sec": LaunchConfiguration(' in map_lifecycle
+    assert "kLidarScan" not in product_bridge
+    assert "/sensors/lidar_2d/scan" not in product_bridge
+    assert "/sensors/lidar_2d/scan" not in contract["topic_aliases"]
     assert 'NativeBridgeSupport("formal_vehicle_product_native_bridge")' in product_bridge
+    assert "LaserScan" not in product_bridge
     for ros_type, gazebo_type in (
-        ("sensor_msgs::msg::LaserScan", "gz::msgs::LaserScan"),
         ("sensor_msgs::msg::NavSatFix", "gz::msgs::NavSat"),
         ("sensor_msgs::msg::Imu", "gz::msgs::IMU"),
     ):

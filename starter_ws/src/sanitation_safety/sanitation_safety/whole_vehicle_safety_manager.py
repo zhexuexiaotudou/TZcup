@@ -957,7 +957,11 @@ class WholeVehicleSafetyManager(Node):
             # server has acknowledged cancellation; completed successes are
             # never sent twice during the same inhibit episode.
             self._cancel_trajectory_goals()
-        if self._switch_future is not None and not self._switch_future.done():
+        # A completed future can become visible to this timer before its done
+        # callback obtains the controller lock.  Treat the request as in flight
+        # until that callback records the authoritative state and clears it;
+        # otherwise a second STRICT activation can race the first completion.
+        if self._switch_future is not None:
             return
         query_requires_switch = False
         if (
@@ -1164,14 +1168,17 @@ class WholeVehicleSafetyManager(Node):
             self.get_logger().error(f"controller switch failed: {error}")
             self._velocity_controller_state_known = False
             self._velocity_controllers_active = False
-            return
-        if response is None or not response.ok:
-            self.get_logger().error("controller switch was rejected")
-            self._velocity_controller_state_known = False
-            self._velocity_controllers_active = False
-            return
-        self._velocity_controller_state_known = True
-        self._velocity_controllers_active = requested_permit
+        else:
+            if response is not None and response.ok:
+                self._velocity_controller_state_known = True
+                self._velocity_controllers_active = requested_permit
+            else:
+                self.get_logger().error("controller switch was rejected")
+                self._velocity_controller_state_known = False
+                self._velocity_controllers_active = False
+        finally:
+            if self._switch_future is future:
+                self._switch_future = None
 
     @staticmethod
     def _diagnostic(

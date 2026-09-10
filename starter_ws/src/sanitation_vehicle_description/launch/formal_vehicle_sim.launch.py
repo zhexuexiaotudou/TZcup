@@ -48,11 +48,18 @@ def generate_launch_description() -> LaunchDescription:
     start_power_system_simulators = LaunchConfiguration(
         "start_power_system_simulators"
     )
+    start_charge_interface_manager = LaunchConfiguration(
+        "start_charge_interface_manager"
+    )
     start_localization = LaunchConfiguration("start_localization")
     simulation_initial_estop_active = LaunchConfiguration(
         "simulation_initial_estop_active"
     )
+    lidar_bridge_ready_timeout_sec = LaunchConfiguration(
+        "lidar_bridge_ready_timeout_sec"
+    )
     use_sim_time = LaunchConfiguration("use_sim_time")
+    controller_config_path = LaunchConfiguration("controller_config_path")
     physics_engine = LaunchConfiguration("physics_engine")
     bodywork_visible = LaunchConfiguration("bodywork_visible")
     high_bandwidth_sensor_runtime = LaunchConfiguration(
@@ -159,6 +166,7 @@ def generate_launch_description() -> LaunchDescription:
     robot_description = ParameterValue(
         Command([
             "xacro ", model,
+            " controller_config_path:=", controller_config_path,
             " use_sim:=true dry_load_mass_kg:=", dry_load_mass_kg,
             " dry_accounting_mode:=", dry_accounting_mode,
             " wastewater_load_mass_kg:=", wastewater_load_mass_kg,
@@ -409,6 +417,15 @@ def generate_launch_description() -> LaunchDescription:
                 "initial_estop_active": ParameterValue(
                     simulation_initial_estop_active, value_type=bool
                 ),
+                # This engineering node evaluates freshness in wall time while
+                # high-fidelity Gazebo can run far below real time.  Its
+                # product feedback and BMS streams therefore need the same
+                # bounded scheduling margin as the downstream safety manager;
+                # production/hardware defaults are not changed here.
+                "operator_command_timeout_sec": 2.0,
+                "battery_state_timeout_sec": 2.0,
+                "charge_connected_timeout_sec": 2.0,
+                "physical_power_feedback_timeout_sec": 2.0,
             }
         ],
         output="screen",
@@ -437,7 +454,7 @@ def generate_launch_description() -> LaunchDescription:
         name="charge_interface_manager",
         parameters=[{"use_sim_time": False}],
         output="screen",
-        condition=IfCondition(start_power_system_simulators),
+        condition=IfCondition(start_charge_interface_manager),
     )
     charge_receptacle_contact_bridge = Node(
         package="sanitation_gazebo_control",
@@ -500,6 +517,32 @@ def generate_launch_description() -> LaunchDescription:
         output="screen",
         condition=IfCondition(manipulation_sim_interfaces),
     )
+    create_vehicle = Node(
+        package="ros_gz_sim",
+        executable="create",
+        parameters=[{"robot_description": robot_description}],
+        # base_footprint is the wheel-ground projection; use only a
+        # 5 mm contact-settling clearance instead of lifting the car.
+        arguments=[
+            "-param", "robot_description", "-name", "tzcup_formal_sanitation_vehicle",
+            "-x", spawn_x, "-y", spawn_y, "-Y", spawn_yaw, "-z", "0.005",
+        ],
+        output="screen",
+        condition=IfCondition(spawn_robot),
+    )
+    # The readiness wrapper observes one physical Gazebo UTM frame before it
+    # execs the standard bridge. It is the sole ROS writer of /scan; the
+    # formal self-filter remains the sole writer of /scan/navigation.
+    formal_vehicle_lidar_bridge = Node(
+        package="sanitation_vehicle_description",
+        executable="formal_lidar_bridge_when_ready.sh",
+        name="formal_vehicle_lidar_bridge",
+        arguments=[
+            "--timeout-sec", lidar_bridge_ready_timeout_sec,
+        ],
+        output="screen",
+        condition=IfCondition(start_product_bridge),
+    )
 
     return LaunchDescription(
         [
@@ -561,6 +604,14 @@ def generate_launch_description() -> LaunchDescription:
                 ),
             ),
             DeclareLaunchArgument(
+                "start_charge_interface_manager",
+                default_value="true",
+                description=(
+                    "Start the charging request and receptacle manager. The "
+                    "A300 BMS remains controlled by start_power_system_simulators."
+                ),
+            ),
+            DeclareLaunchArgument(
                 "start_localization",
                 default_value="true",
                 description=(
@@ -572,6 +623,14 @@ def generate_launch_description() -> LaunchDescription:
                 "simulation_initial_estop_active",
                 default_value="true",
                 description="Power-up E-stop state for simulation inputs.",
+            ),
+            DeclareLaunchArgument(
+                "lidar_bridge_ready_timeout_sec",
+                default_value="600",
+                description=(
+                    "Bounded wait for the first physical UTM-30LX Gazebo "
+                    "frame before starting the sole ROS raw-scan bridge."
+                ),
             ),
             DeclareLaunchArgument("use_sim_time", default_value="true"),
             DeclareLaunchArgument("bodywork_visible", default_value="true"),
@@ -676,6 +735,14 @@ def generate_launch_description() -> LaunchDescription:
             DeclareLaunchArgument("world", default_value=default_world),
             DeclareLaunchArgument("model", default_value=default_model),
             DeclareLaunchArgument(
+                "controller_config_path",
+                default_value="",
+                description=(
+                    "Optional simulation-only ros2_control YAML override; an empty "
+                    "value retains the canonical vehicle controller configuration."
+                ),
+            ),
+            DeclareLaunchArgument(
                 "spawn_robot",
                 default_value="true",
                 description=(
@@ -747,19 +814,7 @@ def generate_launch_description() -> LaunchDescription:
                 parameters=[{"use_sim_time": use_sim_time}],
                 output="screen",
             ),
-            Node(
-                package="ros_gz_sim",
-                executable="create",
-                parameters=[{"robot_description": robot_description}],
-                # base_footprint is the wheel-ground projection; use only a
-                # 5 mm contact-settling clearance instead of lifting the car.
-                arguments=[
-                    "-param", "robot_description", "-name", "tzcup_formal_sanitation_vehicle",
-                    "-x", spawn_x, "-y", spawn_y, "-Y", spawn_yaw, "-z", "0.005",
-                ],
-                output="screen",
-                condition=IfCondition(spawn_robot),
-            ),
+            create_vehicle,
             # Payload mass remains owned by physical simulation, and water
             # service-drain commands remain fail-closed through the safety
             # manager and plugin watchdog.  The native product bridge exposes
@@ -771,6 +826,17 @@ def generate_launch_description() -> LaunchDescription:
                 name="formal_vehicle_product_bridge",
                 output="screen",
                 condition=IfCondition(start_product_bridge),
+            ),
+            RegisterEventHandler(
+                OnProcessExit(
+                    target_action=create_vehicle,
+                    on_exit=[
+                        OpaqueFunction(
+                            function=_start_actions_unless_shutdown,
+                            args=[formal_vehicle_lidar_bridge],
+                        )
+                    ],
+                )
             ),
             # Raw images and point clouds dwarf the control-plane traffic.  A
             # dedicated lazy bridge preserves every product topic, resolution

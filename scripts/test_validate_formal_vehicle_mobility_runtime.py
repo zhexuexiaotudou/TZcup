@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from formal_vehicle_mobility_metrics import WHEEL_JOINTS, evaluate_motion
+from formal_vehicle_mobility_metrics import WHEEL_JOINTS, evaluate_motion, evaluate_rotation
 
 
 def _watchdog_type() -> type:
@@ -111,6 +111,90 @@ def test_accepts_bounded_skid_steer_wheel_odom_coast_after_physical_stop() -> No
     assert result["checks"]["vehicle_stopped_after_zero_command"] is True
     assert result["checks"]["plant_odometry_stopped_after_zero_command"] is True
     assert result["metrics"]["stop_coast_disagreement_m"] <= 0.10
+
+
+def _rotation_evidence() -> dict:
+    return {
+        "actuator_enable_trace": [True],
+        "safety_status_json_trace": [{"payload": {"actuators_enabled": True}}],
+        "plant_status_trace": [{"payload": {"drive_permitted": True}}],
+        "final_command_trace": [{"linear_x_mps": 0.0, "angular_z_rad_s": 0.25}],
+        "plant_odom": {
+            "start": {"x": 0.0, "y": 0.0, "yaw": 0.0},
+            "rotation_end": {"x": 0.0, "y": 0.0, "yaw": 0.82},
+            "stopped_end": {"x": 0.0, "y": 0.0, "yaw": 0.84},
+            "rotation_trace": [{"angular_velocity_rad_s": 0.23}],
+            "stopped_angular_velocity_rad_s": 0.0,
+        },
+        "wheel_state": {
+            "start_positions_rad": {name: 0.0 for name in WHEEL_JOINTS},
+            "rotation_end_positions_rad": {
+                "front_left_wheel_joint": -3.0,
+                "rear_left_wheel_joint": -2.9,
+                "front_right_wheel_joint": 3.1,
+                "rear_right_wheel_joint": 3.0,
+            },
+            "stopped_velocities_rad_s": {name: 0.0 for name in WHEEL_JOINTS},
+        },
+    }
+
+
+def test_accepts_raw_telemetry_only_rotation_gate() -> None:
+    result = evaluate_rotation(
+        _rotation_evidence(), commanded_angular_speed_rad_s=0.25, minimum_yaw_rad=0.20
+    )
+
+    assert result["passed"] is True
+    assert all(result["checks"].values())
+    assert result["metrics"]["plant_odom_yaw_delta_rad"] == pytest.approx(0.82)
+
+
+def test_rotation_metric_does_not_use_world_truth() -> None:
+    source = Path(__file__).with_name("formal_vehicle_mobility_metrics.py").read_text(
+        encoding="utf-8"
+    )
+    rotation_source = source.split("def evaluate_rotation(", 1)[1].split(
+        "def evaluate_estop_stop(", 1
+    )[0]
+
+    assert "ground_truth" not in rotation_source
+
+
+@pytest.mark.parametrize(
+    ("mutate", "expected_check"),
+    [
+        (
+            lambda raw: raw["wheel_state"].update(
+                {"rotation_end_positions_rad": {name: 3.0 for name in WHEEL_JOINTS}}
+            ),
+            "left_right_wheel_mean_opposite_sign",
+        ),
+        (
+            lambda raw: raw["plant_odom"].update(
+                {"rotation_trace": [{"angular_velocity_rad_s": 0.0}]}
+            ),
+            "raw_odom_yaw_rate_same_sign_nonzero",
+        ),
+        (
+            lambda raw: raw["plant_odom"]["rotation_end"].update({"yaw": 0.0}),
+            "raw_odom_integrated_yaw_same_sign",
+        ),
+        (
+            lambda raw: raw["plant_status_trace"].clear(),
+            "plant_drive_permitted_observed",
+        ),
+    ],
+)
+def test_rotation_gate_rejects_missing_closed_loop_evidence(mutate, expected_check: str) -> None:
+    evidence = copy.deepcopy(_rotation_evidence())
+    mutate(evidence)
+
+    result = evaluate_rotation(
+        evidence, commanded_angular_speed_rad_s=0.25, minimum_yaw_rad=0.20
+    )
+
+    assert result["passed"] is False
+    assert result["checks"][expected_check] is False
 
 
 def test_slow_simulation_with_continuous_clock_progress_does_not_time_out() -> None:

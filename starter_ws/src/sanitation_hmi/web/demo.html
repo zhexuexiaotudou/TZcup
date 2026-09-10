@@ -41,12 +41,23 @@
     .panel { border: 1px solid var(--line); background: #0b1714e8; box-shadow: 0 22px 70px #0006; }
     .map-panel { min-height: 650px; padding: 18px; display: grid; grid-template-rows: auto 1fr; }
     .panel-head { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-bottom: 14px; }
+    .map-view-toggle { color: var(--mint); background: #123126; border: 1px solid #35634f; padding: 7px 10px; cursor: pointer; }
     h2 { font-size: 16px; margin: 0; font-weight: 650; }
     .legend { display: flex; flex-wrap: wrap; gap: 12px; color: var(--muted); font-size: 12px; }
     .legend i { width: 18px; height: 3px; display: inline-block; vertical-align: middle; margin-right: 5px; }
     canvas { width: 100%; height: 100%; min-height: 560px; display: block; background: #06100e; border: 1px solid #1e322b; }
     aside { display: grid; align-content: start; gap: 14px; }
     .status-card { padding: 20px; }
+    .product-card { border-color: #315d4d; }
+    .product-card p { color: var(--muted); font-size: 12px; line-height: 1.45; margin: 14px 0 0; }
+    .product-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+    .product-grid div { background: var(--panel); border: 1px solid var(--line); min-width: 0; padding: 10px; }
+    .product-grid label { color: var(--muted); display: block; font-size: 11px; margin-bottom: 5px; }
+    .product-grid strong { display: block; font-size: 14px; overflow-wrap: anywhere; }
+    .live-observation { padding: 18px; }
+    .camera-frame { min-height: 150px; border: 1px solid var(--line); background: #06100e; overflow: hidden; }
+    .camera-frame img { width: 100%; display: block; aspect-ratio: 16 / 9; object-fit: contain; }
+    .source-copy { margin: 10px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; overflow-wrap: anywhere; }
     .status-row { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
     .state { color: var(--mint); font-size: 25px; font-weight: 760; letter-spacing: -.02em; }
     .elapsed { color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -86,12 +97,13 @@
   <main>
     <header>
       <div>
-        <div class="eyebrow">AUTO-17 · Live Gazebo navigation coverage</div>
-        <h1>清扫任务正在发生。</h1>
+        <div class="eyebrow">TZCUP · FINAL PRODUCT VISUALIZATION</div>
+        <h1>200 × 100 m 校园清扫全流程</h1>
       </div>
       <div class="boundary">
-        当前是 Gazebo 导航与全覆盖演示。真值轨迹仅用于评估和绘图，不参与控制；
-        学习感知、真实域、J6 板端和综合竞赛矩阵仍未通过。
+        正式产品口径：A300 四轮滑移底盘，串联首次建图、封图、硬重启重载和清扫。
+        车辆、轨迹和阶段来自实时话题；画布边界只读取本次 episode 的公开 geofence。
+        “正式产品验收”未通过时不得以原型、真值或历史回放替代。
       </div>
     </header>
 
@@ -99,8 +111,11 @@
       <article class="panel map-panel">
         <div class="panel-head">
           <h2>任务地图与车辆轨迹</h2>
+          <button class="map-view-toggle" id="map-view-toggle" type="button">全场视图</button>
           <div class="legend">
-            <span><i style="background:#69d7ff"></i>当前规划</span>
+            <span id="planned-path-legend"><i style="background:#69d7ff"></i>覆盖路径（未观测）</span>
+            <span><i style="background:#657b76"></i>SLAM 占据栅格（下采样）</span>
+            <span><i style="background:#b49aff"></i>Odom 预演轨迹（非真值/非地图定位）</span>
             <span><i style="background:#536d65"></i>实际轨迹（评估）</span>
             <span><i style="background:#66f1b5"></i>刷盘开启轨迹</span>
             <span><i style="background:#ffc66d"></i>车辆</span>
@@ -125,22 +140,77 @@
           </div>
         </section>
 
+        <section class="panel status-card product-card" aria-live="polite">
+          <div class="panel-head">
+            <h2>最终产品阶段</h2>
+            <div class="connection"><span class="dot" id="final-demo-dot"></span><span id="final-demo-status">不可用</span></div>
+          </div>
+          <div class="state" id="final-demo-stage">数据不可用</div>
+          <div class="product-grid">
+            <div><label>场地</label><strong id="final-demo-field">数据不可用</strong></div>
+            <div><label>正式车</label><strong id="final-demo-vehicle">数据不可用</strong></div>
+            <div><label>感知提供方</label><strong id="final-demo-provider">数据不可用</strong></div>
+            <div><label>正式产品验收</label><strong id="final-demo-acceptance">数据不可用</strong></div>
+            <div style="grid-column: 1 / -1"><label>地图 SHA-256</label><strong id="final-demo-map-sha">数据不可用</strong></div>
+          </div>
+          <p id="final-demo-reason">仅接受 /final_demo/state 的实时 JSON；不会以 Gazebo 真值、配置或历史证据补齐。</p>
+        </section>
+
+        <section class="panel live-observation" aria-live="polite">
+          <div class="panel-head">
+            <h2>实时感知观测</h2>
+            <div class="connection"><span class="dot" id="front-camera-dot"></span><span id="front-camera-status">不可用</span></div>
+          </div>
+          <div class="camera-frame">
+            <img id="front-camera-image" alt="前向 RGB 相机实时画面" hidden>
+          </div>
+          <p class="source-copy" id="front-camera-copy">等待真实前向 RGB 话题；不会用地图、回放或配置图片补值。</p>
+          <div class="product-grid">
+            <div><label>项目目标</label><strong id="perception-targets">数据不可用</strong></div>
+            <div><label>推理诊断</label><strong id="perception-diagnostics">数据不可用</strong></div>
+          </div>
+          <p class="source-copy" id="perception-copy">仅接受项目感知话题及其 diagnostics；来源缺失或过期时明确显示。</p>
+        </section>
+
+        <section class="panel live-observation" aria-live="polite">
+          <div class="panel-head">
+            <h2>真实任务运行链</h2>
+            <div class="connection"><span class="dot" id="runtime-chain-dot"></span><span id="runtime-chain-status">未观测</span></div>
+          </div>
+          <div class="product-grid">
+            <div><label>建图生命周期</label><strong id="mapping-lifecycle">未观测</strong></div>
+            <div><label>地图质量门</label><strong id="mapping-map-ready">未观测</strong></div>
+            <div><label>前沿探索器</label><strong id="mapping-explorer">未观测</strong></div>
+            <div><label>已存图清扫执行器</label><strong id="saved-map-coverage">未观测</strong></div>
+            <div><label>安全许可</label><strong id="safety-status">未观测</strong></div>
+            <div><label>A300 底盘状态</label><strong id="drivetrain-status">未观测</strong></div>
+            <div><label>清扫电机状态</label><strong id="cleaning-motor-status">未观测</strong></div>
+            <div><label>SLAM 地图观测</label><strong id="map-observation">未观测</strong></div>
+            <div><label>地图位姿观测</label><strong id="map-pose-observation">未观测</strong></div>
+          </div>
+          <p class="source-copy" id="runtime-chain-copy">逐项展示 formal mapping 与 saved-map coverage 的实际话题；阶段未启动时保持未观测。</p>
+        </section>
+
         <section class="metrics">
           <div class="metric">
-            <label>线速度</label>
-            <strong id="speed">0.00 <small>m/s</small></strong>
+            <label>命令线速度</label>
+            <strong id="commanded-speed" class="warn">未观测</strong>
           </div>
           <div class="metric">
-            <label>地图位姿</label>
+            <label>实测线速度</label>
+            <strong id="measured-speed" class="warn">未观测</strong>
+          </div>
+          <div class="metric">
+            <label id="pose-label">地图位姿</label>
             <strong id="pose">—</strong>
           </div>
           <div class="metric">
             <label>清扫刷盘</label>
-            <strong id="brush" class="warn">关闭</strong>
+            <strong id="brush" class="warn">未观测</strong>
           </div>
           <div class="metric">
             <label>安全状态</label>
-            <strong id="safety" class="ok">正常</strong>
+            <strong id="safety" class="warn">未观测</strong>
           </div>
         </section>
 
@@ -162,6 +232,11 @@
     const canvas = document.querySelector("#map");
     const ctx = canvas.getContext("2d");
     let telemetry = null;
+    // The 200 x 100 m overview is useful for acceptance, but during live
+    // mapping it makes the currently explored cells and vehicle motion nearly
+    // invisible.  Start with the local, live view and retain a one-click
+    // switch to the full competition field.
+    let mapView = "local";
 
     function resizeCanvas() {
       const ratio = window.devicePixelRatio || 1;
@@ -172,11 +247,39 @@
       draw();
     }
 
+    function occupancyGridCorners(grid) {
+      if (!grid || !Array.isArray(grid.origin) || !grid.width || !grid.height || !grid.resolution) return [];
+      const [x, y] = grid.origin;
+      return [[x, y], [x + grid.width * grid.resolution, y + grid.height * grid.resolution]];
+    }
+
+    function livePose(data) {
+      return data?.vehicle?.estimated_pose_map || data?.vehicle?.odometry_preview_pose_odom;
+    }
+
     function bounds(data) {
+      const visual = data?.visualization || {};
+      const pose = livePose(data);
+      if (mapView === "local" && pose) {
+        const recentTrajectory = [
+          ...(visual.evaluation_only_trajectory || []),
+          ...(visual.odometry_preview_trajectory_odom || []),
+        ].slice(-160);
+        const local = [pose, ...recentTrajectory];
+        const xs = local.map(point => point[0]);
+        const ys = local.map(point => point[1]);
+        const span = Math.max(10, Math.max(...xs) - Math.min(...xs) + 4, Math.max(...ys) - Math.min(...ys) + 4);
+        return {
+          minX: pose[0] - span / 2, maxX: pose[0] + span / 2,
+          minY: pose[1] - span / 2, maxY: pose[1] + span / 2,
+        };
+      }
       const geometry = data?.visualization?.geometry || {};
       const all = [
         ...(geometry.outer_polygon || []),
+        ...occupancyGridCorners(visual.occupancy_grid),
         ...(data?.visualization?.planned_path || []),
+        ...(data?.visualization?.odometry_preview_trajectory_odom || []),
         ...(data?.visualization?.evaluation_only_trajectory || [])
       ];
       if (!all.length) return {minX: -3, maxX: 7, minY: -5, maxY: 5};
@@ -224,6 +327,21 @@
       ctx.strokeStyle = stroke; ctx.lineWidth = 1.5; ctx.stroke();
     }
 
+    function drawOccupancyGrid(grid, map) {
+      if (!grid || !Array.isArray(grid.data) || grid.data.length !== grid.width * grid.height) return;
+      const origin = grid.origin;
+      const cellSize = Math.max(1, Math.abs(map([origin[0] + grid.resolution, origin[1]])[0] - map(origin)[0]));
+      for (let row = 0; row < grid.height; row += 1) {
+        for (let col = 0; col < grid.width; col += 1) {
+          const value = grid.data[row * grid.width + col];
+          if (value < 0) continue;
+          const [x, y] = map([origin[0] + col * grid.resolution, origin[1] + row * grid.resolution]);
+          ctx.fillStyle = value >= 65 ? "#aebbb8b8" : "#1a5141a0";
+          ctx.fillRect(x, y - cellSize, cellSize + .5, cellSize + .5);
+        }
+      }
+    }
+
     function draw() {
       const rect = canvas.getBoundingClientRect();
       ctx.clearRect(0, 0, rect.width, rect.height);
@@ -235,17 +353,21 @@
       polygon(geometry.outer_polygon, "#10231d", "#315d4d", map);
       (geometry.keepout_polygons || []).forEach(poly => polygon(poly, "#4a2525aa", "#ff7b7b", map));
       (geometry.exclusion_polygons || []).forEach(poly => polygon(poly, "#3b301baa", "#ffc66d", map));
+      // The field polygon is the background.  Draw the live SLAM grid after
+      // it so explored free cells and occupied returns remain visible.
+      drawOccupancyGrid(visual.occupancy_grid, map);
+      path(visual.odometry_preview_trajectory_odom, "#b49aff", 2.5, map, true);
       path(visual.evaluation_only_trajectory, "#536d65", 3, map);
       path(visual.evaluation_only_cleaned_trajectory, "#66f1b5", 9, map);
       path(visual.planned_path, "#69d7ff", 2.5, map, true);
 
-      const pose = telemetry.vehicle?.evaluation_only_pose_map || telemetry.vehicle?.estimated_pose_map;
+      const pose = livePose(telemetry);
       if (pose) {
         const [x, y] = map(pose);
         const yaw = -(pose[2] || 0);
         ctx.save(); ctx.translate(x, y); ctx.rotate(yaw);
         ctx.beginPath(); ctx.moveTo(15, 0); ctx.lineTo(-10, -9); ctx.lineTo(-6, 0); ctx.lineTo(-10, 9); ctx.closePath();
-        ctx.fillStyle = "#ffc66d"; ctx.fill();
+        ctx.fillStyle = telemetry.vehicle?.odometry_preview_pose_odom && !telemetry.vehicle?.estimated_pose_map ? "#b49aff" : "#ffc66d"; ctx.fill();
         ctx.strokeStyle = "#fff1c9"; ctx.lineWidth = 1.5; ctx.stroke();
         ctx.restore();
       }
@@ -258,33 +380,217 @@
 
     function render(data) {
       telemetry = data;
-      document.querySelector("#state").textContent = data.status || "UNKNOWN";
+      const finalStage = data?.final_demo?.status === "live" ? data.final_demo.stage : null;
+      const preCleaningStage = ["MAPPING", "MAP_SAVED", "HARD_RESTART", "RELOAD_LOCALIZE"].includes(finalStage);
+      const mappingStage = finalStage === "MAPPING";
+      const plannedPathLegend = document.querySelector("#planned-path-legend");
+      const pathCount = Array.isArray(data.visualization?.planned_path) ? data.visualization.planned_path.length : 0;
+      plannedPathLegend.innerHTML = mappingStage
+        ? '<i style="background:#69d7ff"></i>覆盖路径（建图阶段不适用）'
+        : pathCount > 0
+          ? '<i style="background:#69d7ff"></i>覆盖路径（当前组件）'
+          : '<i style="background:#69d7ff"></i>覆盖路径（未观测）';
+      document.querySelector("#state").textContent = preCleaningStage ? finalStage : (data.status || "UNKNOWN");
       document.querySelector("#elapsed").textContent = duration(data.elapsed_sec);
       const progress = data.progress || {};
       const percent = Math.round((progress.ratio || 0) * 100);
-      document.querySelector("#progress-bar").style.width = `${percent}%`;
-      document.querySelector("#progress-value").textContent = `${percent}%`;
-      document.querySelector("#component").textContent = progress.current_component
-        ? `组件 ${progress.active_component_number}/${progress.expected_components} · ${progress.current_component}`
-        : `等待组件 · 0/${progress.expected_components || "--"}`;
-      document.querySelector("#speed").innerHTML = `${(data.vehicle?.linear_speed_m_s || 0).toFixed(2)} <small>m/s</small>`;
-      const pose = data.vehicle?.estimated_pose_map;
+      document.querySelector("#progress-bar").style.width = `${preCleaningStage ? 0 : percent}%`;
+      document.querySelector("#progress-value").textContent = preCleaningStage ? "建图阶段" : `${percent}%`;
+      document.querySelector("#component").textContent = preCleaningStage
+        ? "首次建图中；清扫组件将在重启后的清扫阶段开始统计"
+        : progress.current_component
+          ? `组件 ${progress.active_component_number}/${progress.expected_components} · ${progress.current_component}`
+          : `等待组件 · 0/${progress.expected_components || "--"}`;
+      renderSpeed(
+        "#commanded-speed", data.live_inputs?.commanded_speed || {},
+        data.vehicle?.commanded_linear_speed_m_s, data.vehicle?.command_source,
+      );
+      renderSpeed(
+        "#measured-speed", data.live_inputs?.measured_speed || {},
+        data.vehicle?.measured_linear_speed_m_s, "/odom twist",
+      );
+      const mapPose = data.vehicle?.estimated_pose_map;
+      const odomPreview = data.vehicle?.odometry_preview_pose_odom;
+      document.querySelector("#pose-label").textContent = mapPose ? "地图位姿" : odomPreview ? "Odom 位姿（预演）" : "地图位姿";
+      const pose = mapPose || odomPreview;
       document.querySelector("#pose").innerHTML = pose
-        ? `${pose[0].toFixed(2)}, ${pose[1].toFixed(2)} <small>m</small>`
+        ? `${pose[0].toFixed(2)}, ${pose[1].toFixed(2)} <small>${mapPose ? "m" : "m · odom 非真值"}</small>`
         : "—";
       const brush = document.querySelector("#brush");
-      brush.textContent = data.cleaning?.brush_enabled ? "开启" : "关闭";
-      brush.className = data.cleaning?.brush_enabled ? "ok" : "warn";
+      const brushInput = data.live_inputs?.brush || {};
+      brush.textContent = brushInput.status === "live"
+        ? (data.cleaning?.brush_enabled ? "开启" : "关闭")
+        : sourceStatusLabel(brushInput.status);
+      brush.className = brushInput.status === "live" && data.cleaning?.brush_enabled ? "ok" : "warn";
       const safety = document.querySelector("#safety");
-      safety.textContent = data.cleaning?.emergency_stop ? "急停" : "正常";
-      safety.className = data.cleaning?.emergency_stop ? "danger" : "ok";
+      const safetyInput = data.live_inputs?.emergency_stop || {};
+      safety.textContent = safetyInput.status === "live"
+        ? (data.cleaning?.emergency_stop ? "急停" : "正常")
+        : sourceStatusLabel(safetyInput.status);
+      safety.className = safetyInput.status === "live" && data.cleaning?.emergency_stop ? "danger" : safetyInput.status === "live" ? "ok" : "warn";
+      renderFinalDemo(data.final_demo);
+      renderLiveInputs(data.live_inputs);
       const events = document.querySelector("#events");
       events.innerHTML = [...(data.events || [])].reverse().map(event =>
         `<li><time>${duration(event.elapsed_sec)}</time><span>${event.label}</span></li>`
       ).join("");
-      document.querySelector("#dot").classList.add("live");
-      document.querySelector("#connection").textContent = `实时 · ${data.topics_seen?.length || 0} topics`;
+      const coreInputs = ["mapping_lifecycle", "mapping_map_ready", "mapping_explorer", "saved_map_coverage", "safety_status", "drivetrain_status", "cleaning_motor_status"];
+      const freshCore = coreInputs.filter(name => data.live_inputs?.[name]?.status === "live").length;
+      const observedCore = coreInputs.filter(name => ["live", "observed", "retained"].includes(data.live_inputs?.[name]?.status)).length;
+      document.querySelector("#dot").classList.toggle("live", freshCore > 0);
+      document.querySelector("#connection").textContent = `HTTP 可达 · ROS 核心 ${freshCore} 新鲜 · ${observedCore}/${coreInputs.length} 最近观测`;
       draw();
+    }
+
+    function renderFinalDemo(finalDemo) {
+      const data = finalDemo || {};
+      const status = data.status || "unavailable";
+      const live = status === "live";
+      const statusNode = document.querySelector("#final-demo-status");
+      const dot = document.querySelector("#final-demo-dot");
+      statusNode.textContent = live ? "实时" : status === "stale" ? "过期" : status === "error" ? "错误" : "不可用";
+      dot.classList.toggle("live", live);
+      document.querySelector("#final-demo-stage").textContent = live || status === "stale" ? (data.stage || "未报告") : "数据不可用";
+      const dimensions = Array.isArray(data.field_dimensions_m) ? data.field_dimensions_m : null;
+      document.querySelector("#final-demo-field").textContent = dimensions ? `${dimensions[0]} × ${dimensions[1]} m` : "数据不可用";
+      document.querySelector("#final-demo-vehicle").textContent = data.vehicle || "数据不可用";
+      document.querySelector("#final-demo-provider").textContent = data.perception_provider || "数据不可用";
+      const acceptance = document.querySelector("#final-demo-acceptance");
+      acceptance.textContent = typeof data.formal_product_acceptance === "boolean" ? (data.formal_product_acceptance ? "通过" : "未通过") : "数据不可用";
+      acceptance.className = data.formal_product_acceptance === true ? "ok" : data.formal_product_acceptance === false ? "danger" : "";
+      document.querySelector("#final-demo-map-sha").textContent = data.map_sha256 || (live || status === "stale" ? "尚未报告" : "数据不可用");
+      document.querySelector("#final-demo-reason").textContent = data.reason || `${data.source_topic || "/final_demo/state"} · ${data.age_sec === null || data.age_sec === undefined ? "等待首条消息" : `${data.age_sec.toFixed(1)} 秒前更新`}`;
+    }
+
+    function renderSpeed(selector, source, value, label) {
+      const node = document.querySelector(selector);
+      if (source.status === "live" && typeof value === "number") {
+        node.innerHTML = `${value.toFixed(2)} <small>m/s · ${label}</small>`;
+        node.className = "ok";
+      } else {
+        node.textContent = sourceStatusLabel(source.status);
+        node.className = "warn";
+      }
+    }
+
+    function sourceStatusLabel(status) {
+      return status === "live" ? "实时" : status === "observed" ? "最后观测" : status === "retained" ? "保留状态" : status === "stale" ? "过期" : status === "error" ? "错误" : "不可用";
+    }
+
+    function sourceAgeCopy(data) {
+      if (data?.error) return `${data.topic || "来源"} · ${data.error}`;
+      if (data?.age_sec === null || data?.age_sec === undefined) return `${data?.topic || "来源"} · 等待首条消息`;
+      return `${data.topic || "来源"} · ${data.age_sec.toFixed(1)} 秒前更新`;
+    }
+
+    function renderLiveInputs(inputs) {
+      const values = inputs || {};
+      const camera = values.front_camera || {};
+      const cameraLive = camera.status === "live";
+      document.querySelector("#front-camera-status").textContent = sourceStatusLabel(camera.status);
+      document.querySelector("#front-camera-dot").classList.toggle("live", cameraLive);
+      document.querySelector("#front-camera-copy").textContent = cameraLive && camera.width && camera.height
+        ? `${sourceAgeCopy(camera)} · ${camera.width} × ${camera.height}`
+        : sourceAgeCopy(camera);
+      const image = document.querySelector("#front-camera-image");
+      if (cameraLive) {
+        image.hidden = false;
+        image.src = `/api/v1/images/front_camera?age=${encodeURIComponent(camera.age_sec ?? "live")}`;
+      } else {
+        image.hidden = true;
+        image.removeAttribute("src");
+      }
+
+      const targets = values.perception_targets || {};
+      const diagnostics = values.perception_diagnostics || {};
+      document.querySelector("#perception-targets").textContent = targets.status === "live"
+        ? `实时：${targets.count} 个`
+        : sourceStatusLabel(targets.status);
+      const diagnosticRows = Array.isArray(diagnostics.statuses) ? diagnostics.statuses : [];
+      const highestDiagnosticLevel = diagnosticRows.reduce((maximum, item) => Math.max(maximum, item.level || 0), 0);
+      const diagnosticNode = document.querySelector("#perception-diagnostics");
+      diagnosticNode.textContent = diagnostics.status === "live"
+        ? `实时：${diagnosticRows.length} 条${highestDiagnosticLevel >= 2 ? "（含错误）" : ""}`
+        : sourceStatusLabel(diagnostics.status);
+      diagnosticNode.className = diagnostics.status === "live" && highestDiagnosticLevel >= 2 ? "danger" : "";
+      const diagnosticDetails = diagnosticRows.slice(0, 2).map(item => `${item.name}: ${item.message}`).join("；");
+      document.querySelector("#perception-copy").textContent = [
+        sourceAgeCopy(targets), sourceAgeCopy(diagnostics), diagnosticDetails,
+      ].filter(Boolean).join(" · ");
+
+      const runtimeSources = [
+        ["mapping_lifecycle", "#mapping-lifecycle"],
+        ["mapping_map_ready", "#mapping-map-ready"],
+        ["mapping_explorer", "#mapping-explorer"],
+        ["saved_map_coverage", "#saved-map-coverage"],
+        ["safety_status", "#safety-status"],
+        ["drivetrain_status", "#drivetrain-status"],
+        ["cleaning_motor_status", "#cleaning-motor-status"],
+      ];
+      const liveRuntime = runtimeSources.filter(([name]) => values[name]?.status === "live").length;
+      const observedRuntime = runtimeSources.filter(([name]) => ["live", "observed", "retained"].includes(values[name]?.status)).length;
+      document.querySelector("#runtime-chain-dot").classList.toggle("live", liveRuntime > 0);
+      document.querySelector("#runtime-chain-status").textContent = `ROS ${liveRuntime} 新鲜 · ${observedRuntime}/${runtimeSources.length} 最近观测`;
+      runtimeSources.forEach(([name, selector]) => {
+        const source = values[name] || {};
+        const node = document.querySelector(selector);
+        if (["live", "observed", "retained"].includes(source.status)) {
+          const value = runtimeValue(name, source.value);
+          node.textContent = value || `${sourceStatusLabel(source.status)}（未报告值）`;
+          let dangerous = false;
+          if (name === "cleaning_motor_status" && typeof source.value === "string") {
+            try {
+              const motor = JSON.parse(source.value);
+              dangerous = motor.fault_active === true || motor.physics_update_stale === true;
+            } catch (_error) {
+              dangerous = true;
+            }
+          }
+          node.className = dangerous ? "danger" : name === "mapping_map_ready" && !source.value ? "warn" : source.status === "live" ? "ok" : "";
+        } else {
+          node.textContent = sourceStatusLabel(source.status);
+          node.className = "warn";
+        }
+      });
+      document.querySelector("#runtime-chain-copy").textContent = runtimeSources.map(([name]) => sourceAgeCopy(values[name])).join(" · ");
+
+      const map = values.map || {};
+      const mapNode = document.querySelector("#map-observation");
+      if (map.status === "live") {
+        const delta = map.known_cell_delta === null || map.known_cell_delta === undefined ? "首次" : `Δ${map.known_cell_delta >= 0 ? "+" : ""}${map.known_cell_delta}`;
+        mapNode.textContent = `第 ${map.revision} 帧 · 已知 ${map.known_cell_count} · ${delta}`;
+        mapNode.className = "ok";
+      } else {
+        mapNode.textContent = sourceStatusLabel(map.status);
+        mapNode.className = "warn";
+      }
+      const mapPose = values.map_pose || {};
+      const mapPoseNode = document.querySelector("#map-pose-observation");
+      mapPoseNode.textContent = mapPose.status === "live" ? sourceAgeCopy(mapPose) : sourceStatusLabel(mapPose.status);
+      mapPoseNode.className = mapPose.status === "live" ? "ok" : "warn";
+    }
+
+    function runtimeValue(name, value) {
+      if (name === "mapping_map_ready") return value ? "已就绪（保留）" : "未就绪（保留）";
+      if (typeof value !== "string") return value;
+      try {
+        const parsed = JSON.parse(value);
+        if (name === "safety_status") {
+          return `${parsed.state || "未知"} · permit=${parsed.safety_inputs_permit_actuators ?? "未报告"}`;
+        }
+        if (name === "drivetrain_status") {
+          return `permit=${parsed.drive_permitted ?? "未报告"} · ${parsed.stop_reason || "未知"} · v=${parsed.odom_twist?.linear_x_mps ?? "未报告"}`;
+        }
+        if (name === "cleaning_motor_status") {
+          const faults = Array.isArray(parsed.motors)
+            ? parsed.motors.filter(motor => motor.fault && motor.fault !== "none").map(motor => `${motor.name}:${motor.fault}`)
+            : [];
+          return `fault=${parsed.fault_active ?? "未报告"} · fresh=${parsed.command_fresh ?? "未报告"}${faults.length ? ` · ${faults.join(",")}` : ""}`;
+        }
+        return parsed.status || parsed.state || value;
+      } catch (_error) {
+        return value;
+      }
     }
 
     async function refresh() {
@@ -300,7 +606,12 @@
 
     window.addEventListener("resize", resizeCanvas);
     new ResizeObserver(resizeCanvas).observe(canvas);
-    setInterval(refresh, 500);
+    document.querySelector("#map-view-toggle").addEventListener("click", (event) => {
+      mapView = mapView === "overview" ? "local" : "overview";
+      event.currentTarget.textContent = mapView === "local" ? "全场视图" : "局部实时视图";
+      draw();
+    });
+    setInterval(refresh, 1000);
     refresh();
   </script>
 </body>

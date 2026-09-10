@@ -4824,7 +4824,7 @@
             },
             {
               "evidence": {
-                "line": 36,
+                "line": 32,
                 "path": "starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc",
                 "token": "kTankMass"
               },
@@ -4874,17 +4874,9 @@
             },
             {
               "evidence": {
-                "line": 23,
-                "path": "starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc",
-                "token": "kLidarScan"
-              },
-              "passed": true
-            },
-            {
-              "evidence": {
-                "line": 770,
+                "line": 783,
                 "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
-                "token": "formal_vehicle_product_native_bridge"
+                "token": "formal_vehicle_lidar_bridge"
               },
               "passed": true
             }
@@ -5012,7 +5004,7 @@
             },
             {
               "evidence": {
-                "line": 25,
+                "line": 21,
                 "path": "starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc",
                 "token": "kGnssFix"
               },

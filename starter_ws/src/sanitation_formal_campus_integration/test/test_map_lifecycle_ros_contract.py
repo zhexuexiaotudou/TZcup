@@ -1,3 +1,5 @@
+import ast
+import math
 from pathlib import Path
 
 import yaml
@@ -31,16 +33,31 @@ def test_frontier_goals_use_current_map_frame_pose_and_tangent_yaw():
     assert "math.sin(target_yaw / 2.0)" in source
     assert "math.cos(target_yaw / 2.0)" in source
     assert "goal.pose.pose.orientation.w = 1.0" not in source
+    assert 'goal.pose.header.stamp.sec = 0' in source
+    assert 'goal.pose.header.stamp.nanosec = 0' in source
+    assert 'goal.pose.header.stamp = self.get_clock().now().to_msg()' not in source
+    assert "diagnostics=selector_diagnostics" in source
+    assert 'selector_diagnostics=selector_diagnostics' in source
+    assert '"Frontier selector has no target: %s"' in source
 
 
 def test_formal_launch_separates_mapping_and_saved_map_cleaning():
     source = (
         PACKAGE / "launch" / "formal_campus_map_lifecycle.launch.py"
     ).read_text(encoding="utf-8")
-    assert '"localization_backend": "external" if mode == "mapping" else "amcl"' in source
+    assert '"localization_backend": "external"' in source
+    assert '"localization_backend": "amcl"' in source
     assert 'validate_saved_map_artifact(artifact_root, contract)' in source
     assert '"map_file": str(artifact_root / "occupancy.yaml")' in source
     assert 'executable="formal-frontier-explorer"' in source
+    assert 'executable="formal-slam-scan-startup-gate"' in source
+    assert "OnProcessExit(" in source
+    assert "target_action=scan_startup_gate" in source
+    assert "slam_after_valid_scan" in source
+    assert "mapping_navigation_after_slam" in source
+    assert "mapping_runtime_after_navigation" in source
+    assert '"autostart": "true"' in source
+    assert '"use_lifecycle_manager": "false"' in source
     assert '"start_navigation": "false"' in source
     assert "publish_selected_odom" not in source
     assert 'FindPackageShare("sanitation_localization")' not in source
@@ -51,6 +68,8 @@ def test_formal_launch_separates_mapping_and_saved_map_cleaning():
     assert 'FindPackageShare("sanitation_active_cleaning")' not in source
     assert '"materialize_static_maps": "false"' in source
     assert '"runtime_artifact_dir": str(artifact_root)' in source
+    assert '"start_manipulation_runtime": "false" if mode == "mapping" else "true"' in source
+    assert '"start_charge_interface_manager": "false" if mode == "mapping" else "true"' in source
     assert '"start_velocity_gate": "false"' in source
     assert '"cmd_vel_in_topic": "/cmd_vel_smoothed"' in source
     assert '"cmd_vel_out_topic": "/cmd_vel_gate"' in source
@@ -72,6 +91,8 @@ def test_formal_launch_separates_mapping_and_saved_map_cleaning():
     assert 'slam_params["use_scan_matching"] = True' in source
     assert 'slam_params["use_scan_barycenter"] = True' in source
     assert 'slam_params["do_loop_closing"] = True' in source
+    assert 'slam_params["minimum_travel_distance"] = 0.0' not in source
+    assert 'slam_params["minimum_travel_heading"] = 0.0' not in source
     assert "wheel_imu_ekf_lidar_scan_matching_gnss_consistency" in source
     assert '"rolling_window": True' in source
     assert '"width": 30' in source
@@ -82,6 +103,13 @@ def test_formal_launch_separates_mapping_and_saved_map_cleaning():
     assert 'DeclareLaunchArgument(\n            "mapping_high_bandwidth_sensor_runtime", default_value="false",\n            description="Mapping defaults to scan-only; public mobile calibration opts in explicitly.",' in source
     assert 'package="nav2_collision_monitor"' not in source
     assert "Jazzy nav2_bringup above owns collision_monitor" in source
+    # The map lifecycle waits for the first physical UTM frame before its sole
+    # raw /scan bridge starts. It must not create a bypass publisher.
+    assert '"lidar_bridge_ready_timeout_sec"' in source
+    assert 'default_value="600"' in source
+    assert '"lidar_bridge_ready_timeout_sec": LaunchConfiguration(' in source
+    assert '"/sensors/lidar_2d/scan:=/scan/navigation"' not in source
+    assert 'formal_slam_scan_startup_bootstrap' not in source
     # The canonical vehicle launch owns the two raw bumper bridges.  The map
     # lifecycle must not create duplicates or bypass whole-vehicle safety.
     assert 'formal_mapping_front_bumper_raw_bridge' not in source
@@ -95,6 +123,32 @@ def test_formal_launch_separates_mapping_and_saved_map_cleaning():
         PACKAGE.parent / "sanitation_navigation" / "launch" / "navigation.launch.py"
     ).read_text(encoding="utf-8")
     assert "SetRemap(src='/cmd_vel', dst='/cmd_vel_nav')" in navigation
+    frontier_navigation = (
+        PACKAGE.parent
+        / "sanitation_navigation"
+        / "launch"
+        / "frontier_mapping.launch.py"
+    ).read_text(encoding="utf-8")
+    ast.parse(frontier_navigation)
+    assert 'package="nav2_route"' not in frontier_navigation
+    assert 'package="nav2_waypoint_follower"' not in frontier_navigation
+    assert 'package="opennav_docking"' not in frontier_navigation
+    for package, executable in (
+        ("nav2_planner", "planner_server"),
+        ("nav2_controller", "controller_server"),
+        ("nav2_smoother", "smoother_server"),
+        ("nav2_behaviors", "behavior_server"),
+        ("nav2_bt_navigator", "bt_navigator"),
+        ("nav2_velocity_smoother", "velocity_smoother"),
+        ("nav2_collision_monitor", "collision_monitor"),
+    ):
+        assert f'package="{package}"' in frontier_navigation
+        assert f'executable="{executable}"' in frontier_navigation
+    assert '"navigators": ["navigate_to_pose"]' in frontier_navigation
+    assert 'name="filter_lifecycle_manager"' in frontier_navigation
+    assert 'name="keepout_filter_mask_server"' in frontier_navigation
+    assert 'name="speed_filter_mask_server"' in frontier_navigation
+    assert "frontier_mapping_navigation_launch" in source
     vehicle = (
         PACKAGE.parent
         / "sanitation_vehicle_description"
@@ -164,6 +218,9 @@ def test_saved_map_coverage_is_real_product_action_execution_with_fixed_envelope
     assert 'self.declare_parameter("operation_speed_profile", DRY_CLEANING_SPEED_PROFILE)' in executor
     assert 'self._set_brush(True)' in executor
     assert 'self._set_brush(False)' in executor
+    assert 'self._state_heartbeat = self.create_timer(1.0, self._republish_state)' in executor
+    assert '"sequence": self._state_sequence' in executor
+    assert '"heartbeat": heartbeat' in executor
     assert '"terminal_state": state' in executor
     assert "/ground_truth" not in executor
     assert "/model/" not in executor
@@ -225,6 +282,55 @@ def test_clean_path_and_velocity_smoother_share_formal_speed_ceiling():
     assert smoother["max_velocity"][0] == 0.45
 
 
+def test_mapping_relaxes_only_the_bt_action_acknowledgement_deadline():
+    base_nav2 = yaml.safe_load(
+        (
+            PACKAGE.parent / "sanitation_navigation" / "config" / "nav2.yaml"
+        ).read_text(encoding="utf-8")
+    )
+    lifecycle = (
+        PACKAGE / "launch" / "formal_campus_map_lifecycle.launch.py"
+    ).read_text(encoding="utf-8")
+
+    assert base_nav2["bt_navigator"]["ros__parameters"][
+        "default_server_timeout"
+    ] == 20
+    assert 'if mode == "mapping":' in lifecycle
+    assert '"default_server_timeout"\n        ] = 2000' in lifecycle
+
+
+def test_mapping_controller_period_matches_the_5ms_physics_step_only():
+    controller_config = yaml.safe_load(
+        (
+            PACKAGE.parent
+            / "sanitation_vehicle_description"
+            / "config"
+            / "formal_vehicle_controllers.yaml"
+        ).read_text(encoding="utf-8")
+    )
+    lifecycle = (
+        PACKAGE / "launch" / "formal_campus_map_lifecycle.launch.py"
+    ).read_text(encoding="utf-8")
+    campus = (PACKAGE / "launch" / "formal_campus.launch.py").read_text(
+        encoding="utf-8"
+    )
+    vehicle = (
+        PACKAGE.parent
+        / "sanitation_vehicle_description"
+        / "launch"
+        / "formal_vehicle_sim.launch.py"
+    ).read_text(encoding="utf-8")
+
+    assert controller_config["controller_manager"]["ros__parameters"][
+        "update_rate"
+    ] == 250
+    assert 'controller_manager_params["update_rate"] = 200' in lifecycle
+    assert 'if mode == "mapping":' in lifecycle
+    assert '"controller_config_path": controller_config_path' in lifecycle
+    assert '"controller_config_path": LaunchConfiguration(' in campus
+    assert '" controller_config_path:=", controller_config_path' in vehicle
+
+
 def test_slam_launch_can_disable_legacy_velocity_gate():
     source = (
         PACKAGE.parent
@@ -234,6 +340,10 @@ def test_slam_launch_can_disable_legacy_velocity_gate():
     ).read_text(encoding="utf-8")
     assert "DeclareLaunchArgument('start_velocity_gate'" in source
     assert "condition=IfCondition(LaunchConfiguration('start_velocity_gate'))" in source
+    assert "DeclareLaunchArgument('autostart', default_value='true')" in source
+    assert "DeclareLaunchArgument('use_lifecycle_manager', default_value='false')" in source
+    assert "'autostart': LaunchConfiguration('autostart')" in source
+    assert "'use_lifecycle_manager': LaunchConfiguration('use_lifecycle_manager')" in source
 
 
 def test_scan_self_filter_is_installed_with_config_and_console_entry():
@@ -243,13 +353,59 @@ def test_scan_self_filter_is_installed_with_config_and_console_entry():
         '"formal-scan-self-filter = "' in setup
         and "formal_scan_self_filter:main" in setup
     )
+    assert '"formal-slam-scan-startup-gate = "' in setup
+    startup_gate = (
+        PACKAGE
+        / "sanitation_formal_campus_integration"
+        / "formal_slam_scan_startup_gate.py"
+    ).read_text(encoding="utf-8")
+    assert '"/scan/navigation"' in startup_gate
+    assert "has_usable_scan" in startup_gate
+    assert "neither publishes data nor controls motion" in startup_gate
+    assert (
+        "QoSProfile(depth=1, reliability=ReliabilityPolicy.RELIABLE)"
+        in startup_gate
+    )
+    assert "self._scan_subscription = self.create_subscription" in startup_gate
+    assert "ClockType.STEADY_TIME" in startup_gate
+    assert "canonical scan startup gate waiting:" in startup_gate
     lifecycle = (
         PACKAGE / "launch" / "formal_campus_map_lifecycle.launch.py"
     ).read_text(encoding="utf-8")
     assert 'FindPackageShare("sanitation_formal_campus_integration")' in lifecycle
     assert '"formal_utm30lx_self_filter.yaml"' in lifecycle
     assert "scan_filter_params," in lifecycle
+    assert '"normalize_positive_infinity": mode == "mapping"' in lifecycle
     assert '"no_return_replacement_m": normalized_no_return_range' in lifecycle
+    assert 'slam_params["throttle_scans"] = 20' in lifecycle
+    assert 'slam_params["minimum_time_interval"] = 0.5' in lifecycle
+    filter_params = yaml.safe_load(
+        (PACKAGE / "config" / "formal_utm30lx_self_filter.yaml").read_text(
+            encoding="utf-8"
+        )
+    )["formal_scan_self_filter"]["ros__parameters"]
+    masks = filter_params["angular_range_masks_rad"]
+    effective_fov = float(masks[3]) - float(masks[1])
+    required_sweep = 2.0 * math.pi - effective_fov
+    assert math.isclose(required_sweep, math.radians(117.5), abs_tol=2e-6)
+    assert 3.0 * math.pi / 4.0 - required_sweep > math.radians(17.49)
+    source = (
+        PACKAGE
+        / "sanitation_formal_campus_integration"
+        / "formal_scan_self_filter.py"
+    ).read_text(encoding="utf-8")
+    assert source.count("ReliabilityPolicy.RELIABLE") >= 2
+    assert "depth=1" in source
+    assert "Depth one still drops superseded frames" in source
+    vehicle_launch = (
+        PACKAGE.parent
+        / "sanitation_vehicle_description"
+        / "launch"
+        / "formal_vehicle_sim.launch.py"
+    ).read_text(encoding="utf-8")
+    assert '"lidar_bridge_ready_timeout_sec"' in vehicle_launch
+    assert 'executable="formal_lidar_bridge_when_ready.sh"' in vehicle_launch
+    assert 'remappings=[("/sensors/lidar_2d/scan", "/scan")]' not in vehicle_launch
 
 
 def test_mapping_manager_uses_slam_save_service_and_stable_quality_gate():

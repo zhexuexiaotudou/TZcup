@@ -53,6 +53,40 @@ const char * StopReasonName(const A300DrivetrainStopReason reason)
   }
   return "unknown";
 }
+
+void AppendJsonNumber(std::ostringstream & stream, const double value)
+{
+  if (std::isfinite(value)) {
+    stream << value;
+  } else {
+    stream << "null";
+  }
+}
+
+void AppendJsonWheelSpeeds(
+  std::ostringstream & stream,
+  const std::array<double, kA300WheelCount> & values)
+{
+  stream << '[';
+  for (std::size_t index = 0; index < values.size(); ++index) {
+    if (index != 0U) {
+      stream << ',';
+    }
+    AppendJsonNumber(stream, values[index]);
+  }
+  stream << ']';
+}
+
+void AppendJsonPlanarTwist(
+  std::ostringstream & stream,
+  const A300PlanarTwist & twist)
+{
+  stream << "{\"linear_x_mps\":";
+  AppendJsonNumber(stream, twist.linear_x_mps);
+  stream << ",\"angular_z_rad_s\":";
+  AppendJsonNumber(stream, twist.angular_z_rad_s);
+  stream << '}';
+}
 }  // namespace
 
 /// Gazebo-side four-motor plant replacing the ideal velocity-controlled
@@ -142,6 +176,7 @@ public:
     const double simTimeS = std::chrono::duration<double>(info.simTime).count();
 
     A300DrivetrainPlantInput input;
+    A300PlanarTwist inputTwist;
     input.step_s = stepS;
     input.measured_speed_rad_s.fill(std::numeric_limits<double>::quiet_NaN());
     for (std::size_t index = 0; index < kA300WheelCount; ++index) {
@@ -155,6 +190,7 @@ public:
     {
       std::lock_guard<std::mutex> lock(this->inputMutex);
       input.commanded_speed_rad_s = this->wheelCommand;
+      inputTwist = this->inputTwist;
       input.motor_fault = this->motorFault;
       input.actuator_enable = this->actuatorEnable;
       input.emergency_stop = this->emergencyStop;
@@ -186,7 +222,7 @@ public:
     this->UpdateAndPublishOdometry(input.measured_speed_rad_s, stepS, simTimeS);
 
     if (simTimeS - this->lastStatusTimeS >= 0.1) {
-      this->PublishStatus(output);
+      this->PublishStatus(output, input, inputTwist);
       this->lastStatusTimeS = simTimeS;
     }
   }
@@ -194,14 +230,13 @@ public:
 private:
   void OnTwistCommand(const gz::msgs::Twist & message)
   {
-    const double linearMps = message.linear().x();
-    const double angularRadS = message.angular().z();
-    const double radius = this->plant.Parameters().control_wheel_radius_m;
-    const double halfTrack = this->wheelTrackM * 0.5;
-    const double leftRadS = (linearMps - angularRadS * halfTrack) / radius;
-    const double rightRadS = (linearMps + angularRadS * halfTrack) / radius;
+    const A300PlanarTwist inputTwist{
+      message.linear().x(), message.angular().z()};
     std::lock_guard<std::mutex> lock(this->inputMutex);
-    this->wheelCommand = {leftRadS, rightRadS, leftRadS, rightRadS};
+    this->inputTwist = inputTwist;
+    this->wheelCommand = A300WheelSpeedsFromPlanarTwist(
+      inputTwist, this->plant.Parameters().control_wheel_radius_m,
+      this->wheelTrackM);
     this->lastCommandSteadyTime = std::chrono::steady_clock::now();
     this->commandSeen = true;
   }
@@ -237,19 +272,38 @@ private:
     this->busVoltageV = message.data();
   }
 
-  void PublishStatus(const A300DrivetrainPlantOutput & output)
+  void PublishStatus(
+    const A300DrivetrainPlantOutput & output,
+    const A300DrivetrainPlantInput & input,
+    const A300PlanarTwist & inputTwist)
   {
+    const auto odometryTwist = A300PlanarTwistFromWheelSpeeds(
+      input.measured_speed_rad_s, this->plant.Parameters().control_wheel_radius_m,
+      this->wheelTrackM);
     std::ostringstream stream;
     stream << "{\"model\":\"" << this->modelName << "\","
       << "\"drive_permitted\":" << (output.drive_permitted ? "true" : "false") << ','
+      << "\"actuator_enable\":" << (input.actuator_enable ? "true" : "false") << ','
       << "\"stop_reason\":\"" << StopReasonName(output.stop_reason) << "\","
       << "\"resistive_brake_active\":"
       << (output.resistive_brake_active ? "true" : "false") << ','
       << "\"current_limited\":" << (output.current_limited ? "true" : "false") << ','
       << "\"power_limited\":" << (output.power_limited ? "true" : "false") << ','
-      << "\"mechanical_power_w\":" << output.total_mechanical_power_w << ','
-      << "\"estimated_battery_current_a\":" << output.estimated_battery_current_a
-      << '}';
+      << "\"input_twist\":";
+    AppendJsonPlanarTwist(stream, inputTwist);
+    stream << ",\"commanded_wheel_rad_s\":";
+    AppendJsonWheelSpeeds(stream, input.commanded_speed_rad_s);
+    stream << ",\"measured_wheel_rad_s\":";
+    AppendJsonWheelSpeeds(stream, input.measured_speed_rad_s);
+    stream << ",\"wheel_torque_nm\":";
+    AppendJsonWheelSpeeds(stream, output.wheel_torque_nm);
+    stream << ",\"odom_twist\":";
+    AppendJsonPlanarTwist(stream, odometryTwist);
+    stream << ",\"mechanical_power_w\":";
+    AppendJsonNumber(stream, output.total_mechanical_power_w);
+    stream << ",\"estimated_battery_current_a\":";
+    AppendJsonNumber(stream, output.estimated_battery_current_a);
+    stream << '}';
     gz::msgs::StringMsg status;
     status.set_data(stream.str());
     this->statusPublisher.Publish(status);
@@ -267,11 +321,11 @@ private:
     {
       return;
     }
-    const double leftRadS = (wheelSpeedRadS[0] + wheelSpeedRadS[2]) * 0.5;
-    const double rightRadS = (wheelSpeedRadS[1] + wheelSpeedRadS[3]) * 0.5;
-    const double radius = this->plant.Parameters().control_wheel_radius_m;
-    const double linearMps = radius * (leftRadS + rightRadS) * 0.5;
-    const double angularRadS = radius * (rightRadS - leftRadS) / this->wheelTrackM;
+    const auto odometryTwist = A300PlanarTwistFromWheelSpeeds(
+      wheelSpeedRadS, this->plant.Parameters().control_wheel_radius_m,
+      this->wheelTrackM);
+    const double linearMps = odometryTwist.linear_x_mps;
+    const double angularRadS = odometryTwist.angular_z_rad_s;
     this->odomYawRad += angularRadS * stepS;
     this->odomX += linearMps * std::cos(this->odomYawRad) * stepS;
     this->odomY += linearMps * std::sin(this->odomYawRad) * stepS;
@@ -309,6 +363,7 @@ private:
   A300DrivetrainPlantCore plant;
   std::array<gz::sim::Entity, kA300WheelCount> wheelJoints{};
   std::mutex inputMutex;
+  A300PlanarTwist inputTwist{};
   std::array<double, kA300WheelCount> wheelCommand{};
   std::array<bool, kA300WheelCount> motorFault{};
   std::chrono::steady_clock::time_point lastCommandSteadyTime{};

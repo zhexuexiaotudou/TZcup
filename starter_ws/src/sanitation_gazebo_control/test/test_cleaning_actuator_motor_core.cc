@@ -128,6 +128,8 @@ int main()
   Require(parameters.motors[lift].stall_current_a == 1.0 &&
     parameters.motors[lift].stall_output_load == 300.0,
     "Actuonix current/force boundaries missing");
+  Require(parameters.motors[lift].position_tolerance == 0.002,
+    "lift seated-position deadband must include the measured 1.3 mm rest offset");
   Require(parameters.motors[pump].rated_current_a == 6.0 &&
     parameters.motors[pump].stall_current_a == 10.0,
     "Jabsco operating current/fuse boundary missing");
@@ -214,6 +216,17 @@ int main()
     "lift telemetry must declare position control mode");
   Require(output.motors[lift].speed_limit <= 0.0060001,
     "12 V lift speed must not scale to the 24 V bus");
+
+  CleaningActuatorMotorCore seatedLiftCore(parameters);
+  auto seatedLiftInput = ReadyInput();
+  seatedLiftInput.command[lift] = 0.0;
+  seatedLiftInput.measured_position[lift] = 0.00131;
+  seatedLiftInput.measured_speed[lift] = 0.0;
+  for (int step = 0; step < 200; ++step) {
+    output = seatedLiftCore.Step(seatedLiftInput);
+  }
+  Require(!output.fault_active && output.motors[lift].current_a == 0.0,
+    "a lift seated at the measured lower-stop offset must not latch false stall");
 
   // Keep the published production thermal constants.  The pure core test can
   // advance simulated time deterministically without shortening them, while

@@ -122,6 +122,100 @@ def evaluate_motion(raw: dict[str, Any], *, expected_forward_distance_m: float =
     return {"checks": checks, "metrics": metrics, "passed": all(checks.values())}
 
 
+def evaluate_rotation(
+    raw: dict[str, Any], *, commanded_angular_speed_rad_s: float, minimum_yaw_rad: float
+) -> dict[str, Any]:
+    """Score a raw-telemetry-only in-place rotation gate, failing closed.
+
+    This deliberately does not consume Gazebo model pose or any other world
+    truth.  It proves the product command path reached the effort plant and
+    that the plant's own joint/odometry feedback agrees with the requested
+    turn direction; it is not a localization-accuracy claim.
+    """
+    if not math.isfinite(commanded_angular_speed_rad_s) or commanded_angular_speed_rad_s == 0.0:
+        raise ValueError("commanded angular speed must be finite and non-zero")
+    if not math.isfinite(minimum_yaw_rad) or minimum_yaw_rad <= 0.0:
+        raise ValueError("minimum yaw must be finite and positive")
+
+    direction = math.copysign(1.0, commanded_angular_speed_rad_s)
+    wheel_start = raw["wheel_state"]["start_positions_rad"]
+    wheel_end = raw["wheel_state"]["rotation_end_positions_rad"]
+    left_delta = statistics.fmean(
+        float(wheel_end[name]) - float(wheel_start[name])
+        for name in ("front_left_wheel_joint", "rear_left_wheel_joint")
+    )
+    right_delta = statistics.fmean(
+        float(wheel_end[name]) - float(wheel_start[name])
+        for name in ("front_right_wheel_joint", "rear_right_wheel_joint")
+    )
+    yaw_delta = _projected_delta(
+        Pose2D(**raw["plant_odom"]["start"]),
+        Pose2D(**raw["plant_odom"]["rotation_end"]),
+    )[2]
+    yaw_drift_after_stop = _projected_delta(
+        Pose2D(**raw["plant_odom"]["rotation_end"]),
+        Pose2D(**raw["plant_odom"]["stopped_end"]),
+    )[2]
+    odom_rates = [
+        float(sample["angular_velocity_rad_s"])
+        for sample in raw["plant_odom"]["rotation_trace"]
+    ]
+    signed_peak_yaw_rate = max((direction * value for value in odom_rates), default=0.0)
+    terminal_wheel_speed = max(
+        abs(float(value)) for value in raw["wheel_state"]["stopped_velocities_rad_s"].values()
+    )
+    terminal_yaw_rate = abs(float(raw["plant_odom"]["stopped_angular_velocity_rad_s"]))
+    final_commands = raw["final_command_trace"]
+    safety_status = raw["safety_status_json_trace"]
+    plant_status = raw["plant_status_trace"]
+
+    def _enabled(value: object) -> bool:
+        return value is True or value == "true"
+
+    checks = {
+        "safety_actuator_permit_observed": any(raw["actuator_enable_trace"]),
+        "safety_status_json_permit_observed": any(
+            _enabled(sample.get("payload", {}).get("actuators_enabled"))
+            for sample in safety_status
+        ),
+        "plant_drive_permitted_observed": any(
+            _enabled(sample.get("payload", {}).get("drive_permitted"))
+            for sample in plant_status
+        ),
+        "final_safety_angular_command_observed": any(
+            abs(float(sample["linear_x_mps"])) <= 1e-4
+            and direction * float(sample["angular_z_rad_s"]) >= abs(commanded_angular_speed_rad_s) * 0.80
+            for sample in final_commands
+        ),
+        "left_right_wheel_mean_opposite_sign": (
+            abs(left_delta) >= 0.05
+            and abs(right_delta) >= 0.05
+            and left_delta * right_delta < 0.0
+        ),
+        "raw_odom_yaw_rate_same_sign_nonzero": signed_peak_yaw_rate >= 0.02,
+        "raw_odom_integrated_yaw_same_sign": direction * yaw_delta >= minimum_yaw_rad,
+        "raw_odom_rotation_stopped_after_zero_command": (
+            terminal_yaw_rate <= 0.03 and abs(yaw_drift_after_stop) <= 0.12
+        ),
+        "wheel_joints_stopped_after_zero_command": terminal_wheel_speed <= 0.30,
+    }
+    metrics = {
+        "commanded_angular_speed_rad_s": commanded_angular_speed_rad_s,
+        "minimum_yaw_rad": minimum_yaw_rad,
+        "left_wheel_mean_delta_rad": left_delta,
+        "right_wheel_mean_delta_rad": right_delta,
+        "plant_odom_yaw_delta_rad": yaw_delta,
+        "peak_signed_plant_odom_yaw_rate_rad_s": signed_peak_yaw_rate,
+        "plant_odom_yaw_drift_after_stop_rad": yaw_drift_after_stop,
+        "terminal_plant_odom_yaw_rate_rad_s": terminal_yaw_rate,
+        "terminal_max_wheel_speed_rad_s": terminal_wheel_speed,
+        "rotation_odom_sample_count": len(odom_rates),
+        "safety_status_json_sample_count": len(safety_status),
+        "plant_status_sample_count": len(plant_status),
+    }
+    return {"checks": checks, "metrics": metrics, "passed": all(checks.values())}
+
+
 def evaluate_estop_stop(raw: dict[str, Any], *, minimum_pre_estop_speed_mps: float = 0.98) -> dict[str, Any]:
     """Score a stop asserted while the vehicle is physically in motion.
 

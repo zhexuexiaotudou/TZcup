@@ -7,7 +7,7 @@ import math
 import time
 
 from geometry_msgs.msg import PoseStamped
-from nav2_msgs.action import NavigateToPose
+from nav2_msgs.action import NavigateToPose, Spin
 from nav_msgs.msg import OccupancyGrid, Odometry
 import rclpy
 from rclpy.action import ActionClient
@@ -15,6 +15,7 @@ from rclpy.clock import Clock, ClockType
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from rclpy.time import Time
+from sensor_msgs.msg import LaserScan
 from std_msgs.msg import Bool, String
 from tf2_ros import Buffer, TransformException, TransformListener
 
@@ -28,6 +29,7 @@ from .frontier_runtime_core import (
     bounded_action_server_ready,
     goal_response_timed_out,
     progress_deadline_after_feedback,
+    revisions_after_baseline,
 )
 
 
@@ -42,18 +44,42 @@ class FormalFrontierExplorer(Node):
         self.declare_parameter("map_frame", "map")
         self.declare_parameter("base_frame", "base_footprint")
         self.declare_parameter("navigate_action", "/navigate_to_pose")
+        self.declare_parameter("spin_action", "/spin")
+        self.declare_parameter("scan_topic", "/scan/navigation")
         self.declare_parameter("planning_period_sec", 2.0)
         self.declare_parameter("sample_spacing_m", 0.50)
         self.declare_parameter("max_consecutive_failures", 20)
         self.declare_parameter("action_discovery_timeout_sec", 0.1)
         self.declare_parameter("goal_response_timeout_sec", 5.0)
         self.declare_parameter("goal_execution_timeout_sec", 900.0)
+        # Full-campus Gazebo can run far below real time.  Give Nav2 enough
+        # wall time to make the 5 cm progress that refreshes this watchdog.
         self.declare_parameter("goal_progress_timeout_sec", 120.0)
         self.declare_parameter("cancel_timeout_sec", 5.0)
+        # The nominal UTM-30LX field of view is 270 degrees, but the two
+        # mesh-proven self-return masks remove 27.5 degrees at its rear edges.
+        # A 90 degree turn therefore leaves a 27.5 degree world wedge unseen.
+        # Nav2 owns a 135 degree turn, which covers the 117.5 degree effective
+        # blind sector plus 17.5 degrees of margin for action tolerance, scan
+        # discretization and mount uncertainty; this node never publishes
+        # Twist directly.
+        self.declare_parameter(
+            "initial_scan_sweep_target_yaw_rad", 3.0 * math.pi / 4.0
+        )
+        self.declare_parameter("initial_scan_sweep_prepare_timeout_sec", 60.0)
+        self.declare_parameter("initial_scan_sweep_response_timeout_sec", 5.0)
+        # The 160 kg four-wheel skid-steer reaches a lower physical yaw rate
+        # than Nav2's command under the continuous 60 A drivetrain envelope.
+        # Allow the one 135 degree scan turn to complete at low simulation RTF.
+        self.declare_parameter("initial_scan_sweep_time_allowance_sec", 60.0)
+        self.declare_parameter("initial_scan_sweep_result_timeout_sec", 600.0)
+        self.declare_parameter("initial_scan_sweep_update_timeout_sec", 60.0)
         self._contract = load_campus_map_contract(
             str(self.get_parameter("episode_manifest").value)
         )
         self._map: OccupancyGrid | None = None
+        self._map_revision = 0
+        self._scan_revision = 0
         self._odom_seen = False
         self._goal_active = False
         self._map_ready = False
@@ -74,6 +100,17 @@ class FormalFrontierExplorer(Node):
         self._cancel_result_deadline_monotonic: float | None = None
         self._cancel_reason: str | None = None
         self._terminal_blocked = False
+        self._initial_scan_sweep_state = "waiting_for_map"
+        self._initial_scan_sweep_prepare_deadline_monotonic = (
+            time.monotonic()
+            + self._positive_timeout("initial_scan_sweep_prepare_timeout_sec")
+        )
+        self._initial_scan_sweep_response_deadline_monotonic: float | None = None
+        self._initial_scan_sweep_result_deadline_monotonic: float | None = None
+        self._initial_scan_sweep_update_deadline_monotonic: float | None = None
+        self._initial_scan_sweep_handle = None
+        self._spin_baseline_map_revision: int | None = None
+        self._spin_baseline_scan_revision: int | None = None
         self._tf_buffer = Buffer()
         self._tf_listener = TransformListener(self._tf_buffer, self, spin_thread=False)
         map_qos = QoSProfile(depth=1)
@@ -91,12 +128,23 @@ class FormalFrontierExplorer(Node):
             self._on_odom,
             20,
         )
+        self.create_subscription(
+            LaserScan,
+            str(self.get_parameter("scan_topic").value),
+            self._on_scan,
+            QoSProfile(depth=1, reliability=ReliabilityPolicy.RELIABLE),
+        )
         self.create_subscription(Bool, "/formal_mapping/map_ready", self._on_ready, 10)
         self._status = self.create_publisher(String, "/formal_mapping/explorer_status", 10)
         self._client = ActionClient(
             self,
             NavigateToPose,
             str(self.get_parameter("navigate_action").value),
+        )
+        self._spin_client = ActionClient(
+            self,
+            Spin,
+            str(self.get_parameter("spin_action").value),
         )
         self.create_timer(
             float(self.get_parameter("planning_period_sec").value), self._plan
@@ -115,6 +163,12 @@ class FormalFrontierExplorer(Node):
                 "world_truth_used_for_control": False,
                 "direct_velocity_control": False,
                 "planner": "nav2_navigate_to_pose",
+                # The HMI retains the latest status only.  Keep this state on
+                # every later event so a frontier request cannot hide a
+                # successful initial sweep receipt.
+                "initial_scan_sweep_state": getattr(
+                    self, "_initial_scan_sweep_state", "initializing"
+                ),
                 **values,
             },
             sort_keys=True,
@@ -123,6 +177,10 @@ class FormalFrontierExplorer(Node):
 
     def _on_map(self, message: OccupancyGrid) -> None:
         self._map = message
+        self._map_revision += 1
+
+    def _on_scan(self, _message: LaserScan) -> None:
+        self._scan_revision += 1
 
     def _on_odom(self, message: Odometry) -> None:
         self._odom_seen = True
@@ -156,6 +214,207 @@ class FormalFrontierExplorer(Node):
         self._terminal_blocked = True
         self._publish(state, terminal=True, **values)
 
+    def _block_initial_scan_sweep(
+        self, reason: str, **values
+    ) -> None:  # type: ignore[no-untyped-def]
+        """Fail closed before frontier planning if the sensor sweep is unproven."""
+        if self._terminal_blocked:
+            return
+        self._initial_scan_sweep_state = "blocked"
+        self._block("initial_scan_sweep_blocked", reason=reason, **values)
+
+    def _start_initial_scan_sweep(self) -> None:
+        allowance = self._positive_timeout("initial_scan_sweep_time_allowance_sec")
+        target_yaw = self._positive_timeout("initial_scan_sweep_target_yaw_rad")
+        if target_yaw > math.pi:
+            raise ValueError("initial scan sweep target yaw must not exceed pi")
+        goal = Spin.Goal()
+        goal.target_yaw = target_yaw
+        goal.time_allowance.sec = int(allowance)
+        goal.time_allowance.nanosec = int((allowance % 1.0) * 1_000_000_000)
+        self._initial_scan_sweep_state = "waiting_for_spin_response"
+        self._initial_scan_sweep_response_deadline_monotonic = (
+            time.monotonic()
+            + self._positive_timeout("initial_scan_sweep_response_timeout_sec")
+        )
+        sent = self._spin_client.send_goal_async(goal)
+        sent.add_done_callback(self._on_initial_scan_sweep_response)
+        self._publish(
+            "initial_scan_sweep_requested",
+            target_yaw_rad=goal.target_yaw,
+            time_allowance_sec=allowance,
+            motion_action="nav2_spin",
+        )
+
+    def _on_initial_scan_sweep_response(self, future) -> None:  # type: ignore[no-untyped-def]
+        try:
+            handle = future.result()
+        except Exception as exc:
+            self._block_initial_scan_sweep("spin_response_error", detail=str(exc))
+            return
+        if self._initial_scan_sweep_state != "waiting_for_spin_response":
+            # A late acceptance after the bounded response window must not
+            # create unobserved motion after this explorer has failed closed.
+            if handle is not None and handle.accepted:
+                handle.cancel_goal_async()
+            return
+        self._initial_scan_sweep_response_deadline_monotonic = None
+        if handle is None or not handle.accepted:
+            self._block_initial_scan_sweep("spin_rejected")
+            return
+        self._initial_scan_sweep_handle = handle
+        # Baselines are captured on acceptance, before any spin motion.  A
+        # map or scan generated while Nav2 rotates must count as post-sweep.
+        self._spin_baseline_map_revision = self._map_revision
+        self._spin_baseline_scan_revision = self._scan_revision
+        self._initial_scan_sweep_state = "waiting_for_spin_result"
+        self._initial_scan_sweep_result_deadline_monotonic = (
+            time.monotonic()
+            + self._positive_timeout("initial_scan_sweep_result_timeout_sec")
+        )
+        result = handle.get_result_async()
+        result.add_done_callback(self._on_initial_scan_sweep_result)
+        self._publish("initial_scan_sweep_accepted", motion_action="nav2_spin")
+
+    def _on_initial_scan_sweep_result(self, future) -> None:  # type: ignore[no-untyped-def]
+        try:
+            wrapped = future.result()
+            error_code = int(wrapped.result.error_code)
+            error_msg = str(wrapped.result.error_msg)
+        except Exception as exc:
+            self._initial_scan_sweep_handle = None
+            self._block_initial_scan_sweep("spin_result_error", detail=str(exc))
+            return
+        if self._initial_scan_sweep_state != "waiting_for_spin_result":
+            return
+        self._initial_scan_sweep_handle = None
+        self._initial_scan_sweep_result_deadline_monotonic = None
+        if (
+            int(wrapped.status) != 4  # action_msgs/GoalStatus.STATUS_SUCCEEDED
+            or int(wrapped.result.error_code) != Spin.Result.NONE
+        ):
+            reason = "spin_cancelled" if int(wrapped.status) == 5 else "spin_failed"
+            self._block_initial_scan_sweep(
+                reason,
+                status=int(wrapped.status),
+                error_code=error_code,
+                error_msg=error_msg,
+            )
+            return
+        assert self._spin_baseline_map_revision is not None
+        assert self._spin_baseline_scan_revision is not None
+        map_updated, scan_updated = revisions_after_baseline(
+            map_revision=self._map_revision,
+            scan_revision=self._scan_revision,
+            baseline_map_revision=self._spin_baseline_map_revision,
+            baseline_scan_revision=self._spin_baseline_scan_revision,
+        )
+        if map_updated and scan_updated:
+            self._initial_scan_sweep_state = "complete"
+            self._publish(
+                "initial_scan_sweep_complete",
+                map_revision=self._map_revision,
+                scan_revision=self._scan_revision,
+            )
+            return
+        self._initial_scan_sweep_state = "waiting_for_post_spin_updates"
+        self._initial_scan_sweep_update_deadline_monotonic = (
+            time.monotonic()
+            + self._positive_timeout("initial_scan_sweep_update_timeout_sec")
+        )
+        self._publish(
+            "initial_scan_sweep_succeeded_waiting_for_sensor_map_update",
+            map_updated=map_updated,
+            scan_updated=scan_updated,
+            baseline_map_revision=self._spin_baseline_map_revision,
+            baseline_scan_revision=self._spin_baseline_scan_revision,
+        )
+
+    def _initial_scan_sweep_blocks_frontier(self) -> bool:
+        """Advance the one-shot Nav2 sweep and return whether planning waits."""
+        if self._initial_scan_sweep_state == "complete":
+            return False
+        if self._terminal_blocked:
+            return True
+        now = time.monotonic()
+        if self._initial_scan_sweep_state == "waiting_for_map":
+            if now >= self._initial_scan_sweep_prepare_deadline_monotonic:
+                self._block_initial_scan_sweep("initial_prerequisite_timeout")
+                return True
+            if self._map is None:
+                self._publish("initial_scan_sweep_waiting_for_map")
+                return True
+            if not self._odom_seen:
+                self._publish("initial_scan_sweep_waiting_for_odom")
+                return True
+            if self._scan_revision <= 0:
+                self._publish("initial_scan_sweep_waiting_for_scan")
+                return True
+            if self._map_position() is None:
+                self._publish("initial_scan_sweep_waiting_for_map_frame_pose")
+                return True
+            if not bounded_action_server_ready(
+                self._spin_client,
+                timeout_sec=float(
+                    self.get_parameter("action_discovery_timeout_sec").value
+                ),
+            ):
+                self._publish("initial_scan_sweep_waiting_for_spin_action")
+                return True
+            self._start_initial_scan_sweep()
+            return True
+        if self._initial_scan_sweep_state == "waiting_for_post_spin_updates":
+            assert self._spin_baseline_map_revision is not None
+            assert self._spin_baseline_scan_revision is not None
+            map_updated, scan_updated = revisions_after_baseline(
+                map_revision=self._map_revision,
+                scan_revision=self._scan_revision,
+                baseline_map_revision=self._spin_baseline_map_revision,
+                baseline_scan_revision=self._spin_baseline_scan_revision,
+            )
+            if map_updated and scan_updated:
+                self._initial_scan_sweep_state = "complete"
+                self._initial_scan_sweep_update_deadline_monotonic = None
+                self._publish(
+                    "initial_scan_sweep_complete",
+                    map_revision=self._map_revision,
+                    scan_revision=self._scan_revision,
+                )
+                return False
+            self._publish(
+                "initial_scan_sweep_waiting_for_sensor_map_update",
+                map_updated=map_updated,
+                scan_updated=scan_updated,
+            )
+        return True
+
+    def _watch_initial_scan_sweep(self, now: float) -> None:
+        if self._terminal_blocked:
+            return
+        if (
+            self._initial_scan_sweep_state == "waiting_for_spin_response"
+            and now >= self._initial_scan_sweep_response_deadline_monotonic
+        ):
+            self._initial_scan_sweep_response_deadline_monotonic = None
+            self._block_initial_scan_sweep("spin_response_timeout")
+            return
+        if (
+            self._initial_scan_sweep_state == "waiting_for_spin_result"
+            and now >= self._initial_scan_sweep_result_deadline_monotonic
+        ):
+            if self._initial_scan_sweep_handle is not None:
+                self._initial_scan_sweep_handle.cancel_goal_async()
+            self._initial_scan_sweep_handle = None
+            self._initial_scan_sweep_result_deadline_monotonic = None
+            self._block_initial_scan_sweep("spin_result_timeout")
+            return
+        if (
+            self._initial_scan_sweep_state == "waiting_for_post_spin_updates"
+            and now >= self._initial_scan_sweep_update_deadline_monotonic
+        ):
+            self._initial_scan_sweep_update_deadline_monotonic = None
+            self._block_initial_scan_sweep("post_spin_sensor_or_map_update_timeout")
+
     def _request_cancel(self, reason: str) -> None:
         if self._active_goal_handle is None or self._cancel_future is not None:
             self._block("frontier_cancel_unavailable", reason=reason)
@@ -169,6 +428,7 @@ class FormalFrontierExplorer(Node):
 
     def _watch_goal(self) -> None:
         now = time.monotonic()
+        self._watch_initial_scan_sweep(now)
         if (
             self._terminal_blocked
             and not self._timed_out_goal_request_ids
@@ -249,12 +509,14 @@ class FormalFrontierExplorer(Node):
             self._terminal_blocked
             or self._map_ready
             or self._goal_active
-            or self._map is None
-            or not self._odom_seen
         ):
             return
+        if self._initial_scan_sweep_blocks_frontier():
+            return
+        if self._map is None or not self._odom_seen:
+            return
         if self._failures >= int(self.get_parameter("max_consecutive_failures").value):
-            self._publish("blocked_excessive_nav2_failures", failures=self._failures)
+            self._block("blocked_excessive_nav2_failures", failures=self._failures)
             return
         message = self._map
         map_position = self._map_position()
@@ -264,6 +526,29 @@ class FormalFrontierExplorer(Node):
         yaw = math.atan2(
             2.0 * (orientation.w * orientation.z + orientation.x * orientation.y),
             1.0 - 2.0 * (orientation.y * orientation.y + orientation.z * orientation.z),
+        )
+        selector_diagnostics: dict[str, object] = {}
+        # The public manifest certificate is tied to the fixed map-frame
+        # origin.  A skid-steer Spin may translate slightly; never apply that
+        # certificate after meaningful pose drift.
+        bootstrap_start_offset_m = math.hypot(map_position[0], map_position[1])
+        # The previous physical run showed 0.53 m of map-frame estimate drift
+        # after the skid-steer sweep. Keep a bounded 0.75 m identity gate; the
+        # selector still checks every excused unknown cell against the tighter
+        # 1.5 m public certificate, so this does not enlarge the safe region.
+        bootstrap_start_tolerance_m = 0.75
+        bootstrap_certificate_eligible = (
+            self._goals_requested == 0
+            and self._initial_scan_sweep_state == "complete"
+            and self._contract.fixed_start_clear_radius_m > 0.0
+            and bootstrap_start_offset_m <= bootstrap_start_tolerance_m
+        )
+        selector_diagnostics.update(
+            {
+                "bootstrap_certificate_eligible": bootstrap_certificate_eligible,
+                "bootstrap_start_offset_m": bootstrap_start_offset_m,
+                "bootstrap_start_tolerance_m": bootstrap_start_tolerance_m,
+            }
         )
         target = select_frontier_goal(
             message.data,
@@ -278,9 +563,25 @@ class FormalFrontierExplorer(Node):
             robot_y=map_position[1],
             previous_goals=self._previous[-100:],
             sample_spacing_m=float(self.get_parameter("sample_spacing_m").value),
+            bootstrap_clear_center=(0.0, 0.0)
+            if bootstrap_certificate_eligible
+            else None,
+            bootstrap_clear_radius_m=(
+                self._contract.fixed_start_clear_radius_m
+                if bootstrap_certificate_eligible
+                else 0.0
+            ),
+            diagnostics=selector_diagnostics,
         )
         if target is None:
-            self._publish("waiting_for_reachable_frontier")
+            self._publish(
+                "waiting_for_reachable_frontier",
+                selector_diagnostics=selector_diagnostics,
+            )
+            self.get_logger().info(
+                "Frontier selector has no target: %s"
+                % json.dumps(selector_diagnostics, sort_keys=True)
+            )
             return
         if not bounded_action_server_ready(
             self._client,
@@ -293,7 +594,12 @@ class FormalFrontierExplorer(Node):
         goal = NavigateToPose.Goal()
         goal.pose = PoseStamped()
         goal.pose.header.frame_id = "map"
-        goal.pose.header.stamp = self.get_clock().now().to_msg()
+        # A frontier can be selected while a low-real-time-factor simulation
+        # advances beyond Nav2's transform cache.  A zero PoseStamped stamp is
+        # the ROS/Nav2 "latest transform" convention: it keeps this map-frame
+        # target from becoming stale before NavigateToPose consumes it.
+        goal.pose.header.stamp.sec = 0
+        goal.pose.header.stamp.nanosec = 0
         goal.pose.pose.position.x = target[0]
         goal.pose.pose.position.y = target[1]
         target_yaw = goal_tangent_yaw(

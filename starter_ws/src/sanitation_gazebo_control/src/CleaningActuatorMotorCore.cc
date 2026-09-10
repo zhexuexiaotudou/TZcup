@@ -200,6 +200,10 @@ CleaningActuatorMotorParameters DefaultCleaningActuatorMotorParameters()
   lift.overtemperature_reset_c = 45.0;
   lift.stall_speed_threshold = 0.0002;
   lift.stall_trip_time_s = 1.5;
+  // The detailed cleaning assembly settles about 1.3 mm above the authored
+  // zero stop under contact load. Treat that bounded offset as seated; a
+  // genuinely blocked 100 mm deployment remains far outside this deadband.
+  lift.position_tolerance = 0.002;
   lift.position_actuator = true;
   parameters.motors[3] = lift;
 

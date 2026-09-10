@@ -9,6 +9,27 @@ namespace sanitation_gazebo_control
 
 constexpr std::size_t kA300WheelCount = 4;
 
+/// Planar drivetrain reference or feedback expressed at base_footprint.
+/// Keeping the conversion below independent from Gazebo makes its signs and
+/// wheel ordering directly regression-testable.
+struct A300PlanarTwist
+{
+  double linear_x_mps{0.0};
+  double angular_z_rad_s{0.0};
+};
+
+/// Convert the skid-steer planar command into the fixed FL, FR, RL, RR order.
+std::array<double, kA300WheelCount> A300WheelSpeedsFromPlanarTwist(
+  const A300PlanarTwist & twist,
+  double control_wheel_radius_m,
+  double wheel_track_m);
+
+/// Reconstruct the planar feedback used by the plant's odometry publisher.
+A300PlanarTwist A300PlanarTwistFromWheelSpeeds(
+  const std::array<double, kA300WheelCount> & wheel_speed_rad_s,
+  double control_wheel_radius_m,
+  double wheel_track_m);
+
 enum class A300DrivetrainStopReason : std::uint8_t
 {
   kNone = 0,
@@ -38,6 +59,10 @@ struct A300DrivetrainPlantParameters
   double wheel_side_torque_constant_nm_per_a{3.5};
   double low_speed_torque_limit_nm{59.5};
   double speed_error_gain_nm_per_rad_s{12.0};
+  // Four-wheel skid steer needs more breakaway torque when the left and
+  // right sides counter-rotate.  Keep this separate from the straight-line
+  // gain so the 160 kg final vehicle can turn without overdriving launch.
+  double counter_rotation_speed_error_gain_nm_per_rad_s{120.0};
   double torque_slew_rate_nm_per_s{400.0};
   double service_brake_torque_limit_nm{32.0};
   double brake_response_delay_s{0.08};

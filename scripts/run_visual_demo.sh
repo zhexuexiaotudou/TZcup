@@ -143,6 +143,12 @@ fi
 
 pids=()
 stopped=0
+rosbag_pid=""
+rosbag_finalized=0
+rosbag_finalization_failed=0
+ROSBAG_SIGINT_TIMEOUT_SEC="${ROSBAG_SIGINT_TIMEOUT_SEC:-180}"
+ROSBAG_SIGTERM_TIMEOUT_SEC="${ROSBAG_SIGTERM_TIMEOUT_SEC:-60}"
+ROSBAG_SEAL_TIMEOUT_SEC="${ROSBAG_SEAL_TIMEOUT_SEC:-30}"
 stop_group() {
   local pid="${1:-}"
   [[ -n "${pid}" ]] || return
@@ -189,6 +195,96 @@ stop_group() {
   kill -KILL "${pid}" 2>/dev/null || true
   wait "${pid}" 2>/dev/null || true
 }
+rosbag_group_alive() {
+  local pid="${1:-}"
+  kill -0 "${pid}" 2>/dev/null || pgrep -g "${pid}" >/dev/null 2>&1
+}
+wait_for_rosbag_exit() {
+  local pid="$1"
+  local timeout_sec="$2"
+  for _ in $(seq 1 "$((timeout_sec * 10))"); do
+    if ! rosbag_group_alive "${pid}"; then
+      wait "${pid}" 2>/dev/null || true
+      return 0
+    fi
+    sleep 0.1
+  done
+  return 1
+}
+wait_for_rosbag_seal() {
+  local bag_dir="$1"
+  for _ in $(seq 1 "$((ROSBAG_SEAL_TIMEOUT_SEC * 10))"); do
+    if python3 "${ROOT}/scripts/mcap_validation.py" \
+      --bag "${bag_dir}" --require-sealed \
+      > "${OUTPUT_DIR}/rosbag_seal_check.json" 2>/dev/null
+    then
+      return 0
+    fi
+    sleep 0.1
+  done
+  return 1
+}
+write_rosbag_finalization() {
+  local status="$1"
+  local escalation="$2"
+  local process_group="$3"
+  printf '{"schema_version":1,"status":"%s","escalation":"%s","process_group":"%s","timestamp_utc":"%s"}\n' \
+    "${status}" "${escalation}" "${process_group}" \
+    "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    > "${OUTPUT_DIR}/rosbag_finalization.json"
+}
+finalize_rosbag() {
+  [[ -n "${rosbag_pid}" ]] || return 0
+  [[ "${rosbag_finalized}" -eq 0 ]] || return 0
+  [[ "${rosbag_finalization_failed}" -eq 0 ]] || return 1
+
+  local process_group
+  process_group="$(ps -o pgid= -p "${rosbag_pid}" 2>/dev/null | tr -d '[:space:]' || true)"
+  if [[ "${process_group}" != "${rosbag_pid}" ]]; then
+    # setsid must make the recorder PID its PGID. Do not target an unrelated
+    # process group if that invariant is absent; stop only the known launcher
+    # and reject the artifact because its descendants cannot be accounted for.
+    process_group="${process_group:-unavailable}"
+    kill -INT "${rosbag_pid}" 2>/dev/null || true
+    if ! wait_for_rosbag_exit "${rosbag_pid}" "${ROSBAG_SIGINT_TIMEOUT_SEC}"; then
+      kill -TERM "${rosbag_pid}" 2>/dev/null || true
+      if ! wait_for_rosbag_exit "${rosbag_pid}" "${ROSBAG_SIGTERM_TIMEOUT_SEC}"; then
+        kill -KILL "${rosbag_pid}" 2>/dev/null || true
+        wait "${rosbag_pid}" 2>/dev/null || true
+        write_rosbag_finalization "FAILED" "PGID_MISMATCH_KILL_AFTER_TIMEOUT" "${process_group}"
+      else
+        write_rosbag_finalization "FAILED" "PGID_MISMATCH" "${process_group}"
+      fi
+    else
+      write_rosbag_finalization "FAILED" "PGID_MISMATCH" "${process_group}"
+    fi
+    rosbag_finalization_failed=1
+    echo "rosbag recorder did not own its process group; MCAP is rejected." >&2
+    return 1
+  fi
+  kill -INT -- "-${rosbag_pid}" 2>/dev/null || true
+
+  if ! wait_for_rosbag_exit "${rosbag_pid}" "${ROSBAG_SIGINT_TIMEOUT_SEC}"; then
+    kill -TERM -- "-${rosbag_pid}" 2>/dev/null || true
+    if ! wait_for_rosbag_exit "${rosbag_pid}" "${ROSBAG_SIGTERM_TIMEOUT_SEC}"; then
+      kill -KILL -- "-${rosbag_pid}" 2>/dev/null || true
+      wait "${rosbag_pid}" 2>/dev/null || true
+      rosbag_finalization_failed=1
+      write_rosbag_finalization "FAILED" "KILL_AFTER_TIMEOUT" "${process_group}"
+      echo "rosbag recorder exceeded graceful shutdown timeouts; MCAP is rejected." >&2
+      return 1
+    fi
+  fi
+
+  if ! wait_for_rosbag_seal "${OUTPUT_DIR}/visual_demo_bag"; then
+    rosbag_finalization_failed=1
+    write_rosbag_finalization "FAILED" "NO_KILL_UNSEALED" "${process_group}"
+    echo "rosbag recorder exited without a sealed MCAP metadata/footer pair." >&2
+    return 1
+  fi
+  rosbag_finalized=1
+  write_rosbag_finalization "FINALIZED" "NONE" "${process_group}"
+}
 stop_all() {
   [[ "${stopped}" -eq 0 ]] || return
   stopped=1
@@ -228,6 +324,9 @@ stop_all() {
 on_exit() {
   exit_code=$?
   trap - EXIT INT TERM
+  if ! finalize_rosbag; then
+    exit_code=4
+  fi
   stop_all
   exit "${exit_code}"
 }
@@ -737,7 +836,7 @@ if [[ "${RECORD_MCAP}" -eq 1 ]]; then
     /coverage/actual_transit_trajectory /coverage/actual_repair_trajectory \
     /coverage/diagnostics /local_costmap/costmap /global_costmap/costmap \
     > "${OUTPUT_DIR}/rosbag.log" 2>&1 &
-  pids+=("$!")
+  rosbag_pid="$!"
 fi
 
 effective_video_mode="${VIDEO_MODE}"
@@ -891,12 +990,24 @@ if [[ "${gui_closed_during_mission}" -eq 1 ]]; then
     "${runtime_termination_status}" \
     "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
     > "${OUTPUT_DIR}/launcher_termination.json"
+  rosbag_finalize_code=0
+  finalize_rosbag || rosbag_finalize_code=$?
   stop_all
   trap - EXIT INT TERM
+  if [[ "${rosbag_finalize_code}" -ne 0 ]]; then
+    exit 4
+  fi
   if [[ "${runtime_termination_status}" == "WSLG_WINDOW_GUARD_FAILED" ]]; then
     exit 7
   fi
   exit 0
+fi
+
+if [[ "${RECORD_MCAP}" -eq 1 ]]; then
+  # The coverage process has reached a terminal state.  Seal the recorder now,
+  # while the ROS graph is still alive, before generic runtime cleanup can send
+  # TERM/KILL to it.
+  finalize_rosbag || true
 fi
 
 sleep 8

@@ -51,15 +51,36 @@ class FormalSavedMapCoverageExecutor(Node):
         self._navigate = ActionClient(self, NavigateToPose, "/navigate_to_pose")
         self._follow = ActionClient(self, FollowPath, "/follow_path")
         self._brush_state = False
+        self._state_sequence = 0
+        self._current_state: dict | None = None
+        self._state_heartbeat = self.create_timer(1.0, self._republish_state)
 
     def _publish_state(self, state: str, **details) -> None:  # type: ignore[no-untyped-def]
-        message = String()
-        message.data = json.dumps({
+        self._current_state = {
             "schema_version": 1,
             "state": state,
             "ground_truth_used_for_control": False,
             **details,
-        }, sort_keys=True)
+        }
+        self._emit_state(heartbeat=False)
+
+    def _republish_state(self) -> None:
+        if self._current_state is not None:
+            self._emit_state(heartbeat=True)
+
+    def _emit_state(self, *, heartbeat: bool) -> None:
+        if self._current_state is None:
+            return
+        self._state_sequence += 1
+        message = String()
+        message.data = json.dumps(
+            {
+                **self._current_state,
+                "sequence": self._state_sequence,
+                "heartbeat": heartbeat,
+            },
+            sort_keys=True,
+        )
         self._state.publish(message)
 
     def _set_brush(self, enabled: bool) -> None:

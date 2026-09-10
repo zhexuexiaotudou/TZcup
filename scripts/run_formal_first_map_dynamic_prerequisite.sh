@@ -16,7 +16,12 @@ snapshot="${FORMAL_VEHICLE_SNAPSHOT_MANIFEST:-${repo_root}/reports/engineering/f
 runtime_binding="${output}/runtime_gate_binding.json"
 domain="${ROS_DOMAIN_ID:-99}"
 mapping_timeout_sec="${FORMAL_MAPPING_TIMEOUT_S:-21600}"
+FORMAL_VISUAL_GUI="${FORMAL_VISUAL_GUI:-false}"
 mapping_poll_period_sec=15
+if [[ "${FORMAL_VISUAL_GUI}" != "false" && "${FORMAL_VISUAL_GUI}" != "true" ]]; then
+  echo "FORMAL_VISUAL_GUI must be the strict boolean true or false" >&2
+  exit 2
+fi
 if [[ ! "${mapping_timeout_sec}" =~ ^[1-9][0-9]*$ ]]; then
   echo "formal mapping timeout must be a positive integer" >&2
   exit 2
@@ -99,7 +104,7 @@ formal_runtime_install_traps cleanup
 
 "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 launch sanitation_formal_campus_integration \
   formal_campus_map_lifecycle.launch.py \
-  mission_mode:=mapping gui:=false \
+  mission_mode:=mapping gui:="${FORMAL_VISUAL_GUI}" \
   world:="${mapping_world}" \
   episode_manifest:="${episode}/public/episode_manifest.json" \
   map_artifact_dir:="${output}" \

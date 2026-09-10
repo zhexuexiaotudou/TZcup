@@ -38,6 +38,8 @@ setup(
             "sanitation_formal_campus_integration.frontier_explorer:main",
             "formal-scan-self-filter = "
             "sanitation_formal_campus_integration.formal_scan_self_filter:main",
+            "formal-slam-scan-startup-gate = "
+            "sanitation_formal_campus_integration.formal_slam_scan_startup_gate:main",
             "formal-saved-map-coverage-executor = "
             "sanitation_formal_campus_integration.saved_map_coverage_executor:main",
             "formal-dynamic-footprint-manager = "

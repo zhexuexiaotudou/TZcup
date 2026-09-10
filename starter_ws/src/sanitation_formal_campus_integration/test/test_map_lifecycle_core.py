@@ -1,5 +1,6 @@
 import hashlib
 import json
+import math
 from pathlib import Path
 
 import pytest
@@ -198,6 +199,24 @@ def test_frontier_goal_is_known_free_inside_geofence():
     for row in range(2, 5):
         for column in range(2, 5):
             data[row * 7 + column] = 0
+    baseline = select_frontier_goal(
+        data,
+        width=7,
+        height=7,
+        resolution=0.1,
+        origin_x=0.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((0.0, 0.0), (0.7, 0.0), (0.7, 0.7), (0.0, 0.7)),
+        robot_x=0.35,
+        robot_y=0.35,
+        sample_spacing_m=0.1,
+        clearance_m=0.0,
+        frontier_standoff_m=0.2,
+        seed_max_offset_m=0.2,
+        min_goal_distance_m=0.0,
+    )
+    diagnostics: dict[str, object] = {}
     goal = select_frontier_goal(
         data,
         width=7,
@@ -210,10 +229,632 @@ def test_frontier_goal_is_known_free_inside_geofence():
         robot_x=0.35,
         robot_y=0.35,
         sample_spacing_m=0.1,
+        clearance_m=0.0,
+        frontier_standoff_m=0.2,
+        seed_max_offset_m=0.2,
+        min_goal_distance_m=0.0,
+        diagnostics=diagnostics,
     )
     assert goal is not None
+    assert goal == baseline
     column, row = int(goal[0] / 0.1), int(goal[1] / 0.1)
     assert data[row * 7 + column] == 0
+    assert diagnostics == {
+        "source_dimensions": [7, 7],
+        "source_resolution_m": 0.1,
+        "clearance_model": "conservative_cell_intersection_circle",
+        "clearance_mask_cell_count": 1,
+        "bootstrap_step_limit": 0,
+        "seed_offset_m": pytest.approx(0.0),
+        "seed_safe": True,
+        "seed_touches_boundary": False,
+        "anchor_found": True,
+        "bootstrap_certificate_active": False,
+        "raw_frontier_evaluated": True,
+        "raw_frontier_count": 8,
+        "candidate_count": 9,
+        "rejection_reason": None,
+    }
+
+
+def test_axis_aligned_observation_fast_path_counts_only_field_cell_centers():
+    data = [-1] * (40 * 30)
+    for row in range(5, 25):
+        for column in range(5, 30):
+            data[row * 40 + column] = 0
+    data[12 * 40 + 14] = -1
+
+    quality = assess_grid_observation(
+        data,
+        width=40,
+        height=30,
+        resolution=0.1,
+        origin_x=-0.5,
+        origin_y=-0.5,
+        origin_yaw=0.0,
+        geofence=((0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (0.0, 2.0)),
+        threshold=0.5,
+    )
+
+    assert quality.field_cells == 400
+    assert quality.observed_cells == 399
+    assert quality.observed_fraction == pytest.approx(399 / 400)
+
+
+def test_frontier_goal_never_crosses_to_a_disconnected_free_island():
+    width, height, resolution = 30, 15, 0.1
+    data = [-1] * (width * height)
+    for row in range(2, 13):
+        for column in range(2, 11):
+            data[row * width + column] = 0
+        for column in range(20, 28):
+            data[row * width + column] = 0
+
+    goal = select_frontier_goal(
+        data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=0.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((0.0, 0.0), (3.0, 0.0), (3.0, 1.5), (0.0, 1.5)),
+        robot_x=0.55,
+        robot_y=0.75,
+        sample_spacing_m=0.1,
+        clearance_m=0.2,
+        frontier_standoff_m=0.4,
+        seed_max_offset_m=0.2,
+        min_goal_distance_m=0.2,
+    )
+
+    assert goal is not None
+    assert goal[0] < 1.1
+
+
+def test_frontier_goal_never_crosses_a_vehicle_width_blocking_corridor():
+    width, height, resolution = 30, 15, 0.1
+    data = [-1] * (width * height)
+    for row in range(2, 13):
+        for column in range(2, 11):
+            data[row * width + column] = 0
+        for column in range(20, 28):
+            data[row * width + column] = 0
+    for column in range(11, 20):
+        data[7 * width + column] = 0
+
+    goal = select_frontier_goal(
+        data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=0.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((0.0, 0.0), (3.0, 0.0), (3.0, 1.5), (0.0, 1.5)),
+        robot_x=0.55,
+        robot_y=0.75,
+        sample_spacing_m=0.1,
+        clearance_m=0.2,
+        frontier_standoff_m=0.4,
+        seed_max_offset_m=0.2,
+        min_goal_distance_m=0.2,
+    )
+
+    assert goal is not None
+    assert goal[0] < 1.1
+
+
+def test_frontier_goal_does_not_escape_an_internal_narrow_corridor():
+    width, height, resolution = 30, 15, 0.1
+    data = [-1] * (width * height)
+    for row in range(2, 13):
+        for column in range(2, 11):
+            data[row * width + column] = 0
+        for column in range(20, 28):
+            data[row * width + column] = 0
+    for column in range(11, 20):
+        data[7 * width + column] = 0
+
+    diagnostics: dict[str, object] = {}
+    goal = select_frontier_goal(
+        data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=0.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((0.0, 0.0), (3.0, 0.0), (3.0, 1.5), (0.0, 1.5)),
+        robot_x=1.55,
+        robot_y=0.75,
+        sample_spacing_m=0.1,
+        clearance_m=0.2,
+        frontier_standoff_m=0.4,
+        seed_max_offset_m=0.2,
+        min_goal_distance_m=0.2,
+        diagnostics=diagnostics,
+    )
+
+    assert goal is None
+    assert diagnostics["source_dimensions"] == [30, 15]
+    assert diagnostics["source_resolution_m"] == pytest.approx(0.1)
+    assert diagnostics["seed_offset_m"] == pytest.approx(0.0)
+    assert diagnostics["seed_safe"] is False
+    assert diagnostics["seed_touches_boundary"] is False
+    assert diagnostics["anchor_found"] is False
+    assert diagnostics["raw_frontier_count"] == 0
+    assert diagnostics["candidate_count"] == 0
+    assert diagnostics["rejection_reason"] == "no_footprint_safe_bootstrap_anchor"
+
+
+def test_frontier_goal_bootstraps_past_lidar_unknown_cells_under_robot_body():
+    width, height, resolution = 60, 40, 0.1
+    data = [-1] * (width * height)
+    for row in range(4, 36):
+        for column in range(5, 55):
+            data[row * width + column] = 0
+    # The center cell is known-free, but one unobservable under-body cell lies
+    # on the seed clearance edge. Moving the anchor one cell away makes the
+    # complete clearance window known-free without crossing unknown space.
+    robot_row, robot_column = 20, 30
+    data[(robot_row + 2) * width + robot_column] = -1
+
+    diagnostics: dict[str, object] = {}
+    goal = select_frontier_goal(
+        data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=0.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((0.0, 0.0), (6.0, 0.0), (6.0, 4.0), (0.0, 4.0)),
+        robot_x=(robot_column + 0.5) * resolution,
+        robot_y=(robot_row + 0.5) * resolution,
+        sample_spacing_m=0.1,
+        clearance_m=0.2,
+        frontier_standoff_m=0.4,
+        seed_max_offset_m=0.2,
+        min_goal_distance_m=0.2,
+        diagnostics=diagnostics,
+    )
+
+    assert goal is not None
+    assert diagnostics["seed_safe"] is False
+    assert diagnostics["seed_touches_boundary"] is False
+    assert diagnostics["anchor_found"] is True
+    assert diagnostics["candidate_count"] > 0
+    assert diagnostics["rejection_reason"] is None
+
+
+def test_frontier_goal_uses_public_start_clearance_only_for_unknown_bootstrap():
+    width = height = 100
+    resolution = 0.05
+    data = [0] * (width * height)
+    robot_row = robot_column = 50
+    # Model the self-occluded patch left by a vehicle at the fixed start.  Its
+    # width forces the first fully known 0.95 m circle beyond the old 20-cell
+    # generic bootstrap bound.
+    for row in range(robot_row - 10, robot_row + 11):
+        for column in range(robot_column - 10, robot_column + 11):
+            data[row * width + column] = -1
+    for column in range(robot_column - 10, robot_column + 11):
+        data[robot_row * width + column] = 0
+    diagnostics: dict[str, object] = {}
+    goal = select_frontier_goal(
+        data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=-2.525,
+        origin_y=-2.525,
+        origin_yaw=0.0,
+        geofence=((-3.0, -3.0), (3.0, -3.0), (3.0, 3.0), (-3.0, 3.0)),
+        robot_x=0.0,
+        robot_y=0.0,
+        clearance_m=0.95,
+        frontier_standoff_m=1.20,
+        bootstrap_clear_center=(0.0, 0.0),
+        bootstrap_clear_radius_m=1.5,
+        sample_spacing_m=0.1,
+        min_goal_distance_m=0.1,
+        diagnostics=diagnostics,
+    )
+
+    assert goal is not None, json.dumps(diagnostics, sort_keys=True)
+    assert diagnostics["bootstrap_certificate_active"] is True
+    assert diagnostics["anchor_found"] is True
+    assert diagnostics["raw_frontier_evaluated"] is True
+
+
+def test_frontier_bootstrap_certificate_never_excuses_unknown_outside_start_zone():
+    width = height = 100
+    resolution = 0.05
+    data = [0] * (width * height)
+    robot_row = robot_column = 50
+    for row in range(robot_row - 10, robot_row + 11):
+        for column in range(robot_column - 10, robot_column + 11):
+            data[row * width + column] = -1
+    for column in range(robot_column - 10, robot_column + 11):
+        data[robot_row * width + column] = 0
+    # This unknown wall is outside the 1.5 m public start certificate and
+    # prevents every otherwise possible bootstrap transit to a safe anchor.
+    for row in range(height):
+        data[row * width + 82] = -1
+    diagnostics: dict[str, object] = {}
+    goal = select_frontier_goal(
+        data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=-2.525,
+        origin_y=-2.525,
+        origin_yaw=0.0,
+        geofence=((-3.0, -3.0), (3.0, -3.0), (3.0, 3.0), (-3.0, 3.0)),
+        robot_x=0.0,
+        robot_y=0.0,
+        clearance_m=0.95,
+        frontier_standoff_m=1.20,
+        bootstrap_clear_center=(0.0, 0.0),
+        bootstrap_clear_radius_m=1.5,
+        sample_spacing_m=0.1,
+        min_goal_distance_m=0.1,
+        diagnostics=diagnostics,
+    )
+
+    # A goal may exist on the near side of the wall, but it must never be
+    # selected beyond the uncertified unknown wall.
+    assert goal is None or goal[0] < 1.5
+
+
+def test_frontier_goal_treats_public_infield_raster_edge_as_implicit_unknown():
+    width = height = 40
+    resolution = 0.1
+    data = [0] * (width * height)
+    diagnostics: dict[str, object] = {}
+    goal = select_frontier_goal(
+        data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=0.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((-1.0, -1.0), (5.0, -1.0), (5.0, 5.0), (-1.0, 5.0)),
+        robot_x=2.0,
+        robot_y=2.0,
+        clearance_m=0.2,
+        frontier_standoff_m=0.5,
+        min_goal_distance_m=0.1,
+        diagnostics=diagnostics,
+    )
+
+    assert goal is not None
+    assert diagnostics["raw_frontier_evaluated"] is True
+    assert diagnostics["raw_frontier_count"] > 0
+
+
+def test_frontier_circle_does_not_require_square_only_corner_cells():
+    width = height = 60
+    resolution = 0.1
+    data = [-1] * (width * height)
+    for row in range(5, 55):
+        for column in range(5, 55):
+            data[row * width + column] = 0
+    robot_row = robot_column = 30
+    # With clearance=0.2 m, a cell centered 0.2 m in both axes is outside the
+    # conservative cell-intersection circle (radius 0.2707 m), but the former
+    # square query rejected it. Unknown remains forbidden everywhere in-mask.
+    data[(robot_row + 2) * width + robot_column + 2] = -1
+
+    diagnostics: dict[str, object] = {}
+    goal = select_frontier_goal(
+        data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=0.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((0.0, 0.0), (6.0, 0.0), (6.0, 6.0), (0.0, 6.0)),
+        robot_x=(robot_column + 0.5) * resolution,
+        robot_y=(robot_row + 0.5) * resolution,
+        sample_spacing_m=0.1,
+        clearance_m=0.2,
+        frontier_standoff_m=0.4,
+        seed_max_offset_m=0.2,
+        min_goal_distance_m=0.2,
+        diagnostics=diagnostics,
+    )
+
+    assert goal is not None
+    assert diagnostics["seed_safe"] is True
+    assert diagnostics["clearance_model"] == "conservative_cell_intersection_circle"
+    assert diagnostics["clearance_mask_cell_count"] == 21
+    assert diagnostics["rejection_reason"] is None
+
+
+def test_frontier_goal_does_not_expand_boundary_bootstrap_through_narrow_corridor():
+    """A map-edge exception must not become a long unfit-corridor traversal."""
+    width = height = 40
+    resolution = 0.1
+    data = [-1] * (width * height)
+    # The nearest free seed is at the left map edge.  A one-cell corridor is
+    # deliberately much narrower than the 0.2 m footprint envelope.
+    for column in range(7):
+        data[20 * width + column] = 0
+    for row in range(3, 37):
+        for column in range(7, 37):
+            data[row * width + column] = 0
+
+    diagnostics: dict[str, object] = {}
+    goal = select_frontier_goal(
+        data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=0.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((0.0, 0.0), (4.0, 0.0), (4.0, 4.0), (0.0, 4.0)),
+        robot_x=0.05,
+        robot_y=2.05,
+        sample_spacing_m=0.1,
+        clearance_m=0.2,
+        frontier_standoff_m=0.4,
+        seed_max_offset_m=0.75,
+        min_goal_distance_m=0.2,
+        diagnostics=diagnostics,
+    )
+
+    assert goal is None
+    assert diagnostics["seed_touches_boundary"] is True
+    assert diagnostics["anchor_found"] is False
+    assert diagnostics["rejection_reason"] == "no_footprint_safe_bootstrap_anchor"
+
+
+def test_frontier_goal_uses_a_bounded_nearest_free_seed_outside_the_map():
+    width, height, resolution = 40, 20, 0.1
+    data = [-1] * (width * height)
+    for row in range(4, 16):
+        for column in range(5, 35):
+            data[row * width + column] = 0
+    common = dict(
+        data=data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=0.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((0.0, 0.0), (4.0, 0.0), (4.0, 2.0), (0.0, 2.0)),
+        sample_spacing_m=0.1,
+        clearance_m=0.0,
+        frontier_standoff_m=0.2,
+        min_goal_distance_m=0.2,
+    )
+
+    assert select_frontier_goal(
+        robot_x=0.40,
+        robot_y=0.45,
+        seed_max_offset_m=0.20,
+        **common,
+    ) is not None
+    assert select_frontier_goal(
+        robot_x=-0.30,
+        robot_y=0.45,
+        seed_max_offset_m=0.75,
+        **common,
+    ) is None
+
+
+def test_frontier_goal_recovers_when_robot_is_just_outside_a_growing_map():
+    width = height = 40
+    resolution = 0.1
+    data = [-1] * (width * height)
+    for row in range(0, 31):
+        for column in range(5, 36):
+            data[row * width + column] = 0
+
+    goal = select_frontier_goal(
+        data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=0.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((-1.0, -1.0), (5.0, -1.0), (5.0, 5.0), (-1.0, 5.0)),
+        robot_x=2.0,
+        robot_y=-0.04,
+        sample_spacing_m=0.1,
+        clearance_m=0.95,
+        frontier_standoff_m=1.2,
+        seed_max_offset_m=0.75,
+        min_goal_distance_m=1.0,
+    )
+
+    assert goal is not None
+    assert 1.05 <= goal[0] <= 3.55
+    assert 1.05 <= goal[1] <= 2.05
+
+
+@pytest.mark.parametrize("field", ("origin_x", "origin_y", "origin_yaw", "robot_x", "robot_y"))
+def test_frontier_goal_rejects_non_finite_pose_inputs(field):
+    kwargs = dict(
+        data=[0] * 25,
+        width=5,
+        height=5,
+        resolution=0.1,
+        origin_x=0.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((0.0, 0.0), (0.5, 0.0), (0.5, 0.5), (0.0, 0.5)),
+        robot_x=0.25,
+        robot_y=0.25,
+    )
+    kwargs[field] = math.nan
+    with pytest.raises(MapLifecycleError, match=f"{field} must be finite"):
+        select_frontier_goal(**kwargs)
+
+
+def test_frontier_goal_is_stood_off_by_the_full_footprint_clearance():
+    width = height = 50
+    resolution = 0.1
+    data = [-1] * (width * height)
+    for row in range(5, 45):
+        for column in range(5, 45):
+            data[row * width + column] = 0
+
+    goal = select_frontier_goal(
+        data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=0.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((0.0, 0.0), (5.0, 0.0), (5.0, 5.0), (0.0, 5.0)),
+        robot_x=2.55,
+        robot_y=2.55,
+        sample_spacing_m=0.1,
+        clearance_m=0.95,
+        frontier_standoff_m=1.2,
+        seed_max_offset_m=0.1,
+        min_goal_distance_m=1.0,
+    )
+
+    assert goal is not None
+    column, row = int(goal[0] / resolution), int(goal[1] / resolution)
+    radius = math.ceil(0.95 / resolution)
+    for dr in range(-radius, radius + 1):
+        for dc in range(-radius, radius + 1):
+            if (dr * resolution) ** 2 + (dc * resolution) ** 2 <= 0.95**2:
+                assert data[(row + dr) * width + column + dc] == 0
+
+
+def test_frontier_clearance_includes_the_raster_cell_half_diagonal():
+    width = height = 30
+    resolution = 0.1
+    data = [100] * (width * height)
+    for row in range(3, 27):
+        data[row * width + 4] = -1
+        for column in range(5, 26):
+            data[row * width + column] = 0
+
+    goal = select_frontier_goal(
+        data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=0.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((0.0, 0.0), (3.0, 0.0), (3.0, 3.0), (0.0, 3.0)),
+        robot_x=1.55,
+        robot_y=1.55,
+        sample_spacing_m=0.1,
+        clearance_m=0.95,
+        frontier_standoff_m=1.2,
+        seed_max_offset_m=0.2,
+        min_goal_distance_m=0.0,
+    )
+
+    assert goal is not None
+    assert goal[0] >= 1.55 - 1e-9
+
+
+def test_frontier_vehicle_clearance_stays_inside_the_geofence():
+    width = 40
+    height = 20
+    resolution = 0.1
+    data = [0] * (width * height)
+    for row in range(height):
+        data[row * width + 35] = -1
+
+    goal = select_frontier_goal(
+        data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=0.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((0.0, 1.0), (4.0, 1.0), (4.0, 2.0), (0.0, 2.0)),
+        robot_x=2.0,
+        robot_y=1.45,
+        sample_spacing_m=0.1,
+        clearance_m=0.3,
+        frontier_standoff_m=0.5,
+        seed_max_offset_m=0.75,
+        min_goal_distance_m=0.2,
+    )
+
+    assert goal is not None
+    assert goal[1] >= 1.45 - 1e-9
+
+
+def test_frontier_selection_prefers_nearest_geodesic_goal_and_honors_history():
+    width, height, resolution = 30, 7, 0.1
+    data = [100] * (width * height)
+    for row in range(2, 5):
+        for column in range(2, 28):
+            data[row * width + column] = 0
+        data[row * width + 1] = -1
+        data[row * width + 28] = -1
+    kwargs = dict(
+        data=data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=0.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((0.0, 0.0), (3.0, 0.0), (3.0, 0.7), (0.0, 0.7)),
+        robot_x=0.55,
+        robot_y=0.35,
+        sample_spacing_m=0.1,
+        clearance_m=0.0,
+        frontier_standoff_m=0.0,
+        seed_max_offset_m=0.1,
+        min_goal_distance_m=0.1,
+    )
+
+    nearest = select_frontier_goal(**kwargs)
+    assert nearest is not None and nearest[0] < 0.5
+    alternate = select_frontier_goal(previous_goals=(nearest,), **kwargs)
+    assert alternate is not None and alternate[0] > 2.5
+
+
+def test_frontier_seed_and_goal_respect_a_rotated_map_origin():
+    width, height, resolution = 30, 7, 0.1
+    data = [100] * (width * height)
+    for row in range(2, 5):
+        for column in range(2, 28):
+            data[row * width + column] = 0
+        data[row * width + 1] = -1
+        data[row * width + 28] = -1
+
+    goal = select_frontier_goal(
+        data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=10.0,
+        origin_y=-2.0,
+        origin_yaw=math.pi / 2.0,
+        geofence=((9.0, -2.0), (10.0, -2.0), (10.0, 1.0), (9.0, 1.0)),
+        robot_x=9.65,
+        robot_y=-1.45,
+        sample_spacing_m=0.1,
+        clearance_m=0.0,
+        frontier_standoff_m=0.0,
+        seed_max_offset_m=0.1,
+        min_goal_distance_m=0.1,
+    )
+
+    assert goal == pytest.approx((9.65, -1.75))
 
 
 @pytest.mark.parametrize(

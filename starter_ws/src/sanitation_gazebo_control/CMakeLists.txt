@@ -265,6 +265,23 @@ install(TARGETS formal_vehicle_product_native_bridge
   RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 
+add_executable(formal_lidar_native_bridge
+  src/FormalLidarNativeBridge.cc
+)
+target_include_directories(formal_lidar_native_bridge PRIVATE include)
+ament_target_dependencies(formal_lidar_native_bridge
+  rclcpp
+  ros_gz_bridge
+  sensor_msgs
+)
+target_link_libraries(formal_lidar_native_bridge
+  gz-transport13::gz-transport13
+  gz-msgs10::gz-msgs10
+)
+install(TARGETS formal_lidar_native_bridge
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
+)
+
 add_executable(cleaning_actuator_scalar_native_bridge
   src/CleaningActuatorScalarNativeBridge.cc
 )

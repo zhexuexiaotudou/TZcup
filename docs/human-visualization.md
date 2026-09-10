@@ -73,6 +73,29 @@ ROS 回调只更新进程内线程安全快照；HTTP 请求读取快照，不�
 `/static/*` 只提供随包安装的前端资源。所有响应禁用缓存；状态和导出内容不应作为比赛
 成绩来源，机器验收仍以项目阶段门和可追溯证据为准。
 
+## 最终产品阶段卡
+
+AUTO-17 的实时看板额外订阅 `std_msgs/msg/String` 的 `/final_demo/state`。这张卡只显示
+实时 JSON，不从 Gazebo 真值、场景配置、历史回放或任何其他话题补值；从未收到该话题时所有
+字段明确显示“数据不可用”，超过 5 秒未更新则显示“过期”。有效载荷必须为：
+
+```json
+{
+  "field_dimensions_m": [200, 100],
+  "vehicle": "A300",
+  "stage": "MAPPING",
+  "map_sha256": null,
+  "perception_provider": "s100p",
+  "formal_product_acceptance": false
+}
+```
+
+允许的 `stage` 仅为 `MAPPING`、`MAP_SAVED`、`HARD_RESTART`、`RELOAD_LOCALIZE`、
+`COVERAGE`、`PRODUCT_TERMINAL`；`perception_provider` 仅为 `s100p`、`pc` 或
+`unavailable`。`map_sha256` 在尚未保存地图时可为 `null`，保存后必须是 64 位 SHA-256；
+`formal_product_acceptance` 必须是布尔值。任何字段缺失、类型错误或场地/车型不等于
+`[200, 100]`/`A300`，都会把该卡标为错误，绝不降级为看似真实的默认值。
+
 ## 界面与操作
 
 - `评委`：保留地图、关键状态、三维/车载画面和事实边界；

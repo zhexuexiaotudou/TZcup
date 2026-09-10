@@ -14,9 +14,11 @@ from launch.actions import (
     IncludeLaunchDescription,
     LogInfo,
     OpaqueFunction,
+    RegisterEventHandler,
     TimerAction,
 )
 from launch.conditions import IfCondition
+from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import (
     EnvironmentVariable,
@@ -39,6 +41,11 @@ from sanitation_formal_campus_integration.saved_map_coverage_core import (
     DRY_CLEANING_SPEED_PROFILE,
     load_formal_operation_speed_profile,
 )
+
+
+def _start_actions_unless_shutdown(context, *actions):
+    """Do not let controller-exit events start nodes during launch teardown."""
+    return [] if context.is_shutdown else list(actions)
 
 
 def _runtime_actions(context):  # type: ignore[no-untyped-def]
@@ -207,6 +214,87 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
         "brush_controller",
         "recovery_controller",
     ]
+    position_controller_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        name="formal_campus_position_controller_spawner",
+        arguments=[
+            "joint_state_broadcaster",
+            *position_hold_controllers,
+            "--controller-manager",
+            "/controller_manager",
+            "--controller-manager-timeout",
+            "180",
+            "--service-call-timeout",
+            "60",
+            "--switch-timeout",
+            "60",
+            "--activate-as-group",
+        ],
+        output="screen",
+    )
+    velocity_controller_loader = Node(
+        package="controller_manager",
+        executable="spawner",
+        name="formal_campus_velocity_controller_loader",
+        arguments=[
+            *safety_switched_controllers,
+            "--controller-manager",
+            "/controller_manager",
+            "--controller-manager-timeout",
+            "180",
+            "--service-call-timeout",
+            "60",
+            "--switch-timeout",
+            "60",
+            "--inactive",
+        ],
+        output="screen",
+    )
+    safety_manager = Node(
+        package="sanitation_safety",
+        executable="whole_vehicle_safety_manager",
+        name="whole_vehicle_safety_manager",
+        output="screen",
+        parameters=[
+            {
+                "use_sim_time": True,
+                # Nav2 collision_monitor emits its checked Twist on
+                # /cmd_vel_gate.  The formal manager is the sole
+                # TwistStamped controller writer.
+                "command_input_topic": "/cmd_vel_gate",
+                "base_command_output_topic": "/base_controller/cmd_vel",
+                "max_linear_velocity": ParameterValue(
+                    LaunchConfiguration("max_linear_velocity"), value_type=float
+                ),
+                "max_angular_velocity": ParameterValue(
+                    LaunchConfiguration("max_angular_velocity"), value_type=float
+                ),
+                # Empty/default values are deliberately not eligible for
+                # high speed.  The lifecycle wrapper supplies the exact
+                # dry same-map scope when it has independently qualified it.
+                "mission_mode": LaunchConfiguration("mission_mode"),
+                "operation_speed_profile": LaunchConfiguration(
+                    "operation_speed_profile"
+                ),
+                "speed_qualification_state": LaunchConfiguration(
+                    "speed_qualification_state"
+                ),
+                # The high-fidelity Gazebo profile intentionally runs below
+                # real time on CPU.  Simulation safety heartbeats therefore
+                # arrive at a lower wall-clock cadence even though no source
+                # heartbeat is missing.  Keep hardware defaults untouched and
+                # give only this simulator enough margin over the observed
+                # scheduler gap; command timeout remains the fast 0.5 s stop.
+                "heartbeat_timeout_sec": 2.0,
+                "bumper_timeout_sec": 2.0,
+                "safety_relay_timeout_sec": 2.0,
+                "bms_fault_timeout_sec": 2.0,
+                "cleaning_motor_fault_timeout_sec": 1.0,
+                "traction_permit_timeout_sec": 2.0,
+            }
+        ],
+    )
 
     return [
         LogInfo(
@@ -227,7 +315,16 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                 "gui": LaunchConfiguration("gui"),
                 "world": LaunchConfiguration("world"),
                 "model": manipulation_model,
-                "manipulation_sim_interfaces": "true",
+                "controller_config_path": LaunchConfiguration(
+                    "controller_config_path"
+                ),
+                # Mapping keeps the physical arm in the vehicle model but does
+                # not need grasp/contact ROS interfaces.  The lifecycle selects
+                # that lean runtime explicitly; direct/cleaning launches retain
+                # the full manipulation stack by default.
+                "manipulation_sim_interfaces": LaunchConfiguration(
+                    "start_manipulation_runtime"
+                ),
                 # The integration layer loads the base controller and leaves
                 # all managed actuators inactive for the safety manager.
                 "start_controllers": "false",
@@ -240,9 +337,15 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                 "start_simulation_safety_inputs": LaunchConfiguration(
                     "start_simulation_safety_inputs"
                 ),
+                "start_charge_interface_manager": LaunchConfiguration(
+                    "start_charge_interface_manager"
+                ),
                 "start_localization": "true",
                 "simulation_initial_estop_active": LaunchConfiguration(
                     "simulation_initial_estop_active"
+                ),
+                "lidar_bridge_ready_timeout_sec": LaunchConfiguration(
+                    "lidar_bridge_ready_timeout_sec"
                 ),
                 "high_bandwidth_sensor_runtime": LaunchConfiguration(
                     "high_bandwidth_sensor_runtime"
@@ -258,6 +361,7 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
         ),
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(manipulation_launch),
+            condition=IfCondition(LaunchConfiguration("start_manipulation_runtime")),
         ),
         # Dynamic pedestrian motion still uses this public-world service. Its
         # presence does not authorize moving the vehicle after initial create.
@@ -278,45 +382,29 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
         ),
         TimerAction(
             period=12.0,
-            actions=[
-                Node(
-                    package="controller_manager",
-                    executable="spawner",
-                    name="formal_campus_position_controller_spawner",
-                    arguments=[
-                        "joint_state_broadcaster",
-                        *position_hold_controllers,
-                        "--controller-manager",
-                        "/controller_manager",
-                        "--controller-manager-timeout",
-                        "180",
-                        "--service-call-timeout",
-                        "60",
-                        "--switch-timeout",
-                        "60",
-                        "--activate-as-group",
-                    ],
-                    output="screen",
-                ),
-                Node(
-                    package="controller_manager",
-                    executable="spawner",
-                    name="formal_campus_velocity_controller_loader",
-                    arguments=[
-                        *safety_switched_controllers,
-                        "--controller-manager",
-                        "/controller_manager",
-                        "--controller-manager-timeout",
-                        "180",
-                        "--service-call-timeout",
-                        "60",
-                        "--switch-timeout",
-                        "60",
-                        "--inactive",
-                    ],
-                    output="screen",
-                ),
-            ],
+            actions=[position_controller_spawner],
+        ),
+        RegisterEventHandler(
+            OnProcessExit(
+                target_action=position_controller_spawner,
+                on_exit=[
+                    OpaqueFunction(
+                        function=_start_actions_unless_shutdown,
+                        args=[velocity_controller_loader],
+                    )
+                ],
+            )
+        ),
+        RegisterEventHandler(
+            OnProcessExit(
+                target_action=velocity_controller_loader,
+                on_exit=[
+                    OpaqueFunction(
+                        function=_start_actions_unless_shutdown,
+                        args=[safety_manager],
+                    )
+                ],
+            )
         ),
         Node(
             package="sanitation_formal_campus_integration",
@@ -355,38 +443,6 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                 "start_navsat_transform": "false",
                 "start_global_fusion": start_global_fusion,
             }.items(),
-        ),
-        Node(
-            package="sanitation_safety",
-            executable="whole_vehicle_safety_manager",
-            name="whole_vehicle_safety_manager",
-            output="screen",
-            parameters=[
-                {
-                    "use_sim_time": True,
-                    # Nav2 collision_monitor emits its checked Twist on
-                    # /cmd_vel_gate.  The formal manager is the sole
-                    # TwistStamped controller writer.
-                    "command_input_topic": "/cmd_vel_gate",
-                    "base_command_output_topic": "/base_controller/cmd_vel",
-                    "max_linear_velocity": ParameterValue(
-                        LaunchConfiguration("max_linear_velocity"), value_type=float
-                    ),
-                    "max_angular_velocity": ParameterValue(
-                        LaunchConfiguration("max_angular_velocity"), value_type=float
-                    ),
-                    # Empty/default values are deliberately not eligible for
-                    # high speed.  The lifecycle wrapper supplies the exact
-                    # dry same-map scope when it has independently qualified it.
-                    "mission_mode": LaunchConfiguration("mission_mode"),
-                    "operation_speed_profile": LaunchConfiguration(
-                        "operation_speed_profile"
-                    ),
-                    "speed_qualification_state": LaunchConfiguration(
-                        "speed_qualification_state"
-                    ),
-                }
-            ],
         ),
         # Fast DDS participant discovery becomes nondeterministic when the
         # simulator, bridges, all Nav2 servers, filters and coverage are
@@ -487,6 +543,7 @@ def generate_launch_description() -> LaunchDescription:
         [
             DeclareLaunchArgument("gui", default_value="true"),
             DeclareLaunchArgument("world", description="Generated public/world.sdf path"),
+            DeclareLaunchArgument("controller_config_path", default_value=""),
             DeclareLaunchArgument("world_name", default_value="campus_formal"),
             DeclareLaunchArgument(
                 "episode_manifest",
@@ -502,6 +559,14 @@ def generate_launch_description() -> LaunchDescription:
             # and emergency_stop=false before motion is allowed.
             DeclareLaunchArgument(
                 "simulation_initial_estop_active", default_value="true"
+            ),
+            DeclareLaunchArgument(
+                "lidar_bridge_ready_timeout_sec",
+                default_value="600",
+                description=(
+                    "Bounded wait for the first physical UTM frame before the "
+                    "sole ROS raw-scan bridge starts."
+                ),
             ),
             DeclareLaunchArgument(
                 "high_bandwidth_sensor_runtime", default_value="true"
@@ -553,6 +618,23 @@ def generate_launch_description() -> LaunchDescription:
             DeclareLaunchArgument("slow_zone_percent", default_value="50"),
             DeclareLaunchArgument("start_navigation", default_value="true"),
             DeclareLaunchArgument("start_coverage", default_value="true"),
+            DeclareLaunchArgument(
+                "start_manipulation_runtime",
+                default_value="true",
+                description=(
+                    "Start MoveIt, the physical grasp executor, and its ROS-Gazebo "
+                    "interfaces. Mapping lifecycle disables this only while the arm "
+                    "remains physically stowed."
+                ),
+            ),
+            DeclareLaunchArgument(
+                "start_charge_interface_manager",
+                default_value="true",
+                description=(
+                    "Start the charging interface manager. Mapping lifecycle disables "
+                    "only this non-navigation runtime; cleaning retains it."
+                ),
+            ),
             DeclareLaunchArgument("localization_backend", default_value="amcl"),
             DeclareLaunchArgument("mission_mode", default_value=""),
             DeclareLaunchArgument("max_linear_velocity", default_value="0.45"),

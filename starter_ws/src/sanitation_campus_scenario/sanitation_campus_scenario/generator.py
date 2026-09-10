@@ -1151,6 +1151,16 @@ def generate_episode(
             "y_m": 0.0,
             "yaw_rad": 0.0,
         },
+        # Asset placement reserves a 3 x 3 m start exclusion and all other
+        # collision-bearing episode objects are sampled outside it.  Publish
+        # only this conservative clearance scalar, not evaluator geometry, so
+        # a lidar mapper can distinguish self-occluded cells at the fixed start
+        # from arbitrary unknown space.
+        "vehicle_start_clearance_contract": {
+            "frame_id": "source_world",
+            "collision_free_radius_m": 1.5,
+            "semantics": "public_generator_reserved_collision_free_start",
+        },
         "map_resolution_contract": {
             # This public bundle does not own product-runtime defaults. Their
             # executing components record actual values in their own reports.

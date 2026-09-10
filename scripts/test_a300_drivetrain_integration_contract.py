@@ -44,6 +44,17 @@ def test_effort_plant_is_the_only_wheel_command_writer() -> None:
     assert model.count("sanitation_gazebo_control::A300DrivetrainPlantSystem") == 1
 
 
+def test_wheel_friction_is_bound_to_collision_with_fixed_directions() -> None:
+    platform = (VEHICLE / "urdf/high_fidelity/a300_platform.xacro").read_text(
+        encoding="utf-8"
+    )
+    assert "<collision>" in platform
+    assert '<collision name="${name}_wheel_collision">' not in platform
+    assert '<gazebo reference="${name}_wheel_link">' in platform
+    assert "<mu1>0.9</mu1><mu2>0.72</mu2>" in platform
+    assert "<fdir1>1 0 0</fdir1>" in platform
+
+
 def test_typed_adapter_is_unique_consumer_of_final_safety_command() -> None:
     launch = (VEHICLE / "launch/formal_vehicle_sim.launch.py").read_text(
         encoding="utf-8"

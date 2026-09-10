@@ -5,11 +5,9 @@
 #include <gz/msgs/contacts.pb.h>
 #include <gz/msgs/double.pb.h>
 #include <gz/msgs/imu.pb.h>
-#include <gz/msgs/laserscan.pb.h>
 #include <gz/msgs/navsat.pb.h>
 #include <ros_gz_interfaces/msg/contacts.hpp>
 #include <sensor_msgs/msg/imu.hpp>
-#include <sensor_msgs/msg/laser_scan.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <std_msgs/msg/float64.hpp>
@@ -20,8 +18,6 @@ namespace sanitation_gazebo_control
 {
 namespace
 {
-constexpr GazeboToRosEndpoint<sensor_msgs::msg::LaserScan, gz::msgs::LaserScan> kLidarScan{
-  "/sensors/lidar_2d/scan"};
 constexpr GazeboToRosEndpoint<sensor_msgs::msg::NavSatFix, gz::msgs::NavSat> kGnssFix{
   "/sensors/gnss/fix"};
 constexpr GazeboToRosEndpoint<sensor_msgs::msg::Imu, gz::msgs::IMU> kImuData{
@@ -106,7 +102,6 @@ public:
           *message, service_drain_gz_pub_);
       });
 
-    lidar_ros_pub_ = create_publisher<sensor_msgs::msg::LaserScan>(kLidarScan.topic, 10);
     gnss_ros_pub_ = create_publisher<sensor_msgs::msg::NavSatFix>(kGnssFix.topic, 10);
     imu_ros_pub_ = create_publisher<sensor_msgs::msg::Imu>(kImuData.topic, 10);
     for (std::size_t index = 0; index < kFloatTopics.size(); ++index) {
@@ -121,7 +116,6 @@ public:
     }
 
     bool subscribed = true;
-    subscribed = Subscribe(kLidarScan.topic, &FormalVehicleProductNativeBridge::OnLidarScan, this) && subscribed;
     subscribed = Subscribe(kGnssFix.topic, &FormalVehicleProductNativeBridge::OnGnssFix, this) && subscribed;
     subscribed = Subscribe(kImuData.topic, &FormalVehicleProductNativeBridge::OnImuData, this) && subscribed;
     subscribed = Subscribe(kFloatTopics[0], &FormalVehicleProductNativeBridge::OnWastewaterMass, this) && subscribed;
@@ -151,10 +145,6 @@ public:
   }
 
 private:
-  void OnLidarScan(const gz::msgs::LaserScan & message)
-  {
-    PublishGazeboToRos<sensor_msgs::msg::LaserScan, gz::msgs::LaserScan>(message, lidar_ros_pub_);
-  }
   void OnGnssFix(const gz::msgs::NavSat & message)
   {
     PublishGazeboToRos<sensor_msgs::msg::NavSatFix, gz::msgs::NavSat>(message, gnss_ros_pub_);
@@ -202,7 +192,6 @@ private:
   gz::transport::Node::Publisher service_drain_gz_pub_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr enable_ros_sub_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr service_drain_ros_sub_;
-  rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr lidar_ros_pub_;
   rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr gnss_ros_pub_;
   rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_ros_pub_;
   std::array<rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr, kFloatTopics.size()> float_ros_pubs_;

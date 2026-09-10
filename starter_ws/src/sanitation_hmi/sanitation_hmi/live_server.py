@@ -1,22 +1,32 @@
-"""ROS 2 telemetry bridge and read-only HTTP dashboard for AUTO-17."""
+"""ROS 2 telemetry bridge and read-only final-product dashboard."""
 
 from __future__ import annotations
 
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import math
+import os
 from pathlib import Path
 import threading
+import zlib
 
 from ament_index_python.packages import get_package_share_directory
-from geometry_msgs.msg import PoseWithCovarianceStamped, Twist
-from nav_msgs.msg import Path as NavPath
+from diagnostic_msgs.msg import DiagnosticArray
+from geometry_msgs.msg import PoseWithCovarianceStamped, Twist, TwistStamped
+from nav_msgs.msg import OccupancyGrid, Odometry, Path as NavPath
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
-from std_msgs.msg import Bool, String
+from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
+from rclpy.time import Time
+from sensor_msgs.msg import Image
+from std_msgs.msg import Bool, Float64MultiArray, String
+from tf2_ros import Buffer, TransformException, TransformListener
 import yaml
 
+from .cleaning_motor_telemetry import decode_cleaning_motor_snapshot
 from .live_state import LiveMissionState
+from .ros_adapter import encode_image_png
 
 
 def _yaw_from_quaternion(quaternion) -> float:
@@ -64,6 +74,18 @@ def build_live_handler(state: LiveMissionState, web_root: Path):
             if route == "/api/v1/telemetry":
                 self._send_json(200, state.snapshot())
                 return
+            if route == "/api/v1/images/front_camera":
+                image = state.front_camera_png()
+                if image is None:
+                    self._send_json(404, {"status": "source_unavailable"})
+                    return
+                self.send_response(200)
+                self.send_header("Content-Type", "image/png")
+                self.send_header("Content-Length", str(len(image)))
+                self.send_header("Cache-Control", "no-store")
+                self.end_headers()
+                self.wfile.write(image)
+                return
             if route in {"/", "/demo.html"}:
                 body = (web_root / "demo.html").read_bytes()
                 self.send_response(200)
@@ -89,9 +111,14 @@ class LiveDashboardNode(Node):
         self.declare_parameter("output_dir", "")
         self.declare_parameter("mission_config", "")
         self.declare_parameter("expected_components", 17)
+        self.declare_parameter("web_root", "")
+        self.declare_parameter(
+            "front_camera_topic",
+            "/sensors/front_rgbd/depth/image_rect_raw/image",
+        )
 
         mission_config = str(self.get_parameter("mission_config").value)
-        mission_id = "demo_coverage_001"
+        mission_id = "final_product_visualization"
         geometry: dict = {}
         if mission_config and Path(mission_config).is_file():
             config = yaml.safe_load(
@@ -111,6 +138,8 @@ class LiveDashboardNode(Node):
             mission_id=mission_id,
             geometry=geometry,
         )
+        front_camera_topic = str(self.get_parameter("front_camera_topic").value)
+        self.state.set_live_input_topic("front_camera", front_camera_topic)
         output_value = str(self.get_parameter("output_dir").value).strip()
         self.output_dir = Path(output_value) if output_value else None
         if self.output_dir is not None:
@@ -140,18 +169,118 @@ class LiveDashboardNode(Node):
             self._on_estimated_pose,
             20,
         )
+        self.create_subscription(Odometry, "/odom", self._on_formal_odometry, 20)
+        # `/map` is normally reliable/transient-local.  Matching that QoS lets
+        # a dashboard opened after mapping receive the latest grid immediately.
+        self.create_subscription(
+            OccupancyGrid,
+            "/map",
+            self._on_map,
+            QoSProfile(
+                depth=1,
+                reliability=ReliabilityPolicy.RELIABLE,
+                durability=DurabilityPolicy.TRANSIENT_LOCAL,
+            ),
+        )
         self.create_subscription(Twist, "/cmd_vel", self._on_velocity, 20)
+        self.create_subscription(
+            TwistStamped,
+            "/base_controller/cmd_vel",
+            self._on_formal_base_command_velocity,
+            20,
+        )
+        self._tf_buffer = Buffer()
+        self._tf_listener = TransformListener(
+            self._tf_buffer, self, spin_thread=False
+        )
+        self.create_timer(0.2, self._update_formal_map_pose)
         self.create_subscription(
             Bool, "/brush_enabled", self._on_brush, 20
         )
         self.create_subscription(
             Bool, "/emergency_stop", self._on_emergency_stop, 20
         )
+        # These are the formal map lifecycle and saved-map executor's own
+        # status streams.  Keep them separate from coverage-probe telemetry:
+        # an unavailable phase is not silently represented as a completed
+        # mapping or cleaning step.
+        lifecycle_qos = QoSProfile(
+            depth=1,
+            reliability=ReliabilityPolicy.RELIABLE,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+        )
+        self.create_subscription(
+            String,
+            "/formal_mapping/lifecycle_status",
+            self._on_mapping_lifecycle,
+            lifecycle_qos,
+        )
+        self.create_subscription(
+            Bool,
+            "/formal_mapping/map_ready",
+            self._on_mapping_map_ready,
+            lifecycle_qos,
+        )
+        self.create_subscription(
+            String,
+            "/formal_mapping/explorer_status",
+            self._on_mapping_explorer,
+            20,
+        )
+        self.create_subscription(
+            String,
+            "/formal_saved_map_coverage/state",
+            self._on_saved_map_coverage,
+            20,
+        )
+        self.create_subscription(
+            String, "/safety/status_json", self._on_safety_status, 20
+        )
+        self.create_subscription(
+            String,
+            "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/status",
+            self._on_drivetrain_status,
+            20,
+        )
+        self.create_subscription(
+            Float64MultiArray,
+            "/model/tzcup_formal_sanitation_vehicle/cleaning_motors/telemetry_snapshot",
+            self._on_cleaning_motor_status,
+            20,
+        )
+        self.create_subscription(
+            Image,
+            front_camera_topic,
+            self._on_front_camera,
+            2,
+        )
+        from sanitation_perception_interfaces.msg import GarbageTargetArray
+
+        self.create_subscription(
+            GarbageTargetArray,
+            "/perception/garbage/targets",
+            self._on_perception_targets,
+            10,
+        )
+        self.create_subscription(
+            DiagnosticArray,
+            "/perception/open_vocab/diagnostics",
+            self._on_perception_diagnostics,
+            10,
+        )
+        self.create_subscription(
+            String, "/final_demo/state", self._on_final_demo_state, 20
+        )
         self.create_timer(1.0, self._write_snapshot)
 
+        web_root_value = str(self.get_parameter("web_root").value).strip()
         web_root = (
-            Path(get_package_share_directory("sanitation_hmi")) / "web"
+            Path(web_root_value)
+            if web_root_value
+            else Path(get_package_share_directory("sanitation_hmi")) / "web"
         )
+        if not (web_root / "demo.html").is_file():
+            raise RuntimeError(f"sanitation HMI web root is invalid: {web_root}")
         host = str(self.get_parameter("host").value)
         port = int(self.get_parameter("port").value)
         self.server = ThreadingHTTPServer(
@@ -218,10 +347,54 @@ class LiveDashboardNode(Node):
             pose.position.x,
             pose.position.y,
             _yaw_from_quaternion(pose.orientation),
+            source_topic="/localization/fused_pose",
         )
 
     def _on_velocity(self, message: Twist) -> None:
         self.state.update_velocity(message.linear.x, message.angular.z)
+
+    def _on_formal_odometry(self, message: Odometry) -> None:
+        pose = message.pose.pose
+        self.state.update_formal_odometry_preview(
+            pose.position.x,
+            pose.position.y,
+            _yaw_from_quaternion(pose.orientation),
+        )
+        self.state.update_measured_velocity(
+            message.twist.twist.linear.x, message.twist.twist.angular.z
+        )
+
+    def _on_map(self, message: OccupancyGrid) -> None:
+        info = message.info
+        self.state.update_occupancy_grid(
+            width=info.width,
+            height=info.height,
+            resolution=info.resolution,
+            origin_x=info.origin.position.x,
+            origin_y=info.origin.position.y,
+            data=message.data,
+        )
+
+    def _on_formal_base_command_velocity(self, message: TwistStamped) -> None:
+        self.state.update_formal_base_command_velocity(
+            message.twist.linear.x, message.twist.angular.z
+        )
+
+    def _update_formal_map_pose(self) -> None:
+        """Expose the latest SLAM map pose without using simulator truth."""
+        try:
+            transform = self._tf_buffer.lookup_transform(
+                "map", "base_footprint", Time()
+            )
+        except TransformException:
+            return
+        pose = transform.transform
+        self.state.update_estimated_pose(
+            pose.translation.x,
+            pose.translation.y,
+            _yaw_from_quaternion(pose.rotation),
+            source_topic="/tf map->base_footprint",
+        )
 
     def _on_brush(self, message: Bool) -> None:
         self.state.update_brush(message.data)
@@ -229,19 +402,88 @@ class LiveDashboardNode(Node):
     def _on_emergency_stop(self, message: Bool) -> None:
         self.state.update_emergency_stop(message.data)
 
+    def _on_mapping_lifecycle(self, message: String) -> None:
+        self.state.update_mapping_lifecycle(message.data)
+
+    def _on_mapping_map_ready(self, message: Bool) -> None:
+        self.state.update_mapping_map_ready(message.data)
+
+    def _on_mapping_explorer(self, message: String) -> None:
+        self.state.update_mapping_explorer(message.data)
+
+    def _on_saved_map_coverage(self, message: String) -> None:
+        self.state.update_saved_map_coverage(message.data)
+
+    def _on_safety_status(self, message: String) -> None:
+        self.state.update_safety_status(message.data)
+
+    def _on_drivetrain_status(self, message: String) -> None:
+        self.state.update_drivetrain_status(message.data)
+
+    def _on_cleaning_motor_status(self, message: Float64MultiArray) -> None:
+        try:
+            value = decode_cleaning_motor_snapshot(message.data)
+            self.state.update_cleaning_motor_status(
+                json.dumps(value, sort_keys=True, separators=(",", ":"))
+            )
+        except (TypeError, ValueError) as exc:
+            self.state.update_live_input_error("cleaning_motor_status", str(exc))
+
+    def _on_front_camera(self, message: Image) -> None:
+        try:
+            self.state.update_front_camera(
+                encode_image_png(message),
+                width=int(message.width),
+                height=int(message.height),
+            )
+        except (ValueError, zlib.error) as exc:
+            self.state.update_live_input_error("front_camera", str(exc))
+
+    def _on_perception_targets(self, message) -> None:
+        self.state.update_perception_targets(len(message.targets))
+
+    @staticmethod
+    def _diagnostic_level(value) -> int | None:
+        if isinstance(value, int) and not isinstance(value, bool):
+            return value
+        if isinstance(value, (bytes, bytearray)) and len(value) == 1:
+            return int(value[0])
+        return None
+
+    def _on_perception_diagnostics(self, message: DiagnosticArray) -> None:
+        self.state.update_perception_diagnostics(
+            [
+                {
+                    "name": str(status.name),
+                    "message": str(status.message),
+                    "level": self._diagnostic_level(status.level),
+                }
+                for status in message.status
+            ]
+        )
+
+    def _on_final_demo_state(self, message: String) -> None:
+        self.state.update_final_demo_state(message.data)
+
     def _write_snapshot(self) -> None:
         if self.output_dir is None:
             return
         target = self.output_dir / "dashboard_telemetry.json"
-        temporary = target.with_suffix(".json.tmp")
-        temporary.write_text(
-            json.dumps(
-                self.state.snapshot(), ensure_ascii=False, indent=2
+        temporary = target.with_name(f".{target.name}.{os.getpid()}.tmp")
+        try:
+            temporary.write_text(
+                json.dumps(
+                    self.state.snapshot(), ensure_ascii=False, indent=2
+                )
+                + "\n",
+                encoding="utf-8",
             )
-            + "\n",
-            encoding="utf-8",
-        )
-        temporary.replace(target)
+            temporary.replace(target)
+        except PermissionError as exc:
+            # DrvFs/Windows scanners can briefly hold the previous snapshot.
+            # The HTTP dashboard serves the in-memory state, so retain the
+            # last complete evidence file and retry on the next timer tick.
+            self.get_logger().warning(f"deferred telemetry snapshot update: {exc}")
 
     def destroy_node(self):
         self._write_snapshot()
@@ -256,11 +498,12 @@ def main(args=None) -> None:
     node = LiveDashboardNode()
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == "__main__":
