@@ -671,6 +671,7 @@ def run_ros_independent_tests() -> None:
         ROOT / "scripts" / "test_cleaning_actuator_motor_contract.py",
         ROOT / "scripts" / "test_validate_formal_cleaning_actuator_motor_runtime.py",
         ROOT / "scripts" / "test_run_formal_cleaning_actuator_motor_runtime.py",
+        ROOT / "scripts" / "test_formal_safety_status_schema.py",
         ROOT / "scripts" / "test_whole_vehicle_actuator_interlock_contract.py",
         ROOT / "scripts" / "test_formal_auxiliary_product_interfaces.py",
         ROOT / "scripts" / "test_formal_squeegee_compliance_core.py",
