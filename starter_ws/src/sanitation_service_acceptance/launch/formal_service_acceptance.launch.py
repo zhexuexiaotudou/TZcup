@@ -78,7 +78,7 @@ def generate_launch_description() -> LaunchDescription:
         package='sanitation_service_acceptance',
         executable='formal_service_acceptance_collector',
         name='formal_service_acceptance_collector',
-        arguments=['--scenario', scenario, '--output', output],
+        arguments=['--scenario', scenario, '--output', output, '--sample-sec', '18.0'],
         output='screen',
     )
     return LaunchDescription(

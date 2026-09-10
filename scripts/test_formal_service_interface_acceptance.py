@@ -75,6 +75,7 @@ def test_acceptance_launch_uses_only_ros_to_gz_evaluation_commands() -> None:
     assert "@std_msgs/msg/Float64[gz.msgs.Double" not in source
     assert "name='service_acceptance_joint_command_bridge'" in source
     assert "OnProcessExit" in source and "Shutdown" in source
+    assert "'--sample-sec', '18.0'" in source
 
 
 def test_collector_has_no_world_truth_or_boolean_contact_input() -> None:
