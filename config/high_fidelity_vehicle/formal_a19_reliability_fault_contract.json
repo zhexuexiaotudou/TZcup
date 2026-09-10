@@ -1,27 +1,38 @@
 {
-  "schema_version": 2,
-  "contract_id": "tzcup_formal_a19_two_hour_reliability_fault_contract_v2",
+  "schema_version": 3,
+  "contract_id": "tzcup_formal_a19_two_hour_reliability_fault_contract_v3",
   "goal": "A19",
   "title": "two-hour full-product pipeline stability and fault recovery",
-  "current_state": "BLOCKED_MISSING_CANONICAL_A19_RUNTIME_PRODUCER",
+  "current_state": "READY_FOR_FRESH_TWO_HOUR_RUNTIME",
   "authoritative_source": {
-    "repository_commit": "e1d900faa255c8c2e56ca20d2b17b7af6d59ca7d",
-    "path": "docs/product-acceptance-spec-v1.md",
+    "path": "docs/a12-product-acceptance-specification.md",
     "lines": "1205-1280",
     "sections": ["36. 两小时 Soak", "37. Fault Injection"],
-    "availability_on_current_main": false
+    "availability_on_current_source": true
   },
   "canonical_producer": {
     "required": true,
-    "receipt_id": "tzcup_a19_canonical_runtime_receipt_v1",
+    "available_on_current_source": true,
+    "producer": "scripts/produce_formal_a19_reliability_fault.py",
+    "runner": "scripts/run_formal_a19_reliability_fault.sh",
+    "validator": "scripts/validate_formal_a19_reliability_fault.py",
+    "adapter_protocol": "tzcup.formal_a19.adapter.v1",
+    "raw_receipt_id": "tzcup_a19_canonical_runtime_raw_receipt_v1",
+    "final_report_id": "tzcup_formal_a19_reliability_fault_validation_v3",
     "required_commit_binding": true,
-    "available_on_current_main": false,
-    "future_producer_required_semantics": ["chronological wall-clock time series with continuity and cadence", "launch command and zero exit code", "zero-survivor process receipt", "fault injection parameters and timestamped STOPPED then RECOVERED state sequence", "same-commit snapshot/session/runtime-closure binding"],
-    "blocker": "No canonical current-main runtime collector produces a receipt with full-product time series, command/exit/zero-survivor evidence, all 18 injected faults, and formal session/runtime-closure bindings. Hand-authored JSON can never pass A19."
+    "test_fixture_forbidden_in_formal_run": true,
+    "forbidden_adapter_path_fragments": ["/fixtures/", "\\fixtures\\"]
   },
-  "required_pipeline_components": ["Coverage", "Perception", "Tracking", "DynamicTrashMap", "Spot Cleaning", "Post-Clean Verification"],
+  "required_pipeline_components": [
+    "Coverage", "Perception", "Tracking", "DynamicTrashMap",
+    "Spot Cleaning", "Post-Clean Verification"
+  ],
   "stability_gates": {
     "minimum_duration_s": 7200,
+    "sample_period_s": 1.0,
+    "maximum_sample_gap_s": 2.5,
+    "minimum_sample_count": 7000,
+    "memory_comparison_window_s": 300,
     "crash_count": 0,
     "deadlock_count": 0,
     "maximum_memory_growth_ratio": 0.05,
@@ -34,12 +45,37 @@
     "maximum_localization_xy_p95_m": 0.05,
     "maximum_estop_brake_latency_s": 1.0
   },
-  "required_profiles": ["nominal", "transport_stress", "wet_surface", "degraded_drive"],
-  "required_faults": [
-    "rgb_freeze", "depth_freeze", "timestamp_skew", "camera_info_mismatch", "tf_unavailable", "invalid_depth",
-    "proposal_flood", "proposal_dropout", "classifier_exception", "classifier_timeout", "action_verifier_failure", "reobserve_timeout",
-    "cuda_provider_failure", "model_hash_mismatch", "corrupt_model", "sustained_slow_inference",
-    "nav2_path_unavailable", "dynamic_obstacle_blocks_observation"
+  "profile_schedule": [
+    {"profile": "nominal", "start_offset_s": 0, "minimum_observed_duration_s": 1500},
+    {"profile": "transport_stress", "start_offset_s": 1800, "minimum_observed_duration_s": 1500},
+    {"profile": "wet_surface", "start_offset_s": 3600, "minimum_observed_duration_s": 1500},
+    {"profile": "degraded_drive", "start_offset_s": 5400, "minimum_observed_duration_s": 1500}
+  ],
+  "fault_timing": {
+    "maximum_injection_lateness_s": 30,
+    "maximum_safe_stop_latency_s": 5,
+    "maximum_recovery_latency_s": 60,
+    "required_fault_count": 18
+  },
+  "fault_schedule": [
+    {"fault": "rgb_freeze", "offset_s": 300, "profile": "nominal", "parameters": {"duration_s": 10}},
+    {"fault": "depth_freeze", "offset_s": 600, "profile": "nominal", "parameters": {"duration_s": 10}},
+    {"fault": "timestamp_skew", "offset_s": 900, "profile": "nominal", "parameters": {"skew_ms": 250, "duration_s": 10}},
+    {"fault": "camera_info_mismatch", "offset_s": 1200, "profile": "nominal", "parameters": {"width_delta_px": 8, "duration_s": 10}},
+    {"fault": "tf_unavailable", "offset_s": 2100, "profile": "transport_stress", "parameters": {"frame": "camera_color_optical_frame", "duration_s": 10}},
+    {"fault": "invalid_depth", "offset_s": 2400, "profile": "transport_stress", "parameters": {"invalid_fraction": 1.0, "duration_s": 10}},
+    {"fault": "proposal_flood", "offset_s": 2700, "profile": "transport_stress", "parameters": {"proposals_per_frame": 2048, "duration_s": 10}},
+    {"fault": "proposal_dropout", "offset_s": 3000, "profile": "transport_stress", "parameters": {"drop_probability": 1.0, "duration_s": 10}},
+    {"fault": "classifier_exception", "offset_s": 3300, "profile": "transport_stress", "parameters": {"exception_count": 1}},
+    {"fault": "classifier_timeout", "offset_s": 3900, "profile": "wet_surface", "parameters": {"timeout_s": 2.0, "occurrences": 1}},
+    {"fault": "action_verifier_failure", "offset_s": 4200, "profile": "wet_surface", "parameters": {"reject_count": 1}},
+    {"fault": "reobserve_timeout", "offset_s": 4500, "profile": "wet_surface", "parameters": {"timeout_s": 5.0, "occurrences": 1}},
+    {"fault": "cuda_provider_failure", "offset_s": 4800, "profile": "wet_surface", "parameters": {"provider": "CUDAExecutionProvider", "duration_s": 10}},
+    {"fault": "model_hash_mismatch", "offset_s": 5700, "profile": "degraded_drive", "parameters": {"model": "dosod", "mismatch_count": 1}},
+    {"fault": "corrupt_model", "offset_s": 6000, "profile": "degraded_drive", "parameters": {"model": "edgesam", "corrupt_bytes": 16}},
+    {"fault": "sustained_slow_inference", "offset_s": 6300, "profile": "degraded_drive", "parameters": {"latency_ms": 1000, "duration_s": 20}},
+    {"fault": "nav2_path_unavailable", "offset_s": 6600, "profile": "degraded_drive", "parameters": {"duration_s": 10}},
+    {"fault": "dynamic_obstacle_blocks_observation", "offset_s": 6900, "profile": "degraded_drive", "parameters": {"duration_s": 15, "minimum_block_distance_m": 0.5}}
   ],
   "required_fault_evidence": {
     "require_injection_parameters": true,
@@ -47,10 +83,16 @@
     "perception_health_states": ["DEGRADED", "ERROR"],
     "required_safety_state": "STOPPED",
     "required_recovery_state": "RECOVERED",
+    "required_recovered_coverage_states": ["RESUMED", "RUNNING"],
     "require_safety_nav_operational": true,
-    "require_safe_coverage_recovery_when_possible": true
+    "require_watchdog_operational": true,
+    "require_safe_coverage_recovery": true
   },
   "required_runtime_health": ["Safety", "Nav2", "Watchdog"],
-  "required_raw_evidence": ["wall_clock_time_series", "launch_command", "process_exit", "zero_survivor", "fault_injection_receipt"],
-  "claim_boundary": "This contract preserves every product-standard stability and fault gate. It is fail-closed: until the canonical producer exists on current main and emits one current, hash-bound receipt, every candidate is BLOCKED."
+  "required_raw_evidence": [
+    "adapter_events_jsonl", "adapter_stderr_log", "launch_command",
+    "process_exit", "zero_survivor", "fault_injection_commands",
+    "runtime_gate_binding"
+  ],
+  "claim_boundary": "The producer and validator are available, but A19 passes only after one fresh POSIX/WSL execution reaches 7200 real monotonic seconds and the independent validator accepts its raw, current-commit, current-session, snapshot and runtime-closure-bound evidence. Preflight, fixtures and short runs are never product evidence."
 }

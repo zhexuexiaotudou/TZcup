@@ -162,6 +162,12 @@ def require_project_files() -> None:
         ROOT / "scripts" / "formal_wsl_entry_memory_guard.ps1",
         ROOT / "scripts" / "run_formal_runtime_isolation.sh",
         ROOT / "scripts" / "run_formal_final_acceptance.py",
+        ROOT / "config" / "high_fidelity_vehicle" / "formal_a19_reliability_fault_contract.json",
+        ROOT / "docs" / "formal-a19-reliability-fault-contract.md",
+        ROOT / "scripts" / "produce_formal_a19_reliability_fault.py",
+        ROOT / "scripts" / "validate_formal_a19_reliability_fault.py",
+        ROOT / "scripts" / "run_formal_a19_reliability_fault.sh",
+        ROOT / "scripts" / "fixtures" / "formal_a19_adapter_fixture.py",
         ROOT / "scripts" / "validate_dosod_s100p_hbm_compile_contract.py",
         ROOT / "scripts" / "collect_dosod_s100p_compiler_identity.py",
         ROOT / "scripts" / "test_collect_dosod_s100p_compiler_identity.py",
@@ -187,6 +193,7 @@ def require_project_files() -> None:
         ROOT / "scripts" / "test_public_mobile_pilot.py",
         ROOT / "scripts" / "test_formal_runtime_orchestration.py",
         ROOT / "scripts" / "test_run_formal_final_acceptance.py",
+        ROOT / "scripts" / "test_validate_formal_a19_reliability_fault.py",
         ROOT / "scripts" / "render_formal_vehicle_preview.py",
     )
     missing = [str(path.relative_to(ROOT)) for path in required if not path.is_file()]
@@ -659,6 +666,7 @@ def run_ros_independent_tests() -> None:
         ROOT / "scripts" / "test_build_formal_final_runtime_windows_guard.py",
         ROOT / "scripts" / "test_validate_formal_windows_cold_gate_evidence.py",
         ROOT / "scripts" / "test_run_formal_final_acceptance.py",
+        ROOT / "scripts" / "test_validate_formal_a19_reliability_fault.py",
         ROOT / "scripts" / "test_formal_s100_live_acceptance.py",
         ROOT / "scripts" / "test_validate_formal_end_to_end_cleaning_mission.py",
         ROOT / "scripts" / "test_aggregate_formal_single_episode_cleaning_mission.py",

@@ -171,8 +171,9 @@ def test_every_runtime_effect_class_is_required_by_a_function_position() -> None
         assert contract["evidence_gates"][gate]["snapshot_source_hash_field"] == (
             "source_binding.source_inventory_sha256"
         )
-    runtime_bound_gates = {
-        "sensor_runtime",
+        runtime_bound_gates = {
+            "a19_two_hour_reliability_fault",
+            "sensor_runtime",
         "product_visual_acceptance",
         "service_visual_acceptance",
         "integrated_basic_physics",

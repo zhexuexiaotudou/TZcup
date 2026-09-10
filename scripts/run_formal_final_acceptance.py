@@ -147,6 +147,7 @@ RUNTIME_GATE_BINDING_GATES = {
     "manipulator_trajectory",
     "physical_grasp_and_bin",
     "formal_20_cube_grasp_and_dynamic_mass",
+    "a19_two_hour_reliability_fault",
 }
 WINDOWS_DRY_RUN_FOUR_CHAIN_STEPS = (
     "chassis",
@@ -230,6 +231,13 @@ STEP_SPECS: tuple[StepSpec, ...] = (
         "serially materialize and run all eight validation and twelve hidden product sites",
         "formal_multisite_product_acceptance.py",
         ("multi_site_product_generalization",),
+    ),
+    StepSpec(
+        "a19_reliability",
+        "gazebo",
+        "run one continuous two-hour product soak with all eighteen formal faults",
+        "run_formal_a19_reliability_fault.sh",
+        ("a19_two_hour_reliability_fault",),
     ),
     StepSpec("s100_live", "external", "validate only real RDK S100P / Journey 6P runtime evidence", "validate_formal_s100_live_runtime.py", (EXTERNAL_GATE,)),
     StepSpec("finalize_session", "static", "seal evidence digests into the frozen session", "formal_acceptance_session.py"),
@@ -832,6 +840,7 @@ def static_audit(root: Path = ROOT) -> dict[str, Any]:
         "rl_policy",
         "single_episode",
         "multisite_product",
+        "a19_reliability",
         "s100_live",
         "finalize_session",
         "functional_aggregate",
@@ -1013,6 +1022,10 @@ def _extra_fresh_paths(context: Context) -> list[Path]:
         context.root / "artifacts/formal_20_cube_grasp_manifest.json",
         context.root / "artifacts/formal_20_cube_grasp_runtime.launch.log",
         context.root / "artifacts/formal_same_map_full_coverage_baseline.json",
+        context.root / "artifacts/formal_a19_reliability_fault_raw",
+        context.root / "artifacts/formal_a19_producer.log",
+        context.root / "artifacts/formal_a19_snapshot_preflight.json",
+        context.root / "artifacts/formal_a19_snapshot_postflight.json",
         *_runtime_binding_auxiliary_paths(context),
         *_sensor_runtime_auxiliary_paths(context),
         *_grasp_runtime_auxiliary_paths(context),
@@ -1214,6 +1227,22 @@ def preflight(context: Context) -> dict[str, Any]:
     add("perception_artifact_manifest", (context.perception_artifacts / "artifact_manifest.json").is_file(), str(context.perception_artifacts / "artifact_manifest.json"))
     add("onnxruntime_overlay", (context.onnx_pythonpath / "onnxruntime/__init__.py").is_file(), str(context.onnx_pythonpath))
     add("episode_count", context.episode_count >= 30, f"episode_count={context.episode_count}; formal_minimum=30")
+    a19_adapter_argv_json = os.environ.get("FORMAL_A19_ADAPTER_ARGV_JSON", "")
+    try:
+        a19_adapter_argv = json.loads(a19_adapter_argv_json)
+    except json.JSONDecodeError:
+        a19_adapter_argv = None
+    a19_adapter_valid = (
+        isinstance(a19_adapter_argv, list)
+        and bool(a19_adapter_argv)
+        and all(isinstance(item, str) and item for item in a19_adapter_argv)
+        and "/fixtures/" not in "\0".join(a19_adapter_argv).replace("\\", "/").lower()
+    )
+    add(
+        "a19_production_adapter_argv",
+        a19_adapter_valid,
+        "configured as a non-fixture JSON argv" if a19_adapter_valid else "set FORMAL_A19_ADAPTER_ARGV_JSON to the frozen non-fixture adapter argv JSON array",
+    )
     add(
         "final_output_archive_plan",
         archive_plan.get("validated") is True,
@@ -1974,6 +2003,24 @@ def _step_command(
             "--base-domain", context.base_domain,
             "--output", multisite_output,
         ]), environment
+    if step_id == "a19_reliability":
+        adapter_argv_json = os.environ.get("FORMAL_A19_ADAPTER_ARGV_JSON")
+        if not adapter_argv_json and execution_environment:
+            raise OrchestrationError(
+                "A19 requires FORMAL_A19_ADAPTER_ARGV_JSON from the preflighted execution environment"
+            )
+        if not adapter_argv_json:
+            adapter_argv_json = '["__A19_ADAPTER_REQUIRES_EXECUTION_PREFLIGHT__"]'
+        a19_output = gate_output("a19_two_hour_reliability_fault")
+        environment.update(
+            FORMAL_VEHICLE_RUNTIME_WS=str(context.runtime_ws),
+            FORMAL_A19_ADAPTER_ARGV_JSON=adapter_argv_json,
+            FORMAL_A19_EVIDENCE_ROOT=str(
+                context.root / "artifacts/formal_a19_reliability_fault_raw"
+            ),
+            FORMAL_A19_OUTPUT=str(a19_output),
+        )
+        return bash("run_formal_a19_reliability_fault.sh"), environment
     raise OrchestrationError(f"no executable command for step {step_id}")
 
 
