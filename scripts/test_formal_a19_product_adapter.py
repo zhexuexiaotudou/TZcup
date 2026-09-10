@@ -33,7 +33,7 @@ def product_argv() -> list[str]:
     ]
 
 
-def test_current_formal_contract_is_explicitly_partial_and_fail_closed() -> None:
+def test_current_formal_contract_exposes_only_live_product_fault_consumers() -> None:
     contract = json.loads(
         (ROOT / "config/high_fidelity_vehicle/formal_a19_reliability_fault_contract.json").read_text(encoding="utf-8")
     )
@@ -41,9 +41,11 @@ def test_current_formal_contract_is_explicitly_partial_and_fail_closed() -> None
     assert supported == [
         "rgb_freeze", "depth_freeze", "timestamp_skew",
         "camera_info_mismatch", "tf_unavailable", "invalid_depth",
+        "proposal_flood", "proposal_dropout", "classifier_exception",
+        "classifier_timeout", "action_verifier_failure", "reobserve_timeout",
     ]
     assert unsupported == [row["fault"] for row in contract["fault_schedule"] if row["fault"] not in adapter.SUPPORTED_FAULTS]
-    assert len(unsupported) == 12
+    assert len(unsupported) == 6
 
 
 def test_product_argv_requires_real_product_launch_and_every_proxy_binding(monkeypatch) -> None:
@@ -105,9 +107,11 @@ def test_timestamp_camera_tf_and_invalid_depth_mutate_forwarded_messages() -> No
     assert invalid_readback["after_nonzero_bytes"] == 0
 
 
-def test_unsupported_inner_pipeline_faults_are_never_acked() -> None:
-    with pytest.raises(adapter.AdapterError, match="UNSUPPORTED"):
-        adapter.validate_fault_parameters("classifier_exception", {"exception_count": 1})
+def test_live_inner_pipeline_faults_require_strict_parameters() -> None:
+    adapter.validate_fault_parameters("classifier_exception", {"exception_count": 1})
+    adapter.validate_fault_parameters("proposal_flood", {"proposals_per_frame": 2048, "duration_s": 10})
+    with pytest.raises(adapter.AdapterError, match="drop probability"):
+        adapter.validate_fault_parameters("proposal_dropout", {"drop_probability": 0.5, "duration_s": 10})
     with pytest.raises(adapter.AdapterError, match="only an observed 1.0"):
         adapter.validate_fault_parameters("invalid_depth", {"invalid_fraction": 0.5, "duration_s": 10})
 

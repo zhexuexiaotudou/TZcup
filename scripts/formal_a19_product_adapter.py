@@ -33,6 +33,16 @@ SUPPORTED_FAULTS = frozenset({
     "camera_info_mismatch",
     "tf_unavailable",
     "invalid_depth",
+    "proposal_flood",
+    "proposal_dropout",
+    "classifier_exception",
+    "classifier_timeout",
+    "action_verifier_failure",
+    "reobserve_timeout",
+})
+SENSOR_PROXY_FAULTS = frozenset({
+    "rgb_freeze", "depth_freeze", "timestamp_skew", "camera_info_mismatch",
+    "tf_unavailable", "invalid_depth",
 })
 PROXY_TOPICS = {
     "front_rgb": (
@@ -152,6 +162,20 @@ def validate_fault_parameters(fault: str, parameters: Mapping[str, Any]) -> None
         _positive_number(parameters.get("duration_s"), "invalid_depth.duration_s")
         if parameters.get("invalid_fraction") != 1.0:
             raise AdapterError("invalid_depth currently supports only an observed 1.0 invalid fraction")
+    elif fault == "proposal_flood":
+        _positive_number(parameters.get("proposals_per_frame"), "proposal_flood.proposals_per_frame")
+        _positive_number(parameters.get("duration_s"), "proposal_flood.duration_s")
+    elif fault == "proposal_dropout":
+        if parameters.get("drop_probability") != 1.0:
+            raise AdapterError("proposal_dropout currently supports only an observed 1.0 drop probability")
+        _positive_number(parameters.get("duration_s"), "proposal_dropout.duration_s")
+    elif fault == "classifier_exception":
+        _positive_number(parameters.get("exception_count"), "classifier_exception.exception_count")
+    elif fault in {"classifier_timeout", "reobserve_timeout"}:
+        _positive_number(parameters.get("timeout_s"), f"{fault}.timeout_s")
+        _positive_number(parameters.get("occurrences"), f"{fault}.occurrences")
+    elif fault == "action_verifier_failure":
+        _positive_number(parameters.get("reject_count"), "action_verifier_failure.reject_count")
 
 
 def _shift_stamp(stamp: Any, skew_ms: float) -> None:
@@ -264,6 +288,8 @@ class SensorFaultController:
         with self._lock:
             fault = self._recovery_fault
             if fault is None:
+                return None
+            if fault not in SENSOR_PROXY_FAULTS:
                 return None
             if fault in {"rgb_freeze", "timestamp_skew", "tf_unavailable"}:
                 suffixes = ("rgb",)
@@ -381,8 +407,10 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
             self.last_activity = time.monotonic()
             self.tf_failure_since: float | None = None
             self.initial_perception_pids: set[int] | None = None
+            self.product_fault_baseline: dict[str, int] = {}
             latched = QoSProfile(depth=1, reliability=ReliabilityPolicy.RELIABLE, durability=DurabilityPolicy.TRANSIENT_LOCAL)
             self.operator = self.create_publisher(Bool, "/product_demo/operator_start", latched)
+            self.fault_control = self.create_publisher(String, "/formal_a19/fault_control", latched)
             message_types = {
                 "front_rgb": Image, "front_depth": Image, "front_info": CameraInfo,
                 "wrist_rgb": Image, "wrist_depth": Image, "wrist_info": CameraInfo,
@@ -470,6 +498,46 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
 
         def command_operator(self, armed: bool) -> None:
             self.operator.publish(Bool(data=armed))
+
+        @staticmethod
+        def _fault_values(rows: Any) -> tuple[str, int] | None:
+            if not isinstance(rows, list):
+                return None
+            for row in rows:
+                values = row.get("values") if isinstance(row, Mapping) else None
+                if not isinstance(values, Mapping):
+                    continue
+                try:
+                    fault = json.loads(str(values.get("formal_a19_fault", '""')))
+                    events = json.loads(str(values.get("formal_a19_fault_events", "0")))
+                except json.JSONDecodeError:
+                    fault = str(values.get("formal_a19_fault", ""))
+                    try:
+                        events = int(str(values.get("formal_a19_fault_events", "0")))
+                    except ValueError:
+                        continue
+                if isinstance(fault, str) and type(events) is int:
+                    return fault, events
+            return None
+
+        def command_product_fault(self, fault: str, parameters: Mapping[str, Any], active: bool) -> None:
+            self.fault_control.publish(String(data=json.dumps({
+                "fault": fault, "parameters": dict(parameters), "active": active,
+            }, sort_keys=True, separators=(",", ":"))))
+
+        def product_fault_readback(self, fault: str, *, recovered: bool = False) -> dict[str, Any] | None:
+            source = "post_clean_verification" if fault == "action_verifier_failure" else "perception"
+            rows = self.value(source, 2.0)
+            parsed = self._fault_values(rows)
+            if parsed is None:
+                return None
+            active_fault, events = parsed
+            if recovered:
+                if active_fault:
+                    return None
+            elif active_fault != fault or events <= self.product_fault_baseline.get(fault, 0):
+                return None
+            return {"fault": fault, "observed": True, "source": source, "active_fault": active_fault, "events": events, "rows": rows}
 
         def safety_stopped(self) -> bool:
             raw = self.value("safety", 1.0)
@@ -647,24 +715,55 @@ def _run_ros_adapter(args: argparse.Namespace, contract: Mapping[str, Any]) -> i
                     raise AdapterError("fault parameters are not an object")
                 started = time.monotonic()
                 probe.controller.begin(fault, parameters)
+                if fault not in SENSOR_PROXY_FAULTS:
+                    prior = probe.product_fault_readback(fault)
+                    probe.product_fault_baseline[fault] = 0 if prior is None else int(prior["events"])
+                    probe.command_product_fault(fault, parameters, True)
                 emitter.emit({"type": "fault_injected", "command_id": command["command_id"], "fault": fault, "profile": command["profile"], "parameters": dict(parameters)})
                 for _ in range(10):
                     probe.command_operator(False); time.sleep(0.05)
-                wait_for(lambda: probe.controller.readback() is not None, args.readback_timeout_s, f"{fault} injection")
+                wait_for(
+                    lambda: (
+                        probe.controller.readback() is not None
+                        if fault in SENSOR_PROXY_FAULTS
+                        else probe.product_fault_readback(fault) is not None
+                    ),
+                    args.readback_timeout_s,
+                    f"{fault} injection",
+                )
                 wait_for(probe.safety_stopped, args.readback_timeout_s, f"{fault} safety stop")
                 brake_latency_s = time.monotonic() - started
                 wait_for(probe.cleaning_safe, args.readback_timeout_s, f"{fault} cleaning inhibit")
                 wait_for(probe.perception_degraded, args.readback_timeout_s, f"{fault} perception degradation")
-                readback = probe.controller.readback()
+                readback = (
+                    probe.controller.readback()
+                    if fault in SENSOR_PROXY_FAULTS
+                    else probe.product_fault_readback(fault)
+                )
                 emitter.emit({"type": "fault_state", "fault": fault, "state": "STOPPED", "safety_state": "STOPPED", "pending_clean_outcome": "DEFERRED", "perception_health": "DEGRADED", "nav2_operational": probe.value("nav2") is not None, "watchdog_operational": probe.value("safety", 1.0) is not None, "unsafe_cleaning_action_count": probe.unsafe_cleaning_action_count, "brake_latency_s": brake_latency_s, "injection_readback": readback, "cleaning_inhibit_readback": probe.value("spot_cleaning")})
-                duration = float(parameters.get("duration_s", 0.0))
+                # The wrist fault must remain active through the product's
+                # existing bounded re-observation wait; clearing it at the
+                # first dropped message would merely defer the same request.
+                duration = float(
+                    parameters.get(
+                        "duration_s",
+                        parameters.get("timeout_s", 0.0)
+                        if fault == "reobserve_timeout" else 0.0,
+                    )
+                )
                 time.sleep(max(0.0, duration - (time.monotonic() - started)))
                 probe.controller.clear()
+                if fault not in SENSOR_PROXY_FAULTS:
+                    probe.command_product_fault(fault, parameters, False)
                 for _ in range(12):
                     probe.command_operator(True); time.sleep(0.1)
                 recovered: dict[str, Any] = {}
                 def sensor_recovered() -> bool:
-                    readback = probe.controller.recovery_readback()
+                    readback = (
+                        probe.controller.recovery_readback()
+                        if fault in SENSOR_PROXY_FAULTS
+                        else probe.product_fault_readback(fault, recovered=True)
+                    )
                     if readback is None:
                         return False
                     recovered.update(readback)

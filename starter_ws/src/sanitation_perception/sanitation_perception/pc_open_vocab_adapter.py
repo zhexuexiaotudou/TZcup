@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import math
+import threading
 import time
 
 import numpy as np
@@ -24,6 +25,66 @@ from .tracking import TargetTracker
 FORBIDDEN_INPUT_TOKENS = ("ground_truth", "evaluator", "evaluation/")
 GROUND_DIRT_CLASS_IDS = frozenset(("fallen_leaves", "dust_or_soil", "puddle"))
 NANOSECONDS_PER_SECOND = 1_000_000_000
+A19_PERCEPTION_FAULTS = frozenset({
+    "proposal_flood", "proposal_dropout", "classifier_exception",
+    "classifier_timeout", "reobserve_timeout",
+})
+
+
+class FormalA19PerceptionFaultGate:
+    """Small, live-only fault gate on the actual PC inference consumers."""
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self.fault: str | None = None
+        self.parameters: dict[str, object] = {}
+        self.events = 0
+
+    def configure(self, raw: str) -> None:
+        value = json.loads(raw)
+        if not isinstance(value, dict) or set(value) != {"fault", "parameters", "active"}:
+            raise ValueError("formal A19 fault control is malformed")
+        fault, parameters, active = value["fault"], value["parameters"], value["active"]
+        if not isinstance(fault, str) or fault not in A19_PERCEPTION_FAULTS:
+            raise ValueError("formal A19 perception fault is unsupported")
+        if not isinstance(parameters, dict) or type(active) is not bool:
+            raise ValueError("formal A19 fault control values are malformed")
+        if active:
+            required = {
+                "proposal_flood": ("proposals_per_frame", "duration_s"),
+                "proposal_dropout": ("drop_probability", "duration_s"),
+                "classifier_exception": ("exception_count",),
+                "classifier_timeout": ("timeout_s", "occurrences"),
+                "reobserve_timeout": ("timeout_s", "occurrences"),
+            }[fault]
+            if any(type(parameters.get(name)) not in (int, float) or float(parameters[name]) <= 0.0 for name in required):
+                raise ValueError("formal A19 fault parameters are invalid")
+            with self._lock:
+                self.fault, self.parameters, self.events = fault, dict(parameters), 0
+        else:
+            with self._lock:
+                if self.fault == fault:
+                    self.fault, self.parameters = None, {}
+
+    def consume(self, fault: str) -> bool:
+        with self._lock:
+            if self.fault != fault:
+                return False
+            limit = int(self.parameters.get("exception_count", self.parameters.get("occurrences", 1)))
+            if fault in {"proposal_flood", "proposal_dropout"}:
+                limit = 1 << 30
+            if self.events >= limit:
+                return False
+            self.events += 1
+            return True
+
+    def telemetry(self) -> dict[str, object]:
+        with self._lock:
+            return {"formal_a19_fault": self.fault or "", "formal_a19_fault_events": self.events}
+
+    def number(self, name: str) -> int:
+        with self._lock:
+            return int(self.parameters[name])
 
 
 def select_source_stamp(
@@ -359,6 +420,7 @@ def main() -> None:
             self.last_run: dict[str, int] = {}
             self.rates = {"front": 2.0, "wrist": 2.0, "rear_left": 1.0, "rear_right": 1.0}
             self.frame_counts = {"input": 0, "selected": 0, "output": 0, "rate_limited": 0}
+            self._formal_a19_fault = FormalA19PerceptionFaultGate()
             # DOSOD + EdgeSAM inference is deliberately serialized because the
             # ONNX sessions are shared.  Keep the short-lived map/depth/info
             # cache callbacks in a different group so a long inference cannot
@@ -398,6 +460,13 @@ def main() -> None:
             )
             self.diagnostic_publisher = self.create_publisher(
                 DiagnosticArray, "/perception/open_vocab/diagnostics", diagnostic_qos
+            )
+            self.create_subscription(
+                String,
+                "/formal_a19/fault_control",
+                self._on_formal_a19_fault_control,
+                10,
+                callback_group=self.cache_callback_group,
             )
             self._last_success_diagnostic_s = float("-inf")
 
@@ -497,6 +566,32 @@ def main() -> None:
         def _on_map(self, message: OccupancyGrid) -> None:
             self.latest_map = message
 
+        def _on_formal_a19_fault_control(self, message: String) -> None:
+            try:
+                self._formal_a19_fault.configure(message.data)
+            except (TypeError, ValueError, json.JSONDecodeError) as exc:
+                self._diagnostic(2, "formal_a19_fault_control_rejected", {"error": str(exc)})
+                return
+            self._diagnostic(1, "formal_a19_fault_control_updated", self._formal_a19_fault.telemetry())
+
+        def _infer(self, rgb):
+            # These branches sit immediately at the DOSOD consumer, so each
+            # accepted command changes the product data path rather than an
+            # evidence-only side channel.
+            if self._formal_a19_fault.consume("classifier_exception"):
+                raise RuntimeError("formal_a19_classifier_exception")
+            if self._formal_a19_fault.consume("classifier_timeout"):
+                raise TimeoutError("formal_a19_classifier_deadline_exceeded")
+            results = list(self.detector.infer(rgb))
+            if self._formal_a19_fault.consume("proposal_dropout"):
+                return []
+            if self._formal_a19_fault.consume("proposal_flood"):
+                if not results:
+                    raise RuntimeError("formal_a19_proposal_flood_requires_live_proposal")
+                count = self._formal_a19_fault.number("proposals_per_frame")
+                return (results * ((count + len(results) - 1) // len(results)))[:count]
+            return results
+
         def _due(self, sensor: str, stamp) -> bool:
             self.frame_counts["input"] += 1
             try:
@@ -547,7 +642,7 @@ def main() -> None:
                 return
             try:
                 rgb = self.bridge.imgmsg_to_cv2(image_message, desired_encoding="rgb8")
-                results = self.detector.infer(rgb)
+                results = self._infer(rgb)
                 product = self._detections_message(image_message, results)
                 self.box_publisher.publish(product)
                 self.detection_publisher.publish(product)
@@ -599,7 +694,7 @@ def main() -> None:
                 valid_depth = np.isfinite(depth) & (depth > 0)
                 if not bool(np.any(valid_depth)):
                     raise ValueError("depth image has no finite positive samples")
-                results = self.detector.infer(rgb)
+                results = self._infer(rgb)
                 boxes = np.asarray([item.xyxy for item in results], dtype=np.float32).reshape(-1, 4)
                 product = self._detections_message(image_message, results)
                 # Publish DOSOD immediately. EdgeSAM is intentionally not on
@@ -726,6 +821,8 @@ def main() -> None:
                 self.target_publisher.publish(target_array)
                 if sensor == "wrist":
                     for target in target_array.targets:
+                        if self._formal_a19_fault.consume("reobserve_timeout"):
+                            continue
                         position = target.map_pose.pose.position
                         orientation = target.map_pose.pose.orientation
                         try:
@@ -854,7 +951,12 @@ def main() -> None:
             status.name = "formal_open_vocab_perception/pc_product_adapter"
             status.hardware_id = "pc_cpu_onnxruntime"
             status.message = message
-            values = {**values, "ground_truth_input_used": False, "fail_closed": level >= 2}
+            values = {
+                **values,
+                **self._formal_a19_fault.telemetry(),
+                "ground_truth_input_used": False,
+                "fail_closed": level >= 2,
+            }
             status.values = [
                 KeyValue(key=str(key), value=json.dumps(value, ensure_ascii=False))
                 for key, value in sorted(values.items())

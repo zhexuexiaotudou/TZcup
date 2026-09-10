@@ -13,6 +13,7 @@ from sanitation_perception.product_projection import (
     project_rgbd_observation,
 )
 from sanitation_perception.pc_open_vocab_adapter import (
+    FormalA19PerceptionFaultGate,
     _ground_dirt_prompt_indices,
     _projection_masks,
     select_source_stamp,
@@ -30,6 +31,24 @@ def test_front_source_stamp_selector_is_exactly_two_hz_and_rejects_replays():
         False,
         "source_rate_limited",
     )
+
+
+def test_a19_fault_gate_changes_live_inference_consumption_and_clears() -> None:
+    gate = FormalA19PerceptionFaultGate()
+    gate.configure(json.dumps({
+        "fault": "classifier_timeout",
+        "parameters": {"timeout_s": 2.0, "occurrences": 1},
+        "active": True,
+    }))
+    assert gate.consume("classifier_timeout") is True
+    assert gate.consume("classifier_timeout") is False
+    assert gate.telemetry() == {
+        "formal_a19_fault": "classifier_timeout", "formal_a19_fault_events": 1,
+    }
+    gate.configure(json.dumps({
+        "fault": "classifier_timeout", "parameters": {"timeout_s": 2.0, "occurrences": 1}, "active": False,
+    }))
+    assert gate.telemetry()["formal_a19_fault"] == ""
 
 
 def test_dosod_inverse_roi_golden_vectors_cover_padding_and_odd_remainder():
@@ -294,7 +313,7 @@ def test_ros_product_adapter_lists_every_formal_camera_and_no_evaluator_subscrip
     assert "self.inference_callback_group = MutuallyExclusiveCallbackGroup()" in source
     assert "self.cache_callback_group = MutuallyExclusiveCallbackGroup()" in source
     assert source.count("callback_group=self.inference_callback_group") == 2
-    assert source.count("callback_group=self.cache_callback_group") == 3
+    assert source.count("callback_group=self.cache_callback_group") == 4
     assert "MultiThreadedExecutor(num_threads=3)" in source
     assert "self._last_success_diagnostic_s" in source
     assert "now - self._last_success_diagnostic_s < 1.0" in source

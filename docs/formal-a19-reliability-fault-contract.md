@@ -9,10 +9,13 @@
 RGB/Depth 断流、时间戳偏移、CameraInfo 尺寸错配、不可达 TF frame 和全无效深度保留
 实际消息变换及输入/输出计数 readback。STOPPED/RECOVERED 还必须从产品 Safety、Nav2、
 Perception 和 cleaning diagnostics 独立观察，定位误差由 `/odom` 与物理
-`/odom/unfiltered` 计算，RSS 来自同一 PGID 的 `/proc`。当前产品没有其余 12 类故障和
+`/odom/unfiltered` 计算，RSS 来自同一 PGID 的 `/proc`。proposal_flood、proposal_dropout、
+classifier_exception、classifier_timeout、action_verifier_failure 和 reobserve_timeout
+现通过受控主题实际改变 PC 推理或物理抓取消费者，并由这些节点自己的 diagnostics/status
+回传消费计数；adapter 只在该计数增长后确认 STOPPED。当前产品仍没有其余 6 类故障和
 三种非 nominal profile 的运行时注入接口；adapter 会在正式 start 握手立即列出
 `UNSUPPORTED` 并失败关闭，不会以命令回显冒充实测，也不会先浪费两小时再失败。因此
-完整 A19 仍被产品 fault hooks 阻断。
+完整 A19 仍被剩余产品 fault hooks 与 profile 注入阻断。
 
 ## 不可缩短的正式口径
 
