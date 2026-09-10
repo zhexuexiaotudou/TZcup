@@ -116,8 +116,10 @@
       "step_ids": ["perception", "single_episode"],
       "evidence_gates": ["random_scene_perception", "end_to_end_cleaning_mission"],
       "runtime_evidence_requirements": ["current_formal_session_and_snapshot_binding", "current_run_root_and_source_commit_tree", "model_config_dataset_container_dependency_identities", "per_execution_video_audit", "per_execution_mcap_metadata_and_replay_recalculation", "180_unique_scenario_seed_receipts", "30_independent_mission_group_receipts"],
-      "state": "BLOCKED_NO_CANONICAL_PRODUCER",
-      "blockers": ["No canonical producer is wired to atomically create current-formal-session-bound AUTO-15 video, MCAP, replay/recalculation, provenance, and independent mission-group receipts. The authoritative fixed product-acceptance specification and static cardinality contract cannot promote a product runtime state."]
+      "canonical_producer": "scripts/auto15_product_evidence.py",
+      "canonical_replay_producer": "scripts/formal_product_mcap_replay.py",
+      "state": "NOT_RUN_CURRENT_SNAPSHOT",
+      "blockers": ["The canonical producer is implemented, but the current snapshot still needs 180 fresh scenario-seed execution receipts and at least 30 independent mission-group receipts before A12 can pass."]
     },
     {
       "id": "A13",
@@ -187,8 +189,9 @@
       "evidence_gates": [],
       "receipt_contract": "config/high_fidelity_vehicle/a20_release_replay_receipt_contract.json",
       "receipt_validator": "scripts/a20_release_replay_receipt.py",
-      "state": "BLOCKED",
-      "blockers": ["The repository has no canonical formal product MCAP replay producer that recomputes coverage, localization, session, and runtime-closure bindings. Stage-specific AUTO-02/AUTO-03 and coverage-only replay reports, embedded JSON, and historical AUTO-16 artifacts are not A20 evidence."]
+      "canonical_product_replay_producer": "scripts/formal_product_mcap_replay.py",
+      "state": "NOT_RUN_CURRENT_SNAPSHOT",
+      "blockers": ["The canonical replay producer and strict receipt validator are implemented, but at least five distinct current-session formal product MCAP replays plus current release and rollback artifacts have not yet been produced. Stage-specific AUTO-02/AUTO-03, coverage-only, embedded, and historical AUTO-16 evidence remain rejected."]
     },
     {
       "id": "A21",

@@ -80,7 +80,7 @@ ros2 launch sanitation_bringup gazebo_scene.launch.py
 | 基础仿真、导航与正式车机构 | 正式候选快照已生成，运行复验中 | 当前快照已通过 URDF、产品外观、布局和部件台账静态门；旧车型上的前进/停车、单块抓投和 2.88 L 守恒回收仅保留为历史回归证据，不能替代当前快照的 session-bound 运行验收 |
 | 调试可视化 | 可用 | Gazebo 显示物理场景，RViz 显示目标、障碍、区域、路径、车辆和系统状态 |
 | 学习感知 | 阻断 | AUTO-05 数据门通过，但三次跨世界模型 screening 未达到冻结阈值 |
-| 综合竞赛矩阵 | 未通过 | 受 AUTO-08 学习感知与定点清扫依赖阻断，正式综合任务未启动 |
+| 综合竞赛矩阵 | 未通过、证据 producer 已就绪 | 受 AUTO-08 学习感知与定点清扫依赖阻断，正式综合任务未启动；A12/A20 canonical MCAP replay/receipt producer 已能真实回放并重算，但 180 次执行/30 个任务组及五包、发布与回滚证据仍须当前快照新鲜运行 |
 | 真实域 | 外部阻断 | 缺少满足数量、标定和独立真值要求的真实数据集 |
 | J6P/S100P 部署 | 进行中、正式门未通过 | 历史记录显示真实 RDK S100P 曾连接并运行官方 DOSOD/EdgeSAM 参考模型、项目 adapter、RGB→NV12 桥和 BPU smoke，但当前已核验的可读取 Git refs 中没有该 smoke 原始 JSON，不能作为当前可追溯证据；项目 DOSOD HBM、冻结词表、EdgeSAM encoder/decoder HBM、板端 manifest、真实 RGB-D/TF/map 输入、非空产品输出与 1800 秒正式证据仍未通过 |
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail closed until AUTO-15 has one real, session-bound receipt producer."""
+"""Validate the fixed A12 contract and canonical AUTO-15 evidence ledger."""
 
 from __future__ import annotations
 
@@ -145,14 +145,98 @@ def validate_static_contract(contract: dict[str, Any], authoritative_source: Pat
         raise ProductAcceptanceContractError("alternate or untracked A12 sources are forbidden")
     if any(value is not False for value in runtime_states.values()):
         raise ProductAcceptanceContractError("static contract must not promote product runtime states")
-    if runtime.get("receipt_ingestion_status") != "BLOCKED_NO_CANONICAL_PRODUCER":
-        raise ProductAcceptanceContractError("runtime receipt intake must remain fail-closed")
+    if runtime.get("receipt_ingestion_status") != "CANONICAL_PRODUCER_REQUIRED":
+        raise ProductAcceptanceContractError("runtime receipt intake must require the canonical producer")
+    if runtime.get("canonical_producer") != "scripts/auto15_product_evidence.py":
+        raise ProductAcceptanceContractError("AUTO-15 canonical producer identity drifted")
     return {"contract_integrity_verified": True, "runtime_receipt_ingestion_status": runtime["receipt_ingestion_status"], "scenario_count": 18, "seed_count_per_scenario": 10, "required_execution_count": 180, "required_execution_ids": [f"{scenario}:seed-{seed}" for scenario in scenarios for seed in seeds], "minimum_mission_group_count": 30, "product_runtime_states": runtime_states}
 
 
 def validate_auto15_execution_evidence(contract: dict[str, Any], payload: dict[str, Any], evidence_root: Path) -> dict[str, Any]:
-    validate_static_contract(contract)
-    raise ProductAcceptanceContractError("AUTO-15 runtime receipt intake is BLOCKED_NO_CANONICAL_PRODUCER: wire one producer that atomically creates fresh video, MCAP, replay/recalculation, provenance, and independent mission-group receipts from the current formal session")
+    static = validate_static_contract(contract)
+    try:
+        from auto15_product_evidence import (
+            LEDGER_SCHEMA,
+            Auto15EvidenceError,
+            _producer,
+            validate_execution_receipt,
+            validate_group_receipt,
+        )
+
+        evidence_root = evidence_root.resolve()
+        if payload.get("schema") != LEDGER_SCHEMA or payload.get("status") != "AUTO15_CANONICAL_EVIDENCE_LEDGER_COMPLETE":
+            raise ProductAcceptanceContractError("execution evidence is not a complete canonical AUTO-15 ledger")
+        if payload.get("producer") != _producer(ROOT):
+            raise ProductAcceptanceContractError("AUTO-15 ledger producer identity is stale or forged")
+        if payload.get("run_root") != str(evidence_root):
+            raise ProductAcceptanceContractError("AUTO-15 ledger belongs to another run root")
+        execution_refs = payload.get("executions")
+        group_refs = payload.get("mission_groups")
+        if not isinstance(execution_refs, list) or not isinstance(group_refs, list):
+            raise ProductAcceptanceContractError("AUTO-15 ledger has no receipt reference lists")
+        executions = []
+        for reference in execution_refs:
+            path = Path(reference["path"])
+            if hashlib.sha256(_sealed_regular_bytes(path, "execution receipt")).hexdigest() != reference.get("sha256"):
+                raise ProductAcceptanceContractError("execution receipt hash mismatch")
+            receipt = validate_execution_receipt(ROOT, evidence_root, path)
+            if receipt["execution_id"] != reference.get("execution_id"):
+                raise ProductAcceptanceContractError("execution receipt identity mismatch")
+            executions.append(receipt)
+        groups = []
+        for reference in group_refs:
+            path = Path(reference["path"])
+            if hashlib.sha256(_sealed_regular_bytes(path, "mission group receipt")).hexdigest() != reference.get("sha256"):
+                raise ProductAcceptanceContractError("mission group receipt hash mismatch")
+            receipt = validate_group_receipt(ROOT, evidence_root, path)
+            if receipt["mission_group_id"] != reference.get("mission_group_id"):
+                raise ProductAcceptanceContractError("mission group receipt identity mismatch")
+            groups.append(receipt)
+    except (OSError, KeyError, TypeError, Auto15EvidenceError) as exc:
+        raise ProductAcceptanceContractError(str(exc)) from exc
+
+    expected_ids = set(static["required_execution_ids"])
+    actual_ids = {item["execution_id"] for item in executions}
+    if len(executions) != static["required_execution_count"] or actual_ids != expected_ids:
+        raise ProductAcceptanceContractError("canonical ledger does not contain exactly 180 unique scenario-seed receipts")
+    if len(groups) < static["minimum_mission_group_count"] or len({item["mission_group_id"] for item in groups}) != len(groups):
+        raise ProductAcceptanceContractError("canonical ledger has fewer than 30 independent mission groups")
+    member_map = {
+        member["execution_id"]: group["mission_group_id"]
+        for group in groups
+        for member in group["members"]
+    }
+    member_count = sum(len(group["members"]) for group in groups)
+    if member_count != len(expected_ids) or set(member_map) != expected_ids or any(item["mission_group_id"] != member_map.get(item["execution_id"]) for item in executions):
+        raise ProductAcceptanceContractError("mission-group receipts do not cover all executions exactly once")
+    for field in ("video", "mcap"):
+        identities = {(item[field]["path"], item[field]["sha256"]) for item in executions}
+        if len(identities) != len(executions):
+            raise ProductAcceptanceContractError(f"{field} evidence is reused across executions")
+    if executions and (
+        payload.get("formal_context") != executions[0]["formal_context"]
+        or payload.get("input_hashes") != executions[0]["input_hashes"]
+        or payload.get("input_artifacts") != executions[0]["input_artifacts"]
+    ):
+        raise ProductAcceptanceContractError("ledger provenance differs from execution receipts")
+    counts = {
+        scenario: {
+            "executions": sum(item["scenario_id"] == scenario for item in executions),
+            "videos": sum(item["scenario_id"] == scenario for item in executions),
+            "mcaps": sum(item["scenario_id"] == scenario for item in executions),
+        }
+        for scenario in contract["auto15_execution_accounting"]["scenario_ids"]
+    }
+    return {
+        **static,
+        "execution_evidence_pass": True,
+        "retained_execution_count": len(executions),
+        "mission_group_count": len(groups),
+        "scenario_evidence_counts": counts,
+        "execution_to_mission_group": member_map,
+        "formal_context": payload.get("formal_context"),
+        "input_hashes": payload.get("input_hashes"),
+    }
 
 
 def main() -> int:
@@ -166,7 +250,8 @@ def main() -> int:
         contract = load_contract(args.contract)
         result = validate_static_contract(contract, args.authoritative_source)
         if args.execution_evidence:
-            result = validate_auto15_execution_evidence(contract, {}, args.evidence_root)
+            ledger = _json_object(args.execution_evidence, "AUTO-15 canonical evidence ledger")
+            result = validate_auto15_execution_evidence(contract, ledger, args.evidence_root)
     except ProductAcceptanceContractError as exc:
         print(f"product acceptance contract failed closed: {exc}")
         return 2

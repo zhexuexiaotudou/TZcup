@@ -29,11 +29,11 @@
 
 1. A02 服务舱门修复需要在新鲜 r062 运行根上重跑物理门。
 2. A08 的 3500 m²/h 指标与 0.45 m/s 速度上限冲突，需要分档复核并保留安全余量；不是简单改大速度常量。
-3. A12 的固定产品验收基准已版本化为 [`a12-product-acceptance-specification.md`](a12-product-acceptance-specification.md)，并由 [`product_acceptance_contract.json`](../config/high_fidelity_vehicle/product_acceptance_contract.json) 约束 AUTO-15 的 18×10 执行账本、至少 30 个 mission group 及每个执行的 video/MCAP 保留。运行时收据还必须绑定当前 formal session/snapshot/run root、源码 commit/tree、模型/配置/数据集/容器/依赖身份，并通过 MCAP metadata、真实 replay/recalculation 与视频审计；由于还没有受总编排接线、可原子产出这些当前 session 收据的 canonical producer，A12 保持 `BLOCKED_NO_CANONICAL_PRODUCER`。静态合同只验证声明与基数，不能使任何产品运行时状态变为 true。
+3. A12 的固定产品验收基准已版本化为 [`a12-product-acceptance-specification.md`](a12-product-acceptance-specification.md)，并由 [`product_acceptance_contract.json`](../config/high_fidelity_vehicle/product_acceptance_contract.json) 约束 AUTO-15 的 18×10 执行账本、至少 30 个 mission group 及每个执行的 video/MCAP 保留。canonical replay/evidence producer 已实现并绑定当前 formal session/snapshot/run root、源码 commit/tree、模型/配置/数据集/容器/依赖身份，实际读取 MCAP 重算并审计视频；A12 因尚未在当前快照产生 180+30 份真实回执而保持 `NOT_RUN_CURRENT_SNAPSHOT`。producer 或静态合同不能使任何产品运行时状态变为 true。
 4. A15 的一次性 hidden materializer、consumed/freeze/output-summary 账本和最终 12 站点重验合同已闭合；当前状态仅是尚未在新鲜快照上执行，不是通过。
 5. A18 的 S100 性能部分与 A21 共用外部硬缺口，不能只标成“尚未运行”。
-6. A19 已有 canonical producer、独立 validator、正式 runner 与 18 故障固定时间表，并作为 `a19_reliability` 接入总编排。当前没有新鲜 7200 秒 receipt，故状态为 `READY_FOR_FRESH_TWO_HOUR_RUNTIME` 而不是 PASS；fixture、预检、短跑或手写 JSON 均不能提升状态。
-7. A20 的 receipt 入口现 fail-closed：仓库尚无能从 MCAP 重算正式产品 coverage、localization、session 和 closure 绑定的 canonical producer。AUTO-02/AUTO-03、coverage-only 和历史 AUTO-16 报告均不可替代，故 A20 保持 BLOCKED。
+6. A19 已完整编码产品标准的两小时长稳/18 故障合同，并已有 canonical producer、独立 validator、正式 runner 与 18 故障固定时间表，作为 `a19_reliability` 接入总编排。此前 `BLOCKED_MISSING_CANONICAL_A19_RUNTIME_PRODUCER` 是 producer 落地前的阻断状态；当前没有新鲜 7200 秒 receipt，故现状态为 `READY_FOR_FRESH_TWO_HOUR_RUNTIME` 而不是 PASS。fixture、预检、短跑或手写 JSON 均不能提升状态。
+7. A20 的 canonical product replay producer 与严格 receipt validator 已实现，并从 MCAP 重算正式产品 coverage、localization、session 和 closure 绑定。此前 `BLOCKED` 表示缺少该 canonical producer；当前快照尚无至少五个不同产品 MCAP 的回放重算、发布包与 rollback 演练，故现状态为 `NOT_RUN_CURRENT_SNAPSHOT`。AUTO-02/AUTO-03、coverage-only、嵌入 JSON 和历史 AUTO-16 报告均不可替代。
 8. A21 仍缺项目 DOSOD HBM、真实非仿真图像/标定与 holdout 数据、真实功率测量。板卡在线本身不等于验收通过。
 
 AUTO-05 G3/G4 不在当前 32 步或 S100 关键路径：未发现正式感知 runner、冻结模型或 HBM
