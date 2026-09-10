@@ -11,10 +11,11 @@
     "passed": {"type": "boolean"},
     "source_binding": {
       "type": "object",
-      "required": ["snapshot_manifest_sha256", "source_inventory_sha256"],
+      "required": ["snapshot_manifest_sha256", "source_inventory_sha256", "expanded_urdf_sha256"],
       "properties": {
         "snapshot_manifest_sha256": {"$ref": "#/$defs/sha256"},
-        "source_inventory_sha256": {"$ref": "#/$defs/sha256"}
+        "source_inventory_sha256": {"$ref": "#/$defs/sha256"},
+        "expanded_urdf_sha256": {"$ref": "#/$defs/sha256"}
       },
       "additionalProperties": false
     },
@@ -94,10 +95,11 @@
     "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "sourceBinding": {
       "type": "object",
-      "required": ["snapshot_manifest_sha256", "source_inventory_sha256"],
+      "required": ["snapshot_manifest_sha256", "source_inventory_sha256", "expanded_urdf_sha256"],
       "properties": {
         "snapshot_manifest_sha256": {"$ref": "#/$defs/sha256"},
-        "source_inventory_sha256": {"$ref": "#/$defs/sha256"}
+        "source_inventory_sha256": {"$ref": "#/$defs/sha256"},
+        "expanded_urdf_sha256": {"$ref": "#/$defs/sha256"}
       },
       "additionalProperties": false
     },
