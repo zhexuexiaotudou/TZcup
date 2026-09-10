@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import threading
 import time
+from pathlib import Path
 
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
@@ -15,6 +16,9 @@ from std_msgs.msg import Bool, Float64MultiArray, String
 from collect_formal_water_safety_preflight import MOTOR_ROOT, SafetyPreflight
 from collect_formal_water_safety_preflight import pump_executor
 from collect_formal_water_safety_preflight import summarize_window
+
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def _events(
@@ -261,3 +265,15 @@ def test_callback_executor_does_not_starve_safety_under_interleaved_load():
         collector.destroy_node()
         producer.destroy_node()
         rclpy.shutdown()
+
+
+def test_safety_publish_loops_catch_up_immediately_after_an_overrun():
+    for relative in (
+        "starter_ws/src/sanitation_safety/sanitation_safety/"
+        "simulation_safety_inputs.py",
+        "starter_ws/src/sanitation_safety/sanitation_safety/"
+        "whole_vehicle_safety_manager.py",
+    ):
+        source = (ROOT / relative).read_text(encoding="utf-8")
+        assert "deadline = now + period" not in source
+        assert "if deadline <= now:\n                    deadline = now" in source
