@@ -365,7 +365,7 @@ non-cryptographic** 的证据链，不是 TPM、远程签名或针对恶意持�
 
 ## A12/A20 产品证据侧车
 
-AUTO-15 大矩阵不会塞进 31 步单 Gazebo 正式编排中与主世界争锁。主编排的每个产品回合应在
+AUTO-15 大矩阵不会塞进 32 步单 Gazebo 正式编排中与主世界争锁。主编排的每个产品回合应在
 同一 RUNNING session 下保留 video、MCAP 和源 metrics，然后调用
 `scripts/formal_product_mcap_replay.py`；该侧车只在隔离 ROS domain 回放，不启动 Gazebo。
 随后调用 `scripts/auto15_product_evidence.py execution` 原子封存一次执行，按真实独立任务边界
@@ -377,3 +377,18 @@ session finalize 为 COMPLETE 后，A20 receipt 引用至少五份上述 replay�
 SHA256SUMS、SBOM、container、dependency lock、licenses 与真实 rollback report，再由
 `scripts/a20_release_replay_receipt.py` 校验。侧车失败只阻断 A12/A20 依赖结果，不得复用旧运行根，
 也不得修改或补写已封存证据。
+
+因此主编排在 S100、session finalize 与 functional aggregate 都通过后，只会记录
+`FORMAL_FINAL_ACCEPTANCE_PRODUCT_POSTPROCESS_REQUIRED`，而不会把 32 步车体会话误报为最终完成。
+对同一 retained run root，正式收口必须显式执行：
+
+```bash
+python3 scripts/run_formal_final_acceptance.py --postprocess-product \
+  --runtime-ws "$RUNTIME_WS" --integrated-build-manifest "$BUILD_MANIFEST" \
+  --run-root "$RUN_ROOT" --a12-ledger "$RUN_ROOT/auto15/ledger.json" \
+  --a20-receipt "$RUN_ROOT/a20/receipt.json"
+```
+
+该入口先实际调用 A12 ledger validator，再在 COMPLETE session 上调用 A20 receipt validator；
+任一失败会把主报告标为 `FORMAL_FINAL_ACCEPTANCE_PRODUCT_POSTPROCESS_BLOCKED` 并保留命令日志，
+不允许最终状态为 complete。

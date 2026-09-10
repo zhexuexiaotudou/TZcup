@@ -73,6 +73,12 @@ EXTERNAL_GATE = "s100_live_runtime"
 S100_COMMITTED_AGGREGATE_PENDING = (
     "FORMAL_FINAL_ACCEPTANCE_S100_COMMITTED_AGGREGATE_PENDING"
 )
+PRODUCT_POSTPROCESS_REQUIRED = (
+    "FORMAL_FINAL_ACCEPTANCE_PRODUCT_POSTPROCESS_REQUIRED"
+)
+PRODUCT_POSTPROCESS_BLOCKED = (
+    "FORMAL_FINAL_ACCEPTANCE_PRODUCT_POSTPROCESS_BLOCKED"
+)
 S100_EVIDENCE_TRUST_BOUNDARY = (
     "Operator-trusted, tamper-evident, non-cryptographic S100 evidence chain; "
     "it is not TPM/signed remote attestation and cannot authenticate against a malicious PC operator."
@@ -3791,9 +3797,12 @@ def execute(context: Context) -> tuple[dict[str, Any], int]:
             pending_position_count=functional.get("pending_position_count"),
         )
         if s100_available:
-            report["status"] = "FORMAL_FINAL_ACCEPTANCE_ORCHESTRATION_COMPLETE"
+            # The 32-step vehicle session has no place to execute the 180-run
+            # AUTO-15 matrix.  It is therefore deliberately not final until
+            # the separate, current-session A12/A20 post-process succeeds.
+            report["status"] = PRODUCT_POSTPROCESS_REQUIRED
             report["operator_trusted_s100_acknowledged"] = True
-            exit_code = 0
+            exit_code = 3
         else:
             report["status"] = "FORMAL_FINAL_ACCEPTANCE_LOCAL_GATES_PASSED_S100_EXTERNAL_BLOCKED"
             exit_code = 4
@@ -4187,7 +4196,7 @@ def resume_s100(context: Context) -> tuple[dict[str, Any], int]:
                 },
             })
             report.update(
-                status="FORMAL_FINAL_ACCEPTANCE_ORCHESTRATION_COMPLETE",
+                status=PRODUCT_POSTPROCESS_REQUIRED,
                 previous_status=prior_orchestration_status,
                 resume_started_epoch_ns=resume_started_ns,
                 resume_finished_epoch_ns=resume_finished_ns,
@@ -4202,10 +4211,150 @@ def resume_s100(context: Context) -> tuple[dict[str, Any], int]:
             )
             _atomic_json(context.run_root / "orchestration_report.json", report)
             _atomic_json(context.root / ORCHESTRATION_REPORT.relative_to(ROOT), report)
-            return report, 0
+            return report, 3
     except (OSError, OrchestrationError, subprocess.SubprocessError, ValueError) as exc:
         return {
             "status": "FORMAL_FINAL_ACCEPTANCE_S100_RESUME_REFUSED",
+            "run_root": str(context.run_root),
+            "error": str(exc),
+        }, 3
+
+
+def postprocess_product(
+    context: Context, a12_ledger: Path, a20_receipt: Path
+) -> tuple[dict[str, Any], int]:
+    """Run the A12 ledger and A20 receipt sidecars after a sealed session.
+
+    The sidecars stay outside ``STEP_SPECS`` because A12's fixed 180 product
+    executions must be produced while the session is RUNNING, whereas A20
+    explicitly requires that same session to be COMPLETE.
+    """
+
+    started_ns = time.time_ns()
+    try:
+        _validate_run_root(context, require_exists=True)
+        report_path = _repo_regular_file(
+            context.root,
+            context.run_root / "orchestration_report.json",
+            "product post-process orchestration report",
+        )
+        report = _read_json(report_path)
+        if report.get("status") not in {
+            PRODUCT_POSTPROCESS_REQUIRED,
+            # Allow a report sealed by the older runner to be corrected once;
+            # new executions never emit this final-looking status.
+            "FORMAL_FINAL_ACCEPTANCE_ORCHESTRATION_COMPLETE",
+        }:
+            raise OrchestrationError(
+                "product post-process requires a sealed S100-complete formal report"
+            )
+        session = _read_json(
+            _repo_regular_file(context.root, context.session, "product post-process session")
+        )
+        if (
+            session.get("status") != "FORMAL_FINAL_ACCEPTANCE_SESSION_COMPLETE"
+            or session.get("failures") != {}
+        ):
+            raise OrchestrationError(
+                "A12/A20 post-process requires a COMPLETE formal session without failures"
+            )
+        ledger = _repo_regular_file(context.root, a12_ledger, "A12 canonical ledger")
+        receipt = _repo_regular_file(context.root, a20_receipt, "A20 receipt")
+        for artifact, label in ((ledger, "A12 canonical ledger"), (receipt, "A20 receipt")):
+            try:
+                artifact.relative_to(context.run_root)
+            except ValueError as exc:
+                raise OrchestrationError(f"{label} must be retained under this formal run root") from exc
+        logs = context.run_root / "orchestration_logs"
+        logs.mkdir(parents=True, exist_ok=True)
+        stamp = str(started_ns)
+        a12_log = logs / f"a12_product_postprocess_{stamp}.log"
+        a20_log = logs / f"a20_product_postprocess_{stamp}.log"
+        a20_output = context.run_root / f"a20_release_replay_validation_{stamp}.json"
+        closure_before = _verify_runtime_closure(context, "product_postprocess:before")
+        _snapshot_check(context, logs / f"a12_a20_snapshot_check_{stamp}.log")
+
+        a12_command = [
+            sys.executable,
+            str(context.root / "scripts/validate_product_acceptance_contract.py"),
+            "--execution-evidence", str(ledger),
+            "--evidence-root", str(context.run_root),
+        ]
+        with a12_log.open("w", encoding="utf-8") as stream:
+            a12 = subprocess.run(
+                a12_command, cwd=context.root, stdout=stream,
+                stderr=subprocess.STDOUT, text=True,
+            )
+        if a12.returncode != 0:
+            raise OrchestrationError(
+                f"A12 canonical product ledger validation failed rc={a12.returncode}; log={a12_log}"
+            )
+
+        a20_command = [
+            sys.executable,
+            str(context.root / "scripts/a20_release_replay_receipt.py"),
+            "--repository-root", str(context.root),
+            "--receipt", str(receipt),
+            "--output", str(a20_output),
+        ]
+        with a20_log.open("w", encoding="utf-8") as stream:
+            a20 = subprocess.run(
+                a20_command, cwd=context.root, stdout=stream,
+                stderr=subprocess.STDOUT, text=True,
+            )
+        if a20.returncode != 0:
+            raise OrchestrationError(
+                f"A20 release replay receipt validation failed rc={a20.returncode}; log={a20_log}"
+            )
+        a20_result = _read_json(
+            _repo_regular_file(context.root, a20_output, "A20 validation report")
+        )
+        if a20_result.get("status") != "A20_RECEIPT_VALID" or a20_result.get("valid") is not True:
+            raise OrchestrationError("A20 validator returned a non-passing receipt result")
+        closure_after = _verify_runtime_closure(context, "product_postprocess:after")
+        report.update(
+            status="FORMAL_FINAL_ACCEPTANCE_ORCHESTRATION_COMPLETE",
+            finished_epoch_ns=time.time_ns(),
+            product_postprocess={
+                "status": "A12_A20_PRODUCT_POSTPROCESS_PASSED",
+                "started_epoch_ns": started_ns,
+                "finished_epoch_ns": time.time_ns(),
+                "a12": {
+                    "ledger": str(ledger), "ledger_sha256": _sha256(ledger),
+                    "log": str(a12_log), "log_sha256": _sha256(a12_log),
+                },
+                "a20": {
+                    "receipt": str(receipt), "receipt_sha256": _sha256(receipt),
+                    "validation": str(a20_output), "validation_sha256": _sha256(a20_output),
+                    "log": str(a20_log), "log_sha256": _sha256(a20_log),
+                },
+                "runtime_closure_before": closure_before,
+                "runtime_closure_after": closure_after,
+            },
+        )
+        _atomic_json(report_path, report)
+        _atomic_json(context.root / ORCHESTRATION_REPORT.relative_to(ROOT), report)
+        return report, 0
+    except (OSError, OrchestrationError, subprocess.SubprocessError, ValueError) as exc:
+        try:
+            report_path = context.run_root / "orchestration_report.json"
+            report = _read_json(report_path)
+            report.update(
+                status=PRODUCT_POSTPROCESS_BLOCKED,
+                finished_epoch_ns=time.time_ns(),
+                product_postprocess={
+                    "status": "A12_A20_PRODUCT_POSTPROCESS_BLOCKED",
+                    "started_epoch_ns": started_ns,
+                    "finished_epoch_ns": time.time_ns(),
+                    "error": str(exc),
+                },
+            )
+            _atomic_json(report_path, report)
+            _atomic_json(context.root / ORCHESTRATION_REPORT.relative_to(ROOT), report)
+        except (OSError, OrchestrationError, ValueError):
+            pass
+        return {
+            "status": PRODUCT_POSTPROCESS_BLOCKED,
             "run_root": str(context.run_root),
             "error": str(exc),
         }, 3
@@ -4242,6 +4391,11 @@ def build_parser() -> argparse.ArgumentParser:
     mode.add_argument("--preflight", action="store_true")
     mode.add_argument("--execute", action="store_true")
     mode.add_argument("--resume-s100", action="store_true")
+    mode.add_argument(
+        "--postprocess-product",
+        action="store_true",
+        help="validate the retained current-session A12 ledger, then the A20 release receipt",
+    )
     parser.add_argument("--runtime-ws", type=Path)
     parser.add_argument("--integrated-build-manifest", type=Path)
     parser.add_argument(
@@ -4252,6 +4406,14 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--perception-artifacts", type=Path, default=ROOT / ".work/formal_perception_assets")
     parser.add_argument("--onnx-pythonpath", type=Path, default=Path("/home/zhexu/tzcup-ros-onnx"))
     parser.add_argument("--run-root", type=Path)
+    parser.add_argument(
+        "--a12-ledger", type=Path,
+        help="canonical AUTO-15 ledger retained under --run-root",
+    )
+    parser.add_argument(
+        "--a20-receipt", type=Path,
+        help="A20 release/replay receipt retained under --run-root",
+    )
     parser.add_argument("--base-domain", type=int, default=60)
     parser.add_argument("--perception-episodes", type=int, default=30)
     parser.add_argument(
@@ -4287,6 +4449,11 @@ def main() -> int:
     if args.resume_s100 and args.run_root is None:
         print(json.dumps({"status": "INVALID", "error": "--resume-s100 requires an explicit --run-root"}, indent=2))
         return 2
+    if args.postprocess_product and (
+        args.run_root is None or args.a12_ledger is None or args.a20_receipt is None
+    ):
+        print(json.dumps({"status": "INVALID", "error": "--postprocess-product requires --run-root, --a12-ledger and --a20-receipt"}, indent=2))
+        return 2
     context = Context(
         root=ROOT,
         runtime_ws=args.runtime_ws,
@@ -4314,7 +4481,14 @@ def main() -> int:
             _atomic_json(args.output, result)
         print(json.dumps(result, indent=2, sort_keys=True))
         return 0 if result["passed"] else 2
-    result, exit_code = resume_s100(context) if args.resume_s100 else execute(context)
+    if args.resume_s100:
+        result, exit_code = resume_s100(context)
+    elif args.postprocess_product:
+        result, exit_code = postprocess_product(
+            context, args.a12_ledger, args.a20_receipt
+        )
+    else:
+        result, exit_code = execute(context)
     if args.output:
         _atomic_json(args.output, result)
     print(json.dumps(result, indent=2, sort_keys=True))

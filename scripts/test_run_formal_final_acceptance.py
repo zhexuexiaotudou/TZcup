@@ -1424,8 +1424,8 @@ def test_execute_initial_complete_records_s100_trust_boundary(
 
     report, code = orchestration.execute(context)
 
-    assert code == 0
-    assert report["status"] == "FORMAL_FINAL_ACCEPTANCE_ORCHESTRATION_COMPLETE"
+    assert code == 3
+    assert report["status"] == orchestration.PRODUCT_POSTPROCESS_REQUIRED
     assert report["operator_trusted_s100_acknowledged"] is True
     assert report["s100_evidence_trust_boundary"] == orchestration.S100_EVIDENCE_TRUST_BOUNDARY
 
@@ -1535,8 +1535,8 @@ def test_initial_s100_commit_aggregate_failure_is_recovered_without_local_rerun(
 
     result, code = orchestration.resume_s100(context)
 
-    assert code == 0
-    assert result["status"] == "FORMAL_FINAL_ACCEPTANCE_ORCHESTRATION_COMPLETE"
+    assert code == 3
+    assert result["status"] == orchestration.PRODUCT_POSTPROCESS_REQUIRED
     assert [row["id"] for row in result["steps"]] == [
         spec.step_id for spec in orchestration.STEP_SPECS
     ]
@@ -1642,8 +1642,8 @@ def test_resume_s100_updates_only_the_three_terminal_rows_without_gazebo_runners
     )
 
     result, code = orchestration.resume_s100(context)
-    assert code == 0
-    assert result["status"] == "FORMAL_FINAL_ACCEPTANCE_ORCHESTRATION_COMPLETE"
+    assert code == 3
+    assert result["status"] == orchestration.PRODUCT_POSTPROCESS_REQUIRED
     assert len(result["steps"]) == 32
     assert [row["id"] for row in result["steps"]] == [
         spec.step_id for spec in orchestration.STEP_SPECS
@@ -1819,8 +1819,8 @@ def test_resume_s100_recovers_phase_two_after_prior_finalize_then_aggregate_fail
     assert report["status"] == "FORMAL_FINAL_ACCEPTANCE_LOCAL_GATES_PASSED_S100_EXTERNAL_BLOCKED"
 
     second, second_code = orchestration.resume_s100(context)
-    assert second_code == 0
-    assert second["status"] == "FORMAL_FINAL_ACCEPTANCE_ORCHESTRATION_COMPLETE"
+    assert second_code == 3
+    assert second["status"] == orchestration.PRODUCT_POSTPROCESS_REQUIRED
     assert finalize_calls == []
     assert len(aggregate_attempts) == 2
     assert len(complete_verifications) == 2
@@ -1994,8 +1994,93 @@ def test_cli_requires_explicit_mode_and_runtime_inputs() -> None:
     assert args.preflight is False
     assert args.execute is False
     assert args.resume_s100 is False
+    assert args.postprocess_product is False
     with pytest.raises(SystemExit):
         parser.parse_args(["--execute", "--resume-s100"])
+
+
+def _sealed_product_postprocess_context(tmp_path: Path) -> tuple[orchestration.Context, Path, Path]:
+    context = _context(tmp_path)
+    context.run_root.mkdir(parents=True)
+    context.session.parent.mkdir(parents=True)
+    context.session.write_text(
+        json.dumps(
+            {
+                "status": "FORMAL_FINAL_ACCEPTANCE_SESSION_COMPLETE",
+                "failures": {},
+            }
+        ),
+        encoding="utf-8",
+    )
+    (context.run_root / "orchestration_report.json").write_text(
+        json.dumps({"status": orchestration.PRODUCT_POSTPROCESS_REQUIRED}),
+        encoding="utf-8",
+    )
+    ledger = context.run_root / "auto15" / "ledger.json"
+    receipt = context.run_root / "a20" / "receipt.json"
+    ledger.parent.mkdir(parents=True)
+    receipt.parent.mkdir(parents=True)
+    ledger.write_text("{}\n", encoding="utf-8")
+    receipt.write_text("{}\n", encoding="utf-8")
+    return context, ledger, receipt
+
+
+def test_product_postprocess_calls_a12_then_a20_and_only_then_completes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    context, ledger, receipt = _sealed_product_postprocess_context(tmp_path)
+    commands: list[list[str]] = []
+    monkeypatch.setattr(
+        orchestration, "_verify_runtime_closure", lambda *unused: {"passed": True}
+    )
+    monkeypatch.setattr(orchestration, "_snapshot_check", lambda *unused: None)
+
+    def fake_run(command, **kwargs):
+        commands.append(list(command))
+        if str(command[1]).endswith("a20_release_replay_receipt.py"):
+            output = Path(command[command.index("--output") + 1])
+            output.write_text(
+                json.dumps({"status": "A20_RECEIPT_VALID", "valid": True}),
+                encoding="utf-8",
+            )
+        return types.SimpleNamespace(returncode=0)
+
+    monkeypatch.setattr(orchestration.subprocess, "run", fake_run)
+    report, code = orchestration.postprocess_product(context, ledger, receipt)
+
+    assert code == 0
+    assert report["status"] == "FORMAL_FINAL_ACCEPTANCE_ORCHESTRATION_COMPLETE"
+    assert [Path(command[1]).name for command in commands] == [
+        "validate_product_acceptance_contract.py",
+        "a20_release_replay_receipt.py",
+    ]
+    assert report["product_postprocess"]["status"] == "A12_A20_PRODUCT_POSTPROCESS_PASSED"
+
+
+def test_product_postprocess_a12_failure_blocks_before_a20(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    context, ledger, receipt = _sealed_product_postprocess_context(tmp_path)
+    commands: list[list[str]] = []
+    monkeypatch.setattr(
+        orchestration, "_verify_runtime_closure", lambda *unused: {"passed": True}
+    )
+    monkeypatch.setattr(orchestration, "_snapshot_check", lambda *unused: None)
+
+    def fail_a12(command, **kwargs):
+        commands.append(list(command))
+        return types.SimpleNamespace(returncode=2)
+
+    monkeypatch.setattr(orchestration.subprocess, "run", fail_a12)
+    result, code = orchestration.postprocess_product(context, ledger, receipt)
+
+    assert code == 3
+    assert result["status"] == orchestration.PRODUCT_POSTPROCESS_BLOCKED
+    assert [Path(command[1]).name for command in commands] == [
+        "validate_product_acceptance_contract.py"
+    ]
+    retained = json.loads((context.run_root / "orchestration_report.json").read_text(encoding="utf-8"))
+    assert retained["status"] == orchestration.PRODUCT_POSTPROCESS_BLOCKED
 
 
 def test_context_defaults_to_runtime_local_unified_closure_manifest() -> None:
