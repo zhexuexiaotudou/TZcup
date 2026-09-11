@@ -26,6 +26,8 @@ def _events(
     bad_reason: str = "",
     thread_error: str = "none",
     actuator_permit: bool = True,
+    reported_timer_gap: float = 0.05,
+    critical_timer_gap: float = 0.05,
 ):
     events = []
     for index in range(1301):
@@ -48,7 +50,7 @@ def _events(
                     "safety_state": "ENABLED",
                     "safety_permit": True,
                     "active_reasons": bad_reason,
-                    "maximum_timer_gap_sec": 0.05,
+                    "maximum_timer_gap_sec": reported_timer_gap,
                     "publish_thread_error": thread_error,
                 },
                 {
@@ -60,7 +62,7 @@ def _events(
                     "arrival_monotonic_s": arrival,
                     "source": "critical_status",
                     "critical_publish_count": index,
-                    "critical_maximum_gap_sec": 0.05,
+                    "critical_maximum_gap_sec": critical_timer_gap,
                     "critical_thread_error": None,
                     "relay_enabled": True,
                     "front_bumper_available": True,
@@ -100,6 +102,43 @@ def test_unavailable_or_thread_error_fails_closed():
     assert unavailable["zero_bumper_or_relay_unavailable"] is False
     assert unavailable["safety_permit_enabled_continuous_window"] is False
     assert failed_thread["publish_thread_error_null"] is False
+
+
+def test_scoped_continuity_ignores_pre_window_cumulative_timer_spikes():
+    _, checks = summarize_window(
+        _events(reported_timer_gap=0.120152, critical_timer_gap=0.101178),
+        0.0,
+        65.0,
+    )
+
+    assert all(checks.values())
+
+
+def test_critical_safety_arrival_gap_fails_even_when_cumulative_metric_is_low():
+    events = _events()
+    for event in events:
+        if event["source"] == "critical_status" and event["arrival_monotonic_s"] == 5.0:
+            event["arrival_monotonic_s"] = 5.03
+            break
+
+    _, checks = summarize_window(events, 0.0, 65.0)
+
+    assert checks["collector_high_rate_sources_fair_and_fresh"] is False
+
+
+def test_critical_safety_stream_must_cover_the_complete_window():
+    events = [
+        event
+        for event in _events()
+        if not (
+            event["source"] == "critical_status"
+            and event["arrival_monotonic_s"] > 64.9
+        )
+    ]
+
+    _, checks = summarize_window(events, 0.0, 65.0)
+
+    assert checks["collector_high_rate_sources_fair_and_fresh"] is False
 
 
 def test_declared_safety_permit_cannot_substitute_for_disabled_actuators():
