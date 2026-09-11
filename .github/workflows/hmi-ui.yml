@@ -1,0 +1,16 @@
+name: HMI UI regression
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  replay-behavior:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test starter_ws/src/sanitation_hmi/test/test_app_replay.cjs

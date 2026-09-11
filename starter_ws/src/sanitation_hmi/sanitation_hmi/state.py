@@ -19,6 +19,10 @@ SOURCE_TIMEOUTS = {
     "gazebo_overview": 3.0,
     "perception": 5.0,
     "safety": 3.0,
+    "brush": 3.0,
+    "coverage_state": 10.0,
+    "spot_state": 10.0,
+    "coverage_metrics": 10.0,
 }
 
 
@@ -103,7 +107,12 @@ class VisualizationState:
             }
             stamp = _now()
             self.updated_at["odom"] = stamp
-            sample = [float(x), float(y), float(yaw), stamp, bool(self.brush_enabled)]
+            brush = (
+                self.brush_enabled
+                if self._source_status(stamp)["brush"]["status"] == "live"
+                else None
+            )
+            sample = [float(x), float(y), float(yaw), stamp, brush]
             if not self.trajectory or self.trajectory[-1][:3] != sample[:3]:
                 self.trajectory.append(sample)
 
@@ -216,6 +225,25 @@ class VisualizationState:
                     if key != "samples"
                 }
                 replay_payload["sample_count"] = len(replay.get("samples", []))
+            observed_mission = {
+                "coverage_state": self.coverage_state,
+                "coverage_metrics": deepcopy(self.coverage_metrics),
+                "spot_state": self.spot_state,
+                "brush_enabled": self.brush_enabled,
+            }
+            mission = deepcopy(observed_mission)
+            for field, source in (("coverage_state", "coverage_state"), ("spot_state", "spot_state")):
+                if sources[source]["status"] != "live":
+                    mission[field] = "数据不可用"
+            if sources["brush"]["status"] != "live":
+                mission["brush_enabled"] = None
+            if sources["coverage_metrics"]["status"] != "live":
+                mission["coverage_metrics"] = {
+                    "planned_ratio": None, "actual_ratio": None,
+                    "missed_ratio": None, "repeat_ratio": None, "basis": "unavailable",
+                }
+            mission["last_observed"] = observed_mission
+            mission["next_action"] = self._next_action(system_status, mission["coverage_state"])
             return {
                 "schema_version": 1,
                 "generated_at": current,
@@ -234,13 +262,7 @@ class VisualizationState:
                     "predictions": deepcopy(self.predictions),
                     "cleaned": sorted(self.cleaned_targets),
                 },
-                "mission": {
-                    "coverage_state": self.coverage_state,
-                    "coverage_metrics": deepcopy(self.coverage_metrics),
-                    "spot_state": self.spot_state,
-                    "brush_enabled": self.brush_enabled,
-                    "next_action": self._next_action(system_status),
-                },
+                "mission": mission,
                 "safety": {
                     "emergency_stop": self.emergency_stop,
                     "status": (
@@ -291,14 +313,14 @@ class VisualizationState:
             ),
         }
 
-    def _next_action(self, system_status: str) -> str:
+    def _next_action(self, system_status: str, coverage_state: str | None = None) -> str:
         if self.emergency_stop is True:
             return "等待人工确认后解除急停"
         if system_status == "offline":
             return "等待 ROS 数据连接"
         if system_status == "degraded":
             return "检查缺失或过期的数据源"
-        state = self.coverage_state.upper()
+        state = (self.coverage_state if coverage_state is None else coverage_state).upper()
         if "RUN" in state or "FOLLOW" in state:
             return "沿规划路径继续清扫"
         if "PAUSE" in state:

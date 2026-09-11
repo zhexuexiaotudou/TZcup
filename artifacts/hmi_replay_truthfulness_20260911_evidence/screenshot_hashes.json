@@ -1,0 +1,17 @@
+[
+  {
+    "file": "disconnected-desktop.png",
+    "sha256": "e01218872399cbb84f4375adc5bbe8055c643e17cfb893a56eef886df07907e3",
+    "bytes": 80564
+  },
+  {
+    "file": "replay-failure-mobile.png",
+    "sha256": "dc6a7aad3d12ee9fa07a6aef8f4553d0acd7e339421c42a79fe15da5ff050082",
+    "bytes": 93032
+  },
+  {
+    "file": "stale-desktop.png",
+    "sha256": "cf88f263517f8733c580ecef3a8be8fac09614c5a3086fc5987a6b87c07ec897",
+    "bytes": 81933
+  }
+]
