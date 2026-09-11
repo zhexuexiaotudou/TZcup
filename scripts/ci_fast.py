@@ -566,6 +566,7 @@ def run_ros_independent_tests() -> None:
         ROOT / "scripts" / "test_auto10_speech.py",
         ROOT / "scripts" / "test_auto15_competition_matrix.py",
         ROOT / "scripts" / "test_formal_product_mcap_replay.py",
+        ROOT / "scripts" / "test_formal_cleaning_geometry.py",
         ROOT / "scripts" / "test_a20_release_replay_receipt.py",
         ROOT / "scripts" / "test_auto16_release.py",
         ROOT / "scripts" / "test_upstream_patch_contract.py",

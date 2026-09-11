@@ -10,7 +10,6 @@ session, snapshot, and runtime closure.  It never starts Gazebo.
 from __future__ import annotations
 
 import argparse
-from collections.abc import Sequence
 import hashlib
 import json
 import math
@@ -34,8 +33,7 @@ PRODUCT_TOPICS = {
     "/active_cleaning/planner_status": "scheduler_and_post_clean_state",
     "/active_cleaning/grasp_result": "clean_decisions",
 }
-BRUSH_EPSILON = 1.0e-9
-FROZEN_DUAL_BRUSH_CENTERS_BASE_LINK_M = ((0.385, 0.545), (0.385, -0.545))
+GROUND_DIRT_STATUS_TOPIC = "/evaluation/single_episode/ground_dirt/status_json"
 RAW_CAPTURE_SCHEMA = "tzcup.a12.raw_capture_receipt.v1"
 # A raw-capture receipt is evidence only when this exact, independently
 # reviewed producer created it.  Do not relax this to an arbitrary repository
@@ -421,19 +419,6 @@ def relative_delta(actual: float, expected: float) -> float:
     return abs(actual - expected) / max(abs(expected), 1.0e-12)
 
 
-def full_width_brush_active(values: Any) -> bool:
-    """Accept only the producer's [left, right, roller] coverage contract."""
-    if isinstance(values, (str, bytes, bytearray)) or not isinstance(values, Sequence) or len(values) != 3:
-        raise ProductReplayError("brush command must be [left, right, roller]")
-    try:
-        left, right, _roller = (float(value) for value in values)
-    except (TypeError, ValueError) as exc:
-        raise ProductReplayError("brush command is not numeric") from exc
-    if not all(math.isfinite(value) for value in (left, right, _roller)):
-        raise ProductReplayError("brush command is not finite")
-    return abs(left) > BRUSH_EPSILON and abs(right) > BRUSH_EPSILON
-
-
 def _message_pose(message: Any) -> Any:
     return message.pose.pose if hasattr(message.pose, "pose") else message.pose
 
@@ -469,6 +454,10 @@ def update_product_chain(chain: dict[str, Any], topic: str, message: Any) -> Non
 def read_mcap_records(bag: Path) -> dict[str, Any]:
     """Read and deserialize the exact topics used for product recalculation."""
     try:
+        from formal_cleaning_geometry import load_cleaning_geometry, sample_from_ground_dirt_status
+    except ImportError as exc:
+        raise ProductReplayError(f"formal cleaning geometry dependencies are unavailable: {exc}") from exc
+    try:
         import rosbag2_py
         from rclpy.serialization import deserialize_message
         from rosidl_runtime_py.utilities import get_message
@@ -481,6 +470,11 @@ def read_mcap_records(bag: Path) -> dict[str, Any]:
         rosbag2_py.ConverterOptions("", ""),
     )
     topic_types = {item.name: item.type for item in reader.get_all_topics_and_types()}
+    if topic_types.get(GROUND_DIRT_STATUS_TOPIC) != "std_msgs/msg/String":
+        raise ProductReplayError(
+            f"ground-dirt status topic must be std_msgs/msg/String: {GROUND_DIRT_STATUS_TOPIC}"
+        )
+    cleaning_geometry = load_cleaning_geometry()
     boundary_topics = {"/product_demo/operator_start", "/active_cleaning/mission_complete"}
     boundaries: dict[str, list[int]] = {topic: [] for topic in boundary_topics}
     while reader.has_next():
@@ -513,12 +507,11 @@ def read_mcap_records(bag: Path) -> dict[str, Any]:
     }
     fused: list[tuple[float, float, float]] = []
     truth: list[tuple[float, float, float]] = []
-    brush_points: list[tuple[float, float, float]] = []
+    cleaning_samples: list[dict[str, Any]] = []
     evaluation_stamps: list[float] = []
     coverage_states: list[str] = []
-    brush_enabled = False
     selected = set(PRODUCT_TOPICS) | {
-        "/brush_controller/commands",
+        GROUND_DIRT_STATUS_TOPIC,
         "/ground_truth/odom",
         "/localization/fused_odom",
     }
@@ -537,24 +530,27 @@ def read_mcap_records(bag: Path) -> dict[str, Any]:
             counts[topic] += 1
             update_product_chain(chain, topic, message)
             continue
-        if topic == "/brush_controller/commands":
-            brush_enabled = full_width_brush_active(message.data)
+        if topic == GROUND_DIRT_STATUS_TOPIC:
+            if not isinstance(message.data, str):
+                raise ProductReplayError("ground-dirt status_json is not a string")
+            try:
+                status = json.loads(message.data)
+            except (TypeError, json.JSONDecodeError) as exc:
+                raise ProductReplayError("ground-dirt status_json is malformed") from exc
+            if not isinstance(status, dict):
+                raise ProductReplayError("ground-dirt status_json must be an object")
+            try:
+                cleaning_samples.append(
+                    sample_from_ground_dirt_status(
+                        status, int(received_stamp) * 1.0e-9, cleaning_geometry
+                    )
+                )
+            except (KeyError, TypeError, ValueError) as exc:
+                raise ProductReplayError(f"ground-dirt status_json is invalid: {exc}") from exc
             continue
         pose = _message_pose(message)
         stamp = message.header.stamp
         sample = (stamp.sec + stamp.nanosec * 1.0e-9, float(pose.position.x), float(pose.position.y))
-        if topic == "/ground_truth/odom" and brush_enabled:
-            orientation = pose.orientation
-            yaw = math.atan2(
-                2.0 * (orientation.w * orientation.z + orientation.x * orientation.y),
-                1.0 - 2.0 * (orientation.y * orientation.y + orientation.z * orientation.z),
-            )
-            for forward_m, lateral_m in FROZEN_DUAL_BRUSH_CENTERS_BASE_LINK_M:
-                brush_points.append((
-                    sample[0],
-                    sample[1] + forward_m * math.cos(yaw) - lateral_m * math.sin(yaw),
-                    sample[2] + forward_m * math.sin(yaw) + lateral_m * math.cos(yaw),
-                ))
         (truth if topic == "/ground_truth/odom" else fused).append(sample)
     return {
         "topic_types": topic_types,
@@ -569,11 +565,11 @@ def read_mcap_records(bag: Path) -> dict[str, Any]:
         },
         "fused": fused,
         "truth": truth,
-        "brush_points": brush_points,
+        "cleaning_samples": cleaning_samples,
         "brush_geometry": {
-            "basis": "frozen_high_fidelity_dual_brush_centers_base_link_m",
-            "centers_base_link_m": FROZEN_DUAL_BRUSH_CENTERS_BASE_LINK_M,
-            "coverage_gate": "full_width_signed_left_and_right_nonzero",
+            "basis": "formal_observed_bristle_sweep_proxy",
+            "status_topic": GROUND_DIRT_STATUS_TOPIC,
+            "timestamp_basis": "mcap_received_stamp_ns",
         },
         "evaluation_stamps": evaluation_stamps,
         "coverage_states": coverage_states,
@@ -584,7 +580,8 @@ def read_mcap_records(bag: Path) -> dict[str, Any]:
 def recalculate(records: dict[str, Any], source_metrics: dict[str, Any]) -> dict[str, Any]:
     """Recompute coverage and localization; never trust embedded pass flags."""
     try:
-        from sanitation_coverage.metrics import empirical_swept_metrics, summarize_distances, synchronized_xy_errors
+        from sanitation_coverage.metrics import summarize_distances, synchronized_xy_errors
+        from formal_cleaning_geometry import empirical_cleaning_metrics, samples_in_mission_frame
     except ImportError as exc:  # pragma: no cover - exercised on the ROS runtime
         raise ProductReplayError(f"coverage metric dependencies are unavailable: {exc}") from exc
 
@@ -603,21 +600,46 @@ def recalculate(records: dict[str, Any], source_metrics: dict[str, Any]) -> dict
     actual_rmse = localization["rmse_m"]
     rmse_delta = relative_delta(float(actual_rmse), expected_rmse) if actual_rmse is not None else None
     geometry = source_metrics["mission_geometry"]
-    empirical = empirical_swept_metrics(
-        geometry["cleanable_outer_polygon"],
-        records["brush_points"],
-        float(source_metrics["operation_width_m"]),
-        resolution=float(source_metrics["empirical_metrics"]["resolution_m"]),
-        exclusion_polygons=geometry["cleanable_exclusion_polygons"],
-    )
-    expected_coverage = float(source_metrics["empirical_metrics"]["coverage_rate"])
+    try:
+        empirical = empirical_cleaning_metrics(
+            geometry["cleanable_outer_polygon"],
+            samples_in_mission_frame(records["cleaning_samples"], geometry),
+            resolution=float(source_metrics["empirical_metrics"]["resolution_m"]),
+            exclusion_polygons=geometry["cleanable_exclusion_polygons"],
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ProductReplayError(f"ground-dirt geometry cannot be recalculated: {exc}") from exc
+    if not empirical["valid"]:
+        raise ProductReplayError(
+            "ground-dirt geometry evidence is invalid: "
+            f"invalid_sample_count={empirical['invalid_sample_count']}, "
+            f"continuity_break_count={empirical['continuity_break_count']}"
+        )
+    source_empirical = source_metrics["empirical_metrics"]
+    if source_empirical.get("valid") is not True:
+        raise ProductReplayError("source ground-dirt geometry metric is not valid")
+    if source_empirical.get("metric_basis") != empirical["metric_basis"]:
+        raise ProductReplayError("source metrics use a different cleaning geometry basis")
+    if source_empirical.get("source_hashes") != empirical["source_hashes"]:
+        raise ProductReplayError("source metrics geometry provenance does not match replay")
+    if source_empirical.get("sampling") != empirical["sampling"]:
+        raise ProductReplayError("source metrics sampling safeguards do not match replay")
+    try:
+        expected_coverage = float(source_empirical["coverage_rate"])
+    except (TypeError, ValueError) as exc:
+        raise ProductReplayError("source coverage rate is not numeric") from exc
+    if not math.isfinite(expected_coverage) or not 0.0 <= expected_coverage <= 1.0:
+        raise ProductReplayError("source coverage rate is outside [0, 1]")
     actual_coverage = float(empirical["coverage_rate"])
     return {
         "coverage": {
             "source_rate": expected_coverage,
             "recalculated_rate": actual_coverage,
             "relative_delta": relative_delta(actual_coverage, expected_coverage),
-            "brush_on_sample_count": len(records["brush_points"]),
+            "brush_on_sample_count": int(empirical["active_tool_sample_count"]),
+            "geometry_metric_basis": empirical["metric_basis"],
+            "geometry_source_hashes": empirical["source_hashes"],
+            "geometry_metrics": empirical,
         },
         "localization": {
             "source_rmse_m": expected_rmse,
@@ -893,7 +915,8 @@ def produce_report(
     assert_raw_artifacts_unchanged()
     records = reader(bag)
     required_topics = set(PRODUCT_TOPICS) | {
-        "/brush_controller/commands", "/ground_truth/odom", "/localization/fused_odom"
+        "/brush_controller/commands", GROUND_DIRT_STATUS_TOPIC,
+        "/ground_truth/odom", "/localization/fused_odom",
     }
     missing_topics = sorted(required_topics - set(records["topic_types"]))
     source_metrics = read_object(source_metrics_path)

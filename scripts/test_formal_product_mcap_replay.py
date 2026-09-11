@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 import time
 from array import array
 from pathlib import Path
-from types import SimpleNamespace as NS
+from types import ModuleType, SimpleNamespace as NS
 import pytest
 
 import formal_product_mcap_replay as replay
@@ -361,27 +362,61 @@ def test_cli_provenance_hashes_actual_artifacts_instead_of_accepting_claimed_has
     assert all(hashes[name] == references[name]["sha256"] for name in references)
 
 
-def test_full_width_brush_requires_both_lateral_brushes() -> None:
-    assert replay.full_width_brush_active(array("d", [8.0, -8.0, 0.0])) is True
-    assert replay.full_width_brush_active([0.0, 0.0, 0.0]) is False
-    assert replay.full_width_brush_active([8.0, 0.0, 12.0]) is False
-    assert replay.full_width_brush_active([0.0, -8.0, 12.0]) is False
-    assert replay.full_width_brush_active([8.0, -8.0, 0.0]) is True
-    assert replay.full_width_brush_active([-8.0, -8.0, 0.0]) is True
-    for invalid in ("8,-8,0", b"8,-8,0", [8.0, -8.0], [float("nan"), -8.0, 0.0]):
-        try:
-            replay.full_width_brush_active(invalid)
-        except replay.ProductReplayError:
-            pass
-        else:
-            raise AssertionError("invalid brush array must fail closed")
-
-
-def test_replay_uses_post_safety_commands_and_frozen_dual_brush_centers() -> None:
+def test_replay_uses_authoritative_ground_dirt_status_geometry() -> None:
     source = (ROOT / "scripts/formal_product_mcap_replay.py").read_text(encoding="utf-8")
     capture = (ROOT / "scripts/formal_a12_single_execution_capture.py").read_text(encoding="utf-8")
-    assert replay.FROZEN_DUAL_BRUSH_CENTERS_BASE_LINK_M == ((0.385, 0.545), (0.385, -0.545))
-    assert '"/brush_controller/commands"' in source
+    assert replay.GROUND_DIRT_STATUS_TOPIC == "/evaluation/single_episode/ground_dirt/status_json"
+    assert replay.GROUND_DIRT_STATUS_TOPIC in source
+    assert "sample_from_ground_dirt_status" in source
+    assert "empirical_cleaning_metrics" in source
+    assert "FROZEN_DUAL_BRUSH_CENTERS_BASE_LINK_M" not in source
+    assert "empirical_swept_metrics(" not in source
     assert '"/safety/command/brush"' not in source
     assert '"/brush_controller/commands"' in capture
     assert '"/safety/command/brush"' not in capture
+
+
+def test_recalculate_transforms_world_status_to_frozen_map_and_rejects_old_provenance(monkeypatch) -> None:
+    from formal_cleaning_geometry import empirical_cleaning_metrics, transform_sample_to_mission
+
+    metrics_module = ModuleType("sanitation_coverage.metrics")
+    metrics_module.synchronized_xy_errors = lambda fused, truth: ([0.1], [], 0)
+    metrics_module.summarize_distances = lambda errors: {"rmse_m": 0.1}
+    package = ModuleType("sanitation_coverage")
+    package.metrics = metrics_module
+    monkeypatch.setitem(sys.modules, "sanitation_coverage", package)
+    monkeypatch.setitem(sys.modules, "sanitation_coverage.metrics", metrics_module)
+    sample = {
+        "stamp_s": 1.0, "x": 5.0, "y": 7.0, "yaw": 1.5707963267948966,
+        "lift_position_m": 0.1, "layout_ready": True,
+        "tools": {
+            name: {"enabled": True, "observed_speed_rad_s": 3.0, "clearance_m": 0.0}
+            for name in ("left_side_brush", "right_side_brush", "central_roller")
+        },
+    }
+    polygon = [[-1.0, -1.0], [1.0, -1.0], [1.0, 1.0], [-1.0, 1.0]]
+    mission_geometry = {
+        "cleanable_outer_polygon": polygon,
+        "cleanable_exclusion_polygons": [],
+        "frame_id": "map",
+        "source_fixed_start_pose": [5.0, 7.0, 1.5707963267948966],
+    }
+    empirical = empirical_cleaning_metrics(
+        polygon, [transform_sample_to_mission(sample, mission_geometry)], resolution=0.05
+    )
+    source = {
+        "mission_geometry": mission_geometry,
+        "empirical_metrics": {
+            "resolution_m": 0.05, "coverage_rate": empirical["coverage_rate"],
+            "valid": True, "metric_basis": empirical["metric_basis"],
+            "source_hashes": empirical["source_hashes"], "sampling": empirical["sampling"],
+        },
+        "localization_regression_during_coverage": {"rmse_m": 0.1},
+    }
+    records = {"fused": [(1.0, 0.0, 0.0)], "truth": [(1.0, 0.0, 0.0)],
+               "evaluation_stamps": [], "cleaning_samples": [sample]}
+    result = replay.recalculate(records, source)
+    assert result["coverage"]["brush_on_sample_count"] == 3
+    source["empirical_metrics"]["metric_basis"] = "legacy_vehicle_width_disk"
+    with pytest.raises(replay.ProductReplayError, match="different cleaning geometry basis"):
+        replay.recalculate(records, source)
