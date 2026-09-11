@@ -560,6 +560,7 @@ def run_ros_independent_tests() -> None:
         ROOT / "scripts" / "test_upstream_patch_contract.py",
         ROOT / "scripts" / "test_locked_repository_audit.py",
         ROOT / "scripts" / "test_visual_demo_summary.py",
+        ROOT / "scripts" / "test_create_demo_viewing_cut.py",
         ROOT / "scripts" / "test_dashboard_telemetry_frames.py",
         ROOT / "scripts" / "test_run_visual_demo_contract.py",
         ROOT / "scripts" / "test_gazebo_cleaning_demo_contract.py",
