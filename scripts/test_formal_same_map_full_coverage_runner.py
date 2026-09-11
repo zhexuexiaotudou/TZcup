@@ -47,8 +47,15 @@ def test_prepared_probe_and_server_share_real_cleaning_width(tmp_path: Path) -> 
         mission, ROOT / "config/high_fidelity_vehicle/formal_motion_cleaning_profile.yaml"
     )
     params = server["coverage_server"]["ros__parameters"]
-    assert probe["operation_width_m"] == pytest.approx(1.32)
+    # The 1.32 m declaration spans disconnected side brushes.  Coverage swaths
+    # use the roller's continuous 0.62 m band with a 20 mm overlap.
+    assert probe["operation_width_m"] == pytest.approx(0.60)
     assert params["operation_width"] == probe["operation_width_m"]
+    assert probe["planning_swath_spacing_m"] == pytest.approx(0.60)
+    assert probe["declared_effective_cleaning_width_m"] == pytest.approx(1.32)
+    transverse = probe["transverse_cleaning_geometry"]
+    assert transverse["continuous_band_width_m"] == pytest.approx(0.62)
+    assert transverse["interior_gaps_y_m"] == [[-0.395, -0.31], [0.31, 0.395]]
     assert params["robot_width"] == pytest.approx(1.39)
     assert probe["planning_swath_spacing_m"] <= probe["operation_width_m"]
     assert probe["headland"] == {"enabled": False, "width_m": 0.0}

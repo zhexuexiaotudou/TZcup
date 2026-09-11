@@ -13,6 +13,8 @@ from typing import Any
 from aggregate_formal_single_episode_cleaning_mission import AggregateError, aggregate
 from collect_formal_single_episode_cleaning_mission import (
     CONTROL_PROHIBITED_TRUTH_TOPICS, REQUIRED_RUNTIME_NODES, sha256_file,
+    RAW_GROUND_TRUTH_TOPIC, RAW_GROUND_TRUTH_ADAPTER_NODE,
+    REPLAY_METRIC_TOPICS, TRUSTED_GT_RECORDER_NODE,
 )
 from formal_runtime_gate_binding import RuntimeGateError, load_binding
 
@@ -336,9 +338,16 @@ def validate(
     if isinstance(truth_boundary, dict):
         require(truth_boundary.get("control_truth_topics_subscribed") == [], "evaluator truth entered product control subscriptions")
         audit = truth_boundary.get("subscriber_audit")
+        expected_audit = {
+            topic: ["/formal_single_episode_cleaning_collector"]
+            for topic in CONTROL_PROHIBITED_TRUTH_TOPICS
+        }
+        expected_audit[RAW_GROUND_TRUTH_TOPIC] = [RAW_GROUND_TRUTH_ADAPTER_NODE]
+        expected_audit[REPLAY_METRIC_TOPICS["ground_truth_odom"]["name"]] = sorted([
+            "/formal_single_episode_cleaning_collector", TRUSTED_GT_RECORDER_NODE,
+        ])
         require(
-            isinstance(audit, dict) and set(audit) == set(CONTROL_PROHIBITED_TRUTH_TOPICS)
-            and all(rows == ["/formal_single_episode_cleaning_collector"] for rows in audit.values()),
+            audit == expected_audit,
             "live ROS truth-subscriber audit failed",
         )
     require(isinstance(evidence.get("initial_evaluator_state"), dict), "initial evaluator state missing")

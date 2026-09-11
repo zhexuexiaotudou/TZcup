@@ -255,6 +255,7 @@ def _verified_closure_identity() -> dict[str, object]:
         "status": "FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED",
         "passed": True,
         "typed_cleaning_telemetry_source_sha256": "e" * 64,
+        "ros2_executable": {"path": "/opt/ros/jazzy/bin/ros2", "sha256": "a" * 64},
         "nvidia_egl_runtime_bound": True,
         "nvidia_egl_runtime": {
             "status": "NVIDIA_EGL_RUNTIME_BOUND",
@@ -581,7 +582,7 @@ def test_static_audit_covers_each_contract_gate_exactly_once() -> None:
         "manifest_required": True,
         "merged_overlay_required": True,
         "symlink_install_allowed": False,
-        "runtime_package_count": 19,
+        "runtime_package_count": 20,
         "side_brush_surface_preflight_required": True,
         "typed_cleaning_telemetry_source_manifest_required": True,
         "water_normal_full_surface_hash_reverification_required": True,
@@ -2283,6 +2284,10 @@ def test_execute_step_injects_only_the_bound_frozen_nvidia_egl_environment(
         name: environment[name]
         for name in ("__EGL_VENDOR_LIBRARY_FILENAMES", "EGL_PLATFORM")
     } == closure["nvidia_egl_runtime"]["environment"]
+    assert environment["FORMAL_ROS2_EXECUTABLE"] == closure["ros2_executable"]["path"]
+    closure.pop("ros2_executable")
+    with pytest.raises(orchestration.OrchestrationError, match="no ros2 executable"):
+        orchestration._step_command(step_id, context, runtime_closure=closure, execution_environment=True)
 
 
 @pytest.mark.parametrize(
@@ -2619,7 +2624,7 @@ def test_runtime_closure_verifier_binds_the_full_context(monkeypatch) -> None:
             "status": "FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED",
             "passed": True,
             "closure_sha256": "a" * 64,
-            "runtime_package_count": 19,
+            "runtime_package_count": 20,
             "side_brush_installed_xacro": "/tmp/frozen/install/vehicle.xacro",
             "side_brush_installed_xacro_sha256": "b" * 64,
             "side_brush_expanded_sdf_sha256": "c" * 64,
@@ -2650,7 +2655,7 @@ def test_runtime_closure_verifier_binds_the_full_context(monkeypatch) -> None:
         )
     ]
     assert result["phase"] == "before:test"
-    assert result["runtime_package_count"] == 19
+    assert result["runtime_package_count"] == 20
 
 
 def test_water_gate_rehashes_normal_and_full_surface_evidence_against_closure(

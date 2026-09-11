@@ -16,9 +16,11 @@ from formal_product_mcap_replay import (
     SCHEMA as REPLAY_SCHEMA,
     ProductReplayError,
     artifact_sha256,
+    mcap_sha256,
     _git_identity,
     read_object,
     sha256,
+    validate_raw_capture_receipt,
     write_fresh_json,
 )
 
@@ -102,7 +104,7 @@ def _validate_replay(repository_root: Path, replay_path: Path) -> dict[str, Any]
     checks = replay.get("checks")
     if not isinstance(checks, dict) or not checks or not all(value is True for value in checks.values()):
         raise Auto15EvidenceError("replay checks are incomplete or blocked")
-    if replay.get("playback", {}).get("exit_code") != 0:
+    if replay.get("playback", {}).get("exit_code") != 0 or replay.get("playback", {}).get("timed_out") is not False:
         raise Auto15EvidenceError("replay did not complete ros2 bag play")
     context = replay.get("formal_context")
     if not isinstance(context, dict) or {key: context.get(key) for key in ("source_commit", "source_tree")} != _git_identity(repository_root):
@@ -162,22 +164,42 @@ def build_execution_receipt(
     mission_group_id: str,
     video_path: Path,
     replay_path: Path,
+    raw_capture_receipt_path: Path,
+    mission_id: str,
 ) -> dict[str, Any]:
     contract = read_object(repository_root / "config/high_fidelity_vehicle/product_acceptance_contract.json")
     accounting = contract["auto15_execution_accounting"]
     if scenario_id not in accounting["scenario_ids"] or seed not in accounting["seeds"]:
         raise Auto15EvidenceError("scenario/seed is outside the fixed 18x10 matrix")
-    if not mission_group_id or any(token in mission_group_id.upper() for token in ("AUTO-", "STAGE-")):
-        raise Auto15EvidenceError("mission group must be a current AUTO-15 product mission identity")
     video = _inside(run_root, video_path, "video")
     replay_file = _inside(run_root, replay_path, "replay receipt")
     replay = _validate_replay(repository_root, replay_file)
+    if replay.get("run_root") != str(run_root.resolve()):
+        raise Auto15EvidenceError("replay belongs to another execution run root")
+    raw_capture = validate_raw_capture_receipt(
+        repository_root=repository_root,
+        raw_capture_receipt_path=raw_capture_receipt_path,
+        formal_context=replay["formal_context"],
+        scenario_id=scenario_id,
+        seed=seed,
+        mission_id=mission_id,
+        run_root=run_root,
+    )
+    if replay.get("raw_capture") != raw_capture:
+        raise Auto15EvidenceError("replay did not consume this exact raw capture receipt")
+    derived_group = raw_capture.get("episode_identity", {}).get("mission_group_id")
+    if not isinstance(derived_group, str) or mission_group_id != derived_group:
+        raise Auto15EvidenceError("mission group must equal the immutable bound episode mission group")
     bag = _inside(run_root, Path(replay["bag"]["path"]), "MCAP")
+    if Path(raw_capture["video"]["path"]) != video:
+        raise Auto15EvidenceError("video differs from the raw capture receipt")
+    if Path(raw_capture["mcap"]["path"]) != bag:
+        raise Auto15EvidenceError("MCAP differs from the raw capture receipt")
     started_ns = replay["formal_context"]["session"]["started_epoch_ns"]
     for artifact, label in ((video, "video"), (replay_file, "replay receipt"), (bag, "MCAP")):
         if artifact.stat().st_mtime_ns < started_ns:
             raise Auto15EvidenceError(f"{label} predates the current formal session")
-    if artifact_sha256(bag) != replay["bag"]["sha256"]:
+    if mcap_sha256(bag) != replay["bag"]["sha256"]:
         raise Auto15EvidenceError("MCAP changed after replay recalculation")
     video_audit = _video_audit(video)
     return {
@@ -190,6 +212,7 @@ def build_execution_receipt(
         "scenario_id": scenario_id,
         "seed": seed,
         "mission_group_id": mission_group_id,
+        "mission_id": mission_id,
         "run_root": str(run_root.resolve()),
         "formal_context": replay["formal_context"],
         "input_hashes": replay["input_hashes"],
@@ -201,6 +224,7 @@ def build_execution_receipt(
             "audit": video_audit,
         },
         "mcap": replay["bag"],
+        "raw_capture": raw_capture,
         "replay": {"path": str(replay_file), "sha256": sha256(replay_file), "schema": replay["schema"]},
     }
 
@@ -219,6 +243,29 @@ def validate_execution_receipt(repository_root: Path, run_root: Path, path: Path
     if sha256(replay_path) != replay_ref.get("sha256"):
         raise Auto15EvidenceError("referenced replay receipt hash mismatch")
     replay = _validate_replay(repository_root, replay_path)
+    if replay.get("run_root") != str(run_root.resolve()):
+        raise Auto15EvidenceError("replay belongs to another execution run root")
+    raw_capture = receipt.get("raw_capture")
+    if not isinstance(raw_capture, dict):
+        raise Auto15EvidenceError("execution has no raw capture receipt")
+    try:
+        verified_raw_capture = validate_raw_capture_receipt(
+            repository_root=repository_root,
+            raw_capture_receipt_path=Path(raw_capture["path"]),
+            formal_context=replay["formal_context"],
+            scenario_id=receipt.get("scenario_id"),
+            seed=receipt.get("seed"),
+            mission_id=receipt.get("mission_id"),
+            run_root=run_root,
+        )
+    except (KeyError, TypeError, ProductReplayError) as exc:
+        raise Auto15EvidenceError(f"raw capture receipt validation failed: {exc}") from exc
+    if verified_raw_capture != raw_capture or replay.get("raw_capture") != raw_capture:
+        raise Auto15EvidenceError("execution, replay, and raw capture identities differ")
+    if receipt.get("execution_id") != f"{receipt.get('scenario_id')}:seed-{receipt.get('seed')}":
+        raise Auto15EvidenceError("execution id is not derived from scenario and seed")
+    if receipt.get("mission_group_id") != verified_raw_capture.get("episode_identity", {}).get("mission_group_id"):
+        raise Auto15EvidenceError("mission group is not derived from the verified bound episode")
     if (
         replay.get("formal_context") != receipt.get("formal_context")
         or replay.get("input_hashes") != receipt.get("input_hashes")
@@ -228,8 +275,11 @@ def validate_execution_receipt(repository_root: Path, run_root: Path, path: Path
     for field in ("video", "mcap"):
         reference = receipt.get(field)
         artifact = _inside(run_root, Path(reference["path"]), field)
-        if artifact_sha256(artifact) != reference.get("sha256"):
+        digest = mcap_sha256(artifact) if field == "mcap" else artifact_sha256(artifact)
+        if digest != reference.get("sha256"):
             raise Auto15EvidenceError(f"{field} hash mismatch")
+        if reference.get("path") != verified_raw_capture[field]["path"] or reference.get("sha256") != verified_raw_capture[field]["sha256"]:
+            raise Auto15EvidenceError(f"{field} differs from the raw capture receipt")
     return receipt
 
 
@@ -313,10 +363,27 @@ def build_ledger(repository_root: Path, run_root: Path, execution_paths: list[Pa
         raise Auto15EvidenceError("mission-group receipts do not cover every execution exactly once")
     if any(item["mission_group_id"] != member_map[item["execution_id"]] for item in executions):
         raise Auto15EvidenceError("execution-to-mission-group declarations disagree")
+    capture_ids = {item["raw_capture"]["capture_id"] for item in executions}
+    if len(capture_ids) != len(executions):
+        raise Auto15EvidenceError("raw capture identity is reused across executions")
     for field in ("video", "mcap"):
-        identities = {(item[field]["path"], item[field]["sha256"]) for item in executions}
-        if len(identities) != len(executions):
-            raise Auto15EvidenceError(f"{field} evidence is reused across executions")
+        content_hashes = {item[field]["sha256"] for item in executions}
+        if len(content_hashes) != len(executions):
+            raise Auto15EvidenceError(f"{field} content is reused across executions")
+    mcap_semantics = {item["mcap"].get("semantic_sha256") for item in executions}
+    if None in mcap_semantics or len(mcap_semantics) != len(executions):
+        raise Auto15EvidenceError("MCAP semantic content is reused across executions")
+    capture_identities = {
+        (
+            item["raw_capture"]["capture_id"],
+            item["video"]["sha256"],
+            item["mcap"]["sha256"],
+            item["raw_capture"]["source_metrics"]["sha256"],
+        )
+        for item in executions
+    }
+    if len(capture_identities) != len(executions):
+        raise Auto15EvidenceError("capture content identity is reused across executions")
     contexts = {json.dumps(item["formal_context"], sort_keys=True) for item in executions}
     hashes = {json.dumps(item["input_hashes"], sort_keys=True) for item in executions}
     artifacts = {json.dumps(item["input_artifacts"], sort_keys=True) for item in executions}
@@ -356,6 +423,8 @@ def main() -> int:
     execution.add_argument("--mission-group", required=True)
     execution.add_argument("--video", type=Path, required=True)
     execution.add_argument("--replay", type=Path, required=True)
+    execution.add_argument("--raw-capture-receipt", type=Path, required=True)
+    execution.add_argument("--mission-id", required=True)
     execution.add_argument("--output", type=Path, required=True)
     group = subparsers.add_parser("mission-group")
     group.add_argument("--mission-group", required=True)
@@ -377,6 +446,8 @@ def main() -> int:
                 repository_root=repository_root, run_root=run_root,
                 scenario_id=args.scenario, seed=args.seed, mission_group_id=args.mission_group,
                 video_path=args.video, replay_path=args.replay,
+                raw_capture_receipt_path=args.raw_capture_receipt,
+                mission_id=args.mission_id,
             )
         elif args.command == "mission-group":
             value = build_group_receipt(repository_root, run_root, args.mission_group, args.execution_receipt)

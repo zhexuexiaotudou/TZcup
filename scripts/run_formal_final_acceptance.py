@@ -1762,6 +1762,10 @@ def _step_command(
                 "formal execution requires the verified runtime closure identity"
             )
         environment.update(_bound_nvidia_egl_environment(context, runtime_closure))
+        ros2 = runtime_closure.get("ros2_executable")
+        if not isinstance(ros2, dict) or not isinstance(ros2.get("path"), str):
+            raise OrchestrationError("verified runtime closure has no ros2 executable identity")
+        environment["FORMAL_ROS2_EXECUTABLE"] = ros2["path"]
     bash = lambda name: ["bash", str(scripts / name)]
     python = lambda name, *args: [sys.executable, str(scripts / name), *map(str, args)]
     if step_id == "freeze_snapshot":
@@ -4419,6 +4423,8 @@ def postprocess_product(
             sys.executable,
             str(context.root / "scripts/a20_release_replay_receipt.py"),
             "--repository-root", str(context.root),
+            "--run-root", str(context.run_root),
+            "--session", str(context.session),
             "--receipt", str(receipt),
             "--output", str(a20_output),
         ]

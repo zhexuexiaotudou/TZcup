@@ -143,12 +143,16 @@ def test_canonical_ledger_enforces_exact_180_and_30_nonoverlapping_groups(tmp_pa
             "execution_id": execution_id,
             "scenario_id": scenario,
             "seed": int(seed_text),
-            "mission_group_id": group_id,
-            "formal_context": context,
-            "input_hashes": hashes,
-            "input_artifacts": artifacts,
-            "video": {"path": f"video-{index}.mp4", "sha256": f"{index + 1:064x}"},
-            "mcap": {"path": f"bag-{index}", "sha256": f"{index + 1000:064x}"},
+                "mission_group_id": group_id,
+                "formal_context": context,
+                "input_hashes": hashes,
+                "input_artifacts": artifacts,
+                "video": {"path": f"video-{index}.mp4", "sha256": f"{index + 1:064x}"},
+                "mcap": {"path": f"bag-{index}", "sha256": f"{index + 1000:064x}", "semantic_sha256": f"{index + 4000:064x}"},
+                "raw_capture": {
+                    "capture_id": f"{index + 2000:032x}",
+                    "source_metrics": {"path": f"metrics-{index}.json", "sha256": f"{index + 3000:064x}"},
+                },
         }
     group_paths = []
     group_by_path = {}
@@ -170,3 +174,18 @@ def test_canonical_ledger_enforces_exact_180_and_30_nonoverlapping_groups(tmp_pa
     assert ledger["execution_count"] == 180
     assert ledger["mission_group_count"] == 30
     assert ledger["status"] == "AUTO15_CANONICAL_EVIDENCE_LEDGER_COMPLETE"
+    execution_by_path[execution_paths[1]]["mcap"]["sha256"] = execution_by_path[execution_paths[0]]["mcap"]["sha256"]
+    try:
+        evidence.build_ledger(ROOT, tmp_path, execution_paths, group_paths)
+    except evidence.Auto15EvidenceError as exc:
+        assert "content is reused" in str(exc)
+    else:
+        raise AssertionError("identical MCAP content must not become 180 unique executions")
+    execution_by_path[execution_paths[1]]["mcap"]["sha256"] = f"{1001:064x}"
+    execution_by_path[execution_paths[1]]["mcap"]["semantic_sha256"] = execution_by_path[execution_paths[0]]["mcap"]["semantic_sha256"]
+    try:
+        evidence.build_ledger(ROOT, tmp_path, execution_paths, group_paths)
+    except evidence.Auto15EvidenceError as exc:
+        assert "semantic" in str(exc)
+    else:
+        raise AssertionError("relocated semantic-equivalent MCAP must not become unique evidence")

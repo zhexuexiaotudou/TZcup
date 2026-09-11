@@ -37,7 +37,7 @@ source_snapshot:
       sha256: 688b72f49b7bd06ba6adc3d080c190f04f613b76ed05cbb69bf7a55580cff61a
       role: component_and_functional_interface_register
     - path: reports/engineering/formal_competition_vehicle.urdf
-      sha256: 015f484af59d40bb9af1abb985d6df82a38d0ae829a07c6e0506bef4767ad218
+      sha256: 52bd3978a53073a8126a87a16f065eeb781bbbb088b127a73bba58dcc90410a8
       role: expanded_zero_joint_urdf
 
 # Each id/link pair is unique.  A datum may be reused by several interface

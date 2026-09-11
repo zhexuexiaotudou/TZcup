@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import hashlib
 import os
 import tempfile
 from pathlib import Path
@@ -41,6 +42,26 @@ from sanitation_formal_campus_integration.saved_map_coverage_core import (
 )
 
 
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _world_to_map_from_source_start(pose: tuple[float, float, float]) -> tuple[float, float, float]:
+    """Local map is zeroed at the immutable source-world vehicle start."""
+    x_m, y_m, yaw_rad = pose
+    alignment_yaw = -yaw_rad
+    cosine, sine = math.cos(alignment_yaw), math.sin(alignment_yaw)
+    return (
+        -cosine * x_m + sine * y_m,
+        -sine * x_m - cosine * y_m,
+        alignment_yaw,
+    )
+
+
 def _runtime_actions(context):  # type: ignore[no-untyped-def]
     motion_profile = Path(
         context.perform_substitution(LaunchConfiguration("motion_profile_file"))
@@ -69,6 +90,10 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
         name: float(context.perform_substitution(LaunchConfiguration(name)))
         for name in ("spawn_x", "spawn_y", "spawn_yaw")
     }
+    # The evaluation transform is a property of the immutable episode, not a
+    # convenient launch override.  Otherwise a caller could move the model
+    # while leaving the truth frame bound to a different map origin.
+    manifest_start_pose = resolve_spawn_pose(episode_manifest)
     source_pose = resolve_spawn_pose(
         episode_manifest,
         spawn_x=None if math.isnan(spawn_values["spawn_x"]) else spawn_values["spawn_x"],
@@ -77,6 +102,13 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
             None if math.isnan(spawn_values["spawn_yaw"]) else spawn_values["spawn_yaw"]
         ),
     )
+    if source_pose != manifest_start_pose:
+        raise RuntimeError(
+            "formal truth evaluation rejects spawn overrides that differ from "
+            "the frozen episode manifest start pose"
+        )
+    world_to_map = _world_to_map_from_source_start(manifest_start_pose)
+    episode_manifest_sha256 = _sha256_file(episode_manifest)
     artifact_directory_text = context.perform_substitution(
         LaunchConfiguration("runtime_artifact_dir")
     )
@@ -226,6 +258,12 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
             launch_arguments={
                 "gui": LaunchConfiguration("gui"),
                 "world": LaunchConfiguration("world"),
+                "world_name": LaunchConfiguration("world_name"),
+                "enable_evaluation_odometry": "true",
+                "world_to_map_x": str(world_to_map[0]),
+                "world_to_map_y": str(world_to_map[1]),
+                "world_to_map_yaw": str(world_to_map[2]),
+                "source_episode_manifest_sha256": episode_manifest_sha256,
                 "model": manipulation_model,
                 "manipulation_sim_interfaces": "true",
                 # The integration layer loads the base controller and leaves

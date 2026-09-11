@@ -336,7 +336,7 @@ exec colcon --log-base "${runtime_ws}/log" build --merge-install \
     sanitation_navigation sanitation_perception sanitation_perception_evaluator \
     sanitation_perception_interfaces \
     sanitation_power_system sanitation_product_demo_integration sanitation_safety \
-    sanitation_service_acceptance sanitation_vehicle_description \
+    sanitation_tasks sanitation_service_acceptance sanitation_vehicle_description \
     opennav_coverage_msgs opennav_coverage
 ' formal-final-build "${repo_root}" "${runtime_ws}" "${vendor_work_root}" "${vendor_build_report}" "${parallel_workers}" "${frozen_source_root}" "${opennav_bundle}" "${opennav_provenance_report}" "${fields2cover_binding_report}" &
 build_pid=$!

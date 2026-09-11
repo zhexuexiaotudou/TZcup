@@ -111,6 +111,12 @@ def generate_launch_description() -> LaunchDescription:
     spawn_y = LaunchConfiguration("spawn_y")
     spawn_yaw = LaunchConfiguration("spawn_yaw")
     world = LaunchConfiguration("world")
+    world_name = LaunchConfiguration("world_name")
+    world_to_map_x = LaunchConfiguration("world_to_map_x")
+    world_to_map_y = LaunchConfiguration("world_to_map_y")
+    world_to_map_yaw = LaunchConfiguration("world_to_map_yaw")
+    source_episode_manifest_sha256 = LaunchConfiguration("source_episode_manifest_sha256")
+    enable_evaluation_odometry = LaunchConfiguration("enable_evaluation_odometry")
     model = LaunchConfiguration("model")
     default_model = PathJoinSubstitution(
         [FindPackageShare("sanitation_vehicle_description"), "urdf", "formal_competition_vehicle.urdf.xacro"]
@@ -674,6 +680,12 @@ def generate_launch_description() -> LaunchDescription:
                 ),
             ),
             DeclareLaunchArgument("world", default_value=default_world),
+            DeclareLaunchArgument("world_name", default_value="campus_formal"),
+            DeclareLaunchArgument("world_to_map_x", default_value="0.0"),
+            DeclareLaunchArgument("world_to_map_y", default_value="0.0"),
+            DeclareLaunchArgument("world_to_map_yaw", default_value="0.0"),
+            DeclareLaunchArgument("source_episode_manifest_sha256", default_value=""),
+            DeclareLaunchArgument("enable_evaluation_odometry", default_value="false"),
             DeclareLaunchArgument("model", default_value=default_model),
             DeclareLaunchArgument(
                 "spawn_robot",
@@ -759,6 +771,35 @@ def generate_launch_description() -> LaunchDescription:
                 ],
                 output="screen",
                 condition=IfCondition(spawn_robot),
+            ),
+            # Model-scoped native Gazebo odometry is evaluation-only.  The
+            # bridge preserves model odometry's frame and stamp directly.
+            Node(
+                package="ros_gz_bridge",
+                executable="parameter_bridge",
+                name="formal_model_odometry_evaluation_bridge",
+                condition=IfCondition(enable_evaluation_odometry),
+                arguments=[
+                    "/ground_truth/model_odom_raw@nav_msgs/msg/Odometry[gz.msgs.Odometry",
+                ],
+                output="screen",
+            ),
+            Node(
+                package="sanitation_tasks",
+                executable="sanitation_ground_truth_adapter",
+                name="formal_model_ground_truth_adapter",
+                condition=IfCondition(enable_evaluation_odometry),
+                parameters=[{
+                    "require_episode_identity": True,
+                    "use_sim_time": use_sim_time,
+                    "expected_source_frame": "world",
+                    "expected_child_frame": "base_footprint",
+                    "world_to_map_x": world_to_map_x,
+                    "world_to_map_y": world_to_map_y,
+                    "world_to_map_yaw": world_to_map_yaw,
+                    "source_episode_manifest_sha256": source_episode_manifest_sha256,
+                }],
+                output="screen",
             ),
             # Payload mass remains owned by physical simulation, and water
             # service-drain commands remain fail-closed through the safety

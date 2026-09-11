@@ -13,7 +13,11 @@ from formal_runtime_gate_binding import RuntimeGateError, load_binding
 
 from collect_formal_single_episode_cleaning_mission import (
     CONTROL_PROHIBITED_TRUTH_TOPICS,
+    REPLAY_METRIC_TOPICS,
+    RAW_GROUND_TRUTH_ADAPTER_NODE,
+    RAW_GROUND_TRUTH_TOPIC,
     REQUIRED_RUNTIME_NODES,
+    TRUSTED_GT_RECORDER_NODE,
     directory_descriptor,
     file_descriptor,
     sha256_file,
@@ -487,11 +491,35 @@ def aggregate(raw_path: Path) -> dict[str, Any]:
         graph.get("control_prohibited_truth_topic_subscribers"),
         "runtime_graph.control_prohibited_truth_topic_subscribers",
     )
-    if set(subscribers) != set(CONTROL_PROHIBITED_TRUTH_TOPICS):
+    ground_truth_topic = REPLAY_METRIC_TOPICS["ground_truth_odom"]["name"]
+    expected_truth_topics = set(CONTROL_PROHIBITED_TRUTH_TOPICS) | {ground_truth_topic, RAW_GROUND_TRUTH_TOPIC}
+    if graph.get("truth_subscription_audit_enabled") is not True or set(subscribers) != expected_truth_topics:
         raise AggregateError("runtime truth-subscription audit is incomplete")
     for topic, rows in subscribers.items():
-        if rows != ["/formal_single_episode_cleaning_collector"]:
+        if topic not in {ground_truth_topic, RAW_GROUND_TRUTH_TOPIC} and rows != ["/formal_single_episode_cleaning_collector"]:
             raise AggregateError(f"evaluator truth has a non-collector subscriber: {topic}:{rows}")
+    if graph.get("ground_truth_model_odom_raw_allowed_subscribers") != [RAW_GROUND_TRUTH_ADAPTER_NODE]:
+        raise AggregateError("raw model ground-truth allowlist is missing or differs from the adapter-only boundary")
+    if subscribers.get(RAW_GROUND_TRUTH_TOPIC) != [RAW_GROUND_TRUTH_ADAPTER_NODE]:
+        raise AggregateError("raw model ground-truth has a subscriber outside the adapter-only boundary")
+    allowed_gt_subscribers = sorted([
+        "/formal_single_episode_cleaning_collector", TRUSTED_GT_RECORDER_NODE,
+    ])
+    if graph.get("ground_truth_odom_allowed_subscribers") != allowed_gt_subscribers:
+        raise AggregateError("ground-truth odom allowlist is missing or differs from the fixed two-role boundary")
+    if subscribers.get(ground_truth_topic) != allowed_gt_subscribers:
+        raise AggregateError("ground-truth odom has a subscriber outside the collector/recorder boundary")
+    trusted_recorder = _mapping(
+        graph.get("ground_truth_odom_trusted_recorder"),
+        "runtime_graph.ground_truth_odom_trusted_recorder",
+    )
+    if (
+        trusted_recorder.get("node") != TRUSTED_GT_RECORDER_NODE
+        or trusted_recorder.get("pid_pgid_match") is not True
+        or not isinstance(trusted_recorder.get("pid"), int) or trusted_recorder["pid"] <= 1
+        or not isinstance(trusted_recorder.get("pgid"), int) or trusted_recorder["pgid"] <= 1
+    ):
+        raise AggregateError("trusted ground-truth recorder identity is invalid")
 
     field = _mapping(episode.get("field"), "episode.field")
     width = _number(field, "width_m", "episode.field")

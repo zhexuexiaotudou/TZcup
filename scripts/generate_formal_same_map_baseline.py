@@ -443,8 +443,8 @@ def build_report(
         raise BaselineError("coverage execution did not complete every planned swath")
     _same(
         _strict_number(coverage, "operation_width_m", "coverage_runtime"),
-        1.32,
-        "coverage execution operation width differs from formal brush width",
+        0.60,
+        "coverage execution operation width differs from continuous formal brush band",
     )
     for key, expected in coverage_binding.items():
         actual = coverage.get({

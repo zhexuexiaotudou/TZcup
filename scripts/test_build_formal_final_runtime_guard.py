@@ -160,7 +160,7 @@ def test_final_builder_builds_exactly_the_closed_project_and_opennav_package_set
     selected_block = child.split("--packages-up-to", 1)[1].split("\n'", 1)[0]
     selected = re.findall(r"\b(?:sanitation|opennav)_[a-z0-9_]+", selected_block)
     assert selected == list(closure.FINAL_RUNTIME_PACKAGES)
-    assert len(selected) == 19
+    assert len(selected) == 20
     assert "opennav_coverage_bt" not in selected
     assert "opennav_coverage_navigator" not in selected
     assert "opennav_row_coverage" not in selected

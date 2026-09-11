@@ -239,7 +239,7 @@
       "source_snapshot_sha256": {
         "config/high_fidelity_vehicle/formal_vehicle_component_register.yaml": "688b72f49b7bd06ba6adc3d080c190f04f613b76ed05cbb69bf7a55580cff61a",
         "config/high_fidelity_vehicle/formal_vehicle_layout.yaml": "3c9c10da558c116bcbedf39a516093ca20c1e3eb590e2bb2d121ebd491cf10a9",
-        "reports/engineering/formal_competition_vehicle.urdf": "015f484af59d40bb9af1abb985d6df82a38d0ae829a07c6e0506bef4767ad218"
+        "reports/engineering/formal_competition_vehicle.urdf": "52bd3978a53073a8126a87a16f065eeb781bbbb088b127a73bba58dcc90410a8"
       },
       "status": "STATIC_DERIVED_SNAPSHOT_BOUND_NOT_MANUFACTURING_RELEASE"
     },
@@ -4526,7 +4526,7 @@
           "checks": [
             {
               "evidence": {
-                "line": 74,
+                "line": 86,
                 "path": "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro",
                 "token": "filename=\"libA300DrivetrainPlantSystem.so\""
               },
@@ -4534,7 +4534,7 @@
             },
             {
               "evidence": {
-                "line": 80,
+                "line": 92,
                 "path": "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro",
                 "token": "<command_topic>"
               },
@@ -4558,7 +4558,7 @@
             },
             {
               "evidence": {
-                "line": 303,
+                "line": 309,
                 "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
                 "token": "a300_drivetrain_bridge"
               },
@@ -4600,7 +4600,7 @@
             },
             {
               "evidence": {
-                "line": 98,
+                "line": 110,
                 "path": "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro",
                 "token": "libGripperMimicEffortSystem.so"
               },
@@ -4742,7 +4742,7 @@
           "checks": [
             {
               "evidence": {
-                "line": 213,
+                "line": 225,
                 "path": "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro",
                 "token": "libGroundDirtCleaningSystem.so"
               },
@@ -4784,7 +4784,7 @@
           "checks": [
             {
               "evidence": {
-                "line": 239,
+                "line": 251,
                 "path": "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro",
                 "token": "libWaterRecoverySystem.so"
               },
@@ -4840,7 +4840,7 @@
             },
             {
               "evidence": {
-                "line": 770,
+                "line": 811,
                 "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
                 "token": "formal_vehicle_product_native_bridge"
               },
@@ -4882,7 +4882,7 @@
             },
             {
               "evidence": {
-                "line": 770,
+                "line": 811,
                 "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
                 "token": "formal_vehicle_product_native_bridge"
               },
@@ -5020,7 +5020,7 @@
             },
             {
               "evidence": {
-                "line": 770,
+                "line": 811,
                 "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
                 "token": "formal_vehicle_product_native_bridge"
               },
@@ -5054,7 +5054,7 @@
             },
             {
               "evidence": {
-                "line": 217,
+                "line": 223,
                 "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
                 "token": "joint_state_broadcaster"
               },
