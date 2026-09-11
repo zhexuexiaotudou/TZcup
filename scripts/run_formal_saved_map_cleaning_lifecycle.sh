@@ -90,12 +90,14 @@ from sanitation_formal_campus_integration.map_lifecycle_core import (
     load_campus_map_contract,
     validate_mapping_handoff_record,
     validate_saved_map_artifact,
+    validate_saved_map_cleaning_consumer_bundle,
 )
 
 contract = load_campus_map_contract(pathlib.Path(sys.argv[1]))
 root = pathlib.Path(sys.argv[2])
 validate_mapping_runtime_binding(root, pathlib.Path(sys.argv[5]))
 validate_saved_map_artifact(root, contract)
+validate_saved_map_cleaning_consumer_bundle(root, contract)
 validate_mapping_handoff_record(root)
 PY
 

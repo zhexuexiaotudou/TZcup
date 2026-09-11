@@ -1052,3 +1052,48 @@ def validate_saved_map_artifact(
     ):
         raise MapLifecycleError("saved occupancy coverage geometry violates the formal contract")
     return manifest
+
+
+def validate_saved_map_cleaning_consumer_bundle(
+    artifact_directory: str | Path, contract: CampusMapContract
+) -> dict[str, Any]:
+    """Bind the map-server and coverage-planner inputs to one sealed reload."""
+    root = Path(artifact_directory)
+    manifest = validate_saved_map_artifact(root, contract)
+    hashes = manifest["sha256"]
+    try:
+        snapshots = {
+            name: _read_artifact_snapshot(root, name, label="consumer reload artifact")
+            for name in ("occupancy.yaml", "occupancy.pgm", "mission_geometry.yaml", "coverage_geometry.yaml", "coverage_free_space.pgm")
+        }
+        if any(sha256_bytes != hashes[name] for name, sha256_bytes in (
+            (name, hashlib.sha256(snapshot).hexdigest()) for name, snapshot in snapshots.items()
+        )):
+            raise MapLifecycleError("consumer reload artifact changed after validation")
+        metadata = yaml.safe_load(snapshots["occupancy.yaml"])
+        mission = yaml.safe_load(snapshots["mission_geometry.yaml"])
+        geometry = yaml.safe_load(snapshots["coverage_geometry.yaml"])
+        width, height, _ = parse_binary_pgm(snapshots["occupancy.pgm"])
+        free_width, free_height, _ = parse_binary_pgm(snapshots["coverage_free_space.pgm"])
+        resolution = float(metadata["resolution"])
+        origin = tuple(float(value) for value in metadata["origin"])
+        geometry_resolution = float(geometry["resolution_m"])
+        geometry_origin = tuple(float(value) for value in geometry["origin"])
+    except (MapLifecycleError, KeyError, TypeError, ValueError, yaml.YAMLError) as exc:
+        raise MapLifecycleError("saved-map consumer reload inputs are invalid") from exc
+    if (
+        not isinstance(metadata, dict)
+        or not isinstance(mission, dict)
+        or not isinstance(geometry, dict)
+        or mission.get("outer_polygon") != [list(point) for point in contract.geofence]
+        or len(origin) != 3
+        or len(geometry_origin) != 3
+        or width != free_width
+        or height != free_height
+        or not math.isclose(resolution, geometry_resolution, abs_tol=1e-12)
+        or any(not math.isclose(left, right, abs_tol=1e-12) for left, right in zip(origin, geometry_origin))
+        or geometry.get("occupancy_map_sha256") != hashes["occupancy.yaml"]
+        or geometry.get("occupancy_image_sha256") != hashes["occupancy.pgm"]
+    ):
+        raise MapLifecycleError("saved-map consumer reload inputs disagree")
+    return manifest

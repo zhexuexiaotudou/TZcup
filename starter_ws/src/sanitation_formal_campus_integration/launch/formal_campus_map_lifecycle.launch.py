@@ -22,6 +22,7 @@ from sanitation_formal_campus_integration.map_lifecycle_core import (
     load_campus_map_contract,
     prepare_public_lifecycle_artifacts,
     validate_saved_map_artifact,
+    validate_saved_map_cleaning_consumer_bundle,
 )
 from sanitation_formal_campus_integration.nav2_mode_config import (
     configure_collision_monitor_sources,
@@ -65,6 +66,7 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
         # This launch-time gate prevents AMCL/Nav2 from even starting with an
         # unqualified, wrong-map or tampered artifact.
         validate_saved_map_artifact(artifact_root, contract)
+        validate_saved_map_cleaning_consumer_bundle(artifact_root, contract)
         support = {
             "keepout_map": artifact_root / "geofence_keepout.yaml",
             "speed_map": artifact_root / "neutral_speed.yaml",
@@ -418,6 +420,8 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                         "mission_geometry_path": str(
                             artifact_root / "mission_geometry.yaml"
                         ),
+                        "episode_manifest": str(manifest_path),
+                        "artifact_directory": str(artifact_root),
                         "output_path": str(
                             coverage_evidence_dir / "coverage_execution.json"
                         ),

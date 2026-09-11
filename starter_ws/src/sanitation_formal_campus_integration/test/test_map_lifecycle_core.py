@@ -23,6 +23,7 @@ from sanitation_formal_campus_integration.map_lifecycle_core import (
     _rectangles_from_mask,
     select_frontier_goal,
     validate_saved_map_artifact,
+    validate_saved_map_cleaning_consumer_bundle,
 )
 
 
@@ -456,6 +457,33 @@ def test_materialized_geometry_is_preapplied_and_fully_manifest_sealed(tmp_path)
     assert geometry["planning_clearance_preapplied"] is True
     assert mission["saved_occupancy_coverage"]["planning_clearance_preapplied"] is True
     assert validate_saved_map_artifact(root, contract)["status"] == "ready_for_localization_cleaning"
+
+
+def test_cleaning_consumer_reload_requires_matching_map_and_coverage_rasters(tmp_path):
+    root = tmp_path / "maps"
+    contract, _ = _materialized_saved_map(root)
+    assert validate_saved_map_cleaning_consumer_bundle(root, contract)["map_id"] == contract.map_id
+    geometry_path = root / "coverage_geometry.yaml"
+    geometry = yaml.safe_load(geometry_path.read_text(encoding="utf-8"))
+    geometry["origin"][0] += 0.1
+    geometry_path.write_text(yaml.safe_dump(geometry), encoding="utf-8")
+    manifest_path = root / "map_lifecycle_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["sha256"]["coverage_geometry.yaml"] = hashlib.sha256(
+        geometry_path.read_bytes()
+    ).hexdigest()
+    mission_path = root / "mission_geometry.yaml"
+    mission = yaml.safe_load(mission_path.read_text(encoding="utf-8"))
+    mission["saved_occupancy_coverage"]["sha256"] = hashlib.sha256(
+        geometry_path.read_bytes()
+    ).hexdigest()
+    mission_path.write_text(yaml.safe_dump(mission), encoding="utf-8")
+    manifest["sha256"]["mission_geometry.yaml"] = hashlib.sha256(
+        mission_path.read_bytes()
+    ).hexdigest()
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(MapLifecycleError, match="consumer reload"):
+        validate_saved_map_cleaning_consumer_bundle(root, contract)
 
 
 def test_cleaning_admission_recomputes_pgm_observation_after_a_resealed_map_change(tmp_path):

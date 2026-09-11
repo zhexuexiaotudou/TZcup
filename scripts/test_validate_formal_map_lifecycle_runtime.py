@@ -434,6 +434,7 @@ def test_cleaning_runner_executes_binding_gate_before_launch(handoff_files, monk
     # here; no ROS launch or live process is involved in this executable test.
     monkeypatch.setattr(core, "load_campus_map_contract", lambda _: object())
     monkeypatch.setattr(core, "validate_saved_map_artifact", lambda *_: {})
+    monkeypatch.setattr(core, "validate_saved_map_cleaning_consumer_bundle", lambda *_: {})
     monkeypatch.setitem(sys.modules, "validate_formal_map_lifecycle_runtime", MODULE)
     monkeypatch.setattr(sys, "argv", [
         "-", "unused-episode.json", str(root), str(root / "mapping_handoff_record.json"),

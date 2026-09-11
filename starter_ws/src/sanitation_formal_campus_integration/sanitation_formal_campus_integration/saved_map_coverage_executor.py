@@ -27,6 +27,10 @@ from .saved_map_coverage_core import (
     polygon_area,
     validate_execution_parameters,
 )
+from .map_lifecycle_core import (
+    load_campus_map_contract,
+    validate_saved_map_cleaning_consumer_bundle,
+)
 from .map_lifecycle_core import FORMAL_COVERAGE_STATIC_OBSTACLE_INFLATION_M
 
 
@@ -36,6 +40,8 @@ class FormalSavedMapCoverageExecutor(Node):
     def __init__(self) -> None:
         super().__init__("formal_saved_map_coverage_executor")
         self.declare_parameter("mission_geometry_path", "")
+        self.declare_parameter("episode_manifest", "")
+        self.declare_parameter("artifact_directory", "")
         self.declare_parameter("output_path", "coverage_execution.json")
         self.declare_parameter("operation_width_m", FORMAL_OPERATION_WIDTH_M)
         self.declare_parameter("maximum_linear_speed_mps", FORMAL_MAX_LINEAR_SPEED_MPS)
@@ -185,6 +191,11 @@ class FormalSavedMapCoverageExecutor(Node):
             str(self.get_parameter("operation_speed_profile").value), speed
         )
         validate_execution_parameters(width, speed, speed_profile)
+        artifact_directory = str(self.get_parameter("artifact_directory").value)
+        episode_manifest = str(self.get_parameter("episode_manifest").value)
+        validate_saved_map_cleaning_consumer_bundle(
+            artifact_directory, load_campus_map_contract(episode_manifest)
+        )
         geometry = load_product_mission_geometry(
             str(self.get_parameter("mission_geometry_path").value)
         )
