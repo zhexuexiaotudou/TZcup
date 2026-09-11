@@ -417,6 +417,10 @@ def test_recalculate_transforms_world_status_to_frozen_map_and_rejects_old_prove
                "evaluation_stamps": [], "cleaning_samples": [sample]}
     result = replay.recalculate(records, source)
     assert result["coverage"]["brush_on_sample_count"] == 3
+    records["cleaning_samples"] = []
+    with pytest.raises(replay.ProductReplayError, match="no ground-dirt status samples"):
+        replay.recalculate(records, source)
+    records["cleaning_samples"] = [sample]
     source["empirical_metrics"]["metric_basis"] = "legacy_vehicle_width_disk"
     with pytest.raises(replay.ProductReplayError, match="different cleaning geometry basis"):
         replay.recalculate(records, source)

@@ -600,6 +600,8 @@ def recalculate(records: dict[str, Any], source_metrics: dict[str, Any]) -> dict
     actual_rmse = localization["rmse_m"]
     rmse_delta = relative_delta(float(actual_rmse), expected_rmse) if actual_rmse is not None else None
     geometry = source_metrics["mission_geometry"]
+    if not records["cleaning_samples"]:
+        raise ProductReplayError("MCAP has no ground-dirt status samples in the task window")
     try:
         empirical = empirical_cleaning_metrics(
             geometry["cleanable_outer_polygon"],
