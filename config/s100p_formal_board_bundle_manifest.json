@@ -13,11 +13,11 @@
   },
   "formal_snapshot": {
     "path": "reports/engineering/formal_vehicle_snapshot_manifest.json",
-    "sha256": "7756026554791adfefcb159fb39b41bcac4391e75de0cf448916faae0ee88b82",
+    "sha256": "f73918478359f830d79d571b8dc1f6d1e72bbd992ae1efbf1fa2923eff5cb1a1",
     "byte_size": 53881,
-    "source_inventory_sha256": "9dea018bf88a88e00840180447054c17c4926e782340e2b051084155b31a3726",
-    "output_inventory_sha256": "c66b4aea2e584ec4cc034ae846f42af28a07760cadf708df64c877b1cb346cd2",
-    "formal_urdf_sha256": "015f484af59d40bb9af1abb985d6df82a38d0ae829a07c6e0506bef4767ad218",
+    "source_inventory_sha256": "a372117fe6ac5974a80ea22117fb4c5c049fcb12788f77b43192a15863d66151",
+    "output_inventory_sha256": "878df2fe25cdf125586cfc80ddadeb30ba4612a14230fd72daf5d77c941c8eb5",
+    "formal_urdf_sha256": "52bd3978a53073a8126a87a16f065eeb781bbbb088b127a73bba58dcc90410a8",
     "live_source_revalidation_performed": false,
     "binding_scope": "frozen_formal_snapshot_identity_only_not_a_live_board_or_runtime_acceptance"
   },

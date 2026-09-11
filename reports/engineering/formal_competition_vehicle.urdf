@@ -6937,6 +6937,17 @@
            interface to the product controller graph. -->
   </ros2_control>
   <gazebo>
+    <!-- Model-scoped evaluation odometry preserves the Gazebo producer's
+           Odometry header/frame identity and never feeds into control. -->
+    <plugin filename="gz-sim-odometry-publisher-system" name="gz::sim::systems::OdometryPublisher">
+      <odom_publish_frequency>50</odom_publish_frequency>
+      <odom_topic>/ground_truth/model_odom_raw</odom_topic>
+      <odom_covariance_topic>/evaluation/model_odometry_with_covariance</odom_covariance_topic>
+      <tf_topic>/evaluation/model_pose</tf_topic>
+      <odom_frame>world</odom_frame>
+      <robot_base_frame>base_footprint</robot_base_frame>
+      <dimensions>2</dimensions>
+    </plugin>
     <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
       <parameters>package://sanitation_vehicle_description/config/formal_vehicle_controllers.yaml</parameters>
     </plugin>

@@ -3,7 +3,7 @@ status: NOT_READY_FOR_FABRICATION_OR_REAL_WORLD_ACCEPTANCE
 ready: false
 last_expanded_artifact:
   path: reports/engineering/formal_competition_vehicle.urdf
-  sha256: 015f484af59d40bb9af1abb985d6df82a38d0ae829a07c6e0506bef4767ad218
+  sha256: 52bd3978a53073a8126a87a16f065eeb781bbbb088b127a73bba58dcc90410a8
   links: 196
   joints: 195
   mass_kg: 160.007583
@@ -70,7 +70,7 @@ evidence_paths:
   last_expanded_urdf:
     path: reports/engineering/formal_competition_vehicle.urdf
     state: current_snapshot_output
-    sha256: 015f484af59d40bb9af1abb985d6df82a38d0ae829a07c6e0506bef4767ad218
+    sha256: 52bd3978a53073a8126a87a16f065eeb781bbbb088b127a73bba58dcc90410a8
   source_snapshot:
     path: reports/engineering/formal_vehicle_snapshot_manifest.json
     state: current_verified_snapshot
@@ -83,7 +83,7 @@ evidence_paths:
     path: reports/engineering/formal_vehicle_fov_occlusion_report.json
     state: current_static_analysis
     sha256: 695a8d22fc10630af02a72c416ffbe660f22b572231328f9639c3232790e2048
-    urdf_sha256: 015f484af59d40bb9af1abb985d6df82a38d0ae829a07c6e0506bef4767ad218
+    urdf_sha256: 52bd3978a53073a8126a87a16f065eeb781bbbb088b127a73bba58dcc90410a8
     layout_sha256: 3c9c10da558c116bcbedf39a516093ca20c1e3eb590e2bb2d121ebd491cf10a9
     validator_path: scripts/validate_formal_fov_occlusion.py
     validator_sha256: 92900a3a79845c7645507129af6ab1cd87664d6e837ed00bd35ab225397d04f2
@@ -91,7 +91,7 @@ evidence_paths:
     path: reports/engineering/formal_vehicle_inertia_and_swept_volume_report.json
     state: current_static_analysis
     sha256: 03363de1d64cb7fdddfa82fd3a2433c7e49b3a65d4dde13c7e8c9b51968386e0
-    urdf_sha256: 015f484af59d40bb9af1abb985d6df82a38d0ae829a07c6e0506bef4767ad218
+    urdf_sha256: 52bd3978a53073a8126a87a16f065eeb781bbbb088b127a73bba58dcc90410a8
     layout_sha256: 3c9c10da558c116bcbedf39a516093ca20c1e3eb590e2bb2d121ebd491cf10a9
     scanner_path: scripts/scan_formal_vehicle_inertia_and_swept_volume.py
     scanner_sha256: 6b1e611094578bd51f190c32f9d085ae479127a1fbb043b0ab5bffc5f8dd6dcf

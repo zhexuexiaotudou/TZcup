@@ -4,7 +4,7 @@ ready: false
 nominal_mass_declaration: nominal_model_allocation_not_actual_weighed
 baseline:
   expanded_urdf_path: reports/engineering/formal_competition_vehicle.urdf
-  expanded_urdf_sha256: 015f484af59d40bb9af1abb985d6df82a38d0ae829a07c6e0506bef4767ad218
+  expanded_urdf_sha256: 52bd3978a53073a8126a87a16f065eeb781bbbb088b127a73bba58dcc90410a8
   expanded_urdf_mass_kg: 160.007583
   source_snapshot_path: reports/engineering/formal_vehicle_snapshot_manifest.json
   source_snapshot_sha256: 7756026554791adfefcb159fb39b41bcac4391e75de0cf448916faae0ee88b82

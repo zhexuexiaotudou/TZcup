@@ -239,7 +239,7 @@
       "source_snapshot_sha256": {
         "config/high_fidelity_vehicle/formal_vehicle_component_register.yaml": "688b72f49b7bd06ba6adc3d080c190f04f613b76ed05cbb69bf7a55580cff61a",
         "config/high_fidelity_vehicle/formal_vehicle_layout.yaml": "3c9c10da558c116bcbedf39a516093ca20c1e3eb590e2bb2d121ebd491cf10a9",
-        "reports/engineering/formal_competition_vehicle.urdf": "015f484af59d40bb9af1abb985d6df82a38d0ae829a07c6e0506bef4767ad218"
+        "reports/engineering/formal_competition_vehicle.urdf": "52bd3978a53073a8126a87a16f065eeb781bbbb088b127a73bba58dcc90410a8"
       },
       "status": "STATIC_DERIVED_SNAPSHOT_BOUND_NOT_MANUFACTURING_RELEASE"
     },
