@@ -19,6 +19,14 @@ _REAL_NVIDIA_EGL_RUNTIME_IDENTITY = closure._nvidia_egl_runtime_identity
 _REAL_FIELDS2COVER_SYSTEM_IDENTITY = closure._fields2cover_system_identity
 
 
+@pytest.fixture(autouse=True)
+def _bound_ros2_executable(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    executable = tmp_path / "ros2"
+    executable.write_text("#!/bin/sh\n", encoding="utf-8")
+    monkeypatch.setenv("FORMAL_ROS2_EXECUTABLE", str(executable.resolve()))
+    return executable
+
+
 def test_identity_command_can_accept_expected_empty_output() -> None:
     assert (
         closure._identity_command(
@@ -653,7 +661,7 @@ def test_record_and_verify_complete_non_symlink_merged_closure(tmp_path: Path) -
     assert recorded["closure"]["merged_overlay"]["mode"] == "merged_copy_install"
     verified = closure.verify_manifest(manifest, repository, runtime, models, onnx)
     assert verified["passed"] is True
-    assert verified["runtime_package_count"] == 19
+    assert verified["runtime_package_count"] == 20
     assert verified["gazebo_plugin_count"] == 12
     assert "libDryBinMonitorSystem.so" in recorded["closure"]["gazebo_plugins"]
     assert recorded["closure"]["gazebo_plugins"]["libDryBinMonitorSystem.so"]["sha256"] == closure._sha256(

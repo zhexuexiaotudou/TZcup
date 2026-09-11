@@ -36,6 +36,7 @@
   <exec_depend>sanitation_gazebo_control</exec_depend>
   <exec_depend>sanitation_gazebo_auxiliary</exec_depend>
   <exec_depend>sanitation_localization</exec_depend>
+  <exec_depend>sanitation_tasks</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>trajectory_msgs</exec_depend>

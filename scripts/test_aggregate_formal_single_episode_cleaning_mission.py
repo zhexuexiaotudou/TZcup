@@ -15,7 +15,9 @@ from aggregate_formal_single_episode_cleaning_mission import (
     canonical_session_id,
 )
 from collect_formal_single_episode_cleaning_mission import (
-    CONTROL_PROHIBITED_TRUTH_TOPICS, REQUIRED_RUNTIME_NODES,
+    CONTROL_PROHIBITED_TRUTH_TOPICS, RAW_GROUND_TRUTH_ADAPTER_NODE, RAW_GROUND_TRUTH_TOPIC,
+    REPLAY_METRIC_TOPICS, REQUIRED_RUNTIME_NODES,
+    TRUSTED_GT_RECORDER_NODE,
     build_input_binding, sha256_file,
 )
 from generate_formal_same_map_baseline import build_report
@@ -270,6 +272,12 @@ def build_raw(tmp_path: Path) -> Path:
         "pedestrians": {"state": "ACTIVE", "pedestrian_count": 3}}
     subscribers = {topic: ["/formal_single_episode_cleaning_collector"]
                    for topic in CONTROL_PROHIBITED_TRUTH_TOPICS}
+    ground_truth_topic = REPLAY_METRIC_TOPICS["ground_truth_odom"]["name"]
+    allowed_gt_subscribers = sorted([
+        "/formal_single_episode_cleaning_collector", TRUSTED_GT_RECORDER_NODE,
+    ])
+    subscribers[ground_truth_topic] = allowed_gt_subscribers
+    subscribers[RAW_GROUND_TRUTH_TOPIC] = [RAW_GROUND_TRUTH_ADAPTER_NODE]
     planner = {"diagnostic_name": "formal_active_cleaning_policy_planner",
         "hardware_id": "frozen_truth_free_q_policy", "level": 0, "state": "COMPLETE",
         "reason": "task_complete_and_fixed_start_pose_reached", "truth_used_for_control": "false",
@@ -292,7 +300,14 @@ def build_raw(tmp_path: Path) -> Path:
                           "artifacts": binding["artifacts"]}, "metric_sources": sources,
         "runtime_graph": {"nodes": sorted(REQUIRED_RUNTIME_NODES | {"/formal_single_episode_cleaning_collector"}),
             "required_nodes": sorted(REQUIRED_RUNTIME_NODES), "required_nodes_present": True,
-            "control_prohibited_truth_topic_subscribers": subscribers},
+            "truth_subscription_audit_enabled": True,
+            "control_prohibited_truth_topic_subscribers": subscribers,
+            "ground_truth_odom_allowed_subscribers": allowed_gt_subscribers,
+            "ground_truth_model_odom_raw_allowed_subscribers": [RAW_GROUND_TRUTH_ADAPTER_NODE],
+            "ground_truth_odom_trusted_recorder": {
+                "node": TRUSTED_GT_RECORDER_NODE, "pid": 4201, "pgid": 4200,
+                "pid_pgid_match": True,
+            }},
         "runtime_parameters": {"/formal_active_cleaning_policy_planner": {
                 "policy_checkpoint": str(policy.resolve()), "episode_seed": seed,
                 "maximum_task_distance_m": 1000.},
@@ -349,6 +364,27 @@ def test_rejects_truth_subscription_by_product_node(tmp_path: Path) -> None:
     row["runtime_graph"]["control_prohibited_truth_topic_subscribers"][topic].append("/planner")
     _write(path, row)
     with pytest.raises(AggregateError, match="non-collector subscriber"):
+        aggregate(path)
+
+
+def test_rejects_ground_truth_odom_outside_fixed_collector_recorder_boundary(tmp_path: Path) -> None:
+    path = build_raw(tmp_path)
+    row = json.loads(path.read_text())
+    graph = row["runtime_graph"]
+    graph["control_prohibited_truth_topic_subscribers"]["/ground_truth/odom"].append("/planner")
+    _write(path, row)
+    with pytest.raises(AggregateError, match="ground-truth odom has a subscriber outside"):
+        aggregate(path)
+
+
+def test_rejects_raw_model_ground_truth_subscriber_outside_adapter_boundary(tmp_path: Path) -> None:
+    path = build_raw(tmp_path)
+    row = json.loads(path.read_text())
+    row["runtime_graph"]["control_prohibited_truth_topic_subscribers"][RAW_GROUND_TRUTH_TOPIC].append(
+        "/formal_single_episode_cleaning_collector"
+    )
+    _write(path, row)
+    with pytest.raises(AggregateError, match="raw model ground-truth has a subscriber outside"):
         aggregate(path)
 
 

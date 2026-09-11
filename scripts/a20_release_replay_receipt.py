@@ -12,6 +12,11 @@ import stat
 import re
 from pathlib import Path
 from typing import Any
+from types import SimpleNamespace
+
+from formal_product_mcap_replay import validate_raw_capture_receipt
+from validate_product_acceptance_contract import ProductAcceptanceContractError, load_contract, validate_auto15_execution_evidence
+from run_formal_final_acceptance import OrchestrationError, _verify_complete_session_evidence
 
 
 SCHEMA = "tzcup.a20_release_replay_receipt.v1"
@@ -19,6 +24,14 @@ BLOCKER = "canonical current-session formal product replay evidence is incomplet
 HEX64 = re.compile(r"^[0-9a-f]{64}$")
 GIT40 = re.compile(r"^[0-9a-f]{40}$")
 HASH_FIELDS = ("source", "model", "config", "dataset", "dependency")
+REPLAY_CHECKS = frozenset({
+    "mcap_metadata_readable", "required_product_and_metric_topics_present",
+    "product_chain_observed", "coverage_recalculated_within_1_percent",
+    "localization_recalculated_within_1_percent", "ros2_bag_play_exit_zero",
+    "replay_uses_formal_safe_dds_domain", "replay_process_group_cleanup_proven",
+    "ros2_executable_matches_runtime_closure",
+    "current_formal_session_snapshot_closure_bound",
+})
 
 
 def _sealed_bytes(path: Path, label: str) -> bytes:
@@ -80,7 +93,7 @@ def _artifact_in_root(root: Path, candidate: Path, label: str) -> Path:
     return candidate
 
 
-def validate_receipt(receipt: dict[str, Any], repository_root: Path | None = None) -> dict[str, Any]:
+def validate_receipt(receipt: dict[str, Any], repository_root: Path | None = None, expected_run_root: Path | None = None, expected_session: Path | None = None) -> dict[str, Any]:
     """Validate current retained files; embedded/stage-specific reports fail."""
 
     errors: list[str] = []
@@ -88,15 +101,65 @@ def validate_receipt(receipt: dict[str, Any], repository_root: Path | None = Non
     try:
         if root is None:
             raise ValueError("repository root is required for retained-file validation")
+        if expected_run_root is None:
+            raise ValueError("expected run root is required for retained-file validation")
+        if expected_session is None:
+            raise ValueError("expected formal session is required for retained-file validation")
+        expected = _artifact_in_root(root, expected_run_root.resolve(), "expected run root")
+        if not expected.is_dir():
+            raise ValueError("expected run root is not a directory")
         if receipt.get("schema") != SCHEMA:
             raise ValueError("unsupported A20 receipt schema")
+        ledger_path, ledger = _json_hash_ref(root, receipt.get("a12_ledger"), "verified A12 ledger")
+        if ledger.get("run_root") != str(expected):
+            raise ValueError("A12 ledger belongs to another run root")
+        try:
+            validate_auto15_execution_evidence(load_contract(), ledger, expected)
+        except ProductAcceptanceContractError as exc:
+            raise ValueError(f"A12 ledger failed revalidation: {exc}") from exc
+        ledger_replay_hashes: set[str] = set()
+        ledger_context: dict[str, Any] | None = None
+        for item in ledger.get("executions", []):
+            execution_path, execution = _json_hash_ref(root, item, "A12 execution receipt")
+            del execution_path
+            replay_ref = execution.get("replay")
+            if not isinstance(replay_ref, dict) or not HEX64.fullmatch(str(replay_ref.get("sha256", ""))):
+                raise ValueError("A12 execution lacks a canonical replay reference")
+            ledger_replay_hashes.add(replay_ref["sha256"])
+            if ledger_context is None:
+                ledger_context = execution.get("formal_context")
+            elif execution.get("formal_context") != ledger_context:
+                raise ValueError("A12 ledger mixes formal contexts")
+        if not ledger_replay_hashes or ledger_context != ledger.get("formal_context"):
+            raise ValueError("A12 ledger replay/context bindings are incomplete")
         hashes = receipt.get("input_hashes")
         if not isinstance(hashes, dict) or set(hashes) != set(HASH_FIELDS) or any(not HEX64.fullmatch(str(hashes.get(name, ""))) for name in HASH_FIELDS):
             raise ValueError("input_hashes must contain exact source/model/config/dataset/dependency SHA-256 values")
 
         session_path, session = _json_hash_ref(root, receipt.get("sealed_final_session"), "sealed final session")
+        if session_path != expected_session.resolve():
+            raise ValueError("sealed final session path differs from postprocess context")
         if session.get("report_id") != "tzcup_formal_final_acceptance_session_v1" or session.get("status") != "FORMAL_FINAL_ACCEPTANCE_SESSION_COMPLETE":
             raise ValueError("sealed final session is not the completed canonical session")
+        if (
+            session.get("failures") != {}
+            or type(session.get("started_epoch_ns")) is not int or session["started_epoch_ns"] <= 0
+            or type(session.get("finished_epoch_ns")) is not int or session["finished_epoch_ns"] <= session["started_epoch_ns"]
+        ):
+            raise ValueError("sealed final session has failures or invalid completion time")
+        if not isinstance(session.get("evidence"), dict):
+            raise ValueError("sealed final session lacks complete gate evidence")
+        try:
+            gate_results = {
+                gate: {"sha256": row["sha256"], "status": row["status"]}
+                for gate, row in session["evidence"].items()
+                if isinstance(row, dict)
+            }
+            _verify_complete_session_evidence(
+                SimpleNamespace(root=root), session, session["started_epoch_ns"], gate_results
+            )
+        except (KeyError, TypeError, OrchestrationError) as exc:
+            raise ValueError(f"sealed final session evidence is not complete/current: {exc}") from exc
         snapshot = session.get("snapshot")
         if not isinstance(snapshot, dict) or any(not HEX64.fullmatch(str(snapshot.get(name, ""))) for name in ("snapshot_manifest_sha256", "source_inventory_sha256", "expanded_urdf_sha256")):
             raise ValueError("sealed final session has no complete snapshot identity")
@@ -106,14 +169,20 @@ def validate_receipt(receipt: dict[str, Any], repository_root: Path | None = Non
         if not isinstance(closure, dict) or closure.get("status") != "FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED" or not HEX64.fullmatch(str(closure.get("closure_sha256", ""))):
             raise ValueError("sealed final session has no verified runtime closure")
 
-        from formal_product_mcap_replay import PRODUCER_ID, SCHEMA as REPLAY_SCHEMA, artifact_sha256, sha256
+        from formal_product_mcap_replay import PRODUCER_ID, SCHEMA as REPLAY_SCHEMA, artifact_sha256, mcap_sha256, mcap_semantic_sha256, sha256
         producer = {"id": PRODUCER_ID, "sha256": sha256(root / PRODUCER_ID)}
         replay_refs = receipt.get("product_replays")
         if not isinstance(replay_refs, list) or len(replay_refs) < 5:
             raise ValueError("A20 requires at least five canonical product replay receipts")
         bag_identities: set[tuple[str, str]] = set()
+        semantic_identities: set[str] = set()
+        selected_replay_hashes: set[str] = set()
         for index, reference in enumerate(replay_refs):
             replay_path, replay = _json_hash_ref(root, reference, f"product_replays[{index}]")
+            if reference.get("sha256") not in ledger_replay_hashes or replay.get("formal_context") != ledger_context:
+                raise ValueError(f"product_replays[{index}] is not a member of the verified A12 ledger")
+            selected_replay_hashes.add(reference["sha256"])
+            _artifact_in_root(expected, replay_path, f"product_replays[{index}] replay")
             if replay.get("schema") != REPLAY_SCHEMA or replay.get("status") != "FORMAL_PRODUCT_MCAP_REPLAY_PASS" or replay.get("pass") is not True:
                 raise ValueError(f"product_replays[{index}] is not a passing canonical product replay")
             if replay.get("producer") != producer:
@@ -150,18 +219,82 @@ def validate_receipt(receipt: dict[str, Any], repository_root: Path | None = Non
             if replay_hashes.get("container") != receipt.get("container_sha256"):
                 raise ValueError(f"product_replays[{index}] container digest differs")
             checks = replay.get("checks")
-            if not isinstance(checks, dict) or not checks or not all(value is True for value in checks.values()):
+            if not isinstance(checks, dict) or set(checks) != REPLAY_CHECKS or not all(value is True for value in checks.values()):
                 raise ValueError(f"product_replays[{index}] has incomplete recalculation/playback checks")
+            playback = replay.get("playback")
+            executable = playback.get("ros2_executable") if isinstance(playback, dict) else None
+            cleanup = playback.get("process_group_cleanup") if isinstance(playback, dict) else None
+            if (
+                not isinstance(playback, dict) or playback.get("exit_code") != 0 or playback.get("timed_out") is not False
+                or playback.get("ros_domain_id") not in range(215, 232)
+                or playback.get("ros_localhost_only") is not True
+                or playback.get("rmw_implementation") != "rmw_cyclonedds_cpp"
+                or playback.get("automatic_discovery_range") != "LOCALHOST"
+                or not isinstance(executable, dict) or not isinstance(executable.get("path"), str)
+                or not Path(executable["path"]).is_absolute() or not HEX64.fullmatch(str(executable.get("sha256", "")))
+                or closure.get("ros2_executable") != executable
+                or not isinstance(cleanup, dict)
+                or type(cleanup.get("process_group_id")) is not int or cleanup["process_group_id"] <= 1
+                or cleanup.get("process_group_isolated") is not True or cleanup.get("cleanup_attempted") is not True
+                or type(cleanup.get("sigterm_attempted")) is not bool or type(cleanup.get("sigkill_attempted")) is not bool
+                or not isinstance(cleanup.get("signals_sent"), list) or any(item not in {"SIGTERM", "SIGKILL"} for item in cleanup["signals_sent"])
+                or cleanup.get("sigterm_attempted") != ("SIGTERM" in cleanup["signals_sent"])
+                or cleanup.get("sigkill_attempted") != ("SIGKILL" in cleanup["signals_sent"])
+                or cleanup.get("surviving_group_processes") != 0 or cleanup.get("zero_survivor") is not True
+            ):
+                raise ValueError(f"product_replays[{index}] playback identity/checks are incomplete")
             bag = replay.get("bag", {})
             bag_identity = (str(bag.get("path", "")), str(bag.get("sha256", "")))
             if not bag_identity[0] or not HEX64.fullmatch(bag_identity[1]):
                 raise ValueError(f"product_replays[{index}] has no MCAP binding")
             bag_path = _artifact_in_root(root, Path(bag_identity[0]), f"product_replays[{index}] MCAP")
-            if artifact_sha256(bag_path) != bag_identity[1]:
+            _artifact_in_root(expected, bag_path, f"product_replays[{index}] MCAP")
+            if mcap_sha256(bag_path) != bag_identity[1]:
                 raise ValueError(f"product_replays[{index}] MCAP hash mismatch")
+            if not HEX64.fullmatch(str(bag.get("semantic_sha256", ""))) or mcap_semantic_sha256(bag_path) != bag.get("semantic_sha256"):
+                raise ValueError(f"product_replays[{index}] MCAP semantic hash mismatch")
+            raw = replay.get("raw_capture")
+            if (
+                not isinstance(raw, dict)
+                or raw.get("mcap", {}).get("path") != bag_identity[0]
+                or raw.get("mcap", {}).get("sha256") != bag_identity[1]
+                or raw.get("mcap", {}).get("semantic_sha256") != bag.get("semantic_sha256")
+                or not HEX64.fullmatch(str(raw.get("sha256", "")))
+                or not isinstance(raw.get("path"), str)
+                or not HEX64.fullmatch(str(raw.get("capture_id", "")))
+                or not isinstance(raw.get("run_root"), str)
+                or replay.get("run_root") != raw.get("run_root")
+                or raw.get("run_root") != str(expected)
+            ):
+                raise ValueError(f"product_replays[{index}] lacks a verified raw capture chain")
+            _raw_path, raw_file = _json_hash_ref(root, {"path": raw["path"], "sha256": raw["sha256"]}, f"product_replays[{index}] raw capture receipt")
+            _artifact_in_root(expected, _raw_path, f"product_replays[{index}] raw capture receipt")
+            if (
+                raw_file.get("schema") != "tzcup.a12.raw_capture_receipt.v1"
+                or raw_file.get("capture_id") != raw["capture_id"]
+                or raw_file.get("run_root") != raw["run_root"]
+                or raw_file.get("mcap") != {"path": bag_identity[0], "sha256": bag_identity[1]}
+            ):
+                raise ValueError(f"product_replays[{index}] raw capture receipt chain differs")
+            verified_raw = validate_raw_capture_receipt(
+                repository_root=root,
+                raw_capture_receipt_path=_raw_path,
+                formal_context=context,
+                scenario_id=raw.get("scenario_id"),
+                seed=raw.get("seed"),
+                mission_id=raw.get("mission_id"),
+                run_root=expected,
+            )
+            if verified_raw != raw:
+                raise ValueError(f"product_replays[{index}] raw capture receipt did not revalidate")
             bag_identities.add(bag_identity)
+            semantic_identities.add(str(bag["semantic_sha256"]))
         if len(bag_identities) != len(replay_refs):
             raise ValueError("A20 product replay receipts reuse an MCAP")
+        if len(semantic_identities) != len(replay_refs):
+            raise ValueError("A20 product replay receipts reuse a semantic MCAP stream")
+        if len(selected_replay_hashes) != len(replay_refs):
+            raise ValueError("A20 product replay receipts repeat an A12 ledger replay")
 
         release = receipt.get("release_artifact")
         if not isinstance(release, dict) or release.get("status") != "RELEASE_PACKAGE_ARTIFACT_RECORDED":
@@ -434,6 +567,8 @@ def main() -> int:
     parser.add_argument("--repository-root", type=Path, required=True)
     parser.add_argument("--receipt", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--run-root", type=Path, required=True)
+    parser.add_argument("--session", type=Path, required=True)
     args = parser.parse_args()
     try:
         _require_posix_descriptor_api()
@@ -446,7 +581,7 @@ def main() -> int:
             descriptor, identity = _open_bound_input(root, root_descriptor, receipt_path)
             receipt, receipt_sha256 = _read_bound_json(descriptor, identity)
             _assert_root_binding(root, root_descriptor)
-            report = validate_receipt(receipt, root)
+            report = validate_receipt(receipt, root, args.run_root, args.session)
             report["receipt_sha256"] = receipt_sha256
             _write_fresh_output(root, root_descriptor, output, report)
             _assert_root_binding(root, root_descriptor)
