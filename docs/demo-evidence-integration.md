@@ -43,3 +43,9 @@ export FORMAL_ROS2_EXECUTABLE="$(command -v ros2)"
 - 0.45 m/s低速原始运行不能封成3500 m²/h正式全覆盖基线。速度重鉴定、完整建图/重启/清扫长跑、A12矩阵、A19长稳和S100实板证据须分别验收。
 
 交接时必须携带源码版本、闭包、原始失败日志、MCAP和视频哈希。只有完整当前运行的证据齐全后，才可以报告“全过程demo完成”；测试通过与上述待验状态分开记录。
+
+## 离线依赖构建故障记录
+
+本轮 `build-02` 在 GitHub 获取 gz-transport 时超时，未完成运行时构建。`build-03` 改用旧构建目录生成的 bundle，仍失败：旧目录来自浅克隆，bundle 的声明检查通过，但导入空仓库时缺少父提交 `d8faacb071d07e14e06c0daea379dec8d2949dd2`。这两个失败目录均保留，不作为可运行产物复用。
+
+后续离线包必须从完整上游仓库生成，并先在空仓库中执行 clone 和 `git fsck --full`，不能只凭 `git bundle verify` 宣布完整。当前完整 gz-transport13_13.5.0 包的 SHA-256 为 `099149041037537a188cc07ecd248bc54c7dc57e35c29226f856c36c74e42d01`；上游提交为 `7232d0b163b08f79dd390ad9913d6ea72efaf209`。通过已有 `FORMAL_GZ_TRANSPORT13_SOURCE_BUNDLE` 与 `FORMAL_GZ_TRANSPORT13_SOURCE_BUNDLE_SHA256` 参数加载，并使用新的运行目录。OpenNav 包仍须独立校验，不能由一个依赖成功推断全部依赖完整。

@@ -10,9 +10,9 @@ last_expanded_artifact:
   source_snapshot_state: current_verified_snapshot
 current_snapshot:
   path: reports/engineering/formal_vehicle_snapshot_manifest.json
-  sha256: 7756026554791adfefcb159fb39b41bcac4391e75de0cf448916faae0ee88b82
-  source_inventory_sha256: 9dea018bf88a88e00840180447054c17c4926e782340e2b051084155b31a3726
-  output_inventory_sha256: c66b4aea2e584ec4cc034ae846f42af28a07760cadf708df64c877b1cb346cd2
+  sha256: f73918478359f830d79d571b8dc1f6d1e72bbd992ae1efbf1fa2923eff5cb1a1
+  source_inventory_sha256: a372117fe6ac5974a80ea22117fb4c5c049fcb12788f77b43192a15863d66151
+  output_inventory_sha256: 878df2fe25cdf125586cfc80ddadeb30ba4612a14230fd72daf5d77c941c8eb5
 mass_budget:
   a300_design_load_kg: 91.35
   a300_base_mass_kg: 78.5
@@ -74,15 +74,15 @@ evidence_paths:
   source_snapshot:
     path: reports/engineering/formal_vehicle_snapshot_manifest.json
     state: current_verified_snapshot
-    sha256: 7756026554791adfefcb159fb39b41bcac4391e75de0cf448916faae0ee88b82
+    sha256: f73918478359f830d79d571b8dc1f6d1e72bbd992ae1efbf1fa2923eff5cb1a1
   component_register:
     path: reports/engineering/formal_vehicle_component_register_report.json
     state: current_snapshot_output
-    sha256: 983124ba0ed810afe66ba1a398db6709494054ac2b87d1fd7d19a011a4936768
+    sha256: 1c43b84182affe58cc6d8c228523c99ad389d3436b1d7ace0a08ea128f716b60
   fov_occlusion:
     path: reports/engineering/formal_vehicle_fov_occlusion_report.json
     state: current_static_analysis
-    sha256: 695a8d22fc10630af02a72c416ffbe660f22b572231328f9639c3232790e2048
+    sha256: f74e1752ee61cc37245a2c2af8b689c4feddf0af32896824d6410613c618832f
     urdf_sha256: 52bd3978a53073a8126a87a16f065eeb781bbbb088b127a73bba58dcc90410a8
     layout_sha256: 3c9c10da558c116bcbedf39a516093ca20c1e3eb590e2bb2d121ebd491cf10a9
     validator_path: scripts/validate_formal_fov_occlusion.py
@@ -90,7 +90,7 @@ evidence_paths:
   inertia_swept_volume:
     path: reports/engineering/formal_vehicle_inertia_and_swept_volume_report.json
     state: current_static_analysis
-    sha256: 03363de1d64cb7fdddfa82fd3a2433c7e49b3a65d4dde13c7e8c9b51968386e0
+    sha256: 52ed4d26839ec7573452421e97d0d0b4e1f8ada47d129d5ea7e0c869dc1a2d35
     urdf_sha256: 52bd3978a53073a8126a87a16f065eeb781bbbb088b127a73bba58dcc90410a8
     layout_sha256: 3c9c10da558c116bcbedf39a516093ca20c1e3eb590e2bb2d121ebd491cf10a9
     scanner_path: scripts/scan_formal_vehicle_inertia_and_swept_volume.py
