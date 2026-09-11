@@ -305,10 +305,18 @@ def summarize_window(
             for event in window
             if event["source"] == source
         ]
-        source_gaps = [
-            later - earlier
-            for earlier, later in zip(source_times, source_times[1:])
-        ]
+        source_gaps = (
+            [
+                source_times[0] - start_s,
+                *[
+                    later - earlier
+                    for earlier, later in zip(source_times, source_times[1:])
+                ],
+                end_s - source_times[-1],
+            ]
+            if source_times
+            else []
+        )
         source_metrics[source] = {
             "count": len(source_times),
             "rate_hz": (
@@ -422,10 +430,9 @@ def summarize_window(
                 "motor_status",
                 "safety",
                 "actuator_permit",
+                "critical_status",
             )
         ),
-        "reported_timer_maximum_gap_below_0_075_s": bool(safety)
-        and all(float(event["maximum_timer_gap_sec"]) < 0.075 for event in safety),
         "zero_bumper_or_relay_unavailable": not any(
             reason
             in {
@@ -440,11 +447,6 @@ def summarize_window(
         "critical_producer_rate_between_18_and_22_hz": 18.0
         <= critical_rate_hz
         <= 22.0,
-        "critical_producer_maximum_gap_below_0_075_s": bool(auxiliary)
-        and all(
-            float(event["critical_maximum_gap_sec"]) < 0.075
-            for event in auxiliary
-        ),
         "critical_producer_thread_error_null": bool(auxiliary)
         and all(event["critical_thread_error"] is None for event in auxiliary),
         "critical_snapshot_inputs_available": bool(auxiliary)

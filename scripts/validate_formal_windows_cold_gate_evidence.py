@@ -71,6 +71,7 @@ def validate_evidence(
         "docker_private_at_most_configured_maximum",
         "wsl_vm_stopped_when_required",
         "wsl_vm_running_when_required",
+        "no_suspected_ndis_nonpaged_pool_leak",
     }
     if set(checks) != expected_checks or any(checks[key] is not True for key in checks):
         raise EvidenceError("cold-start checks are incomplete or not all true")

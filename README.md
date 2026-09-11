@@ -21,7 +21,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleanin
 小场默认使用 skid-steer 优化方案；A/B 回归可加 `-CoverageProfile legacy` 启动保留的 `0.35 m + Dubins` 基线，或显式使用 `-CoverageProfile optimized`。
 
 动态受阻条带采用可审计状态机，默认最多重试 2 次且两次重试至少间隔 10 秒；持续受阻会进入 `DEFERRED` 并纳入报告，后续由局部残余任务处理，不会在同一障碍前无限振荡。正式动态恢复率仍必须以 20 次真实交互矩阵为准。
-优化方案将清扫直线固定为 `CleanPath`（`0.65 m/s`、固定前视），补扫使用 `RepairPath`，转向和横移使用 Nav2 `Spin / DriveOnHeading / BackUp`；补扫中心线只覆盖漏扫连通域、复用主条带的离线法向标定，并在刷盘关闭时完成进入与航向对齐，避免把转向弧伪装成补扫；长度按实际下发路径而非名义残余线验收，`fast/turbo` 只改变 Gazebo 推进倍率，不再把所有物理动作一并加速。以上均为 small/optimized 历史演示口径；正式 A300 使用 `config/high_fidelity_vehicle/formal_motion_cleaning_profile.yaml` 的 `1.32 m`声明有效宽度。正式 saved-map 干式清扫上游现可显式选择 `dry_cleaning_competition_candidate` 的 `1.0 m/s` `CleanPath` 请求；最终 `whole_vehicle_safety_manager` 仍按未重新鉴定的 `0.45 m/s` envelope 限幅，因此当前不代表车辆已实际获准运行 `1.0 m/s`。建图、湿式回收与安全/障碍限速不随之放宽，竞赛效率仍只能由同一会话的实测有效覆盖并集和实际总时长验收。
+优化方案将清扫直线固定为 `CleanPath`（`0.65 m/s`、固定前视），补扫使用 `RepairPath`，转向和横移使用 Nav2 `Spin / DriveOnHeading / BackUp`；补扫中心线只覆盖漏扫连通域、复用主条带的离线法向标定，并在刷盘关闭时完成进入与航向对齐，避免把转向弧伪装成补扫；长度按实际下发路径而非名义残余线验收，`fast/turbo` 只改变 Gazebo 推进倍率，不再把所有物理动作一并加速。以上均为 small/optimized 历史演示口径；正式 A300 保留 `config/high_fidelity_vehicle/formal_motion_cleaning_profile.yaml` 的 `1.32 m`声明宽度用于包络与吞吐候选，但三刷横向集合含两个 `0.085 m` 空隙，正式覆盖规划以中央滚刷连续 `0.620 m` 带加 `0.020 m` 重叠，使用 `0.600 m` 条带间距。正式 saved-map 干式清扫上游现可显式选择 `dry_cleaning_competition_candidate` 的 `1.0 m/s` `CleanPath` 请求；最终 `whole_vehicle_safety_manager` 仍按未重新鉴定的 `0.45 m/s` envelope 限幅，因此当前不代表车辆已实际获准运行 `1.0 m/s`。建图、湿式回收与安全/障碍限速不随之放宽，竞赛效率仍只能由同一会话的实测有效覆盖并集和实际总时长验收。
 小场世界预置一个默认停放在场外的非静态行人模型，仅在正式动态矩阵中由 ROS `SetEntityPose` 或当前世界的原生 Gazebo `set_pose` 服务贴地横穿当前条带；模型自身已定义碰撞体高度，五点快速横穿兼顾 LiDAR 可观测与安全净距，普通演示不会看到它，也不会把服务调用本身冒充有效避障交互。
 WSLg 日常演示始终默认 Ogre2；只有缺少 EGL 图形上下文的无头 Docker 矩阵才显式使用 `-SimulationRenderEngine ogre`，实际选择会写入保留的运行时 SDF。
 正式回归入口包括 optimized/legacy 各 5 个种子的 `run_coverage_optimizer_matrix.sh`、10 个融合定位路径分数刷盘失效注入种子的 `run_coverage_repair_matrix.sh`，以及 `run_coverage_dynamic_matrix.sh` 的三个独立 8 次有效物理动态障碍任务；每轮只允许 2 次额外有界尝试，动态汇总至少要求 20 个有效交互，并按全部尝试保持恢复率/任务继续率 ≥95%、零碰撞和零原地振荡。分轮是为了保持每次注入前至少 3.0 m 剩余路径和同条带 0.5 m 前进间隔，不用压缩安全净距换数量。optimized seed 132 保留 MCAP，必须再经 `verify_coverage_mcap_replay.sh` 的顺序重建和真实 `ros2 bag play` 双门禁。正式原始证据必须写到仓库外；`coverage_optimizer_report.py` 生成对照报告和逐文件 SHA-256 清单，仓库只接收压缩审核摘要。
@@ -47,7 +47,7 @@ Coverage 启动器直接执行已安装的 `coverage_probe`，不经过 `ros2 ru
 
 本机完整任务通过：`17/17` 组件、经验覆盖率 `93.67%`、碰撞 `0`、禁行区违规 `0`、定位 XY RMSE `0.03588 m`，MCAP 为 `205528` 条消息/18 个话题；看板终态为 `COMPLETED`，专用 MP4 为 `1.49 MB`。使用与证据边界见 [`docs/auto17-visual-demo.md`](docs/auto17-visual-demo.md)。AUTO-17 只提升可观察性和演示复现能力，不改变学习感知、真实域、J6 板端及综合竞赛矩阵仍为 false 的事实。
 
-工业化接口契约、故障档案和 SIL/HIL/封闭场准入见 [`docs/industrialization-and-sim2real.md`](docs/industrialization-and-sim2real.md)；演示目标按真值和刷盘足迹判定并从场景移除，不代表真实识别或物理吸入闭环。
+工业化接口契约、故障档案和 SIL/HIL/封闭场准入见 [`docs/industrialization-and-sim2real.md`](docs/industrialization-and-sim2real.md)；演示目标按真值和刷盘足迹判定并从场景移除，不代表真实识别或物理吸入闭环。主动清扫的目标所有权、取消终态、失鲜停止和返航完成规则见[执行与恢复合同](docs/active-cleaning-execution-recovery.md)。异步回归与隔离ROS通信探针用于检查恢复链，不能替代全场Gazebo验收。录像、真值隔离与回放接线见[证据集成说明](docs/demo-evidence-integration.md)。
 ### 竞赛尺度现场配置
 
 `powershell -ExecutionPolicy Bypass -File scripts/run_visual_demo.ps1 -CompetitionProfile -GazeboOnly -ManualControl -KeepOpen`
@@ -80,7 +80,7 @@ ros2 launch sanitation_bringup gazebo_scene.launch.py
 | 基础仿真、导航与正式车机构 | 正式候选快照已生成，运行复验中 | 当前快照已通过 URDF、产品外观、布局和部件台账静态门；旧车型上的前进/停车、单块抓投和 2.88 L 守恒回收仅保留为历史回归证据，不能替代当前快照的 session-bound 运行验收 |
 | 调试可视化 | 可用 | Gazebo 显示物理场景，RViz 显示目标、障碍、区域、路径、车辆和系统状态 |
 | 学习感知 | 阻断 | AUTO-05 数据门通过，但三次跨世界模型 screening 未达到冻结阈值 |
-| 综合竞赛矩阵 | 未通过 | 受 AUTO-08 学习感知与定点清扫依赖阻断，正式综合任务未启动 |
+| 综合竞赛矩阵 | 未通过、证据 producer 已就绪 | 受 AUTO-08 学习感知与定点清扫依赖阻断，正式综合任务未启动；A12/A20 canonical MCAP replay/receipt producer 已能真实回放并重算，但 180 次执行/30 个任务组及五包、发布与回滚证据仍须当前快照新鲜运行 |
 | 真实域 | 外部阻断 | 缺少满足数量、标定和独立真值要求的真实数据集 |
 | J6P/S100P 部署 | 进行中、正式门未通过 | 历史记录显示真实 RDK S100P 曾连接并运行官方 DOSOD/EdgeSAM 参考模型、项目 adapter、RGB→NV12 桥和 BPU smoke，但当前已核验的可读取 Git refs 中没有该 smoke 原始 JSON，不能作为当前可追溯证据；项目 DOSOD HBM、冻结词表、EdgeSAM encoder/decoder HBM、板端 manifest、真实 RGB-D/TF/map 输入、非空产品输出与 1800 秒正式证据仍未通过 |
 
@@ -92,7 +92,7 @@ ros2 launch sanitation_bringup gazebo_scene.launch.py
 - 人类可读的园区道路、路缘、人行道、绿化、积水、垃圾、落叶和静态/动态障碍 Gazebo 场景；
 - SLAM、AMCL、混合定位、Nav2、keepout/speed filter、碰撞监控和急停；
 - 全覆盖规划、任务几何、覆盖率/定位/安全指标与 rosbag 回放审计；
-- 五类清扫目标链；另有多长宽比园区、belief-only主动清扫/RL、3 cm方块投箱占位闭环，以及已完成[正式 URDF/CAD 名义整车](docs/formal-vehicle-urdf-cad.md)的竞赛级高保真链；后者采用锁定许可的 A300/UR5e/2F-85/传感器 mesh、项目参数化清扫/分仓 CAD 和完整产品车身，[部件与连接台账](docs/formal-vehicle-component-architecture.md)把 38 个移动、感知、抓取、投放、清扫、回收、配电和安全功能位置绑定到实体 link、关节、控制器与话题合同；视觉入口为产品/检修十九视图 Gazebo Ogre2 验收，每张 PNG 均绑定 SHA-256、字节数、尺寸和目标实体投影。20 块 3 cm 垃圾采用 5×4 单层布置，纸板、PP、PET、铝各 5 块并逐块核对抓投与动态质量；[正式整车最终验收编排](docs/formal-final-acceptance-orchestration.md)要求单一非符号链接 merged overlay，并在 31 个步骤前后逐次复核全部运行包、插件与模型冻结闭包，再串行重跑全部本地门，其中单场 E2E 与 8+12 多场产品泛化是两个独立门；S100 实板、实物标定、连续全关节空间和园区端到端闭环不得提前写成通过；
+- 五类清扫目标链；另有多长宽比园区、belief-only主动清扫/RL、3 cm方块投箱占位闭环，以及已完成[正式 URDF/CAD 名义整车](docs/formal-vehicle-urdf-cad.md)的竞赛级高保真链；后者采用锁定许可的 A300/UR5e/2F-85/传感器 mesh、项目参数化清扫/分仓 CAD 和完整产品车身，[部件与连接台账](docs/formal-vehicle-component-architecture.md)把 38 个移动、感知、抓取、投放、清扫、回收、配电和安全功能位置绑定到实体 link、关节、控制器与话题合同；视觉入口为产品/检修十九视图 Gazebo Ogre2 验收，每张 PNG 均绑定 SHA-256、字节数、尺寸和目标实体投影。20 块 3 cm 垃圾采用 5×4 单层布置，纸板、PP、PET、铝各 5 块并逐块核对抓投与动态质量；[正式整车最终验收编排](docs/formal-final-acceptance-orchestration.md)要求单一非符号链接 merged overlay，并在 32 个步骤前后逐次复核全部运行包、插件与模型冻结闭包，再串行重跑全部本地门，其中单场 E2E、8+12 多场产品泛化和 A19 两小时长稳/18 故障恢复是独立门；S100 实板、实物标定、连续全关节空间和园区端到端闭环不得提前写成通过；
 - APP/API、语音入口和受限任务 DSL；
 - RViz 调试图层与 Gazebo 三维物理界面；
 - 分阶段验收、紧凑证据、SBOM、许可清单和发布打包工具。

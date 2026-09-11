@@ -73,6 +73,12 @@ EXTERNAL_GATE = "s100_live_runtime"
 S100_COMMITTED_AGGREGATE_PENDING = (
     "FORMAL_FINAL_ACCEPTANCE_S100_COMMITTED_AGGREGATE_PENDING"
 )
+PRODUCT_POSTPROCESS_REQUIRED = (
+    "FORMAL_FINAL_ACCEPTANCE_PRODUCT_POSTPROCESS_REQUIRED"
+)
+PRODUCT_POSTPROCESS_BLOCKED = (
+    "FORMAL_FINAL_ACCEPTANCE_PRODUCT_POSTPROCESS_BLOCKED"
+)
 S100_EVIDENCE_TRUST_BOUNDARY = (
     "Operator-trusted, tamper-evident, non-cryptographic S100 evidence chain; "
     "it is not TPM/signed remote attestation and cannot authenticate against a malicious PC operator."
@@ -147,6 +153,7 @@ RUNTIME_GATE_BINDING_GATES = {
     "manipulator_trajectory",
     "physical_grasp_and_bin",
     "formal_20_cube_grasp_and_dynamic_mass",
+    "a19_two_hour_reliability_fault",
 }
 WINDOWS_DRY_RUN_FOUR_CHAIN_STEPS = (
     "chassis",
@@ -216,13 +223,13 @@ STEP_SPECS: tuple[StepSpec, ...] = (
     StepSpec("physical_grasp", "gazebo", "validate contact-gated grasp and physical bin deposit", "run_formal_grasp_executor_runtime.sh", ("physical_grasp_and_bin",)),
     StepSpec("twenty_cubes", "gazebo", "validate all twenty material cubes and dynamic bin mass", "run_formal_20_cube_grasp_acceptance.sh", ("formal_20_cube_grasp_and_dynamic_mass",)),
     StepSpec("integrated_basic_physics", "gazebo", "repeat the source-bound basic physics bundle", "run_integrated_functional_acceptance.sh", ("integrated_basic_physics",), True),
-    StepSpec("rl_policy", "static", "freeze and evaluate the belief-only cross-map policy before any held-out final episode", "generate_formal_rl_multimap_report.py", ("rl_cross_map_policy",)),
     StepSpec("episode_materialization", "static", "materialize a fresh formal hidden episode"),
     StepSpec("first_map", "gazebo", "explore once and seal the first-task SLAM map", "run_formal_first_map_dynamic_prerequisite.sh"),
     StepSpec("saved_map_reuse", "gazebo", "hard-restart and clean using only the saved map", "run_formal_saved_map_cleaning_lifecycle.sh", ("first_map_then_clean",)),
     StepSpec("same_map_baseline", "gazebo", "measure the same-episode FullCoverage distance baseline", "run_formal_same_map_full_coverage_baseline.sh"),
     StepSpec("perception", "gazebo", "run fresh random-scene DOSOD plus EdgeSAM episodes", "run_formal_random_scene_perception.sh", ("random_scene_perception",)),
     StepSpec("dynamic_obstacle", "gazebo", "validate saved-map pedestrian avoidance", "run_formal_dynamic_obstacle_avoidance.sh", ("dynamic_obstacle_avoidance",)),
+    StepSpec("rl_policy", "static", "freeze and evaluate the belief-only cross-map policy before any held-out final episode", "generate_formal_rl_multimap_report.py", ("rl_cross_map_policy",)),
     StepSpec("single_episode", "gazebo", "run the complete product single-episode mission", "run_formal_single_episode_cleaning_mission.sh", ("end_to_end_cleaning_mission",)),
     StepSpec(
         "multisite_product",
@@ -230,6 +237,13 @@ STEP_SPECS: tuple[StepSpec, ...] = (
         "serially materialize and run all eight validation and twelve hidden product sites",
         "formal_multisite_product_acceptance.py",
         ("multi_site_product_generalization",),
+    ),
+    StepSpec(
+        "a19_reliability",
+        "gazebo",
+        "run one continuous two-hour product soak with all eighteen formal faults",
+        "run_formal_a19_reliability_fault.sh",
+        ("a19_two_hour_reliability_fault",),
     ),
     StepSpec("s100_live", "external", "validate only real RDK S100P / Journey 6P runtime evidence", "validate_formal_s100_live_runtime.py", (EXTERNAL_GATE,)),
     StepSpec("finalize_session", "static", "seal evidence digests into the frozen session", "formal_acceptance_session.py"),
@@ -821,6 +835,32 @@ def static_audit(root: Path = ROOT) -> dict[str, Any]:
     positions = {name: gazebo_order.index(name) for name in required_order if name in gazebo_order}
     if len(positions) != len(required_order) or list(positions.values()) != sorted(positions.values()):
         failures.append("requested_gazebo_order_is_not_preserved")
+    lifecycle_order = [step.step_id for step in STEP_SPECS]
+    required_lifecycle_order = [
+        "episode_materialization",
+        "first_map",
+        "saved_map_reuse",
+        "same_map_baseline",
+        "perception",
+        "dynamic_obstacle",
+        "rl_policy",
+        "single_episode",
+        "multisite_product",
+        "a19_reliability",
+        "s100_live",
+        "finalize_session",
+        "functional_aggregate",
+    ]
+    lifecycle_positions = {
+        step_id: lifecycle_order.index(step_id)
+        for step_id in required_lifecycle_order
+        if step_id in lifecycle_order
+    }
+    if (
+        len(lifecycle_positions) != len(required_lifecycle_order)
+        or list(lifecycle_positions.values()) != sorted(lifecycle_positions.values())
+    ):
+        failures.append("requested_lifecycle_order_is_not_preserved")
     return {
         "report_id": "tzcup_formal_final_acceptance_orchestration_static_audit_v1",
         "status": (
@@ -839,6 +879,7 @@ def static_audit(root: Path = ROOT) -> dict[str, Any]:
         "gate_producers": producers,
         "runner_inventory": runner_rows,
         "gazebo_execution_order": gazebo_order,
+        "required_lifecycle_order": required_lifecycle_order,
         "serial_execution": True,
         "shared_gazebo_lock": LOCK_FILE.as_posix(),
         "snapshot_checked_after_every_post_session_step": True,
@@ -866,6 +907,12 @@ def static_audit(root: Path = ROOT) -> dict[str, Any]:
             # non-cryptographic evidence chain cannot be forged by a malicious PC.
             "pc_substitution_allowed": False,
         },
+        "s100_collection_semantics": {
+            "collection_must_follow_session_start": True,
+            "collection_started_automatically_by_orchestrator": False,
+            "terminal_validation_step": "s100_live",
+            "all_local_gates_required_before_final_acceptance": True,
+        },
         "runtime_closure": {
             "manifest_required": True,
             "merged_overlay_required": True,
@@ -878,6 +925,14 @@ def static_audit(root: Path = ROOT) -> dict[str, Any]:
             "verified_before_and_after_every_step": True,
             "runtime_gate_bindings_required": sorted(RUNTIME_GATE_BINDING_GATES),
             "functional_aggregate_revalidates_runtime_binding_sidecars": True,
+        },
+        "runtime_evidence_state": {
+            "status": "NOT_EVALUATED_STATIC_AUDIT_ONLY",
+            "runtime_execution_eligible": False,
+            "fresh_frozen_runtime_required": True,
+            "native_preflight_required_before_execute": True,
+            "current_session_bound_gazebo_evidence_verified": False,
+            "s100_board_evidence_verified": False,
         },
         "failures": failures,
     }
@@ -973,6 +1028,10 @@ def _extra_fresh_paths(context: Context) -> list[Path]:
         context.root / "artifacts/formal_20_cube_grasp_manifest.json",
         context.root / "artifacts/formal_20_cube_grasp_runtime.launch.log",
         context.root / "artifacts/formal_same_map_full_coverage_baseline.json",
+        context.root / "artifacts/formal_a19_reliability_fault_raw",
+        context.root / "artifacts/formal_a19_producer.log",
+        context.root / "artifacts/formal_a19_snapshot_preflight.json",
+        context.root / "artifacts/formal_a19_snapshot_postflight.json",
         *_runtime_binding_auxiliary_paths(context),
         *_sensor_runtime_auxiliary_paths(context),
         *_grasp_runtime_auxiliary_paths(context),
@@ -1139,6 +1198,130 @@ def _lock_available() -> tuple[bool, str | None]:
         os.close(descriptor)
 
 
+def _a19_adapter_base_argv(context: Context, raw: str | None = None) -> list[str]:
+    """Accept only the frozen adapter executable plus its source file.
+
+    The orchestrator owns all run-specific arguments.  This prevents an
+    environment-provided JSON fragment from omitting a product input or
+    redirecting the product log while preserving a shell-free argv boundary.
+    """
+
+    raw = os.environ.get("FORMAL_A19_ADAPTER_ARGV_JSON", "") if raw is None else raw
+    try:
+        argv = json.loads(raw)
+    except (TypeError, json.JSONDecodeError) as exc:
+        raise OrchestrationError(
+            "FORMAL_A19_ADAPTER_ARGV_JSON must be the JSON array "
+            "[adapter-python, frozen-formal_a19_product_adapter.py]"
+        ) from exc
+    if (
+        not isinstance(argv, list)
+        or len(argv) != 2
+        or any(not isinstance(item, str) or not item for item in argv)
+    ):
+        raise OrchestrationError(
+            "FORMAL_A19_ADAPTER_ARGV_JSON must contain exactly the adapter "
+            "executable and frozen formal_a19_product_adapter.py path"
+        )
+    executable = Path(argv[0])
+    resolved_executable = (
+        executable if executable.is_absolute() else Path(shutil.which(argv[0]) or "")
+    )
+    adapter = Path(argv[1])
+    if not resolved_executable.is_file():
+        raise OrchestrationError(f"A19 adapter executable is unavailable: {argv[0]}")
+    if adapter.is_symlink() or not adapter.is_file():
+        raise OrchestrationError(f"A19 adapter source is unavailable or linked: {adapter}")
+    expected_adapter = (context.root / "scripts/formal_a19_product_adapter.py").resolve()
+    if adapter.resolve() != expected_adapter:
+        raise OrchestrationError(
+            "A19 adapter source must be the frozen current "
+            "scripts/formal_a19_product_adapter.py"
+        )
+    if "fixture" in "\0".join(argv).lower():
+        raise OrchestrationError("A19 adapter argv must not reference a fixture")
+    return argv
+
+
+def _a19_product_argv(
+    context: Context, *, runtime_inputs: bool
+) -> list[str]:
+    """Build the sole headless product graph argv used by the A19 adapter."""
+
+    world = context.episode_root / "public/world.sdf"
+    episode_manifest = context.episode_root / "public/episode_manifest.json"
+    pedestrian_schedule = context.episode_root / "environment/pedestrian_schedule.json"
+    policy_checkpoint = context.rl_evidence_root / "formal_planning/q_policy.json"
+    if runtime_inputs:
+        required_files = (
+            world,
+            episode_manifest,
+            pedestrian_schedule,
+            policy_checkpoint,
+            context.same_map_baseline,
+        )
+        for path in required_files:
+            if path.is_symlink() or not path.is_file():
+                raise OrchestrationError(f"A19 product input is missing or linked: {path}")
+        for path in (context.map_root, context.perception_artifacts):
+            if path.is_symlink() or not path.is_dir():
+                raise OrchestrationError(f"A19 product input directory is missing or linked: {path}")
+        try:
+            evaluator = _read_json(context.episode_root / "evaluator/episode_manifest.json")
+            baseline = _read_json(context.same_map_baseline)
+            seed = evaluator["seeds"]["dirt"]
+            maximum_distance = baseline["successful_distance_m"]
+        except (KeyError, TypeError, OrchestrationError) as exc:
+            raise OrchestrationError(
+                "A19 product inputs lack the frozen evaluator dirt seed or "
+                "same-map FullCoverage distance"
+            ) from exc
+        if type(seed) is not int or seed <= 0:
+            raise OrchestrationError("A19 product evaluator dirt seed is invalid")
+        if type(maximum_distance) not in (int, float) or not math.isfinite(float(maximum_distance)) or float(maximum_distance) <= 0:
+            raise OrchestrationError("A19 product same-map FullCoverage distance is invalid")
+        episode_seed, distance = str(seed), str(float(maximum_distance))
+    else:
+        # Preflight validates the launch shape before the fresh episode exists;
+        # execution replaces these placeholders only after earlier gates seal it.
+        episode_seed, distance = "1", "1.0"
+    argv = [
+        "ros2", "launch", "sanitation_product_demo_integration", "product_demo.launch.py",
+        "gui:=false", f"world:={world}", f"episode_manifest:={episode_manifest}",
+        f"pedestrian_schedule:={pedestrian_schedule}", "start_pedestrians:=true",
+        f"saved_map_artifact_dir:={context.map_root}",
+        f"perception_artifact_root:={context.perception_artifacts}",
+        f"policy_checkpoint:={policy_checkpoint}",
+        f"maximum_task_distance_m:={distance}", f"episode_seed:={episode_seed}",
+        "operation_speed_profile:=dry_cleaning_competition_candidate",
+        "max_linear_velocity:=0.45",
+    ]
+    argv.extend(f"{name}:={topic}" for name, topic in {
+        "perception_front_rgb_topic": "/formal_a19/proxy/front_rgb",
+        "perception_front_depth_topic": "/formal_a19/proxy/front_depth",
+        "perception_front_camera_info_topic": "/formal_a19/proxy/front_camera_info",
+        "perception_wrist_rgb_topic": "/formal_a19/proxy/wrist_rgb",
+        "perception_wrist_depth_topic": "/formal_a19/proxy/wrist_depth",
+        "perception_wrist_camera_info_topic": "/formal_a19/proxy/wrist_camera_info",
+        "perception_rear_left_rgb_topic": "/formal_a19/proxy/rear_left_rgb",
+        "perception_rear_right_rgb_topic": "/formal_a19/proxy/rear_right_rgb",
+    }.items())
+    return argv
+
+
+def _a19_adapter_argv(context: Context, *, runtime_inputs: bool) -> list[str]:
+    base = _a19_adapter_base_argv(context)
+    product_log = context.run_root / "a19_product_demo.log"
+    if runtime_inputs and (product_log.exists() or product_log.is_symlink()):
+        raise OrchestrationError(f"refusing stale A19 product log: {product_log}")
+    return [
+        *base,
+        "--repository-root", str(context.root),
+        "--product-argv-json", json.dumps(_a19_product_argv(context, runtime_inputs=runtime_inputs)),
+        "--product-log", str(product_log),
+    ]
+
+
 def preflight(context: Context) -> dict[str, Any]:
     checks: list[dict[str, Any]] = []
 
@@ -1174,6 +1357,18 @@ def preflight(context: Context) -> dict[str, Any]:
     add("perception_artifact_manifest", (context.perception_artifacts / "artifact_manifest.json").is_file(), str(context.perception_artifacts / "artifact_manifest.json"))
     add("onnxruntime_overlay", (context.onnx_pythonpath / "onnxruntime/__init__.py").is_file(), str(context.onnx_pythonpath))
     add("episode_count", context.episode_count >= 30, f"episode_count={context.episode_count}; formal_minimum=30")
+    try:
+        a19_adapter_argv = _a19_adapter_argv(context, runtime_inputs=False)
+    except OrchestrationError as exc:
+        a19_adapter_argv = None
+        a19_adapter_error = str(exc)
+    else:
+        a19_adapter_error = None
+    add(
+        "a19_production_adapter_argv",
+        a19_adapter_argv is not None,
+        "frozen adapter plus complete shell-free product argv" if a19_adapter_argv is not None else a19_adapter_error or "invalid A19 adapter argv",
+    )
     add(
         "final_output_archive_plan",
         archive_plan.get("validated") is True,
@@ -1567,6 +1762,10 @@ def _step_command(
                 "formal execution requires the verified runtime closure identity"
             )
         environment.update(_bound_nvidia_egl_environment(context, runtime_closure))
+        ros2 = runtime_closure.get("ros2_executable")
+        if not isinstance(ros2, dict) or not isinstance(ros2.get("path"), str):
+            raise OrchestrationError("verified runtime closure has no ros2 executable identity")
+        environment["FORMAL_ROS2_EXECUTABLE"] = ros2["path"]
     bash = lambda name: ["bash", str(scripts / name)]
     python = lambda name, *args: [sys.executable, str(scripts / name), *map(str, args)]
     if step_id == "freeze_snapshot":
@@ -1934,6 +2133,29 @@ def _step_command(
             "--base-domain", context.base_domain,
             "--output", multisite_output,
         ]), environment
+    if step_id == "a19_reliability":
+        if execution_environment:
+            adapter_argv_json = json.dumps(
+                _a19_adapter_argv(context, runtime_inputs=True)
+            )
+        else:
+            # Static command rendering deliberately does not manufacture a
+            # runnable adapter.  Native preflight and execute must validate the
+            # frozen two-token base argv before any runtime starts.
+            adapter_argv_json = '["__A19_ADAPTER_REQUIRES_EXECUTION_PREFLIGHT__"]'
+        a19_output = gate_output("a19_two_hour_reliability_fault")
+        environment.update(
+            FORMAL_VEHICLE_RUNTIME_WS=str(context.runtime_ws),
+            FORMAL_A19_ADAPTER_ARGV_JSON=adapter_argv_json,
+            TZCUP_FORMAL_A19_CONTRACT=str(
+                context.root / "config/high_fidelity_vehicle/formal_a19_reliability_fault_contract.json"
+            ),
+            FORMAL_A19_EVIDENCE_ROOT=str(
+                context.root / "artifacts/formal_a19_reliability_fault_raw"
+            ),
+            FORMAL_A19_OUTPUT=str(a19_output),
+        )
+        return bash("run_formal_a19_reliability_fault.sh"), environment
     raise OrchestrationError(f"no executable command for step {step_id}")
 
 
@@ -3704,9 +3926,12 @@ def execute(context: Context) -> tuple[dict[str, Any], int]:
             pending_position_count=functional.get("pending_position_count"),
         )
         if s100_available:
-            report["status"] = "FORMAL_FINAL_ACCEPTANCE_ORCHESTRATION_COMPLETE"
+            # The 32-step vehicle session has no place to execute the 180-run
+            # AUTO-15 matrix.  It is therefore deliberately not final until
+            # the separate, current-session A12/A20 post-process succeeds.
+            report["status"] = PRODUCT_POSTPROCESS_REQUIRED
             report["operator_trusted_s100_acknowledged"] = True
-            exit_code = 0
+            exit_code = 3
         else:
             report["status"] = "FORMAL_FINAL_ACCEPTANCE_LOCAL_GATES_PASSED_S100_EXTERNAL_BLOCKED"
             exit_code = 4
@@ -4100,7 +4325,7 @@ def resume_s100(context: Context) -> tuple[dict[str, Any], int]:
                 },
             })
             report.update(
-                status="FORMAL_FINAL_ACCEPTANCE_ORCHESTRATION_COMPLETE",
+                status=PRODUCT_POSTPROCESS_REQUIRED,
                 previous_status=prior_orchestration_status,
                 resume_started_epoch_ns=resume_started_ns,
                 resume_finished_epoch_ns=resume_finished_ns,
@@ -4115,10 +4340,152 @@ def resume_s100(context: Context) -> tuple[dict[str, Any], int]:
             )
             _atomic_json(context.run_root / "orchestration_report.json", report)
             _atomic_json(context.root / ORCHESTRATION_REPORT.relative_to(ROOT), report)
-            return report, 0
+            return report, 3
     except (OSError, OrchestrationError, subprocess.SubprocessError, ValueError) as exc:
         return {
             "status": "FORMAL_FINAL_ACCEPTANCE_S100_RESUME_REFUSED",
+            "run_root": str(context.run_root),
+            "error": str(exc),
+        }, 3
+
+
+def postprocess_product(
+    context: Context, a12_ledger: Path, a20_receipt: Path
+) -> tuple[dict[str, Any], int]:
+    """Run the A12 ledger and A20 receipt sidecars after a sealed session.
+
+    The sidecars stay outside ``STEP_SPECS`` because A12's fixed 180 product
+    executions must be produced while the session is RUNNING, whereas A20
+    explicitly requires that same session to be COMPLETE.
+    """
+
+    started_ns = time.time_ns()
+    try:
+        _validate_run_root(context, require_exists=True)
+        report_path = _repo_regular_file(
+            context.root,
+            context.run_root / "orchestration_report.json",
+            "product post-process orchestration report",
+        )
+        report = _read_json(report_path)
+        if report.get("status") not in {
+            PRODUCT_POSTPROCESS_REQUIRED,
+            # Allow a report sealed by the older runner to be corrected once;
+            # new executions never emit this final-looking status.
+            "FORMAL_FINAL_ACCEPTANCE_ORCHESTRATION_COMPLETE",
+        }:
+            raise OrchestrationError(
+                "product post-process requires a sealed S100-complete formal report"
+            )
+        session = _read_json(
+            _repo_regular_file(context.root, context.session, "product post-process session")
+        )
+        if (
+            session.get("status") != "FORMAL_FINAL_ACCEPTANCE_SESSION_COMPLETE"
+            or session.get("failures") != {}
+        ):
+            raise OrchestrationError(
+                "A12/A20 post-process requires a COMPLETE formal session without failures"
+            )
+        ledger = _repo_regular_file(context.root, a12_ledger, "A12 canonical ledger")
+        receipt = _repo_regular_file(context.root, a20_receipt, "A20 receipt")
+        for artifact, label in ((ledger, "A12 canonical ledger"), (receipt, "A20 receipt")):
+            try:
+                artifact.relative_to(context.run_root)
+            except ValueError as exc:
+                raise OrchestrationError(f"{label} must be retained under this formal run root") from exc
+        logs = context.run_root / "orchestration_logs"
+        logs.mkdir(parents=True, exist_ok=True)
+        stamp = str(started_ns)
+        a12_log = logs / f"a12_product_postprocess_{stamp}.log"
+        a20_log = logs / f"a20_product_postprocess_{stamp}.log"
+        a20_output = context.run_root / f"a20_release_replay_validation_{stamp}.json"
+        closure_before = _verify_runtime_closure(context, "product_postprocess:before")
+        _snapshot_check(context, logs / f"a12_a20_snapshot_check_{stamp}.log")
+
+        a12_command = [
+            sys.executable,
+            str(context.root / "scripts/validate_product_acceptance_contract.py"),
+            "--execution-evidence", str(ledger),
+            "--evidence-root", str(context.run_root),
+        ]
+        with a12_log.open("w", encoding="utf-8") as stream:
+            a12 = subprocess.run(
+                a12_command, cwd=context.root, stdout=stream,
+                stderr=subprocess.STDOUT, text=True,
+            )
+        if a12.returncode != 0:
+            raise OrchestrationError(
+                f"A12 canonical product ledger validation failed rc={a12.returncode}; log={a12_log}"
+            )
+
+        a20_command = [
+            sys.executable,
+            str(context.root / "scripts/a20_release_replay_receipt.py"),
+            "--repository-root", str(context.root),
+            "--run-root", str(context.run_root),
+            "--session", str(context.session),
+            "--receipt", str(receipt),
+            "--output", str(a20_output),
+        ]
+        with a20_log.open("w", encoding="utf-8") as stream:
+            a20 = subprocess.run(
+                a20_command, cwd=context.root, stdout=stream,
+                stderr=subprocess.STDOUT, text=True,
+            )
+        if a20.returncode != 0:
+            raise OrchestrationError(
+                f"A20 release replay receipt validation failed rc={a20.returncode}; log={a20_log}"
+            )
+        a20_result = _read_json(
+            _repo_regular_file(context.root, a20_output, "A20 validation report")
+        )
+        if a20_result.get("status") != "A20_RECEIPT_VALID" or a20_result.get("valid") is not True:
+            raise OrchestrationError("A20 validator returned a non-passing receipt result")
+        closure_after = _verify_runtime_closure(context, "product_postprocess:after")
+        report.update(
+            status="FORMAL_FINAL_ACCEPTANCE_ORCHESTRATION_COMPLETE",
+            finished_epoch_ns=time.time_ns(),
+            product_postprocess={
+                "status": "A12_A20_PRODUCT_POSTPROCESS_PASSED",
+                "started_epoch_ns": started_ns,
+                "finished_epoch_ns": time.time_ns(),
+                "a12": {
+                    "ledger": str(ledger), "ledger_sha256": _sha256(ledger),
+                    "log": str(a12_log), "log_sha256": _sha256(a12_log),
+                },
+                "a20": {
+                    "receipt": str(receipt), "receipt_sha256": _sha256(receipt),
+                    "validation": str(a20_output), "validation_sha256": _sha256(a20_output),
+                    "log": str(a20_log), "log_sha256": _sha256(a20_log),
+                },
+                "runtime_closure_before": closure_before,
+                "runtime_closure_after": closure_after,
+            },
+        )
+        _atomic_json(report_path, report)
+        _atomic_json(context.root / ORCHESTRATION_REPORT.relative_to(ROOT), report)
+        return report, 0
+    except (OSError, OrchestrationError, subprocess.SubprocessError, ValueError) as exc:
+        try:
+            report_path = context.run_root / "orchestration_report.json"
+            report = _read_json(report_path)
+            report.update(
+                status=PRODUCT_POSTPROCESS_BLOCKED,
+                finished_epoch_ns=time.time_ns(),
+                product_postprocess={
+                    "status": "A12_A20_PRODUCT_POSTPROCESS_BLOCKED",
+                    "started_epoch_ns": started_ns,
+                    "finished_epoch_ns": time.time_ns(),
+                    "error": str(exc),
+                },
+            )
+            _atomic_json(report_path, report)
+            _atomic_json(context.root / ORCHESTRATION_REPORT.relative_to(ROOT), report)
+        except (OSError, OrchestrationError, ValueError):
+            pass
+        return {
+            "status": PRODUCT_POSTPROCESS_BLOCKED,
             "run_root": str(context.run_root),
             "error": str(exc),
         }, 3
@@ -4155,6 +4522,11 @@ def build_parser() -> argparse.ArgumentParser:
     mode.add_argument("--preflight", action="store_true")
     mode.add_argument("--execute", action="store_true")
     mode.add_argument("--resume-s100", action="store_true")
+    mode.add_argument(
+        "--postprocess-product",
+        action="store_true",
+        help="validate the retained current-session A12 ledger, then the A20 release receipt",
+    )
     parser.add_argument("--runtime-ws", type=Path)
     parser.add_argument("--integrated-build-manifest", type=Path)
     parser.add_argument(
@@ -4165,6 +4537,14 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--perception-artifacts", type=Path, default=ROOT / ".work/formal_perception_assets")
     parser.add_argument("--onnx-pythonpath", type=Path, default=Path("/home/zhexu/tzcup-ros-onnx"))
     parser.add_argument("--run-root", type=Path)
+    parser.add_argument(
+        "--a12-ledger", type=Path,
+        help="canonical AUTO-15 ledger retained under --run-root",
+    )
+    parser.add_argument(
+        "--a20-receipt", type=Path,
+        help="A20 release/replay receipt retained under --run-root",
+    )
     parser.add_argument("--base-domain", type=int, default=60)
     parser.add_argument("--perception-episodes", type=int, default=30)
     parser.add_argument(
@@ -4200,6 +4580,11 @@ def main() -> int:
     if args.resume_s100 and args.run_root is None:
         print(json.dumps({"status": "INVALID", "error": "--resume-s100 requires an explicit --run-root"}, indent=2))
         return 2
+    if args.postprocess_product and (
+        args.run_root is None or args.a12_ledger is None or args.a20_receipt is None
+    ):
+        print(json.dumps({"status": "INVALID", "error": "--postprocess-product requires --run-root, --a12-ledger and --a20-receipt"}, indent=2))
+        return 2
     context = Context(
         root=ROOT,
         runtime_ws=args.runtime_ws,
@@ -4227,7 +4612,14 @@ def main() -> int:
             _atomic_json(args.output, result)
         print(json.dumps(result, indent=2, sort_keys=True))
         return 0 if result["passed"] else 2
-    result, exit_code = resume_s100(context) if args.resume_s100 else execute(context)
+    if args.resume_s100:
+        result, exit_code = resume_s100(context)
+    elif args.postprocess_product:
+        result, exit_code = postprocess_product(
+            context, args.a12_ledger, args.a20_receipt
+        )
+    else:
+        result, exit_code = execute(context)
     if args.output:
         _atomic_json(args.output, result)
     print(json.dumps(result, indent=2, sort_keys=True))

@@ -503,6 +503,9 @@ def test_ros_gateway_zeros_velocity_actuators_and_switches_trajectory_controller
             "status_publish_count",
             "maximum_timer_gap_sec",
             "publish_thread_error",
+            "effective_max_linear_velocity_mps",
+            "operation_speed_profile",
+            "speed_qualification_state",
         }
         assert len(
             json.dumps(status_json, sort_keys=True, separators=(",", ":")).encode()
@@ -512,6 +515,12 @@ def test_ros_gateway_zeros_velocity_actuators_and_switches_trajectory_controller
         assert isinstance(status_json["safety_inputs_permit_actuators"], bool)
         assert isinstance(status_json["actuators_enabled"], bool)
         assert isinstance(status_json["managed_controllers_active"], bool)
+        assert isinstance(status_json["effective_max_linear_velocity_mps"], float)
+        assert isinstance(status_json["operation_speed_profile"], str)
+        assert isinstance(status_json["speed_qualification_state"], str)
+        assert status_json["effective_max_linear_velocity_mps"] == 0.45
+        assert status_json["operation_speed_profile"] == ""
+        assert status_json["speed_qualification_state"] == "none"
         assert int(status_json["unsafe_generation"]) == manager._unsafe_generation
         assert int(status_json["consumed_unsafe_generation"]) == (
             manager._consumed_unsafe_generation

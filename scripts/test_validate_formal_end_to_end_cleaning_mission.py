@@ -26,6 +26,22 @@ def test_runtime_gate_binding_must_match_the_final_sidecar(tmp_path: Path) -> No
     assert "differs from the final sidecar" in "\n".join(result["errors"])
 
 
+@pytest.mark.parametrize("mutation", ["extra", "duplicate", "missing"])
+def test_truth_subscriber_roles_are_exact(tmp_path: Path, mutation: str) -> None:
+    payload = aggregate(build_raw(tmp_path))
+    audit = payload["evidence"]["truth_boundary"]["subscriber_audit"]
+    topic = end_to_end.REPLAY_METRIC_TOPICS["ground_truth_odom"]["name"]
+    if mutation == "extra":
+        audit[topic].append("/formal_active_cleaning_policy_planner")
+    elif mutation == "duplicate":
+        audit[topic].append(end_to_end.TRUSTED_GT_RECORDER_NODE)
+    else:
+        del audit[end_to_end.RAW_GROUND_TRUTH_TOPIC]
+    result = validate(payload)
+    assert not result["passed"]
+    assert "live ROS truth-subscriber audit failed" in result["errors"]
+
+
 def test_final_sidecar_is_rechecked_against_current_snapshot_and_session(
     tmp_path: Path,
 ) -> None:

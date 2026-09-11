@@ -329,7 +329,7 @@ J6 节点只承担推理和必要预处理，保持与仿真/主控解耦：
 - 碰撞与惯性几何优先使用参数化 primitive 保证实时和稳定；正式工业车辆外观必须采用
   许可证明确且锁定版本的上游网格，或由项目可维护参数化 CAD 生成的离线 mesh；
 - 底盘默认使用 4WD skid-steer，真实底盘若为 Ackermann，再新增并行车型；
-- 正式 A300 清扫宽度以 `config/high_fidelity_vehicle/formal_motion_cleaning_profile.yaml` 的 `declared_effective_cleaning_width_m`（当前 `1.32 m`）为唯一来源；`0.65 m`仅适用于历史/演示 profile；
+- 正式 A300 的包络和吞吐候选宽度以 `config/high_fidelity_vehicle/formal_motion_cleaning_profile.yaml` 的 `declared_effective_cleaning_width_m`（当前 `1.32 m`）为来源；其三刷横向代理存在两个 `0.085 m` 空隙，不能直接用作连续覆盖的 lane spacing。正式 saved-map 覆盖使用中央滚刷连续 `0.620 m` 带并保留 `0.020 m` 重叠，即 `0.600 m`；`0.65 m`仅适用于历史/演示 profile；
 - 尘箱几何容积 0.04 m³，即 40 L；
 - 保留 `arm_mount_link`，为抓取演示预留安装位；
 - 传感器坐标必须集中配置，不散落硬编码；
