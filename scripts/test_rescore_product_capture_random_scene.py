@@ -35,6 +35,35 @@ def _fixture(tmp_path):
     return root, public, truth, binding
 
 
+def _projection_evidence(root, binding, path):
+    frame = root / "frames" / "frame-0000"
+    meta, _ = MODULE._bundle(frame)
+    replay = MODULE._replay_frame(root, frame, 0.5)
+    target = replay["projected_targets"][0]
+    row = json.loads(binding.read_text())
+    _json(path, {
+        "schema_version": 1,
+        "namespace": "/evaluation/product_projection",
+        "control_use_prohibited": True,
+        "capture_manifest_sha256": row["capture_manifest_sha256"],
+        "source_commit": row["source_commit"],
+        "acceptance_session_binding": row["acceptance_session_binding"],
+        "runtime_closure_binding": row["runtime_closure_binding"],
+        "camera_frame_id": meta["camera_info"]["frame_id"],
+        "map_frame_id": "map",
+        "samples": [{
+            "target_uuid": "11111111-1111-1111-1111-111111111111",
+            "track_identity": "product-track-0",
+            "frame": "frame-0000",
+            "detection_index": target["detection_index"],
+            "observation_stamp_s": meta["rgb_stamp_s"],
+            "map_point_xyz": target["xyz"],
+            "evaluator_object_id": "cube-0",
+        }],
+    })
+    return path
+
+
 def test_missing_capture_is_explicitly_blocked(tmp_path):
     root, public, truth, binding = _fixture(tmp_path)
     for child in (root / "frames").iterdir():
@@ -63,3 +92,42 @@ def test_capture_hash_and_episode_identity_drift_are_rejected(tmp_path):
     root, public, truth, binding = _fixture(tmp_path / "identity")
     row = json.loads(public.read_text()); row["map_id"] = "val-map-007"; _json(public, row)
     assert "identity mismatch" in MODULE.rescore(root, public, truth, binding)["reason"]
+
+
+def test_valid_projection_evidence_computes_map_error(tmp_path):
+    root, public, truth, binding = _fixture(tmp_path)
+    evidence = _projection_evidence(root, binding, tmp_path / "projection.json")
+    report = MODULE.rescore(root, public, truth, binding, evidence)
+    assert report["status"] == "RESCORED_OFFLINE"
+    assert report["map_projection"]["sample_count"] == 1
+    sample = json.loads(evidence.read_text())["samples"][0]
+    expected = float(np.linalg.norm(np.asarray(sample["map_point_xyz"]) - np.asarray([0., 0., .015])))
+    assert abs(report["map_projection"]["rmse_m"] - expected) < 1e-9
+    assert report["map_projection"]["source"] == "evaluator_only_projection_evidence"
+    assert report["claim_boundary"]["truth_used_to_modify_product_output"] is False
+
+
+def test_projection_evidence_rejects_cross_session_uuid_and_frame_drift(tmp_path):
+    root, public, truth, binding = _fixture(tmp_path)
+    evidence = _projection_evidence(root, binding, tmp_path / "projection.json")
+    row = json.loads(evidence.read_text())
+    row["acceptance_session_binding"] = {"id": "other"}; _json(evidence, row)
+    assert "session or closure mismatch" in MODULE.rescore(root, public, truth, binding, evidence)["reason"]
+    evidence = _projection_evidence(root, binding, evidence)
+    row = json.loads(evidence.read_text()); row["samples"].append(dict(row["samples"][0])); _json(evidence, row)
+    assert "duplicate target UUID" in MODULE.rescore(root, public, truth, binding, evidence)["reason"]
+    evidence = _projection_evidence(root, binding, evidence)
+    row = json.loads(evidence.read_text()); row["camera_frame_id"] = "wrong_camera"; _json(evidence, row)
+    assert "camera frame mismatch" in MODULE.rescore(root, public, truth, binding, evidence)["reason"]
+
+
+def test_projection_evidence_rejects_timestamp_and_hash_drift(tmp_path):
+    root, public, truth, binding = _fixture(tmp_path)
+    evidence = _projection_evidence(root, binding, tmp_path / "projection.json")
+    row = json.loads(evidence.read_text())
+    rollback = dict(row["samples"][0]); rollback["target_uuid"] = "22222222-2222-2222-2222-222222222222"; rollback["track_identity"] = "product-track-1"; rollback["observation_stamp_s"] = 0.
+    row["samples"].append(rollback); _json(evidence, row)
+    assert "timestamp" in MODULE.rescore(root, public, truth, binding, evidence)["reason"]
+    evidence = _projection_evidence(root, binding, evidence)
+    row = json.loads(evidence.read_text()); row["capture_manifest_sha256"] = "0" * 64; _json(evidence, row)
+    assert "capture hash mismatch" in MODULE.rescore(root, public, truth, binding, evidence)["reason"]
