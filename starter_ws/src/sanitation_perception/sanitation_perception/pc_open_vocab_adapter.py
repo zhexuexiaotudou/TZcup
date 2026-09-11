@@ -20,7 +20,7 @@ from .a19_fault_hooks import A19ProductFaultError, ProductFaultHooks
 from .diagnostic_compat import set_diagnostic_level
 from .edgesam_ros_adapter import EdgeSamOnnxSegmenter
 from .product_intermediate_capture import ProductIntermediateCapture
-from .product_projection import CameraIntrinsics, PublicGrid, project_rgbd_observation
+from .product_projection import CameraIntrinsics, PublicGrid, project_rgbd_observation, require_valid_depth
 from .tracking import TargetTracker
 
 
@@ -135,6 +135,34 @@ def select_source_stamp(
 
 def _stamp_seconds(stamp) -> float:
     return float(stamp.sec) + float(stamp.nanosec) * 1e-9
+
+
+def validate_rgbd_context(image, depth, info, *, maximum_age_s: float) -> None:
+    """Validate registered RGB-D metadata before inference or projection.
+
+    Message-shaped inputs also allow recorded metadata to exercise this gate
+    without ROS. Calibration may be latched (zero stamp), but a stamped
+    calibration must remain within the same source-age budget as depth.
+    """
+    if not math.isfinite(maximum_age_s) or maximum_age_s < 0.0:
+        raise ValueError("RGB-D maximum age must be finite and non-negative")
+    frame = image.header.frame_id
+    if not frame or depth.header.frame_id != frame or info.header.frame_id != frame:
+        raise ValueError("RGB-D and CameraInfo must share the registered optical frame")
+    dimensions = (image.width, image.height)
+    if min(dimensions) <= 0 or (depth.width, depth.height) != dimensions or (info.width, info.height) != dimensions:
+        raise ValueError("RGB-D and CameraInfo dimensions differ")
+    if depth.encoding not in {"16UC1", "32FC1"}:
+        raise ValueError("depth encoding must declare millimeters or floating-point meters")
+    stamps = [message.header.stamp for message in (image, depth, info)]
+    if any(stamp.sec < 0 or not 0 <= stamp.nanosec < NANOSECONDS_PER_SECOND for stamp in stamps):
+        raise ValueError("invalid RGB-D source stamp")
+    rgb_ns, depth_ns, info_ns = [stamp.sec * NANOSECONDS_PER_SECOND + stamp.nanosec for stamp in stamps]
+    maximum_ns = maximum_age_s * NANOSECONDS_PER_SECOND
+    if abs(rgb_ns - depth_ns) > maximum_ns or (info_ns != 0 and abs(rgb_ns - info_ns) > maximum_ns):
+        raise ValueError("RGB-D or CameraInfo source stamp is stale")
+    if len(info.k) != 9 or not np.isfinite(info.k).all() or info.k[0] <= 0 or info.k[4] <= 0:
+        raise ValueError("CameraInfo pinhole intrinsics are invalid")
 
 
 def serialize_wrist_grasp_recheck(
@@ -292,7 +320,7 @@ def _projection_masks(
     if len(dirt_masks) != len(dirt_indices) or len(dirt_qualities) != len(dirt_indices):
         raise ValueError("EdgeSAM outputs must align with ground-dirt prompts")
     dirt_by_index = {
-        index: (np.asarray(mask, dtype=bool), float(quality))
+        index: (np.asarray(mask), float(quality))
         for index, mask, quality in zip(dirt_indices, dirt_masks, dirt_qualities)
     }
     height, width = image_shape
@@ -303,6 +331,16 @@ def _projection_masks(
             mask, quality = dirt_by_index[index]
             if mask.shape != (height, width):
                 raise ValueError("EdgeSAM mask dimensions differ from RGB input")
+            if not np.isfinite(mask).all():
+                raise ValueError("EdgeSAM mask must be finite before boolean conversion")
+            mask = mask.astype(bool)
+            if not math.isfinite(quality) or not 0.0 <= quality <= 1.0:
+                raise ValueError("EdgeSAM quality must be finite and in [0, 1]")
+        elif ids[index] != "litter_cube":
+            # Missing segmentation proves neither dirt nor clean ground.
+            # Reject this frame before its depth footprint can be emitted as
+            # observed-clean cells in the product raster.
+            raise ValueError("ground-dirt detection has no EdgeSAM segmentation")
         else:
             x1, y1, x2, y2 = box
             left = max(0, min(width, int(math.floor(x1))))
@@ -759,6 +797,16 @@ def main() -> None:
             if depth_message is None or info is None or self.latest_map is None:
                 self._diagnostic(2, "rgbd_context_missing", {"sensor": sensor})
                 return
+            try:
+                validate_rgbd_context(
+                    image_message, depth_message, info,
+                    maximum_age_s=float(self.get_parameter("depth_max_age_s").value),
+                )
+                if self.latest_map.header.frame_id != "map":
+                    raise ValueError("public occupancy grid must be in the map frame")
+            except ValueError as exc:
+                self._diagnostic(2, "rgbd_context_rejected", {"sensor": sensor, "error": str(exc)})
+                return
             rgb_time = Time.from_msg(image_message.header.stamp)
             depth_time = Time.from_msg(depth_message.header.stamp)
             age = abs((rgb_time - depth_time).nanoseconds) * 1e-9
@@ -792,9 +840,7 @@ def main() -> None:
                     raise ValueError("RGB and depth dimensions differ")
                 if int(info.width) != rgb.shape[1] or int(info.height) != rgb.shape[0]:
                     raise ValueError("CameraInfo and RGB dimensions differ")
-                valid_depth = np.isfinite(depth) & (depth > 0)
-                if not bool(np.any(valid_depth)):
-                    raise ValueError("depth image has no finite positive samples")
+                require_valid_depth(depth)
                 results = self._infer(rgb)
                 boxes = np.asarray([item.xyxy for item in results], dtype=np.float32).reshape(-1, 4)
                 product = self._detections_message(image_message, results)
@@ -921,45 +967,14 @@ def main() -> None:
                     target_array.targets.append(target)
                 self.target_publisher.publish(target_array)
                 if sensor == "wrist":
-                    for target in target_array.targets:
-                        if self._formal_a19_fault.consume("reobserve_timeout"):
-                            self._formal_a19_fault.record_effect("reobserve_timeout", "wrist_reobservation_drop_observed", target_id=str(target.uuid))
-                            continue
-                        position = target.map_pose.pose.position
-                        orientation = target.map_pose.pose.orientation
-                        try:
-                            encoded_recheck = serialize_wrist_grasp_recheck(
-                                target_id=str(target.uuid),
-                                frame_id=str(
-                                    target.header.frame_id
-                                    or target_array.header.frame_id
-                                ),
-                                pose=(
-                                    float(position.x),
-                                    float(position.y),
-                                    float(position.z),
-                                    float(orientation.x),
-                                    float(orientation.y),
-                                    float(orientation.z),
-                                    float(orientation.w),
-                                ),
-                                size_m=(
-                                    float(target.size.x),
-                                    float(target.size.y),
-                                    float(target.size.z),
-                                ),
-                                confidence=float(target.confidence),
-                            )
-                        except ValueError as exc:
-                            self._diagnostic(
-                                2,
-                                "wrist_grasp_recheck_rejected",
-                                {"target_id": str(target.uuid), "error": str(exc)},
-                            )
-                            continue
-                        self.wrist_recheck_publisher.publish(
-                            String(data=encoded_recheck)
-                        )
+                    # Tracker size and height above are nominal class priors,
+                    # not measured 3-D cube geometry. They must never satisfy
+                    # the independent wrist grasp-refinement contract.
+                    self._diagnostic(
+                        2,
+                        "wrist_grasp_recheck_not_ready",
+                        {"sensor": sensor, "reason": "measured_cube_geometry_missing"},
+                    )
                 # Product messages above are computed and published before
                 # diagnostic persistence. Capture consumes only the same
                 # public inputs/intermediates and cannot alter those messages.
@@ -992,6 +1007,12 @@ def main() -> None:
                                     "xyxy": [float(value) for value in item.xyxy],
                                 }
                                 for index, item in enumerate(results)
+                            ],
+                            product_targets=[
+                                {"target_uuid": str(target.uuid), "track_identity": str(target.uuid),
+                                 "map_point_xyz": [float(target.map_pose.pose.position.x), float(target.map_pose.pose.position.y), float(target.map_pose.pose.position.z)],
+                                 "observation_stamp_s": rgb_time.nanoseconds * 1e-9}
+                                for target in target_array.targets
                             ],
                             prompt_decisions=prompt_decisions,
                             prompt_detection_indices=dirt_indices,

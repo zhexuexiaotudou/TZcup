@@ -61,9 +61,10 @@ object、直线抬升、碰撞检查投箱、物理释放、材料质量和数�
 姿态和关投料门。为了允许真实接触，仅在最后短距离接近期间从 world collision set 移除
 目标本体；整车和环境碰撞检查仍保持开启，夹持后立即改为 attached collision object。
 
-PC 产品感知适配器只在腕部 RGB-D 帧中发布该复测话题，复用同一个 map-frame track id，
-并再次输出三维 pose、尺寸、置信度和 `material=unknown`；无效四元数、尺寸或低置信度
-复测会在发布前失败关闭。
+腕部复测必须使用同一个 map-frame track id，并输出实测三维 pose、尺寸、置信度和
+`material=unknown`。当前 PC 适配器尚无实测三轴几何，已停止把固定 0.03 m 尺寸和
+0.015 m 高度作为复测发布，报告 `measured_cube_geometry_missing`。因此真实视觉抓取
+闭环保持未就绪，详见[产品观测边界](perception-observation-boundaries.md)。
 
 机械臂任务开始前发布锁存的 `/manipulation/base_motion_inhibited=true`。只有机械臂恢复
 `TRANSPORT` 且投料门关闭后才发布 `false`；预释放失败会保持 inhibit，要求人工恢复。

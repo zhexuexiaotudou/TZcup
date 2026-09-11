@@ -14,20 +14,29 @@ aggregate = perception.aggregate
 
 
 def _report(episode_id: str, status: str = "PASSED") -> dict:
-    return {
-        "report_id": "tzcup_formal_random_scene_perception_episode_v1",
-        "episode_id": episode_id,
-        "status": status,
-        "litter_cube_detection": {"precision": 0.9, "recall": 0.85, "f1": 0.87},
-        "ground_dirt_segmentation": {"iou": 0.7, "recall": 0.9},
-        "map_projection": {"rmse_m": 0.1, "p95_m": 0.2, "false_product_track_count": 0},
-        "sensor_runtime": {"real_camera_message_count": 10},
-        "truth_isolation": {
-            "truth_published_to_ros": False,
-            "truth_used_by_product_control": False,
-            "synthetic_offline_image_used": False,
-        },
-    }
+    report = perception.finalize_acceptance(
+        episode_id=episode_id,
+        detection={"true_positive_count": 90, "false_positive_count": 0,
+                   "visible_unique_truth_count": 100, "matched_unique_truth_count": 90,
+                   "evaluated_frame_count": 100},
+        segmentation={"iou": 0.7, "recall": 0.9, "truth_cell_count": 100},
+        projection={"sample_count": 10, "rmse_m": 0.1, "p95_m": 0.2,
+                    "false_product_track_count": 0},
+        freshness={"real_camera_message_count": 10, "rgb_topic_count": 4,
+                   "depth_topic_count": 2, "camera_info_topic_count": 4,
+                   "depth_rgb_skew_max_s": 0.1, "tf_success_ratio": 1.0,
+                   "tf_age_max_s": 0.1, "diagnostic_ground_truth_input_used": False,
+                   "product_detection_message_count": 10, "product_mask_message_count": 10,
+                   "product_target_message_count": 10},
+    )
+    if status != "PASSED":
+        report["sensor_runtime"]["product_mask_message_count"] = 0
+        report = perception.finalize_acceptance(
+            episode_id=episode_id, detection=report["litter_cube_detection"],
+            segmentation=report["ground_dirt_segmentation"], projection=report["map_projection"],
+            freshness=report["sensor_runtime"],
+        )
+    return report
 
 
 def _formal_episode_id(index: int) -> str:
@@ -54,10 +63,24 @@ def test_aggregate_requires_full_validation_matrix_for_formal_pc_evidence(tmp_pa
     assert report["claim_boundary"]["real_world_accuracy_claimed"] is False
     assert len(report["episodes"][0]["report_sha256"]) == 64
     assert "path" not in report["episodes"][0]
-    assert report["episodes"][0]["litter_cube_detection"]["f1"] == 0.87
+    assert report["episodes"][0]["litter_cube_detection"]["f1"] == pytest.approx(2 * 0.9 / 1.9)
     assert report["episodes"][0]["artifact_evidence"][
         "product_source_manifest_entries"
     ] == ["a" * 64 + "  pc_open_vocab_adapter.py"]
+
+
+def test_aggregate_blocks_matrix_when_one_episode_uses_truth_in_product_perception(tmp_path: Path):
+    paths = []
+    for index in range(30):
+        report = _report(_formal_episode_id(index))
+        if index == 0:
+            report["truth_isolation"]["truth_used_by_product_perception"] = True
+        path = tmp_path / f"episode-{index}.json"
+        path.write_text(json.dumps(report), encoding="utf-8")
+        paths.append(path)
+    result = aggregate(paths, 30)
+    assert result["status"] == "FORMAL_DOSOD_EDGESAM_RANDOM_SCENE_ACCEPTANCE_BLOCKED"
+    assert not result["gates"]["truth_isolation_passed"]
 
 
 def test_aggregate_blocks_smoke_scale_input_even_when_the_caller_requests_three(tmp_path: Path):
@@ -140,3 +163,54 @@ def test_bound_matrix_report_fails_closed_when_existing_binding_is_invalid(
         perception.write_bound_report(output, {"status": "PASSED"}, tmp_path / "missing.json")
     assert not output.exists()
     assert not output.with_name(output.name + ".runtime_binding.json").exists()
+
+
+@pytest.mark.parametrize("mutation", [
+    lambda r: r.pop("metric_checks"),
+    lambda r: r.pop("litter_cube_detection"),
+    lambda r: r["thresholds"].update(cube_precision_min=0.0),
+    lambda r: r["ground_dirt_segmentation"].update(iou=0.0),
+    lambda r: r["map_projection"].update(rmse_m=float("nan")),
+    lambda r: r["sensor_runtime"].update(product_mask_message_count=0),
+    lambda r: r["litter_cube_detection"].update(precision=0.01),
+])
+def test_aggregate_rejects_stale_pass_or_incomplete_evidence(tmp_path, mutation):
+    paths = []
+    for index in range(30):
+        row = _report(_formal_episode_id(index))
+        if index == 0:
+            mutation(row)
+        path = tmp_path / f"{index}.json"
+        path.write_text(json.dumps(row), encoding="utf-8")
+        paths.append(path)
+    report = aggregate(paths, 30)
+    assert report["status"].endswith("BLOCKED")
+    assert not report["gates"]["all_episode_reports_well_formed"]
+    assert report["input_errors"]
+
+
+@pytest.mark.parametrize("root", [None, [], 1, "PASSED"])
+def test_non_object_episode_is_reported_as_input_error(tmp_path, root):
+    path = tmp_path / "bad.json"
+    path.write_text(json.dumps(root), encoding="utf-8")
+    report = aggregate([path], 30)
+    assert report["input_errors"]
+
+
+def test_legitimate_negative_map_coordinates_remain_valid():
+    report = _report("val-map-000-mission-000")
+    report["sensor_runtime"].update({
+        "localized_map_pose": {"x": -1.0, "y": -2.0, "yaw": -0.5},
+        "expected_localization_map_start_pose": [-1.0, -2.0, -0.5],
+        "source_world_start_pose_used_for_staging": {"x": -10.0, "y": -20.0},
+        "map_ground_z_m": -0.1651,
+    })
+    perception._validate_episode(report)
+
+
+def test_live_evaluator_config_matches_frozen_aggregate_thresholds():
+    import yaml
+    config = yaml.safe_load((ROOT / "starter_ws/src/sanitation_perception/config/formal_random_scene_acceptance.yaml").read_text(encoding="utf-8"))
+    effective = {**perception.DEFAULT_THRESHOLDS, **config["metrics"], **config["runtime"]}
+    assert all(effective[name] == value for name, value in perception.DEFAULT_THRESHOLDS.items())
+    assert config["minimum_episode_count"] == perception.DEFAULT_THRESHOLDS["minimum_episode_count"]

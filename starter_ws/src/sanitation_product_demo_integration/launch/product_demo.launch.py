@@ -103,6 +103,7 @@ def generate_launch_description() -> LaunchDescription:
                 "perception_artifact_root",
                 description="Verified DOSOD and EdgeSAM PC artifact directory",
             ),
+            DeclareLaunchArgument("intermediate_capture_root", default_value=""),
             DeclareLaunchArgument(
                 "policy_checkpoint",
                 description="Frozen truth-free active-cleaning Q checkpoint",
@@ -178,6 +179,9 @@ def generate_launch_description() -> LaunchDescription:
                         launch_arguments={
                             "artifact_root": LaunchConfiguration(
                                 "perception_artifact_root"
+                            ),
+                            "intermediate_capture_root": LaunchConfiguration(
+                                "intermediate_capture_root"
                             ),
                             **{
                                 name: LaunchConfiguration(f"perception_{name}")

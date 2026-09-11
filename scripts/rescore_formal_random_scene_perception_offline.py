@@ -15,9 +15,15 @@ import json
 import math
 from pathlib import Path
 import re
+import sys
 from types import SimpleNamespace
 
 import numpy as np
+
+# The offline CLI must work from a source checkout without a ROS installation.
+ROOT = Path(__file__).resolve().parents[1]
+for package in ("sanitation_perception", "sanitation_perception_evaluator"):
+    sys.path.insert(0, str(ROOT / "starter_ws" / "src" / package))
 
 from sanitation_perception_evaluator.formal_random_scene_evaluator import _project_cube
 from sanitation_perception.formal_random_scene_evaluator_core import (
@@ -202,9 +208,10 @@ def rescore_episode(episode_root: Path) -> dict:
         raise ValueError("saved diagnostic image hash does not match raw output")
 
     threshold_key = f"{CUBE_SCORE_THRESHOLD:.3f}"
-    detections = raw.get("postprocess_threshold_sweep", {}).get(threshold_key, {}).get(
-        "detections", []
-    )
+    sweep = raw.get("postprocess_threshold_sweep", {}).get(threshold_key)
+    if not isinstance(sweep, dict) or not isinstance(sweep.get("detections"), list):
+        raise ValueError("saved diagnostic lacks frozen 0.005 postprocess detections")
+    detections = sweep["detections"]
     predictions = [
         BoxObservation(
             class_id=str(item["class_id"]),
@@ -224,10 +231,7 @@ def rescore_episode(episode_root: Path) -> dict:
     f1 = 2.0 * precision * recall / (precision + recall) if precision + recall else 0.0
 
     ground = acceptance["ground_dirt_segmentation"]
-    intersection = int(ground["intersection_cell_count"])
-    union = int(ground["union_cell_count"])
-    predicted = int(ground["predicted_cell_count"])
-    truth_cells = int(ground["truth_cell_count"])
+    intersection, union, predicted, truth_cells = _validated_ground_counts(ground)
     ground_recomputed = {
         "intersection_cell_count": intersection,
         "union_cell_count": union,
@@ -236,6 +240,10 @@ def rescore_episode(episode_root: Path) -> dict:
         "iou": intersection / union if union else 0.0,
         "precision": intersection / predicted if predicted else 0.0,
         "recall": intersection / truth_cells if truth_cells else 0.0,
+        "missed_truth_cell_count": truth_cells - intersection,
+        "false_positive_cell_count": predicted - intersection,
+        "missed_area_m2": None,
+        "area_unavailable_reason": "saved aggregate lacks bound grid resolution",
         "basis": "stored_episode_aggregate_confusion_counts_unaffected_by_2d_truth_frame_fix",
     }
     return {
@@ -244,6 +252,7 @@ def rescore_episode(episode_root: Path) -> dict:
             "episode_root": str(episode_root),
             "image_sha256": _sha256(image_path),
             "raw_diagnostic_sha256": _sha256(raw_path),
+            "frame_metadata_sha256": _sha256(metadata_path),
             "acceptance_report_sha256": _sha256(acceptance_path),
             "front_camera_tf_evidence_sha256": _sha256(tf_path),
         },
@@ -260,8 +269,14 @@ def rescore_episode(episode_root: Path) -> dict:
             "recall": recall,
             "f1": f1,
             "matched_ious": [float(item["iou"]) for item in matching["matches"]],
+            "unmatched_truth_object_ids": matching["unmatched_truth_object_ids"],
+            "false_positive_indices_confidence_order": matching["false_positive_indices"],
         },
         "ground_dirt_episode_rescore": ground_recomputed,
+        "stored_map_projection": {
+            "basis": "stored_episode_summary_not_recomputed_without_track_truth_pairs",
+            "metrics": acceptance.get("map_projection"),
+        },
         "postprocess_distributions_at_common_0_005": _detection_distributions(
             detections, truth
         ),
@@ -270,6 +285,10 @@ def rescore_episode(episode_root: Path) -> dict:
 
 
 def build_report(episode_roots: list[Path]) -> dict:
+    if not episode_roots:
+        raise ValueError("at least one saved episode is required")
+    if len({path.resolve() for path in episode_roots}) != len(episode_roots):
+        raise ValueError("duplicate saved episode root")
     episodes = [rescore_episode(path) for path in episode_roots]
     cube_rows = [item["cube_best_saved_frame_rescore"] for item in episodes]
     ground_rows = [item["ground_dirt_episode_rescore"] for item in episodes]
@@ -311,9 +330,17 @@ def build_report(episode_roots: list[Path]) -> dict:
             "staged_cube_slot_count": len(CUBE_SLOTS),
         },
         "episodes": episodes,
+        "saved_frame_count": len(episodes),
+        "metric_availability": {
+            "litter_cube_precision_recall_f1": "recomputed_from_saved_frame",
+            "ground_dirt_iou_recall_precision": "recomputed_from_validated_aggregate_counts",
+            "fallen_leaves_dust_or_soil_puddle_per_class_scores": "unavailable_without_class_labelled_truth_masks",
+            "missed_area_m2": "unavailable_without_bound_grid_resolution",
+            "map_projection_rescore": "unavailable_without_saved_track_truth_pairs",
+        },
         "saved_evidence_aggregate": {
             "cube_two_best_frames": {
-                "scope": "two_saved_best_frames_not_formal_episode_aggregate",
+                "scope": "saved_best_frames_not_formal_episode_aggregate",
                 "true_positive_count": cube_tp,
                 "false_positive_count": cube_fp,
                 "false_negative_count": cube_fn,
@@ -340,8 +367,9 @@ def build_report(episode_roots: list[Path]) -> dict:
                 min((row["iou"] for row in ground_rows), default=None),
                 max((row["iou"] for row in ground_rows), default=None),
             ],
-            "ground_existing_path_demonstrates_gate": all(
-                row["iou"] >= 0.65 for row in ground_rows
+            "ground_existing_path_demonstrates_gate": bool(ground_rows) and all(
+                row["truth_cell_count"] > 0 and row["iou"] >= 0.65
+                and row["recall"] >= 0.85 for row in ground_rows
             ),
             "interpretation": (
                 "Corrected single-frame geometry can show whether the frozen DOSOD weights "
@@ -350,6 +378,17 @@ def build_report(episode_roots: list[Path]) -> dict:
             ),
         },
     }
+
+
+def _validated_ground_counts(ground: dict) -> tuple[int, int, int, int]:
+    keys = ("intersection_cell_count", "union_cell_count", "predicted_cell_count", "truth_cell_count")
+    counts = tuple(ground[key] for key in keys)
+    if any(type(value) is not int or value < 0 for value in counts):
+        raise ValueError("stored ground confusion counts must be non-negative integers")
+    intersection, union, predicted, truth = counts
+    if intersection > min(predicted, truth) or union != predicted + truth - intersection:
+        raise ValueError("stored ground confusion counts are inconsistent")
+    return counts
 
 
 def main() -> int:

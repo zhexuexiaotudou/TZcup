@@ -8,6 +8,7 @@ from launch_ros.actions import Node
 
 def generate_launch_description() -> LaunchDescription:
     artifact_root = LaunchConfiguration("artifact_root")
+    capture_root = LaunchConfiguration("intermediate_capture_root")
     topic_defaults = {
         "front_rgb_topic": "/sensors/front_rgbd/depth/image_rect_raw/image",
         "front_depth_topic": "/sensors/front_rgbd/depth/image_rect_raw/depth_image",
@@ -24,6 +25,7 @@ def generate_launch_description() -> LaunchDescription:
                 "artifact_root",
                 description="Absolute directory containing verified formal PC model artifacts",
             ),
+            DeclareLaunchArgument("intermediate_capture_root", default_value=""),
             *[
                 DeclareLaunchArgument(name, default_value=value)
                 for name, value in topic_defaults.items()
@@ -35,6 +37,7 @@ def generate_launch_description() -> LaunchDescription:
                 output="screen",
                 parameters=[{
                     "artifact_root": artifact_root,
+                    "intermediate_capture_root": capture_root,
                     "use_sim_time": True,
                     **{name: LaunchConfiguration(name) for name in topic_defaults},
                 }],

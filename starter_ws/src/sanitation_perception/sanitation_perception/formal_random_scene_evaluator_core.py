@@ -221,7 +221,27 @@ def finalize_acceptance(
     recall = matched_unique / visible if visible else 0.0
     f1 = 2.0 * precision * recall / (precision + recall) if precision + recall else 0.0
     fp_per_frame = fp / frames if frames else math.inf
+    def finite_in_range(value, minimum, maximum=math.inf):
+        try:
+            numeric = float(value)
+        except (TypeError, ValueError, OverflowError):
+            return False
+        return math.isfinite(numeric) and minimum <= numeric <= maximum
+
     metric_checks = {
+        "detection_counts_consistent": min(tp, fp, visible, matched_unique, frames) >= 0
+        and matched_unique <= visible and matched_unique <= tp,
+        "ground_dirt_truth_present": finite_in_range(
+            segmentation.get("truth_cell_count"), 1
+        ),
+        "ground_dirt_metrics_valid": all(
+            finite_in_range(segmentation.get(name), 0.0, 1.0)
+            for name in ("iou", "recall")
+        ),
+        "map_projection_metrics_valid": all(
+            finite_in_range(projection.get(name), 0.0)
+            for name in ("rmse_m", "p95_m")
+        ),
         "visible_cube_truth_present": visible > 0 and frames > 0
         and int(freshness.get("real_camera_message_count", 0)) > 0,
         "cube_precision": precision >= float(limits["cube_precision_min"]),
