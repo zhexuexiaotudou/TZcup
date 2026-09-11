@@ -123,7 +123,7 @@ def _fixture(tmp_path: Path) -> argparse.Namespace:
     coverage = _json(tmp_path / "coverage.json", {
         "schema_version": 1, "success": True, "terminal_state": "COMPLETED",
         "ground_truth_used_for_control": False, "brush_disabled_on_exit": True,
-        "operation_width_m": 1.32,
+        "operation_width_m": 0.60,
         "operation_speed_profile": "dry_cleaning_competition_candidate",
         "maximum_linear_speed_mps": 1.0,
         "planned_swath_count": 100, "completed_swath_count": 100,
