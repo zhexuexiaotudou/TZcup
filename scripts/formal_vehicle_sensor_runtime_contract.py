@@ -122,6 +122,7 @@ STREAM_CONTRACTS: dict[str, dict[str, Any]] = {
 # stamps span 300 ms at the configured rate; fifty IMU stamps span 245 ms.
 SOURCE_FREQUENCY_SAMPLE_TARGETS: dict[str, int] = {
     "/sensors/front_rgbd/depth/image_rect_raw/image": 10,
+    "/sensors/front_rgbd/depth/image_rect_raw/depth_image": 10,
     # Thirty-two 30 Hz source stamps cover at least one second before a lazy
     # wrist-D435 bridge subscription is retired.  Both depth image aliases and
     # both IR streams need the same bounded steady-state observation window.

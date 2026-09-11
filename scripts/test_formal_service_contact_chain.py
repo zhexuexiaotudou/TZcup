@@ -14,6 +14,14 @@ SAFETY = ROOT / "starter_ws" / "src" / "sanitation_safety"
 SERVICE_XACRO = DESCRIPTION / "urdf" / "high_fidelity" / "power_service_hardware.xacro"
 CONTROL_XACRO = DESCRIPTION / "urdf" / "high_fidelity" / "control_interfaces.xacro"
 LAUNCH = DESCRIPTION / "launch" / "formal_vehicle_sim.launch.py"
+NATIVE_CONTACT_BRIDGE = (
+    ROOT
+    / "starter_ws"
+    / "src"
+    / "sanitation_gazebo_control"
+    / "src"
+    / "FormalContactEvaluationNativeBridge.cc"
+)
 MANAGER = POWER / "sanitation_power_system" / "charge_interface_manager.py"
 SIM_INPUTS = SAFETY / "sanitation_safety" / "simulation_safety_inputs.py"
 REGISTER = ROOT / "config" / "high_fidelity_vehicle" / "formal_vehicle_component_register.yaml"
@@ -32,14 +40,16 @@ def test_service_fittings_have_named_collisions_and_contact_sensors() -> None:
             "charge_receptacle_contact_collision",
             "charge_receptacle_contact_sensor",
             "/formal_vehicle/gazebo/charge_receptacle/contact",
+            "base_footprint_fixed_joint_lump__charge_receptacle_contact_collision_collision_49",
         ),
         "wastewater_drain_coupling_link": (
             "wastewater_drain_coupling_contact_collision",
             "wastewater_drain_coupling_contact_sensor",
             "/formal_vehicle/gazebo/wastewater_drain_coupling/contact",
+            "base_footprint_fixed_joint_lump__wastewater_drain_coupling_contact_collision_collision_120",
         ),
     }
-    for link_name, (collision_name, sensor_name, topic) in expected.items():
+    for link_name, (collision_name, sensor_name, topic, expanded_collision) in expected.items():
         link = root.find(f".//link[@name='{link_name}']")
         assert link is not None
         assert link.find(f"collision[@name='{collision_name}']") is not None
@@ -48,29 +58,55 @@ def test_service_fittings_have_named_collisions_and_contact_sensors() -> None:
         sensor = gazebo.find(f"sensor[@name='{sensor_name}']")
         assert sensor is not None
         assert sensor.get("type") == "contact"
-        assert sensor.findtext("topic") == topic
+        assert sensor.findtext("topic") is None
+        assert sensor.findtext("contact/topic") == topic
         assert sensor.findtext("always_on") == "true"
         assert float(sensor.findtext("update_rate", "0")) >= 50.0
-        assert sensor.findtext("contact/collision") == collision_name
+        # The fixed service links are folded into base_footprint by sdformat;
+        # this must stay aligned with the final expanded-SDF collision name.
+        assert sensor.findtext("contact/collision") == expanded_collision
 
 
-def test_default_launch_bridges_contacts_one_way_to_exact_product_raw_topics() -> None:
-    source = LAUNCH.read_text(encoding="utf-8")
+def test_default_launch_uses_one_native_contact_bridge_per_product_raw_topic() -> None:
+    native_source = NATIVE_CONTACT_BRIDGE.read_text(encoding="utf-8")
+    tree = ast.parse(LAUNCH.read_text(encoding="utf-8"), filename=str(LAUNCH))
     expected = {
-        "/formal_vehicle/gazebo/charge_receptacle/contact": (
+        "charge_receptacle_contact_bridge": (
+            "charge_receptacle",
+            "/formal_vehicle/gazebo/charge_receptacle/contact",
             "/formal_vehicle/service/raw/charge_plug_contact"
         ),
-        "/formal_vehicle/gazebo/wastewater_drain_coupling/contact": (
+        "wastewater_drain_contact_bridge": (
+            "wastewater_drain",
+            "/formal_vehicle/gazebo/wastewater_drain_coupling/contact",
             "/formal_vehicle/service/raw/drain_hose_contact"
         ),
     }
-    for gz_topic, ros_topic in expected.items():
-        assert (
-            f'"{gz_topic}@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts"'
-            in source
-        )
-        assert f'"{gz_topic}",' in source
-        assert f'"{ros_topic}",' in source
+    contact_nodes = {}
+    for call in ast.walk(tree):
+        if not isinstance(call, ast.Call) or not isinstance(call.func, ast.Name):
+            continue
+        if call.func.id != "Node":
+            continue
+        keywords = {item.arg: item.value for item in call.keywords if item.arg}
+        name = keywords.get("name")
+        if not isinstance(name, ast.Constant) or name.value not in expected:
+            continue
+        contact_nodes[name.value] = keywords
+
+    assert set(contact_nodes) == set(expected)
+    assert "GroupedGazeboToRosEndpoint<ros_gz_interfaces::msg::Contacts, gz::msgs::Contacts>" in native_source
+    all_remaps = []
+    for name, (group, gazebo_topic, ros_topic) in expected.items():
+        keywords = contact_nodes[name]
+        assert ast.literal_eval(keywords["package"]) == "sanitation_gazebo_control"
+        assert ast.literal_eval(keywords["executable"]) == "formal_contact_evaluation_native_bridge"
+        assert ast.literal_eval(keywords["parameters"]) == [{"endpoint_group": group}]
+        remappings = ast.literal_eval(keywords["remappings"])
+        assert remappings == [(gazebo_topic, ros_topic)]
+        assert f'"{gazebo_topic}"' in native_source
+        all_remaps.extend(remappings)
+        assert [source for source, target in all_remaps if target == ros_topic] == [gazebo_topic]
 
 
 def test_every_parameter_bridge_has_a_unique_stable_node_name() -> None:
@@ -90,7 +126,9 @@ def test_every_parameter_bridge_has_a_unique_stable_node_name() -> None:
         name = keywords.get("name")
         assert isinstance(name, ast.Constant) and isinstance(name.value, str)
         names.append(name.value)
-    assert bridge_count >= 8
+    # Service Contacts use two native bridges; retain a guard for the remaining
+    # ros_gz parameter bridges without requiring the retired service bridges.
+    assert bridge_count >= 5
     assert len(names) == len(set(names))
 
 

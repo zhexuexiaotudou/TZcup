@@ -20,6 +20,7 @@ def generate_launch_description() -> LaunchDescription:
     scenario = LaunchConfiguration('scenario')
     output = LaunchConfiguration('output')
     vehicle_model = LaunchConfiguration('vehicle_model')
+    world = LaunchConfiguration('world')
     station_x_offset = LaunchConfiguration('station_x_offset')
     vehicle_share = get_package_share_directory('sanitation_vehicle_description')
     acceptance_share = get_package_share_directory('sanitation_service_acceptance')
@@ -39,6 +40,8 @@ def generate_launch_description() -> LaunchDescription:
             'start_power_system_simulators': 'true',
             'high_bandwidth_sensor_runtime': 'false',
             'model': vehicle_model,
+            'world': world,
+            'spawn_robot': 'false',
         }.items(),
     )
     station = Node(
@@ -75,7 +78,7 @@ def generate_launch_description() -> LaunchDescription:
         package='sanitation_service_acceptance',
         executable='formal_service_acceptance_collector',
         name='formal_service_acceptance_collector',
-        arguments=['--scenario', scenario, '--output', output],
+        arguments=['--scenario', scenario, '--output', output, '--sample-sec', '18.0'],
         output='screen',
     )
     return LaunchDescription(
@@ -83,6 +86,7 @@ def generate_launch_description() -> LaunchDescription:
             DeclareLaunchArgument('scenario'),
             DeclareLaunchArgument('output'),
             DeclareLaunchArgument('vehicle_model'),
+            DeclareLaunchArgument('world'),
             DeclareLaunchArgument('station_x_offset', default_value='0.0'),
             formal_vehicle,
             evaluation_joint_bridge,

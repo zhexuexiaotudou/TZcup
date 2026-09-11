@@ -7,6 +7,7 @@
 
 #include <geometry_msgs/msg/twist.hpp>
 #include <gz/msgs/boolean.pb.h>
+#include <gz/msgs/double_v.pb.h>
 #include <gz/msgs/header.pb.h>
 #include <gz/msgs/odometry.pb.h>
 #include <gz/msgs/stringmsg.pb.h>
@@ -15,6 +16,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/bool.hpp>
+#include <std_msgs/msg/float64_multi_array.hpp>
 #include <std_msgs/msg/string.hpp>
 
 namespace sanitation_gazebo_control
@@ -33,6 +35,8 @@ constexpr char kActuatorEnableTopic[] =
   "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/actuator_enable";
 constexpr char kEmergencyStopTopic[] =
   "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/emergency_stop";
+constexpr char kProfileTopic[] =
+  "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/profile";
 constexpr GazeboToRosEndpoint<nav_msgs::msg::Odometry, gz::msgs::Odometry>
   kOdometryEndpoint{
   "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/odom"
@@ -60,6 +64,7 @@ public:
     command_velocity_gz_pub_ = gz_node_.Advertise<gz::msgs::Twist>(kCommandVelocityTopic);
     actuator_enable_gz_pub_ = gz_node_.Advertise<gz::msgs::Boolean>(kActuatorEnableTopic);
     emergency_stop_gz_pub_ = gz_node_.Advertise<gz::msgs::Boolean>(kEmergencyStopTopic);
+    profile_gz_pub_ = gz_node_.Advertise<gz::msgs::Double_V>(kProfileTopic);
 
     command_velocity_ros_sub_ = create_subscription<geometry_msgs::msg::Twist>(
       kCommandVelocityTopic, 10,
@@ -75,6 +80,11 @@ public:
       kEmergencyStopTopic, 10,
       [this](const std_msgs::msg::Bool::SharedPtr message) {
         PublishGazeboBool(*message, emergency_stop_gz_pub_);
+      });
+    profile_ros_sub_ = create_subscription<std_msgs::msg::Float64MultiArray>(
+      kProfileTopic, 10,
+      [this](const std_msgs::msg::Float64MultiArray::SharedPtr message) {
+        PublishGazeboProfile(*message);
       });
 
     odometry_ros_pub_ = create_publisher<nav_msgs::msg::Odometry>(kOdometryEndpoint.topic, 10);
@@ -134,6 +144,22 @@ private:
     publisher.Publish(target);
   }
 
+  void PublishGazeboProfile(const std_msgs::msg::Float64MultiArray & source)
+  {
+    if (source.data.size() != 2) {
+      return;
+    }
+    const std::lock_guard<std::mutex> lock(callback_mutex_);
+    if (stopping_.load()) {
+      return;
+    }
+    gz::msgs::Double_V target;
+    for (const double value : source.data) {
+      target.add_data(value);
+    }
+    profile_gz_pub_.Publish(target);
+  }
+
   void OnOdometry(const gz::msgs::Odometry & source)
   {
     const std::lock_guard<std::mutex> lock(callback_mutex_);
@@ -176,9 +202,11 @@ private:
   gz::transport::Node::Publisher command_velocity_gz_pub_;
   gz::transport::Node::Publisher actuator_enable_gz_pub_;
   gz::transport::Node::Publisher emergency_stop_gz_pub_;
+  gz::transport::Node::Publisher profile_gz_pub_;
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr command_velocity_ros_sub_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr actuator_enable_ros_sub_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr emergency_stop_ros_sub_;
+  rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr profile_ros_sub_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odometry_ros_pub_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr status_ros_pub_;
   std::mutex callback_mutex_;

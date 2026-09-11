@@ -13,8 +13,11 @@ from sanitation_perception.product_projection import (
     project_rgbd_observation,
 )
 from sanitation_perception.pc_open_vocab_adapter import (
+    FormalA19PerceptionFaultGate,
     _ground_dirt_prompt_indices,
     _projection_masks,
+    live_session_provider_readback,
+    preferred_onnx_providers,
     select_source_stamp,
     serialize_wrist_grasp_recheck,
 )
@@ -30,6 +33,55 @@ def test_front_source_stamp_selector_is_exactly_two_hz_and_rejects_replays():
         False,
         "source_rate_limited",
     )
+
+
+def test_a19_fault_gate_changes_live_inference_consumption_and_clears() -> None:
+    gate = FormalA19PerceptionFaultGate()
+    gate.configure(json.dumps({
+        "fault": "classifier_timeout",
+        "parameters": {"timeout_s": 2.0, "occurrences": 1},
+        "active": True,
+    }))
+    assert gate.consume("classifier_timeout") is True
+    assert gate.consume("classifier_timeout") is False
+    assert gate.telemetry() == {
+        "formal_a19_fault": "classifier_timeout", "formal_a19_fault_events": 1,
+        "formal_a19_fault_effect": {},
+    }
+    gate.configure(json.dumps({
+        "fault": "classifier_timeout", "parameters": {"timeout_s": 2.0, "occurrences": 1}, "active": False,
+    }))
+    assert gate.telemetry()["formal_a19_fault"] == ""
+
+
+class _ProviderSession:
+    def __init__(self, providers):
+        self._providers = providers
+
+    def get_providers(self):
+        return list(self._providers)
+
+
+def test_formal_product_prefers_cuda_and_a19_reads_the_live_dosod_session() -> None:
+    available = ["TensorrtExecutionProvider", "CUDAExecutionProvider", "CPUExecutionProvider"]
+    assert preferred_onnx_providers(available) == [
+        "CUDAExecutionProvider", "CPUExecutionProvider"
+    ]
+    assert preferred_onnx_providers(["CPUExecutionProvider"]) == ["CPUExecutionProvider"]
+    readback = live_session_provider_readback(
+        _ProviderSession(["CUDAExecutionProvider", "CPUExecutionProvider"]), available
+    )
+    assert readback == {
+        "available_providers": available,
+        "selected_provider": "CUDAExecutionProvider",
+        "session_providers": ["CUDAExecutionProvider", "CPUExecutionProvider"],
+    }
+    source = (PACKAGE / "sanitation_perception" / "pc_open_vocab_adapter.py").read_text(
+        encoding="utf-8"
+    )
+    probe = source[source.index("def _probe_cuda_provider"):source.index("def _probe_model_load")]
+    assert "self.detector.session" in probe
+    assert "InferenceSession" not in probe
 
 
 def test_dosod_inverse_roi_golden_vectors_cover_padding_and_odd_remainder():
@@ -294,7 +346,7 @@ def test_ros_product_adapter_lists_every_formal_camera_and_no_evaluator_subscrip
     assert "self.inference_callback_group = MutuallyExclusiveCallbackGroup()" in source
     assert "self.cache_callback_group = MutuallyExclusiveCallbackGroup()" in source
     assert source.count("callback_group=self.inference_callback_group") == 2
-    assert source.count("callback_group=self.cache_callback_group") == 3
+    assert source.count("callback_group=self.cache_callback_group") == 4
     assert "MultiThreadedExecutor(num_threads=3)" in source
     assert "self._last_success_diagnostic_s" in source
     assert "now - self._last_success_diagnostic_s < 1.0" in source

@@ -224,6 +224,7 @@ def test_runtime_acceptance_attributes_physical_inputs_and_status_reasons():
     assert "def assert_single_safety_input_writers" in source
     assert "def _status_reason_evidence" in source
     assert "MAXIMUM_STATUS_SAMPLE_GAP_SEC" in source
+    assert "validate_speed_qualification_status(payload)" in source
     assert 'target_reason="safety_relay_disabled"' in source
     assert 'target_reason="front_bumper_contact"' in source
     assert 'target_reason="rear_bumper_contact"' in source

@@ -1,4 +1,5 @@
 from pathlib import Path
+import hashlib
 
 import pytest
 import yaml
@@ -20,10 +21,22 @@ SUPPORT = (ROOT / "scripts/formal_same_map_baseline_support.py").read_text(
 
 def test_prepared_probe_and_server_share_real_cleaning_width(tmp_path: Path) -> None:
     mission = tmp_path / "mission.yaml"
+    geometry = tmp_path / "coverage_geometry.yaml"
+    geometry.write_text(yaml.safe_dump({
+        "source": "saved_slam_occupancy_only", "keepout_polygons": [],
+        "planning_outer_polygon": [[-98, -48], [98, -48], [98, 48], [-98, 48]],
+        "planning_hole_polygons": [], "reachable_cleanable_cells": 1,
+        "resolution_m": 0.1,
+        "obstacle_inflation_m": 1.70, "planning_clearance_m": 1.70,
+    }), encoding="utf-8")
     mission.write_text(yaml.safe_dump({
         "mission_id": "formal-lifecycle-7",
         "outer_polygon": [[-100., -50.], [100., -50.], [100., 50.], [-100., 50.]],
         "keepout_polygons": [],
+        "headland": {"enabled": True, "width_m": 1.70},
+        "saved_occupancy_coverage": {"source": "saved_slam_occupancy_only",
+            "geometry": geometry.name, "free_space_map": "coverage_free_space.pgm",
+            "sha256": hashlib.sha256(geometry.read_bytes()).hexdigest()},
         "vehicle_start_pose_map": {"x_m": 0., "y_m": 0., "yaw_rad": 0.},
         "source_fixed_start_pose": [-98., 0., 0.],
         "truth_boundary": {"dirt_truth_used": False,
@@ -38,7 +51,8 @@ def test_prepared_probe_and_server_share_real_cleaning_width(tmp_path: Path) -> 
     assert params["operation_width"] == probe["operation_width_m"]
     assert params["robot_width"] == pytest.approx(1.39)
     assert probe["planning_swath_spacing_m"] <= probe["operation_width_m"]
-    assert probe["headland"]["width_m"] >= 1.69
+    assert probe["headland"] == {"enabled": False, "width_m": 0.0}
+    assert params["default_headland_width"] == 0.0
     assert probe["evaluation_brush_dropout"]["enabled"] is False
 
 
@@ -46,12 +60,14 @@ def test_runner_is_one_hard_restart_fullcoverage_process_chain() -> None:
     assert RUNNER.count("formal_campus_map_lifecycle.launch.py") == 1
     assert "mission_mode:=cleaning" in RUNNER
     assert "cleaning_planner:=full_coverage" in RUNNER
-    assert "start_coverage:=false" in RUNNER
-    assert RUNNER.count("ros2 run opennav_coverage opennav_coverage") == 1
-    assert RUNNER.count("ros2 run sanitation_coverage coverage_probe") == 1
+    assert "start_coverage:=true" in RUNNER
+    assert "ros2 run opennav_coverage opennav_coverage" not in RUNNER
+    assert "ros2 lifecycle set /coverage_server" not in RUNNER
+    assert "ros2 run sanitation_coverage coverage_probe" not in RUNNER
+    assert "coverage_evidence_dir:=\"${OUTPUT}\"" in RUNNER
     assert "hard_restart_record.json" in RUNNER
     assert "mapping_process_count_before_cleaning" in RUNNER
-    assert "coverage_runtime.json" in RUNNER
+    assert "coverage_execution.json" in RUNNER
     assert "run_formal_same_map_baseline.sh" in RUNNER
     assert "policy_checkpoint" not in RUNNER and "rl_dirt_priority" not in RUNNER
     assert "formal_source_bound_preflight.sh" in RUNNER
