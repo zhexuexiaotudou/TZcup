@@ -64,3 +64,45 @@ Current external blockers are not softened by these tools: an authorized real
 camera graph, at least 500 unique calibration tensors, an independent frozen
 holdout, approved metric thresholds, a verified HBM runner serialization
 contract, a project DOSOD HBM, and a measured positive input-power source.
+
+## Diagnosing compile inputs and staged payloads
+
+`validate_dosod_s100p_hbm_compile_contract.py` inventories model, vocabulary,
+reparameterization, upstream files, calibration and compiler identity even when
+the preprocessing oracle is absent or invalid, provided the contract itself is
+valid. It still returns `BLOCKED` with no compile-plan hash. File and directory
+symlinks within declared input paths are rejected before their bytes can be
+admitted. This diagnostic does not execute compilation or create calibration.
+
+The board-only `produce_s100p_model_payload_receipt.py` accepts the Linux
+`/proc/device-tree` link only when it points directly to
+`/sys/firmware/devicetree/base`; redirected ancestors and property links remain
+invalid. The staged DOSOD vocabulary must match the frozen compile contract's
+path, SHA-256 and byte size; the producer independently reuses the canonical
+contract validator before admitting those bindings. Passing this producer still requires the canonical
+offline compile receipt, real S100P/BPU identity and current session/closure.
+
+### Local inventory, 2026-09-11
+
+The retained local asset root under
+`F:/Project/TZcup/.workspace/worktrees/TZcup-integrated-functional-acceptance/.work/formal_perception_assets`
+contains the exact contract-bound four-class ONNX (45,430,396 bytes), vocabulary
+(188 bytes), embedding, checkpoint, EdgeSAM encoder/decoder HBM and artifact
+manifest. The expected project DOSOD HBM is absent there. A scoped local search
+did not establish a frozen 500-tensor calibration set. Local Windows PATH has no
+`hb_compile`; that does not establish remote toolchain absence.
+
+The adjacent retained DOSOD upstream reparameterization config is modified:
+717 bytes, SHA-256
+`7f827487334848a74c387e81dde9b3e1f115f0adf23487e46b64897b86b8f14b`,
+instead of the frozen 719 bytes and
+`2b0d9be4b250e322413d590bbd15465efcb52cfbfe0819c857ef9da680750db7`.
+It is preserved. Neither replacing it with the upstream 80-class config nor
+changing the contract hash is an admissible repair without the frozen source.
+
+Local raw inventory and recovery searches are retained in this task worktree's
+`.work/s100p-compile-delivery/`. No official preprocessing oracle, live compiler
+identity or complete calibration set was admitted by this inventory. Resume via
+the existing [compile queue](public-gazebo-dosod-compile-plan.md#exact-future-compile-queue)
+after those inputs and a resource window are verified; do not reuse an official
+COCO-80 or non-formal candidate HBM as the four-class formal result.

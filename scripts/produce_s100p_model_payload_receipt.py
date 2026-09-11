@@ -14,6 +14,7 @@ from typing import Any, Callable, Mapping
 
 from formal_s100_live_acceptance_core import acceptance_session_binding, runtime_closure_binding
 import validate_s100p_final_predeploy as final_predeploy
+from validate_dosod_s100p_hbm_compile_contract import validate_contract_shape
 
 
 PAYLOADS = {
@@ -95,7 +96,19 @@ def _read(path: Path) -> str:
         return ""
 
 
-def _device_tree_fact(path: Path) -> tuple[str, str]:
+def _device_tree_fact(path: Path, board_root: Path) -> tuple[str, str]:
+    # /proc/device-tree is the stable Linux ABI and is normally a kernel
+    # symlink. Permit that single link into sysfs, not arbitrary fact links.
+    tree = path.parent
+    if tree.is_symlink():
+        if not _nonlink_ancestors(board_root, tree.parent):
+            raise ValueError("board device-tree parent is a link")
+        link = tree.readlink()
+        target = Path(os.path.abspath(link if link.is_absolute() else tree.parent / link))
+        sysfs = _absolute_board_path(board_root, "/sys/firmware/devicetree/base")
+        if target != sysfs:
+            raise ValueError("board device-tree link is outside kernel sysfs")
+        path = target / path.name
     if not _nonlink_file(path):
         raise ValueError(f"board device-tree fact is not a regular non-link file: {path}")
     raw = path.read_bytes()
@@ -114,8 +127,8 @@ def _device_major_minor(value: int) -> tuple[int, int]:
 def _board_identity(
     *, board_root: Path, platform_machine: Callable[[], str], stat_path: Callable[[Path], os.stat_result]
 ) -> dict[str, Any]:
-    model, model_sha256 = _device_tree_fact(_absolute_board_path(board_root, "/proc/device-tree/model"))
-    compatible, compatible_sha256 = _device_tree_fact(_absolute_board_path(board_root, "/proc/device-tree/compatible"))
+    model, model_sha256 = _device_tree_fact(_absolute_board_path(board_root, "/proc/device-tree/model"), board_root)
+    compatible, compatible_sha256 = _device_tree_fact(_absolute_board_path(board_root, "/proc/device-tree/compatible"), board_root)
     device = _absolute_board_path(board_root, EXPECTED_BPU_DEVICE)
     try:
         device_stat = stat_path(device)
@@ -193,6 +206,11 @@ def build_receipt(*, artifact_root: Path, candidate_stage: str, board_root: Path
         board_root=board_root, platform_machine=platform_machine, stat_path=stat_path
     )
     compile_receipt = _load(offline_compile_receipt)
+    hbm_contract = _load(hbm_contract_path)
+    contract_blockers: list[str] = []
+    validate_contract_shape(hbm_contract, contract_blockers)
+    if contract_blockers:
+        raise ValueError("HBM compile contract is not frozen: " + ";".join(contract_blockers))
     session = _load(acceptance_session)
     _load(runtime_closure)
     session_binding, closure = _session_binding(session, runtime_closure, acceptance_session)
@@ -212,6 +230,15 @@ def build_receipt(*, artifact_root: Path, candidate_stage: str, board_root: Path
     dosod = payloads["dosod_hbm"]
     if dosod["sha256"] != compile_receipt.get("output_sha256") or dosod["byte_size"] != compile_receipt.get("output_byte_size"):
         raise ValueError("staged DOSOD HBM does not match the offline compile receipt")
+    vocabulary_contract = hbm_contract.get("vocabulary")
+    vocabulary = payloads["dosod_vocabulary"]
+    if not isinstance(vocabulary_contract, Mapping) or any(
+        vocabulary[field] != vocabulary_contract.get(contract_field)
+        for field, contract_field in (
+            ("target_relative_path", "relative_path"), ("sha256", "sha256"), ("byte_size", "byte_size")
+        )
+    ):
+        raise ValueError("staged DOSOD vocabulary does not match the frozen compile contract")
     return {
         "schema_version": 1,
         "receipt_id": "tzcup_s100p_model_payload_receipt_v1",
