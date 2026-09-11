@@ -9,7 +9,8 @@ fed by the product DOSOD+EdgeSAM ROS topics and a real manipulation verifier.
 from __future__ import annotations
 
 import argparse
-from dataclasses import dataclass
+from copy import deepcopy
+from dataclasses import asdict, dataclass
 import hashlib
 import json
 import math
@@ -145,7 +146,10 @@ def _validate_full_map_generalization(
     )
     actual_counts: dict[str, int] = {}
     map_indices: dict[str, list[int]] = {}
+    full_task_coverage = True
     for name, episode_split, rows in expected:
+        if name == "hidden" and not rows:
+            continue
         by_index: dict[int, set[str]] = {}
         for episode in rows:
             if episode.split != episode_split:
@@ -161,6 +165,14 @@ def _validate_full_map_generalization(
                 f"{name} must cover every frozen map index 0.."
                 f"{FORMAL_FULL_MAP_COUNTS[name] - 1}; got {indices}"
             )
+        expected_missions = 200 if name == "train" else 100
+        tasks = [(row.map_index, row.mission_index) for row in rows]
+        if len(tasks) != len(set(tasks)):
+            raise ValueError(f"{name} contains duplicate frozen tasks")
+        full_task_coverage = full_task_coverage and set(tasks) == {
+            (index, mission) for index in range(FORMAL_FULL_MAP_COUNTS[name])
+            for mission in range(expected_missions)
+        }
         actual_counts[name] = len(by_index)
         map_indices[name] = indices
     return {
@@ -168,6 +180,7 @@ def _validate_full_map_generalization(
         "actual_distinct_map_counts": actual_counts,
         "map_indices": map_indices,
         "full_map_coverage": True,
+        "full_task_coverage": full_task_coverage,
         "smoke_subset_accepted_as_generalization": False,
     }
 
@@ -547,8 +560,15 @@ def train_and_evaluate(
     *,
     policy_seed: int = 7,
     epochs: int = 1,
+    train_validation_only: bool = False,
+    state_path: Path | None = None,
+    frozen_q_table_sha256: str | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any]]:
-    if not train or not validation or not test:
+    if train_validation_only and test:
+        raise ValueError("train-validation-only mode forbids hidden episodes")
+    if isinstance(epochs, bool) or not isinstance(epochs, int) or epochs <= 0:
+        raise ValueError("epochs must be a positive integer")
+    if not train or not validation or (not test and not train_validation_only):
         raise ValueError("formal train/validation/test episode sets must be non-empty")
     generalization_contract = _validate_full_map_generalization(
         train, validation, test
@@ -560,17 +580,70 @@ def train_and_evaluate(
     if any(seed_sets[i] & seed_sets[j] for i in range(3) for j in range(i + 1, 3)):
         raise ValueError("formal mission seeds must be disjoint")
 
+    # Persist only completed episodes. An interrupted episode is retried from
+    # the last durable table, never from its partially updated in-memory state.
+    identity = hashlib.sha256(json.dumps({
+        "policy_seed": policy_seed, "epochs": epochs,
+        "implementation_sha256": {path.name: hashlib.sha256(path.read_bytes()).hexdigest()
+                                  for path in sorted(Path(__file__).parent.glob("*.py"))},
+        "inputs": [[asdict(row) for row in rows] for rows in (train, validation)],
+    }, sort_keys=True, default=str).encode()).hexdigest()
+    schedule = [episode for _ in range(epochs) for episode in train]
     q_table: dict[str, dict[str, float]] = {}
-    train_rows = []
-    for _ in range(epochs):
-        for episode in train:
-            train_rows.append(
-                _train_episode(episode, q_table, policy_seed=policy_seed)
-            )
+    train_rows: list[dict[str, Any]] = []
+    failures: list[dict[str, Any]] = []
+    if state_path is not None and state_path.exists():
+        saved = _json(state_path)
+        signature = saved.pop("state_sha256", None)
+        if saved.get("schema_version") != 1 or signature != _state_sha256(saved):
+            raise ValueError("training resume state integrity mismatch")
+        if saved.get("input_sha256") != identity:
+            raise ValueError("training resume input fingerprint mismatch")
+        q_table = saved["q_table"]
+        train_rows = saved["episodes"]
+        failures = saved["failures"]
+        if not isinstance(q_table, dict) or not isinstance(train_rows, list) or not isinstance(failures, list):
+            raise ValueError("training resume state schema mismatch")
+        if any(not isinstance(values, dict) or any(
+            isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value)
+            for value in values.values()) for values in q_table.values()):
+            raise ValueError("training resume Q table schema mismatch")
+        if any(not isinstance(row, dict) or row.get("episode_id") != episode.episode_id
+               or row.get("mission_seed") != episode.mission_seed
+               for row, episode in zip(train_rows, schedule)):
+            raise ValueError("training resume episode order mismatch")
+    if frozen_q_table_sha256 is not None and (
+        len(train_rows) != len(schedule) or _state_sha256(q_table) != frozen_q_table_sha256
+    ):
+        raise ValueError("frozen evaluation requires complete unchanged training state")
+    if len(train_rows) > len(schedule):
+        raise ValueError("training resume exceeds frozen schedule")
+
+    def persist() -> None:
+        if state_path is not None:
+            state = {"schema_version": 1, "input_sha256": identity,
+                     "q_table": q_table, "episodes": train_rows, "failures": failures}
+            state["state_sha256"] = _state_sha256(state)
+            _write(state_path, state)
+
+    for index, episode in enumerate(schedule):
+        if index < len(train_rows):
+            continue
+        previous_table = deepcopy(q_table)
+        try:
+            row = _train_episode(episode, q_table, policy_seed=policy_seed)
+        except BaseException as exc:
+            q_table = previous_table
+            failures.append({"episode_index": index, "episode_id": episode.episode_id,
+                             "error_type": type(exc).__name__})
+            persist()
+            raise
+        train_rows.append(row)
+        persist()
 
     checkpoint_policy = QLearningPolicy(train[0].config, seed=policy_seed)
     checkpoint_policy.q_table = q_table
-    checkpoint = checkpoint_policy.checkpoint()
+    checkpoint = deepcopy(checkpoint_policy.checkpoint())
     checkpoint.update(
         {
             "formal_multi_map": True,
@@ -611,7 +684,7 @@ def train_and_evaluate(
         )
         baseline_rows.append(baseline)
         policy = QLearningPolicy(episode.config, epsilon=0.0, seed=policy_seed)
-        policy.q_table = q_table
+        policy.q_table = deepcopy(q_table)
         active_started = time.perf_counter()
         active = run_episode(
             episode.config,
@@ -666,7 +739,7 @@ def train_and_evaluate(
 
         hybrid_policy = CoverageBackstoppedQLearningPolicy(
             episode.config,
-            q_table=q_table,
+            q_table=deepcopy(q_table),
             seed=policy_seed,
         )
         hybrid_started = time.perf_counter()
@@ -744,6 +817,7 @@ def train_and_evaluate(
         "formal_multimap_contract": generalization_contract,
         "epochs": epochs,
         "episodes": train_rows,
+        "failed_attempts": failures,
         "q_state_count": len(q_table),
         "reward_contract": "public_belief_delta_plus_executed_trajectory_v1",
     }
@@ -774,7 +848,7 @@ def train_and_evaluate(
         "hidden_gate_passed": bool(
             [row for row in hybrid_rows if row["split"] == "hidden"]
         )
-        and generalization_contract["full_map_coverage"] is True
+        and generalization_contract["full_task_coverage"] is True
         and all(
             row["formal_success"]
             for row in hybrid_rows
@@ -804,9 +878,15 @@ def _policy_seeds(value: str) -> tuple[int, ...]:
     return seeds
 
 
+def _state_sha256(value: Any) -> str:
+    return hashlib.sha256(json.dumps(value, sort_keys=True, allow_nan=False).encode()).hexdigest()
+
+
 def _write(path: Path, value: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    temporary = path.with_name(path.name + ".tmp")
+    temporary.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    temporary.replace(path)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -838,6 +918,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--epochs", type=int, default=1)
     parser.add_argument("--max-steps", type=int, default=400)
     parser.add_argument("--policy-seed", type=int, default=7)
+    parser.add_argument("--train-validation-only", action="store_true",
+                        help="train/validate frozen public splits without opening hidden tasks")
     parser.add_argument(
         "--policy-seeds",
         type=_policy_seeds,
@@ -849,6 +931,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="required for a formal multi-map budget claim; smoke runs remain research-only",
     )
     args = parser.parse_args(argv)
+    if args.train_validation_only and args.test is not None:
+        raise ValueError("--train-validation-only forbids --test")
     budget = load_formal_rl_budget(args.budget_contract) if args.budget_contract else None
     if budget is not None:
         if args.epochs != 1:
@@ -867,12 +951,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         ),
         "hidden": _require_full_map_selection("hidden", args.test, split_manifest),
     }
-    if any(value is None for value in (args.snapshot, args.session, args.hidden_receipt_root)):
+    if not args.train_validation_only and any(value is None for value in (args.snapshot, args.session, args.hidden_receipt_root)):
         raise ValueError("formal multi-map training requires --snapshot, --session and --hidden-receipt-root")
     from sanitation_campus_scenario.hidden_materializer import require_canonical_formal_inputs
-    require_canonical_formal_inputs(
-        snapshot_path=args.snapshot, session_path=args.session, scenario_config=args.scenario_config,
-    )
+    if not args.train_validation_only:
+        require_canonical_formal_inputs(
+            snapshot_path=args.snapshot, session_path=args.session, scenario_config=args.scenario_config,
+        )
 
     def prepare(
         split: str, rows: Sequence[tuple[int, int]], freeze_receipt_path: Path | None = None,
@@ -901,14 +986,41 @@ def main(argv: Sequence[str] | None = None) -> int:
         "validation": prepare("val", selections["validation"]),
     }
     policy_seeds = args.policy_seeds or (args.policy_seed,)
+    if args.train_validation_only:
+        for policy_seed in policy_seeds:
+            destination = args.evidence_root / "formal_planning" / f"seed-{policy_seed}"
+            reports = train_and_evaluate(
+                prepared["train"], prepared["validation"], [], policy_seed=policy_seed,
+                epochs=args.epochs, train_validation_only=True,
+                state_path=destination / "training_state.json",
+            )
+            for name, report in zip(("q_policy", "training_report", "baseline_report", "validation_report"), reports):
+                report["status"] = "train_validation_only_not_formal_acceptance"
+                report["hidden_opened"] = False
+                report["formal_budget_claim"] = False
+                _write(destination / f"{name}.json", report)
+        return 0
     seed_runs = []
     primary: tuple[dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any]] | None = None
     # All algorithm/configuration choices and the complete seed list are
     # frozen before any hidden rollout.  Hidden metrics are never used to
     # choose a checkpoint; the first frozen seed is the downstream artifact.
+    frozen_policy_hashes = {}
+    for policy_seed in policy_seeds:
+        destination = args.evidence_root / "formal_planning" / f"seed-{policy_seed}"
+        prehidden = train_and_evaluate(
+            prepared["train"], prepared["validation"], [], policy_seed=policy_seed,
+            epochs=args.epochs, train_validation_only=True,
+            state_path=destination / "training_state.json",
+        )
+        frozen_policy_hashes[str(policy_seed)] = _state_sha256(prehidden[0]["q_table"])
+        for name, report in zip(("q_policy", "training_report", "baseline_report", "validation_report"), prehidden):
+            _write(destination / "before_hidden" / f"{name}.json", report)
     configuration_freeze = {
         "frozen_before_hidden": True,
         "selection_source": "validation_only_before_hidden",
+        "checkpoint_selection_rule": "all_frozen_seeds_final_training_checkpoint",
+        "q_table_sha256_by_policy_seed": frozen_policy_hashes,
         "policy_seeds": list(policy_seeds),
     }
     from sanitation_campus_scenario.hidden_materializer import (
@@ -937,10 +1049,16 @@ def main(argv: Sequence[str] | None = None) -> int:
         run = train_and_evaluate(
             prepared["train"], prepared["validation"], prepared["hidden"],
             policy_seed=policy_seed, epochs=args.epochs,
+            state_path=args.evidence_root / "formal_planning" / f"seed-{policy_seed}" / "training_state.json",
+            frozen_q_table_sha256=frozen_policy_hashes[str(policy_seed)],
         )
+        if _state_sha256(run[0]["q_table"]) != frozen_policy_hashes[str(policy_seed)]:
+            raise ValueError("policy checkpoint changed after hidden configuration freeze")
         if primary is None:
             primary = run
         checkpoint_run, training_run, _baseline_run, validation_run = run
+        for name, report in zip(("q_policy", "training_report", "baseline_report", "validation_report"), run):
+            _write(args.evidence_root / "formal_planning" / f"seed-{policy_seed}" / f"{name}.json", report)
         seed_runs.append({
             "policy_seed": policy_seed,
             "training_rollout_count": len(training_run.get("episodes", [])),
@@ -968,7 +1086,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "training_rollout_count": len(selections["train"]) * args.epochs,
             "max_steps_per_episode": args.max_steps,
             "max_steps_is_episode_truncation_guard_not_task_or_episode_budget": True,
-            "policy_seed": args.policy_seed,
+            "policy_seed": policy_seeds[0],
             "policy_seeds": list(policy_seeds),
             "policy_seed_runs": seed_runs,
             "configuration_freeze": configuration_freeze,
@@ -982,7 +1100,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     _write(evidence / "baseline_report.json", baseline)
     _write(evidence / "validation_report.json", validation)
     print(evidence)
-    return 0 if validation["hidden_gate_passed"] else 2
+    return 0 if all(row["hidden_gate_passed"] for row in seed_runs) else 2
 
 
 if __name__ == "__main__":

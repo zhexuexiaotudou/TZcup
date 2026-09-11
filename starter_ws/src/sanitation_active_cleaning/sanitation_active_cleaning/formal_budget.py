@@ -126,8 +126,8 @@ def load_formal_rl_budget(path: str | Path) -> FormalRLBudget:
     if (
         not isinstance(seeds, list)
         or len(seeds) != 5
-        or len(set(seeds)) != 5
         or any(isinstance(seed, bool) or not isinstance(seed, int) or seed < 0 for seed in seeds)
+        or len(set(seeds)) != 5
         or policy.get("required_seed_count") != 5
         or policy.get("selection_source") != "validation_only_before_hidden"
     ):

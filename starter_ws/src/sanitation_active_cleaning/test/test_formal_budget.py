@@ -52,3 +52,12 @@ def test_budget_rejects_any_smoke_sized_multimap_contract(tmp_path: Path) -> Non
     invalid.write_text(payload, encoding="utf-8")
     with pytest.raises(ValueError, match="task_counts"):
         load_formal_rl_budget(invalid)
+
+
+def test_budget_rejects_non_scalar_policy_seed_with_contract_error(tmp_path: Path) -> None:
+    invalid = tmp_path / "budget.yaml"
+    invalid.write_text(BUDGET.read_text(encoding="utf-8").replace(
+        "training_seeds: [7, 17, 29, 43, 61]", "training_seeds: [[7], 17, 29, 43, 61]"
+    ), encoding="utf-8")
+    with pytest.raises(ValueError, match="policy seed/freeze contract"):
+        load_formal_rl_budget(invalid)

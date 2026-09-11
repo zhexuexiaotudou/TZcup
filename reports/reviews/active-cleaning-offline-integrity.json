@@ -1,0 +1,120 @@
+{
+  "formal_acceptance": false,
+  "gazebo_runtime_verified": false,
+  "hidden_consumed": false,
+  "limitations": [
+    "All smoke episodes truncated; no formal success or total-budget duration claim.",
+    "Training resumes at completed episodes; validation restarts and hidden receipts remain single-use.",
+    "Full budgets, product perception, Gazebo and S100P not executed."
+  ],
+  "offline_package": {
+    "formal_training_help": true,
+    "isolated_install": true,
+    "scope": "candidate offline package; merged revision verification pending",
+    "sha256": "7147b33297579b4cb17499e61efd2bc5641a3d1bff05094960442bef544053a2",
+    "stage_a_training_help": true,
+    "wheel": "sanitation_active_cleaning-0.1.0-py3-none-any.whl"
+  },
+  "raw_evidence_root": ".workspace",
+  "schema_version": 1,
+  "source_hash_scope": "final smoke local Python module bytes before git normalization",
+  "source_sha256": {
+    "starter_ws\\src\\sanitation_active_cleaning\\sanitation_active_cleaning\\__init__.py": "2f2003f033572698aa3eaa251075b4ebbf289b64d319b61cd0cee4c73c19f796",
+    "starter_ws\\src\\sanitation_active_cleaning\\sanitation_active_cleaning\\cli.py": "49e1485860d47ef624b5c639357e2433ddab7ea7777b777f3be76407ae351bb1",
+    "starter_ws\\src\\sanitation_active_cleaning\\sanitation_active_cleaning\\environment.py": "e9e8baa2cb08253e5ccd3eb201e56ef0d4f5362703f6f8c2154a52cad20f8bab",
+    "starter_ws\\src\\sanitation_active_cleaning\\sanitation_active_cleaning\\evaluation.py": "93cf6305d5b62a10e899efe6dabc74c1fcbe9576184e97997dc851689c47bb4c",
+    "starter_ws\\src\\sanitation_active_cleaning\\sanitation_active_cleaning\\formal_budget.py": "09e1335586455df6949e9a0ebbcf60887b8493ce7aa31b16d65eeaaad889e32a",
+    "starter_ws\\src\\sanitation_active_cleaning\\sanitation_active_cleaning\\formal_cleaning_coordinator.py": "d1e75116d35387ea86340bdda7db14eeec0174c88925a82a9cc288bb7a65ff8e",
+    "starter_ws\\src\\sanitation_active_cleaning\\sanitation_active_cleaning\\formal_cleaning_core.py": "19851b87e2203a0ea9e77d40a01d0ad4ffa16edb570caced4f58ea939354cc11",
+    "starter_ws\\src\\sanitation_active_cleaning\\sanitation_active_cleaning\\formal_contract.py": "78e4876127f67470b39fcf27fb2c862d3ee51868c313a85b789eddb1a55ff8d4",
+    "starter_ws\\src\\sanitation_active_cleaning\\sanitation_active_cleaning\\formal_observation_bridge.py": "e862cc2a2778c8a0677e457deed11a8471f41c710c0527fd58c5a29eb7a9361e",
+    "starter_ws\\src\\sanitation_active_cleaning\\sanitation_active_cleaning\\formal_observation_core.py": "3b412a9b26fb7c18260824803e10777780e07a20790f3bae13a632c3a8c7e1dc",
+    "starter_ws\\src\\sanitation_active_cleaning\\sanitation_active_cleaning\\formal_policy_core.py": "8d630400d9ea12da58c5483fae12d73d490a3e5c68440a8632b1d25052b72864",
+    "starter_ws\\src\\sanitation_active_cleaning\\sanitation_active_cleaning\\formal_policy_planner.py": "ae4702d5a69e3ec153d40a4196cf2e0ded8cbfc0579e9a912046d423e46dd42a",
+    "starter_ws\\src\\sanitation_active_cleaning\\sanitation_active_cleaning\\formal_stage_a_training.py": "c892ecd57898a89cab1cae2065314800aa684228a8a9d3a6ba101645ffbe29b6",
+    "starter_ws\\src\\sanitation_active_cleaning\\sanitation_active_cleaning\\formal_training.py": "c5fa579b081722b5fd1a8e44306bff3fd8227a32185fb21296647c8198205cb9",
+    "starter_ws\\src\\sanitation_active_cleaning\\sanitation_active_cleaning\\formal_trajectory_core.py": "0fa5db16bbe426904993627f73176842e2caa2fc840eb0ce798b980530a3b8de",
+    "starter_ws\\src\\sanitation_active_cleaning\\sanitation_active_cleaning\\formal_trajectory_executor.py": "b0cf0e5818437a274061964781816ae2514adc1b5059feee8f00b0cb9fbfbe63",
+    "starter_ws\\src\\sanitation_active_cleaning\\sanitation_active_cleaning\\geometry.py": "ff10646e63e196735f960daea8e65307b13c4d2096ec4687c91fd9c7ec859bc8",
+    "starter_ws\\src\\sanitation_active_cleaning\\sanitation_active_cleaning\\models.py": "93105ae52932b6adea1b5a36f959ca77468a2289a30923d2171c105be0df5696",
+    "starter_ws\\src\\sanitation_active_cleaning\\sanitation_active_cleaning\\policies.py": "4682c08f3c6531693082ce1fb46625e39a1e3530b0922c24fd1c851b59d5c8e0",
+    "starter_ws\\src\\sanitation_active_cleaning\\sanitation_active_cleaning\\rl.py": "980d31ac54a38e9febbe577cf9035bedeaa2931a9d77fd6d6e6797cfd7b35d3c",
+    "starter_ws\\src\\sanitation_active_cleaning\\sanitation_active_cleaning\\train_cli.py": "ec96e7d59252968a11df1b901e169155d36bc77a90fbda46b70c2d3f04d7a32c"
+  },
+  "status": "OFFLINE_SMOKE_VERIFIED_FORMAL_BUDGET_NOT_RUN",
+  "targeted_pytest": {
+    "duration_s": 17.16,
+    "passed": 43
+  },
+  "throughput_measurements": [
+    {
+      "max_steps": 8,
+      "measurements": [
+        {
+          "baseline_steps": null,
+          "materialization_s": 7.2015858000086155,
+          "rollout_wall_s": 1.2416656000132207,
+          "split": "train",
+          "steps": 8,
+          "truncated": true
+        },
+        {
+          "baseline_steps": 8,
+          "materialization_s": 6.813859800022328,
+          "rollout_wall_s": 3.2550495000032242,
+          "split": "val",
+          "steps": 8,
+          "truncated": true
+        }
+      ],
+      "run": "active-cleaning-smoke-01",
+      "status": "SMOKE_COMPLETED_NOT_FORMAL"
+    },
+    {
+      "max_steps": 40,
+      "measurements": [
+        {
+          "baseline_steps": null,
+          "materialization_s": 6.735055800003465,
+          "rollout_wall_s": 5.450015600014012,
+          "split": "train",
+          "steps": 40,
+          "truncated": true
+        },
+        {
+          "baseline_steps": 40,
+          "materialization_s": 7.0622265999845695,
+          "rollout_wall_s": 59.51842189999297,
+          "split": "val",
+          "steps": 40,
+          "truncated": true
+        }
+      ],
+      "run": "active-cleaning-smoke-02",
+      "status": "SMOKE_COMPLETED_NOT_FORMAL"
+    },
+    {
+      "max_steps": 8,
+      "measurements": [
+        {
+          "baseline_steps": null,
+          "materialization_s": 5.487072199990507,
+          "rollout_wall_s": 0.8520378000102937,
+          "split": "train",
+          "steps": 8,
+          "truncated": true
+        },
+        {
+          "baseline_steps": 8,
+          "materialization_s": 5.372189499990782,
+          "rollout_wall_s": 3.704909599997336,
+          "split": "val",
+          "steps": 8,
+          "truncated": true
+        }
+      ],
+      "run": "active-cleaning-smoke-final",
+      "status": "SMOKE_COMPLETED_NOT_FORMAL"
+    }
+  ]
+}
