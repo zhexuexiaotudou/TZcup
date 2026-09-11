@@ -117,6 +117,7 @@ def test_hard_restart_record_binds_pids_exit_order_and_hashes(tmp_path):
         ("map_lifecycle_manifest.json", b'{"status": "ready_for_localization_cleaning"}'),
         ("mapping_runtime.json", b'{"passed": true}'),
         ("runtime_gate_binding.json", b'{"session_id": "mapping-session-001"}'),
+        ("mapping_localization_diagnostic.json", b'{"passed": true}'),
     ):
         (root / name).write_bytes(content)
     record = {
@@ -139,6 +140,7 @@ def test_hard_restart_record_binds_pids_exit_order_and_hashes(tmp_path):
         ("map_lifecycle_manifest_sha256", "map_lifecycle_manifest.json"),
         ("mapping_runtime_sha256", "mapping_runtime.json"),
         ("mapping_runtime_gate_binding_sha256", "runtime_gate_binding.json"),
+        ("mapping_localization_diagnostic_sha256", "mapping_localization_diagnostic.json"),
     ):
         record[field] = hashlib.sha256((root / name).read_bytes()).hexdigest()
     handoff = {key: record[key] for key in (
@@ -146,6 +148,7 @@ def test_hard_restart_record_binds_pids_exit_order_and_hashes(tmp_path):
         "mapping_launch_pid", "mapping_collector_pid", "mapping_completion_wall_time",
         "mapping_cleanup_wall_time", "map_lifecycle_manifest_sha256",
         "mapping_runtime_sha256", "mapping_runtime_gate_binding_sha256",
+        "mapping_localization_diagnostic_sha256",
     )}
     handoff.update(mapping_runner_completed=True, mapping_process_groups_stopped=True)
     handoff_path = root / "mapping_handoff_record.json"

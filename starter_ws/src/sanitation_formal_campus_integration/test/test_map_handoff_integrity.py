@@ -6,7 +6,9 @@ import json
 import pytest
 
 from sanitation_formal_campus_integration.map_lifecycle_core import (
+    MapLifecycleError,
     hard_restart_record_valid,
+    validate_mapping_handoff_record,
 )
 
 
@@ -29,6 +31,9 @@ def restart_evidence(tmp_path):
         "schema_version": 1, "session_id": "mapping-session-001",
         "source_sha256": "a" * 64,
     })
+    diagnostic_hash = _write_json(tmp_path, "mapping_localization_diagnostic.json", {
+        "passed": True, "status": "FORMAL_FIRST_MAP_LOCALIZATION_DIAGNOSTIC_CAPTURED",
+    })
     handoff = {
         "schema_version": 2,
         "mapping_runner_completed": True,
@@ -44,6 +49,7 @@ def restart_evidence(tmp_path):
         "map_lifecycle_manifest_sha256": manifest_hash,
         "mapping_runtime_sha256": runtime_hash,
         "mapping_runtime_gate_binding_sha256": binding_hash,
+        "mapping_localization_diagnostic_sha256": diagnostic_hash,
     }
     handoff_hash = _write_json(tmp_path, "mapping_handoff_record.json", handoff)
     record = {key: handoff[key] for key in (
@@ -52,6 +58,7 @@ def restart_evidence(tmp_path):
         "mapping_completion_wall_time", "mapping_cleanup_wall_time",
         "map_lifecycle_manifest_sha256", "mapping_runtime_sha256",
         "mapping_runtime_gate_binding_sha256",
+        "mapping_localization_diagnostic_sha256",
     )}
     record.update({
         "mapping_stopped_before_cleaning": True,
@@ -91,6 +98,7 @@ def test_handoff_requires_structured_completion_evidence(restart_evidence, hando
     ("map_lifecycle_manifest_sha256", "0" * 64),
     ("mapping_runtime_sha256", "0" * 64),
     ("mapping_runtime_gate_binding_sha256", "0" * 64),
+    ("mapping_localization_diagnostic_sha256", "0" * 64),
 ])
 def test_rehashed_failed_handoff_is_rejected(restart_evidence, field, value):
     root, handoff, record = restart_evidence
@@ -120,6 +128,33 @@ def test_mapping_runtime_binding_cannot_drift(restart_evidence, action):
                 root, "mapping_handoff_record.json", handoff
             )
     assert hard_restart_record_valid(record, root) is False
+
+
+@pytest.mark.parametrize("action", ["missing", "tampered"])
+def test_localization_diagnostic_receipt_cannot_drift_after_mapping_handoff(
+    restart_evidence, action
+):
+    root, _, record = restart_evidence
+    path = root / "mapping_localization_diagnostic.json"
+    if action == "missing":
+        path.unlink()
+    else:
+        path.write_text('{"passed": false}', encoding="utf-8")
+    assert hard_restart_record_valid(record, root) is False
+
+
+@pytest.mark.parametrize("action", ["missing", "tampered"])
+def test_mapping_handoff_validator_rehashes_localization_diagnostic(
+    restart_evidence, action
+):
+    root, _, _ = restart_evidence
+    path = root / "mapping_localization_diagnostic.json"
+    if action == "missing":
+        path.unlink()
+    else:
+        path.write_text('{"passed": false}', encoding="utf-8")
+    with pytest.raises(MapLifecycleError, match="mapping_localization_diagnostic"):
+        validate_mapping_handoff_record(root)
 
 
 @pytest.mark.parametrize(("field", "value"), [

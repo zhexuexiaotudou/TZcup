@@ -55,6 +55,7 @@ def _seal_restart(root, mapping, cleaning):
         ("map_lifecycle_manifest_sha256", "map_lifecycle_manifest.json"),
         ("mapping_runtime_sha256", "mapping_runtime.json"),
         ("mapping_runtime_gate_binding_sha256", "runtime_gate_binding.json"),
+        ("mapping_localization_diagnostic_sha256", "mapping_localization_diagnostic.json"),
     ):
         handoff[key] = hashlib.sha256((root / filename).read_bytes()).hexdigest()
     handoff_path = _write(root / "mapping_handoff_record.json", handoff)
@@ -114,6 +115,10 @@ def test_validator_passes_only_complete_real_runtime_contract(tmp_path, monkeypa
         "world_truth_used_for_control": False,
         "mapping_ignored_dirt": True,
         "sha256": hashes,
+    })
+    _write(root / "mapping_localization_diagnostic.json", {
+        "passed": True,
+        "status": "FORMAL_FIRST_MAP_LOCALIZATION_DIAGNOSTIC_CAPTURED",
     })
     mapping = _write(tmp_path / "mapping.json", {
         "passed": True,
@@ -369,6 +374,7 @@ def handoff_files(tmp_path):
     root = tmp_path / "map"
     root.mkdir()
     _write(root / "map_lifecycle_manifest.json", {})
+    _write(root / "mapping_localization_diagnostic.json", {"passed": True})
     mapping = _write(tmp_path / "mapping.json", {"passed": True})
     cleaning = _write(tmp_path / "cleaning.json", {"hard_restart_verified": True})
     _seal_restart(root, mapping, cleaning)

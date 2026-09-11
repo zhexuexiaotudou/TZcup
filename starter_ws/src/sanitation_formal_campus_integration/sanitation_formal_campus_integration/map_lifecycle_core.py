@@ -76,6 +76,7 @@ def validate_mapping_handoff_record(map_root: str | Path) -> dict:
             ("map_lifecycle_manifest_sha256", "map_lifecycle_manifest.json"),
             ("mapping_runtime_sha256", "mapping_runtime.json"),
             ("mapping_runtime_gate_binding_sha256", "runtime_gate_binding.json"),
+            ("mapping_localization_diagnostic_sha256", "mapping_localization_diagnostic.json"),
         ):
             artifact = root / name
             if artifact.is_symlink() or handoff.get(key) != sha256(artifact):
@@ -98,6 +99,7 @@ def hard_restart_record_valid(record: dict, map_root: str | Path) -> bool:
         manifest_hash = sha256(root / "map_lifecycle_manifest.json")
         mapping_runtime_hash = sha256(root / "mapping_runtime.json")
         mapping_binding_hash = sha256(root / "runtime_gate_binding.json")
+        diagnostic_hash = sha256(root / "mapping_localization_diagnostic.json")
         times = [datetime.datetime.fromisoformat(record[key]) for key in (
             "mapping_completion_wall_time", "mapping_cleanup_wall_time",
             "cleaning_start_wall_time",
@@ -142,6 +144,8 @@ def hard_restart_record_valid(record: dict, map_root: str | Path) -> bool:
         and handoff.get("mapping_runtime_sha256") == mapping_runtime_hash
         and record.get("mapping_runtime_gate_binding_sha256") == mapping_binding_hash
         and handoff.get("mapping_runtime_gate_binding_sha256") == mapping_binding_hash
+        and record.get("mapping_localization_diagnostic_sha256") == diagnostic_hash
+        and handoff.get("mapping_localization_diagnostic_sha256") == diagnostic_hash
         and record.get("mapping_handoff_record_sha256")
         == hashlib.sha256(handoff_bytes).hexdigest()
     )

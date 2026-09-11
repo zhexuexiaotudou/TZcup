@@ -259,6 +259,9 @@ value = {
     ).hexdigest(),
     "mapping_runtime_sha256": hashlib.sha256(runtime.read_bytes()).hexdigest(),
     "mapping_runtime_gate_binding_sha256": handoff["mapping_runtime_gate_binding_sha256"],
+    "mapping_localization_diagnostic_sha256": hashlib.sha256(
+        (map_root / "mapping_localization_diagnostic.json").read_bytes()
+    ).hexdigest(),
 }
 output.write_text(
     json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8"
