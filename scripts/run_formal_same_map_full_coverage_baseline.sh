@@ -162,17 +162,23 @@ cleanup() {
 formal_runtime_install_traps cleanup
 
 # The lifecycle launch owns one Gazebo/Nav2/AMCL graph, but deliberately does
-# not start its hard-coded server. The baseline server below consumes configs
-# derived from the frozen real cleaning footprint and effective swath width.
+# starts the sealed saved-map executor and its lifecycle-owned coverage server.
 "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 launch sanitation_formal_campus_integration formal_campus_map_lifecycle.launch.py \
-  mission_mode:=cleaning cleaning_planner:=full_coverage start_coverage:=false \
+  mission_mode:=cleaning cleaning_planner:=full_coverage start_coverage:=true \
   gui:=false world:="${OUTPUT}/world.sdf" world_name:="${WORLD_NAME}" episode_manifest:="${EPISODE_MANIFEST}" \
   map_artifact_dir:="${MAP_ROOT}" pedestrian_schedule:="${SCHEDULE}" \
   operation_speed_profile:="${OPERATION_SPEED_PROFILE}" \
   max_linear_velocity:="${WHOLE_VEHICLE_SAFETY_CAP}" \
   speed_qualification_state:="${SPEED_QUALIFICATION_STATE}" \
+  coverage_evidence_dir:="${OUTPUT}" \
   start_pedestrians:=true >"${OUTPUT}/cleaning.launch.log" 2>&1 &
 LAUNCH_PID=$!; PIDS+=("${LAUNCH_PID}")
+python3 - "${OUTPUT}/hard_restart_record.json" "${MAP_ROOT}/mapping_handoff_record.json" "${MAP_ROOT}/map_lifecycle_manifest.json" "${MAPPING_RUNTIME}" "${LAUNCH_PID}" <<'PY'
+import datetime,hashlib,json,pathlib,sys
+out,handoff_path,manifest,runtime=map(pathlib.Path,sys.argv[1:5]); handoff=json.loads(handoff_path.read_text(encoding='utf-8'))
+value={"schema_version":2,"mapping_stopped_before_cleaning":True,"mapping_process_count_before_cleaning":0,"mapping_pid_alive_count_before_cleaning":0,"mapping_runner_pid":handoff["mapping_runner_pid"],"mapping_runner_exit_code":handoff["mapping_runner_exit_code"],"mapping_launch_pid":handoff["mapping_launch_pid"],"mapping_collector_pid":handoff["mapping_collector_pid"],"mapping_completion_wall_time":handoff["mapping_completion_wall_time"],"mapping_cleanup_wall_time":handoff["mapping_cleanup_wall_time"],"cleaning_runner_pid":__import__('os').getpid(),"cleaning_launch_pid":int(sys.argv[5]),"cleaning_start_wall_time":datetime.datetime.now(datetime.timezone.utc).isoformat(),"restart_type":"separate_process_hard_restart","mapping_handoff_record_sha256":hashlib.sha256(handoff_path.read_bytes()).hexdigest(),"map_lifecycle_manifest_sha256":hashlib.sha256(manifest.read_bytes()).hexdigest(),"mapping_runtime_sha256":hashlib.sha256(runtime.read_bytes()).hexdigest()}
+out.write_text(json.dumps(value,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+PY
 if [[ "${REQUALIFIED_DRY_SPEED_ENABLEMENT}" == "1" ]]; then
   # This short lease is deliberately separate from the launch: losing either
   # this heartbeat or the live /brush_enabled dry-cleaning signal re-clamps
@@ -189,31 +195,6 @@ fi
   --start-x "${START_X}" --start-y "${START_Y}" --start-yaw "${START_YAW}" \
   >"${OUTPUT}/baseline_support.log" 2>&1 & PIDS+=("$!")
 
-"${FORMAL_RUNTIME_SESSION_PREFIX[@]}" python3 "${ROOT}/scripts/collect_formal_map_lifecycle_runtime.py" \
-  --mode cleaning --map-root "${MAP_ROOT}" --timeout 180 \
-  --restart-record "${OUTPUT}/hard_restart_record.json" \
-  --output "${OUTPUT}/cleaning_runtime.json" \
-  >"${OUTPUT}/cleaning_runtime.collector.log" 2>&1 &
-COLLECTOR_PID=$!; PIDS+=("${COLLECTOR_PID}")
-set +e; wait "${COLLECTOR_PID}"; COLLECTOR_STATUS=$?; set -e
-unset 'PIDS[-1]'
-(( COLLECTOR_STATUS == 0 )) || { echo "saved-map readiness collector failed" >&2; exit 4; }
-kill -0 "${LAUNCH_PID}" 2>/dev/null || { echo "cleaning launch exited before FullCoverage" >&2; exit 4; }
-
-"${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 run opennav_coverage opennav_coverage --ros-args \
-  --params-file "${OUTPUT}/coverage_server_params.yaml" \
-  >"${OUTPUT}/coverage_server.log" 2>&1 & SERVER_PID=$!; PIDS+=("${SERVER_PID}")
-for _ in {1..120}; do
-  ros2 service list 2>/dev/null | grep -q '^/coverage_server/change_state$' && break
-  kill -0 "${SERVER_PID}" 2>/dev/null || { echo "coverage_server exited" >&2; exit 4; }
-  sleep 1
-done
-ros2 service list | grep -q '^/coverage_server/change_state$' || { echo "coverage_server not ready" >&2; exit 4; }
-ros2 lifecycle set /coverage_server configure >"${OUTPUT}/coverage_server.configure.log"
-grep -q 'Transitioning successful' "${OUTPUT}/coverage_server.configure.log" || { echo "coverage_server configure failed" >&2; exit 4; }
-ros2 lifecycle set /coverage_server activate >"${OUTPUT}/coverage_server.activate.log"
-grep -q 'Transitioning successful' "${OUTPUT}/coverage_server.activate.log" || { echo "coverage_server activate failed" >&2; exit 4; }
-
 for _ in {1..180}; do
   actions="$(ros2 action list 2>/dev/null || true)"
   topics="$(ros2 topic list 2>/dev/null || true)"
@@ -226,12 +207,17 @@ done
 timeout 30 ros2 topic echo --once /ground_truth/odom nav_msgs/msg/Odometry \
   >"${OUTPUT}/first_ground_truth_odom.txt" 2>&1 || { echo "evaluator ground truth unavailable" >&2; exit 4; }
 
-"${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 run sanitation_coverage coverage_probe --ros-args \
-  -p use_sim_time:=true -p config_path:="${OUTPUT}/coverage_probe_config.yaml" \
-  -p output_path:="${OUTPUT}/coverage_runtime.json" \
-  -p path_output_path:="${OUTPUT}/coverage_path.json" \
-  -p trajectory_output_path:="${OUTPUT}/coverage_trajectory.csv" \
-  >"${OUTPUT}/coverage_probe.log" 2>&1 & PROBE_PID=$!; PIDS+=("${PROBE_PID}")
+# The lifecycle-owned executor is the only coverage executor.  The collector
+# starts before its schema-1 receipt appears so it observes the entire live
+# AMCL/brush interval, then closes only after the executor terminal state.
+"${FORMAL_RUNTIME_SESSION_PREFIX[@]}" python3 "${ROOT}/scripts/collect_formal_map_lifecycle_runtime.py" \
+  --mode cleaning --map-root "${MAP_ROOT}" --timeout "${TIMEOUT}" \
+  --restart-record "${OUTPUT}/hard_restart_record.json" \
+  --mission-geometry "${MAP_ROOT}/mission_geometry.yaml" \
+  --coverage-report "${OUTPUT}/coverage_execution.json" \
+  --output "${OUTPUT}/cleaning_runtime.json" \
+  >"${OUTPUT}/cleaning_runtime.collector.log" 2>&1 &
+COLLECTOR_PID=$!; PIDS+=("${COLLECTOR_PID}")
 for _ in {1..60}; do
   if "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" python3 "${ROOT}/scripts/collect_formal_safety_speed_readback.py" \
       --output "${OUTPUT}/safety_manager_speed_readback_attempt_${_}.json" \
@@ -251,27 +237,31 @@ done
   echo "live safety-manager speed readback never reached the required dry-only cap" >&2; exit 4;
 }
 deadline=$((SECONDS + TIMEOUT))
-while kill -0 "${PROBE_PID}" 2>/dev/null; do
-  (( SECONDS < deadline )) || { echo "FullCoverage probe timed out" >&2; exit 4; }
+while kill -0 "${COLLECTOR_PID}" 2>/dev/null; do
+  (( SECONDS < deadline )) || { echo "FullCoverage collector timed out" >&2; exit 4; }
   kill -0 "${LAUNCH_PID}" 2>/dev/null || { echo "cleaning launch exited during FullCoverage" >&2; exit 4; }
   sleep 2
 done
-set +e; wait "${PROBE_PID}"; PROBE_STATUS=$?; set -e
+set +e; wait "${COLLECTOR_PID}"; COLLECTOR_STATUS=$?; set -e
 unset 'PIDS[-1]'
-(( PROBE_STATUS == 0 )) || { echo "FullCoverage probe failed" >&2; exit 4; }
-[[ -f "${OUTPUT}/coverage_runtime.json" ]] || { echo "FullCoverage report missing" >&2; exit 4; }
+(( COLLECTOR_STATUS == 0 )) || { echo "saved-map cleaning collector failed" >&2; exit 4; }
+[[ -f "${OUTPUT}/coverage_execution.json" ]] || { echo "saved-map coverage report missing" >&2; exit 4; }
 
 python3 "${ROOT}/scripts/validate_formal_map_lifecycle_runtime.py" \
   --map-root "${MAP_ROOT}" --mapping-runtime "${MAPPING_RUNTIME}" \
   --cleaning-runtime "${OUTPUT}/cleaning_runtime.json" \
   --runtime-binding "${RUNTIME_BINDING}" \
   --output "${OUTPUT}/lifecycle_acceptance.json"
+# The baseline generator accepts only the executor's schema-1 completion
+# receipt plus the collector's independent AMCL/brush telemetry.  It derives
+# distance, swept cells and first-brush-to-terminal monotonic duration there;
+# do not add a hand-written empirical-metrics shortcut to this runner.
 bash "${ROOT}/scripts/run_formal_same_map_baseline.sh" \
   --episode-manifest "${EPISODE_MANIFEST}" --map-root "${MAP_ROOT}" \
   --mapping-runtime "${MAPPING_RUNTIME}" \
   --cleaning-runtime "${OUTPUT}/cleaning_runtime.json" \
   --lifecycle-acceptance "${OUTPUT}/lifecycle_acceptance.json" \
-  --coverage-runtime "${OUTPUT}/coverage_runtime.json" \
+  --coverage-runtime "${OUTPUT}/coverage_execution.json" \
   --safety-manager-readback "${SAFETY_MANAGER_READBACK}" \
   --runtime-binding "${RUNTIME_BINDING}" \
   --runtime-closure "${RUNTIME_CLOSURE_MANIFEST}" \

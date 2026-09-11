@@ -64,6 +64,112 @@ def test_final_preembedded_world_binds_each_formal_water_contact_sensor() -> Non
     assert world.find("model[@name='vehicle']") is not None
 
 
+def _service_contact_model(*, nested_topic: bool) -> ET.Element:
+    sensor_name = "charge_receptacle_contact_sensor"
+    topic = MODULE.FORMAL_SERVICE_CONTACT_TOPICS[sensor_name]
+    topic_xml = (
+        f"<contact><topic>{topic}</topic><collision>proxy</collision></contact>"
+        if nested_topic
+        else f"<topic>{topic}</topic><contact><collision>proxy</collision></contact>"
+    )
+    return ET.fromstring(
+        "<model><link name='base_footprint'><collision name='proxy'/>"
+        f"<sensor name='{sensor_name}' type='contact'>{topic_xml}</sensor>"
+        "</link></model>"
+    )
+
+
+def test_final_service_contact_binding_requires_nested_topic() -> None:
+    sensor_name = "charge_receptacle_contact_sensor"
+    model = _service_contact_model(nested_topic=True)
+    MODULE.validate_formal_water_contact_sensor_bindings(model, {sensor_name})
+    sensor = model.find(".//sensor")
+    assert sensor is not None and sensor.find("topic") is None
+
+
+def test_final_service_contact_binding_rejects_direct_sensor_topic() -> None:
+    with pytest.raises(MODULE.PreparationError, match="misplaced direct topic"):
+        MODULE.validate_formal_water_contact_sensor_bindings(
+            _service_contact_model(nested_topic=False),
+            {"charge_receptacle_contact_sensor"},
+        )
+
+
+SERVICE_SOURCE_LINKS = {
+    "charge_receptacle_contact_sensor": "charge_receptacle_link",
+    "wastewater_drain_coupling_contact_sensor": "wastewater_drain_coupling_link",
+}
+
+
+def _service_rebind_fixture(
+    sensor_name: str, *, selector_suffix: int = 120, collision_suffixes: tuple[int, ...] = (113,)
+) -> tuple[ET.Element, ET.Element]:
+    source_link = SERVICE_SOURCE_LINKS[sensor_name]
+    source_collision = MODULE.FORMAL_SERVICE_CONTACT_SOURCE_COLLISIONS[sensor_name]
+    topic = MODULE.FORMAL_SERVICE_CONTACT_TOPICS[sensor_name]
+    selector = (
+        f"base_footprint_fixed_joint_lump__{source_collision}_collision_{selector_suffix}"
+    )
+    collisions = "".join(
+        f"<collision name='base_footprint_fixed_joint_lump__{source_collision}_collision_{suffix}'/>"
+        for suffix in collision_suffixes
+    )
+    urdf = ET.fromstring(
+        f"<robot name='vehicle'><link name='base_footprint'/><link name='{source_link}'>"
+        f"<collision name='{source_collision}'/></link><gazebo reference='{source_link}'>"
+        f"<sensor name='{sensor_name}' type='contact'/></gazebo></robot>"
+    )
+    converted = ET.fromstring(
+        f"<sdf version='1.11'><model name='vehicle'><link name='base_footprint'>{collisions}"
+        f"<sensor name='{sensor_name}' type='contact'><contact><topic>{topic}</topic>"
+        f"<collision>{selector}</collision></contact></sensor></link></model></sdf>"
+    )
+    return urdf, converted
+
+
+@pytest.mark.parametrize("sensor_name", sorted(MODULE.FORMAL_SERVICE_CONTACT_SOURCE_COLLISIONS))
+def test_service_contact_rebinds_unique_converted_lump_suffix(sensor_name: str) -> None:
+    urdf, converted = _service_rebind_fixture(sensor_name)
+    world = ET.fromstring("<world name='w'/>")
+
+    restored, model = MODULE.append_preembedded_model(world, converted, urdf)
+
+    source_collision = MODULE.FORMAL_SERVICE_CONTACT_SOURCE_COLLISIONS[sensor_name]
+    expected = f"base_footprint_fixed_joint_lump__{source_collision}_collision_113"
+    sensor = model.find(f"link[@name='base_footprint']/sensor[@name='{sensor_name}']")
+    assert sensor is not None and sensor.findtext("contact/collision") == expected
+    assert restored == [{
+        "sensor": sensor_name,
+        "converted_link": "base_footprint",
+        "restored_link": "base_footprint",
+        "local_pose": "0 0 0 0 0 0",
+        "attachment_status": "retained_on_converted_collision_owner_selector_rebound",
+        "contact_selector_original": f"base_footprint_fixed_joint_lump__{source_collision}_collision_120",
+        "contact_selector_rebound": expected,
+        "urdf_source_collision": source_collision,
+    }]
+    assert MODULE.service_contact_selector_rebindings(restored) == restored
+
+
+@pytest.mark.parametrize("sensor_name", sorted(MODULE.FORMAL_SERVICE_CONTACT_SOURCE_COLLISIONS))
+def test_service_contact_rebinding_rejects_ambiguous_lumps(sensor_name: str) -> None:
+    urdf, converted = _service_rebind_fixture(sensor_name, collision_suffixes=(113, 114))
+
+    with pytest.raises(MODULE.PreparationError, match="ambiguous lump collisions"):
+        MODULE.append_preembedded_model(ET.fromstring("<world name='w'/>"), converted, urdf)
+
+
+@pytest.mark.parametrize("sensor_name", sorted(MODULE.FORMAL_SERVICE_CONTACT_SOURCE_COLLISIONS))
+def test_service_contact_with_correct_selector_is_not_rebound(sensor_name: str) -> None:
+    urdf, converted = _service_rebind_fixture(sensor_name, selector_suffix=113)
+
+    restored, _ = MODULE.append_preembedded_model(ET.fromstring("<world name='w'/>"), converted, urdf)
+
+    assert restored[0]["attachment_status"] == "retained_on_converted_collision_owner"
+    assert "contact_selector_rebound" not in restored[0]
+    assert MODULE.service_contact_selector_rebindings(restored) == []
+
+
 def test_rejects_historical_squeegee_stale_collision_selector() -> None:
     urdf, converted = _formal_water_contact_fixture()
     selector = converted.find(
@@ -156,6 +262,36 @@ def test_reconstructs_fixed_sensor_holder_when_sdformat_reduces_reference_link()
     joint = converted.find("joint[@name='formal_sensor_attachment_camera_link']")
     assert joint is not None and joint.findtext("parent") == "base"
     assert restored[0]["attachment_status"] == "restored_reconstructed_fixed_reference_link"
+
+
+def test_retains_contact_sensor_on_reduced_collision_owner():
+    urdf = ET.fromstring(
+        """<robot name='fixture'><link name='base'/><link name='service_link'/>
+        <joint name='service_mount' type='fixed'><parent link='base'/><child link='service_link'/></joint>
+        <gazebo reference='service_link'><sensor name='service_contact' type='contact'/>
+        </gazebo></robot>"""
+    )
+    converted = ET.fromstring(
+        """<model name='fixture'><link name='base'>
+        <collision name='base_fixed_joint_lump__service_collision_collision'/>
+        <sensor name='service_contact' type='contact'><pose>1 2 3 0 0 0</pose>
+        <contact><collision>base_fixed_joint_lump__service_collision_collision</collision></contact>
+        </sensor></link></model>"""
+    )
+
+    restored = MODULE.restore_sensor_attachments(
+        converted, MODULE.sensor_attachment_contract(urdf), urdf
+    )
+
+    assert converted.find("link[@name='service_link']") is None
+    assert converted.find("link[@name='base']/sensor[@name='service_contact']") is not None
+    assert restored == [{
+        "sensor": "service_contact",
+        "converted_link": "base",
+        "restored_link": "base",
+        "local_pose": "1 2 3 0 0 0",
+        "attachment_status": "retained_on_converted_collision_owner",
+    }]
 
 
 def test_build_can_make_single_sensor_source_diagnostic(tmp_path: Path):

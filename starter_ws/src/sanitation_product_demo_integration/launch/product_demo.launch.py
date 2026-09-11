@@ -42,6 +42,16 @@ def _validate_product_inputs(context):  # type: ignore[no-untyped-def]
 
 
 def generate_launch_description() -> LaunchDescription:
+    perception_topic_defaults = {
+        "front_rgb_topic": "/sensors/front_rgbd/depth/image_rect_raw/image",
+        "front_depth_topic": "/sensors/front_rgbd/depth/image_rect_raw/depth_image",
+        "front_camera_info_topic": "/sensors/front_rgbd/depth/image_rect_raw/camera_info",
+        "wrist_rgb_topic": "/sensors/wrist_rgbd/depth/image_rect_raw/image",
+        "wrist_depth_topic": "/sensors/wrist_rgbd/depth/image_rect_raw/depth_image",
+        "wrist_camera_info_topic": "/sensors/wrist_rgbd/depth/image_rect_raw/camera_info",
+        "rear_left_rgb_topic": "/sensors/rear_left_fisheye/image_raw",
+        "rear_right_rgb_topic": "/sensors/rear_right_fisheye/image_raw",
+    }
     campus_launch = PathJoinSubstitution(
         [
             FindPackageShare("sanitation_formal_campus_integration"),
@@ -117,6 +127,12 @@ def generate_launch_description() -> LaunchDescription:
                     "unless a current requalification receipt explicitly allows 1.0."
                 ),
             ),
+            *[
+                DeclareLaunchArgument(
+                    f"perception_{name}", default_value=value
+                )
+                for name, value in perception_topic_defaults.items()
+            ],
             OpaqueFunction(function=_validate_product_inputs),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(campus_launch),
@@ -162,7 +178,11 @@ def generate_launch_description() -> LaunchDescription:
                         launch_arguments={
                             "artifact_root": LaunchConfiguration(
                                 "perception_artifact_root"
-                            )
+                            ),
+                            **{
+                                name: LaunchConfiguration(f"perception_{name}")
+                                for name in perception_topic_defaults
+                            },
                         }.items(),
                     )
                 ],

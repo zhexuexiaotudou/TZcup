@@ -6,16 +6,73 @@ import pytest
 import yaml
 
 from sanitation_formal_campus_integration.map_lifecycle_core import (
+    CampusMapContract,
     MAXIMUM_SAVED_MAP_RESOLUTION_M,
     MapLifecycleError,
     assess_grid_observation,
     goal_tangent_yaw,
     hard_restart_record_valid,
     load_campus_map_contract,
+    materialize_saved_map_coverage_geometry,
     prepare_public_lifecycle_artifacts,
+    read_binary_pgm,
+    _mask_loops,
+    _signed_area,
+    _inside,
+    _rectangles_from_mask,
     select_frontier_goal,
     validate_saved_map_artifact,
 )
+
+
+@pytest.mark.parametrize("separator", [b" ", b"\t", b"\n", b"\r\n"])
+@pytest.mark.parametrize("pixel", [b"\x09", b"\x0a", b"\x20"])
+def test_binary_pgm_preserves_whitespace_valued_first_pixel(tmp_path, separator, pixel):
+    path = tmp_path / "map.pgm"
+    path.write_bytes(b"P5\r\n1 1\r\n255" + separator + pixel)
+    assert read_binary_pgm(path) == (1, 1, [bytearray(pixel)])
+
+
+def test_binary_pgm_flips_top_first_raster_into_map_row_order(tmp_path):
+    path = tmp_path / "map.pgm"
+    path.write_bytes(b"P5\n2 2\n255\n" + bytes([1, 2, 3, 4]))
+    assert read_binary_pgm(path) == (2, 2, [bytearray([3, 4]), bytearray([1, 2])])
+
+
+def test_occupancy_union_uses_one_boundary_not_adjacent_keepout_boxes():
+    loops = _mask_loops([[True, True]], resolution=1.0, origin_x=0.0, origin_y=0.0)
+    assert len(loops) == 1
+    assert [0.0, 0.0] in loops[0] and [2.0, 1.0] in loops[0]
+
+
+def test_reachable_contour_separates_outer_ring_from_internal_obstacle_hole():
+    loops = _mask_loops(
+        [[True, True, True], [True, False, True], [True, True, True]],
+        resolution=1.0, origin_x=0.0, origin_y=0.0,
+    )
+    assert len([loop for loop in loops if _signed_area(loop) > 0.0]) == 1
+    assert len([loop for loop in loops if _signed_area(loop) < 0.0]) == 1
+
+
+def test_disconnected_reachable_islands_have_multiple_outer_rings_and_are_rejected_by_contract():
+    loops = _mask_loops([[True, False, True]], resolution=1.0, origin_x=0.0, origin_y=0.0)
+    assert len([loop for loop in loops if _signed_area(loop) > 0.0]) == 2
+
+
+def test_boundary_obstacle_moves_the_planning_outer_ring_inside_the_geofence_edge():
+    loops = _mask_loops([[False, True, True]], resolution=1.0, origin_x=0.0, origin_y=0.0)
+    outer = next(loop for loop in loops if _signed_area(loop) > 0.0)
+    assert min(point[0] for point in outer) == 1.0
+
+
+def test_checkerboard_corner_touching_rings_are_rejected():
+    with pytest.raises(MapLifecycleError, match="self-intersects|rings touch"):
+        _mask_loops([[True, False], [False, True]], resolution=1.0, origin_x=0.0, origin_y=0.0)
+
+
+def test_collision_keepout_rectangles_do_not_include_a_reachable_cell_center():
+    keepouts = _rectangles_from_mask([[True, False]], resolution=1.0, origin_x=0.0, origin_y=0.0)
+    assert not any(_inside(1.5, 0.5, tuple(map(tuple, polygon))) for polygon in keepouts)
 
 
 def test_hard_restart_record_binds_pids_exit_order_and_hashes(tmp_path):
@@ -280,6 +337,132 @@ def test_slam_resolution_contract_uses_the_validator_limit():
         )
 
 
+def _materialized_saved_map(root: Path) -> tuple[CampusMapContract, dict[str, Path]]:
+    contract = CampusMapContract(
+        episode_id="fixture-episode",
+        map_id="fixture-map",
+        field_area_m2=25.0,
+        geofence=((-2.5, -2.5), (2.5, -2.5), (2.5, 2.5), (-2.5, 2.5)),
+        source_geofence=((-2.5, -2.5), (2.5, -2.5), (2.5, 2.5), (-2.5, 2.5)),
+        fixed_start_source=(0.0, 0.0, 0.0),
+    )
+    prepare_public_lifecycle_artifacts(contract, root)
+    width = height = 60
+    (root / "occupancy.pgm").write_bytes(
+        f"P5\n{width} {height}\n255\n".encode("ascii") + bytes([255]) * (width * height)
+    )
+    (root / "occupancy.yaml").write_text(yaml.safe_dump({
+        "image": "occupancy.pgm",
+        "resolution": 0.1,
+        "origin": [-3.0, -3.0, 0.0],
+        "negate": 0,
+        "occupied_thresh": 0.65,
+        "free_thresh": 0.25,
+        "mode": "trinary",
+    }), encoding="utf-8")
+    artifacts = materialize_saved_map_coverage_geometry(root, contract)
+    hashes = {
+        name: hashlib.sha256((root / name).read_bytes()).hexdigest()
+        for name in {"occupancy.yaml", "occupancy.pgm", *(
+            "coverage_free_space.pgm",
+            "coverage_geometry.yaml",
+            "mission_geometry.yaml",
+            "materialization_contract.yaml",
+            "geofence_keepout.yaml",
+            "geofence_keepout.pgm",
+            "neutral_speed.yaml",
+            "neutral_speed.pgm",
+        )}
+    }
+    (root / "map_lifecycle_manifest.json").write_text(json.dumps({
+        "schema_version": 1,
+        "status": "ready_for_localization_cleaning",
+        "episode_id": contract.episode_id,
+        "map_id": contract.map_id,
+        "occupancy_map": "occupancy.yaml",
+        "observed_fraction": 0.95,
+        "quality_threshold": 0.95,
+        "stable_gate_samples": 3,
+        "fixed_start_verified": True,
+        "gnss_mapping_reference_observed": True,
+        "mapping_pose_source": "wheel_imu_ekf_lidar_scan_matching_gnss_consistency",
+        "world_truth_used_for_control": False,
+        "mapping_ignored_dirt": True,
+        "sha256": hashes,
+    }), encoding="utf-8")
+    return contract, artifacts
+
+
+def test_materialized_geometry_is_preapplied_and_fully_manifest_sealed(tmp_path):
+    root = tmp_path / "maps"
+    contract, artifacts = _materialized_saved_map(root)
+    geometry = yaml.safe_load(artifacts["coverage_geometry"].read_bytes())
+    mission = yaml.safe_load(artifacts["mission_geometry"].read_bytes())
+    width, height, rows = read_binary_pgm(artifacts["coverage_free_space"])
+    assert (width, height) == (60, 60)
+    assert sum(pixel == 255 for row in rows for pixel in row) == geometry["reachable_cleanable_cells"]
+    assert geometry["planning_clearance_preapplied"] is True
+    assert mission["saved_occupancy_coverage"]["planning_clearance_preapplied"] is True
+    assert validate_saved_map_artifact(root, contract)["status"] == "ready_for_localization_cleaning"
+
+
+def test_saved_map_validator_uses_one_snapshot_per_sealed_artifact(tmp_path, monkeypatch):
+    root = tmp_path / "maps"
+    contract, _ = _materialized_saved_map(root)
+    original = Path.read_bytes
+    reads: dict[str, int] = {}
+
+    def counted(path: Path) -> bytes:
+        reads[path.name] = reads.get(path.name, 0) + 1
+        return original(path)
+
+    monkeypatch.setattr(Path, "read_bytes", counted)
+    validate_saved_map_artifact(root, contract)
+    assert reads["map_lifecycle_manifest.json"] == 1
+    assert set(reads) == {
+        "map_lifecycle_manifest.json",
+        "occupancy.yaml",
+        "occupancy.pgm",
+        "coverage_free_space.pgm",
+        "coverage_geometry.yaml",
+        "mission_geometry.yaml",
+        "materialization_contract.yaml",
+        "geofence_keepout.yaml",
+        "geofence_keepout.pgm",
+        "neutral_speed.yaml",
+        "neutral_speed.pgm",
+    }
+    assert all(count == 1 for count in reads.values())
+
+
+def test_materialization_blocks_a_cell_exactly_at_free_threshold(tmp_path):
+    root = tmp_path / "maps"
+    contract = CampusMapContract(
+        episode_id="threshold", map_id="threshold", field_area_m2=4.0,
+        geofence=((-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)),
+        source_geofence=((-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)),
+        fixed_start_source=(0.0, 0.0, 0.0),
+    )
+    prepare_public_lifecycle_artifacts(contract, root)
+    width = height = 30
+    pixels = bytearray([255] * (width * height))
+    pixels[(height - 1 - 15) * width + 15] = 254
+    (root / "occupancy.pgm").write_bytes(
+        f"P5\n{width} {height}\n255\n".encode("ascii") + pixels
+    )
+    (root / "occupancy.yaml").write_text(yaml.safe_dump({
+        "image": "occupancy.pgm",
+        "resolution": 0.1,
+        "origin": [-1.5, -1.5, 0.0],
+        "negate": 0,
+        "occupied_thresh": 0.65,
+        "free_thresh": 1.0 / 255.0,
+        "mode": "trinary",
+    }), encoding="utf-8")
+    with pytest.raises(MapLifecycleError, match="fixed saved-map start"):
+        materialize_saved_map_coverage_geometry(root, contract, obstacle_inflation_m=0.1)
+
+
 def test_cleaning_admission_requires_hash_valid_saved_map(tmp_path):
     contract = load_campus_map_contract(_manifest(tmp_path / "episode.json"))
     root = tmp_path / "maps"
@@ -289,6 +472,34 @@ def test_cleaning_admission_requires_hash_valid_saved_map(tmp_path):
         "image: occupancy.pgm\nresolution: 0.05\norigin: [0, 0, 0]\n",
         encoding="utf-8",
     )
+    (root / "coverage_free_space.pgm").write_bytes(b"P5\n1 1\n255\n\xff")
+    geometry = {
+        "source": "saved_slam_occupancy_only",
+        "occupancy_map": "occupancy.yaml",
+        "occupancy_image": "occupancy.pgm",
+        "occupancy_map_sha256": hashlib.sha256((root / "occupancy.yaml").read_bytes()).hexdigest(),
+        "occupancy_image_sha256": hashlib.sha256((root / "occupancy.pgm").read_bytes()).hexdigest(),
+        "free_space_map": "coverage_free_space.pgm",
+        "free_space_map_sha256": hashlib.sha256((root / "coverage_free_space.pgm").read_bytes()).hexdigest(),
+        "world_truth_used_for_product_map": False,
+        "planning_polygons": [[[0, 0], [1, 0], [1, 1], [0, 1]]],
+        "planning_outer_polygon": [[0, 0], [1, 0], [1, 1], [0, 1]],
+        "planning_hole_polygons": [],
+        "keepout_polygons": [],
+        "reachable_cleanable_cells": 1,
+        "obstacle_inflation_m": 1.70,
+        "planning_clearance_m": 1.70,
+        "planning_clearance_preapplied": True,
+        "planning_clearance_derivation": "test",
+    }
+    (root / "coverage_geometry.yaml").write_text(yaml.safe_dump(geometry), encoding="utf-8")
+    mission = yaml.safe_load((root / "mission_geometry.yaml").read_text(encoding="utf-8"))
+    mission.update({"keepout_polygons": [], "exclusion_polygons": [], "headland": {"enabled": True, "width_m": 1.70}, "saved_occupancy_coverage": {
+        "geometry": "coverage_geometry.yaml", "free_space_map": "coverage_free_space.pgm",
+        "source": "saved_slam_occupancy_only", "planning_clearance_preapplied": True,
+        "sha256": hashlib.sha256((root / "coverage_geometry.yaml").read_bytes()).hexdigest(),
+    }})
+    (root / "mission_geometry.yaml").write_text(yaml.safe_dump(mission), encoding="utf-8")
     files = (
         "occupancy.pgm",
         "occupancy.yaml",
@@ -298,6 +509,8 @@ def test_cleaning_admission_requires_hash_valid_saved_map(tmp_path):
         "geofence_keepout.pgm",
         "neutral_speed.yaml",
         "neutral_speed.pgm",
+        "coverage_geometry.yaml",
+        "coverage_free_space.pgm",
     )
     hashes = {
         name: hashlib.sha256((root / name).read_bytes()).hexdigest() for name in files

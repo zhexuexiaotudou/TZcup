@@ -182,6 +182,16 @@ mechanically limited vertical hinge and an independent rotary latch. Zero latch
 angle is the locked transport state; hinge and latch positions are observable
 but intentionally have no powered command interface.
 
+`prepare_formal_preembedded_sensor_world.py` validates the charge and drain
+contact selectors after URDF-to-SDF conversion. For only these fixed service
+contacts, a missing converted selector may be rebound to one uniquely matched
+collision using the stable authored URDF collision basename and the current
+converted owner name. The generated lump suffix is never fixed in source. Zero
+or multiple structural matches fail preparation; every rebound, original
+selector and resolved collision is retained in the preparation report. This
+proves source binding only, not a live Gazebo contact or physical service
+acceptance.
+
 The dry-bin and wastewater-tank lids also use explicit passive service
 mechanisms rather than fixed decorative hardware. Each compartment has a
 three-body over-centre latch (tank-mounted base, 70-degree hand lever and
