@@ -132,3 +132,18 @@ def test_tentative_or_lost_targets_never_enter_the_planner_queue(tmp_path):
     )
     assert accepted == ()
     assert core.belief_snapshot().known_targets == ()
+
+
+def test_duplicate_target_uuid_clears_the_planner_queue_fail_closed(tmp_path):
+    core = FormalObservationBridgeCore(_public_map(tmp_path), min_target_confidence=0.5)
+    common = {
+        "confidence": 0.99, "source_backend": "dosod_edgesam_pc",
+        "track_state": "CONFIRMED", "in_keepout": False,
+    }
+    assert core.replace_targets([ProductTargetObservation("good", 0.5, 0.5, **common)])
+    accepted = core.replace_targets([
+        ProductTargetObservation("duplicate", 0.5, 0.5, **common),
+        ProductTargetObservation("duplicate", 1.5, 0.5, **common),
+    ])
+    assert accepted == ()
+    assert core.belief_snapshot().known_targets == ()

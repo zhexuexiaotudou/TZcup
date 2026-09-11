@@ -186,9 +186,17 @@ class FormalObservationBridgeCore:
     def replace_targets(
         self, targets: Iterable[ProductTargetObservation]
     ) -> tuple[ProductTargetObservation, ...]:
+        # A UUID is the identity used by both the planner and grasp result
+        # correlation.  Never let a later row silently overwrite an earlier
+        # observation from the same message.
+        materialized = tuple(targets)
+        ids = [target.target_id for target in materialized]
+        if any(not target_id for target_id in ids) or len(ids) != len(set(ids)):
+            self._targets = {}
+            return ()
         accepted: list[ProductTargetObservation] = []
         next_targets: dict[str, KnownTarget] = {}
-        for target in targets:
+        for target in materialized:
             backend = target.source_backend.strip().lower()
             if not target.target_id or backend in {"ground_truth", "evaluator"}:
                 continue
