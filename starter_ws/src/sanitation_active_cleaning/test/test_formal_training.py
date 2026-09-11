@@ -236,3 +236,157 @@ def test_cli_rejects_a_smaller_explicit_selection_before_materialization(
                 "--train", "0:0",
             ]
         )
+
+def test_topology_only_rollouts_never_pass_formal_budget(tmp_path):
+    _, _, _, validation = train_and_evaluate(
+        _full_split(tmp_path, "train"), _full_split(tmp_path, "val"),
+        _full_split(tmp_path, "hidden"),
+    )
+    assert validation["formal_multimap_contract"]["full_task_coverage"] is False
+    assert validation["hidden_gate_passed"] is False
+
+
+def test_training_resume_preserves_failures_and_completed_work(tmp_path, monkeypatch):
+    train = _full_split(tmp_path, "train")
+    validation = _full_split(tmp_path, "val")
+    state = tmp_path / "training_state.json"
+    calls = []
+    original = formal_training._train_episode
+
+    def interrupted(episode, table, **kwargs):
+        calls.append(episode.episode_id)
+        if len(calls) == 2:
+            table["partial_failure"] = {"invalid": 1.0}
+            raise RuntimeError("simulated interrupted episode")
+        return original(episode, table, **kwargs)
+
+    monkeypatch.setattr(formal_training, "_train_episode", interrupted)
+    with pytest.raises(RuntimeError, match="interrupted"):
+        train_and_evaluate(train, validation, [], train_validation_only=True, state_path=state)
+    saved = json.loads(state.read_text())
+    assert len(saved["episodes"]) == 1
+    assert "partial_failure" not in saved["q_table"]
+    assert saved["failures"][0]["episode_index"] == 1
+    monkeypatch.setattr(formal_training, "_train_episode", original)
+    resumed = train_and_evaluate(train, validation, [], train_validation_only=True, state_path=state)
+    fresh = train_and_evaluate(train, validation, [], train_validation_only=True)
+    assert resumed[0]["q_table"] == fresh[0]["q_table"]
+    assert len(resumed[1]["failed_attempts"]) == 1
+    with pytest.raises(ValueError, match="fingerprint"):
+        train_and_evaluate(train, validation, [], policy_seed=8, train_validation_only=True, state_path=state)
+
+
+def test_validation_cannot_mutate_training_checkpoint(tmp_path, monkeypatch):
+    original = formal_training.run_episode
+
+    def mutate_policy(*args, **kwargs):
+        policy = kwargs["policy"]
+        if hasattr(policy, "q_table"):
+            policy.q_table["evaluation_only"] = {"wait": 0.0}
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(formal_training, "run_episode", mutate_policy)
+    checkpoint, _, _, report = train_and_evaluate(
+        _full_split(tmp_path, "train"), _full_split(tmp_path, "val"), [],
+        train_validation_only=True,
+    )
+    assert "evaluation_only" not in checkpoint["q_table"]
+    assert report["hidden_gate_passed"] is False
+
+
+def test_train_validation_only_rejects_hidden_inputs(tmp_path):
+    with pytest.raises(ValueError, match="forbids hidden"):
+        train_and_evaluate(_full_split(tmp_path, "train"), _full_split(tmp_path, "val"),
+                           _full_split(tmp_path, "hidden"), train_validation_only=True)
+
+def test_cli_train_validation_only_never_materializes_hidden(tmp_path, monkeypatch):
+    scenario = _frozen_scenario(tmp_path / "scenario.yaml")
+    splits = set()
+
+    def materialize(*args, **kwargs):
+        assert kwargs["split"] != "hidden"
+        splits.add(kwargs["split"])
+        return _episode(tmp_path, kwargs["split"], kwargs["map_index"], 100)
+
+    def train(*args, **kwargs):
+        assert args[2] == []
+        assert kwargs["train_validation_only"] is True
+        return {}, {}, {}, {"hidden_gate_passed": False}
+
+    monkeypatch.setattr(formal_training, "materialize_episode", materialize)
+    monkeypatch.setattr(formal_training, "train_and_evaluate", train)
+    assert formal_training.main([
+        "--scenario-config", str(scenario), "--motion-profile", str(tmp_path / "motion.yaml"),
+        "--work-root", str(tmp_path / "work"), "--evidence-root", str(tmp_path / "evidence"),
+        "--train-validation-only",
+    ]) == 0
+    assert splits == {"train", "val"}
+    report = json.loads((tmp_path / "evidence/formal_planning/seed-7/validation_report.json").read_text())
+    assert report["hidden_opened"] is False
+    assert report["formal_budget_claim"] is False
+
+def test_resume_rejects_corrupt_state(tmp_path, monkeypatch):
+    state = tmp_path / "state.json"
+    train = _full_split(tmp_path, "train")
+    val = _full_split(tmp_path, "val")
+    train_and_evaluate(train, val, [], train_validation_only=True, state_path=state)
+    data = json.loads(state.read_text())
+    data["episodes"][0]["episode_id"] = "corrupted"
+    state.write_text(json.dumps(data))
+    with pytest.raises(ValueError, match="integrity"):
+        train_and_evaluate(train, val, [], train_validation_only=True, state_path=state)
+    data["state_sha256"] = formal_training._state_sha256({k: v for k, v in data.items() if k != "state_sha256"})
+    state.write_text(json.dumps(data))
+    with pytest.raises(ValueError, match="episode order"):
+        train_and_evaluate(train, val, [], train_validation_only=True, state_path=state)
+
+
+def test_cli_freezes_trained_policies_before_hidden_materialization(tmp_path, monkeypatch):
+    import sanitation_campus_scenario.hidden_materializer as hidden
+    events = []
+    scenario = _frozen_scenario(tmp_path / "scenario.yaml")
+    receipt = tmp_path / "freeze.json"
+    receipt.write_text("{}")
+    monkeypatch.setattr(hidden, "require_canonical_formal_inputs", lambda **kwargs: None)
+
+    def freeze(**kwargs):
+        assert events == ["trained-7", "trained-8"]
+        assert set(kwargs["frozen_configuration"]["q_table_sha256_by_policy_seed"]) == {"7", "8"}
+        events.append("freeze")
+        return receipt
+
+    monkeypatch.setattr(hidden, "commit_hidden_configuration_freeze", freeze)
+    monkeypatch.setattr(hidden, "verify_hidden_consumption_records", lambda **kwargs: {})
+
+    def materialize(*args, **kwargs):
+        if kwargs["split"] == "hidden":
+            assert "freeze" in events
+            if "hidden" not in events:
+                events.append("hidden")
+        return None
+
+    def train(*args, **kwargs):
+        if kwargs.get("train_validation_only"):
+            assert "hidden" not in events
+            events.append(f"trained-{kwargs['policy_seed']}")
+        else:
+            assert events[-1] == "hidden"
+        return {"q_table": {}}, {"episodes": []}, {}, {"hidden_gate_passed": False}
+
+    monkeypatch.setattr(formal_training, "materialize_episode", materialize)
+    monkeypatch.setattr(formal_training, "train_and_evaluate", train)
+    assert formal_training.main([
+        "--scenario-config", str(scenario), "--motion-profile", str(tmp_path / "motion.yaml"),
+        "--work-root", str(tmp_path / "work"), "--evidence-root", str(tmp_path / "evidence"),
+        "--snapshot", str(tmp_path / "snapshot"), "--session", str(tmp_path / "session"),
+        "--hidden-receipt-root", str(tmp_path / "receipts"), "--policy-seeds", "7,8",
+    ]) == 2
+    assert events == ["trained-7", "trained-8", "freeze", "hidden"]
+
+def test_frozen_evaluation_cannot_restart_missing_training(tmp_path, monkeypatch):
+    monkeypatch.setattr(formal_training, "_train_episode", lambda *args, **kwargs: pytest.fail("must not retrain"))
+    monkeypatch.setattr(formal_training, "run_episode", lambda *args, **kwargs: pytest.fail("must not evaluate"))
+    with pytest.raises(ValueError, match="complete unchanged"):
+        train_and_evaluate(_full_split(tmp_path, "train"), _full_split(tmp_path, "val"), [],
+                           train_validation_only=True, state_path=tmp_path / "absent.json",
+                           frozen_q_table_sha256="a" * 64)

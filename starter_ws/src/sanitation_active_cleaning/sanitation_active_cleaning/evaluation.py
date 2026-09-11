@@ -106,15 +106,26 @@ def run_episode(
         grasp_verifier=grasp_verifier,
     )
     observation = env.reset(seed=seed)
-    policy.reset(episode_seed=RoleSeeds.from_master(seed).policy)
-    while True:
+    failure_reason = None
+    try:
+        policy.reset(episode_seed=RoleSeeds.from_master(seed).policy)
+    except Exception as exc:
+        failure_reason = f"policy_reset_error:{type(exc).__name__}"
+    while failure_reason is None:
         truth = env.evaluation_snapshot(token)
         if truth.terminated or truth.truncated:
             break
-        if isinstance(policy, OraclePolicy):
-            action = policy.act_with_truth(observation, truth)
-        else:
-            action = policy.act(observation)
+        try:
+            if isinstance(policy, OraclePolicy):
+                action = policy.act_with_truth(observation, truth)
+            else:
+                action = policy.act(observation)
+        except Exception as exc:
+            # A broken policy is a failed trial, not grounds to drop the seed.
+            # Keep the actual partial trajectory; infrastructure errors from
+            # env.step remain visible to the caller rather than being scored.
+            failure_reason = f"policy_action_error:{type(exc).__name__}"
+            break
         result = env.step(action)
         observation = result.observation
     truth = env.evaluation_snapshot(token)
@@ -125,12 +136,27 @@ def run_episode(
     )
     metrics["policy"] = policy.name
     metrics["evaluation_only_policy"] = policy.evaluation_only
+    metrics["failure_reason"] = failure_reason
+    if failure_reason is not None:
+        metrics["success"] = False
     return metrics
 
 
-def _summary(values: Sequence[float]) -> dict[str, float]:
+def _summary(
+    values: Sequence[float], *, higher_is_better: bool = True
+) -> dict[str, Any]:
+    # Existing interval fields remain numeric for report compatibility. For
+    # zero/one sample they are placeholders, not evidence of zero uncertainty.
+    sample_metadata = {
+        "sample_count": len(values),
+        "stddev": statistics.stdev(values) if len(values) > 1 else None,
+        "stddev_ddof": 1,
+        "ci95_method": "normal_approximation_1.96_standard_error",
+        "ci95_estimable": len(values) > 1,
+    }
     if not values:
-        return {"mean": 0.0, "ci95_low": 0.0, "ci95_high": 0.0, "p10": 0.0, "worst": 0.0}
+        return {"mean": 0.0, "ci95_low": 0.0, "ci95_high": 0.0,
+                "p10": 0.0, "worst": 0.0, **sample_metadata}
     mean = statistics.fmean(values)
     if len(values) > 1:
         half_width = 1.96 * statistics.stdev(values) / math.sqrt(len(values))
@@ -139,11 +165,12 @@ def _summary(values: Sequence[float]) -> dict[str, float]:
     ordered = sorted(values)
     p10_index = max(0, math.ceil(0.10 * len(ordered)) - 1)
     return {
+        **sample_metadata,
         "mean": mean,
         "ci95_low": mean - half_width,
         "ci95_high": mean + half_width,
         "p10": ordered[p10_index],
-        "worst": ordered[0],
+        "worst": ordered[0] if higher_is_better else ordered[-1],
     }
 
 
@@ -160,12 +187,18 @@ def evaluate_paired(
     """
     if not seeds:
         raise ValueError("at least one evaluation seed is required")
-    factories = policy_factories or (
+    if any(isinstance(seed, bool) or not isinstance(seed, int) for seed in seeds):
+        raise ValueError("evaluation seeds must be integers")
+    if len(set(seeds)) != len(seeds):
+        raise ValueError("evaluation seeds must be unique")
+    factories = policy_factories if policy_factories is not None else (
         FullCoveragePolicy,
         SensingGreedyPolicy,
         OraclePolicy,
     )
     names = [factory(config).name for factory in factories]
+    if len(set(names)) != len(names):
+        raise ValueError("paired evaluation requires unique policy names")
     if "full_coverage" not in names:
         raise ValueError("paired evaluation requires the full_coverage baseline")
     episodes: list[dict[str, Any]] = []
@@ -199,8 +232,12 @@ def evaluate_paired(
         rows = [row for row in episodes if row["policy"] == name]
         summaries[name] = {
             "episodes": len(rows),
+            "failed_episodes": sum(not bool(row["success"]) for row in rows),
+            "policy_error_episodes": sum(row["failure_reason"] is not None for row in rows),
             "success_rate": _ratio(sum(bool(row["success"]) for row in rows), len(rows)),
-            "task_distance": _summary([float(row["task_distance"]) for row in rows]),
+            "task_distance": _summary(
+                [float(row["task_distance"]) for row in rows], higher_is_better=False
+            ),
             "observed_ratio": _summary([float(row["observed_ratio"]) for row in rows]),
             "ground_clear_ratio": _summary([float(row["ground_clear_ratio"]) for row in rows]),
             "discrete_clear_ratio": _summary([float(row["discrete_clear_ratio"]) for row in rows]),
