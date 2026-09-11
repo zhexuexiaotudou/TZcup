@@ -298,7 +298,7 @@ def test_calibration_symlink_inside_root_is_rejected(tmp_path, monkeypatch) -> N
 
 
 def test_vocabulary_symlink_is_not_read_after_declaration_rejection(tmp_path, monkeypatch) -> None:
-    contract, repository, artifacts, upstream, calibration, identity = _build_ready_fixture(tmp_path, monkeypatch)
+    contract_path, repository, artifacts, upstream, calibration, identity = _build_ready_fixture(tmp_path, monkeypatch)
     vocabulary = artifacts / "dosod" / "tzcup_offline_vocabulary.json"
     target = artifacts / "dosod" / "frozen-vocabulary.json"
     vocabulary.rename(target)
