@@ -1,0 +1,12 @@
+[
+  {
+    "file": "disconnected-mobile.png",
+    "sha256": "c09fc69f0f83925603f57ad2e877611f64afea303d81cb16acd83101ad401ff7",
+    "bytes": 217076
+  },
+  {
+    "file": "stale-desktop.png",
+    "sha256": "68d2289e8056a11ae1d27f786a57ab4fe3bc79b2f1f422f033de31f8cc5e18dc",
+    "bytes": 276308
+  }
+]
