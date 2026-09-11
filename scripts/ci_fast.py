@@ -504,6 +504,8 @@ def run_ros_independent_tests() -> None:
         perception_package / "test" / "test_open_vocab.py",
         perception_package / "test" / "test_formal_contract.py",
         perception_package / "test" / "test_formal_pc_adapters.py",
+        perception_package / "test" / "test_rgbd_projection_boundaries.py",
+        ROOT / "scripts" / "test_perception_observation_replay.py",
         perception_package / "test" / "test_formal_random_scene_evaluator_contract.py",
         perception_package / "test" / "test_rgb_to_nv12_adapter.py",
         perception_package / "test" / "test_s100p_board_launch_contract.py",
