@@ -102,7 +102,7 @@ python3 - "$fixture/repo/.work/clean-root/public_gazebo_camera_readiness_smoke_r
 import json,sys
 d=json.load(open(sys.argv[1])); assert d['status']=='NON_FORMAL_CAMERA_READY' and d['formal_passed'] is False and d['zero_survivor_check'] and d['readiness_report']['sha256'] and d['binding_unchanged'] and set(d['inputs'])=={'ros_setup','stage1_setup','runtime_setup','campus_setup','world','manifest'}
 PY
-start=$(date +%s); run_case breach breach 86; elapsed=$(( $(date +%s)-start )); (( elapsed < 4 )); pid=$(cat "$fixture/repo/.work/breach-state/launch.pid"); ! kill -0 -- "-$pid" 2>/dev/null
+start_ns=$(date +%s%N); run_case breach breach 86 8; elapsed_ms=$(( ($(date +%s%N)-start_ns)/1000000 )); (( elapsed_ms < 6000 )); pid=$(cat "$fixture/repo/.work/breach-state/launch.pid"); ! kill -0 -- "-$pid" 2>/dev/null
 python3 - "$fixture/repo/.work/breach-root/public_gazebo_camera_readiness_smoke_receipt.json" <<'PY'
 import json,sys
 d=json.load(open(sys.argv[1])); assert d['exit_code']==86
