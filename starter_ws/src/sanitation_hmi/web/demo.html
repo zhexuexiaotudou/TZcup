@@ -57,6 +57,7 @@
     .live-observation { padding: 18px; }
     .camera-frame { min-height: 150px; border: 1px solid var(--line); background: #06100e; overflow: hidden; }
     .camera-frame img { width: 100%; display: block; aspect-ratio: 16 / 9; object-fit: contain; }
+    #front-camera-image[hidden] { display: none; }
     .source-copy { margin: 10px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; overflow-wrap: anywhere; }
     .status-row { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
     .state { color: var(--mint); font-size: 25px; font-weight: 760; letter-spacing: -.02em; }
@@ -90,6 +91,9 @@
       main { padding: 15px; }
       .metrics { grid-template-columns: 1fr; }
       .boundary { font-size: 12px; }
+      .map-panel .panel-head { align-items: flex-start; flex-wrap: wrap; }
+      .map-panel .panel-head h2 { flex: 1 1 180px; white-space: nowrap; }
+      .map-panel .panel-head .legend { flex-basis: 100%; }
     }
   </style>
 </head>
@@ -390,7 +394,9 @@
         : pathCount > 0
           ? '<i style="background:#69d7ff"></i>覆盖路径（当前组件）'
           : '<i style="background:#69d7ff"></i>覆盖路径（未观测）';
-      document.querySelector("#state").textContent = preCleaningStage ? finalStage : (data.status || "UNKNOWN");
+      const state = document.querySelector("#state");
+      state.textContent = preCleaningStage ? finalStage : (data.status || "UNKNOWN");
+      state.className = `state ${data.status === "FAILED" ? "danger" : data.status === "CANCELED" ? "warn" : ""}`.trim();
       document.querySelector("#elapsed").textContent = duration(data.elapsed_sec);
       const progress = data.progress || {};
       const percent = Math.round((progress.ratio || 0) * 100);
@@ -450,14 +456,16 @@
       const dot = document.querySelector("#final-demo-dot");
       statusNode.textContent = live ? "实时" : status === "stale" ? "过期" : status === "error" ? "错误" : "不可用";
       dot.classList.toggle("live", live);
-      document.querySelector("#final-demo-stage").textContent = live || status === "stale" ? (data.stage || "未报告") : "数据不可用";
+      document.querySelector("#final-demo-stage").textContent = live || status === "stale" ? `${live ? "" : "最后观测："}${data.stage || "未报告"}` : "数据不可用";
       const dimensions = Array.isArray(data.field_dimensions_m) ? data.field_dimensions_m : null;
       document.querySelector("#final-demo-field").textContent = dimensions ? `${dimensions[0]} × ${dimensions[1]} m` : "数据不可用";
       document.querySelector("#final-demo-vehicle").textContent = data.vehicle || "数据不可用";
       document.querySelector("#final-demo-provider").textContent = data.perception_provider || "数据不可用";
       const acceptance = document.querySelector("#final-demo-acceptance");
-      acceptance.textContent = typeof data.formal_product_acceptance === "boolean" ? (data.formal_product_acceptance ? "通过" : "未通过") : "数据不可用";
-      acceptance.className = data.formal_product_acceptance === true ? "ok" : data.formal_product_acceptance === false ? "danger" : "";
+      acceptance.textContent = live && typeof data.formal_product_acceptance === "boolean"
+        ? (data.formal_product_acceptance ? "通过" : "未通过")
+        : status === "stale" ? "过期 · 当前验收未知" : "数据不可用";
+      acceptance.className = live && data.formal_product_acceptance === true ? "ok" : live && data.formal_product_acceptance === false ? "danger" : "warn";
       document.querySelector("#final-demo-map-sha").textContent = data.map_sha256 || (live || status === "stale" ? "尚未报告" : "数据不可用");
       document.querySelector("#final-demo-reason").textContent = data.reason || `${data.source_topic || "/final_demo/state"} · ${data.age_sec === null || data.age_sec === undefined ? "等待首条消息" : `${data.age_sec.toFixed(1)} 秒前更新`}`;
     }
@@ -593,14 +601,35 @@
       }
     }
 
+    function renderDisconnected() {
+      // Retain only labelled lifecycle identity.  Cached telemetry cannot
+      // describe the current vehicle after the HTTP transport has failed.
+      const previous = telemetry || {};
+      const liveInputs = Object.fromEntries(Object.entries(previous.live_inputs || {}).map(([name, source]) =>
+        [name, { topic: source.topic, status: "stale", error: "HTTP 连接失败，当前状态未知" }],
+      ));
+      render({
+        status: "连接失败 · 当前任务状态未知",
+        live_inputs: liveInputs,
+        final_demo: { ...(previous.final_demo || {}), status: "stale",
+          formal_product_acceptance: null, reason: "HTTP 连接失败，最后观测不能作为当前验收" },
+        vehicle: {}, cleaning: {}, visualization: {}, events: [],
+      });
+      document.querySelector("#elapsed").textContent = "—";
+      document.querySelector("#progress-value").textContent = "未知";
+      document.querySelector("#state").className = "state warn";
+      document.querySelector("#component").textContent = "连接失败，当前组件未知";
+      document.querySelector("#dot").classList.remove("live");
+      document.querySelector("#connection").textContent = "连接失败 · 等待遥测";
+    }
+
     async function refresh() {
       try {
         const response = await fetch("/api/v1/telemetry", {cache: "no-store"});
         if (!response.ok) throw new Error(response.statusText);
         render(await response.json());
       } catch (error) {
-        document.querySelector("#dot").classList.remove("live");
-        document.querySelector("#connection").textContent = "等待遥测";
+        renderDisconnected();
       }
     }
 

@@ -1,3 +1,5 @@
+import pytest
+
 from sanitation_hmi.live_state import (
     OCCUPANCY_GRID_MAX_AXIS,
     LiveMissionState,
@@ -59,6 +61,90 @@ def test_terminal_state_finishes_current_component_without_overcounting():
     assert snapshot["terminal"] is True
     assert snapshot["progress"]["completed_components"] == 1
     assert snapshot["progress"]["ratio"] == 1.0
+
+
+@pytest.mark.parametrize("terminal,counter", [("FAILED", "failed_components"), ("CANCELED", "canceled_components")])
+@pytest.mark.parametrize("component_topic_first", [False, True])
+def test_unsuccessful_terminal_is_not_completed(terminal, counter, component_topic_first):
+    state = LiveMissionState(expected_components=2)
+    state.update_component({"state": "EXECUTING_SWATH", "kind": "swath", "index": 0})
+    state.update_component({"state": "EXECUTING_SWATH", "kind": "swath", "index": 1})
+    if component_topic_first:
+        state.update_component({"state": terminal})
+    state.update_state(terminal)
+    state.update_component({"state": terminal})
+    state.update_state(terminal)
+    snapshot = state.snapshot()
+    assert snapshot["status"] == terminal
+    assert snapshot["progress"]["completed_components"] == 1
+    assert snapshot["progress"]["ratio"] == 0.5
+    assert snapshot["progress"][counter] == 1
+    state.update_component({"state": "EXECUTING_SWATH", "kind": "swath", "index": 2})
+    assert state.snapshot()["progress"]["completed_components"] == 1
+
+
+def test_component_terminal_first_counts_success_exactly_once():
+    state = LiveMissionState(expected_components=1)
+    state.update_component({"state": "EXECUTING_SWATH", "kind": "swath", "index": 0})
+    state.update_component({"state": "COMPLETED"})
+    state.update_state("COMPLETED")
+    progress = state.snapshot()["progress"]
+    assert progress["completed_components"] == 1
+    assert progress["failed_components"] == 0
+    assert progress["canceled_components"] == 0
+
+
+@pytest.mark.parametrize("terminal", ["COMPLETED", "FAILED", "CANCELED"])
+@pytest.mark.parametrize("stale_state", ["EXECUTING_SWATH", "RECOVERY"])
+def test_late_nonterminal_component_message_cannot_reopen_terminal_state(
+    terminal, stale_state
+):
+    state = LiveMissionState(expected_components=1)
+    active = {"state": "EXECUTING_SWATH", "kind": "swath", "index": 0}
+    state.update_component(active)
+    state.update_state(terminal)
+    # `/coverage/state` and `/coverage/component_state` are separate topics;
+    # this is an older component message received after the terminal state.
+    state.update_component({**active, "state": stale_state, "expected_components": 9})
+    state.update_component({"state": terminal})
+
+    snapshot = state.snapshot()
+
+    assert snapshot["status"] == terminal
+    assert snapshot["terminal"] is True
+    assert snapshot["progress"]["completed_components"] == (terminal == "COMPLETED")
+    assert snapshot["progress"]["failed_components"] == (terminal == "FAILED")
+    assert snapshot["progress"]["canceled_components"] == (terminal == "CANCELED")
+    assert snapshot["progress"]["expected_components"] == 1
+
+
+def test_failed_component_retry_and_next_component_stay_conservatively_uncompleted():
+    state = LiveMissionState(expected_components=3)
+    component_zero = {"state": "EXECUTING_SWATH", "kind": "swath", "index": 0}
+    component_one = {"state": "EXECUTING_TURN", "kind": "turn", "index": 1}
+
+    state.update_component(component_zero)
+    state.update_state("FAILED")
+    state.update_state("RECOVERY")
+    state.update_component(component_zero)  # retry the same component
+    state.update_component(component_one)   # then a legitimate next component
+    state.update_component(component_one)   # duplicate component topic message
+
+    progress = state.snapshot()["progress"]
+
+    assert progress["completed_components"] == 0
+    assert progress["failed_components"] == 1
+    assert progress["canceled_components"] == 0
+    assert progress["current_component"] == "turn:1"
+
+
+def test_failure_before_any_component_does_not_invent_component_count():
+    state = LiveMissionState()
+    state.update_state("FAILED")
+    progress = state.snapshot()["progress"]
+    assert progress["completed_components"] == 0
+    assert progress["failed_components"] == 0
+    assert progress["ratio"] == 0.0
 
 
 def test_late_evaluation_sample_does_not_reopen_terminal_state():

@@ -118,6 +118,7 @@ class LiveMissionState:
         self._mission_id = str(mission_id)
         self._geometry = deepcopy(geometry or {})
         self._seen_components: list[str] = []
+        self._component_terminal_states: dict[str, str] = {}
         self._current_component: str | None = None
         self._estimated_pose: list[float] | None = None
         # `/odom` is useful before SLAM emits a map pose.  It remains a
@@ -293,30 +294,51 @@ class LiveMissionState:
     def update_state(self, state: str, details: dict | None = None) -> None:
         normalized = str(state or "UNKNOWN")
         with self._lock:
+            self._record_component_terminal(normalized)
             if normalized != self._state:
-                if normalized in TERMINAL_STATES and self._current_component:
-                    if self._current_component not in self._seen_components:
-                        self._seen_components.append(self._current_component)
                 self._append_event(normalized, self._event_label(normalized, details))
             self._state = normalized
             self._details = deepcopy(details or {})
             self._topics_seen.add("/coverage/state")
             self._touch()
 
+    def _record_component_terminal(self, state: str) -> None:
+        """Account for a terminal observation once, whichever topic arrives first."""
+        component = self._current_component
+        if state not in TERMINAL_STATES or component is None:
+            return
+        self._component_terminal_states[component] = state
+        if state == "COMPLETED":
+            if component not in self._seen_components:
+                self._seen_components.append(component)
+        elif component in self._seen_components:
+            self._seen_components.remove(component)
+
     def update_component(self, payload: dict) -> None:
         with self._lock:
+            state = str(payload.get("state") or self._state)
+            # `_set_state` publishes `/coverage/state` before the paired
+            # component payload.  Different ROS topics have no shared ordering,
+            # so an older nonterminal component message may arrive after a
+            # terminal mission state.  It must not reopen the terminal
+            # dashboard state.
+            if self._state in TERMINAL_STATES and state not in TERMINAL_STATES:
+                self._topics_seen.add("/coverage/component_state")
+                self._touch()
+                return
             expected = payload.get("expected_components")
             if expected is not None and int(expected) > 0:
                 self._expected_components = int(expected)
             kind = payload.get("kind")
             index = payload.get("index")
-            state = str(payload.get("state") or self._state)
             if state in ACTIVE_COMPONENT_STATES and kind is not None and index is not None:
                 key = str(payload.get("component_id") or f"{kind}:{int(index)}")
                 if key != self._current_component:
                     if (
                         self._current_component
                         and self._current_component not in self._seen_components
+                        and self._component_terminal_states.get(self._current_component)
+                        not in {"FAILED", "CANCELED"}
                     ):
                         self._seen_components.append(self._current_component)
                     self._current_component = key
@@ -324,6 +346,7 @@ class LiveMissionState:
                         state,
                         f"{'清扫带' if kind == 'swath' else '转弯'} {int(index) + 1}",
                     )
+            self._record_component_terminal(state)
             self._details = deepcopy(payload)
             self._state = state
             self._topics_seen.add("/coverage/component_state")
@@ -693,6 +716,12 @@ class LiveMissionState:
                 "last_update_age_sec": round(now - self._last_update_monotonic, 2),
                 "progress": {
                     "completed_components": completed,
+                    "failed_components": sum(
+                        value == "FAILED" for value in self._component_terminal_states.values()
+                    ),
+                    "canceled_components": sum(
+                        value == "CANCELED" for value in self._component_terminal_states.values()
+                    ),
                     "active_component_number": active_number,
                     "expected_components": self._expected_components,
                     "ratio": round(
