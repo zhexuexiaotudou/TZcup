@@ -79,31 +79,24 @@ mapping_handoff_record="${map_root}/mapping_handoff_record.json"
 python3 - \
   "${episode}/public/episode_manifest.json" \
   "${map_root}" \
-  "${mapping_handoff_record}" <<'PY'
+  "${mapping_handoff_record}" "${repo_root}/scripts" "${runtime_binding}" <<'PY'
 import hashlib
 import json
 import pathlib
 import sys
+sys.path.insert(0, sys.argv[4])
+from validate_formal_map_lifecycle_runtime import validate_mapping_runtime_binding
 from sanitation_formal_campus_integration.map_lifecycle_core import (
     load_campus_map_contract,
+    validate_mapping_handoff_record,
     validate_saved_map_artifact,
 )
 
 contract = load_campus_map_contract(pathlib.Path(sys.argv[1]))
 root = pathlib.Path(sys.argv[2])
+validate_mapping_runtime_binding(root, pathlib.Path(sys.argv[5]))
 validate_saved_map_artifact(root, contract)
-handoff = json.loads(pathlib.Path(sys.argv[3]).read_text(encoding="utf-8"))
-if (
-    handoff.get("schema_version") != 2
-    or handoff.get("mapping_runner_completed") is not True
-    or handoff.get("mapping_runner_exit_code") != 0
-    or handoff.get("mapping_process_groups_stopped") is not True
-    or handoff.get("map_lifecycle_manifest_sha256")
-    != hashlib.sha256((root / "map_lifecycle_manifest.json").read_bytes()).hexdigest()
-    or handoff.get("mapping_runtime_sha256")
-    != hashlib.sha256((root / "mapping_runtime.json").read_bytes()).hexdigest()
-):
-    raise SystemExit("mapping handoff record or hashes failed closed")
+validate_mapping_handoff_record(root)
 PY
 
 # The mapping launch must be gone, not merely lifecycle-inactive.  Use the
@@ -226,6 +219,7 @@ value = {
         manifest.read_bytes()
     ).hexdigest(),
     "mapping_runtime_sha256": hashlib.sha256(runtime.read_bytes()).hexdigest(),
+    "mapping_runtime_gate_binding_sha256": handoff["mapping_runtime_gate_binding_sha256"],
 }
 output.write_text(
     json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8"
