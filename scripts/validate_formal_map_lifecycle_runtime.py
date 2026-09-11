@@ -33,6 +33,7 @@ from sanitation_formal_campus_integration.saved_map_coverage_core import (
     SavedMapCoverageError,
     load_formal_operation_speed_profile,
 )
+from sanitation_formal_campus_integration.map_lifecycle_core import REQUIRED_SAVED_MAP_SUPPORT_FILES
 from sanitation_formal_campus_integration.runtime_evidence_core import (
     COMMAND_CHAIN_RECEIPT_REORDER_TOLERANCE_S,
     EXPECTED_COMMAND_TOPIC_PUBLISHER,
@@ -99,12 +100,7 @@ def _hashes_valid(root: Path, manifest: dict) -> bool:
     required = {
         occupancy_name,
         image_name,
-        "mission_geometry.yaml",
-        "materialization_contract.yaml",
-        "geofence_keepout.yaml",
-        "geofence_keepout.pgm",
-        "neutral_speed.yaml",
-        "neutral_speed.pgm",
+        *REQUIRED_SAVED_MAP_SUPPORT_FILES,
     }
     hashes = manifest.get("sha256")
     if not isinstance(hashes, dict) or set(hashes) != required:

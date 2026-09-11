@@ -51,14 +51,16 @@ def _string_keyword(call: ast.Call, name: str) -> str | None:
     return value.value if isinstance(value, ast.Constant) and isinstance(value.value, str) else None
 
 
-def test_native_bridge_preserves_exact_five_endpoint_directions() -> None:
+def test_native_bridge_preserves_native_profile_and_telemetry_directions() -> None:
     source = SOURCE.read_text(encoding="utf-8")
-    for suffix in ("cmd_vel", "actuator_enable", "emergency_stop", "odom", "status"):
+    for suffix in ("cmd_vel", "actuator_enable", "emergency_stop", "profile", "odom", "status"):
         assert f'{ROOT_TOPIC}/{suffix}"' in source
     assert source.count("Advertise<gz::msgs::Twist>") == 1
     assert source.count("Advertise<gz::msgs::Boolean>") == 2
+    assert source.count("Advertise<gz::msgs::Double_V>") == 1
     assert source.count("create_subscription<geometry_msgs::msg::Twist>") == 1
     assert source.count("create_subscription<std_msgs::msg::Bool>") == 2
+    assert source.count("create_subscription<std_msgs::msg::Float64MultiArray>") == 1
     assert source.count("gz_node_.Subscribe(") == 2
     assert source.count("create_publisher<nav_msgs::msg::Odometry>") == 1
     assert source.count("create_publisher<std_msgs::msg::String>") == 1
@@ -91,8 +93,8 @@ def test_native_bridge_stops_gazebo_callbacks_before_ros_shutdown() -> None:
     assert "if (stopping_.exchange(true))" in stop
     assert stop.count("gz_node_.Unsubscribe(") == 2
     assert "const std::lock_guard<std::mutex> drain(callback_mutex_);" in stop
-    assert source.count("const std::lock_guard<std::mutex> lock(callback_mutex_);") == 4
-    assert source.count("if (stopping_.load()) {") == 4
+    assert source.count("const std::lock_guard<std::mutex> lock(callback_mutex_);") == 5
+    assert source.count("if (stopping_.load()) {") == 5
     assert source.count("bridge->Stop();") == 2
     assert source.count("bridge.reset();") == 2
     assert source.index("bridge->Stop();") < source.rindex("rclcpp::shutdown();")
@@ -136,3 +138,19 @@ def test_native_bridge_build_and_shutdown_contracts_are_bound() -> None:
     assert "for kind, executable, target in ordered_targets[1:]:" in runner
     assert "remaining_native_nodes, native_malformed, native_unknown = native_bridge_census()" in runner
     assert "--required-clean-exit-process a300_drivetrain_native_bridge" in runner
+
+
+def test_native_profile_is_bound_to_actual_wheel_end_and_actuator_output() -> None:
+    plant = (
+        ROOT / "starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainPlantSystem.cc"
+    ).read_text(encoding="utf-8")
+    xacro = (
+        ROOT / "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro"
+    ).read_text(encoding="utf-8")
+    assert '"/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/profile"' in plant
+    assert "OnProfile" in plant
+    assert "command *= slipScale;" in plant
+    assert "output.wheel_torque_nm[index] * actuatorGain" in plant
+    assert "effective_wheel_speed_rad_s" in plant
+    assert "applied_wheel_torque_nm" in plant
+    assert "<profile_topic>/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/profile</profile_topic>" in xacro

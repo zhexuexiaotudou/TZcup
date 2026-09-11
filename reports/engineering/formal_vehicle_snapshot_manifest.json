@@ -1,13 +1,13 @@
 {
   "kind": "tzcup_formal_vehicle_snapshot_manifest",
-  "output_inventory_sha256": "1b851ad66b5d3dc8a85d08825a1d31741e945f66d618374965ec3c3a2dc8eb0c",
+  "output_inventory_sha256": "c66b4aea2e584ec4cc034ae846f42af28a07760cadf708df64c877b1cb346cd2",
   "outputs": {
     "reports/engineering/formal_competition_vehicle.urdf": {
-      "sha256": "34257c2ed840a6f8f25933bdf37c6130c3db397d0aa1211c561bff528bd621d1",
-      "size_bytes": 277916
+      "sha256": "015f484af59d40bb9af1abb985d6df82a38d0ae829a07c6e0506bef4767ad218",
+      "size_bytes": 278395
     },
     "reports/engineering/formal_vehicle_component_register_report.json": {
-      "sha256": "edeead91c4b3655f92b5a2e11d9ae1c6ec10882ce7883498b132a89fe224ea60",
+      "sha256": "983124ba0ed810afe66ba1a398db6709494054ac2b87d1fd7d19a011a4936768",
       "size_bytes": 12648
     },
     "reports/engineering/formal_vehicle_layout_report.json": {
@@ -127,8 +127,8 @@
       "size_bytes": 1037
     },
     "starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainNativeBridge.cc": {
-      "sha256": "ad96718ae9ca1861fbef4ba44f7a9a8f8c2765366f7d080073627e4f49b52575",
-      "size_bytes": 7263
+      "sha256": "f88bac23674ddc1f6fb1292db8d0f9cd17d1b0b128f79504764bafdfc1ad4faf",
+      "size_bytes": 8284
     },
     "starter_ws/src/sanitation_gazebo_control/src/CleaningActuatorScalarNativeBridge.cc": {
       "sha256": "6e5444efb888712a62230b8cbe6d24fe269d98ab052134471d948757933977a1",
@@ -151,12 +151,12 @@
       "size_bytes": 8675
     },
     "starter_ws/src/sanitation_safety/sanitation_safety/simulation_safety_inputs.py": {
-      "sha256": "8ad9c744278d1711b049dc39191776472bbad0e5c0990e6c8e9ff9340f99c98c",
-      "size_bytes": 30487
+      "sha256": "52a4a9a8e84dd264ee9b0c73e4a08b9f60e1ea6f4f6523eb7d72137d0eee7b9f",
+      "size_bytes": 30478
     },
     "starter_ws/src/sanitation_safety/sanitation_safety/whole_vehicle_safety_manager.py": {
-      "sha256": "0483c9b8e6f91a0d32a31156d1539fbd18b99484bfa6e73dd33c5ffd0594a89c",
-      "size_bytes": 57582
+      "sha256": "8af06fb554cf7d617291b717fc1e2c6b21007b7435f88d775b0e3733a200d859",
+      "size_bytes": 57573
     },
     "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py": {
       "sha256": "f4ed077479b1bba4a51207a90d7e35adec6a9323efde950e3b4bfc5313153977",
@@ -967,8 +967,8 @@
       "size_bytes": 2949
     },
     "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro": {
-      "sha256": "124e79bf215d787ac215b70fa0fdb7e7d7a8f588f02ebd976a18ccdd1f4909a4",
-      "size_bytes": 17832
+      "sha256": "92139b3e272f7696fb6c69323a31f7cf9712084d0ddaf340cdc48425a9e6ed15",
+      "size_bytes": 17934
     },
     "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/a300_platform.xacro": {
       "sha256": "294a160cd22adf46f25724b7fe96404e184ab5863c841a93fd48215d59c6dad3",
@@ -991,8 +991,8 @@
       "size_bytes": 15152
     },
     "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/power_service_hardware.xacro": {
-      "sha256": "1303f16f15c651a663662eef8e3b7ed683bd941bd260bd46fda6f5a21c7e52d4",
-      "size_bytes": 17726
+      "sha256": "d2826fde3faf384726adc12d3b9185e3d7bf26558f6b650c0cc3f8fb230514e8",
+      "size_bytes": 18150
     },
     "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/sensor_suite.xacro": {
       "sha256": "36de63218a6ab2d4f34d915a4c546362dbea4e9c496cda7bbba72e2d0a58b2b9",
@@ -1003,5 +1003,5 @@
       "size_bytes": 26704
     }
   },
-  "source_inventory_sha256": "74a251a5d13e8afca5ff548284712472cba0a407032770205ec798daaff01ced"
+  "source_inventory_sha256": "9dea018bf88a88e00840180447054c17c4926e782340e2b051084155b31a3726"
 }

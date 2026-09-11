@@ -37,8 +37,10 @@ def test_validator_passes_only_complete_real_runtime_contract(tmp_path):
         "materialization_contract.yaml",
         "geofence_keepout.yaml",
         "geofence_keepout.pgm",
-        "neutral_speed.yaml",
-        "neutral_speed.pgm",
+            "neutral_speed.yaml",
+            "neutral_speed.pgm",
+            "coverage_geometry.yaml",
+            "coverage_free_space.pgm",
     )
     for name in files[1:]:
         (root / name).write_bytes(name.encode("utf-8"))
@@ -116,7 +118,9 @@ def test_validator_passes_only_complete_real_runtime_contract(tmp_path):
             "operation_speed_profile": "dry_cleaning_competition_candidate",
             "maximum_linear_speed_mps": 1.0,
             "planned_swath_count": 3,
-            "completed_swath_count": 3,
+                "completed_swath_count": 3,
+                "coverage_geometry_sha256": "0" * 64,
+                "cleanable_area_m2": 1.0,
         },
         "trajectory_total_distance_m": 100.0,
         "brush_enabled_distance_m": 95.0,
