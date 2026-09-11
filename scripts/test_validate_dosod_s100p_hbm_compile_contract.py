@@ -316,7 +316,7 @@ def test_vocabulary_symlink_is_not_read_after_declaration_rejection(tmp_path, mo
         return original_load_json(path)
 
     monkeypatch.setattr(subject, "load_json", guarded_load_json)
-    report = subject.audit_compile_inputs(contract, repository, artifacts, upstream, calibration, identity)
+    report = subject.audit_compile_inputs(contract_path, repository, artifacts, upstream, calibration, identity)
     assert "declared_file_symlink:vocabulary" in report["blockers"]
     assert vocabulary not in read_paths
 
@@ -341,6 +341,6 @@ def test_embedding_symlink_is_not_loaded_after_declaration_rejection(tmp_path, m
         return original_np_load(path, *args, **kwargs)
 
     monkeypatch.setattr(np, "load", guarded_np_load)
-    report = subject.audit_compile_inputs(contract, repository, artifacts, upstream, calibration, identity)
+    report = subject.audit_compile_inputs(contract_path, repository, artifacts, upstream, calibration, identity)
     assert "declared_file_symlink:reparameterization_embedding" in report["blockers"]
     assert embedding not in loaded_paths
