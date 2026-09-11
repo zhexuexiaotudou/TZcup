@@ -488,7 +488,8 @@ def main() -> None:
                         pose_message.pose.orientation.w = math.cos(item.yaw / 2.0)
                         path.poses.append(pose_message)
                     self._set_cleaning(False)
-                    self._begin_path(path)
+                    if not self._begin_path(path):
+                        return
                     self._path_publisher.publish(path)
                     self._busy = True
                     self._executor_seen_active = False
@@ -560,7 +561,8 @@ def main() -> None:
                     pose_message.pose.orientation.w = math.cos(item.yaw / 2.0)
                     path.poses.append(pose_message)
                 self._set_cleaning(decision.clean_ground)
-                self._begin_path(path)
+                if not self._begin_path(path):
+                    return
                 self._path_publisher.publish(path)
                 self._busy = True
                 self._executor_seen_active = False
@@ -571,11 +573,19 @@ def main() -> None:
                 self._reason = decision.reason
             self._publish_status(decision.observed_ratio)
 
-        def _begin_path(self, path: Path) -> None:
+        def _begin_path(self, path: Path) -> bool:
+            stamp = path.header.stamp
+            current = (int(stamp.sec), int(stamp.nanosec))
+            if self._request_stamp:
+                previous = tuple(int(part) for part in self._request_stamp.split(":"))
+                if current <= previous:
+                    self._block("path_clock_has_not_advanced")
+                    return False
             self._request_stamp = f"{path.header.stamp.sec}:{path.header.stamp.nanosec}"
             self._pending_since = time.monotonic()
             self._executor_status_time = None
             self._cancel_sent = False
+            return True
 
         def _block(self, reason: str) -> None:
             self._state = "FAILED" if self._fatal_reason else "BLOCKED"

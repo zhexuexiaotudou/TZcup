@@ -168,6 +168,23 @@ def test_execution_deadline_cancels_without_claiming_terminal():
     assert handle.cancel_calls == 1 and not node._terminal_confirmed
 
 
+def test_late_cancel_ack_cannot_poison_the_next_goal():
+    node, _ = executor()
+    old = Handle()
+    accept(node, old)
+    node._on_cancel(NS(data=True))
+    finish(old)
+    current = Handle()
+    current.goal_id = NS(uuid=bytes([8] * 16))
+    node._goal_pending = True
+    node._cancel_sent = False
+    node._terminal_confirmed = False
+    accept(node, current)
+    old.cancel_future.resolve(NS(return_code=0, goals_canceling=[NS(goal_id=old.goal_id)]))
+    assert node._fatal_reason == ""
+    assert node._goal_handle is current and node._state == "EXECUTING"
+
+
 def test_result_transport_error_retains_ownership_and_cancels():
     node, _ = executor()
     handle = Handle()
@@ -239,6 +256,17 @@ def test_busy_planner_stops_cleaning_and_cancels_on_stale_input():
     assert node.cleaning == [False, False]
     assert node.cancels == [True]
     assert node._busy  # Must still wait for real terminal evidence.
+
+
+def test_paused_or_rewound_clock_cannot_reuse_previous_request_identity():
+    node, _ = planner()
+    node._busy = False
+    for sec, nano in ((2, 3), (1, 999)):
+        assert not node._begin_path(NS(header=NS(stamp=NS(sec=sec, nanosec=nano))))
+        assert node._request_stamp == "2:3"
+        assert not node._cleaning_requested
+    assert node._begin_path(NS(header=NS(stamp=NS(sec=2, nanosec=4))))
+    assert node._request_stamp == "2:4"
 
 
 def test_old_or_nonterminal_executor_status_cannot_release_planner():

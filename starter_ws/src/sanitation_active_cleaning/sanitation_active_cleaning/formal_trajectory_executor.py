@@ -282,15 +282,16 @@ def node_class():
                 self._cancel_sent = True
                 self._cancel_started = time.monotonic()
                 try:
-                    self._goal_handle.cancel_goal_async().add_done_callback(
-                        self._on_cancel_response
+                    handle = self._goal_handle
+                    handle.cancel_goal_async().add_done_callback(
+                        lambda future: self._on_cancel_response(future, handle)
                     )
                 except Exception as exc:
                     self._latch_failure(f"cancel_exception:{type(exc).__name__}")
             self._publish_status()
 
-        def _on_cancel_response(self, future) -> None:
-            if self._terminal_confirmed:
+        def _on_cancel_response(self, future, handle) -> None:
+            if self._terminal_confirmed or self._goal_handle is not handle:
                 return
             try:
                 response = future.result()
