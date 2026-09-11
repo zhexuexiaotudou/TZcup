@@ -15,6 +15,7 @@ import argparse
 import hashlib
 import json
 import subprocess
+import tempfile
 from pathlib import Path
 
 from formal_final_runtime_closure import (
@@ -49,6 +50,18 @@ def _run(arguments: list[str], label: str) -> str:
     return result.stdout.strip()
 
 
+def _verify_bundle(bundle: Path) -> None:
+    """Verify a complete bundle without depending on the caller's Git metadata."""
+
+    with tempfile.TemporaryDirectory(prefix="tzcup-opennav-bundle-verify-") as raw:
+        repository = Path(raw)
+        _run(["git", "init", "--bare", str(repository)], "OpenNav verification repository init")
+        _run(
+            ["git", "-C", str(repository), "bundle", "verify", str(bundle)],
+            "OpenNav source bundle verification",
+        )
+
+
 def materialize(bundle: Path, destination: Path, report: Path) -> dict[str, object]:
     if bundle.is_symlink() or not bundle.is_file():
         raise MaterializeError(f"OpenNav source bundle is not a regular file: {bundle}")
@@ -58,7 +71,7 @@ def materialize(bundle: Path, destination: Path, report: Path) -> dict[str, obje
         raise MaterializeError(f"OpenNav destination is not fresh: {destination}")
     if report.exists() or report.is_symlink():
         raise MaterializeError(f"OpenNav provenance report is not fresh: {report}")
-    _run(["git", "bundle", "verify", str(bundle)], "OpenNav source bundle verification")
+    _verify_bundle(bundle)
     _run(["git", "clone", "--no-checkout", str(bundle), str(destination)], "OpenNav bundle clone")
     _run(["git", "-C", str(destination), "checkout", "--detach", PATCHED_COMMIT], "OpenNav patched checkout")
     actual = {

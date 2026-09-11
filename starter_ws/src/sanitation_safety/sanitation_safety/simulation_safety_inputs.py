@@ -465,7 +465,7 @@ class SimulationSafetyInputs(Node):
                 deadline += period
                 now = time.monotonic()
                 if deadline <= now:
-                    deadline = now + period
+                    deadline = now
         except BaseException as error:
             with self._state_lock:
                 self._safety_publish_thread_error = error

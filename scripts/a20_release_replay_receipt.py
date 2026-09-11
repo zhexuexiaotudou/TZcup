@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
-"""Fail closed until TZcup has a canonical product MCAP replay producer.
-
-AUTO-02 and AUTO-03 replay tools are stage-specific. Neither replays the
-formal product chain with coverage, localization, runtime closure and session
-bindings, so A20 must not promote their reports or arbitrary JSON.
-"""
+"""Validate an A20 release receipt against canonical product MCAP replays."""
 
 from __future__ import annotations
 
@@ -14,30 +9,187 @@ import json
 import os
 import secrets
 import stat
+import re
 from pathlib import Path
 from typing import Any
 
 
 SCHEMA = "tzcup.a20_release_replay_receipt.v1"
-BLOCKER = (
-    "canonical formal product replay producer is absent; AUTO-02/AUTO-03 and "
-    "coverage-only replay audits cannot satisfy A20"
-)
+BLOCKER = "canonical current-session formal product replay evidence is incomplete"
+HEX64 = re.compile(r"^[0-9a-f]{64}$")
+GIT40 = re.compile(r"^[0-9a-f]{40}$")
+HASH_FIELDS = ("source", "model", "config", "dataset", "dependency")
 
 
-def validate_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
-    """Purely reject a receipt until a complete canonical producer exists."""
+def _sealed_bytes(path: Path, label: str) -> bytes:
+    flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
+    descriptor = os.open(path, flags)
+    try:
+        before = os.fstat(descriptor)
+        if not stat.S_ISREG(before.st_mode):
+            raise ValueError(f"{label} is not a regular file")
+        chunks: list[bytes] = []
+        while chunk := os.read(descriptor, 1024 * 1024):
+            chunks.append(chunk)
+        after = os.fstat(descriptor)
+    finally:
+        os.close(descriptor)
+    named = os.lstat(path)
+    if _identity(before) != _identity(after) or _identity(before) != _identity(named):
+        raise ValueError(f"{label} changed while being read")
+    return b"".join(chunks)
 
-    del receipt
+
+def _hash_ref(root: Path, value: Any, label: str) -> Path:
+    if not isinstance(value, dict) or not isinstance(value.get("path"), str) or not HEX64.fullmatch(str(value.get("sha256", ""))):
+        raise ValueError(f"{label} has no path and sha256 binding")
+    path = _regular_in_root(root, Path(value["path"]), label)
+    digest = hashlib.sha256(_sealed_bytes(path, label)).hexdigest()
+    if digest != value["sha256"]:
+        raise ValueError(f"{label} hash mismatch")
+    return path
+
+
+def _json_hash_ref(root: Path, value: Any, label: str) -> tuple[Path, dict[str, Any]]:
+    if not isinstance(value, dict) or not isinstance(value.get("path"), str) or not HEX64.fullmatch(str(value.get("sha256", ""))):
+        raise ValueError(f"{label} has no path and sha256 binding")
+    path = _regular_in_root(root, Path(value["path"]), label)
+    raw = _sealed_bytes(path, label)
+    if hashlib.sha256(raw).hexdigest() != value["sha256"]:
+        raise ValueError(f"{label} hash mismatch")
+    payload = json.loads(raw.decode("utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError(f"{label} JSON root is not an object")
+    return path, payload
+
+
+def _artifact_in_root(root: Path, candidate: Path, label: str) -> Path:
+    if not candidate.is_absolute():
+        raise ValueError(f"{label} must be absolute")
+    try:
+        relative = candidate.relative_to(root)
+    except ValueError as exc:
+        raise ValueError(f"{label} escapes repository root") from exc
+    current = root
+    for part in relative.parts:
+        current /= part
+        if current.exists() and current.is_symlink():
+            raise ValueError(f"{label} has a symbolic-link component")
+    if not candidate.exists() or candidate.is_symlink() or not (candidate.is_file() or candidate.is_dir()):
+        raise ValueError(f"{label} is missing or not a regular artifact")
+    return candidate
+
+
+def validate_receipt(receipt: dict[str, Any], repository_root: Path | None = None) -> dict[str, Any]:
+    """Validate current retained files; embedded/stage-specific reports fail."""
+
+    errors: list[str] = []
+    root = repository_root.resolve() if repository_root is not None else None
+    try:
+        if root is None:
+            raise ValueError("repository root is required for retained-file validation")
+        if receipt.get("schema") != SCHEMA:
+            raise ValueError("unsupported A20 receipt schema")
+        hashes = receipt.get("input_hashes")
+        if not isinstance(hashes, dict) or set(hashes) != set(HASH_FIELDS) or any(not HEX64.fullmatch(str(hashes.get(name, ""))) for name in HASH_FIELDS):
+            raise ValueError("input_hashes must contain exact source/model/config/dataset/dependency SHA-256 values")
+
+        session_path, session = _json_hash_ref(root, receipt.get("sealed_final_session"), "sealed final session")
+        if session.get("report_id") != "tzcup_formal_final_acceptance_session_v1" or session.get("status") != "FORMAL_FINAL_ACCEPTANCE_SESSION_COMPLETE":
+            raise ValueError("sealed final session is not the completed canonical session")
+        snapshot = session.get("snapshot")
+        if not isinstance(snapshot, dict) or any(not HEX64.fullmatch(str(snapshot.get(name, ""))) for name in ("snapshot_manifest_sha256", "source_inventory_sha256", "expanded_urdf_sha256")):
+            raise ValueError("sealed final session has no complete snapshot identity")
+        if hashes["source"] != snapshot["source_inventory_sha256"]:
+            raise ValueError("source hash does not match the sealed snapshot")
+        closure = session.get("runtime_closure_binding")
+        if not isinstance(closure, dict) or closure.get("status") != "FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED" or not HEX64.fullmatch(str(closure.get("closure_sha256", ""))):
+            raise ValueError("sealed final session has no verified runtime closure")
+
+        from formal_product_mcap_replay import PRODUCER_ID, SCHEMA as REPLAY_SCHEMA, artifact_sha256, sha256
+        producer = {"id": PRODUCER_ID, "sha256": sha256(root / PRODUCER_ID)}
+        replay_refs = receipt.get("product_replays")
+        if not isinstance(replay_refs, list) or len(replay_refs) < 5:
+            raise ValueError("A20 requires at least five canonical product replay receipts")
+        bag_identities: set[tuple[str, str]] = set()
+        for index, reference in enumerate(replay_refs):
+            replay_path, replay = _json_hash_ref(root, reference, f"product_replays[{index}]")
+            if replay.get("schema") != REPLAY_SCHEMA or replay.get("status") != "FORMAL_PRODUCT_MCAP_REPLAY_PASS" or replay.get("pass") is not True:
+                raise ValueError(f"product_replays[{index}] is not a passing canonical product replay")
+            if replay.get("producer") != producer:
+                raise ValueError(f"product_replays[{index}] producer identity is stale or forged")
+            context = replay.get("formal_context", {})
+            replay_session = context.get("session", {})
+            if replay_session.get("path") != str(session_path) or replay_session.get("started_epoch_ns") != session.get("started_epoch_ns"):
+                raise ValueError(f"product_replays[{index}] belongs to another formal session")
+            if context.get("snapshot") != snapshot or context.get("runtime_closure_binding") != closure:
+                raise ValueError(f"product_replays[{index}] snapshot/runtime closure binding differs")
+            snapshot_manifest = context.get("snapshot_manifest")
+            _hash_ref(root, snapshot_manifest, f"product_replays[{index}] snapshot manifest")
+            if snapshot_manifest.get("sha256") != snapshot["snapshot_manifest_sha256"]:
+                raise ValueError(f"product_replays[{index}] snapshot manifest identity differs")
+            binding_path, binding = _json_hash_ref(root, context.get("runtime_gate_binding"), f"product_replays[{index}] runtime gate binding")
+            del binding_path
+            if (
+                binding.get("status") != "FORMAL_RUNTIME_GATE_BOUND"
+                or binding.get("runtime_closure_binding") != closure
+                or binding.get("acceptance_session_binding", {}).get("snapshot") != snapshot
+                or binding.get("acceptance_session_binding", {}).get("session_started_epoch_ns") != session.get("started_epoch_ns")
+            ):
+                raise ValueError(f"product_replays[{index}] runtime gate binding differs")
+            replay_hashes = replay.get("input_hashes", {})
+            if any(replay_hashes.get(name) != hashes[name] for name in ("model", "config", "dataset", "dependency")):
+                raise ValueError(f"product_replays[{index}] provenance hashes differ")
+            artifacts = replay.get("input_artifacts")
+            if not isinstance(artifacts, dict) or set(artifacts) != {"model", "config", "dataset", "dependency"}:
+                raise ValueError(f"product_replays[{index}] has no complete provenance artifact bindings")
+            for name, reference in artifacts.items():
+                artifact_path = _artifact_in_root(root, Path(str(reference.get("path", ""))), f"product_replays[{index}] {name}")
+                if artifact_sha256(artifact_path) != reference.get("sha256") or reference.get("sha256") != hashes[name]:
+                    raise ValueError(f"product_replays[{index}] {name} artifact hash mismatch")
+            if replay_hashes.get("container") != receipt.get("container_sha256"):
+                raise ValueError(f"product_replays[{index}] container digest differs")
+            checks = replay.get("checks")
+            if not isinstance(checks, dict) or not checks or not all(value is True for value in checks.values()):
+                raise ValueError(f"product_replays[{index}] has incomplete recalculation/playback checks")
+            bag = replay.get("bag", {})
+            bag_identity = (str(bag.get("path", "")), str(bag.get("sha256", "")))
+            if not bag_identity[0] or not HEX64.fullmatch(bag_identity[1]):
+                raise ValueError(f"product_replays[{index}] has no MCAP binding")
+            bag_path = _artifact_in_root(root, Path(bag_identity[0]), f"product_replays[{index}] MCAP")
+            if artifact_sha256(bag_path) != bag_identity[1]:
+                raise ValueError(f"product_replays[{index}] MCAP hash mismatch")
+            bag_identities.add(bag_identity)
+        if len(bag_identities) != len(replay_refs):
+            raise ValueError("A20 product replay receipts reuse an MCAP")
+
+        release = receipt.get("release_artifact")
+        if not isinstance(release, dict) or release.get("status") != "RELEASE_PACKAGE_ARTIFACT_RECORDED":
+            raise ValueError("release artifact is not recorded")
+        if not GIT40.fullmatch(str(release.get("main_commit", ""))) or not GIT40.fullmatch(str(release.get("rollback_commit", ""))):
+            raise ValueError("release artifact lacks exact main/rollback commits")
+        for name in ("archive", "sha256sums", "sbom", "dependency_lock", "licenses"):
+            _hash_ref(root, release.get(name), f"release {name}")
+        if release.get("container_sha256") != receipt.get("container_sha256") or not HEX64.fullmatch(str(release.get("container_sha256", ""))):
+            raise ValueError("release container digest is missing or differs")
+
+        rollback = receipt.get("verified_rollback_exercise")
+        if not isinstance(rollback, dict) or rollback.get("status") != "ROLLBACK_EXERCISE_VERIFIED" or rollback.get("verified") is not True:
+            raise ValueError("rollback exercise is not verified")
+        if rollback.get("rollback_commit") != release.get("rollback_commit"):
+            raise ValueError("rollback exercise does not bind the release rollback commit")
+        _hash_ref(root, rollback.get("verification_report"), "rollback verification report")
+    except (OSError, UnicodeError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+        errors.append(str(exc))
     return {
         "schema": "tzcup.a20_release_replay_receipt_validation.v1",
-        "status": "A20_RECEIPT_STATIC_BLOCKED",
-        "valid": False,
-        "errors": [BLOCKER],
-        "release_runtime_pass": False,
+        "status": "A20_RECEIPT_VALID" if not errors else "A20_RECEIPT_STATIC_BLOCKED",
+        "valid": not errors,
+        "errors": errors,
+        "release_runtime_pass": not errors,
         "claim_boundary": (
-            "A20 has no canonical complete product replay producer. No supplied "
-            "hash, embedded report, or historical AUTO-16 artifact can be promoted."
+            "Validation proves retained current-session replay/recalculation, release, "
+            "and rollback bindings; it does not itself deploy or rerun Gazebo."
         ),
     }
 
@@ -93,7 +245,10 @@ def _identity(value: os.stat_result) -> tuple[int, int, int, int, int]:
         value.st_ino,
         value.st_size,
         value.st_mtime_ns,
-        value.st_ctime_ns,
+        # Windows fstat/lstat can expose transient creation-time rounding.
+        # The production CLI is POSIX-only, where ctime remains part of the
+        # mutation identity; pure Windows unit tests use the stable fields.
+        value.st_ctime_ns if os.name != "nt" else 0,
     )
 
 
@@ -291,7 +446,7 @@ def main() -> int:
             descriptor, identity = _open_bound_input(root, root_descriptor, receipt_path)
             receipt, receipt_sha256 = _read_bound_json(descriptor, identity)
             _assert_root_binding(root, root_descriptor)
-            report = validate_receipt(receipt)
+            report = validate_receipt(receipt, root)
             report["receipt_sha256"] = receipt_sha256
             _write_fresh_output(root, root_descriptor, output, report)
             _assert_root_binding(root, root_descriptor)
@@ -299,7 +454,8 @@ def main() -> int:
             os.close(root_descriptor)
     except (OSError, UnicodeError, json.JSONDecodeError, ValueError) as exc:
         print(json.dumps({"status": "A20_RECEIPT_STATIC_BLOCKED", "error": str(exc)}, indent=2))
-    return 2
+        return 2
+    return 0 if report["valid"] else 2
 
 
 if __name__ == "__main__":

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import os
@@ -43,10 +44,41 @@ def prepare(mission_path: Path, motion_profile_path: Path) -> tuple[dict, dict]:
         raise PreparationError("invalid deployed cleaning footprint vertices")
     radius = max(math.hypot(*point) for point in points)
     safety_margin = 0.10
-    headland = math.ceil((radius + safety_margin + width / 2.0) * 100.0) / 100.0
+    expected_clearance = math.ceil((radius + safety_margin + width / 2.0) * 100.0) / 100.0
     truth = mission.get("truth_boundary")
     if not isinstance(truth, dict) or truth.get("dirt_truth_used") is not False:
         raise PreparationError("saved-map mission has no dirt-truth prohibition")
+    coverage = mission.get("saved_occupancy_coverage")
+    if not isinstance(coverage, dict) or coverage.get("source") != "saved_slam_occupancy_only":
+        raise PreparationError("saved-map mission has no sealed SLAM coverage geometry")
+    geometry_name = coverage.get("geometry")
+    geometry_hash = coverage.get("sha256")
+    if not isinstance(geometry_name, str) or Path(geometry_name).name != geometry_name or not isinstance(geometry_hash, str):
+        raise PreparationError("saved-map coverage geometry reference is invalid")
+    geometry_path = mission_path.parent / geometry_name
+    if not geometry_path.is_file() or hashlib.sha256(geometry_path.read_bytes()).hexdigest() != geometry_hash:
+        raise PreparationError("saved-map coverage geometry hash differs")
+    geometry = _object(geometry_path)
+    outer = geometry.get("planning_outer_polygon")
+    exclusions = geometry.get("planning_hole_polygons")
+    if (geometry.get("source") != "saved_slam_occupancy_only" or not isinstance(outer, list)
+            or not isinstance(exclusions, list)):
+        raise PreparationError("saved-map coverage geometry is not shared by the mission")
+    try:
+        headland = float(geometry["planning_clearance_m"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise PreparationError("saved-map coverage clearance is invalid") from exc
+    if (not math.isfinite(headland) or not math.isclose(headland, expected_clearance, abs_tol=1e-9)
+            or geometry.get("obstacle_inflation_m") != headland
+            or mission.get("headland") != {"enabled": True, "width_m": headland}):
+        raise PreparationError("saved-map coverage clearance is not shared by the mission")
+    try:
+        free_cells = int(geometry["reachable_cleanable_cells"])
+        resolution = float(geometry["resolution_m"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise PreparationError("saved-map coverage cells are invalid") from exc
+    if free_cells <= 0 or not math.isfinite(resolution) or resolution <= 0.0:
+        raise PreparationError("saved-map coverage cells are invalid")
     probe = {
         **mission,
         "mode": "coverage",
@@ -57,8 +89,14 @@ def prepare(mission_path: Path, motion_profile_path: Path) -> tuple[dict, dict]:
         "route_type": "BOUSTROPHEDON",
         "path_type": "DUBIN",
         "allow_overlap": True,
-        "exclusion_polygons": mission.get("exclusion_polygons", []),
-        "headland": {"enabled": True, "width_m": headland},
+        "outer_polygon": outer,
+        "keepout_polygons": exclusions,
+        "exclusion_polygons": exclusions,
+        "coverage_geometry_sha256": geometry_hash,
+        "coverage_geometry": {"sha256": geometry_hash, "planning_clearance_m": headland,
+            "resolution_m": resolution, "free_cell_count": free_cells,
+            "cleanable_area_m2": free_cells * resolution * resolution},
+        "headland": {"enabled": False, "width_m": 0.0},
         "safety_margin_m": safety_margin,
         "staging_offset_m": headland,
         "optimized_staging_offset_m": headland,
@@ -78,7 +116,7 @@ def prepare(mission_path: Path, motion_profile_path: Path) -> tuple[dict, dict]:
             "operation_width": width,
             "min_turning_radius": 0.40,
             "linear_curv_change": 200.0,
-            "default_headland_width": headland,
+            "default_headland_width": 0.0,
             "default_headland_type": "CONSTANT",
             "default_allow_overlap": True,
             "default_swath_type": "COVERAGE",

@@ -27,6 +27,7 @@ from .saved_map_coverage_core import (
     polygon_area,
     validate_execution_parameters,
 )
+from .map_lifecycle_core import FORMAL_COVERAGE_STATIC_OBSTACLE_INFLATION_M
 
 
 class FormalSavedMapCoverageExecutor(Node):
@@ -39,6 +40,7 @@ class FormalSavedMapCoverageExecutor(Node):
         self.declare_parameter("operation_width_m", FORMAL_OPERATION_WIDTH_M)
         self.declare_parameter("maximum_linear_speed_mps", FORMAL_MAX_LINEAR_SPEED_MPS)
         self.declare_parameter("operation_speed_profile", DRY_CLEANING_SPEED_PROFILE)
+        self.declare_parameter("planning_clearance_m", FORMAL_COVERAGE_STATIC_OBSTACLE_INFLATION_M)
         self.declare_parameter("planning_timeout_sec", 300.0)
         self.declare_parameter("component_timeout_margin_sec", 120.0)
         self._state = self.create_publisher(
@@ -115,9 +117,10 @@ class FormalSavedMapCoverageExecutor(Node):
             "terminal_status": int(wrapped.status),
         }
 
-    def _plan(self, polygon: tuple[tuple[float, float], ...]) -> dict:
+    def _plan(self, polygons: tuple[tuple[tuple[float, float], ...], ...]) -> dict:
         goal = ComputeCoveragePath.Goal()
-        goal.generate_headland = True
+        # The sealed planning rings already include the formal clearance.
+        goal.generate_headland = False
         goal.generate_route = True
         goal.generate_path = True
         goal.frame_id = "map"
@@ -127,12 +130,13 @@ class FormalSavedMapCoverageExecutor(Node):
         goal.route_mode.mode = "BOUSTROPHEDON"
         goal.path_mode.mode = "DUBIN"
         goal.path_mode.continuity_mode = "DISCONTINUOUS"
-        closed = (*polygon, polygon[0])
-        coordinates = Coordinates()
-        coordinates.coordinates = [
-            Coordinate(axis1=x, axis2=y) for x, y in closed
-        ]
-        goal.polygons = [coordinates]
+        goal.polygons = []
+        for polygon in polygons:
+            coordinates = Coordinates()
+            coordinates.coordinates = [
+                Coordinate(axis1=x, axis2=y) for x, y in (*polygon, polygon[0])
+            ]
+            goal.polygons.append(coordinates)
         timeout = float(self.get_parameter("planning_timeout_sec").value)
         if not math.isfinite(timeout) or timeout <= 0.0:
             return {"success": False, "error": "invalid_planning_timeout"}
@@ -181,12 +185,15 @@ class FormalSavedMapCoverageExecutor(Node):
             str(self.get_parameter("operation_speed_profile").value), speed
         )
         validate_execution_parameters(width, speed, speed_profile)
-        polygon = load_product_mission_geometry(
+        geometry = load_product_mission_geometry(
             str(self.get_parameter("mission_geometry_path").value)
         )
+        clearance = float(self.get_parameter("planning_clearance_m").value)
+        if not math.isclose(clearance, geometry.planning_clearance_m, abs_tol=1e-9):
+            return self._finish(False, "FAILED", {"error": "coverage_clearance_mismatch"}, speed_profile)
         self._set_brush(False)
         self._publish_state("PLANNING", operation_width_m=width)
-        planning = self._plan(polygon)
+        planning = self._plan((geometry.planning_outer_polygon, *geometry.planning_hole_polygons))
         if not planning.get("success"):
             return self._finish(False, "FAILED", planning, speed_profile)
         swaths = planning["swaths"]
@@ -201,8 +208,8 @@ class FormalSavedMapCoverageExecutor(Node):
             )
         maximum_transit_timeout = (
             math.hypot(
-                max(point[0] for point in polygon) - min(point[0] for point in polygon),
-                max(point[1] for point in polygon) - min(point[1] for point in polygon),
+                max(point[0] for point in geometry.outer_polygon) - min(point[0] for point in geometry.outer_polygon),
+                max(point[1] for point in geometry.outer_polygon) - min(point[1] for point in geometry.outer_polygon),
             )
             / speed
             + margin
@@ -262,8 +269,13 @@ class FormalSavedMapCoverageExecutor(Node):
             "completed_swath_count": len(swaths),
             "planned_swath_length_m": length,
             "planned_coverage_fraction": min(
-                1.0, length * width / polygon_area(polygon)
+                1.0, length * width / (len(geometry.free_cells) * geometry.raster_resolution_m ** 2)
             ),
+            "coverage_geometry_sha256": geometry.sha256,
+            "planning_clearance_m": geometry.planning_clearance_m,
+            "coverage_raster_resolution_m": geometry.raster_resolution_m,
+            "reachable_cleanable_cells": len(geometry.free_cells),
+            "cleanable_area_m2": len(geometry.free_cells) * geometry.raster_resolution_m ** 2,
             "component_results": results,
         }, speed_profile)
 

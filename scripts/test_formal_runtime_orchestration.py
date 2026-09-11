@@ -22,6 +22,7 @@ RUNNERS = {
         "run_formal_first_map_dynamic_prerequisite.sh",
         "run_formal_saved_map_cleaning_lifecycle.sh",
         "run_formal_random_scene_perception.sh",
+        "run_formal_a19_reliability_fault.sh",
     )
 }
 ISOLATION = (SCRIPTS / "run_formal_runtime_isolation.sh").read_text(encoding="utf-8")
@@ -70,6 +71,9 @@ def test_contract_outputs_are_default_or_explicitly_published() -> None:
     assert "artifacts/formal_end_to_end_cleaning_mission_acceptance.json" in RUNNERS[
         "run_formal_single_episode_cleaning_mission.sh"
     ]
+    assert "artifacts/formal_a19_reliability_fault_acceptance.json" in RUNNERS[
+        "run_formal_a19_reliability_fault.sh"
+    ]
 
 
 def test_map_runners_share_one_default_map_root() -> None:
@@ -81,7 +85,13 @@ def test_map_runners_share_one_default_map_root() -> None:
 def test_gazebo_runners_use_process_groups_partitions_and_waited_cleanup() -> None:
     for name, source in RUNNERS.items():
         assert "GZ_PARTITION" in source, name
-        assert '"${FORMAL_RUNTIME_SESSION_PREFIX[@]}"' in source, name
+        if name == "run_formal_a19_reliability_fault.sh":
+            producer = (SCRIPTS / "produce_formal_a19_reliability_fault.py").read_text(encoding="utf-8")
+            assert "start_new_session=True" in producer
+            assert "os.killpg" in producer
+            assert "_survivors_in_group" in producer
+        else:
+            assert '"${FORMAL_RUNTIME_SESSION_PREFIX[@]}"' in source, name
         assert "formal_runtime_install_traps" in source, name
     assert 'wait "${pid}"' in ISOLATION
     # Let ros2 launch perform its ordered child shutdown first.  Escalate only

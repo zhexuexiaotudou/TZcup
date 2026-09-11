@@ -230,10 +230,11 @@ def test_final_builder_snapshots_the_installed_proot_compatibility_layer() -> No
     assert 'cc -shared -fPIC -O2 -Wall -Wextra' in source
     assert 'chmod 0555 -- "${proot_compat_pending}"' in source
     assert 'mv -- "${proot_compat_pending}" "${proot_compat_install}"' in source
-    assert (
-        'LD_PRELOAD="${proot_compat_install}${LD_PRELOAD:+:${LD_PRELOAD}}" '
-        "setsid bash -c"
-    ) in source
+    assert 'if [[ -z "${cold_gate_evidence}" ]]; then' in source
+    assert 'export LD_PRELOAD="${proot_compat_install}${LD_PRELOAD:+:${LD_PRELOAD}}"' in source
+    assert 'else\n  unset LD_PRELOAD\nfi\nsetsid bash -c' in source
+    assert 'build_ld_preload_was_set=false' in source
+    assert 'export LD_PRELOAD="${build_ld_preload_saved}"' in source
     install_position = source.index('mv -- "${proot_compat_pending}" "${proot_compat_install}"')
     build_position = source.index("setsid bash -c")
     link_inventory_position = source.index('# Record the exact install-tree link inventory.')

@@ -17,7 +17,11 @@ snapshot="${FORMAL_VEHICLE_SNAPSHOT_MANIFEST:-${repo_root}/reports/engineering/f
 install_root="$(dirname "${formal_service_setup}")"
 closure_manifest="${FORMAL_FINAL_RUNTIME_CLOSURE_MANIFEST:-$(dirname "${install_root}")/final_runtime_closure_manifest.json}"
 runtime_binding="${aggregate_output}.runtime_binding.json"
-formal_runtime_register_evidence_paths "${aggregate_output}" "${runtime_binding}"
+preembedded_world="${aggregate_output%.json}.preembedded_sensor_world.sdf"
+preembedded_report="${aggregate_output%.json}.preembedded_sensor_world.json"
+formal_runtime_register_evidence_paths \
+  "${aggregate_output}" "${runtime_binding}" \
+  "${preembedded_world}" "${preembedded_report}"
 scenarios=(
   charge_allow charge_reject_no_contact charge_reject_door_closed
   charge_reject_lock_open drain_allow drain_reject_no_contact
@@ -25,7 +29,9 @@ scenarios=(
 )
 base_domain="${FORMAL_SERVICE_DOMAIN_BASE:-87}"
 formal_runtime_configure "${base_domain}" "${#scenarios[@]}"
-if [[ -e "${episodes_dir}" || -e "${aggregate_output}" || -e "${runtime_binding}" ]]; then
+if [[ -e "${episodes_dir}" || -e "${aggregate_output}" || \
+      -e "${runtime_binding}" || -e "${preembedded_world}" || \
+      -e "${preembedded_report}" ]]; then
   echo "Refusing stale service-interface evidence; use fresh episode and aggregate paths" >&2
   exit 2
 fi
@@ -48,8 +54,24 @@ xacro "${vehicle_xacro}" \
   high_bandwidth_sensor_runtime:=false \
   service_acceptance_interfaces:=true \
   wastewater_load_mass_kg:=8.30 \
+  controller_config_path:=package://sanitation_vehicle_description/config/formal_vehicle_controllers.yaml \
   > "${vehicle_model}.tmp"
 mv "${vehicle_model}.tmp" "${vehicle_model}"
+
+installed_package_share="$(ros2 pkg prefix --share sanitation_vehicle_description)"
+expected_package_share="${install_root}/share/sanitation_vehicle_description"
+if [[ ! -d "${expected_package_share}" ]] || \
+   [[ "$(cd -- "${installed_package_share}" && pwd -P)" != "$(cd -- "${expected_package_share}" && pwd -P)" ]]; then
+  echo "sanitation_vehicle_description resolves outside the frozen runtime install: ${installed_package_share}" >&2
+  exit 2
+fi
+python3 "${repo_root}/scripts/prepare_formal_preembedded_sensor_world.py" \
+  --source-world "${installed_package_share}/worlds/formal_vehicle_validation.sdf" \
+  --vehicle-urdf "${vehicle_model}" \
+  --controller-config "${installed_package_share}/config/formal_vehicle_controllers.yaml" \
+  --runtime-install-root "${install_root}" \
+  --output-world "${preembedded_world}" --report "${preembedded_report}" \
+  --model-pose "0 0 0.005 0 0 0"
 
 active_launch_pid=""
 active_partition=""
@@ -85,6 +107,7 @@ for index in "${!scenarios[@]}"; do
       scenario:="${scenario}" \
       output:="${episode_output}" \
       vehicle_model:="${vehicle_model}" \
+      world:="${preembedded_world}" \
       station_x_offset:="${station_x_offset}" \
       > "${episode_log}" 2>&1 &
   launch_pid=$!

@@ -4,6 +4,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -16,6 +17,15 @@ import materialize_formal_opennav_source as materializer
 _REAL_ROS_GZ_IMAGE_SYSTEM_IDENTITY = closure._ros_gz_image_system_identity
 _REAL_NVIDIA_EGL_RUNTIME_IDENTITY = closure._nvidia_egl_runtime_identity
 _REAL_FIELDS2COVER_SYSTEM_IDENTITY = closure._fields2cover_system_identity
+
+
+def test_identity_command_can_accept_expected_empty_output() -> None:
+    assert (
+        closure._identity_command(
+            [sys.executable, "-c", ""], "clean working tree", allow_empty=True
+        )
+        == ""
+    )
 
 
 @pytest.fixture(autouse=True)
@@ -205,6 +215,7 @@ def _fake_closure(tmp_path: Path) -> tuple[Path, Path, Path, Path, Path]:
                     "docker_private_at_most_configured_maximum": True,
                     "wsl_vm_stopped_when_required": True,
                     "wsl_vm_running_when_required": True,
+                    "no_suspected_ndis_nonpaged_pool_leak": True,
                 },
                 "docker_was_signalled_or_stopped": False,
             }
@@ -963,6 +974,22 @@ def test_opennav_materializer_rejects_stale_destination_before_git(tmp_path: Pat
     monkeypatch.setattr(materializer, "_sha256", lambda path: materializer.BUNDLE_SHA256)
     with pytest.raises(materializer.MaterializeError, match="not fresh"):
         materializer.materialize(bundle, destination, tmp_path / "report.json")
+
+
+def test_opennav_bundle_verification_is_independent_of_parent_worktree(tmp_path: Path, monkeypatch) -> None:
+    bundle = _write(tmp_path / "complete.bundle", b"fixture")
+    commands: list[list[str]] = []
+
+    def record(arguments: list[str], label: str) -> str:
+        commands.append(arguments)
+        return ""
+
+    monkeypatch.setattr(materializer, "_run", record)
+    materializer._verify_bundle(bundle)
+    assert commands[0][:3] == ["git", "init", "--bare"]
+    assert commands[1][0] == "git"
+    assert commands[1][1] == "-C"
+    assert commands[1][-3:] == ["bundle", "verify", str(bundle)]
 
 
 def test_final_runtime_builder_materializes_all_preflight_inputs() -> None:

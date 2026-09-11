@@ -164,6 +164,14 @@ def test_wrist_recheck_contact_attachment_and_bin_increment_are_fail_closed():
     assert SOURCE.index("self._wait_wrist_recheck(request_base)") < SOURCE.index(
         '"LINEAR_CONTACT_APPROACH"'
     )
+
+
+def test_a19_faults_change_the_live_verifier_and_wrist_consumers():
+    assert '"/formal_a19/fault_control"' in SOURCE
+    assert 'self._consume_formal_a19_fault("reobserve_timeout")' in SOURCE
+    assert 'self._consume_formal_a19_fault("action_verifier_failure")' in SOURCE
+    assert '"formal_a19_action_verifier_rejected"' in SOURCE
+    assert '"formal_a19_fault_events"' in SOURCE
     assert SOURCE.index("self._common_live_contact()") < SOURCE.index(
         "self._attach.publish(Empty())"
     )

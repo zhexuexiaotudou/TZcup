@@ -9,11 +9,14 @@ from __future__ import annotations
 
 import json
 import math
+import threading
 import time
+from pathlib import Path
 
 import numpy as np
 
 from .dosod_ros_adapter import DosodOnnxDetector
+from .a19_fault_hooks import A19ProductFaultError, ProductFaultHooks
 from .diagnostic_compat import set_diagnostic_level
 from .edgesam_ros_adapter import EdgeSamOnnxSegmenter
 from .product_intermediate_capture import ProductIntermediateCapture
@@ -24,6 +27,91 @@ from .tracking import TargetTracker
 FORBIDDEN_INPUT_TOKENS = ("ground_truth", "evaluator", "evaluation/")
 GROUND_DIRT_CLASS_IDS = frozenset(("fallen_leaves", "dust_or_soil", "puddle"))
 NANOSECONDS_PER_SECOND = 1_000_000_000
+A19_PERCEPTION_FAULTS = frozenset({
+    "proposal_flood", "proposal_dropout", "classifier_exception",
+    "classifier_timeout", "reobserve_timeout",
+})
+
+
+def preferred_onnx_providers(available_providers) -> list[str]:
+    """Prefer the actual CUDA product path, retaining a CPU-only fallback."""
+    available = set(available_providers)
+    if "CUDAExecutionProvider" in available:
+        return ["CUDAExecutionProvider", "CPUExecutionProvider"]
+    return ["CPUExecutionProvider"]
+
+
+def live_session_provider_readback(session, available_providers) -> dict[str, object]:
+    """Describe the already-running product session; never create a probe session."""
+    session_providers = list(session.get_providers())
+    return {
+        "available_providers": list(available_providers),
+        "selected_provider": session_providers[0] if session_providers else None,
+        "session_providers": session_providers,
+    }
+
+
+class FormalA19PerceptionFaultGate:
+    """Small, live-only fault gate on the actual PC inference consumers."""
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self.fault: str | None = None
+        self.parameters: dict[str, object] = {}
+        self.events = 0
+        self.effect: dict[str, object] = {}
+
+    def configure(self, raw: str) -> None:
+        value = json.loads(raw)
+        if not isinstance(value, dict) or set(value) != {"fault", "parameters", "active"}:
+            raise ValueError("formal A19 fault control is malformed")
+        fault, parameters, active = value["fault"], value["parameters"], value["active"]
+        if not isinstance(fault, str) or fault not in A19_PERCEPTION_FAULTS:
+            raise ValueError("formal A19 perception fault is unsupported")
+        if not isinstance(parameters, dict) or type(active) is not bool:
+            raise ValueError("formal A19 fault control values are malformed")
+        if active:
+            required = {
+                "proposal_flood": ("proposals_per_frame", "duration_s"),
+                "proposal_dropout": ("drop_probability", "duration_s"),
+                "classifier_exception": ("exception_count",),
+                "classifier_timeout": ("timeout_s", "occurrences"),
+                "reobserve_timeout": ("timeout_s", "occurrences"),
+            }[fault]
+            if any(type(parameters.get(name)) not in (int, float) or float(parameters[name]) <= 0.0 for name in required):
+                raise ValueError("formal A19 fault parameters are invalid")
+            with self._lock:
+                self.fault, self.parameters, self.events, self.effect = fault, dict(parameters), 0, {}
+        else:
+            with self._lock:
+                if self.fault == fault:
+                    self.fault, self.parameters = None, {}
+
+    def consume(self, fault: str) -> bool:
+        with self._lock:
+            if self.fault != fault:
+                return False
+            limit = int(self.parameters.get("exception_count", self.parameters.get("occurrences", 1)))
+            if fault in {"proposal_flood", "proposal_dropout"}:
+                limit = 1 << 30
+            if self.events >= limit:
+                return False
+            self.events += 1
+            return True
+
+    def telemetry(self) -> dict[str, object]:
+        with self._lock:
+            return {"formal_a19_fault": self.fault or "", "formal_a19_fault_events": self.events, "formal_a19_fault_effect": dict(self.effect)}
+
+    def record_effect(self, fault: str, expected_outcome: str, **details: object) -> None:
+        with self._lock:
+            if self.fault != fault or self.events <= 0:
+                raise RuntimeError(f"formal A19 effect without consumed fault: {fault}")
+            self.effect = {"fault": fault, "observed": True, "expected_outcome": expected_outcome, **details}
+
+    def number(self, name: str) -> int:
+        with self._lock:
+            return int(self.parameters[name])
 
 
 def select_source_stamp(
@@ -295,12 +383,27 @@ def main() -> None:
             self.declare_parameter("intermediate_capture_max_frames", 12)
             self.declare_parameter("intermediate_capture_interval_s", 1.0)
             self.declare_parameter("intermediate_capture_max_bytes", 268435456)
+            sensor_topics = {
+                "front_rgb_topic": "/sensors/front_rgbd/depth/image_rect_raw/image",
+                "front_depth_topic": "/sensors/front_rgbd/depth/image_rect_raw/depth_image",
+                "front_camera_info_topic": "/sensors/front_rgbd/depth/image_rect_raw/camera_info",
+                "wrist_rgb_topic": "/sensors/wrist_rgbd/depth/image_rect_raw/image",
+                "wrist_depth_topic": "/sensors/wrist_rgbd/depth/image_rect_raw/depth_image",
+                "wrist_camera_info_topic": "/sensors/wrist_rgbd/depth/image_rect_raw/camera_info",
+                "rear_left_rgb_topic": "/sensors/rear_left_fisheye/image_raw",
+                "rear_right_rgb_topic": "/sensors/rear_right_fisheye/image_raw",
+            }
+            for name, value in sensor_topics.items():
+                self.declare_parameter(name, value)
             artifact_root = str(self.get_parameter("artifact_root").value)
             if not artifact_root:
                 raise RuntimeError("artifact_root is required; refusing placeholder inference")
-            from pathlib import Path
-
             root = Path(artifact_root)
+            import onnxruntime as ort
+
+            self.inference_providers = preferred_onnx_providers(
+                ort.get_available_providers()
+            )
             capture_root = str(self.get_parameter("intermediate_capture_root").value)
             self.intermediate_capture = (
                 ProductIntermediateCapture(
@@ -333,10 +436,22 @@ def main() -> None:
                     "puddle": float(self.get_parameter("puddle_score_threshold").value),
                 },
                 nms_threshold=float(self.get_parameter("nms_threshold").value),
+                providers=self.inference_providers,
             )
             self.segmenter = EdgeSamOnnxSegmenter(
                 root / "edgesam" / "edge_sam_3x_encoder.onnx",
                 root / "edgesam" / "edge_sam_3x_decoder.onnx",
+                providers=self.inference_providers,
+            )
+            self._a19_model_faults = ProductFaultHooks(
+                {
+                    "dosod": root / "dosod" / "dosod_mlp3x_s_tzcup_rep.onnx",
+                    "edgesam": root / "edgesam" / "edge_sam_3x_encoder.onnx",
+                },
+                provider_probe=lambda provider: self._probe_cuda_provider(
+                    provider, root / "dosod" / "dosod_mlp3x_s_tzcup_rep.onnx"
+                ),
+                model_probe=self._probe_model_load,
             )
             self.bridge = CvBridge()
             self.tf_buffer = Buffer(cache_time=Duration(seconds=10.0))
@@ -347,6 +462,7 @@ def main() -> None:
             self.last_run: dict[str, int] = {}
             self.rates = {"front": 2.0, "wrist": 2.0, "rear_left": 1.0, "rear_right": 1.0}
             self.frame_counts = {"input": 0, "selected": 0, "output": 0, "rate_limited": 0}
+            self._formal_a19_fault = FormalA19PerceptionFaultGate()
             # DOSOD + EdgeSAM inference is deliberately serialized because the
             # ONNX sessions are shared.  Keep the short-lived map/depth/info
             # cache callbacks in a different group so a long inference cannot
@@ -387,6 +503,19 @@ def main() -> None:
             self.diagnostic_publisher = self.create_publisher(
                 DiagnosticArray, "/perception/open_vocab/diagnostics", diagnostic_qos
             )
+            self.create_subscription(
+                String,
+                "/formal_a19/fault_control",
+                self._on_formal_a19_fault_control,
+                10,
+                callback_group=self.cache_callback_group,
+            )
+            self.create_subscription(
+                String,
+                "/formal_a19/perception_fault",
+                self._on_a19_model_fault,
+                10,
+            )
             self._last_success_diagnostic_s = float("-inf")
 
             map_qos = QoSProfile(
@@ -407,21 +536,21 @@ def main() -> None:
             )
             self._subscribe_rgbd(
                 "front",
-                "/sensors/front_rgbd/depth/image_rect_raw/image",
-                "/sensors/front_rgbd/depth/image_rect_raw/depth_image",
-                "/sensors/front_rgbd/depth/image_rect_raw/camera_info",
+                str(self.get_parameter("front_rgb_topic").value),
+                str(self.get_parameter("front_depth_topic").value),
+                str(self.get_parameter("front_camera_info_topic").value),
             )
             self._subscribe_rgbd(
                 "wrist",
-                "/sensors/wrist_rgbd/depth/image_rect_raw/image",
-                "/sensors/wrist_rgbd/depth/image_rect_raw/depth_image",
-                "/sensors/wrist_rgbd/depth/image_rect_raw/camera_info",
+                str(self.get_parameter("wrist_rgb_topic").value),
+                str(self.get_parameter("wrist_depth_topic").value),
+                str(self.get_parameter("wrist_camera_info_topic").value),
             )
             self._subscribe_rgb_only(
-                "rear_left", "/sensors/rear_left_fisheye/image_raw"
+                "rear_left", str(self.get_parameter("rear_left_rgb_topic").value)
             )
             self._subscribe_rgb_only(
-                "rear_right", "/sensors/rear_right_fisheye/image_raw"
+                "rear_right", str(self.get_parameter("rear_right_rgb_topic").value)
             )
             self._diagnostic(0, "ready", {"ground_truth_input_used": False})
             # The evaluator starts after this node. A one-shot volatile ready
@@ -485,6 +614,85 @@ def main() -> None:
         def _on_map(self, message: OccupancyGrid) -> None:
             self.latest_map = message
 
+        def _on_formal_a19_fault_control(self, message: String) -> None:
+            try:
+                self._formal_a19_fault.configure(message.data)
+            except (TypeError, ValueError, json.JSONDecodeError) as exc:
+                self._diagnostic(2, "formal_a19_fault_control_rejected", {"error": str(exc)})
+                return
+            self._diagnostic(1, "formal_a19_fault_control_updated", self._formal_a19_fault.telemetry())
+
+        def _probe_cuda_provider(self, provider: str, model_path: Path) -> dict[str, object]:
+            del provider, model_path
+            import onnxruntime as ort
+
+            return live_session_provider_readback(
+                self.detector.session, ort.get_available_providers()
+            )
+
+        @staticmethod
+        def _probe_model_load(path: Path) -> dict[str, object]:
+            import onnxruntime as ort
+
+            session = ort.InferenceSession(str(path), providers=["CPUExecutionProvider"])
+            return {
+                "loader_accepted_shadow": True,
+                "session_providers": list(session.get_providers()),
+            }
+
+        def _on_a19_model_fault(self, message: String) -> None:
+            try:
+                command = json.loads(message.data)
+                if not isinstance(command, dict) or command.get("action") not in {"begin", "clear"}:
+                    raise A19ProductFaultError("invalid A19 product fault command")
+                if command["action"] == "begin":
+                    readback = self._a19_model_faults.begin(
+                        str(command.get("fault")), command.get("parameters", {})
+                    )
+                    self._diagnostic(1, "a19_fault_armed", readback)
+                else:
+                    self._diagnostic(
+                        0, "a19_fault_recovered", self._a19_model_faults.clear()
+                    )
+            except (A19ProductFaultError, ValueError, TypeError) as exc:
+                self._diagnostic(2, "a19_fault_command_rejected", {"error": str(exc)})
+
+        def _a19_before_inference(self) -> None:
+            try:
+                readback = self._a19_model_faults.before_inference()
+            except A19ProductFaultError:
+                readback = self._a19_model_faults.trigger_readback()
+                if readback is not None:
+                    self._diagnostic(2, "a19_fault_active", readback)
+                raise
+            if readback is not None:
+                self._diagnostic(2, "a19_fault_active", readback)
+
+        def _infer(self, rgb):
+            # These branches sit immediately at the DOSOD consumer, so each
+            # accepted command changes the product data path rather than an
+            # evidence-only side channel.
+            self._a19_before_inference()
+            if self._formal_a19_fault.consume("classifier_exception"):
+                self._formal_a19_fault.record_effect("classifier_exception", "classifier_exception_observed")
+                raise RuntimeError("formal_a19_classifier_exception")
+            if self._formal_a19_fault.consume("classifier_timeout"):
+                self._formal_a19_fault.record_effect("classifier_timeout", "classifier_timeout_observed")
+                raise TimeoutError("formal_a19_classifier_deadline_exceeded")
+            results = list(self.detector.infer(rgb))
+            if self._formal_a19_fault.consume("proposal_dropout"):
+                if not results:
+                    raise RuntimeError("formal_a19_proposal_dropout_requires_live_proposal")
+                self._formal_a19_fault.record_effect("proposal_dropout", "proposal_output_drop_observed", input_proposal_count=len(results), output_proposal_count=0)
+                return []
+            if self._formal_a19_fault.consume("proposal_flood"):
+                if not results:
+                    raise RuntimeError("formal_a19_proposal_flood_requires_live_proposal")
+                count = self._formal_a19_fault.number("proposals_per_frame")
+                self._formal_a19_fault.record_effect("proposal_flood", "proposal_output_expansion_observed", input_proposal_count=len(results), output_proposal_count=count)
+                return (results * ((count + len(results) - 1) // len(results)))[:count]
+            return results
+
         def _due(self, sensor: str, stamp) -> bool:
             self.frame_counts["input"] += 1
             try:
@@ -535,7 +743,7 @@ def main() -> None:
                 return
             try:
                 rgb = self.bridge.imgmsg_to_cv2(image_message, desired_encoding="rgb8")
-                results = self.detector.infer(rgb)
+                results = self._infer(rgb)
                 product = self._detections_message(image_message, results)
                 self.box_publisher.publish(product)
                 self.detection_publisher.publish(product)
@@ -582,7 +790,12 @@ def main() -> None:
                 depth = self.bridge.imgmsg_to_cv2(depth_message, desired_encoding="passthrough")
                 if depth.shape != rgb.shape[:2]:
                     raise ValueError("RGB and depth dimensions differ")
-                results = self.detector.infer(rgb)
+                if int(info.width) != rgb.shape[1] or int(info.height) != rgb.shape[0]:
+                    raise ValueError("CameraInfo and RGB dimensions differ")
+                valid_depth = np.isfinite(depth) & (depth > 0)
+                if not bool(np.any(valid_depth)):
+                    raise ValueError("depth image has no finite positive samples")
+                results = self._infer(rgb)
                 boxes = np.asarray([item.xyxy for item in results], dtype=np.float32).reshape(-1, 4)
                 product = self._detections_message(image_message, results)
                 # Publish DOSOD immediately. EdgeSAM is intentionally not on
@@ -709,6 +922,9 @@ def main() -> None:
                 self.target_publisher.publish(target_array)
                 if sensor == "wrist":
                     for target in target_array.targets:
+                        if self._formal_a19_fault.consume("reobserve_timeout"):
+                            self._formal_a19_fault.record_effect("reobserve_timeout", "wrist_reobservation_drop_observed", target_id=str(target.uuid))
+                            continue
                         position = target.map_pose.pose.position
                         orientation = target.map_pose.pose.orientation
                         try:
@@ -835,9 +1051,16 @@ def main() -> None:
             status = DiagnosticStatus()
             set_diagnostic_level(status, level)
             status.name = "formal_open_vocab_perception/pc_product_adapter"
-            status.hardware_id = "pc_cpu_onnxruntime"
+            status.hardware_id = "pc_onnxruntime_" + str(
+                self.detector.session.get_providers()[0]
+            )
             status.message = message
-            values = {**values, "ground_truth_input_used": False, "fail_closed": level >= 2}
+            values = {
+                **values,
+                **self._formal_a19_fault.telemetry(),
+                "ground_truth_input_used": False,
+                "fail_closed": level >= 2,
+            }
             status.values = [
                 KeyValue(key=str(key), value=json.dumps(value, ensure_ascii=False))
                 for key, value in sorted(values.items())

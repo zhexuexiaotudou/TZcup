@@ -89,6 +89,9 @@ public:
     if (sdf->HasElement("bus_voltage_topic")) {
       this->busVoltageTopic = sdf->Get<std::string>("bus_voltage_topic");
     }
+    if (sdf->HasElement("profile_topic")) {
+      this->profileTopic = sdf->Get<std::string>("profile_topic");
+    }
     if (sdf->HasElement("status_topic")) {
       this->statusTopic = sdf->Get<std::string>("status_topic");
     }
@@ -126,6 +129,8 @@ public:
       this->motorFaultTopic, &A300DrivetrainPlantSystem::OnMotorFault, this);
     this->node.Subscribe(
       this->busVoltageTopic, &A300DrivetrainPlantSystem::OnBusVoltage, this);
+    this->node.Subscribe(
+      this->profileTopic, &A300DrivetrainPlantSystem::OnProfile, this);
     this->statusPublisher = this->node.Advertise<gz::msgs::StringMsg>(this->statusTopic);
     this->odometryPublisher = this->node.Advertise<gz::msgs::Odometry>(this->odometryTopic);
     this->configured = true;
@@ -142,6 +147,9 @@ public:
     const double simTimeS = std::chrono::duration<double>(info.simTime).count();
 
     A300DrivetrainPlantInput input;
+    std::array<double, kA300WheelCount> rawWheelCommand{};
+    double wheelSlipRatio = 0.0;
+    double actuatorGain = 1.0;
     input.step_s = stepS;
     input.measured_speed_rad_s.fill(std::numeric_limits<double>::quiet_NaN());
     for (std::size_t index = 0; index < kA300WheelCount; ++index) {
@@ -155,6 +163,7 @@ public:
     {
       std::lock_guard<std::mutex> lock(this->inputMutex);
       input.commanded_speed_rad_s = this->wheelCommand;
+      rawWheelCommand = this->wheelCommand;
       input.motor_fault = this->motorFault;
       input.actuator_enable = this->actuatorEnable;
       input.emergency_stop = this->emergencyStop;
@@ -163,15 +172,29 @@ public:
         std::chrono::duration<double>(
         std::chrono::steady_clock::now() - this->lastCommandSteadyTime).count() :
         this->plant.Parameters().command_timeout_s + 1.0;
+      wheelSlipRatio = this->wheelSlipRatio;
+      actuatorGain = this->actuatorGain;
+    }
+
+    // A positive longitudinal slip ratio is a wheel-end effect: the wheel
+    // needs more angular speed than the no-slip ground-speed target.  Keep the
+    // controller and all safety limits in the existing plant; only its actual
+    // wheel reference and applied motor torque are altered at this native
+    // Gazebo boundary.
+    const double slipScale = 1.0 / (1.0 - wheelSlipRatio);
+    for (double & command : input.commanded_speed_rad_s) {
+      command *= slipScale;
     }
 
     const auto output = this->plant.Step(input);
+    std::array<double, kA300WheelCount> appliedWheelTorque{};
     for (std::size_t index = 0; index < kA300WheelCount; ++index) {
       // JointForceCmd and JointVelocity are the effort and velocity of the
       // same generalized coordinate. Preserve the core torque sign so that a
       // settled zero-speed feedback remains dissipative. An extra sign
       // inversion turns the speed controller into anti-damping.
-      const double gazeboJointForceNm = output.wheel_torque_nm[index];
+      const double gazeboJointForceNm = output.wheel_torque_nm[index] * actuatorGain;
+      appliedWheelTorque[index] = gazeboJointForceNm;
       auto * force =
         ecm.Component<gz::sim::components::JointForceCmd>(this->wheelJoints[index]);
       if (force == nullptr) {
@@ -186,7 +209,10 @@ public:
     this->UpdateAndPublishOdometry(input.measured_speed_rad_s, stepS, simTimeS);
 
     if (simTimeS - this->lastStatusTimeS >= 0.1) {
-      this->PublishStatus(output);
+      this->PublishStatus(
+        output, rawWheelCommand, input.commanded_speed_rad_s,
+        appliedWheelTorque, input.measured_speed_rad_s, wheelSlipRatio,
+        actuatorGain);
       this->lastStatusTimeS = simTimeS;
     }
   }
@@ -237,7 +263,31 @@ private:
     this->busVoltageV = message.data();
   }
 
-  void PublishStatus(const A300DrivetrainPlantOutput & output)
+  void OnProfile(const gz::msgs::Double_V & message)
+  {
+    if (message.data_size() != 2) {
+      return;
+    }
+    const double slipRatio = message.data(0);
+    const double actuatorGain = message.data(1);
+    if (!std::isfinite(slipRatio) || slipRatio < 0.0 || slipRatio >= 1.0 ||
+      !std::isfinite(actuatorGain) || actuatorGain <= 0.0 || actuatorGain > 1.0)
+    {
+      return;
+    }
+    std::lock_guard<std::mutex> lock(this->inputMutex);
+    this->wheelSlipRatio = slipRatio;
+    this->actuatorGain = actuatorGain;
+  }
+
+  void PublishStatus(
+    const A300DrivetrainPlantOutput & output,
+    const std::array<double, kA300WheelCount> & rawWheelCommand,
+    const std::array<double, kA300WheelCount> & effectiveWheelCommand,
+    const std::array<double, kA300WheelCount> & appliedWheelTorque,
+    const std::array<double, kA300WheelCount> & measuredWheelSpeed,
+    const double wheelSlipRatio,
+    const double actuatorGain)
   {
     std::ostringstream stream;
     stream << "{\"model\":\"" << this->modelName << "\","
@@ -249,10 +299,36 @@ private:
       << "\"power_limited\":" << (output.power_limited ? "true" : "false") << ','
       << "\"mechanical_power_w\":" << output.total_mechanical_power_w << ','
       << "\"estimated_battery_current_a\":" << output.estimated_battery_current_a
-      << '}';
+      << ",\"profile\":{\"wheel_slip_ratio\":" << wheelSlipRatio
+      << ",\"actuator_gain\":" << actuatorGain << "}"
+      << ",\"commanded_wheel_speed_rad_s\":";
+    AppendArray(stream, rawWheelCommand);
+    stream << ",\"effective_wheel_speed_rad_s\":";
+    AppendArray(stream, effectiveWheelCommand);
+    stream << ",\"unscaled_wheel_torque_nm\":";
+    AppendArray(stream, output.wheel_torque_nm);
+    stream << ",\"applied_wheel_torque_nm\":";
+    AppendArray(stream, appliedWheelTorque);
+    stream << ",\"measured_wheel_speed_rad_s\":";
+    AppendArray(stream, measuredWheelSpeed);
+    stream << '}';
     gz::msgs::StringMsg status;
     status.set_data(stream.str());
     this->statusPublisher.Publish(status);
+  }
+
+  template<std::size_t Size>
+  static void AppendArray(
+    std::ostringstream & stream, const std::array<double, Size> & values)
+  {
+    stream << '[';
+    for (std::size_t index = 0; index < values.size(); ++index) {
+      if (index > 0) {
+        stream << ',';
+      }
+      stream << values[index];
+    }
+    stream << ']';
   }
 
   void UpdateAndPublishOdometry(
@@ -317,6 +393,8 @@ private:
   bool emergencyStop{false};
   bool configured{false};
   double busVoltageV{25.6};
+  double wheelSlipRatio{0.0};
+  double actuatorGain{1.0};
   double lastStatusTimeS{-1.0};
   double lastOdometryTimeS{-1.0};
   double odomX{0.0};
@@ -334,6 +412,8 @@ private:
     "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/motor_fault"};
   std::string busVoltageTopic{
     "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/bus_voltage_v"};
+  std::string profileTopic{
+    "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/profile"};
   std::string statusTopic{
     "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/status"};
   std::string odometryTopic{

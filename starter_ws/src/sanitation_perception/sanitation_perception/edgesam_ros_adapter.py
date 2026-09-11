@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Sequence
 
 import numpy as np
 
@@ -21,6 +22,7 @@ class EdgeSamOnnxSegmenter:
         *,
         encoder_session=None,
         decoder_session=None,
+        providers: Sequence[str] | None = None,
     ) -> None:
         if encoder_session is None or decoder_session is None:
             if not encoder_path or not Path(encoder_path).is_file():
@@ -29,12 +31,11 @@ class EdgeSamOnnxSegmenter:
                 raise FileNotFoundError(f"EdgeSAM decoder missing: {decoder_path}")
             import onnxruntime as ort
 
-            encoder_session = ort.InferenceSession(
-                str(encoder_path), providers=["CPUExecutionProvider"]
-            )
-            decoder_session = ort.InferenceSession(
-                str(decoder_path), providers=["CPUExecutionProvider"]
-            )
+            requested_providers = list(providers or ["CPUExecutionProvider"])
+            if not requested_providers:
+                raise ValueError("EdgeSAM ONNX provider list must not be empty")
+            encoder_session = ort.InferenceSession(str(encoder_path), providers=requested_providers)
+            decoder_session = ort.InferenceSession(str(decoder_path), providers=requested_providers)
         self.encoder = encoder_session
         self.decoder = decoder_session
         if {item.name for item in self.encoder.get_inputs()} != {"image"}:
@@ -107,4 +108,3 @@ class EdgeSamOnnxSegmenter:
             masks.append(mask)
             qualities.append(float(scores[best]))
         return masks, qualities
-

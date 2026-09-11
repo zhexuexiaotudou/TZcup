@@ -44,6 +44,7 @@ from sanitation_formal_campus_integration.saved_map_coverage_core import (
     load_product_mission_geometry,
 )
 from sanitation_formal_campus_integration.map_lifecycle_core import (
+    REQUIRED_SAVED_MAP_SUPPORT_FILES,
     hard_restart_record_valid,
 )
 from sanitation_formal_campus_integration.runtime_evidence_core import (
@@ -86,12 +87,7 @@ def _hashes_valid(root: Path) -> bool:
     required = {
         occupancy_name,
         image_name,
-        "mission_geometry.yaml",
-        "materialization_contract.yaml",
-        "geofence_keepout.yaml",
-        "geofence_keepout.pgm",
-        "neutral_speed.yaml",
-        "neutral_speed.pgm",
+        *REQUIRED_SAVED_MAP_SUPPORT_FILES,
     }
     hashes = manifest.get("sha256")
     resolved_root = root.resolve()
@@ -131,9 +127,12 @@ class Collector(Node):
         self.completion_reason = "running"
         self.sealed_manifest_seen_at: float | None = None
         self.coverage_terminal_seen_at: float | None = None
+        self.cleaning_started_at: float | None = None
         self.coverage_state: dict = {}
         self.coverage_telemetry = (
-            ProductCoverageTelemetry(load_product_mission_geometry(mission_geometry))
+            ProductCoverageTelemetry.from_mission_geometry(
+                load_product_mission_geometry(mission_geometry)
+            )
             if mission_geometry is not None
             else None
         )
@@ -370,6 +369,8 @@ class Collector(Node):
             )
 
     def _brush_state(self, message: Bool) -> None:
+        if message.data and self.cleaning_started_at is None:
+            self.cleaning_started_at = time.monotonic()
         if self.coverage_telemetry is not None:
             self.coverage_telemetry.set_brush(message.data)
 
@@ -381,7 +382,10 @@ class Collector(Node):
         if not isinstance(value, dict):
             return
         self.coverage_state = value
-        if value.get("state") in {"COMPLETED", "FAILED", "STOPPED"}:
+        if (
+            value.get("state") in {"COMPLETED", "FAILED", "STOPPED"}
+            and self.coverage_terminal_seen_at is None
+        ):
             self.coverage_terminal_seen_at = time.monotonic()
 
     def _collision_state(self, message: CollisionMonitorState) -> None:
@@ -585,6 +589,9 @@ class Collector(Node):
         coverage_terminal_passed = (
             coverage_execution_passed(coverage_execution)
             and self.coverage_state.get("state") == "COMPLETED"
+            and self.cleaning_started_at is not None
+            and self.coverage_terminal_seen_at is not None
+            and self.coverage_terminal_seen_at > self.cleaning_started_at
             and float(product_coverage.get("trajectory_total_distance_m", 0.0)) > 0.0
             and float(product_coverage.get("brush_enabled_distance_m", 0.0)) > 0.0
             and int(product_coverage.get("brush_state_sample_count", 0)) >= 2
@@ -734,6 +741,17 @@ class Collector(Node):
             "coverage_action_terminal_passed": coverage_terminal_passed,
             "coverage_execution_report": coverage_execution,
             "coverage_state": self.coverage_state,
+            "coverage_started_event": "first_brush_enabled_sample",
+            "coverage_terminal_event": "formal_saved_map_coverage_state_terminal",
+            "coverage_actual_duration_sec": (
+                self.coverage_terminal_seen_at - self.cleaning_started_at
+                if self.cleaning_started_at is not None
+                and self.coverage_terminal_seen_at is not None
+                and self.coverage_terminal_seen_at > self.cleaning_started_at
+                else None
+            ),
+            "coverage_first_brush_enabled_monotonic_s": self.cleaning_started_at,
+            "coverage_terminal_monotonic_s": self.coverage_terminal_seen_at,
             **product_coverage,
             "hard_restart_verified": restart_verified,
             "hard_restart_record": restart_value,

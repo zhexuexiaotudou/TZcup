@@ -172,6 +172,7 @@ def test_collector_bounds_and_retires_high_bandwidth_subscriptions():
 def test_transient_sensitive_cadence_uses_stable_bounded_source_timestamp_windows():
     assert SOURCE_FREQUENCY_SAMPLE_TARGETS == {
         "/sensors/front_rgbd/depth/image_rect_raw/image": 10,
+        "/sensors/front_rgbd/depth/image_rect_raw/depth_image": 10,
         "/sensors/wrist_rgbd/depth/image_rect_raw/image": 32,
         "/sensors/wrist_rgbd/depth/image_rect_raw/depth_image": 32,
         "/sensors/wrist_rgbd/infra1/image_rect_raw": 32,
@@ -337,3 +338,10 @@ def test_dependency_free_runtime_contract_rejects_frame_rate_range_and_encoder_d
 def test_source_timestamp_frequency_requires_three_monotonic_samples():
     assert observed_frequency_hz([0, 100, 100]) is None
     assert observed_frequency_hz([1_000_000_000, 1_100_000_000, 1_200_000_000]) == 10.0
+
+
+def test_longer_source_timestamp_window_avoids_three_frame_transient_misclassification():
+    transient = [1_000_000_000, 1_075_000_000, 1_150_000_000]
+    assert observed_frequency_hz(transient) < 15.0
+    steady_30_hz = [1_000_000_000 + index * 100_000_000 // 3 for index in range(10)]
+    assert observed_frequency_hz(steady_30_hz) >= 30.0

@@ -18,6 +18,7 @@ from launch_ros.substitutions import FindPackageShare
 
 from sanitation_formal_campus_integration.contract import materialize_nav2_config
 from sanitation_formal_campus_integration.map_lifecycle_core import (
+    FORMAL_COVERAGE_STATIC_OBSTACLE_INFLATION_M,
     load_campus_map_contract,
     prepare_public_lifecycle_artifacts,
     validate_saved_map_artifact,
@@ -215,6 +216,7 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
         nav2["global_costmap"]["global_costmap"]["ros__parameters"]["footprint"]
     )
     coverage_parameters["operation_width"] = cleaning_width
+    coverage_parameters["default_headland_width"] = FORMAL_COVERAGE_STATIC_OBSTACLE_INFLATION_M
     coverage_parameters["robot_width"] = max(
         point[1] for point in transport_footprint
     ) - min(point[1] for point in transport_footprint)
@@ -420,6 +422,7 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                             coverage_evidence_dir / "coverage_execution.json"
                         ),
                         "operation_width_m": cleaning_width,
+                        "planning_clearance_m": FORMAL_COVERAGE_STATIC_OBSTACLE_INFLATION_M,
                         "maximum_linear_speed_mps": smoother_speed,
                         "operation_speed_profile": speed_profile.name,
                     }],
