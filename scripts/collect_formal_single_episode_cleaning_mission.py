@@ -20,8 +20,30 @@ import numbers
 import os
 import re
 import time
+import tempfile
 from pathlib import Path
 from typing import Any
+
+
+def publish_raw_report(path: Path, report: dict[str, Any]) -> None:
+    """Publish the completed collector/recorder handoff without a partial file."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", dir=path.parent, prefix=path.name + ".pending-",
+            delete=False,
+        ) as stream:
+            temporary = Path(stream.name)
+            json.dump(report, stream, indent=2, sort_keys=True)
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        # link is atomic and fails if a previous run already owns this path.
+        os.link(temporary, path)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
 
 
 PRODUCT_TOPICS = {
@@ -1390,10 +1412,7 @@ def main() -> int:
         node.destroy_node()
         if rclpy.ok():
             rclpy.shutdown()
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(
-        json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
+    publish_raw_report(args.output, report)
     return 0 if (
         report["product"]["mission_complete"]
         and report["collector_ready_before_operator_start"]

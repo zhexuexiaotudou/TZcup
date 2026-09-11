@@ -3,6 +3,8 @@ from array import array
 from pathlib import Path
 import sys
 from types import SimpleNamespace
+import json
+import pytest
 
 
 COLLECTOR_PATH = Path(__file__).with_name("collect_formal_single_episode_cleaning_mission.py")
@@ -11,6 +13,25 @@ SPEC = importlib.util.spec_from_file_location("single_episode_collector", COLLEC
 assert SPEC is not None and SPEC.loader is not None
 COLLECTOR = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(COLLECTOR)
+
+
+def test_raw_handoff_is_complete_and_never_overwrites_evidence(tmp_path):
+    path = tmp_path / "raw.json"
+    report = {"product": {"mission_complete": True}, "samples": list(range(100))}
+    COLLECTOR.publish_raw_report(path, report)
+    assert json.loads(path.read_text()) == report
+    with pytest.raises(FileExistsError):
+        COLLECTOR.publish_raw_report(path, {"replaced": True})
+    assert json.loads(path.read_text()) == report
+    assert list(tmp_path.iterdir()) == [path]
+
+
+def test_failed_raw_serialization_publishes_nothing(tmp_path):
+    path = tmp_path / "raw.json"
+    with pytest.raises(TypeError):
+        COLLECTOR.publish_raw_report(path, {"invalid": object()})
+    assert not path.exists()
+    assert list(tmp_path.iterdir()) == []
 
 
 def test_duplicate_recorder_names_cannot_hide_a_second_truth_subscription():

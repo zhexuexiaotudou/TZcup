@@ -908,6 +908,30 @@ def _wait_for_fresh_inputs(paths: dict[str, Path], session_started_ns: int, time
     raise CaptureError(f"timed out waiting for required A12 finalization inputs: {missing}")
 
 
+def _collector_handoff(args: argparse.Namespace, session: dict[str, Any]) -> dict[str, Any]:
+    # Keep the recorder alive through the collector's terminal PID/PGID audit
+    # and stream recomputation. The collector atomically publishes this file.
+    rows = _wait_for_fresh_inputs(
+        {"collector_raw": args.run_root.resolve() / args.collector_raw},
+        int(session["started_epoch_ns"]),
+        timeout_seconds=min(args.window_timeout_seconds, 600.0),
+    )
+    path = Path(rows["collector_raw"]["path"])
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise CaptureError("collector terminal handoff is unreadable") from exc
+    if (
+        not isinstance(raw, dict)
+        or raw.get("artifact_kind") != "single_live_episode_raw_collection"
+        or not isinstance(raw.get("run_identity"), dict)
+        or raw["run_identity"].get("runtime_id") != args.runtime_id
+        or raw["run_identity"].get("session_start_epoch_ns") != session["started_epoch_ns"]
+    ):
+        raise CaptureError("collector terminal handoff belongs to another runtime/session")
+    return rows
+
+
 def _bag_command(args: argparse.Namespace) -> list[str]:
     return [
         args.ros2, "bag", "record", "--storage", "mcap", "--node-name", "a12_trusted_gt_recorder",
@@ -1027,9 +1051,10 @@ def supervisor(args: argparse.Namespace) -> dict[str, Any]:
                 raise CaptureError("A12 video worker did not publish readiness")
             if worker.wait() != 0:
                 raise CaptureError("A12 video worker failed; no receipt may be emitted")
-            # The worker exits only after the first true mission_complete. Stop
-            # the recorder at that same terminal boundary so later ROS traffic
-            # cannot extend the evidence window.
+            # Metric windows end at first mission_complete. Keep the recorder
+            # process alive until the collector has sealed its terminal audit;
+            # later bag traffic is excluded by the recorded window boundaries.
+            status["collector_terminal_handoff"] = _collector_handoff(args, session)
             recorder_exit = _stop_child(bag, "trusted_gt_recorder", bag_command, args.window_timeout_seconds)
             child_lifecycles.append(recorder_exit)
             bag = None

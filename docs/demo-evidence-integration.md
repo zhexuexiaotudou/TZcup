@@ -21,6 +21,8 @@
 
 采集窗口由实际操作员启动和首次任务完成消息界定。刷盘、估计位姿和真值按消息时间戳窗口筛选，定位配对使用有界分块排序，覆盖率仅使用通过安全链的完整刷盘工作命令。MCAP回放必须运行真实播放器，并检查播放前后输入哈希，不能用阅读metadata替代播放。
 
+任务完成时，录像工作进程结束，但录制器必须继续存活，直到采集器完成终态PID/PGID审计、指标计算，并原子发布原始报告。supervisor核验报告的runtime/session身份后才停止录制器；等待最多600秒且不超过当前运行窗口预算。期间额外录入的消息仍被首次完成时间戳截除。原始报告以不覆盖既有文件的原子方式发布，序列化失败不能留下可见的半份交接文件。
+
 ## 评测坐标与兼容性
 
 Gazebo模型里程计来自模型世界位姿，且保留源时间戳；实现依据可核对[Gazebo OdometryPublisher](https://github.com/gazebosim/gz-sim/blob/gz-sim8/src/systems/odometry_publisher/OdometryPublisher.cc)。评测变换由冻结episode的起始位姿求逆得到，不能用启动时的临时位置覆盖。评测TF与协方差输出位于 `/evaluation/*`，不接入控制TF。

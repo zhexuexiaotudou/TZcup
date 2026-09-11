@@ -5,6 +5,8 @@ import os
 import shutil
 import subprocess
 import sys
+import json
+from types import SimpleNamespace
 from pathlib import Path
 
 import pytest
@@ -16,6 +18,29 @@ assert SPEC and SPEC.loader
 capture = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = capture
 SPEC.loader.exec_module(capture)
+
+
+@pytest.mark.parametrize("runtime,epoch,accepted", [("run-1", 1, True), ("other", 1, False), ("run-1", 2, False)])
+def test_collector_terminal_handoff_binds_the_current_execution(tmp_path, runtime, epoch, accepted):
+    path = tmp_path / "raw.json"
+    path.write_text(json.dumps({
+        "artifact_kind": "single_live_episode_raw_collection",
+        "run_identity": {"runtime_id": runtime, "session_start_epoch_ns": epoch},
+    }), encoding="utf-8")
+    args = SimpleNamespace(run_root=tmp_path, collector_raw=Path("raw.json"),
+                           runtime_id="run-1", window_timeout_seconds=1.0)
+    if accepted:
+        assert capture._collector_handoff(args, {"started_epoch_ns": 1})["collector_raw"]["sha256"] == capture._sha256(path)
+    else:
+        with pytest.raises(capture.CaptureError, match="another runtime/session"):
+            capture._collector_handoff(args, {"started_epoch_ns": 1})
+
+
+def test_missing_collector_handoff_has_a_bounded_wait(tmp_path):
+    args = SimpleNamespace(run_root=tmp_path, collector_raw=Path("raw.json"),
+                           runtime_id="run-1", window_timeout_seconds=0.01)
+    with pytest.raises(capture.CaptureError, match="timed out"):
+        capture._collector_handoff(args, {"started_epoch_ns": 1})
 
 
 RGB_INFO = """Type: sensor_msgs/msg/Image
@@ -232,6 +257,7 @@ def test_supervisor_interface_uses_fixed_same_pgid_children_and_finalization_inp
     assert '"argv": command' in source
     assert '"timeout_seconds": timeout_seconds' in source
     assert '"source_metrics_child"' in source
+    assert source.index('status["collector_terminal_handoff"] = _collector_handoff') < source.index('recorder_exit = _stop_child')
 
 
 def test_recorder_metadata_requires_every_actual_topic_type_and_positive_count(tmp_path: Path) -> None:
