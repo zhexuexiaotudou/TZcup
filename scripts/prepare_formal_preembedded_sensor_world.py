@@ -17,6 +17,7 @@ import argparse
 import hashlib
 import json
 import math
+import re
 import subprocess
 import sys
 import tempfile
@@ -48,6 +49,10 @@ FORMAL_WATER_CONTACT_SENSOR_LINKS = {
 FORMAL_SERVICE_CONTACT_TOPICS = {
     "charge_receptacle_contact_sensor": "/formal_vehicle/gazebo/charge_receptacle/contact",
     "wastewater_drain_coupling_contact_sensor": "/formal_vehicle/gazebo/wastewater_drain_coupling/contact",
+}
+FORMAL_SERVICE_CONTACT_SOURCE_COLLISIONS = {
+    "charge_receptacle_contact_sensor": "charge_receptacle_contact_collision",
+    "wastewater_drain_coupling_contact_sensor": "wastewater_drain_coupling_contact_collision",
 }
 
 
@@ -240,6 +245,79 @@ def _surviving_ancestor(target: str, links: dict[str | None, ET.Element], parent
     return candidate
 
 
+def formal_service_contact_source_collisions(
+    urdf: ET.Element, attachments: dict[str, tuple[str, str | None, str]]
+) -> dict[str, str]:
+    """Bind each selected service sensor to its stable, authored URDF collision.
+
+    Converted SDF collision suffixes are deliberately excluded from this
+    contract: sdformat may renumber them as unrelated fixed links change.
+    """
+
+    links = {link.get("name"): link for link in urdf.findall("link")}
+    result: dict[str, str] = {}
+    for sensor_name, expected_collision in FORMAL_SERVICE_CONTACT_SOURCE_COLLISIONS.items():
+        if sensor_name not in attachments:
+            continue
+        source_link, _, sensor_type = attachments[sensor_name]
+        if sensor_type != "contact":
+            raise PreparationError(
+                f"formal service sensor {sensor_name} must be a contact sensor"
+            )
+        link = links.get(source_link)
+        matches = (
+            [] if link is None else [
+                collision for collision in link.findall("collision")
+                if collision.get("name") == expected_collision
+            ]
+        )
+        if len(matches) != 1:
+            raise PreparationError(
+                f"formal service sensor {sensor_name} must map to exactly one "
+                f"URDF collision {expected_collision!r} on {source_link}, "
+                f"found {len(matches)}"
+            )
+        result[sensor_name] = expected_collision
+    return result
+
+
+def _unique_lumped_collision(
+    owner: ET.Element, source_collision: str
+) -> str:
+    """Find one current-owner lump name for a stable URDF collision basename."""
+
+    owner_name = owner.get("name", "")
+    pattern = re.compile(
+        rf"^{re.escape(owner_name)}_fixed_joint_lump__"
+        rf"{re.escape(source_collision)}_collision_[0-9]+$"
+    )
+    candidates = [
+        collision.get("name", "")
+        for collision in owner.findall("collision")
+        if pattern.fullmatch(collision.get("name", ""))
+    ]
+    if len(candidates) == 1:
+        return candidates[0]
+    if not candidates:
+        raise PreparationError(
+            f"formal service collision {source_collision!r} has no unique lump "
+            f"collision on converted owner {owner_name or '<unnamed>'}"
+        )
+    raise PreparationError(
+        f"formal service collision {source_collision!r} has ambiguous lump "
+        f"collisions on converted owner {owner_name or '<unnamed>'}: "
+        + ", ".join(sorted(candidates))
+    )
+
+
+def service_contact_selector_rebindings(
+    restored: list[dict[str, str]],
+) -> list[dict[str, str]]:
+    """Return only audited service-selector corrections for the report."""
+
+    return [row for row in restored if "contact_selector_rebound" in row]
+
+
 def restore_sensor_attachments(
     model: ET.Element,
     attachments: dict[str, tuple[str, str | None, str]],
@@ -257,6 +335,7 @@ def restore_sensor_attachments(
     links = {link.get("name"): link for link in model.findall("link")}
     reduced_frames = {frame.get("name"): frame for frame in model.findall("frame")}
     urdf_parents = _urdf_parent_links(urdf)
+    service_contact_sources = formal_service_contact_source_collisions(urdf, attachments)
     parents = _parent_map(model)
     converted = {
         sensor.get("name"): sensor
@@ -296,6 +375,34 @@ def restore_sensor_attachments(
                         "restored_link": current.get("name", ""),
                         "local_pose": sensor.findtext("pose", default="0 0 0 0 0 0"),
                         "attachment_status": "retained_on_converted_collision_owner",
+                    }
+                )
+                continue
+            if len(matching_collisions) > 1:
+                raise PreparationError(
+                    f"converted contact sensor {name} selector {selector!r} must match "
+                    f"exactly one collision on {current.get('name', '<unnamed>')}, "
+                    f"found {len(matching_collisions)}"
+                )
+            source_collision = service_contact_sources.get(name)
+            if source_collision is not None:
+                rebound = _unique_lumped_collision(current, source_collision)
+                selector_element = sensor.find("contact/collision")
+                if selector_element is None:
+                    raise PreparationError(
+                        f"converted contact sensor {name} has no collision selector element"
+                    )
+                selector_element.text = rebound
+                restored.append(
+                    {
+                        "sensor": name,
+                        "converted_link": current.get("name", ""),
+                        "restored_link": current.get("name", ""),
+                        "local_pose": sensor.findtext("pose", default="0 0 0 0 0 0"),
+                        "attachment_status": "retained_on_converted_collision_owner_selector_rebound",
+                        "contact_selector_original": selector,
+                        "contact_selector_rebound": rebound,
+                        "urdf_source_collision": source_collision,
                     }
                 )
                 continue
@@ -601,6 +708,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         "output_world": str(output_world),
         "output_world_sha256": _sha256(output_world),
         "sensors_restored_to_urdf_reference_links": restored,
+        "service_contact_selector_rebindings": service_contact_selector_rebindings(restored),
         "sensor_count": len(model.findall(".//sensor")),
         "spawn_mode": "preembedded_before_gazebo_sensors_system",
         "model_initial_pose": model_pose,

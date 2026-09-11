@@ -95,6 +95,81 @@ def test_final_service_contact_binding_rejects_direct_sensor_topic() -> None:
         )
 
 
+SERVICE_SOURCE_LINKS = {
+    "charge_receptacle_contact_sensor": "charge_receptacle_link",
+    "wastewater_drain_coupling_contact_sensor": "wastewater_drain_coupling_link",
+}
+
+
+def _service_rebind_fixture(
+    sensor_name: str, *, selector_suffix: int = 120, collision_suffixes: tuple[int, ...] = (113,)
+) -> tuple[ET.Element, ET.Element]:
+    source_link = SERVICE_SOURCE_LINKS[sensor_name]
+    source_collision = MODULE.FORMAL_SERVICE_CONTACT_SOURCE_COLLISIONS[sensor_name]
+    topic = MODULE.FORMAL_SERVICE_CONTACT_TOPICS[sensor_name]
+    selector = (
+        f"base_footprint_fixed_joint_lump__{source_collision}_collision_{selector_suffix}"
+    )
+    collisions = "".join(
+        f"<collision name='base_footprint_fixed_joint_lump__{source_collision}_collision_{suffix}'/>"
+        for suffix in collision_suffixes
+    )
+    urdf = ET.fromstring(
+        f"<robot name='vehicle'><link name='base_footprint'/><link name='{source_link}'>"
+        f"<collision name='{source_collision}'/></link><gazebo reference='{source_link}'>"
+        f"<sensor name='{sensor_name}' type='contact'/></gazebo></robot>"
+    )
+    converted = ET.fromstring(
+        f"<sdf version='1.11'><model name='vehicle'><link name='base_footprint'>{collisions}"
+        f"<sensor name='{sensor_name}' type='contact'><contact><topic>{topic}</topic>"
+        f"<collision>{selector}</collision></contact></sensor></link></model></sdf>"
+    )
+    return urdf, converted
+
+
+@pytest.mark.parametrize("sensor_name", sorted(MODULE.FORMAL_SERVICE_CONTACT_SOURCE_COLLISIONS))
+def test_service_contact_rebinds_unique_converted_lump_suffix(sensor_name: str) -> None:
+    urdf, converted = _service_rebind_fixture(sensor_name)
+    world = ET.fromstring("<world name='w'/>")
+
+    restored, model = MODULE.append_preembedded_model(world, converted, urdf)
+
+    source_collision = MODULE.FORMAL_SERVICE_CONTACT_SOURCE_COLLISIONS[sensor_name]
+    expected = f"base_footprint_fixed_joint_lump__{source_collision}_collision_113"
+    sensor = model.find(f"link[@name='base_footprint']/sensor[@name='{sensor_name}']")
+    assert sensor is not None and sensor.findtext("contact/collision") == expected
+    assert restored == [{
+        "sensor": sensor_name,
+        "converted_link": "base_footprint",
+        "restored_link": "base_footprint",
+        "local_pose": "0 0 0 0 0 0",
+        "attachment_status": "retained_on_converted_collision_owner_selector_rebound",
+        "contact_selector_original": f"base_footprint_fixed_joint_lump__{source_collision}_collision_120",
+        "contact_selector_rebound": expected,
+        "urdf_source_collision": source_collision,
+    }]
+    assert MODULE.service_contact_selector_rebindings(restored) == restored
+
+
+@pytest.mark.parametrize("sensor_name", sorted(MODULE.FORMAL_SERVICE_CONTACT_SOURCE_COLLISIONS))
+def test_service_contact_rebinding_rejects_ambiguous_lumps(sensor_name: str) -> None:
+    urdf, converted = _service_rebind_fixture(sensor_name, collision_suffixes=(113, 114))
+
+    with pytest.raises(MODULE.PreparationError, match="ambiguous lump collisions"):
+        MODULE.append_preembedded_model(ET.fromstring("<world name='w'/>"), converted, urdf)
+
+
+@pytest.mark.parametrize("sensor_name", sorted(MODULE.FORMAL_SERVICE_CONTACT_SOURCE_COLLISIONS))
+def test_service_contact_with_correct_selector_is_not_rebound(sensor_name: str) -> None:
+    urdf, converted = _service_rebind_fixture(sensor_name, selector_suffix=113)
+
+    restored, _ = MODULE.append_preembedded_model(ET.fromstring("<world name='w'/>"), converted, urdf)
+
+    assert restored[0]["attachment_status"] == "retained_on_converted_collision_owner"
+    assert "contact_selector_rebound" not in restored[0]
+    assert MODULE.service_contact_selector_rebindings(restored) == []
+
+
 def test_rejects_historical_squeegee_stale_collision_selector() -> None:
     urdf, converted = _formal_water_contact_fixture()
     selector = converted.find(

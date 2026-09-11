@@ -88,6 +88,14 @@ def test_runner_starts_physics_bridge_and_product_executor_as_separate_surfaces(
 
 
 def test_grasp_runner_preembeds_both_contact_models_and_archives_them():
+    controller_config_uri = (
+        "controller_config_path:=package://sanitation_vehicle_description/config/"
+        "formal_vehicle_controllers.yaml"
+    )
+    assert controller_config_uri in RUNNER
+    assert RUNNER.index(controller_config_uri) < RUNNER.index(
+        "prepare_formal_preembedded_sensor_world.py"
+    )
     assert "prepare_formal_preembedded_sensor_world.py" in RUNNER
     assert '--preembedded-vehicle-urdf "${preembedded_vehicle_urdf}"' in RUNNER
     assert '--preembedded-cube-urdf "${preembedded_cube_urdf}"' in RUNNER

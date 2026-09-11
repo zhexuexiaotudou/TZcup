@@ -94,6 +94,7 @@ mkdir -p "$(dirname "${output}")" "$(dirname "${launch_log}")"
 
 xacro "${vehicle_model}" use_sim:=true bodywork_visible:=true \
   dry_accounting_mode:=physical_resident initial_estop_latched:=false \
+  controller_config_path:=package://sanitation_vehicle_description/config/formal_vehicle_controllers.yaml \
   >"${preembedded_vehicle_urdf}"
 xacro "${cube_model}" material:="${material}" >"${preembedded_cube_urdf}"
 python3 "${repo_root}/scripts/prepare_formal_preembedded_sensor_world.py" \
