@@ -59,24 +59,24 @@ dynamic_report="${run_root}/dynamic_obstacle_acceptance.json"
 # never silently reuse the stale default map artifact.
 ROS_DOMAIN_ID="${base_domain}" \
 FORMAL_DYNAMIC_SAVED_MAP_ROOT="${map_root}" \
-"${repo_root}/scripts/run_formal_first_map_dynamic_prerequisite.sh"
+bash "${repo_root}/scripts/run_formal_first_map_dynamic_prerequisite.sh"
 
 ROS_DOMAIN_ID="$((base_domain + 1))" \
 FORMAL_DYNAMIC_SAVED_MAP_ROOT="${map_root}" \
 FORMAL_MAP_LIFECYCLE_OUTPUT="${map_report}" \
 FORMAL_MAP_CLEANING_RUNTIME_ROOT="${run_root}/saved_map_runtime" \
 FORMAL_CLEANING_PLANNER="full_coverage" \
-"${repo_root}/scripts/run_formal_saved_map_cleaning_lifecycle.sh"
+bash "${repo_root}/scripts/run_formal_saved_map_cleaning_lifecycle.sh"
 
 ROS_DOMAIN_ID="$((base_domain + 2))" \
 FORMAL_DIRT_OUTPUT_DIR="${ground_root}" \
-"${repo_root}/scripts/run_formal_ground_dirt_cleaning_runtime.sh"
+bash "${repo_root}/scripts/run_formal_ground_dirt_cleaning_runtime.sh"
 
 ROS_DOMAIN_ID="$((base_domain + 3))" \
 FORMAL_DYNAMIC_SAVED_MAP_ROOT="${map_root}" \
 FORMAL_DYNAMIC_OUTPUT="${dynamic_report}" \
 FORMAL_DYNAMIC_TELEMETRY="${run_root}/dynamic_runtime/runtime_telemetry.json" \
-"${repo_root}/scripts/run_formal_dynamic_obstacle_avoidance.sh"
+bash "${repo_root}/scripts/run_formal_dynamic_obstacle_avoidance.sh"
 
 contract_args=(
   --map-lifecycle-report "${map_report}"

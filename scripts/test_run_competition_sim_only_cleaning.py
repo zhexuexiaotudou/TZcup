@@ -20,5 +20,12 @@ def test_cleaning_runner_isolated_from_a12_and_cube_route():
     assert "FORMAL_COMPETITION_SIM_ONLY_CLOSURE_MANIFEST" in text
     assert "sanitation-campus-scenario generate" in text
     assert "FORMAL_DYNAMIC_EPISODE_ROOT=\"${episode}\"" in text
+    for script in (
+        "run_formal_first_map_dynamic_prerequisite.sh",
+        "run_formal_saved_map_cleaning_lifecycle.sh",
+        "run_formal_ground_dirt_cleaning_runtime.sh",
+        "run_formal_dynamic_obstacle_avoidance.sh",
+    ):
+        assert f'bash "${{repo_root}}/scripts/{script}"' in text
     assert "SIM_DEMO_VERIFIED" not in text
     assert "Golden Mission" not in text
