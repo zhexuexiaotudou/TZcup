@@ -42,6 +42,7 @@ class FormalSavedMapCoverageExecutor(Node):
         self.declare_parameter("mission_geometry_path", "")
         self.declare_parameter("episode_manifest", "")
         self.declare_parameter("artifact_directory", "")
+        self.declare_parameter("route_sanity_path", "")
         self.declare_parameter("output_path", "coverage_execution.json")
         self.declare_parameter("operation_width_m", FORMAL_OPERATION_WIDTH_M)
         self.declare_parameter("maximum_linear_speed_mps", FORMAL_MAX_LINEAR_SPEED_MPS)
@@ -196,6 +197,22 @@ class FormalSavedMapCoverageExecutor(Node):
         validate_saved_map_cleaning_consumer_bundle(
             artifact_directory, load_campus_map_contract(episode_manifest)
         )
+        route_sanity_path = Path(str(self.get_parameter("route_sanity_path").value))
+        route_sanity = json.loads(route_sanity_path.read_text(encoding="utf-8"))
+        if (
+            route_sanity.get("passed") is not True
+            or not route_sanity.get("candidate_lanes_summary_only")
+            or route_sanity.get("planner_path_authority")
+            != "opennav_coverage_compute_coverage_path"
+            or not math.isclose(
+                float(route_sanity.get("operation_width_m", 0.0)), width, abs_tol=1e-9
+            )
+            or float(route_sanity.get("recommended_max_lane_spacing_m", 0.0)) > 1.056
+            or float(route_sanity.get("realized_lane_spacing_m", math.inf)) > 1.056
+        ):
+            return self._finish(
+                False, "FAILED", {"error": "coverage_route_sanity_invalid"}, speed_profile
+            )
         geometry = load_product_mission_geometry(
             str(self.get_parameter("mission_geometry_path").value)
         )

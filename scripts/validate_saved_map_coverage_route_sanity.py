@@ -68,8 +68,24 @@ def main() -> int:
             "coverage_raster_resolution_m": geometry.raster_resolution_m,
             "free_cells": len(geometry.free_cells),
             "candidate_lane_count": len(selected),
+            "candidate_lanes": [
+                {
+                    "row": row,
+                    "y_m": geometry.origin_y + (row + 0.5) * geometry.raster_resolution_m,
+                    "free_segments_m": [
+                        [
+                            geometry.origin_x + start * geometry.raster_resolution_m,
+                            geometry.origin_x + (end + 1) * geometry.raster_resolution_m,
+                        ]
+                        for start, end in lane
+                    ],
+                }
+                for row, lane in zip(selected, lanes)
+            ],
             "narrow_or_empty_lane_rows": [row for row, ok in zip(selected, realizable) if not ok],
             "disconnected_turn_rows": transition_blockers,
+            "planner_path_authority": "opennav_coverage_compute_coverage_path",
+            "candidate_lanes_summary_only": True,
             "blockers": [],
         }
         if not report["passed"]:

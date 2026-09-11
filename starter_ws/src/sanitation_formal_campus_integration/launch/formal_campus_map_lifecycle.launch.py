@@ -422,6 +422,9 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                         ),
                         "episode_manifest": str(manifest_path),
                         "artifact_directory": str(artifact_root),
+                        "route_sanity_path": str(
+                            artifact_root / "coverage_route_sanity.json"
+                        ),
                         "output_path": str(
                             coverage_evidence_dir / "coverage_execution.json"
                         ),

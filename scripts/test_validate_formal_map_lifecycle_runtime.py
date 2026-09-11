@@ -558,6 +558,10 @@ def test_runtime_collectors_preserve_safety_and_hard_restart_contract():
     assert "mission_mode:=cleaning" in cleaning_runner
     assert "start_pedestrians:=true" in cleaning_runner
     assert "start_coverage:=true" in cleaning_runner
+    assert "validate_saved_map_coverage_route_sanity.py" in cleaning_runner
+    assert 'coverage_route_sanity="${map_root}/coverage_route_sanity.json"' in cleaning_runner
+    assert "write_saved_map_cleaning_requirement_evidence.py" in cleaning_runner
+    assert "requirement_evidence.json" in cleaning_runner
     assert 'FORMAL_CLEANING_PLANNER:-full_coverage' in cleaning_runner
     assert 'FORMAL_PERCEPTION_ARTIFACT_ROOT' in cleaning_runner
     assert 'FORMAL_POLICY_CHECKPOINT' in cleaning_runner
