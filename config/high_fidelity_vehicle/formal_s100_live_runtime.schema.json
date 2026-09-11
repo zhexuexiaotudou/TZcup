@@ -174,10 +174,11 @@
     "nullableSha256": {"anyOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
     "sourceBinding": {
       "type": "object",
-      "required": ["snapshot_manifest_sha256", "source_inventory_sha256"],
+      "required": ["snapshot_manifest_sha256", "source_inventory_sha256", "expanded_urdf_sha256"],
       "properties": {
         "snapshot_manifest_sha256": {"$ref": "#/$defs/sha256"},
-        "source_inventory_sha256": {"$ref": "#/$defs/sha256"}
+        "source_inventory_sha256": {"$ref": "#/$defs/sha256"},
+        "expanded_urdf_sha256": {"$ref": "#/$defs/sha256"}
       },
       "additionalProperties": false
     },

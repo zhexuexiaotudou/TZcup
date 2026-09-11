@@ -7,9 +7,10 @@ UR5e/Robotiq grasp-and-bin executor. The ordinary coverage server is disabled
 in this mode so there is only one planning owner.
 
 The vehicle remains fail-closed with main power off and E-stop asserted after
-launch. An operator must explicitly publish `main_power=true` and
-`emergency_stop=false` through the simulation command topics after inspecting
-readiness. Model and policy paths are mandatory; placeholders are rejected.
+launch. After the gate reports `control_owners_ready=true`, an operator must
+publish one fresh low-to-high `/product_demo/operator_start` command. The gate,
+not the operator, then continuously issues the main-power, E-stop and reset
+commands. Model and policy paths are mandatory; placeholders are rejected.
 The exact-map successful FullCoverage distance is mandatory as a hard task
 distance budget. Return-to-start distance is reported separately and is not
 charged to the cleaning-task metric.
@@ -39,10 +40,19 @@ with one latched command:
 ros2 topic pub --once /product_demo/operator_start std_msgs/msg/Bool '{data: true}'
 ```
 
-The operator gate continuously refreshes main-power and E-stop commands. If
-that gate dies, the simulation input watchdog reasserts E-stop and opens main
-power within 0.5 s. Mission completion is published only after return to the
-fixed start, and automatically returns the simulated vehicle to the safe state.
+The gate requires fresh, independently identified planner and executor
+heartbeats. Its transient-local status includes `control_owners_ready`, a gate
+`instance_id`, monotonically increasing `sequence`, and
+`published_at_unix_ns`; a runner must accept only a newly received, fresh
+status from one instance. The pre-arm readiness means the three-second start
+window is not consumed while the runtime is still initialising. After the reset sequence, only a fresh true
+`/safety/actuators_enabled` receipt confirms `/product_demo/operator_armed`.
+Loss of either owner or of a previously confirmed permit immediately opens main
+power, asserts E-stop and requires a new low-to-high operator request. Gate
+death is also covered by the simulation input watchdog. Mission completion is
+published only after return to the fixed start, and automatically returns the
+simulated vehicle to the safe state. These simulated ROS receipts are not
+physical interlock or braking acceptance.
 
 ## One-episode end-to-end acceptance
 

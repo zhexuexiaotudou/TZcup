@@ -843,7 +843,7 @@ class WholeVehicleSafetyManager(Node):
                 deadline += period
                 now = time.monotonic()
                 if deadline <= now:
-                    deadline = now + period
+                    deadline = now
         except BaseException as error:  # supervised by the main executor loop
             with self._state_lock:
                 self._publish_thread_error = error

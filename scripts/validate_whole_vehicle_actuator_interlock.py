@@ -10,6 +10,10 @@ import math
 import time
 from pathlib import Path
 
+from formal_safety_status_schema import (
+    STATUS_JSON_KEYS,
+    validate_speed_qualification_status,
+)
 from formal_runtime_gate_binding import load_binding
 import rclpy
 from builtin_interfaces.msg import Duration
@@ -97,19 +101,6 @@ HELD_JOINT_THRESHOLDS = {
     **{joint: 0.01 for joint in ARM_JOINTS},
     "robotiq_85_left_knuckle_joint": 0.005,
     "dry_deposit_gate_joint": 0.01,
-}
-STATUS_JSON_KEYS = {
-    "schema_version",
-    "state",
-    "safety_inputs_permit_actuators",
-    "actuators_enabled",
-    "managed_controllers_active",
-    "active_reasons",
-    "unsafe_generation",
-    "consumed_unsafe_generation",
-    "status_publish_count",
-    "maximum_timer_gap_sec",
-    "publish_thread_error",
 }
 ALLOWED_ADDITIONAL_STATUS_REASONS = {"manipulator_base_inhibit"}
 MAXIMUM_STATUS_SAMPLE_GAP_SEC = 0.25
@@ -735,6 +726,10 @@ def _status_reason_evidence(
             )
         if payload["schema_version"] != 1:
             raise RuntimeError("unsupported /safety/status_json schema_version")
+        try:
+            validate_speed_qualification_status(payload)
+        except ValueError as exc:
+            raise RuntimeError(f"invalid speed qualification status: {exc}") from exc
         reason_text = payload["active_reasons"]
         if not isinstance(reason_text, str):
             raise RuntimeError("/safety/status_json active_reasons must be a string")

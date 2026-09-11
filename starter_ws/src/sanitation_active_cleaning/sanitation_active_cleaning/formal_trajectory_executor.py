@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 import time
+import uuid
 
 from .formal_trajectory_core import FormalTrajectoryGate, PathPose
 
@@ -16,13 +17,15 @@ CONTROL_INPUT_TOPICS = (
 NAVIGATION_ACTION = "/follow_path"
 
 
-def main() -> None:
+def node_class():
+    """Load ROS dependencies and expose the node for real transport tests."""
     import rclpy
     from action_msgs.msg import GoalStatus
     from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
     from nav2_msgs.action import FollowPath
     from nav_msgs.msg import Path
     from rclpy.action import ActionClient
+    from rclpy.clock import Clock, ClockType
     from rclpy.executors import ExternalShutdownException
     from rclpy.node import Node
     from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
@@ -31,6 +34,8 @@ def main() -> None:
     class FormalTrajectoryExecutor(Node):
         def __init__(self) -> None:
             super().__init__("formal_active_cleaning_trajectory_executor")
+            self._instance_id = uuid.uuid4().hex
+            self._status_sequence = 0
             self.declare_parameter("mission_geometry", "")
             self.declare_parameter("path_topic", CONTROL_INPUT_TOPICS[0])
             self.declare_parameter("cancel_topic", CONTROL_INPUT_TOPICS[1])
@@ -43,6 +48,16 @@ def main() -> None:
             self.declare_parameter("max_safety_age_sec", 0.50)
             self.declare_parameter("controller_id", "FollowPath")
             self.declare_parameter("goal_checker_id", "general_goal_checker")
+            for name, default in (
+                ("goal_response_timeout_sec", 5.0),
+                ("execution_timeout_sec", 1800.0),
+                ("cancel_timeout_sec", 5.0),
+            ):
+                self.declare_parameter(name, default)
+                value = float(self.get_parameter(name).value)
+                if not math.isfinite(value) or value <= 0:
+                    raise RuntimeError(f"{name} must be finite and positive")
+                setattr(self, "_" + name, value)
             self._gate = FormalTrajectoryGate.from_mission_geometry(
                 str(self.get_parameter("mission_geometry").value),
                 max_segment_length=float(
@@ -61,6 +76,12 @@ def main() -> None:
             self._goal_handle = None
             self._goal_pending = False
             self._cancel_requested = False
+            self._cancel_sent = False
+            self._goal_started = None
+            self._cancel_started = None
+            self._fatal_reason = ""
+            self._terminal_confirmed = True
+            self._request_stamp = ""
             self._state = "BLOCKED"
             self._reason = "safety_permit_not_received"
             self._last_path_length = 0.0
@@ -97,7 +118,9 @@ def main() -> None:
                 self._on_safety,
                 latched,
             )
-            self.create_timer(0.10, self._watchdog)
+            self.create_timer(
+                0.10, self._watchdog, clock=Clock(clock_type=ClockType.STEADY_TIME)
+            )
             self._publish_status()
 
         def _safety_is_fresh_and_permitted(self) -> bool:
@@ -111,7 +134,8 @@ def main() -> None:
             self._last_safety_time = time.monotonic()
             if not self._safety_permitted:
                 self._fail_closed("safety_inhibited")
-            elif self._goal_handle is None and not self._goal_pending:
+            elif (self._goal_handle is None and not self._goal_pending
+                  and not self._fatal_reason and self._state == "BLOCKED"):
                 self._state = "IDLE"
                 self._reason = "ready"
                 self._publish_status()
@@ -121,9 +145,14 @@ def main() -> None:
                 self._fail_closed("operator_or_planner_cancel")
 
         def _on_path(self, message: Path) -> None:
-            if self._goal_handle is not None or self._goal_pending:
-                self._reject("executor_busy")
+            if self._fatal_reason:
+                self._publish_status()
                 return
+            if self._goal_handle is not None or self._goal_pending:
+                # A second request must not overwrite the active goal's status.
+                self.get_logger().error("trajectory ignored: executor_busy")
+                return
+            self._request_stamp = f"{message.header.stamp.sec}:{message.header.stamp.nanosec}"
             if not self._safety_is_fresh_and_permitted():
                 self._reject("safety_not_permitted_or_stale")
                 return
@@ -158,36 +187,49 @@ def main() -> None:
             goal.goal_checker_id = str(self.get_parameter("goal_checker_id").value)
             self._goal_pending = True
             self._cancel_requested = False
+            self._cancel_sent = False
+            self._cancel_started = None
+            self._goal_started = time.monotonic()
+            self._terminal_confirmed = False
             self._state = "SUBMITTING"
             self._reason = "validated_path"
             self._publish_status()
-            future = self._action_client.send_goal_async(goal)
-            future.add_done_callback(self._on_goal_response)
+            try:
+                future = self._action_client.send_goal_async(goal)
+                future.add_done_callback(self._on_goal_response)
+            except Exception as exc:
+                # A transport exception does not prove the server never got it.
+                self._latch_failure(f"goal_submission_exception:{type(exc).__name__}")
 
         def _on_goal_response(self, future) -> None:
-            self._goal_pending = False
             try:
                 handle = future.result()
             except Exception as exc:  # ROS future transports executor exceptions.
-                self._goal_handle = None
-                self._state = "FAILED"
-                self._reason = f"goal_submission_exception:{type(exc).__name__}"
-                self._publish_status()
+                self._latch_failure(f"goal_response_exception:{type(exc).__name__}")
                 return
+            self._goal_pending = False
             if not handle.accepted:
                 self._goal_handle = None
+                self._terminal_confirmed = True
                 self._state = "FAILED"
-                self._reason = "follow_path_goal_rejected"
+                self._reason = self._fatal_reason or "follow_path_goal_rejected"
                 self._publish_status()
                 return
             self._goal_handle = handle
-            if self._cancel_requested or not self._safety_is_fresh_and_permitted():
+            # Subscribe BEFORE canceling: cancellation acknowledgement is not
+            # terminal evidence. Late accepted goals must also be drained.
+            try:
+                handle.get_result_async().add_done_callback(self._on_result)
+            except Exception as exc:
+                self._latch_failure(f"result_subscription_exception:{type(exc).__name__}")
+            if self._goal_handle is None:
+                return  # An already-resolved result callback ran synchronously.
+            if self._cancel_requested or self._fatal_reason or not self._safety_is_fresh_and_permitted():
                 self._cancel_active_goal("cancel_before_goal_acceptance")
                 return
             self._state = "EXECUTING"
             self._reason = "follow_path_active"
             self._publish_status()
-            handle.get_result_async().add_done_callback(self._on_result)
 
         def _on_result(self, future) -> None:
             try:
@@ -195,14 +237,28 @@ def main() -> None:
                 status = int(wrapped.status)
                 error_code = int(getattr(wrapped.result, "error_code", 0))
             except Exception as exc:  # ROS future transports executor exceptions.
-                self._goal_handle = None
-                self._state = "FAILED"
-                self._reason = f"result_exception:{type(exc).__name__}"
-                self._publish_status()
+                self._latch_failure(f"result_exception:{type(exc).__name__}")
+                self._cancel_active_goal(self._fatal_reason)
+                return
+            if status not in {
+                GoalStatus.STATUS_SUCCEEDED, GoalStatus.STATUS_CANCELED,
+                GoalStatus.STATUS_ABORTED,
+            }:
+                self._latch_failure(f"nonterminal_result_status:{status}")
+                self._cancel_active_goal(self._fatal_reason)
                 return
             self._goal_handle = None
+            self._terminal_confirmed = True
+            was_canceled = self._cancel_requested
             self._cancel_requested = False
-            if status == GoalStatus.STATUS_SUCCEEDED and error_code == 0:
+            self._cancel_started = None
+            if self._fatal_reason:
+                self._state = "FAILED"
+                self._reason = self._fatal_reason
+            elif was_canceled:
+                self._state = "CANCELED"
+                self._reason = "cancel_requested_goal_terminated"
+            elif status == GoalStatus.STATUS_SUCCEEDED and error_code == 0:
                 self._state = "SUCCEEDED"
                 self._reason = "follow_path_succeeded"
             elif status == GoalStatus.STATUS_CANCELED:
@@ -221,10 +277,42 @@ def main() -> None:
 
         def _cancel_active_goal(self, reason: str) -> None:
             self._cancel_requested = True
+            if self._cancel_sent:
+                return
             self._state = "CANCELING"
-            self._reason = reason
+            self._reason = self._fatal_reason or reason
             if self._goal_handle is not None:
-                self._goal_handle.cancel_goal_async()
+                self._cancel_sent = True
+                self._cancel_started = time.monotonic()
+                try:
+                    handle = self._goal_handle
+                    handle.cancel_goal_async().add_done_callback(
+                        lambda future: self._on_cancel_response(future, handle)
+                    )
+                except Exception as exc:
+                    self._latch_failure(f"cancel_exception:{type(exc).__name__}")
+            self._publish_status()
+
+        def _on_cancel_response(self, future, handle) -> None:
+            if self._terminal_confirmed or self._goal_handle is not handle:
+                return
+            try:
+                response = future.result()
+                own_id = bytes(self._goal_handle.goal_id.uuid)
+                accepted = response.return_code == 0 and any(
+                    bytes(goal.goal_id.uuid) == own_id
+                    for goal in response.goals_canceling
+                )
+            except Exception as exc:
+                self._latch_failure(f"cancel_response_exception:{type(exc).__name__}")
+                return
+            if not accepted:
+                self._latch_failure("cancel_not_acknowledged_for_active_goal")
+
+        def _latch_failure(self, reason: str) -> None:
+            self._fatal_reason = self._fatal_reason or reason
+            self._state = "FAILED"
+            self._reason = self._fatal_reason
             self._publish_status()
 
         def _fail_closed(self, reason: str) -> None:
@@ -236,15 +324,27 @@ def main() -> None:
                 self._reason = reason
                 self._publish_status()
             else:
-                self._state = "BLOCKED"
-                self._reason = reason
+                self._state = "FAILED" if self._fatal_reason else "BLOCKED"
+                self._reason = self._fatal_reason or reason
                 self._publish_status()
 
         def _watchdog(self) -> None:
+            now = time.monotonic()
+            if self._goal_pending and now - self._goal_started >= self._goal_response_timeout_sec:
+                self._cancel_requested = True
+                self._latch_failure("goal_response_timeout")
+            if self._goal_handle is not None and not self._cancel_sent:
+                if now - self._goal_started >= self._execution_timeout_sec:
+                    self._latch_failure("execution_timeout")
+                    self._cancel_active_goal(self._fatal_reason)
+            if self._cancel_started is not None and now - self._cancel_started >= self._cancel_timeout_sec:
+                self._latch_failure("cancel_terminal_timeout")
             if not self._safety_is_fresh_and_permitted():
                 self._fail_closed("safety_not_permitted_or_stale")
+            self._publish_status()
 
         def _publish_status(self) -> None:
+            self._status_sequence += 1
             status = DiagnosticStatus()
             status.name = "formal_active_cleaning_trajectory_executor"
             status.hardware_id = "nav2_follow_path_safety_chain"
@@ -255,7 +355,13 @@ def main() -> None:
             )
             status.message = self._state
             status.values = [
+                KeyValue(key="instance_id", value=self._instance_id),
+                KeyValue(key="published_at_monotonic_ns", value=str(time.monotonic_ns())),
+                KeyValue(key="sequence", value=str(self._status_sequence)),
                 KeyValue(key="reason", value=self._reason),
+                KeyValue(key="terminal_confirmed", value=str(self._terminal_confirmed).lower()),
+                KeyValue(key="restart_required", value=str(bool(self._fatal_reason)).lower()),
+                KeyValue(key="request_stamp", value=self._request_stamp),
                 KeyValue(
                     key="safety_fresh_and_permitted",
                     value=str(self._safety_is_fresh_and_permitted()).lower(),
@@ -276,10 +382,17 @@ def main() -> None:
             self._action_client.destroy()
             return super().destroy_node()
 
+    return FormalTrajectoryExecutor
+
+
+def main() -> None:
+    import rclpy
+    from rclpy.executors import ExternalShutdownException
+
     rclpy.init()
     node = None
     try:
-        node = FormalTrajectoryExecutor()
+        node = node_class()()
         rclpy.spin(node)
     except (KeyboardInterrupt, ExternalShutdownException):
         pass

@@ -144,6 +144,7 @@ class DosodOnnxDetector:
         model_path: str | Path | None = None,
         *,
         session=None,
+        providers: Sequence[str] | None = None,
         class_ids: Sequence[str] = CLASS_IDS,
         score_threshold: float = OFFICIAL_PREFILTER_SCORE,
         class_score_thresholds: Mapping[str, float] | None = None,
@@ -157,7 +158,10 @@ class DosodOnnxDetector:
                 raise FileNotFoundError(f"DOSOD ONNX artifact missing: {model_path}")
             import onnxruntime as ort
 
-            session = ort.InferenceSession(str(model_path), providers=["CPUExecutionProvider"])
+            requested_providers = list(providers or ["CPUExecutionProvider"])
+            if not requested_providers:
+                raise ValueError("DOSOD ONNX provider list must not be empty")
+            session = ort.InferenceSession(str(model_path), providers=requested_providers)
         self.session = session
         self.class_ids = tuple(class_ids)
         self.score_threshold = float(score_threshold)

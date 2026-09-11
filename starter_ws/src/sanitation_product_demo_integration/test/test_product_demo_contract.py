@@ -45,6 +45,11 @@ def test_operator_gate_repeats_power_estop_and_stops_after_returned_mission():
     assert '"/formal_vehicle/simulation/command/main_power"' in source
     assert '"/formal_vehicle/simulation/command/emergency_stop"' in source
     assert "mission_complete_safe_stop" in source
+    assert '"control_owners_ready"' in source
+    assert "physical_safety_permit_lost_requires_new_operator_request" in source
+    assert '"published_at_unix_ns"' in source
+    assert '"instance_id"' in source
+    assert '"sequence"' in source
 
 
 def test_top_level_package_breaks_the_formal_training_dependency_cycle():

@@ -29,6 +29,7 @@ def test_ros_adapters_declare_only_product_map_path_and_safety_inputs():
         "/active_cleaning/observation_ready",
         "/active_cleaning/executor_status",
         "/active_cleaning/grasp_result",
+        "/product_demo/operator_armed",
     )
     assert formal_cleaning_coordinator.CONTROL_INPUT_TOPICS == (
         "/active_cleaning/cleaning_requested",
@@ -46,6 +47,8 @@ def test_executor_uses_follow_path_cancel_and_safety_chain_without_direct_drive_
     assert "FollowPath" in source
     assert "cancel_goal_async" in source
     assert "safety_not_permitted_or_stale" in source
+    assert 'KeyValue(key="published_at_monotonic_ns"' in source
+    assert 'KeyValue(key="sequence"' in source
     assert "Twist" not in source
     assert "/base_controller/cmd_vel" not in source
 
@@ -75,6 +78,8 @@ def test_policy_planner_emits_only_path_cleaning_and_grasp_requests_not_drive_co
     assert "/active_cleaning/grasp_request" in source
     assert "RETURNING_HOME" in source
     assert "task_distance_m_excluding_return" in source
+    assert '"published_at_monotonic_ns": time.monotonic_ns()' in source
+    assert '"sequence": self._control_health_sequence' in source
     assert "Twist" not in source
     assert "/base_controller/cmd_vel" not in source
 

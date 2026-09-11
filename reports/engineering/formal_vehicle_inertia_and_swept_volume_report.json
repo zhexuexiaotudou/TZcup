@@ -297,7 +297,7 @@
       },
       {
         "class": "arm_vehicle",
-        "conservative_obb_penetration_m": 0.06671843248782883,
+        "conservative_obb_penetration_m": 0.06671843248782885,
         "exact_mesh_triangles_intersecting_vehicle_box": 0,
         "left_collision": "collision_0",
         "left_link": "robotiq_85_right_finger_tip_link",
@@ -308,7 +308,7 @@
       },
       {
         "class": "arm_vehicle",
-        "conservative_obb_penetration_m": 0.07771843248782881,
+        "conservative_obb_penetration_m": 0.07771843248782884,
         "exact_mesh_triangles_intersecting_vehicle_box": 0,
         "left_collision": "collision_0",
         "left_link": "robotiq_85_right_finger_tip_link",
@@ -462,7 +462,7 @@
       },
       {
         "class": "arm_vehicle",
-        "conservative_obb_penetration_m": 0.04173809177398677,
+        "conservative_obb_penetration_m": 0.041738091773986796,
         "exact_mesh_triangles_intersecting_vehicle_box": 0,
         "left_collision": "collision_0",
         "left_link": "robotiq_85_left_inner_knuckle_link",
@@ -473,7 +473,7 @@
       },
       {
         "class": "arm_vehicle",
-        "conservative_obb_penetration_m": 0.06473809177398676,
+        "conservative_obb_penetration_m": 0.06473809177398679,
         "exact_mesh_triangles_intersecting_vehicle_box": 0,
         "left_collision": "collision_0",
         "left_link": "robotiq_85_left_inner_knuckle_link",
@@ -1963,7 +1963,7 @@
   },
   "inputs": {
     "expanded_urdf": "reports/engineering/formal_competition_vehicle.urdf",
-    "expanded_urdf_sha256": "34257c2ed840a6f8f25933bdf37c6130c3db397d0aa1211c561bff528bd621d1",
+    "expanded_urdf_sha256": "52bd3978a53073a8126a87a16f065eeb781bbbb088b127a73bba58dcc90410a8",
     "layout": "config/high_fidelity_vehicle/formal_vehicle_layout.yaml",
     "layout_sha256": "3c9c10da558c116bcbedf39a516093ca20c1e3eb590e2bb2d121ebd491cf10a9",
     "load_source": "formal Xacro payload reserve links and final capacity clamps",

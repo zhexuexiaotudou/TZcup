@@ -10,6 +10,7 @@
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>rclpy</exec_depend>
+  <exec_depend>diagnostic_msgs</exec_depend>
   <exec_depend>sanitation_active_cleaning</exec_depend>
   <exec_depend>sanitation_formal_campus_integration</exec_depend>
   <exec_depend>sanitation_manipulation</exec_depend>
