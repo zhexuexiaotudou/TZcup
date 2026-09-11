@@ -28,6 +28,7 @@ py -3 scripts/rescore_product_capture_random_scene.py `
   --public-manifest "$env:TZCUP_PUBLIC_EPISODE_MANIFEST" `
   --evaluator-truth "$env:TZCUP_EVALUATOR_GROUND_TRUTH" `
   --capture-binding "$env:TZCUP_CAPTURE_BINDING" `
+  --projection-evidence "$env:TZCUP_EVALUATOR_PROJECTION_EVIDENCE" `
   --output .workspace/evidence/product-capture-random-scene-rescore.json
 ```
 
@@ -43,10 +44,25 @@ identity 或 truth isolation 都会保持 `BLOCKED`。
 漏检面积（格数乘保存地图分辨率平方）。缺失 class raster 会单独列为不可用，而不是
 作为零预测或零真值。
 
-PR178 capture 没有保存产品 target 的稳定 ID 或 map 坐标，因而无法重算 target 对
-truth 的投影 RMSE/P95。输出将 `map_projection.rmse_m/p95_m` 置为 `null` 并说明原因。
-运行收集器若要使该指标可用，必须在不读取 truth 的前提下保存产品发布 target 的稳定
-ID、map position 与时间戳；此适配器不改动 PR178 的 capture schema。
+PR178 capture 没有保存产品 target 的稳定 ID 或 map 坐标。因此没有
+`--projection-evidence` 时，旧 capture 仍可完成其他离线指标，但
+`map_projection.rmse_m/p95_m` 会是 `null`，原因固定为
+`projection_evidence_not_supplied_for_legacy_capture`，绝不宣称通过。
+
+需要投影误差时，可从评估侧提供独立 `--projection-evidence`。它是
+`/evaluation/` namespace、`control_use_prohibited=true` 的 schema v1 JSON，必须与
+capture binding 的 inventory SHA-256、source commit、acceptance session、runtime
+closure 完全相同。每个 sample 必须给出唯一的产品 `target_uuid`、非空
+`track_identity`、capture frame 和 detection index、与保存 RGB-D 完全一致且严格递增的
+观测时间、产品 map point，以及 evaluator-only 的 `evaluator_object_id`。工具会重新从
+capture 重投影 detection，要求所得 map point 与 sample 完全一致，再用 evaluator truth
+中的同一 object ID 计算 RMSE/P95/max。缺 UUID、重复 UUID、跨 session/closure、相机或
+map frame 不匹配、时间倒退、被修改的 capture hash、无可重投影目标或无法关联 evaluator
+object 都使整个复评分保持 `BLOCKED`。
+
+该 sidecar 只在产品运行结束后由评估侧生成；不能被产品控制、模型输入或
+`ProductIntermediateCapture` 写入。它保留 PR178 capture 的既有 schema，并为有真实采集
+的运行提供受哈希和坐标链约束的可选投影误差路径。
 
 本轮没有真实 capture，故实际状态仍是 `no_product_capture_frames`。fixture 仅验证格式、
 哈希、绑定、truth isolation 与 fail-closed 行为，绝不构成真实识别、定位、部署或正式

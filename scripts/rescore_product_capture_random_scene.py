@@ -15,6 +15,7 @@ import json
 import math
 from pathlib import Path
 import sys
+import uuid
 
 import numpy as np
 
@@ -25,7 +26,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from replay_product_observation_capture import _bundle, _replay_frame  # noqa: E402
 from sanitation_perception.formal_random_scene_evaluator_core import (  # noqa: E402
-    BoxObservation, match_boxes, rasterize_dirt_truth, segmentation_metrics,
+    BoxObservation, match_boxes, projection_error_metrics, rasterize_dirt_truth, segmentation_metrics,
 )
 from sanitation_perception_evaluator.formal_random_scene_evaluator import _project_cube  # noqa: E402
 
@@ -110,7 +111,113 @@ def _class_dirt_metrics(truth: dict, arrays: dict, map_metadata: dict) -> tuple[
     return output, failures
 
 
-def rescore(capture_root: Path, public_path: Path, truth_path: Path, binding_path: Path) -> dict:
+def _finite_xyz(value: object, label: str) -> tuple[float, float, float]:
+    if not isinstance(value, list) or len(value) != 3:
+        raise CaptureRescoreError(f"{label} must be a three-dimensional map point")
+    point = tuple(float(item) for item in value)
+    if not all(math.isfinite(item) for item in point):
+        raise CaptureRescoreError(f"{label} must be finite")
+    return point
+
+
+def _projection_metrics(evidence_path: Path | None, binding: dict, truth: dict,
+                        frame_rows: list[dict], frame_metadata: dict[str, dict],
+                        capture_root: Path) -> tuple[dict, str | None]:
+    """Evaluate product target positions only from a separately held evaluation sidecar.
+
+    The sidecar is deliberately not a ProductIntermediateCapture artifact.  It can
+    associate a product UUID with evaluator truth only after the product run has
+    ended; its namespace and control prohibition make that direction explicit.
+    """
+    if evidence_path is None:
+        return {"rmse_m": None, "p95_m": None,
+                "reason": "projection_evidence_not_supplied_for_legacy_capture"}, None
+    evidence = _load_json(evidence_path, "projection evidence")
+    required = ("capture_manifest_sha256", "source_commit", "acceptance_session_binding",
+                "runtime_closure_binding", "camera_frame_id", "map_frame_id", "samples")
+    if (evidence.get("schema_version") != 1
+            or evidence.get("control_use_prohibited") is not True
+            or not str(evidence.get("namespace", "")).startswith("/evaluation/")
+            or any(name not in evidence for name in required)):
+        raise CaptureRescoreError("projection evidence contract is incomplete or not evaluator-only")
+    if evidence["capture_manifest_sha256"] != binding["capture_manifest_sha256"]:
+        raise CaptureRescoreError("projection evidence capture hash mismatch")
+    if evidence["capture_manifest_sha256"] != _inventory_digest(capture_root):
+        raise CaptureRescoreError("projection evidence capture inventory changed")
+    if evidence["source_commit"] != binding["source_commit"]:
+        raise CaptureRescoreError("projection evidence source commit mismatch")
+    if (evidence["acceptance_session_binding"] != binding["acceptance_session_binding"]
+            or evidence["runtime_closure_binding"] != binding["runtime_closure_binding"]):
+        raise CaptureRescoreError("projection evidence session or closure mismatch")
+    if evidence["map_frame_id"] != "map" or not isinstance(evidence["camera_frame_id"], str):
+        raise CaptureRescoreError("projection evidence camera or map frame mismatch")
+    if not isinstance(evidence["samples"], list) or not evidence["samples"]:
+        raise CaptureRescoreError("projection evidence has no samples")
+    truth_by_id = {row.get("object_id"): row for row in truth.get("discrete_cubes", [])}
+    if len(truth_by_id) != len(truth.get("discrete_cubes", [])):
+        raise CaptureRescoreError("evaluator truth has duplicate cube object IDs")
+    replay_by_frame = {row["frame"]: row["replay"] for row in frame_rows}
+    seen_uuid, seen_track, seen_detection, seen_truth = set(), {}, set(), set()
+    previous_stamp = -math.inf
+    errors = []
+    for index, row in enumerate(evidence["samples"]):
+        if not isinstance(row, dict):
+            raise CaptureRescoreError(f"projection sample {index} is not an object")
+        required_sample = ("target_uuid", "track_identity", "frame", "detection_index",
+                           "observation_stamp_s", "map_point_xyz", "evaluator_object_id")
+        if any(name not in row for name in required_sample):
+            raise CaptureRescoreError(f"projection sample {index} is incomplete")
+        try:
+            target_uuid = str(uuid.UUID(str(row["target_uuid"])))
+        except (AttributeError, ValueError) as exc:
+            raise CaptureRescoreError(f"projection sample {index} target UUID is invalid") from exc
+        track = row["track_identity"]
+        if not isinstance(track, str) or not track.strip():
+            raise CaptureRescoreError(f"projection sample {index} track identity is invalid")
+        if target_uuid in seen_uuid:
+            raise CaptureRescoreError("projection evidence has duplicate target UUID")
+        if track in seen_track and seen_track[track] != target_uuid:
+            raise CaptureRescoreError("projection evidence reuses a track identity across targets")
+        seen_uuid.add(target_uuid); seen_track[track] = target_uuid
+        frame = row["frame"]
+        if frame not in replay_by_frame or frame not in frame_metadata:
+            raise CaptureRescoreError(f"projection sample {index} references an unknown capture frame")
+        meta = frame_metadata[frame]
+        if meta["camera_info"].get("frame_id") != evidence["camera_frame_id"]:
+            raise CaptureRescoreError("projection evidence camera frame mismatch")
+        stamp = float(row["observation_stamp_s"])
+        if (not math.isfinite(stamp) or stamp <= previous_stamp
+                or abs(stamp - float(meta["rgb_stamp_s"])) > 1e-6
+                or abs(stamp - float(meta["depth_stamp_s"])) > 1e-6):
+            raise CaptureRescoreError("projection evidence timestamp is non-monotonic or does not match RGB-D")
+        previous_stamp = stamp
+        detection_key = (frame, int(row["detection_index"]))
+        if detection_key in seen_detection:
+            raise CaptureRescoreError("projection evidence duplicates a product detection")
+        seen_detection.add(detection_key)
+        product_point = _finite_xyz(row["map_point_xyz"], f"projection sample {index} product map point")
+        projected = {int(item["detection_index"]): item["xyz"] for item in replay_by_frame[frame]["projected_targets"]}
+        if detection_key[1] not in projected:
+            raise CaptureRescoreError("projection sample has no reprojectable product target")
+        replay_point = _finite_xyz(projected[detection_key[1]], "replayed product map point")
+        if not np.allclose(product_point, replay_point, rtol=0.0, atol=1e-6):
+            raise CaptureRescoreError("projection sample map point differs from captured product reprojection")
+        truth_row = truth_by_id.get(row["evaluator_object_id"])
+        if truth_row is None:
+            raise CaptureRescoreError("projection sample evaluator object identity is absent from evaluator truth")
+        if row["evaluator_object_id"] in seen_truth:
+            raise CaptureRescoreError("projection evidence reuses an evaluator object identity")
+        seen_truth.add(row["evaluator_object_id"])
+        truth_point = _finite_xyz([truth_row["pose"]["x_m"], truth_row["pose"]["y_m"], truth_row["pose"]["z_m"]], "evaluator truth map point")
+        errors.append(float(np.linalg.norm(np.asarray(product_point) - np.asarray(truth_point))))
+    metrics = projection_error_metrics(errors)
+    metrics["source"] = "evaluator_only_projection_evidence"
+    metrics["projection_evidence_sha256"] = _sha256(evidence_path)
+    return metrics, None
+
+
+def rescore(capture_root: Path, public_path: Path, truth_path: Path, binding_path: Path,
+            projection_evidence_path: Path | None = None) -> dict:
     report = {"schema_version": 1, "status": "BLOCKED", "claim_boundary": {
         "evaluator_only_offline_diagnostic": True, "eligible_as_formal_product_acceptance": False,
         "truth_used_to_modify_product_output": False, "model_inference_executed": False}}
@@ -127,12 +234,13 @@ def rescore(capture_root: Path, public_path: Path, truth_path: Path, binding_pat
             raise CaptureRescoreError("no_product_capture_frames")
         _require_binding(binding, capture_root=capture_root, public=public_path, truth=truth_path)
         cube_tp = cube_fp = cube_fn = 0
-        dirt_rows, failures, frame_rows = {}, {}, []
+        dirt_rows, failures, frame_rows, frame_metadata = {}, {}, [], {}
         for frame in frames:
             replay = _replay_frame(capture_root, frame, 0.5)
             if replay["status"] != "replayed":
                 raise CaptureRescoreError(f"capture frame rejected: {frame.name}")
             meta, arrays = _bundle(frame)
+            frame_metadata[frame.name] = meta
             map_meta, _ = _bundle(capture_root / "maps" / meta["map_content_sha256"])
             truth_boxes = _truth_for_frame(truth, arrays, meta)
             predictions = [BoxObservation("litter_cube", float(row["confidence"]), tuple(map(float, row["xyxy"]))) for row in meta["detections"] if row.get("class_id") == "litter_cube"]
@@ -143,13 +251,14 @@ def rescore(capture_root: Path, public_path: Path, truth_path: Path, binding_pat
                 dirt_rows.setdefault(class_id, []).append(metrics)
             failures.update(class_failures)
             frame_rows.append({"frame": frame.name, "cube_unmatched_truth_object_ids": matched["unmatched_truth_object_ids"], "cube_false_positive_indices": matched["false_positive_indices"], "replay": replay})
+        projection, _ = _projection_metrics(projection_evidence_path, binding, truth, frame_rows, frame_metadata, capture_root)
         precision = cube_tp / (cube_tp + cube_fp) if cube_tp + cube_fp else 0.0
         recall = cube_tp / (cube_tp + cube_fn) if cube_tp + cube_fn else 0.0
         report.update({"status": "RESCORED_OFFLINE", "episode_id": public["episode_id"], "map_id": public["map_id"],
             "bindings": {"source_commit": binding["source_commit"], "capture_manifest_sha256": binding["capture_manifest_sha256"], "public_manifest_sha256": binding["public_manifest_sha256"], "evaluator_truth_sha256": binding["evaluator_truth_sha256"], "acceptance_session_binding": binding["acceptance_session_binding"], "runtime_closure_binding": binding["runtime_closure_binding"]},
             "litter_cube": {"true_positive_count": cube_tp, "false_positive_count": cube_fp, "false_negative_count": cube_fn, "precision": precision, "recall": recall, "f1": 2 * precision * recall / (precision + recall) if precision + recall else 0.0},
             "dirt_by_class": {key: {"frame_count": len(rows), "iou_mean": float(np.mean([row["iou"] for row in rows])), "recall_mean": float(np.mean([row["recall"] for row in rows])), "missed_area_m2": float(sum(row["missed_area_m2"] for row in rows))} for key, rows in dirt_rows.items()},
-            "map_projection": {"rmse_m": None, "p95_m": None, "reason": "capture_format_has_no_product_target_identity_or_position"}, "failure_samples": frame_rows, "unavailable_metrics": failures})
+            "map_projection": projection, "failure_samples": frame_rows, "unavailable_metrics": failures})
     except (OSError, KeyError, TypeError, ValueError, np.linalg.LinAlgError) as exc:
         report["reason"] = str(exc)
     return report
@@ -161,9 +270,12 @@ def main() -> int:
     parser.add_argument("--public-manifest", type=Path, required=True)
     parser.add_argument("--evaluator-truth", type=Path, required=True)
     parser.add_argument("--capture-binding", type=Path, required=True)
+    parser.add_argument("--projection-evidence", type=Path,
+                        help="optional evaluator-only UUID/track/map-point sidecar for projection error")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    report = rescore(args.capture_root, args.public_manifest, args.evaluator_truth, args.capture_binding)
+    report = rescore(args.capture_root, args.public_manifest, args.evaluator_truth, args.capture_binding,
+                     args.projection_evidence)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(json.dumps({"status": report["status"], "output": str(args.output)}))
