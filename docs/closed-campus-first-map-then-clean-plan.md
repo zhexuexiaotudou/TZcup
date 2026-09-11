@@ -576,6 +576,8 @@ Contact-GraspNet、GraspGen等通用方法同样偏CUDA；GPD可走CPU点云路�
 
 交接还须密封 mapping runtime binding，核对独立启动的会话、源码、运行闭包和时间顺序；稳定观测不能重复计入同一地图消息。文件格式、拒绝条件与可执行检查见[地图交接完整性](formal-map-handoff-integrity.md)。
 
+固图前须按保存的 PGM 与 YAML 在 geofence 内重新计算观测率，不能只信 manifest 的旧值；像素语义、元数据约束和聚合复验见[保存地图 PGM 质量复核](saved-map-pgm-quality-recheck.md)。
+
 以上为源码和Windows离线测试收口，不构成Gazebo动态通过证据。正式结论仍需在全新输出路径上完成一次真实200 m × 100 m SLAM探索、`>=95%`稳定观测固图，以及独立硬重启后的AMCL/Nav2全覆盖运行。
 
 ## 12. 当前边界

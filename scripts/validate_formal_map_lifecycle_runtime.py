@@ -34,7 +34,12 @@ from sanitation_formal_campus_integration.saved_map_coverage_core import (
     SavedMapCoverageError,
     load_formal_operation_speed_profile,
 )
-from sanitation_formal_campus_integration.map_lifecycle_core import REQUIRED_SAVED_MAP_SUPPORT_FILES
+from sanitation_formal_campus_integration.map_lifecycle_core import (
+    REQUIRED_SAVED_MAP_SUPPORT_FILES,
+    MapLifecycleError,
+    load_campus_map_contract,
+    validate_saved_map_artifact,
+)
 from sanitation_formal_campus_integration.runtime_evidence_core import (
     COMMAND_CHAIN_RECEIPT_REORDER_TOLERANCE_S,
     EXPECTED_COMMAND_TOPIC_PUBLISHER,
@@ -161,6 +166,17 @@ def _hashes_valid(root: Path, manifest: dict) -> bool:
     )
 
 
+def _saved_pgm_quality_valid(map_root: Path, episode_manifest: Path | None) -> bool:
+    """Do not let the aggregate report trust a self-reported map percentage."""
+    if episode_manifest is None:
+        return False
+    try:
+        validate_saved_map_artifact(map_root, load_campus_map_contract(episode_manifest))
+    except (MapLifecycleError, OSError, TypeError, ValueError):
+        return False
+    return True
+
+
 def _report_matches_speed_profile(report: object, expected_profile: object) -> bool:
     """Bind a coverage report to the selected, source-owned speed profile."""
     if not isinstance(report, dict):
@@ -184,6 +200,7 @@ def validate(
     *,
     speed_profiles_path: Path = FORMAL_SPEED_PROFILES,
     runtime_binding_path: Path | None = None,
+    episode_manifest: Path | None = None,
 ) -> dict:
     manifest = _json(map_root / "map_lifecycle_manifest.json")
     mapping = _json(mapping_runtime)
@@ -222,6 +239,9 @@ def validate(
     checks = {
         "mapping_cleaning_runtime_binding_verified": binding_valid,
         "hard_restart_record_reverified": restart_valid and mapping_bytes_match,
+        "saved_pgm_observation_reverified": _saved_pgm_quality_valid(
+            map_root, episode_manifest
+        ),
         "quality_gated_map_manifest": (
             manifest.get("schema_version") == 1
             and manifest.get("status") == "ready_for_localization_cleaning"
@@ -360,13 +380,17 @@ def main() -> int:
     parser.add_argument("--map-root", required=True, type=Path)
     parser.add_argument("--mapping-runtime", required=True, type=Path)
     parser.add_argument("--cleaning-runtime", required=True, type=Path)
+    parser.add_argument("--episode-manifest", required=True, type=Path)
     parser.add_argument("--runtime-binding", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
     try:
         report = validate(
-            args.map_root, args.mapping_runtime, args.cleaning_runtime,
+            args.map_root,
+            args.mapping_runtime,
+            args.cleaning_runtime,
             runtime_binding_path=args.runtime_binding,
+            episode_manifest=args.episode_manifest,
         )
         write_bound_report(args.output, report, args.runtime_binding)
     except (OSError, RuntimeGateError, TypeError, ValueError, KeyError) as exc:

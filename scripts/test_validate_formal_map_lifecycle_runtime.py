@@ -70,7 +70,7 @@ def _seal_restart(root, mapping, cleaning):
     _write(cleaning, value)
 
 
-def test_validator_passes_only_complete_real_runtime_contract(tmp_path):
+def test_validator_passes_only_complete_real_runtime_contract(tmp_path, monkeypatch):
     root = tmp_path / "map"
     root.mkdir()
     (root / "occupancy.yaml").write_text("image: occupancy.pgm\n", encoding="utf-8")
@@ -175,6 +175,7 @@ def test_validator_passes_only_complete_real_runtime_contract(tmp_path):
         "estimated_coverage_fraction": 0.95,
     })
     _seal_restart(root, mapping, cleaning)
+    monkeypatch.setattr(MODULE, "_saved_pgm_quality_valid", lambda *_: True)
     result = MODULE.validate(root, mapping, cleaning)
     assert result["passed"] is True
     assert result["status"] == MODULE.PASS_STATUS
@@ -336,7 +337,8 @@ def test_validator_blocks_missing_or_tampered_evidence(tmp_path):
     result = MODULE.validate(tmp_path / "map", tmp_path / "m.json", tmp_path / "c.json")
     assert result["passed"] is False
     assert result["status"] == MODULE.BLOCKED_STATUS
-    assert len(result["blockers"]) == 5
+    assert len(result["blockers"]) == 6
+    assert "saved_pgm_observation_reverified" in result["blockers"]
 
 
 @pytest.fixture
