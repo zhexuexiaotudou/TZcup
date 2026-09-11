@@ -188,6 +188,8 @@ SESSION_ID="${IDENTITY[2]}"
 SESSION_START="${IDENTITY[3]}"
 MAX_DISTANCE="${IDENTITY[4]}"
 RUNTIME_ID="${EPISODE_ID}-$(date -u +%Y%m%dT%H%M%SZ)-$$"
+PRODUCT_CAPTURE_ROOT="${OUTPUT}/product_intermediates"
+PRODUCT_CAPTURE_REPORT="${OUTPUT}/product_capture_random_scene_rescore.json"
 export ROS_DOMAIN_ID="${ROS_DOMAIN}"
 export GZ_PARTITION="tzcup-single-episode-${ROS_DOMAIN}-$$"
 
@@ -216,7 +218,7 @@ formal_runtime_install_traps cleanup
   gui:=false world:="${WORLD}" episode_manifest:="${EPISODE_MANIFEST}" \
   pedestrian_schedule:="${SCHEDULE}" start_pedestrians:=true \
   saved_map_artifact_dir:="${SAVED_MAP}" perception_artifact_root:="${PERCEPTION_ARTIFACTS}" \
-  policy_checkpoint:="${POLICY_CHECKPOINT}" maximum_task_distance_m:="${MAX_DISTANCE}" \
+  policy_checkpoint:="${POLICY_CHECKPOINT}" intermediate_capture_root:="${PRODUCT_CAPTURE_ROOT}" maximum_task_distance_m:="${MAX_DISTANCE}" \
   episode_seed:="${EPISODE_SEED}" operation_speed_profile:="${OPERATION_SPEED_PROFILE}" \
   max_linear_velocity:="${WHOLE_VEHICLE_SAFETY_CAP}" >"${OUTPUT}/product_demo.log" 2>&1 &
 GAZEBO_LAUNCH_PID=$!
@@ -270,6 +272,12 @@ done
 # product operator gate is the only mission-start write.
 ros2 topic pub --once /product_demo/operator_start std_msgs/msg/Bool '{data: true}'
 wait "${COLLECTOR_PID}"
+
+python3 "${ROOT}/scripts/finalize_product_capture_rescore.py" \
+  --capture-root "${PRODUCT_CAPTURE_ROOT}" --public-manifest "${EPISODE_MANIFEST}" \
+  --evaluator-truth "${EVALUATOR_GROUND_TRUTH}" --session-status "${SESSION_STATUS}" \
+  --runtime-binding "${RUNTIME_BINDING}" --source-commit "$(git -C "${ROOT}" rev-parse HEAD)" \
+  --binding-output "${OUTPUT}/product_capture_binding.json" --report-output "${PRODUCT_CAPTURE_REPORT}" || true
 
 python3 "${ROOT}/scripts/aggregate_formal_single_episode_cleaning_mission.py" \
   --raw "${OUTPUT}/raw_collection.json" --output "${OUTPUT}/aggregate.json"

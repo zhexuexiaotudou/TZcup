@@ -798,6 +798,12 @@ def main() -> None:
                                 }
                                 for index, item in enumerate(results)
                             ],
+                            product_targets=[
+                                {"target_uuid": str(target.uuid), "track_identity": str(target.uuid),
+                                 "map_point_xyz": [float(target.map_pose.pose.position.x), float(target.map_pose.pose.position.y), float(target.map_pose.pose.position.z)],
+                                 "observation_stamp_s": rgb_time.nanoseconds * 1e-9}
+                                for target in target_array.targets
+                            ],
                             prompt_decisions=prompt_decisions,
                             prompt_detection_indices=dirt_indices,
                             prompt_masks=dirt_masks,

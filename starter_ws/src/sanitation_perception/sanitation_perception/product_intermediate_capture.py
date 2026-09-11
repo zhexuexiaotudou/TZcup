@@ -197,6 +197,7 @@ class ProductIntermediateCapture:
         projection_diagnostics: dict,
         map_occupancy: np.ndarray,
         map_metadata: dict,
+        product_targets: list[dict] | None = None,
     ) -> bool:
         if not self.wants_frame(sensor, rgb_stamp_s):
             return False
@@ -257,6 +258,7 @@ class ProductIntermediateCapture:
             "rgb_depth_skew_s": abs(float(rgb_stamp_s) - float(depth_stamp_s)),
             "camera_info": camera_info,
             "detections": detections,
+            "product_targets": list(product_targets or []),
             "prompt_decisions": prompt_decisions,
             "projection": {
                 "sample_stride": int(projection_diagnostics["sample_stride"]),
