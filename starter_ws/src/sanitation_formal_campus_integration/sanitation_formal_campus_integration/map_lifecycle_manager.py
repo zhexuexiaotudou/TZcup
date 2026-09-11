@@ -18,6 +18,7 @@ import yaml
 from .map_lifecycle_core import (
     MAPPING_POSE_SOURCE,
     MapLifecycleError,
+    assess_saved_pgm_observation,
     assess_grid_observation,
     load_campus_map_contract,
     materialize_saved_map_coverage_geometry,
@@ -283,6 +284,14 @@ class FormalMapLifecycleManager(Node):
             if not image_path.is_file():
                 raise MapLifecycleError("saved map image is missing")
             materialize_saved_map_coverage_geometry(self._root, self._contract)
+            pgm_observation = assess_saved_pgm_observation(
+                metadata,
+                image_path.read_bytes(),
+                geofence=self._contract.geofence,
+                threshold=float(self.get_parameter("observation_threshold").value),
+            )
+            if not pgm_observation.passed:
+                raise MapLifecycleError("saved occupancy PGM did not meet the observation threshold")
             hashes = {
                 map_yaml.name: sha256(map_yaml),
                 image_path.name: sha256(image_path),
@@ -315,9 +324,12 @@ class FormalMapLifecycleManager(Node):
                 "episode_id": self._contract.episode_id,
                 "map_id": self._contract.map_id,
                 "occupancy_map": map_yaml.name,
-                "observed_fraction": details["observed_fraction"],
-                "observed_area_m2": details["observed_area_m2"],
-                "field_sampled_area_m2": details["field_sampled_area_m2"],
+                "observed_fraction": pgm_observation.observed_fraction,
+                "observed_area_m2": pgm_observation.observed_area_m2,
+                "field_sampled_area_m2": pgm_observation.field_sampled_area_m2,
+                "saved_pgm_observed_fraction": pgm_observation.observed_fraction,
+                "saved_pgm_observed_cells": pgm_observation.observed_cells,
+                "saved_pgm_field_cells": pgm_observation.field_cells,
                 "quality_threshold": float(
                     self.get_parameter("observation_threshold").value
                 ),
