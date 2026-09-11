@@ -79,9 +79,9 @@ def test_hard_restart_record_binds_pids_exit_order_and_hashes(tmp_path):
     root = tmp_path / "map"
     root.mkdir()
     for name, content in (
-        ("map_lifecycle_manifest.json", b"manifest"),
-        ("mapping_runtime.json", b"runtime"),
-        ("mapping_handoff_record.json", b"handoff"),
+        ("map_lifecycle_manifest.json", b'{"status": "ready_for_localization_cleaning"}'),
+        ("mapping_runtime.json", b'{"passed": true}'),
+        ("runtime_gate_binding.json", b'{"session_id": "mapping-session-001"}'),
     ):
         (root / name).write_bytes(content)
     record = {
@@ -99,10 +99,25 @@ def test_hard_restart_record_binds_pids_exit_order_and_hashes(tmp_path):
         "mapping_collector_pid": 103,
         "cleaning_runner_pid": 201,
         "cleaning_launch_pid": 202,
-        "map_lifecycle_manifest_sha256": hashlib.sha256(b"manifest").hexdigest(),
-        "mapping_runtime_sha256": hashlib.sha256(b"runtime").hexdigest(),
-        "mapping_handoff_record_sha256": hashlib.sha256(b"handoff").hexdigest(),
     }
+    for field, name in (
+        ("map_lifecycle_manifest_sha256", "map_lifecycle_manifest.json"),
+        ("mapping_runtime_sha256", "mapping_runtime.json"),
+        ("mapping_runtime_gate_binding_sha256", "runtime_gate_binding.json"),
+    ):
+        record[field] = hashlib.sha256((root / name).read_bytes()).hexdigest()
+    handoff = {key: record[key] for key in (
+        "schema_version", "mapping_runner_exit_code", "mapping_runner_pid",
+        "mapping_launch_pid", "mapping_collector_pid", "mapping_completion_wall_time",
+        "mapping_cleanup_wall_time", "map_lifecycle_manifest_sha256",
+        "mapping_runtime_sha256", "mapping_runtime_gate_binding_sha256",
+    )}
+    handoff.update(mapping_runner_completed=True, mapping_process_groups_stopped=True)
+    handoff_path = root / "mapping_handoff_record.json"
+    handoff_path.write_text(json.dumps(handoff), encoding="utf-8")
+    record["mapping_handoff_record_sha256"] = hashlib.sha256(
+        handoff_path.read_bytes()
+    ).hexdigest()
     assert hard_restart_record_valid(record, root)
     for field, value in (
         ("mapping_runner_exit_code", 1),
