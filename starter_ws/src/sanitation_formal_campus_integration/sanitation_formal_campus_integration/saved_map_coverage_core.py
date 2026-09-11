@@ -262,6 +262,27 @@ def load_product_mission_geometry(path: str | Path) -> SavedMapCoverageGeometry:
     )
 
 
+def load_saved_map_home_pose(path: str | Path) -> tuple[float, float, float]:
+    """Read the map-frame home pose from the same sealed mission geometry."""
+    mission_path = Path(path)
+    load_product_mission_geometry(mission_path)
+    root = mission_path.parent
+    try:
+        manifest = json.loads(_read_artifact_snapshot(
+            root, "map_lifecycle_manifest.json", label="saved-map lifecycle manifest"
+        ))
+        mission = yaml.safe_load(_sealed_snapshot(
+            root, "mission_geometry.yaml", manifest["sha256"], "mission geometry"
+        ))
+        pose = mission["vehicle_start_pose_map"]
+        x, y, yaw = (float(pose[key]) for key in ("x_m", "y_m", "yaw_rad"))
+    except (MapLifecycleError, OSError, json.JSONDecodeError, yaml.YAMLError, KeyError, TypeError, ValueError) as exc:
+        raise SavedMapCoverageError("sealed mission geometry has no valid map-frame home pose") from exc
+    if not all(math.isfinite(value) for value in (x, y, yaw)) or not -math.pi <= yaw <= math.pi:
+        raise SavedMapCoverageError("sealed mission geometry has no valid map-frame home pose")
+    return x, y, yaw
+
+
 def validate_execution_parameters(
     operation_width_m: float,
     max_speed_mps: float,
@@ -445,4 +466,10 @@ def coverage_execution_passed(report: dict) -> bool:
         and isinstance(report.get("coverage_geometry_sha256"), str)
         and len(report["coverage_geometry_sha256"]) == 64
         and float(report.get("cleanable_area_m2", 0.0)) > 0.0
+        and isinstance(report.get("return_home"), dict)
+        and report["return_home"].get("success") is True
+        and report["return_home"].get("goal_frame_id") == "map"
+        and report["return_home"].get("final_cmd_vel_zero") is True
+        and report["return_home"].get("brush_control_released") is True
+        and report["return_home"].get("coverage_control_released") is True
     )

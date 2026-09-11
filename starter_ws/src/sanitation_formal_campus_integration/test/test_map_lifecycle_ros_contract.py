@@ -39,6 +39,7 @@ def test_formal_launch_separates_mapping_and_saved_map_cleaning():
     ).read_text(encoding="utf-8")
     assert '"localization_backend": "external" if mode == "mapping" else "amcl"' in source
     assert 'validate_saved_map_artifact(artifact_root, contract)' in source
+    assert 'validate_saved_map_cleaning_consumer_bundle(artifact_root, contract)' in source
     assert '"map_file": str(artifact_root / "occupancy.yaml")' in source
     assert 'executable="formal-frontier-explorer"' in source
     assert '"start_navigation": "false"' in source

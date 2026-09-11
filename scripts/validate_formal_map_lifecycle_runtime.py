@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import datetime
 import hashlib
 import json
 import math
@@ -33,11 +34,17 @@ from sanitation_formal_campus_integration.saved_map_coverage_core import (
     SavedMapCoverageError,
     load_formal_operation_speed_profile,
 )
-from sanitation_formal_campus_integration.map_lifecycle_core import REQUIRED_SAVED_MAP_SUPPORT_FILES
+from sanitation_formal_campus_integration.map_lifecycle_core import (
+    REQUIRED_SAVED_MAP_SUPPORT_FILES,
+    MapLifecycleError,
+    load_campus_map_contract,
+    validate_saved_map_artifact,
+)
 from sanitation_formal_campus_integration.runtime_evidence_core import (
     COMMAND_CHAIN_RECEIPT_REORDER_TOLERANCE_S,
     EXPECTED_COMMAND_TOPIC_PUBLISHER,
 )
+from sanitation_formal_campus_integration.map_lifecycle_core import hard_restart_record_valid
 
 
 def _json(path: Path) -> dict:
@@ -58,6 +65,45 @@ def _atomic_write_json(path: Path, value: dict) -> None:
     finally:
         if pending.exists():
             pending.unlink()
+
+
+def validate_mapping_runtime_binding(map_root: Path, current_binding_path: Path) -> None:
+    """Require the sealed mapping evidence and cleaning to share one frozen session."""
+    mapping_path = map_root / "runtime_gate_binding.json"
+    handoff_path = map_root / "mapping_handoff_record.json"
+    for path in (mapping_path, handoff_path, current_binding_path):
+        if path.is_symlink() or not path.is_file():
+            raise RuntimeGateError("map handoff requires regular runtime binding evidence")
+    handoff = _json(handoff_path)
+    expected = handoff.get("mapping_runtime_gate_binding_sha256")
+    if expected != hashlib.sha256(mapping_path.read_bytes()).hexdigest():
+        raise RuntimeGateError("mapping runtime binding hash differs from handoff")
+    mapping = load_binding(mapping_path)
+    current = load_binding(current_binding_path)
+    # Gate verification time necessarily changes across the separate process
+    # starts. Every other field, including paths and source inventories, is identity.
+    mapping_identity = {key: value for key, value in mapping.items() if key != "verified_epoch_ns"}
+    current_identity = {key: value for key, value in current.items() if key != "verified_epoch_ns"}
+    if mapping_identity != current_identity:
+        raise RuntimeGateError("mapping and cleaning session/source/runtime closure differ")
+    mapped_at, cleaned_at = mapping.get("verified_epoch_ns"), current.get("verified_epoch_ns")
+    started_at = mapping["acceptance_session_binding"].get("session_started_epoch_ns")
+    if (
+        any(type(value) is not int or value <= 0 for value in (started_at, mapped_at, cleaned_at))
+        or not started_at <= mapped_at <= cleaned_at
+    ):
+        raise RuntimeGateError("mapping/cleaning runtime binding chronology is invalid")
+    try:
+        completed, stopped = [datetime.datetime.fromisoformat(handoff[key]) for key in (
+            "mapping_completion_wall_time", "mapping_cleanup_wall_time",
+        )]
+        if completed.utcoffset() is None or stopped.utcoffset() is None:
+            raise ValueError("missing timezone")
+        completed_ns, stopped_ns = (int(value.timestamp() * 1_000_000_000) for value in (completed, stopped))
+    except (KeyError, TypeError, ValueError, OverflowError) as exc:
+        raise RuntimeGateError("mapping handoff timestamps are invalid") from exc
+    if not mapped_at <= completed_ns <= stopped_ns <= cleaned_at:
+        raise RuntimeGateError("mapping cleanup is outside the bound process chronology")
 
 
 def _embed_runtime_binding(report: dict, runtime_binding_path: Path) -> dict:
@@ -120,6 +166,17 @@ def _hashes_valid(root: Path, manifest: dict) -> bool:
     )
 
 
+def _saved_pgm_quality_valid(map_root: Path, episode_manifest: Path | None) -> bool:
+    """Do not let the aggregate report trust a self-reported map percentage."""
+    if episode_manifest is None:
+        return False
+    try:
+        validate_saved_map_artifact(map_root, load_campus_map_contract(episode_manifest))
+    except (MapLifecycleError, OSError, TypeError, ValueError):
+        return False
+    return True
+
+
 def _report_matches_speed_profile(report: object, expected_profile: object) -> bool:
     """Bind a coverage report to the selected, source-owned speed profile."""
     if not isinstance(report, dict):
@@ -142,10 +199,27 @@ def validate(
     cleaning_runtime: Path,
     *,
     speed_profiles_path: Path = FORMAL_SPEED_PROFILES,
+    runtime_binding_path: Path | None = None,
+    episode_manifest: Path | None = None,
 ) -> dict:
     manifest = _json(map_root / "map_lifecycle_manifest.json")
     mapping = _json(mapping_runtime)
     cleaning = _json(cleaning_runtime)
+    try:
+        validate_mapping_runtime_binding(
+            map_root, runtime_binding_path or cleaning_runtime.parent / "runtime_gate_binding.json"
+        )
+        binding_valid = True
+    except (OSError, RuntimeGateError, TypeError, ValueError, KeyError):
+        binding_valid = False
+    restart_valid = hard_restart_record_valid(cleaning.get("hard_restart_record", {}), map_root)
+    try:
+        mapping_bytes_match = (
+            hashlib.sha256(mapping_runtime.read_bytes()).hexdigest()
+            == _json(map_root / "mapping_handoff_record.json").get("mapping_runtime_sha256")
+        )
+    except OSError:
+        mapping_bytes_match = False
     try:
         mapping_speed_profile = load_formal_operation_speed_profile(
             speed_profiles_path, MAPPING_SAFE_SPEED_PROFILE
@@ -163,6 +237,11 @@ def validate(
         observed_fraction = quality_threshold = math.nan
         stable_samples = 0
     checks = {
+        "mapping_cleaning_runtime_binding_verified": binding_valid,
+        "hard_restart_record_reverified": restart_valid and mapping_bytes_match,
+        "saved_pgm_observation_reverified": _saved_pgm_quality_valid(
+            map_root, episode_manifest
+        ),
         "quality_gated_map_manifest": (
             manifest.get("schema_version") == 1
             and manifest.get("status") == "ready_for_localization_cleaning"
@@ -301,11 +380,18 @@ def main() -> int:
     parser.add_argument("--map-root", required=True, type=Path)
     parser.add_argument("--mapping-runtime", required=True, type=Path)
     parser.add_argument("--cleaning-runtime", required=True, type=Path)
+    parser.add_argument("--episode-manifest", required=True, type=Path)
     parser.add_argument("--runtime-binding", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
     try:
-        report = validate(args.map_root, args.mapping_runtime, args.cleaning_runtime)
+        report = validate(
+            args.map_root,
+            args.mapping_runtime,
+            args.cleaning_runtime,
+            runtime_binding_path=args.runtime_binding,
+            episode_manifest=args.episode_manifest,
+        )
         write_bound_report(args.output, report, args.runtime_binding)
     except (OSError, RuntimeGateError, TypeError, ValueError, KeyError) as exc:
         print(f"FORMAL_MAP_LIFECYCLE_RUNTIME_BINDING_BLOCKED: {exc}", file=sys.stderr)

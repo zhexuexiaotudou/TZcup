@@ -22,6 +22,7 @@ from sanitation_formal_campus_integration.map_lifecycle_core import (
     load_campus_map_contract,
     prepare_public_lifecycle_artifacts,
     validate_saved_map_artifact,
+    validate_saved_map_cleaning_consumer_bundle,
 )
 from sanitation_formal_campus_integration.nav2_mode_config import (
     configure_collision_monitor_sources,
@@ -65,6 +66,7 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
         # This launch-time gate prevents AMCL/Nav2 from even starting with an
         # unqualified, wrong-map or tampered artifact.
         validate_saved_map_artifact(artifact_root, contract)
+        validate_saved_map_cleaning_consumer_bundle(artifact_root, contract)
         support = {
             "keepout_map": artifact_root / "geofence_keepout.yaml",
             "speed_map": artifact_root / "neutral_speed.yaml",
@@ -362,6 +364,8 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                         "mode": mode,
                         "episode_manifest": str(manifest_path),
                         "artifact_directory": str(artifact_root),
+                        "session_id": LaunchConfiguration("session_id"),
+                        "runtime_id": LaunchConfiguration("runtime_id"),
                         "support_artifacts_prepared": True,
                         "mapping_pose_source": (
                             "wheel_imu_ekf_lidar_scan_matching_gnss_consistency"
@@ -418,6 +422,11 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                         "mission_geometry_path": str(
                             artifact_root / "mission_geometry.yaml"
                         ),
+                        "episode_manifest": str(manifest_path),
+                        "artifact_directory": str(artifact_root),
+                        "route_sanity_path": str(
+                            artifact_root / "coverage_route_sanity.json"
+                        ),
                         "output_path": str(
                             coverage_evidence_dir / "coverage_execution.json"
                         ),
@@ -446,6 +455,8 @@ def generate_launch_description() -> LaunchDescription:
         DeclareLaunchArgument("world"),
         DeclareLaunchArgument("world_name", default_value="campus_formal"),
         DeclareLaunchArgument("episode_manifest"),
+        DeclareLaunchArgument("session_id", default_value=""),
+        DeclareLaunchArgument("runtime_id", default_value=""),
         DeclareLaunchArgument("map_artifact_dir"),
         DeclareLaunchArgument("pedestrian_schedule", default_value=""),
         DeclareLaunchArgument("start_pedestrians", default_value="true"),
