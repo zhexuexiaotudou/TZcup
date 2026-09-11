@@ -937,6 +937,76 @@ def _read_artifact_snapshot(root: Path, value: Any, *, label: str) -> bytes:
         raise MapLifecycleError(f"{label} is missing or unreadable") from exc
 
 
+def _validate_timestamp_paired_gnss_odometry(manifest: dict[str, Any]) -> None:
+    """Require sealed evidence for the live first-map localization gate."""
+    try:
+        tolerance_m = float(manifest["gnss_odometry_tolerance_m"])
+        maximum_skew_sec = float(manifest["gnss_odometry_pair_max_skew_sec"])
+        recorded_skew_sec = float(manifest["gnss_odometry_stamp_delta_sec"])
+        recorded_disagreement_m = float(manifest["gnss_odometry_disagreement_m"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise MapLifecycleError("saved map lacks GNSS/odometry gate evidence") from exc
+    if (
+        manifest.get("gnss_odometry_pairing_status") != "time_aligned"
+        or not all(math.isfinite(value) for value in (
+            tolerance_m, maximum_skew_sec, recorded_skew_sec, recorded_disagreement_m,
+        ))
+        or not 0.0 < tolerance_m <= 2.0
+        or not 0.0 < maximum_skew_sec <= 0.10
+        or not 0.0 <= recorded_skew_sec <= maximum_skew_sec
+        or not 0.0 <= recorded_disagreement_m <= tolerance_m
+    ):
+        raise MapLifecycleError("saved map GNSS/odometry gate evidence is outside the formal contract")
+
+    def sample(name: str, topic: str) -> tuple[int, tuple[float, float]]:
+        value = manifest.get(name)
+        if not isinstance(value, dict):
+            raise MapLifecycleError("saved map GNSS/odometry sample is missing")
+        stamp_ns = value.get("stamp_ns")
+        stamp_sec = value.get("stamp_sec")
+        xy = value.get("xy_m")
+        covariance = value.get("pose_covariance_xy_m2")
+        if (
+            type(stamp_ns) is not int
+            or stamp_ns <= 0
+            or value.get("source_topic") != topic
+            or value.get("frame_id") != "odom"
+            or value.get("child_frame_id") != "base_footprint"
+            or not isinstance(xy, list)
+            or len(xy) != 2
+            or not isinstance(covariance, list)
+            or len(covariance) != 2
+        ):
+            raise MapLifecycleError("saved map GNSS/odometry sample violates the frame contract")
+        try:
+            stamp_sec_value = float(stamp_sec)
+            x, y = (float(component) for component in xy)
+            covariance_x, covariance_y = (float(component) for component in covariance)
+        except (TypeError, ValueError) as exc:
+            raise MapLifecycleError("saved map GNSS/odometry sample is invalid") from exc
+        if (
+            not all(math.isfinite(component) for component in (
+                stamp_sec_value, x, y, covariance_x, covariance_y,
+            ))
+            or covariance_x < 0.0
+            or covariance_y < 0.0
+            or not math.isclose(stamp_sec_value, stamp_ns / 1_000_000_000.0, abs_tol=1e-3)
+        ):
+            raise MapLifecycleError("saved map GNSS/odometry sample is invalid")
+        return stamp_ns, (x, y)
+
+    odom_stamp_ns, odom_xy = sample("gnss_odometry_odom_sample", "/odom")
+    gps_stamp_ns, gps_xy = sample("gnss_odometry_gps_sample", "/odometry/gps")
+    computed_skew_sec = abs(odom_stamp_ns - gps_stamp_ns) / 1_000_000_000.0
+    computed_disagreement_m = math.dist(odom_xy, gps_xy)
+    if (
+        computed_skew_sec > maximum_skew_sec
+        or not math.isclose(recorded_skew_sec, computed_skew_sec, abs_tol=1e-12)
+        or not math.isclose(recorded_disagreement_m, computed_disagreement_m, abs_tol=1e-12)
+    ):
+        raise MapLifecycleError("saved map GNSS/odometry evidence does not match its samples")
+
+
 def validate_saved_map_artifact(
     artifact_directory: str | Path, contract: CampusMapContract
 ) -> dict[str, Any]:
@@ -954,7 +1024,9 @@ def validate_saved_map_artifact(
     except (TypeError, ValueError) as exc:
         raise MapLifecycleError("saved map has invalid quality metadata") from exc
     if (
-        manifest.get("schema_version") != 1
+        # Schema 1 predates timestamp-paired localization evidence and is
+        # intentionally incompatible with the formal first-map handoff.
+        manifest.get("schema_version") != 2
         or manifest.get("status") != "ready_for_localization_cleaning"
         or manifest.get("episode_id") != contract.episode_id
         or manifest.get("map_id") != contract.map_id
@@ -970,6 +1042,7 @@ def validate_saved_map_artifact(
         or manifest.get("mapping_ignored_dirt") is not True
     ):
         raise MapLifecycleError("saved map did not pass the formal lifecycle gate")
+    _validate_timestamp_paired_gnss_odometry(manifest)
     occupancy_name = _artifact_basename(
         manifest.get("occupancy_map"), label="occupancy map"
     )

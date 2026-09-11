@@ -243,7 +243,7 @@ def validate(
             map_root, episode_manifest
         ),
         "quality_gated_map_manifest": (
-            manifest.get("schema_version") == 1
+            manifest.get("schema_version") == 2
             and manifest.get("status") == "ready_for_localization_cleaning"
             and math.isfinite(observed_fraction)
             and math.isfinite(quality_threshold)
@@ -252,6 +252,26 @@ def validate(
             and stable_samples >= 3
             and manifest.get("fixed_start_verified") is True
             and manifest.get("gnss_mapping_reference_observed") is True
+            and manifest.get("gnss_odometry_pairing_status") == "time_aligned"
+            and isinstance(manifest.get("gnss_odometry_odom_sample"), dict)
+            and isinstance(manifest.get("gnss_odometry_gps_sample"), dict)
+            and all(
+                isinstance(manifest.get(name), (int, float))
+                and not isinstance(manifest.get(name), bool)
+                and math.isfinite(float(manifest[name]))
+                for name in (
+                    "gnss_odometry_disagreement_m",
+                    "gnss_odometry_tolerance_m",
+                    "gnss_odometry_pair_max_skew_sec",
+                    "gnss_odometry_stamp_delta_sec",
+                )
+            )
+            and 0.0 < float(manifest["gnss_odometry_tolerance_m"]) <= 2.0
+            and 0.0 < float(manifest["gnss_odometry_pair_max_skew_sec"]) <= 0.10
+            and 0.0 <= float(manifest["gnss_odometry_stamp_delta_sec"])
+            <= float(manifest["gnss_odometry_pair_max_skew_sec"])
+            and 0.0 <= float(manifest["gnss_odometry_disagreement_m"])
+            <= float(manifest["gnss_odometry_tolerance_m"])
             and manifest.get("mapping_pose_source")
             == "wheel_imu_ekf_lidar_scan_matching_gnss_consistency"
             and manifest.get("world_truth_used_for_control") is False

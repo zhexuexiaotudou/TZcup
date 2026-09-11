@@ -60,6 +60,10 @@ class FormalMapLifecycleManager(Node):
         self.declare_parameter("fixed_start_position_tolerance_m", 0.50)
         self.declare_parameter("fixed_start_yaw_tolerance_rad", 0.35)
         self.declare_parameter("gnss_odometry_consistency_tolerance_m", 2.0)
+        # /odom is normally faster than /odometry/gps.  Never compare their
+        # most recently received values unless their source timestamps refer
+        # to the same short time interval.
+        self.declare_parameter("gnss_odometry_max_pair_skew_sec", 0.10)
         self.declare_parameter("support_artifacts_prepared", False)
         self.declare_parameter(
             "mapping_pose_source",
@@ -76,6 +80,14 @@ class FormalMapLifecycleManager(Node):
         for name, ceiling in (("map_max_age_sec", 15.0), ("odometry_max_age_sec", 5.0)):
             if float(self.get_parameter(name).value) > ceiling:
                 raise MapLifecycleError(f"{name} cannot exceed {ceiling} seconds")
+        if self._gnss_odometry_max_pair_skew_sec() is None:
+            raise MapLifecycleError(
+                "gnss_odometry_max_pair_skew_sec must be finite, positive, and <= 0.10"
+            )
+        if self._gnss_odometry_consistency_tolerance_m() is None:
+            raise MapLifecycleError(
+                "gnss_odometry_consistency_tolerance_m must be finite, positive, and <= 2.0"
+            )
         self._mapping_pose_source = str(
             self.get_parameter("mapping_pose_source").value
         )
@@ -88,6 +100,8 @@ class FormalMapLifecycleManager(Node):
             str(self.get_parameter("episode_manifest").value)
         )
         self._root = Path(str(self.get_parameter("artifact_directory").value))
+        self._odom_source_topic = str(self.get_parameter("odom_topic").value)
+        self._gps_source_topic = str(self.get_parameter("gps_odometry_topic").value)
         if not str(self._root):
             raise MapLifecycleError("artifact_directory is required")
         if self._mode == "mapping":
@@ -121,6 +135,12 @@ class FormalMapLifecycleManager(Node):
         self._start_checked = False
         self._latest_odom_xy: tuple[float, float] | None = None
         self._latest_gps_xy: tuple[float, float] | None = None
+        self._latest_odom_sample: dict | None = None
+        self._latest_gps_sample: dict | None = None
+        self._latest_gnss_odometry_pair: dict | None = None
+        self._odom_sample_history: list[dict] = []
+        self._gps_sample_history: list[dict] = []
+        self._odometry_pair_history_depth = 32
         self._map_received_at: float | None = None
         self._odom_received_at: float | None = None
         self._gps_received_at: float | None = None
@@ -128,6 +148,7 @@ class FormalMapLifecycleManager(Node):
         self._gps_stamp_ns: int | None = None
         self._map_stamp_ns: int | None = None
         self._consumed_map_stamp_ns: int | None = None
+        self._consumed_gnss_odometry_pair_key: tuple[int, int] | None = None
         self._stable = 0
         self._saving = False
         self._finished = False
@@ -152,13 +173,13 @@ class FormalMapLifecycleManager(Node):
         )
         self.create_subscription(
             Odometry,
-            str(self.get_parameter("odom_topic").value),
+            self._odom_source_topic,
             self._on_odom,
             20,
         )
         self.create_subscription(
             Odometry,
-            str(self.get_parameter("gps_odometry_topic").value),
+            self._gps_source_topic,
             self._on_gps_odom,
             20,
         )
@@ -189,13 +210,17 @@ class FormalMapLifecycleManager(Node):
         flag.data = ready
         self._ready.publish(flag)
 
-    def _valid_source_header(self, message, stream: str, frame: str, maximum_age: float) -> bool:
+    def _valid_source_header(
+        self, message, stream: str, frame: str, child_frame: str, maximum_age: float
+    ) -> bool:
         stamp = message.header.stamp
         stamp_ns = stamp.sec * 1_000_000_000 + stamp.nanosec
         previous = getattr(self, f"_{stream}_stamp_ns")
         age = (self.get_clock().now().nanoseconds - stamp_ns) / 1e9
         valid = (
-            message.header.frame_id == frame and stamp.sec >= 0
+            message.header.frame_id == frame
+            and getattr(message, "child_frame_id", "") == child_frame
+            and stamp.sec >= 0
             and 0 <= stamp.nanosec < 1_000_000_000 and stamp_ns > 0
             and (previous is None or stamp_ns > previous)
             and 0 <= age <= maximum_age
@@ -220,14 +245,152 @@ class FormalMapLifecycleManager(Node):
                 return False
         return True
 
+    def _gnss_odometry_max_pair_skew_sec(self) -> float | None:
+        try:
+            value = float(self.get_parameter("gnss_odometry_max_pair_skew_sec").value)
+        except (TypeError, ValueError):
+            return None
+        # The limit itself is fail-closed: callers cannot silently loosen the
+        # formal 100 ms pairing contract at runtime.
+        if not math.isfinite(value) or not 0.0 < value <= 0.10:
+            return None
+        return value
+
+    def _gnss_odometry_consistency_tolerance_m(self) -> float | None:
+        try:
+            value = float(self.get_parameter("gnss_odometry_consistency_tolerance_m").value)
+        except (TypeError, ValueError):
+            return None
+        # This is a formal gate, not an operator-tunable warning threshold.
+        if not math.isfinite(value) or not 0.0 < value <= 2.0:
+            return None
+        return value
+
+    def _pose_sample(self, message: Odometry, source_topic: str) -> dict:
+        stamp = message.header.stamp
+        covariance = getattr(message.pose, "covariance", ())
+        covariance_xy: list[float] | None = None
+        if len(covariance) >= 8:
+            values = (covariance[0], covariance[7])
+            if all(math.isfinite(value) for value in values):
+                covariance_xy = [float(value) for value in values]
+        pose = message.pose.pose
+        return {
+            "source_topic": source_topic,
+            "stamp_ns": stamp.sec * 1_000_000_000 + stamp.nanosec,
+            "stamp_sec": stamp.sec + stamp.nanosec / 1_000_000_000.0,
+            "frame_id": message.header.frame_id,
+            "child_frame_id": getattr(message, "child_frame_id", ""),
+            "xy_m": [float(pose.position.x), float(pose.position.y)],
+            "pose_covariance_xy_m2": covariance_xy,
+        }
+
+    @staticmethod
+    def _append_bounded_sample(history: list[dict], sample: dict, depth: int) -> None:
+        history.append(sample)
+        del history[:-depth]
+
+    def _refresh_gnss_odometry_pair(self, stream: str, sample: dict) -> None:
+        counterpart_history = (
+            self._gps_sample_history if stream == "odom" else self._odom_sample_history
+        )
+        maximum_skew = self._gnss_odometry_max_pair_skew_sec()
+        if not counterpart_history or maximum_skew is None:
+            self._latest_gnss_odometry_pair = None
+            return
+        counterpart = min(
+            counterpart_history,
+            key=lambda candidate: abs(candidate["stamp_ns"] - sample["stamp_ns"]),
+        )
+        skew_sec = abs(counterpart["stamp_ns"] - sample["stamp_ns"]) / 1_000_000_000.0
+        if skew_sec > maximum_skew:
+            self._latest_gnss_odometry_pair = None
+            return
+        odom_sample, gps_sample = (
+            (sample, counterpart) if stream == "odom" else (counterpart, sample)
+        )
+        self._latest_gnss_odometry_pair = {
+            "odom": odom_sample,
+            "gps": gps_sample,
+            "stamp_delta_sec": skew_sec,
+            "key": (odom_sample["stamp_ns"], gps_sample["stamp_ns"]),
+        }
+
+    def _gnss_odometry_pair_details(self) -> dict:
+        maximum_skew = self._gnss_odometry_max_pair_skew_sec()
+        details = {
+            "gnss_odometry_pair_max_skew_sec": maximum_skew,
+            "gnss_odometry_odom_latest": self._latest_odom_sample,
+            "gnss_odometry_gps_latest": self._latest_gps_sample,
+        }
+        pair = self._latest_gnss_odometry_pair
+        if maximum_skew is None:
+            return {**details, "gnss_odometry_pairing_status": "invalid_pair_skew_parameter"}
+        if pair is None:
+            return {**details, "gnss_odometry_pairing_status": "no_time_aligned_pair"}
+        if (
+            pair["odom"]["stamp_ns"] != self._odom_stamp_ns
+            or pair["gps"]["stamp_ns"] != self._gps_stamp_ns
+        ):
+            return {**details, "gnss_odometry_pairing_status": "pair_not_current"}
+        return {
+            **details,
+            "gnss_odometry_pairing_status": "time_aligned",
+            "gnss_odometry_stamp_delta_sec": pair["stamp_delta_sec"],
+            "gnss_odometry_odom_sample": pair["odom"],
+            "gnss_odometry_gps_sample": pair["gps"],
+        }
+
+    def _gnss_odometry_consistency_details(self) -> tuple[str, dict]:
+        """Return a fail-closed GNSS/odometry decision and replayable inputs."""
+        pair_details = self._gnss_odometry_pair_details()
+        tolerance_m = self._gnss_odometry_consistency_tolerance_m()
+        details = {
+            "gnss_odometry_tolerance_m": tolerance_m,
+            **pair_details,
+        }
+        if tolerance_m is None:
+            return "invalid_gnss_odometry_consistency_tolerance", details
+        if self._latest_odom_xy is None or self._latest_gps_xy is None:
+            return "waiting_for_gnss_mapping_reference", details
+        if pair_details["gnss_odometry_pairing_status"] != "time_aligned":
+            return "waiting_for_time_aligned_gnss_odometry", details
+        pair = self._latest_gnss_odometry_pair
+        assert pair is not None
+        covariances = (
+            pair["odom"].get("pose_covariance_xy_m2"),
+            pair["gps"].get("pose_covariance_xy_m2"),
+        )
+        if any(
+            not isinstance(covariance, list)
+            or len(covariance) != 2
+            or not all(math.isfinite(value) and value >= 0.0 for value in covariance)
+            for covariance in covariances
+        ):
+            return "invalid_gnss_odometry_covariance", details
+        disagreement_m = math.dist(pair["odom"]["xy_m"], pair["gps"]["xy_m"])
+        details["gnss_odometry_disagreement_m"] = disagreement_m
+        if not math.isfinite(disagreement_m) or disagreement_m > tolerance_m:
+            return "gnss_odometry_consistency_gate_failed", details
+        return "gnss_odometry_consistency_passed", details
+
     def _on_odom(self, message: Odometry) -> None:
         pose = message.pose.pose
-        if (self._valid_source_header(message, "odom", "odom", 5.0)
+        if (self._valid_source_header(message, "odom", "odom", "base_footprint", 5.0)
                 and math.isfinite(pose.position.x) and math.isfinite(pose.position.y)):
             self._latest_odom_xy = (pose.position.x, pose.position.y)
+            self._latest_odom_sample = self._pose_sample(message, self._odom_source_topic)
+            self._append_bounded_sample(
+                self._odom_sample_history,
+                self._latest_odom_sample,
+                self._odometry_pair_history_depth,
+            )
+            self._refresh_gnss_odometry_pair("odom", self._latest_odom_sample)
             self._odom_received_at = time.monotonic()
         else:
             self._latest_odom_xy = None
+            self._latest_odom_sample = None
+            self._latest_gnss_odometry_pair = None
             self._odom_received_at = None
             self._stable = 0
             return
@@ -254,12 +417,21 @@ class FormalMapLifecycleManager(Node):
 
     def _on_gps_odom(self, message: Odometry) -> None:
         pose = message.pose.pose
-        if (self._valid_source_header(message, "gps", "odom", 5.0)
+        if (self._valid_source_header(message, "gps", "odom", "base_footprint", 5.0)
                 and math.isfinite(pose.position.x) and math.isfinite(pose.position.y)):
             self._latest_gps_xy = (pose.position.x, pose.position.y)
+            self._latest_gps_sample = self._pose_sample(message, self._gps_source_topic)
+            self._append_bounded_sample(
+                self._gps_sample_history,
+                self._latest_gps_sample,
+                self._odometry_pair_history_depth,
+            )
+            self._refresh_gnss_odometry_pair("gps", self._latest_gps_sample)
             self._gps_received_at = time.monotonic()
         else:
             self._latest_gps_xy = None
+            self._latest_gps_sample = None
+            self._latest_gnss_odometry_pair = None
             self._gps_received_at = None
             self._stable = 0
 
@@ -273,7 +445,7 @@ class FormalMapLifecycleManager(Node):
         values = (origin.position.x, origin.position.y, origin.position.z,
                   quaternion.x, quaternion.y, quaternion.z, quaternion.w)
         valid = (
-            self._valid_source_header(message, "map", "map", 15.0)
+            self._valid_source_header(message, "map", "map", "", 15.0)
             and all(math.isfinite(value) for value in values)
             and math.isclose(sum(value * value for value in values[3:]), 1.0, abs_tol=1e-3)
             and abs(quaternion.x) <= 1e-6 and abs(quaternion.y) <= 1e-6
@@ -313,31 +485,24 @@ class FormalMapLifecycleManager(Node):
             self.get_parameter("quality_period_sec").value
         ):
             return
-        self._last_quality_monotonic = now
-        self._consumed_map_stamp_ns = self._map_stamp_ns
         if not self._start_ok:
             self._stable = 0
             self._publish("fixed_start_gate_failed", False, {})
             return
-        if self._latest_odom_xy is None or self._latest_gps_xy is None:
+        gnss_status, pair_details = self._gnss_odometry_consistency_details()
+        if gnss_status != "gnss_odometry_consistency_passed":
             self._stable = 0
-            self._publish("waiting_for_gnss_mapping_reference", False, {})
+            self._publish(gnss_status, False, pair_details)
             return
-        gnss_disagreement_m = math.dist(self._latest_odom_xy, self._latest_gps_xy)
-        gnss_tolerance_m = float(
-            self.get_parameter("gnss_odometry_consistency_tolerance_m").value
-        )
-        if not math.isfinite(gnss_disagreement_m) or gnss_disagreement_m > gnss_tolerance_m:
+        pair = self._latest_gnss_odometry_pair
+        assert pair is not None
+        if pair["key"] == self._consumed_gnss_odometry_pair_key:
             self._stable = 0
-            self._publish(
-                "gnss_odometry_consistency_gate_failed",
-                False,
-                {
-                    "gnss_odometry_disagreement_m": gnss_disagreement_m,
-                    "gnss_odometry_tolerance_m": gnss_tolerance_m,
-                },
-            )
+            self._publish("waiting_for_new_time_aligned_gnss_odometry", False, pair_details)
             return
+        self._last_quality_monotonic = now
+        self._consumed_map_stamp_ns = self._map_stamp_ns
+        self._consumed_gnss_odometry_pair_key = pair["key"]
         try:
             quality = self._assess_latest_map()
         except MapLifecycleError as exc:
@@ -352,8 +517,7 @@ class FormalMapLifecycleManager(Node):
             "field_sampled_area_m2": quality.field_sampled_area_m2,
             "observed_fraction": quality.observed_fraction,
             "stable_gate_samples": self._stable,
-            "gnss_odometry_disagreement_m": gnss_disagreement_m,
-            "gnss_odometry_tolerance_m": gnss_tolerance_m,
+            **pair_details,
         }
         required = int(self.get_parameter("stable_samples_required").value)
         if self._stable < required:
@@ -388,6 +552,11 @@ class FormalMapLifecycleManager(Node):
             now = time.monotonic()
             if self._stable < 3 or self._latest_map is None or not self._inputs_fresh(now):
                 raise MapLifecycleError("mapping inputs expired or became invalid while saving")
+            gnss_status, details = self._gnss_odometry_consistency_details()
+            if gnss_status != "gnss_odometry_consistency_passed":
+                raise MapLifecycleError(
+                    f"GNSS/odometry consistency changed while saving: {gnss_status}"
+                )
             threshold = float(self.get_parameter("observation_threshold").value)
             required = self.get_parameter("stable_samples_required").value
             if (not 0.95 <= threshold <= 1.0 or type(required) is not int or required < 3
@@ -447,7 +616,10 @@ class FormalMapLifecycleManager(Node):
                 ),
             }
             manifest = {
-                "schema_version": 1,
+                # Version 2 makes timestamp-paired GNSS/odometry evidence a
+                # required formal admission field.  Version 1 maps lack it and
+                # are intentionally not accepted for this first-map route.
+                "schema_version": 2,
                 "status": "ready_for_localization_cleaning",
                 "episode_id": self._contract.episode_id,
                 "map_id": self._contract.map_id,
@@ -467,9 +639,21 @@ class FormalMapLifecycleManager(Node):
                 "mapping_ignored_dirt": True,
                 "mapping_pose_source": self._mapping_pose_source,
                 "gnss_mapping_reference_observed": True,
+                "gnss_odometry_pairing_status": details[
+                    "gnss_odometry_pairing_status"
+                ],
                 "gnss_odometry_disagreement_m": details[
                     "gnss_odometry_disagreement_m"
                 ],
+                "gnss_odometry_tolerance_m": details["gnss_odometry_tolerance_m"],
+                "gnss_odometry_pair_max_skew_sec": details[
+                    "gnss_odometry_pair_max_skew_sec"
+                ],
+                "gnss_odometry_stamp_delta_sec": details[
+                    "gnss_odometry_stamp_delta_sec"
+                ],
+                "gnss_odometry_odom_sample": details["gnss_odometry_odom_sample"],
+                "gnss_odometry_gps_sample": details["gnss_odometry_gps_sample"],
                 "sha256": hashes,
             }
             temporary = self._root / ".map_lifecycle_manifest.json.tmp"

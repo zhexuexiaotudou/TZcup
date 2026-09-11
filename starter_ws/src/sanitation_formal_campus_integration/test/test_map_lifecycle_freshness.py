@@ -27,6 +27,8 @@ def manager(tmp_path):
     node = cls.__new__(cls)
     params = dict(quality_period_sec=5.0, map_max_age_sec=15.0,
                   odometry_max_age_sec=5.0, gnss_odometry_consistency_tolerance_m=2.0,
+                  gnss_odometry_max_pair_skew_sec=.10,
+                  odom_topic="/odom", gps_odometry_topic="/odometry/gps",
                   observation_threshold=.95, stable_samples_required=3)
     node.get_parameter = lambda name: NS(value=params[name])
     node._finished = node._saving = False
@@ -34,6 +36,15 @@ def manager(tmp_path):
     node._map_received_at = node._odom_received_at = node._gps_received_at = None
     node._map_stamp_ns = node._consumed_map_stamp_ns = None
     node._odom_stamp_ns = node._gps_stamp_ns = None
+    node._consumed_gnss_odometry_pair_key = None
+    node._latest_odom_xy = node._latest_gps_xy = None
+    node._latest_odom_sample = node._latest_gps_sample = None
+    node._latest_gnss_odometry_pair = None
+    node._odom_sample_history = []
+    node._gps_sample_history = []
+    node._odometry_pair_history_depth = 32
+    node._odom_source_topic = "/odom"
+    node._gps_source_topic = "/odometry/gps"
     node.get_clock = lambda: NS(now=lambda: NS(nanoseconds=int(clock.value*1e9)))
     node._stable = 0
     node._last_quality_monotonic = 0.0
@@ -58,9 +69,14 @@ def grid(stamp, **changes):
     return msg
 
 
-def odometry(stamp):
-    return NS(header=NS(frame_id="odom", stamp=NS(sec=stamp,nanosec=0)),
-              pose=NS(pose=NS(position=NS(x=0.,y=0.))))
+def odometry(stamp, *, nanosec=0, x=0., y=0., covariance=(0.1, 0.2)):
+    full_covariance = [0.] * 36
+    full_covariance[0], full_covariance[7] = covariance
+    return NS(
+        header=NS(frame_id="odom", stamp=NS(sec=stamp, nanosec=nanosec)),
+        child_frame_id="base_footprint",
+        pose=NS(pose=NS(position=NS(x=x, y=y)), covariance=full_covariance),
+    )
 
 
 def fresh_inputs(node):
@@ -207,6 +223,119 @@ def test_wrong_odometry_frame_is_rejected(manager, stream):
     msg = odometry(11); msg.header.frame_id = "map"
     callback = node._on_odom if stream == "odom" else node._on_gps_odom
     callback(msg)
+    assert getattr(node, f"_{stream}_received_at") is None
+
+
+def test_time_aligned_pair_exposes_sources_coordinates_covariance_and_skew(manager):
+    node, clock = manager
+    clock.value = 11.
+    node._on_odom(odometry(10, x=2.0, y=3.0, covariance=(0.3, 0.4)))
+    node._on_gps_odom(
+        odometry(10, nanosec=50_000_000, x=2.2, y=3.1, covariance=(0.5, 0.6))
+    )
+    details = node._gnss_odometry_pair_details()
+    assert details["gnss_odometry_pairing_status"] == "time_aligned"
+    assert details["gnss_odometry_stamp_delta_sec"] == pytest.approx(.05)
+    assert details["gnss_odometry_odom_sample"] == {
+        "source_topic": "/odom", "stamp_ns": 10_000_000_000,
+        "stamp_sec": 10.0, "frame_id": "odom", "child_frame_id": "base_footprint",
+        "xy_m": [2.0, 3.0], "pose_covariance_xy_m2": [0.3, 0.4],
+    }
+    assert details["gnss_odometry_gps_sample"]["source_topic"] == "/odometry/gps"
+    assert details["gnss_odometry_gps_sample"]["xy_m"] == [2.2, 3.1]
+    assert details["gnss_odometry_gps_sample"]["pose_covariance_xy_m2"] == [0.5, 0.6]
+
+
+def test_out_of_skew_pair_fails_closed_without_using_an_old_pair(manager):
+    node, clock = manager
+    clock.value = 11.
+    node._on_odom(odometry(10, x=1.0, y=1.0))
+    node._on_gps_odom(odometry(10, nanosec=50_000_000, x=1.0, y=1.0))
+    assert node._latest_gnss_odometry_pair is not None
+    # A later unmatched odom must clear the old pair; it cannot reuse the
+    # earlier aligned samples while the current streams have diverged.
+    node._on_odom(odometry(11, x=1.0, y=1.0))
+    assert node._latest_gnss_odometry_pair is None
+    clock.value = 12.
+    node._on_map(grid(12))
+    node._evaluate()
+    assert node._stable == 0
+    assert node.statuses[-1][0] == "waiting_for_time_aligned_gnss_odometry"
+    assert node.statuses[-1][2]["gnss_odometry_pairing_status"] == "no_time_aligned_pair"
+
+
+def test_pair_skew_parameter_cannot_be_relaxed_above_100ms(manager):
+    node, clock = manager
+    clock.value = 11.
+    original = node.get_parameter
+    node.get_parameter = lambda key: NS(value=.11) if key == "gnss_odometry_max_pair_skew_sec" else original(key)
+    node._on_odom(odometry(10))
+    node._on_gps_odom(odometry(10, nanosec=50_000_000))
+    assert node._latest_gnss_odometry_pair is None
+    assert node._gnss_odometry_pair_details()["gnss_odometry_pairing_status"] == "invalid_pair_skew_parameter"
+
+
+@pytest.mark.parametrize("value", [2.01, math.inf, math.nan])
+def test_gnss_consistency_tolerance_cannot_be_relaxed_or_made_nonfinite(manager, value):
+    node, clock = manager
+    original = node.get_parameter
+    node.get_parameter = lambda key: NS(value=value) if key == "gnss_odometry_consistency_tolerance_m" else original(key)
+    fresh_inputs(node)
+    node._on_map(grid(10))
+    node._evaluate()
+    assert node._stable == 0
+    assert node.statuses[-1][0] == "invalid_gnss_odometry_consistency_tolerance"
+
+
+@pytest.mark.parametrize("covariance", [(-0.1, 0.2), (math.nan, 0.2)])
+def test_gnss_pair_requires_finite_nonnegative_covariance(manager, covariance):
+    node, clock = manager
+    clock.value = 11.
+    node._on_odom(odometry(10, covariance=covariance))
+    node._on_gps_odom(odometry(10, nanosec=50_000_000))
+    status, _ = node._gnss_odometry_consistency_details()
+    assert status == "invalid_gnss_odometry_covariance"
+
+
+def test_each_quality_map_requires_a_new_time_aligned_pair(manager):
+    node, clock = manager
+    fresh_inputs(node)
+    node._on_map(grid(10))
+    node._evaluate()
+    assert node._stable == 1
+    clock.value = 15.
+    # The original pair remains individually fresh at its 5 s ceiling, but a
+    # second map sample cannot reuse it for the stable-window count.
+    node._on_map(grid(15))
+    node._evaluate()
+    assert node._stable == 0
+    assert node.statuses[-1][0] == "waiting_for_new_time_aligned_gnss_odometry"
+
+
+def test_save_callback_rechecks_current_pair_before_writing_manifest(manager):
+    node, clock = manager
+    clock.value = 11.
+    node._stable = 3
+    node._latest_map = grid(10)
+    node._map_received_at = 11.
+    node._map_stamp_ns = 10_000_000_000
+    node._on_odom(odometry(10))
+    node._on_gps_odom(odometry(10, nanosec=50_000_000))
+    node._on_odom(odometry(10, nanosec=200_000_000))
+    assert node._latest_gnss_odometry_pair is None
+    node._on_save(NS(result=lambda: NS(result=0)), {"stale": "details"})
+    assert not node._finished
+    assert node._stable == 0
+    assert "GNSS/odometry consistency changed while saving" in node.statuses[-1][2]["error"]
+
+
+@pytest.mark.parametrize("stream", ["odom", "gps"])
+def test_wrong_odometry_child_frame_is_rejected(manager, stream):
+    node, _ = manager
+    message = odometry(10)
+    message.child_frame_id = "base_link"
+    callback = node._on_odom if stream == "odom" else node._on_gps_odom
+    callback(message)
     assert getattr(node, f"_{stream}_received_at") is None
 
 

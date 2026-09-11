@@ -268,5 +268,7 @@ def test_mapping_manager_uses_slam_save_service_and_stable_quality_gate():
     assert '"gnss_mapping_reference_observed": True' in source
     assert '"gps_odometry_topic", "/odometry/gps"' in source
     assert 'self.declare_parameter("gnss_odometry_consistency_tolerance_m", 2.0)' in source
+    assert 'self.declare_parameter("gnss_odometry_max_pair_skew_sec", 0.10)' in source
     assert '"waiting_for_gnss_mapping_reference"' in source
+    assert '"waiting_for_time_aligned_gnss_odometry"' in source
     assert '"gnss_odometry_consistency_gate_failed"' in source

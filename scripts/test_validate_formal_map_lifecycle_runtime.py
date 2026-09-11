@@ -93,7 +93,7 @@ def test_validator_passes_only_complete_real_runtime_contract(tmp_path, monkeypa
         for name in files
     }
     _write(root / "map_lifecycle_manifest.json", {
-        "schema_version": 1,
+        "schema_version": 2,
         "status": "ready_for_localization_cleaning",
         "occupancy_map": "occupancy.yaml",
         "observed_fraction": 0.95,
@@ -101,6 +101,13 @@ def test_validator_passes_only_complete_real_runtime_contract(tmp_path, monkeypa
         "stable_gate_samples": 3,
         "fixed_start_verified": True,
         "gnss_mapping_reference_observed": True,
+        "gnss_odometry_pairing_status": "time_aligned",
+        "gnss_odometry_disagreement_m": 0.0,
+        "gnss_odometry_tolerance_m": 2.0,
+        "gnss_odometry_pair_max_skew_sec": 0.1,
+        "gnss_odometry_stamp_delta_sec": 0.05,
+        "gnss_odometry_odom_sample": {"source_topic": "/odom"},
+        "gnss_odometry_gps_sample": {"source_topic": "/odometry/gps"},
         "mapping_pose_source": (
             "wheel_imu_ekf_lidar_scan_matching_gnss_consistency"
         ),

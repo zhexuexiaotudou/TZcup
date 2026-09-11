@@ -425,7 +425,7 @@ def _materialized_saved_map(root: Path) -> tuple[CampusMapContract, dict[str, Pa
         )}
     }
     (root / "map_lifecycle_manifest.json").write_text(json.dumps({
-        "schema_version": 1,
+        "schema_version": 2,
         "status": "ready_for_localization_cleaning",
         "episode_id": contract.episode_id,
         "map_id": contract.map_id,
@@ -438,6 +438,21 @@ def _materialized_saved_map(root: Path) -> tuple[CampusMapContract, dict[str, Pa
         "stable_gate_samples": 3,
         "fixed_start_verified": True,
         "gnss_mapping_reference_observed": True,
+        "gnss_odometry_pairing_status": "time_aligned",
+        "gnss_odometry_disagreement_m": 0.0,
+        "gnss_odometry_tolerance_m": 2.0,
+        "gnss_odometry_pair_max_skew_sec": 0.1,
+        "gnss_odometry_stamp_delta_sec": 0.05,
+        "gnss_odometry_odom_sample": {
+            "source_topic": "/odom", "stamp_ns": 10_000_000_000,
+            "stamp_sec": 10.0, "frame_id": "odom", "child_frame_id": "base_footprint",
+            "xy_m": [0.0, 0.0], "pose_covariance_xy_m2": [0.0, 0.0],
+        },
+        "gnss_odometry_gps_sample": {
+            "source_topic": "/odometry/gps", "stamp_ns": 10_050_000_000,
+            "stamp_sec": 10.05, "frame_id": "odom", "child_frame_id": "base_footprint",
+            "xy_m": [0.0, 0.0], "pose_covariance_xy_m2": [0.0, 0.0],
+        },
         "mapping_pose_source": "wheel_imu_ekf_lidar_scan_matching_gnss_consistency",
         "world_truth_used_for_control": False,
         "mapping_ignored_dirt": True,
@@ -457,6 +472,52 @@ def test_materialized_geometry_is_preapplied_and_fully_manifest_sealed(tmp_path)
     assert geometry["planning_clearance_preapplied"] is True
     assert mission["saved_occupancy_coverage"]["planning_clearance_preapplied"] is True
     assert validate_saved_map_artifact(root, contract)["status"] == "ready_for_localization_cleaning"
+
+
+def test_saved_map_rejects_missing_or_forged_timestamp_paired_gnss_evidence(tmp_path):
+    root = tmp_path / "maps"
+    contract, _ = _materialized_saved_map(root)
+    manifest_path = root / "map_lifecycle_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    del manifest["gnss_odometry_gps_sample"]
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(MapLifecycleError, match="GNSS/odometry"):
+        validate_saved_map_artifact(root, contract)
+
+    contract, _ = _materialized_saved_map(root)
+    manifest_path = root / "map_lifecycle_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["gnss_odometry_gps_sample"]["xy_m"][0] = 3.0
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(MapLifecycleError, match="does not match"):
+        validate_saved_map_artifact(root, contract)
+
+
+def test_saved_map_rejects_gnss_sample_frame_or_threshold_tampering(tmp_path):
+    root = tmp_path / "maps"
+    contract, _ = _materialized_saved_map(root)
+    manifest_path = root / "map_lifecycle_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["gnss_odometry_odom_sample"]["child_frame_id"] = "base_link"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(MapLifecycleError, match="frame contract"):
+        validate_saved_map_artifact(root, contract)
+
+    contract, _ = _materialized_saved_map(root)
+    manifest_path = root / "map_lifecycle_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["gnss_odometry_tolerance_m"] = 2.01
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(MapLifecycleError, match="outside the formal contract"):
+        validate_saved_map_artifact(root, contract)
+
+    contract, _ = _materialized_saved_map(root)
+    manifest_path = root / "map_lifecycle_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["gnss_odometry_pair_max_skew_sec"] = 0.11
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(MapLifecycleError, match="outside the formal contract"):
+        validate_saved_map_artifact(root, contract)
 
 
 def test_cleaning_consumer_reload_requires_matching_map_and_coverage_rasters(tmp_path):
@@ -624,7 +685,7 @@ def test_cleaning_admission_rejects_old_manifest_that_lacks_pgm_observation_proo
         name: hashlib.sha256((root / name).read_bytes()).hexdigest() for name in files
     }
     manifest = {
-        "schema_version": 1,
+        "schema_version": 2,
         "status": "ready_for_localization_cleaning",
         "episode_id": contract.episode_id,
         "map_id": contract.map_id,
@@ -634,6 +695,21 @@ def test_cleaning_admission_rejects_old_manifest_that_lacks_pgm_observation_proo
         "stable_gate_samples": 3,
         "fixed_start_verified": True,
         "gnss_mapping_reference_observed": True,
+        "gnss_odometry_pairing_status": "time_aligned",
+        "gnss_odometry_disagreement_m": 0.0,
+        "gnss_odometry_tolerance_m": 2.0,
+        "gnss_odometry_pair_max_skew_sec": 0.1,
+        "gnss_odometry_stamp_delta_sec": 0.05,
+        "gnss_odometry_odom_sample": {
+            "source_topic": "/odom", "stamp_ns": 10_000_000_000,
+            "stamp_sec": 10.0, "frame_id": "odom", "child_frame_id": "base_footprint",
+            "xy_m": [0.0, 0.0], "pose_covariance_xy_m2": [0.0, 0.0],
+        },
+        "gnss_odometry_gps_sample": {
+            "source_topic": "/odometry/gps", "stamp_ns": 10_050_000_000,
+            "stamp_sec": 10.05, "frame_id": "odom", "child_frame_id": "base_footprint",
+            "xy_m": [0.0, 0.0], "pose_covariance_xy_m2": [0.0, 0.0],
+        },
         "mapping_pose_source": (
             "wheel_imu_ekf_lidar_scan_matching_gnss_consistency"
         ),
@@ -661,7 +737,7 @@ def test_cleaning_admission_rejects_partial_or_traversing_hash_seal(tmp_path):
         encoding="utf-8",
     )
     common = {
-        "schema_version": 1,
+        "schema_version": 2,
         "status": "ready_for_localization_cleaning",
         "episode_id": contract.episode_id,
         "map_id": contract.map_id,
@@ -671,6 +747,21 @@ def test_cleaning_admission_rejects_partial_or_traversing_hash_seal(tmp_path):
         "stable_gate_samples": 3,
         "fixed_start_verified": True,
         "gnss_mapping_reference_observed": True,
+        "gnss_odometry_pairing_status": "time_aligned",
+        "gnss_odometry_disagreement_m": 0.0,
+        "gnss_odometry_tolerance_m": 2.0,
+        "gnss_odometry_pair_max_skew_sec": 0.1,
+        "gnss_odometry_stamp_delta_sec": 0.05,
+        "gnss_odometry_odom_sample": {
+            "source_topic": "/odom", "stamp_ns": 10_000_000_000,
+            "stamp_sec": 10.0, "frame_id": "odom", "child_frame_id": "base_footprint",
+            "xy_m": [0.0, 0.0], "pose_covariance_xy_m2": [0.0, 0.0],
+        },
+        "gnss_odometry_gps_sample": {
+            "source_topic": "/odometry/gps", "stamp_ns": 10_050_000_000,
+            "stamp_sec": 10.05, "frame_id": "odom", "child_frame_id": "base_footprint",
+            "xy_m": [0.0, 0.0], "pose_covariance_xy_m2": [0.0, 0.0],
+        },
         "mapping_pose_source": (
             "wheel_imu_ekf_lidar_scan_matching_gnss_consistency"
         ),
