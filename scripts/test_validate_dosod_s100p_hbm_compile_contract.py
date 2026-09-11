@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 import validate_dosod_s100p_hbm_compile_contract as subject
 
@@ -252,3 +253,94 @@ def test_relative_path_escape_is_rejected(tmp_path) -> None:
         assert "escapes" in str(exc)
     else:
         raise AssertionError("path escape was accepted")
+
+
+def test_missing_oracle_still_inventories_missing_compile_inputs(tmp_path, monkeypatch) -> None:
+    contract, repository, artifacts, upstream, calibration, identity = _build_ready_fixture(tmp_path, monkeypatch)
+    (artifacts / "dosod" / "dosod_mlp3x_s_tzcup_rep.onnx").unlink()
+    (calibration / "calibration_manifest.json").unlink()
+    report = subject.audit_compile_inputs(contract, repository, artifacts, upstream, calibration, None)
+    assert report["status"] == "BLOCKED"
+    assert {"preprocessing_oracle_missing", "declared_file_missing:model", "calibration_manifest_missing", "live_compiler_identity_missing"} <= set(report["blockers"])
+    assert report["compile_plan_sha256"] is None
+
+
+@pytest.mark.parametrize("directory_link", [False, True])
+def test_declared_artifact_symlink_inside_root_is_rejected(tmp_path, directory_link) -> None:
+    target = tmp_path / "real"
+    target.mkdir()
+    payload = target / "model.onnx"
+    payload.write_bytes(b"unit-test-only")
+    link = tmp_path / ("linked" if directory_link else "linked.onnx")
+    try:
+        link.symlink_to(target if directory_link else payload, target_is_directory=directory_link)
+    except OSError as exc:
+        pytest.skip(f"symlink creation unavailable: {exc}")
+    relative = "linked/model.onnx" if directory_link else "linked.onnx"
+    blockers = []
+    result = subject.audit_declared_file(tmp_path, {"relative_path": relative, "byte_size": payload.stat().st_size, "sha256": _sha(payload)}, "model", blockers)
+    assert "declared_file_symlink:model" in blockers
+    assert result is None
+
+
+def test_calibration_symlink_inside_root_is_rejected(tmp_path, monkeypatch) -> None:
+    contract_path, _, _, _, calibration, _ = _build_ready_fixture(tmp_path, monkeypatch)
+    payload = calibration / "frame_0.npy"
+    target = calibration / "frame_0.data"
+    payload.rename(target)
+    try:
+        payload.symlink_to(target)
+    except OSError as exc:
+        pytest.skip(f"symlink creation unavailable: {exc}")
+    blockers = []
+    subject.audit_calibration(calibration, json.loads(contract_path.read_text(encoding="utf-8")), blockers)
+    assert "calibration_sample_symlink:frame_0.npy" in blockers
+
+
+def test_vocabulary_symlink_is_not_read_after_declaration_rejection(tmp_path, monkeypatch) -> None:
+    contract, repository, artifacts, upstream, calibration, identity = _build_ready_fixture(tmp_path, monkeypatch)
+    vocabulary = artifacts / "dosod" / "tzcup_offline_vocabulary.json"
+    target = artifacts / "dosod" / "frozen-vocabulary.json"
+    vocabulary.rename(target)
+    try:
+        vocabulary.symlink_to(target)
+    except OSError as exc:
+        pytest.skip(f"symlink creation unavailable: {exc}")
+    original_load_json = subject.load_json
+    read_paths: list[Path] = []
+
+    def guarded_load_json(path: Path):
+        read_paths.append(Path(path))
+        if Path(path) == vocabulary:
+            raise AssertionError("rejected vocabulary symlink was read")
+        return original_load_json(path)
+
+    monkeypatch.setattr(subject, "load_json", guarded_load_json)
+    report = subject.audit_compile_inputs(contract, repository, artifacts, upstream, calibration, identity)
+    assert "declared_file_symlink:vocabulary" in report["blockers"]
+    assert vocabulary not in read_paths
+
+
+def test_embedding_symlink_is_not_loaded_after_declaration_rejection(tmp_path, monkeypatch) -> None:
+    contract_path, repository, artifacts, upstream, calibration, identity = _build_ready_fixture(tmp_path, monkeypatch)
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    embedding = artifacts / contract["reparameterization"]["embedding"]["relative_path"]
+    target = embedding.with_name("frozen-embedding.npy")
+    embedding.rename(target)
+    try:
+        embedding.symlink_to(target)
+    except OSError as exc:
+        pytest.skip(f"symlink creation unavailable: {exc}")
+    original_np_load = np.load
+    loaded_paths: list[Path] = []
+
+    def guarded_np_load(path, *args, **kwargs):
+        loaded_paths.append(Path(path))
+        if Path(path) == embedding:
+            raise AssertionError("rejected embedding symlink was loaded")
+        return original_np_load(path, *args, **kwargs)
+
+    monkeypatch.setattr(np, "load", guarded_np_load)
+    report = subject.audit_compile_inputs(contract, repository, artifacts, upstream, calibration, identity)
+    assert "declared_file_symlink:reparameterization_embedding" in report["blockers"]
+    assert embedding not in loaded_paths

@@ -55,10 +55,21 @@ def resolve_relative(root: Path, relative: str) -> Path:
     if candidate.is_absolute() or not relative or "\\" in relative:
         raise ValueError("relative path must be non-empty POSIX syntax")
     resolved_root = root.resolve()
-    resolved = (resolved_root / candidate).resolve()
+    lexical = resolved_root / candidate
+    resolved = lexical.resolve()
     if not resolved.is_relative_to(resolved_root):
         raise ValueError("relative path escapes its declared root")
-    return resolved
+    # Preserve the declared path: resolving it here erases symlink evidence.
+    return lexical
+
+
+def has_symlink_component(root: Path, path: Path) -> bool:
+    current = root.resolve()
+    for part in path.relative_to(current).parts:
+        current = current / part
+        if current.is_symlink():
+            return True
+    return False
 
 
 def _block(blockers: list[str], code: str) -> None:
@@ -171,9 +182,9 @@ def audit_declared_file(
     if not path.is_file():
         _block(blockers, f"declared_file_missing:{label}")
         return path
-    if path.is_symlink():
+    if has_symlink_component(root, path):
         _block(blockers, f"declared_file_symlink:{label}")
-        return path
+        return None
     if not isinstance(expected_size, int) or path.stat().st_size != expected_size:
         _block(blockers, f"declared_file_size_mismatch:{label}")
     if not isinstance(expected_sha, str) or sha256_file(path) != expected_sha:
@@ -392,8 +403,9 @@ def audit_calibration(
         if relative in expected_paths:
             _block(blockers, "calibration_duplicate_relative_path")
         expected_paths.add(relative)
-        if sample_path.is_symlink():
+        if has_symlink_component(calibration_dir, sample_path):
             _block(blockers, f"calibration_sample_symlink:{relative}")
+            continue
         if not sample_path.is_file():
             _block(blockers, f"calibration_sample_missing:{relative}")
             continue
@@ -469,6 +481,7 @@ def audit_compile_inputs(
             "compile_plan_sha256": None,
         }
     validate_contract_shape(contract, blockers)
+    contract_valid = not blockers
     oracle_sha = None
     if preprocessing_oracle_path is None:
         _block(blockers, "preprocessing_oracle_missing")
@@ -485,7 +498,7 @@ def audit_compile_inputs(
     model_path = None
     vocabulary_path = None
     embedding_path = None
-    if not blockers:
+    if contract_valid:
         model_path = audit_declared_file(artifact_root, contract["model"], "model", blockers)
         vocabulary_path = audit_declared_file(
             artifact_root, contract["vocabulary"], "vocabulary", blockers
