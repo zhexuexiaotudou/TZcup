@@ -74,6 +74,7 @@ def main() -> None:
     from geometry_msgs.msg import PoseStamped
     from nav_msgs.msg import OccupancyGrid, Odometry, Path
     from rclpy.executors import ExternalShutdownException
+    from rclpy.clock import Clock, ClockType
     from rclpy.node import Node
     from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
     from rclpy.time import Time
@@ -99,6 +100,7 @@ def main() -> None:
                 ("cleaning_request_topic", "/active_cleaning/cleaning_requested"),
                 ("mission_complete_topic", "/active_cleaning/mission_complete"),
                 ("status_topic", "/active_cleaning/planner_status"),
+                ("cancel_topic", "/active_cleaning/cancel"),
                 ("odometry_topic", "/odom"),
                 ("map_frame", "map"),
                 ("base_frame", "base_link"),
@@ -111,6 +113,14 @@ def main() -> None:
             self.declare_parameter("maximum_input_age_sec", 1.5)
             self.declare_parameter("planning_period_sec", 0.5)
             self.declare_parameter("maximum_task_distance_m", 0.0)
+            self.declare_parameter("executor_status_timeout_sec", 5.0)
+            self.declare_parameter("grasp_result_timeout_sec", 900.0)
+            self.declare_parameter("dock_settle_sec", 1.0)
+            for name in ("executor_status_timeout_sec", "grasp_result_timeout_sec", "dock_settle_sec"):
+                value = float(self.get_parameter(name).value)
+                if not math.isfinite(value) or value <= 0:
+                    raise RuntimeError(f"{name} must be finite and positive")
+                setattr(self, "_" + name, value)
 
             public_map = PublicPlanningMap.load(
                 str(self.get_parameter("occupancy_map").value),
@@ -151,6 +161,9 @@ def main() -> None:
             )
             self._grasp_publisher = self.create_publisher(
                 String, str(self.get_parameter("grasp_request_topic").value), 10
+            )
+            self._cancel_publisher = self.create_publisher(
+                Bool, str(self.get_parameter("cancel_topic").value), 10
             )
             self._cleaning_publisher = self.create_publisher(
                 Bool, str(self.get_parameter("cleaning_request_topic").value), latched
@@ -212,6 +225,13 @@ def main() -> None:
             self._busy = False
             self._executor_seen_active = False
             self._pending_grasp: str | None = None
+            self._pending_since = None
+            self._executor_status_time = None
+            self._request_stamp = ""
+            self._cancel_sent = False
+            self._fatal_reason = ""
+            self._odom_time = None
+            self._stationary_since = None
             self._mission_complete = False
             self._returning_home = False
             self._task_distance_at_completion: float | None = None
@@ -219,23 +239,40 @@ def main() -> None:
             self._state = "BLOCKED"
             self._reason = "awaiting_product_inputs"
             self.create_timer(
-                float(self.get_parameter("planning_period_sec").value), self._plan
+                float(self.get_parameter("planning_period_sec").value), self._plan,
+                clock=Clock(clock_type=ClockType.STEADY_TIME),
             )
             self._publish_status()
 
         def _on_belief(self, message: OccupancyGrid) -> None:
             if message.header.frame_id != self._map_frame:
+                self._belief_time = None
                 self._block("belief_frame_mismatch")
                 return
             expected = self._core.public_map.width * self._core.public_map.height
             if len(message.data) != expected:
+                self._belief_time = None
                 self._block("belief_size_mismatch")
+                return
+            geometry = self._core.public_map
+            origin = message.info.origin
+            if (message.info.width != geometry.width or message.info.height != geometry.height
+                or not math.isclose(message.info.resolution, geometry.resolution, rel_tol=1.0e-6)
+                or not math.isclose(origin.position.x, geometry.origin_x, abs_tol=1.0e-6)
+                or not math.isclose(origin.position.y, geometry.origin_y, abs_tol=1.0e-6)
+                or any(abs(v) > 1.0e-6 or not math.isfinite(v) for v in (
+                    origin.orientation.x, origin.orientation.y, origin.orientation.z))
+                or not math.isclose(abs(origin.orientation.w), 1.0, abs_tol=1.0e-6)
+                or any(value < -1 or value > 100 for value in message.data)):
+                self._belief_time = None
+                self._block("belief_geometry_or_values_mismatch")
                 return
             self._belief = tuple(int(value) for value in message.data)
             self._belief_time = time.monotonic()
 
         def _on_targets(self, message: GarbageTargetArray) -> None:
             if message.header.frame_id != self._map_frame:
+                self._targets_time = None
                 self._block("target_frame_mismatch")
                 return
             self._targets = tuple(
@@ -283,11 +320,28 @@ def main() -> None:
                 float(message.pose.pose.position.y),
             )
             if not all(math.isfinite(value) for value in point):
+                self._odom_time = None
+                self._stationary_since = None
                 return
+            now = time.monotonic()
+            twist = message.twist.twist
+            velocities = (twist.linear.x, twist.linear.y, twist.angular.z)
+            stopped = (all(math.isfinite(v) for v in velocities)
+                       and math.hypot(*velocities[:2]) <= 0.02
+                       and abs(velocities[2]) <= 0.03)
+            continuous = self._odom_time is not None and 0 <= now - self._odom_time <= self._maximum_age
+            self._stationary_since = (
+                (self._stationary_since if continuous and self._stationary_since is not None else now)
+                if stopped else None
+            )
+            self._odom_time = now
             if self._last_odom_xy is not None:
                 increment = math.dist(self._last_odom_xy, point)
-                if increment < 2.0:
-                    self._task_distance += increment
+                if increment >= 2.0:
+                    self._fatal_reason = "odometry_discontinuity_requires_restart"
+                    self._block(self._fatal_reason)
+                    return
+                self._task_distance += increment
             self._last_odom_xy = point
 
         def _on_executor_status(self, message: DiagnosticArray) -> None:
@@ -295,14 +349,22 @@ def main() -> None:
             if not rows:
                 return
             state = rows[-1].message
+            fields = {item.key: item.value for item in rows[-1].values}
+            if not self._request_stamp or fields.get("request_stamp") != self._request_stamp:
+                return  # Latched/late status from a different path is not ours.
+            self._executor_status_time = time.monotonic()
+            if fields.get("restart_required") == "true":
+                self._fatal_reason = self._fatal_reason or "executor_requires_restart"
+                self._block(self._fatal_reason)
+                return
             if state in {"SUBMITTING", "EXECUTING", "CANCELING"}:
                 self._executor_seen_active = True
                 self._busy = True
-            elif self._busy and (
-                self._executor_seen_active
-                or state in {"REJECTED", "FAILED", "CANCELED"}
-            ) and state in {"IDLE", "SUCCEEDED", "REJECTED", "FAILED", "CANCELED", "BLOCKED"}:
+            elif (self._busy and self._pending_grasp is None
+                  and state in {"SUCCEEDED", "REJECTED", "FAILED", "CANCELED"}
+                  and fields.get("terminal_confirmed") == "true"):
                 self._busy = False
+                self._pending_since = None
                 self._executor_seen_active = False
                 self._set_cleaning(False)
                 self._state = "IDLE" if state == "SUCCEEDED" else "REPLAN"
@@ -323,6 +385,7 @@ def main() -> None:
             self._core.mark_grasp_result(target_id, verified_in_bin=verified)
             self._pending_grasp = None
             self._busy = False
+            self._pending_since = None
             self._state = "IDLE" if verified else "REPLAN"
             self._reason = "grasp_verified_in_bin" if verified else "grasp_not_verified"
             self._publish_status()
@@ -347,6 +410,11 @@ def main() -> None:
                 return None
             translation = transform.transform.translation
             rotation = transform.transform.rotation
+            stamp = transform.header.stamp
+            stamp_ns = int(stamp.sec) * 1_000_000_000 + int(stamp.nanosec)
+            age = (self.get_clock().now().nanoseconds - stamp_ns) / 1.0e9
+            if not 0.0 <= age <= self._maximum_age:
+                return None
             yaw = math.atan2(
                 2.0 * (rotation.w * rotation.z + rotation.x * rotation.y),
                 1.0 - 2.0 * (rotation.y * rotation.y + rotation.z * rotation.z),
@@ -358,8 +426,29 @@ def main() -> None:
             # This is also the coordinator watchdog heartbeat.  If the planner
             # dies, the cleaning actuator coordinator times this request out
             # and commands lift/brush/pump safe.
-            self._cleaning_publisher.publish(Bool(data=self._cleaning_requested))
-            if self._mission_complete or self._busy:
+            if self._fatal_reason:
+                self._block(self._fatal_reason)
+                return
+            if self._mission_complete:
+                self._set_cleaning(False)
+                return
+            if self._busy:
+                now = time.monotonic()
+                if self._pending_grasp is not None:
+                    if now - self._pending_since >= self._grasp_result_timeout_sec:
+                        self._fatal_reason = "grasp_result_timeout_requires_restart"
+                        self._block(self._fatal_reason)
+                        return
+                else:
+                    latest = self._executor_status_time or self._pending_since
+                    if now - latest >= self._executor_status_timeout_sec:
+                        self._fatal_reason = "executor_status_timeout_requires_restart"
+                        self._block(self._fatal_reason)
+                        return
+                if not self._inputs_fresh():
+                    self._block("product_inputs_stale_during_execution")
+                    return
+                self._cleaning_publisher.publish(Bool(data=self._cleaning_requested))
                 return
             if not self._inputs_fresh() or self._belief is None:
                 self._block("product_inputs_stale_or_not_ready")
@@ -380,7 +469,7 @@ def main() -> None:
             task_cleaning_complete = (
                 observation.observed_ratio >= 0.95 and not uncleared and not dirty
             )
-            if task_cleaning_complete:
+            if task_cleaning_complete or self._returning_home:
                 if not self._returning_home:
                     self._returning_home = True
                     self._task_distance_at_completion = self._task_distance
@@ -399,6 +488,7 @@ def main() -> None:
                         pose_message.pose.orientation.w = math.cos(item.yaw / 2.0)
                         path.poses.append(pose_message)
                     self._set_cleaning(False)
+                    self._begin_path(path)
                     self._path_publisher.publish(path)
                     self._busy = True
                     self._executor_seen_active = False
@@ -408,6 +498,12 @@ def main() -> None:
                     return
                 if return_decision.kind != "home_reached":
                     self._block(return_decision.reason)
+                    return
+                now = time.monotonic()
+                if (self._odom_time is None or not 0 <= now - self._odom_time <= self._maximum_age
+                    or self._stationary_since is None
+                    or now - self._stationary_since < self._dock_settle_sec):
+                    self._block("awaiting_stationary_dock_feedback")
                     return
                 self._mission_complete = True
                 self._state = "COMPLETE"
@@ -419,10 +515,13 @@ def main() -> None:
             decision = self._core.decide(observation)
             self._step_index += 1
             if decision.kind == "grasp":
-                target = next(
-                    item for item in self._targets if item.target_id == decision.grasp_target_id
-                )
+                target = next((item for item in self._targets
+                               if item.target_id == decision.grasp_target_id), None)
+                if target is None:
+                    self._block("grasp_target_requires_fresh_reobservation")
+                    return
                 self._pending_grasp = target.target_id
+                self._pending_since = time.monotonic()
                 self._busy = True
                 self._set_cleaning(False)
                 observation = self._target_grasp_observations.get(target.target_id)
@@ -461,6 +560,7 @@ def main() -> None:
                     pose_message.pose.orientation.w = math.cos(item.yaw / 2.0)
                     path.poses.append(pose_message)
                 self._set_cleaning(decision.clean_ground)
+                self._begin_path(path)
                 self._path_publisher.publish(path)
                 self._busy = True
                 self._executor_seen_active = False
@@ -471,10 +571,19 @@ def main() -> None:
                 self._reason = decision.reason
             self._publish_status(decision.observed_ratio)
 
+        def _begin_path(self, path: Path) -> None:
+            self._request_stamp = f"{path.header.stamp.sec}:{path.header.stamp.nanosec}"
+            self._pending_since = time.monotonic()
+            self._executor_status_time = None
+            self._cancel_sent = False
+
         def _block(self, reason: str) -> None:
-            self._state = "BLOCKED"
+            self._state = "FAILED" if self._fatal_reason else "BLOCKED"
             self._reason = reason
             self._set_cleaning(False)
+            if self._busy and self._pending_grasp is None and not self._cancel_sent:
+                self._cancel_sent = True
+                self._cancel_publisher.publish(Bool(data=True))
             self._publish_status()
 
         def _set_cleaning(self, requested: bool) -> None:

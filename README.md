@@ -48,6 +48,7 @@ Coverage 启动器直接执行已安装的 `coverage_probe`，不经过 `ros2 ru
 本机完整任务通过：`17/17` 组件、经验覆盖率 `93.67%`、碰撞 `0`、禁行区违规 `0`、定位 XY RMSE `0.03588 m`，MCAP 为 `205528` 条消息/18 个话题；看板终态为 `COMPLETED`，专用 MP4 为 `1.49 MB`。使用与证据边界见 [`docs/auto17-visual-demo.md`](docs/auto17-visual-demo.md)。AUTO-17 只提升可观察性和演示复现能力，不改变学习感知、真实域、J6 板端及综合竞赛矩阵仍为 false 的事实。
 
 工业化接口契约、故障档案和 SIL/HIL/封闭场准入见 [`docs/industrialization-and-sim2real.md`](docs/industrialization-and-sim2real.md)；演示目标按真值和刷盘足迹判定并从场景移除，不代表真实识别或物理吸入闭环。
+主动清扫的目标所有权、取消终态、失鲜停止和返航完成规则见[执行与恢复合同](docs/active-cleaning-execution-recovery.md)。异步回归与隔离ROS通信探针用于检查恢复链，不能替代全场Gazebo验收。
 ### 竞赛尺度现场配置
 
 `powershell -ExecutionPolicy Bypass -File scripts/run_visual_demo.ps1 -CompetitionProfile -GazeboOnly -ManualControl -KeepOpen`
