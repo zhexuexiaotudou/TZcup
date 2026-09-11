@@ -73,7 +73,16 @@ def validate_artifacts(artifact_root: Path, *, session_factory: Callable[[str], 
             session_factory(str(path))
         else:
             vocabulary = json.loads(path.read_text(encoding="utf-8"))
-            if not isinstance(vocabulary, dict) or not vocabulary:
+            if (
+                not isinstance(vocabulary, list)
+                or len(vocabulary) != 4
+                or any(
+                    not isinstance(group, list)
+                    or not group
+                    or any(not isinstance(label, str) or not label.strip() for label in group)
+                    for group in vocabulary
+                )
+            ):
                 raise ValueError("frozen vocabulary is empty or invalid")
         results[relative] = {"sha256": actual_hash, "byte_size": actual_size, "loadable": True}
     return {"artifact_manifest_sha256": _sha256(manifest), "artifacts": results}

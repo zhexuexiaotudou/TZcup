@@ -19,7 +19,11 @@ def bundle(tmp_path: Path) -> Path:
     for relative, (kind, source_revision, model_role, pinned_hash, pinned_size) in MODULE.REQUIRED_ARTIFACTS.items():
         path = root / relative
         path.parent.mkdir(parents=True, exist_ok=True)
-        data = b'{"classes":["litter_cube"]}' if kind == "json" else ("model:" + relative).encode()
+        data = (
+            json.dumps([["litter cube"], ["fallen leaves"], ["dust patch"], ["puddle"]]).encode()
+            if kind == "json"
+            else ("model:" + relative).encode()
+        )
         path.write_bytes(data)
         rows[relative] = {"sha256": hashlib.sha256(data).hexdigest(), "byte_size": len(data), "source_revision": source_revision, "model_role": model_role}
         MODULE.REQUIRED_ARTIFACTS[relative] = (kind, source_revision, model_role, rows[relative]["sha256"], len(data))
@@ -45,6 +49,30 @@ def test_empty_manifest_is_blocked(tmp_path):
     root.mkdir()
     (root / "artifact_manifest.json").write_text("{}", encoding="utf-8")
     with pytest.raises(ValueError, match="invalid schema"):
+        MODULE.validate_artifacts(root, session_factory=lambda _: None)
+
+
+def test_vocabulary_must_be_four_nonempty_label_groups(tmp_path):
+    root = bundle(tmp_path)
+    relative = "dosod/tzcup_offline_vocabulary.json"
+    path = root / relative
+    data = json.dumps({"classes": ["litter_cube"]}).encode()
+    path.write_bytes(data)
+    manifest_path = root / "artifact_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["artifacts"][relative].update(
+        sha256=hashlib.sha256(data).hexdigest(), byte_size=len(data)
+    )
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    kind, revision, role, _, _ = MODULE.REQUIRED_ARTIFACTS[relative]
+    MODULE.REQUIRED_ARTIFACTS[relative] = (
+        kind,
+        revision,
+        role,
+        hashlib.sha256(data).hexdigest(),
+        len(data),
+    )
+    with pytest.raises(ValueError, match="vocabulary is empty or invalid"):
         MODULE.validate_artifacts(root, session_factory=lambda _: None)
 
 
