@@ -3,6 +3,7 @@
 These tests cover transport races, not ROS/Gazebo runtime acceptance.
 """
 import ast
+import json
 from pathlib import Path
 from types import SimpleNamespace as NS
 import math
@@ -59,7 +60,7 @@ def load_class(module, name, clock):
     namespace.update(
         Node=object, Bool=lambda **kw: NS(**kw), String=lambda **kw: NS(**kw),
         GoalStatus=NS(STATUS_SUCCEEDED=4, STATUS_CANCELED=5, STATUS_ABORTED=6),
-        time=NS(monotonic=lambda: clock[0]),
+        time=NS(monotonic=lambda: clock[0], monotonic_ns=lambda: int(clock[0] * 1_000_000_000)),
     )
     exec(compile(ast.Module(body=[cls], type_ignores=[]), module.__file__, "exec", flags=0x1000000), namespace)
     return namespace[name]
@@ -256,6 +257,72 @@ def test_busy_planner_stops_cleaning_and_cancels_on_stale_input():
     assert node.cleaning == [False, False]
     assert node.cancels == [True]
     assert node._busy  # Must still wait for real terminal evidence.
+
+
+def armed_planner():
+    node, clock = planner()
+    node._operator_armed = False
+    node._operator_armed_time = None
+    node._ever_armed = False
+    node._inputs_fresh = lambda: True
+    node._map_pose = lambda: object()
+    node._odom_time = clock[0]
+    node.health, node.plans = [], []
+    node._instance_id = "planner-test-instance"
+    node._control_health_sequence = 0
+    node._control_health_publisher = NS(publish=lambda msg: node.health.append(json.loads(msg.data)))
+    node._plan = lambda: node.plans.append(True)
+    node._busy = False
+    return node, clock
+
+
+def test_planner_announces_startup_health_but_waits_for_confirmed_arming():
+    node, _ = armed_planner()
+    node._plan_tick()
+    assert node.health[-1]["healthy"] is True and node.health[-1]["sequence"] == 1 and not node.plans
+    node._on_operator_armed(NS(data=True))
+    node._plan_tick()
+    assert node.plans == [True]
+
+
+def test_lost_arm_confirmation_stops_and_latches_restart():
+    node, clock = armed_planner()
+    node._on_operator_armed(NS(data=True))
+    node._busy = True
+    clock[0] += 2.0
+    node._plan_tick()
+    assert not node.plans and node.health[-1]["healthy"] is False
+    assert node.cancels == [True]
+    assert "requires_restart" in node._fatal_reason
+
+
+def test_planner_exception_publishes_unhealthy_before_propagating():
+    node, _ = armed_planner()
+    node._on_operator_armed(NS(data=True))
+    def fail():
+        raise RuntimeError("planner died")
+    node._plan = fail
+    with pytest.raises(RuntimeError):
+        node._plan_tick()
+    assert node.health[-1]["healthy"] is False
+
+
+def test_stale_odometry_cannot_dispatch_a_path_or_keep_control_healthy():
+    node, clock = armed_planner()
+    node._on_operator_armed(NS(data=True))
+    node._odom_time = clock[0] - 3.0
+    node._plan_tick()
+    assert not node.plans and node.health[-1]["healthy"] is False
+
+
+def test_planner_health_has_instance_monotonic_source_time_and_strict_sequence():
+    node, clock = armed_planner()
+    node._plan_tick()
+    clock[0] += 0.5
+    node._plan_tick()
+    assert [row["sequence"] for row in node.health] == [1, 2]
+    assert all(row["instance_id"] == "planner-test-instance" for row in node.health)
+    assert [row["published_at_monotonic_ns"] for row in node.health] == [10_000_000_000, 10_500_000_000]
 
 
 def test_paused_or_rewound_clock_cannot_reuse_previous_request_identity():

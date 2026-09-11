@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 import time
+import uuid
 
 from .formal_trajectory_core import FormalTrajectoryGate, PathPose
 
@@ -33,6 +34,8 @@ def node_class():
     class FormalTrajectoryExecutor(Node):
         def __init__(self) -> None:
             super().__init__("formal_active_cleaning_trajectory_executor")
+            self._instance_id = uuid.uuid4().hex
+            self._status_sequence = 0
             self.declare_parameter("mission_geometry", "")
             self.declare_parameter("path_topic", CONTROL_INPUT_TOPICS[0])
             self.declare_parameter("cancel_topic", CONTROL_INPUT_TOPICS[1])
@@ -341,6 +344,7 @@ def node_class():
             self._publish_status()
 
         def _publish_status(self) -> None:
+            self._status_sequence += 1
             status = DiagnosticStatus()
             status.name = "formal_active_cleaning_trajectory_executor"
             status.hardware_id = "nav2_follow_path_safety_chain"
@@ -351,6 +355,9 @@ def node_class():
             )
             status.message = self._state
             status.values = [
+                KeyValue(key="instance_id", value=self._instance_id),
+                KeyValue(key="published_at_monotonic_ns", value=str(time.monotonic_ns())),
+                KeyValue(key="sequence", value=str(self._status_sequence)),
                 KeyValue(key="reason", value=self._reason),
                 KeyValue(key="terminal_confirmed", value=str(self._terminal_confirmed).lower()),
                 KeyValue(key="restart_required", value=str(bool(self._fatal_reason)).lower()),

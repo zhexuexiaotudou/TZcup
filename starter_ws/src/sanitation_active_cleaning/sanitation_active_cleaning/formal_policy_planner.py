@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import math
 import time
+import uuid
 
 from .formal_observation_core import PublicPlanningMap
 from .formal_policy_core import FormalRuntimePolicyCore, runtime_task_config
@@ -17,6 +18,7 @@ CONTROL_INPUT_TOPICS = (
     "/active_cleaning/observation_ready",
     "/active_cleaning/executor_status",
     "/active_cleaning/grasp_result",
+    "/product_demo/operator_armed",
 )
 
 
@@ -95,6 +97,7 @@ def main() -> None:
                 ("ready_topic", CONTROL_INPUT_TOPICS[2]),
                 ("executor_status_topic", CONTROL_INPUT_TOPICS[3]),
                 ("grasp_result_topic", CONTROL_INPUT_TOPICS[4]),
+                ("operator_armed_topic", CONTROL_INPUT_TOPICS[5]),
                 ("path_topic", "/active_cleaning/trajectory"),
                 ("grasp_request_topic", "/active_cleaning/grasp_request"),
                 ("cleaning_request_topic", "/active_cleaning/cleaning_requested"),
@@ -174,6 +177,15 @@ def main() -> None:
             self._status_publisher = self.create_publisher(
                 DiagnosticArray, str(self.get_parameter("status_topic").value), latched
             )
+            self._control_health_publisher = self.create_publisher(
+                String, "/active_cleaning/control_health", 1
+            )
+            self._instance_id = uuid.uuid4().hex
+            self._control_health_sequence = 0
+            self.create_subscription(
+                Bool, str(self.get_parameter("operator_armed_topic").value),
+                self._on_operator_armed, latched,
+            )
             self.create_subscription(
                 OccupancyGrid,
                 str(self.get_parameter("belief_topic").value),
@@ -238,11 +250,61 @@ def main() -> None:
             self._cleaning_requested = False
             self._state = "BLOCKED"
             self._reason = "awaiting_product_inputs"
+            self._operator_armed = False
+            self._operator_armed_time = None
+            self._ever_armed = False
             self.create_timer(
-                float(self.get_parameter("planning_period_sec").value), self._plan,
+                float(self.get_parameter("planning_period_sec").value), self._plan_tick,
                 clock=Clock(clock_type=ClockType.STEADY_TIME),
             )
             self._publish_status()
+
+        def _on_operator_armed(self, message: Bool) -> None:
+            self._operator_armed_time = time.monotonic()
+            self._operator_armed = bool(message.data)
+            if self._operator_armed:
+                self._ever_armed = True
+            elif self._ever_armed and not self._mission_complete:
+                self._fatal_reason = self._fatal_reason or "operator_or_physical_permit_lost_requires_restart"
+                self._block(self._fatal_reason)
+
+        def _plan_tick(self) -> None:
+            healthy = False
+            try:
+                now = time.monotonic()
+                inputs_healthy = (
+                    not self._fatal_reason and self._inputs_fresh()
+                    and self._odom_time is not None
+                    and 0.0 <= now - self._odom_time <= self._maximum_age
+                    and self._map_pose() is not None
+                )
+                armed = (
+                    self._operator_armed and self._operator_armed_time is not None
+                    and 0.0 <= now - self._operator_armed_time <= self._maximum_age
+                )
+                if self._mission_complete:
+                    self._set_cleaning(False)
+                elif not armed:
+                    if self._ever_armed:
+                        self._fatal_reason = self._fatal_reason or "operator_arm_confirmation_stale_requires_restart"
+                    self._block(self._fatal_reason or "awaiting_confirmed_operator_arming")
+                elif not inputs_healthy:
+                    self._block("control_inputs_unhealthy")
+                else:
+                    self._plan()
+                # Startup health is independent of arming, avoiding a circular
+                # dependency with the physical power/permit reset sequence.
+                healthy = bool(inputs_healthy and not self._fatal_reason and not self._mission_complete)
+            finally:
+                # Exceptions publish false before propagating; a dead or
+                # blocked callback also expires at the independent operator gate.
+                self._control_health_sequence += 1
+                self._control_health_publisher.publish(String(data=json.dumps({
+                    "instance_id": self._instance_id,
+                    "healthy": healthy,
+                    "published_at_monotonic_ns": time.monotonic_ns(),
+                    "sequence": self._control_health_sequence,
+                }, sort_keys=True)))
 
         def _on_belief(self, message: OccupancyGrid) -> None:
             if message.header.frame_id != self._map_frame:
