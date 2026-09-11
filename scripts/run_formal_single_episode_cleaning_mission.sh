@@ -121,6 +121,7 @@ done
 for directory in "${SAVED_MAP}" "${PERCEPTION_ARTIFACTS}"; do
   [[ -d "${directory}" ]] || { echo "missing required directory: ${directory}" >&2; exit 3; }
 done
+python3 "${ROOT}/scripts/preflight_product_perception_startup.py" --artifact-root "${PERCEPTION_ARTIFACTS}" --output "${OUTPUT}/perception_preflight.json"
 
 # Recompute the FullCoverage baseline from its source evidence before any
 # Gazebo process is started.  This rejects a copied status JSON, a different
