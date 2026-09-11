@@ -24,13 +24,14 @@ class EndToEndMissionError(RuntimeError):
 
 
 COMPETITION_EFFICIENCY_THRESHOLD_M2_H = 3500.0
-COMPETITION_EFFICIENCY_KEYS = {
+PLANNING_PROXY_EFFICIENCY_KEYS = {
     "threshold_m2_h",
-    "covered_area_m2",
+    "planning_proxy_area_m2",
     "actual_duration_sec",
-    "measured_net_efficiency_m2_h",
-    "recomputed_net_efficiency_m2_h",
+    "planning_proxy_efficiency_m2_h",
     "return_distance_included",
+    "metric_basis",
+    "competition_metric_status",
     "passed",
 }
 
@@ -171,70 +172,46 @@ def validate(
     require(mission_distance <= baseline_distance, "mission path exceeds same-map FullCoverage baseline")
     require(planning.get("baseline_map_id") == mission.get("map_id"), "baseline map differs from mission map")
     require(isinstance(planning.get("trajectory_publish_count"), int) and planning["trajectory_publish_count"] > 0, "planner published no trajectory")
-    competition_efficiency = planning.get("same_map_full_coverage_efficiency")
+    planning_proxy_efficiency = planning.get("same_map_planning_proxy_efficiency")
     require(
-        isinstance(competition_efficiency, dict),
-        "same-map FullCoverage competition efficiency is missing",
+        isinstance(planning_proxy_efficiency, dict),
+        "same-map FullCoverage planning proxy efficiency is missing",
     )
-    if isinstance(competition_efficiency, dict):
+    if isinstance(planning_proxy_efficiency, dict):
         require(
-            set(competition_efficiency) == COMPETITION_EFFICIENCY_KEYS,
-            "same-map FullCoverage competition efficiency mapping is incomplete or unexpected",
+            set(planning_proxy_efficiency) == PLANNING_PROXY_EFFICIENCY_KEYS,
+            "same-map FullCoverage planning proxy efficiency mapping is incomplete or unexpected",
         )
-        threshold = _strict_finite(
-            competition_efficiency.get("threshold_m2_h")
-        )
-        covered_area = _strict_finite(
-            competition_efficiency.get("covered_area_m2")
-        )
-        duration = _strict_finite(
-            competition_efficiency.get("actual_duration_sec")
-        )
-        measured_efficiency = _strict_finite(
-            competition_efficiency.get("measured_net_efficiency_m2_h")
-        )
-        reported_recomputed_efficiency = _strict_finite(
-            competition_efficiency.get("recomputed_net_efficiency_m2_h")
+        threshold = _strict_finite(planning_proxy_efficiency.get("threshold_m2_h"))
+        proxy_area = _strict_finite(planning_proxy_efficiency.get("planning_proxy_area_m2"))
+        duration = _strict_finite(planning_proxy_efficiency.get("actual_duration_sec"))
+        proxy_efficiency = _strict_finite(planning_proxy_efficiency.get("planning_proxy_efficiency_m2_h"))
+        require(
+            all(value is not None for value in (threshold, proxy_area, duration, proxy_efficiency)),
+            "same-map FullCoverage planning proxy must use finite numeric values",
         )
         require(
-            all(value is not None for value in (
-                threshold, covered_area, duration, measured_efficiency,
-                reported_recomputed_efficiency,
-            )),
-            "same-map FullCoverage competition efficiency must use finite numeric values",
+            planning_proxy_efficiency.get("passed") is False,
+            "planning proxy must not claim a competition efficiency pass",
         )
         require(
-            competition_efficiency.get("passed") is True,
-            "same-map FullCoverage competition efficiency has no explicit pass",
+            planning_proxy_efficiency.get("competition_metric_status") == "NOT_MEASURED_BY_SAVED_MAP_LIFECYCLE",
+            "actual competition efficiency is not explicitly unmeasured",
         )
-        require(
-            competition_efficiency.get("return_distance_included") is False,
-            "same-map FullCoverage competition efficiency includes return-home distance",
-        )
-        if all(value is not None for value in (
-            threshold, covered_area, duration, measured_efficiency,
-            reported_recomputed_efficiency,
-        )):
-            assert threshold is not None and covered_area is not None and duration is not None
-            assert measured_efficiency is not None and reported_recomputed_efficiency is not None
+        require(planning_proxy_efficiency.get("metric_basis") == "amcl_base_centerline_planning_proxy_not_actual_swept_area", "planning proxy metric basis is invalid")
+        require(planning_proxy_efficiency.get("return_distance_included") is False, "same-map FullCoverage planning proxy includes return-home distance")
+        if all(value is not None for value in (threshold, proxy_area, duration, proxy_efficiency)):
+            assert threshold is not None and proxy_area is not None and duration is not None and proxy_efficiency is not None
             require(
                 math.isclose(threshold, COMPETITION_EFFICIENCY_THRESHOLD_M2_H, abs_tol=1.0e-9),
                 "same-map FullCoverage competition threshold must equal 3500 m2/h",
             )
-            require(
-                covered_area > 0.0 and duration > 0.0,
-                "same-map FullCoverage competition area/duration must be positive",
-            )
-            if covered_area > 0.0 and duration > 0.0:
-                recomputed_efficiency = covered_area / duration * 3600.0
+            require(proxy_area > 0.0 and duration > 0.0, "same-map FullCoverage planning proxy area/duration must be positive")
+            if proxy_area > 0.0 and duration > 0.0:
+                recomputed_efficiency = proxy_area / duration * 3600.0
                 require(
-                    math.isclose(measured_efficiency, recomputed_efficiency, rel_tol=1.0e-9, abs_tol=1.0e-6)
-                    and math.isclose(reported_recomputed_efficiency, recomputed_efficiency, rel_tol=1.0e-9, abs_tol=1.0e-6),
-                    "same-map FullCoverage competition efficiency formula mismatch",
-                )
-                require(
-                    measured_efficiency >= COMPETITION_EFFICIENCY_THRESHOLD_M2_H,
-                    "same-map FullCoverage competition efficiency is below 3500 m2/h",
+                    math.isclose(proxy_efficiency, recomputed_efficiency, rel_tol=1.0e-9, abs_tol=1.0e-6),
+                    "same-map FullCoverage planning proxy efficiency formula mismatch",
                 )
 
     return_home = sections["return_home"]
@@ -451,15 +428,13 @@ def _result(
                 _finite(planning["cleaning_distance_m"], default=math.inf)
                 <= _finite(planning["full_coverage_baseline_distance_m"])
             ),
-            "same_map_full_coverage_efficiency_at_least_3500": (
-                planning["same_map_full_coverage_efficiency"]["passed"] is True
-                and planning["same_map_full_coverage_efficiency"]["return_distance_included"] is False
-                and _strict_finite(
-                    planning["same_map_full_coverage_efficiency"]["measured_net_efficiency_m2_h"]
-                ) is not None
-                and _strict_finite(
-                    planning["same_map_full_coverage_efficiency"]["measured_net_efficiency_m2_h"]
-                ) >= COMPETITION_EFFICIENCY_THRESHOLD_M2_H
+            "same_map_planning_proxy_verified": (
+                planning["same_map_planning_proxy_efficiency"]["passed"] is False
+                and planning["same_map_planning_proxy_efficiency"]["competition_metric_status"]
+                == "NOT_MEASURED_BY_SAVED_MAP_LIFECYCLE"
+                and planning["same_map_planning_proxy_efficiency"]["return_distance_included"] is False
+                and planning["same_map_planning_proxy_efficiency"]["metric_basis"]
+                == "amcl_base_centerline_planning_proxy_not_actual_swept_area"
             ),
             "return_distance_excluded_from_efficiency": _finite(
                 return_home["distance_excluded_from_efficiency_m"], default=-1.0

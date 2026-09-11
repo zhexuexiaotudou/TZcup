@@ -118,9 +118,9 @@ def test_formal_width_and_speed_are_exact_single_source(tmp_path):
     }), encoding="utf-8")
     mapping = load_formal_operation_speed_profile(profile_file, MAPPING_SAFE_SPEED_PROFILE)
     dry = load_formal_operation_speed_profile(profile_file, DRY_CLEANING_SPEED_PROFILE)
-    validate_execution_parameters(1.32, 0.45, mapping)
-    validate_execution_parameters(1.32, 1.0, dry)
-    for width, speed, profile in ((0.52, 0.45, mapping), (1.32, 0.65, dry)):
+    validate_execution_parameters(0.60, 0.45, mapping)
+    validate_execution_parameters(0.60, 1.0, dry)
+    for width, speed, profile in ((0.52, 0.45, mapping), (0.60, 0.65, dry)):
         with pytest.raises(SavedMapCoverageError):
             validate_execution_parameters(width, speed, profile)
 
@@ -227,8 +227,9 @@ def test_product_telemetry_integrates_distance_brush_and_estimated_sweep():
     assert report["brush_state_sample_count"] == 2
     assert report["brush_state_source"] == "/brush_enabled_product_runtime"
     assert report["brush_disabled_on_exit"] is True
-    assert report["estimated_covered_cells"] > 0
-    assert 0.0 < report["estimated_coverage_fraction"] < 1.0
+    assert report["planning_proxy_covered_cells"] > 0
+    assert 0.0 < report["planning_proxy_coverage_fraction"] < 1.0
+    assert report["coverage_metric_basis"] == "amcl_base_centerline_planning_proxy_not_actual_swept_area"
     assert report["coverage_raster_resolution_m"] == pytest.approx(0.20)
     assert report["simulator_truth_used"] is False
 
@@ -239,10 +240,16 @@ def test_execution_pass_requires_real_terminal_and_all_swaths():
         "terminal_state": "COMPLETED",
         "ground_truth_used_for_control": False,
         "operation_width_m": FORMAL_OPERATION_WIDTH_M,
+        "planning_lane_spacing_m": 0.60,
+        "continuous_cleaning_band_width_m": 0.620,
+        "continuous_cleaning_lane_overlap_m": 0.020,
+        "declared_effective_cleaning_width_m": 1.32,
         "maximum_linear_speed_mps": FORMAL_MAX_LINEAR_SPEED_MPS,
         "operation_speed_profile": MAPPING_SAFE_SPEED_PROFILE,
         "planned_swath_count": 3,
         "completed_swath_count": 3,
+        "planned_coverage_fraction": 0.95,
+        "planned_coverage_metric_basis": "planning_route_coverage_proxy_not_actual_cleaned_area",
         "coverage_geometry_sha256": "0" * 64,
         "cleanable_area_m2": 1.0,
         "return_home": {"success": True, "goal_frame_id": "map", "final_cmd_vel_zero": True, "brush_control_released": True, "coverage_control_released": True},
@@ -251,6 +258,8 @@ def test_execution_pass_requires_real_terminal_and_all_swaths():
     for field, value in (
         ("terminal_state", "READY"),
         ("completed_swath_count", 2),
+        ("planned_coverage_fraction", 0.949999),
+        ("planned_coverage_metric_basis", "actual_cleaned_area"),
         ("operation_width_m", 0.52),
         ("maximum_linear_speed_mps", 0.65),
         ("operation_speed_profile", "wet_puddle_recovery"),

@@ -17,10 +17,16 @@ from sanitation_formal_campus_integration.map_lifecycle_core import (
     validate_saved_map_cleaning_consumer_bundle,
 )
 from sanitation_formal_campus_integration.saved_map_coverage_core import (
-    FORMAL_OPERATION_WIDTH_M, SavedMapCoverageError, load_product_mission_geometry,
+    SavedMapCoverageError, load_product_mission_geometry,
+)
+from sanitation_formal_campus_integration.map_lifecycle_core import (
+    FORMAL_CLEANING_LANE_OVERLAP_M,
+    FORMAL_CLEANING_LANE_SPACING_M,
+    FORMAL_CONTINUOUS_CLEANING_BAND_WIDTH_M,
+    FORMAL_DECLARED_CLEANING_ENVELOPE_WIDTH_M,
 )
 
-RECOMMENDED_LANE_SPACING_M = 1.056  # 80% of the declared 1.32 m effective width.
+RECOMMENDED_LANE_SPACING_M = FORMAL_CLEANING_LANE_SPACING_M
 
 
 def _runs(columns: list[int]) -> list[tuple[int, int]]:
@@ -50,21 +56,31 @@ def main() -> int:
         for column, row in geometry.free_cells:
             by_row[row].append(column)
         rows = sorted(by_row)
-        stride = max(1, math.floor(RECOMMENDED_LANE_SPACING_M / geometry.raster_resolution_m))
-        selected = rows[::stride]
-        if rows and selected[-1] != rows[-1]:
+        stride = max(1, round(RECOMMENDED_LANE_SPACING_M / geometry.raster_resolution_m))
+        realized_lane_spacing_m = round(stride * geometry.raster_resolution_m, 9)
+        spacing_representable = math.isclose(
+            realized_lane_spacing_m, RECOMMENDED_LANE_SPACING_M, abs_tol=1e-9
+        )
+        selected = rows[::stride] if spacing_representable else []
+        # A non-representable spacing intentionally yields no candidates.  Do
+        # not index that empty list while constructing the fail-closed report.
+        if selected and selected[-1] != rows[-1]:
             selected.append(rows[-1])
         lanes = [_runs(by_row[row]) for row in selected]
-        realizable = [any((end - start + 1) * geometry.raster_resolution_m >= FORMAL_OPERATION_WIDTH_M for start, end in lane) for lane in lanes]
+        realizable = [any((end - start + 1) * geometry.raster_resolution_m >= FORMAL_CONTINUOUS_CLEANING_BAND_WIDTH_M for start, end in lane) for lane in lanes]
         transition_blockers = [
             row for row, before, after in zip(selected[1:], lanes, lanes[1:])
             if not any(max(a0, b0) <= min(a1, b1) for a0, a1 in before for b0, b1 in after)
         ]
         report = {
-            "passed": not transition_blockers and all(realizable),
-            "operation_width_m": FORMAL_OPERATION_WIDTH_M,
+            "passed": spacing_representable and not transition_blockers and all(realizable),
+            "operation_width_m": FORMAL_CLEANING_LANE_SPACING_M,
+            "planning_lane_spacing_m": FORMAL_CLEANING_LANE_SPACING_M,
+            "continuous_cleaning_band_width_m": FORMAL_CONTINUOUS_CLEANING_BAND_WIDTH_M,
+            "continuous_cleaning_lane_overlap_m": FORMAL_CLEANING_LANE_OVERLAP_M,
+            "declared_effective_cleaning_width_m": FORMAL_DECLARED_CLEANING_ENVELOPE_WIDTH_M,
             "recommended_max_lane_spacing_m": RECOMMENDED_LANE_SPACING_M,
-            "realized_lane_spacing_m": stride * geometry.raster_resolution_m,
+            "realized_lane_spacing_m": realized_lane_spacing_m,
             "coverage_raster_resolution_m": geometry.raster_resolution_m,
             "free_cells": len(geometry.free_cells),
             "candidate_lane_count": len(selected),
@@ -90,6 +106,7 @@ def main() -> int:
         }
         if not report["passed"]:
             report["blockers"] = [
+                *( ["saved_map_raster_cannot_represent_0_600_m_lane_spacing"] if not spacing_representable else [] ),
                 *( ["narrow_or_empty_coverage_lane"] if not all(realizable) else [] ),
                 *( ["adjacent_coverage_lanes_have_no_free_space_turn_connection"] if transition_blockers else [] ),
             ]

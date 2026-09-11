@@ -34,13 +34,14 @@ class AggregateError(RuntimeError):
 
 
 COMPETITION_EFFICIENCY_THRESHOLD_M2_H = 3500.0
-COMPETITION_EFFICIENCY_KEYS = {
+PLANNING_PROXY_EFFICIENCY_KEYS = {
     "threshold_m2_h",
-    "covered_area_m2",
+    "planning_proxy_area_m2",
     "actual_duration_sec",
-    "measured_net_efficiency_m2_h",
-    "recomputed_net_efficiency_m2_h",
+    "planning_proxy_efficiency_m2_h",
     "return_distance_included",
+    "metric_basis",
+    "competition_metric_status",
     "passed",
 }
 
@@ -400,52 +401,47 @@ def aggregate(raw_path: Path) -> dict[str, Any]:
         raise AggregateError("FullCoverage baseline planner/truth boundary is invalid")
     if baseline.get("return_distance_included") is not False:
         raise AggregateError("FullCoverage baseline must exclude return-home distance")
-    competition_efficiency = _mapping(
-        baseline.get("competition_efficiency"),
-        "same_map_baseline.competition_efficiency",
+    planning_proxy_efficiency = _mapping(
+        baseline.get("planning_proxy_efficiency"),
+        "same_map_baseline.planning_proxy_efficiency",
     )
-    if set(competition_efficiency) != COMPETITION_EFFICIENCY_KEYS:
-        raise AggregateError("FullCoverage competition efficiency mapping is incomplete or unexpected")
+    if set(planning_proxy_efficiency) != PLANNING_PROXY_EFFICIENCY_KEYS:
+        raise AggregateError("FullCoverage planning proxy efficiency mapping is incomplete or unexpected")
     threshold = _strict_number(
-        competition_efficiency,
+        planning_proxy_efficiency,
         "threshold_m2_h",
-        "same_map_baseline.competition_efficiency",
+        "same_map_baseline.planning_proxy_efficiency",
     )
-    covered_area = _strict_number(
-        competition_efficiency,
-        "covered_area_m2",
-        "same_map_baseline.competition_efficiency",
+    proxy_area = _strict_number(
+        planning_proxy_efficiency,
+        "planning_proxy_area_m2",
+        "same_map_baseline.planning_proxy_efficiency",
     )
     duration = _strict_number(
-        competition_efficiency,
+        planning_proxy_efficiency,
         "actual_duration_sec",
-        "same_map_baseline.competition_efficiency",
+        "same_map_baseline.planning_proxy_efficiency",
     )
-    measured_efficiency = _strict_number(
-        competition_efficiency,
-        "measured_net_efficiency_m2_h",
-        "same_map_baseline.competition_efficiency",
+    proxy_efficiency = _strict_number(
+        planning_proxy_efficiency,
+        "planning_proxy_efficiency_m2_h",
+        "same_map_baseline.planning_proxy_efficiency",
     )
-    reported_recomputed_efficiency = _strict_number(
-        competition_efficiency,
-        "recomputed_net_efficiency_m2_h",
-        "same_map_baseline.competition_efficiency",
-    )
-    _true(competition_efficiency, "passed", "same_map_baseline.competition_efficiency")
-    if competition_efficiency.get("return_distance_included") is not False:
-        raise AggregateError("FullCoverage competition efficiency must exclude return-home distance")
+    if planning_proxy_efficiency.get("passed") is not False:
+        raise AggregateError("planning proxy must not claim a competition efficiency pass")
+    if planning_proxy_efficiency.get("competition_metric_status") != "NOT_MEASURED_BY_SAVED_MAP_LIFECYCLE":
+        raise AggregateError("actual competition efficiency must remain not measured")
+    if planning_proxy_efficiency.get("metric_basis") != "amcl_base_centerline_planning_proxy_not_actual_swept_area":
+        raise AggregateError("planning proxy metric basis is invalid")
+    if planning_proxy_efficiency.get("return_distance_included") is not False:
+        raise AggregateError("FullCoverage planning proxy must exclude return-home distance")
     if not math.isclose(threshold, COMPETITION_EFFICIENCY_THRESHOLD_M2_H, abs_tol=1.0e-9):
         raise AggregateError("FullCoverage competition efficiency threshold must equal 3500 m2/h")
-    if covered_area <= 0.0 or duration <= 0.0:
-        raise AggregateError("FullCoverage competition coverage area/duration must be positive")
-    recomputed_efficiency = covered_area / duration * 3600.0
-    if not (
-        math.isclose(measured_efficiency, recomputed_efficiency, rel_tol=1.0e-9, abs_tol=1.0e-6)
-        and math.isclose(reported_recomputed_efficiency, recomputed_efficiency, rel_tol=1.0e-9, abs_tol=1.0e-6)
-    ):
-        raise AggregateError("FullCoverage competition efficiency differs from area/duration recomputation")
-    if measured_efficiency < COMPETITION_EFFICIENCY_THRESHOLD_M2_H:
-        raise AggregateError("FullCoverage competition efficiency is below 3500 m2/h")
+    if proxy_area <= 0.0 or duration <= 0.0:
+        raise AggregateError("FullCoverage planning proxy area/duration must be positive")
+    recomputed_efficiency = proxy_area / duration * 3600.0
+    if not math.isclose(proxy_efficiency, recomputed_efficiency, rel_tol=1.0e-9, abs_tol=1.0e-6):
+        raise AggregateError("FullCoverage planning proxy efficiency differs from area/duration recomputation")
     comparison = _mapping(baseline.get("planner_comparison"), "same_map_baseline.planner_comparison")
     if (
         comparison.get("candidate_planner") != "q_learning"
@@ -803,7 +799,7 @@ def aggregate(raw_path: Path) -> dict[str, Any]:
             "cleaning_distance_m": mission_distance,
             "full_coverage_baseline_distance_m": baseline_distance,
             "baseline_map_id": baseline["map_id"],
-            "same_map_full_coverage_efficiency": dict(competition_efficiency),
+            "same_map_planning_proxy_efficiency": dict(planning_proxy_efficiency),
             "trajectory_publish_count": product["trajectory_publish_count"],
         },
         "return_home": {

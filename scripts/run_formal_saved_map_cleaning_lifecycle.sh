@@ -125,8 +125,9 @@ validate_mapping_handoff_record(root)
 PY
 
 # This cross-verifiable summary is deliberately not the OpenNav route.  It
-# makes the sealed free-space raster, effective 1.32 m cleaning width, and the
-# <=1.056 m candidate-row spacing fail closed before Gazebo is started.
+# makes the sealed free-space raster, declared 1.32 m mechanism envelope,
+# 0.620 m continuous roller band and exact 0.600 m lane spacing fail closed
+# before Gazebo is started.
 coverage_route_sanity="${map_root}/coverage_route_sanity.json"
 if [[ "${cleaning_planner}" == "full_coverage" ]]; then
   python3 "${repo_root}/scripts/validate_saved_map_coverage_route_sanity.py" \

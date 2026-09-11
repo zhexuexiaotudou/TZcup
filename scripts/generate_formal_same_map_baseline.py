@@ -444,8 +444,24 @@ def build_report(
     _same(
         _strict_number(coverage, "operation_width_m", "coverage_runtime"),
         0.60,
-        "coverage execution operation width differs from continuous formal brush band",
+        "coverage execution planning lane spacing differs from the 0.600 m contract",
     )
+    for key, expected in (
+        ("planning_lane_spacing_m", 0.600),
+        ("continuous_cleaning_band_width_m", 0.620),
+        ("continuous_cleaning_lane_overlap_m", 0.020),
+        ("declared_effective_cleaning_width_m", 1.32),
+    ):
+        _same(
+            _strict_number(coverage, key, "coverage_runtime"), expected,
+            f"coverage execution {key} differs from the frozen cleaning geometry",
+        )
+    if (
+        coverage.get("planned_coverage_metric_basis")
+        != "planning_route_coverage_proxy_not_actual_cleaned_area"
+        or _strict_number(coverage, "planned_coverage_fraction", "coverage_runtime") < 0.95
+    ):
+        raise BaselineError("coverage route planning proxy is incomplete")
     for key, expected in coverage_binding.items():
         actual = coverage.get({
             "geometry_sha256": "coverage_geometry_sha256",
@@ -485,7 +501,7 @@ def build_report(
             "geometry_sha256": "coverage_geometry_sha256",
             "planning_clearance_m": "coverage_planning_clearance_m",
             "raster_resolution_m": "coverage_raster_resolution_m",
-            "reachable_cleanable_cells": "estimated_field_cells",
+            "reachable_cleanable_cells": "planning_proxy_field_cells",
         }.get(key)
         if actual_key is None:
             continue
@@ -500,22 +516,20 @@ def build_report(
                 f"cleaning telemetry {key} differs from sealed geometry",
             )
     covered_cells = _strict_positive_int(
-        cleaning, "estimated_covered_cells", "cleaning_runtime"
+        cleaning, "planning_proxy_covered_cells", "cleaning_runtime"
     )
     free_cells = int(coverage_binding["reachable_cleanable_cells"])
     if covered_cells > free_cells:
-        raise BaselineError("estimated covered cells exceed sealed cleanable cells")
-    covered_area = covered_cells * float(coverage_binding["raster_resolution_m"]) ** 2
+        raise BaselineError("planning proxy cells exceed sealed cleanable cells")
+    planning_proxy_area = covered_cells * float(coverage_binding["raster_resolution_m"]) ** 2
     coverage_fraction = _strict_number(
-        cleaning, "estimated_coverage_fraction", "cleaning_runtime"
+        cleaning, "planning_proxy_coverage_fraction", "cleaning_runtime"
     )
     _same(
         coverage_fraction,
         covered_cells / free_cells,
-        "coverage fraction differs from live covered/free cell counts",
+        "planning proxy fraction differs from covered/free cell counts",
     )
-    if coverage_fraction < 0.95:
-        raise BaselineError("live AMCL coverage fraction is below 95 percent")
     first_brush = _strict_number(
         cleaning, "coverage_first_brush_enabled_monotonic_s", "cleaning_runtime"
     )
@@ -534,10 +548,7 @@ def build_report(
     )
     if actual_duration <= 0.0:
         raise BaselineError("FullCoverage competition coverage duration must be positive")
-    measured_efficiency = covered_area / actual_duration * 3600.0
-    recomputed_efficiency = measured_efficiency
-    if measured_efficiency < COMPETITION_EFFICIENCY_THRESHOLD_M2_H:
-        raise BaselineError("FullCoverage competition efficiency is below 3500 m2/h")
+    planning_proxy_efficiency = planning_proxy_area / actual_duration * 3600.0
     planned_distance = _strict_number(
         coverage, "planned_swath_length_m", "coverage_runtime"
     )
@@ -588,14 +599,15 @@ def build_report(
         "planner_implementation": PLANNER,
         "successful_distance_m": actual_distance,
         "return_distance_included": False,
-        "competition_efficiency": {
+        "planning_proxy_efficiency": {
             "threshold_m2_h": COMPETITION_EFFICIENCY_THRESHOLD_M2_H,
-            "covered_area_m2": covered_area,
+            "planning_proxy_area_m2": planning_proxy_area,
             "actual_duration_sec": actual_duration,
-            "measured_net_efficiency_m2_h": measured_efficiency,
-            "recomputed_net_efficiency_m2_h": recomputed_efficiency,
+            "planning_proxy_efficiency_m2_h": planning_proxy_efficiency,
             "return_distance_included": False,
-            "passed": True,
+            "metric_basis": "amcl_base_centerline_planning_proxy_not_actual_swept_area",
+            "competition_metric_status": "NOT_MEASURED_BY_SAVED_MAP_LIFECYCLE",
+            "passed": False,
         },
         "planner_comparison": {
             "baseline_planner": "full_coverage",

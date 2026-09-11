@@ -320,6 +320,18 @@ def validate(
             ) is False
             and cleaning.get("coverage_execution_report", {}).get(
                 "operation_width_m"
+            ) == 0.60
+            and cleaning.get("coverage_execution_report", {}).get(
+                "planning_lane_spacing_m"
+            ) == 0.60
+            and cleaning.get("coverage_execution_report", {}).get(
+                "continuous_cleaning_band_width_m"
+            ) == 0.620
+            and cleaning.get("coverage_execution_report", {}).get(
+                "continuous_cleaning_lane_overlap_m"
+            ) == 0.020
+            and cleaning.get("coverage_execution_report", {}).get(
+                "declared_effective_cleaning_width_m"
             ) == 1.32
             and dry_cleaning_speed_profile is not None
             and _report_matches_speed_profile(
@@ -333,6 +345,18 @@ def validate(
             ) == cleaning.get("coverage_execution_report", {}).get(
                 "planned_swath_count"
             )
+            and cleaning.get("coverage_execution_report", {}).get(
+                "planned_coverage_metric_basis"
+            ) == "planning_route_coverage_proxy_not_actual_cleaned_area"
+            and isinstance(cleaning.get("coverage_execution_report", {}).get(
+                "planned_coverage_fraction"
+            ), (int, float))
+            and not isinstance(cleaning.get("coverage_execution_report", {}).get(
+                "planned_coverage_fraction"
+            ), bool)
+            and float(cleaning.get("coverage_execution_report", {}).get(
+                "planned_coverage_fraction", 0.0
+            )) >= 0.95
             and float(cleaning.get("trajectory_total_distance_m", 0.0)) > 0.0
             and float(cleaning.get("brush_enabled_distance_m", 0.0)) > 0.0
             and int(cleaning.get("brush_state_sample_count", 0)) >= 2
@@ -340,7 +364,6 @@ def validate(
             and cleaning.get("brush_state_source")
             == "/brush_enabled_product_runtime"
             and cleaning.get("brush_disabled_on_exit") is True
-            and float(cleaning.get("estimated_coverage_fraction", 0.0)) >= 0.95
         ),
     }
     passed = all(checks.values())

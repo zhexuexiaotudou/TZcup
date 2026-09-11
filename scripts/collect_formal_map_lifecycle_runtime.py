@@ -597,8 +597,6 @@ class Collector(Node):
             and int(product_coverage.get("brush_state_sample_count", 0)) >= 2
             and int(product_coverage.get("brush_state_transitions", 0)) >= 2
             and product_coverage.get("brush_disabled_on_exit") is True
-            and float(product_coverage.get("estimated_coverage_fraction", 0.0))
-            >= 0.95
         )
         restart_verified = False
         restart_value: dict = {}

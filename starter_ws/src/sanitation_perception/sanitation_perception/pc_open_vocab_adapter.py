@@ -840,7 +840,10 @@ def main() -> None:
                     raise ValueError("RGB and depth dimensions differ")
                 if int(info.width) != rgb.shape[1] or int(info.height) != rgb.shape[0]:
                     raise ValueError("CameraInfo and RGB dimensions differ")
-                require_valid_depth(depth)
+                try:
+                    require_valid_depth(depth)
+                except ValueError as exc:
+                    raise ValueError("depth image has no finite positive samples") from exc
                 results = self._infer(rgb)
                 boxes = np.asarray([item.xyxy for item in results], dtype=np.float32).reshape(-1, 4)
                 product = self._detections_message(image_message, results)

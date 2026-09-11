@@ -29,6 +29,10 @@ from .saved_map_coverage_core import (
     validate_execution_parameters,
 )
 from .map_lifecycle_core import (
+    FORMAL_CLEANING_LANE_OVERLAP_M,
+    FORMAL_CLEANING_LANE_SPACING_M,
+    FORMAL_CONTINUOUS_CLEANING_BAND_WIDTH_M,
+    FORMAL_DECLARED_CLEANING_ENVELOPE_WIDTH_M,
     load_campus_map_contract,
     validate_saved_map_cleaning_consumer_bundle,
 )
@@ -217,12 +221,12 @@ class FormalSavedMapCoverageExecutor(Node):
         return {"success": bool(valid_tolerance and result.get("success") and position_error <= position_tolerance and yaw_error <= yaw_tolerance and final_cmd_zero and not self._brush_state), "nav2": result, "goal_frame_id": "map", "home_pose_map": {"x_m": home[0], "y_m": home[1], "yaw_rad": home[2]}, "position_error_m": position_error, "yaw_error_rad": yaw_error, "position_tolerance_m": position_tolerance, "yaw_tolerance_rad": yaw_tolerance, "final_cmd_vel_zero": final_cmd_zero, "brush_control_released": not self._brush_state, "coverage_control_released": True, **identity}
 
     def execute(self) -> dict:
-        width = float(self.get_parameter("operation_width_m").value)
+        lane_spacing = float(self.get_parameter("operation_width_m").value)
         speed = float(self.get_parameter("maximum_linear_speed_mps").value)
         speed_profile = FormalOperationSpeedProfile(
             str(self.get_parameter("operation_speed_profile").value), speed
         )
-        validate_execution_parameters(width, speed, speed_profile)
+        validate_execution_parameters(lane_spacing, speed, speed_profile)
         artifact_directory = str(self.get_parameter("artifact_directory").value)
         episode_manifest = str(self.get_parameter("episode_manifest").value)
         session_id = str(self.get_parameter("session_id").value)
@@ -241,11 +245,13 @@ class FormalSavedMapCoverageExecutor(Node):
             or not route_sanity.get("candidate_lanes_summary_only")
             or route_sanity.get("planner_path_authority")
             != "opennav_coverage_compute_coverage_path"
-            or not math.isclose(
-                float(route_sanity.get("operation_width_m", 0.0)), width, abs_tol=1e-9
-            )
-            or float(route_sanity.get("recommended_max_lane_spacing_m", 0.0)) > 1.056
-            or float(route_sanity.get("realized_lane_spacing_m", math.inf)) > 1.056
+            or not math.isclose(float(route_sanity.get("operation_width_m", 0.0)), lane_spacing, abs_tol=1e-9)
+            or not math.isclose(float(route_sanity.get("planning_lane_spacing_m", 0.0)), FORMAL_CLEANING_LANE_SPACING_M, abs_tol=1e-9)
+            or not math.isclose(float(route_sanity.get("continuous_cleaning_band_width_m", 0.0)), FORMAL_CONTINUOUS_CLEANING_BAND_WIDTH_M, abs_tol=1e-9)
+            or not math.isclose(float(route_sanity.get("continuous_cleaning_lane_overlap_m", 0.0)), FORMAL_CLEANING_LANE_OVERLAP_M, abs_tol=1e-9)
+            or not math.isclose(float(route_sanity.get("declared_effective_cleaning_width_m", 0.0)), FORMAL_DECLARED_CLEANING_ENVELOPE_WIDTH_M, abs_tol=1e-9)
+            or not math.isclose(float(route_sanity.get("recommended_max_lane_spacing_m", 0.0)), FORMAL_CLEANING_LANE_SPACING_M, abs_tol=1e-9)
+            or not math.isclose(float(route_sanity.get("realized_lane_spacing_m", math.inf)), FORMAL_CLEANING_LANE_SPACING_M, abs_tol=1e-9)
         ):
             return self._finish(
                 False, "FAILED", {"error": "coverage_route_sanity_invalid"}, speed_profile
@@ -339,8 +345,9 @@ class FormalSavedMapCoverageExecutor(Node):
             "completed_swath_count": len(swaths),
             "planned_swath_length_m": length,
             "planned_coverage_fraction": min(
-                1.0, length * width / (len(geometry.free_cells) * geometry.raster_resolution_m ** 2)
+                1.0, length * FORMAL_CONTINUOUS_CLEANING_BAND_WIDTH_M / (len(geometry.free_cells) * geometry.raster_resolution_m ** 2)
             ),
+            "planned_coverage_metric_basis": "planning_route_coverage_proxy_not_actual_cleaned_area",
             "coverage_geometry_sha256": geometry.sha256,
             "planning_clearance_m": geometry.planning_clearance_m,
             "coverage_raster_resolution_m": geometry.raster_resolution_m,
@@ -370,6 +377,10 @@ class FormalSavedMapCoverageExecutor(Node):
             "ground_truth_used_for_control": False,
             "truth_topics_subscribed": [],
             "operation_width_m": FORMAL_OPERATION_WIDTH_M,
+            "planning_lane_spacing_m": FORMAL_CLEANING_LANE_SPACING_M,
+            "continuous_cleaning_band_width_m": FORMAL_CONTINUOUS_CLEANING_BAND_WIDTH_M,
+            "continuous_cleaning_lane_overlap_m": FORMAL_CLEANING_LANE_OVERLAP_M,
+            "declared_effective_cleaning_width_m": FORMAL_DECLARED_CLEANING_ENVELOPE_WIDTH_M,
             "operation_speed_profile": speed_profile.name,
             "maximum_linear_speed_mps": speed_profile.maximum_linear_speed_mps,
             "brush_disabled_on_exit": True,
@@ -387,6 +398,10 @@ class FormalSavedMapCoverageExecutor(Node):
             success=success,
             terminal_state=state,
             operation_width_m=FORMAL_OPERATION_WIDTH_M,
+            planning_lane_spacing_m=FORMAL_CLEANING_LANE_SPACING_M,
+            continuous_cleaning_band_width_m=FORMAL_CONTINUOUS_CLEANING_BAND_WIDTH_M,
+            continuous_cleaning_lane_overlap_m=FORMAL_CLEANING_LANE_OVERLAP_M,
+            declared_effective_cleaning_width_m=FORMAL_DECLARED_CLEANING_ENVELOPE_WIDTH_M,
             operation_speed_profile=speed_profile.name,
             maximum_linear_speed_mps=speed_profile.maximum_linear_speed_mps,
             planned_swath_count=int(report.get("planned_swath_count", 0)),

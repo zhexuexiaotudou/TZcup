@@ -13,6 +13,10 @@ import yaml
 
 from .map_lifecycle_core import (
     FORMAL_COVERAGE_STATIC_OBSTACLE_INFLATION_M,
+    FORMAL_CLEANING_LANE_OVERLAP_M,
+    FORMAL_CLEANING_LANE_SPACING_M,
+    FORMAL_CONTINUOUS_CLEANING_BAND_WIDTH_M,
+    FORMAL_DECLARED_CLEANING_ENVELOPE_WIDTH_M,
     MapLifecycleError,
     REQUIRED_SAVED_MAP_SUPPORT_FILES,
     _artifact_basename,
@@ -21,7 +25,11 @@ from .map_lifecycle_core import (
 )
 
 
-FORMAL_OPERATION_WIDTH_M = 1.32
+# Backward-compatible report/configuration field: the Coverage server calls
+# this operation width, but it is the lane pitch, not the 1.32 m mechanism
+# envelope and not the 0.620 m physical roller band.
+FORMAL_OPERATION_WIDTH_M = FORMAL_CLEANING_LANE_SPACING_M
+FORMAL_PLANNING_ROUTE_COVERAGE_FRACTION_MIN = 0.95
 MAPPING_SAFE_SPEED_PROFILE = "mapping_safe"
 DRY_CLEANING_SPEED_PROFILE = "dry_cleaning_competition_candidate"
 WET_PUDDLE_SPEED_PROFILE = "wet_puddle_recovery"
@@ -288,8 +296,8 @@ def validate_execution_parameters(
     max_speed_mps: float,
     speed_profile: FormalOperationSpeedProfile,
 ) -> None:
-    if not math.isclose(operation_width_m, FORMAL_OPERATION_WIDTH_M, abs_tol=1e-9):
-        raise SavedMapCoverageError("formal operation width must be exactly 1.32 m")
+    if not math.isclose(operation_width_m, FORMAL_CLEANING_LANE_SPACING_M, abs_tol=1e-9):
+        raise SavedMapCoverageError("formal planning lane spacing must be exactly 0.600 m")
     if not math.isclose(
         max_speed_mps, speed_profile.maximum_linear_speed_mps, abs_tol=1e-9
     ):
@@ -318,6 +326,8 @@ class ProductCoverageTelemetry:
     coverage_geometry_sha256: str | None = None
     planning_clearance_m: float | None = None
     operation_width_m: float = FORMAL_OPERATION_WIDTH_M
+    continuous_cleaning_band_width_m: float = FORMAL_CONTINUOUS_CLEANING_BAND_WIDTH_M
+    continuous_cleaning_lane_overlap_m: float = FORMAL_CLEANING_LANE_OVERLAP_M
     operation_speed_profile: str = MAPPING_SAFE_SPEED_PROFILE
     maximum_linear_speed_mps: float = FORMAL_MAX_LINEAR_SPEED_MPS
     raster_resolution_m: float = 0.25
@@ -328,7 +338,7 @@ class ProductCoverageTelemetry:
     brush_state_transitions: int = 0
     _last_odom_xy: tuple[float, float] | None = None
     _last_map_xy: tuple[float, float] | None = None
-    _covered_cells: set[tuple[int, int]] = field(default_factory=set)
+    _planning_proxy_cells: set[tuple[int, int]] = field(default_factory=set)
 
     def __post_init__(self) -> None:
         speed_profile = FormalOperationSpeedProfile(
@@ -337,6 +347,16 @@ class ProductCoverageTelemetry:
         validate_execution_parameters(
             self.operation_width_m, self.maximum_linear_speed_mps, speed_profile
         )
+        if not math.isclose(
+            self.continuous_cleaning_band_width_m,
+            FORMAL_CONTINUOUS_CLEANING_BAND_WIDTH_M,
+            abs_tol=1e-9,
+        ) or not math.isclose(
+            self.continuous_cleaning_lane_overlap_m,
+            FORMAL_CLEANING_LANE_OVERLAP_M,
+            abs_tol=1e-9,
+        ):
+            raise SavedMapCoverageError("continuous cleaning geometry differs from the frozen roller band")
         if not 0.0 < self.raster_resolution_m <= 0.25:
             raise SavedMapCoverageError("coverage evidence raster must be <=0.25 m")
         self._min_x = self.raster_origin_x if self.cleanable_cells is not None else min(point[0] for point in self.polygon)
@@ -396,14 +416,20 @@ class ProductCoverageTelemetry:
         if self.brush_state:
             for index in range(samples + 1):
                 ratio = index / samples
-                self._mark_disk(
+                self._mark_planning_centerline_disk(
                     previous[0] + (current[0] - previous[0]) * ratio,
                     previous[1] + (current[1] - previous[1]) * ratio,
                 )
         self._last_map_xy = current
 
-    def _mark_disk(self, x: float, y: float) -> None:
-        radius = self.operation_width_m / 2.0
+    def _mark_planning_centerline_disk(self, x: float, y: float) -> None:
+        """Mark a conservative planning proxy around the AMCL base estimate.
+
+        This has no per-tool pose or contact observation, so it must never be
+        presented as actual swept/cleaned area.  Actual cleaning is measured by
+        GroundDirtCleaningSystem plus formal_cleaning_geometry.
+        """
+        radius = self.continuous_cleaning_band_width_m / 2.0
         cell_radius = math.ceil(radius / self.raster_resolution_m)
         center_column = math.floor((x - self._min_x) / self.raster_resolution_m)
         center_row = math.floor((y - self._min_y) / self.raster_resolution_m)
@@ -424,11 +450,11 @@ class ProductCoverageTelemetry:
                         )
                     )
                 ):
-                    self._covered_cells.add((column, row))
+                    self._planning_proxy_cells.add((column, row))
 
     @property
-    def estimated_coverage_fraction(self) -> float:
-        return min(1.0, len(self._covered_cells) / self._field_cells)
+    def planning_proxy_coverage_fraction(self) -> float:
+        return min(1.0, len(self._planning_proxy_cells) / self._field_cells)
 
     def report(self) -> dict:
         return {
@@ -438,12 +464,17 @@ class ProductCoverageTelemetry:
             "brush_state_sample_count": self.brush_state_samples,
             "brush_state_source": "/brush_enabled_product_runtime",
             "brush_disabled_on_exit": not self.brush_state,
-            "estimated_covered_cells": len(self._covered_cells),
-            "estimated_field_cells": self._field_cells,
-            "estimated_coverage_fraction": self.estimated_coverage_fraction,
+            "planning_proxy_covered_cells": len(self._planning_proxy_cells),
+            "planning_proxy_field_cells": self._field_cells,
+            "planning_proxy_coverage_fraction": self.planning_proxy_coverage_fraction,
+            "coverage_metric_basis": "amcl_base_centerline_planning_proxy_not_actual_swept_area",
             "coverage_raster_resolution_m": self.raster_resolution_m,
             "coverage_geometry_sha256": self.coverage_geometry_sha256,
             "coverage_planning_clearance_m": self.planning_clearance_m,
+            "declared_effective_cleaning_width_m": FORMAL_DECLARED_CLEANING_ENVELOPE_WIDTH_M,
+            "continuous_cleaning_band_width_m": self.continuous_cleaning_band_width_m,
+            "continuous_cleaning_lane_overlap_m": self.continuous_cleaning_lane_overlap_m,
+            "planning_lane_spacing_m": self.operation_width_m,
             "coverage_pose_source": "amcl_pose_product_estimate",
             "operation_speed_profile": self.operation_speed_profile,
             "maximum_linear_speed_mps": self.maximum_linear_speed_mps,
@@ -457,12 +488,22 @@ def coverage_execution_passed(report: dict) -> bool:
         and report.get("terminal_state") == "COMPLETED"
         and report.get("ground_truth_used_for_control") is False
         and report.get("operation_width_m") == FORMAL_OPERATION_WIDTH_M
+        and report.get("planning_lane_spacing_m") == FORMAL_CLEANING_LANE_SPACING_M
+        and report.get("continuous_cleaning_band_width_m") == FORMAL_CONTINUOUS_CLEANING_BAND_WIDTH_M
+        and report.get("continuous_cleaning_lane_overlap_m") == FORMAL_CLEANING_LANE_OVERLAP_M
+        and report.get("declared_effective_cleaning_width_m") == FORMAL_DECLARED_CLEANING_ENVELOPE_WIDTH_M
         and report.get("operation_speed_profile")
         in {MAPPING_SAFE_SPEED_PROFILE, DRY_CLEANING_SPEED_PROFILE}
         and report.get("maximum_linear_speed_mps")
         in {FORMAL_MAX_LINEAR_SPEED_MPS, 1.0}
         and int(report.get("planned_swath_count", 0)) > 0
         and report.get("completed_swath_count") == report.get("planned_swath_count")
+        and report.get("planned_coverage_metric_basis")
+        == "planning_route_coverage_proxy_not_actual_cleaned_area"
+        and isinstance(report.get("planned_coverage_fraction"), (int, float))
+        and not isinstance(report.get("planned_coverage_fraction"), bool)
+        and float(report["planned_coverage_fraction"])
+        >= FORMAL_PLANNING_ROUTE_COVERAGE_FRACTION_MIN
         and isinstance(report.get("coverage_geometry_sha256"), str)
         and len(report["coverage_geometry_sha256"]) == 64
         and float(report.get("cleanable_area_m2", 0.0)) > 0.0

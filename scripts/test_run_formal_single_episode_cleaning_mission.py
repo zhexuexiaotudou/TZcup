@@ -135,8 +135,11 @@ def test_truth_subscription_boundary_is_collector_plus_fixed_recorder_only() -> 
     assert 'terminal_raw_gt_subscribers == [RAW_GROUND_TRUTH_ADAPTER_NODE]' in COLLECTOR
 
 
-def test_runner_attests_the_only_trusted_gt_recorder_before_operator_start() -> None:
+def test_runner_only_enables_a12_sidecar_for_explicit_a12_or_capture_request() -> None:
     for token in (
+        '--a12-capture) A12_CAPTURE_REQUESTED=1; shift ;;',
+        'if (( a12_execution_enabled || A12_CAPTURE_REQUESTED )); then',
+        'if (( a12_sidecar_enabled )); then',
         'A12_TRUSTED_GT_RECORDER_NODE="/a12_trusted_gt_recorder"',
         'formal_a12_single_execution_capture.py',
         '--bag-output "a12_execution.mcap"',
@@ -148,5 +151,8 @@ def test_runner_attests_the_only_trusted_gt_recorder_before_operator_start() -> 
         'A12_CAPTURE_SUPERVISOR_BLOCKED',
     ):
         assert token in RUNNER
-    assert RUNNER.index("a12_video_worker_ready.json") < RUNNER.index("ros2 topic pub --once /product_demo/operator_start")
-    assert RUNNER.index('wait "${A12_SUPERVISOR_PID}"') < RUNNER.index("aggregate_formal_single_episode_cleaning_mission.py")
+    sidecar_start = RUNNER.index("if (( a12_sidecar_enabled )); then", RUNNER.index("COLLECTOR_TRUSTED_GT_ARGS=()"))
+    sidecar_end = RUNNER.index("fi\n\n\"${FORMAL_RUNTIME_SESSION_PREFIX[@]}\" python3", sidecar_start)
+    assert sidecar_start < RUNNER.index("formal_a12_single_execution_capture.py") < sidecar_end
+    assert RUNNER.index("if (( a12_sidecar_enabled )); then", sidecar_end) < RUNNER.index("ros2 topic pub --once /product_demo/operator_start")
+    assert RUNNER.rindex('if (( a12_sidecar_enabled )); then') < RUNNER.index('wait "${A12_SUPERVISOR_PID}"') < RUNNER.index("aggregate_formal_single_episode_cleaning_mission.py")

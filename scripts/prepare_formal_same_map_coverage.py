@@ -9,8 +9,21 @@ import json
 import math
 import os
 from pathlib import Path
+import sys
 
 import yaml
+
+ROOT = Path(__file__).resolve().parents[1]
+sys_path = ROOT / "starter_ws/src/sanitation_formal_campus_integration"
+if str(sys_path) not in sys.path:
+    sys.path.insert(0, str(sys_path))
+
+from sanitation_formal_campus_integration.map_lifecycle_core import (
+    FORMAL_CLEANING_LANE_OVERLAP_M,
+    FORMAL_CLEANING_LANE_SPACING_M,
+    FORMAL_CONTINUOUS_CLEANING_BAND_WIDTH_M,
+    FORMAL_DECLARED_CLEANING_ENVELOPE_WIDTH_M,
+)
 
 
 class PreparationError(RuntimeError):
@@ -54,11 +67,18 @@ def _continuous_cleaning_lane_spacing(sweeps: dict) -> tuple[float, dict]:
     gaps = [[round(first[1], 6), round(second[0], 6)] for first, second in zip(ordered, ordered[1:])
             if second[0] > first[1]]
     continuous_width = intervals["central_roller"][1] - intervals["central_roller"][0]
-    spacing = round(continuous_width - 0.020, 6)
+    if not math.isclose(
+        continuous_width, FORMAL_CONTINUOUS_CLEANING_BAND_WIDTH_M, abs_tol=1e-9
+    ):
+        raise PreparationError("central roller continuous band must be exactly 0.620 m")
+    spacing = round(continuous_width - FORMAL_CLEANING_LANE_OVERLAP_M, 6)
+    if not math.isclose(spacing, FORMAL_CLEANING_LANE_SPACING_M, abs_tol=1e-9):
+        raise PreparationError("central roller lane spacing must be exactly 0.600 m")
     if spacing <= 0.0:
         raise PreparationError("continuous roller band cannot retain required overlap")
     return spacing, {"tool_intervals_y_m": intervals, "interior_gaps_y_m": gaps,
                      "continuous_band_width_m": round(continuous_width, 6),
+                     "continuous_band_overlap_m": FORMAL_CLEANING_LANE_OVERLAP_M,
                      "conservative_lane_spacing_m": spacing}
 
 
@@ -76,7 +96,9 @@ def prepare(mission_path: Path, motion_profile_path: Path) -> tuple[dict, dict]:
     declared_width = float(transverse.get("declared_effective_cleaning_width_m", 0.0))
     lane_spacing, transverse_geometry = _continuous_cleaning_lane_spacing(sweeps)
     footprint = cleaning.get("footprint_xy_m")
-    if declared_width <= 0.0 or not isinstance(footprint, list) or len(footprint) < 3:
+    if not math.isclose(
+        declared_width, FORMAL_DECLARED_CLEANING_ENVELOPE_WIDTH_M, abs_tol=1e-9
+    ) or not isinstance(footprint, list) or len(footprint) < 3:
         raise PreparationError("invalid cleaning width/footprint")
     points = [[float(value) for value in point] for point in footprint]
     if any(len(point) != 2 or not all(math.isfinite(value) for value in point) for point in points):

@@ -29,6 +29,8 @@ from sanitation_formal_campus_integration.nav2_mode_config import (
 )
 from sanitation_formal_campus_integration.saved_map_coverage_core import (
     DRY_CLEANING_SPEED_PROFILE,
+    FORMAL_CLEANING_LANE_SPACING_M,
+    FORMAL_DECLARED_CLEANING_ENVELOPE_WIDTH_M,
     FORMAL_MAX_LINEAR_SPEED_MPS,
     FORMAL_OPERATION_WIDTH_M,
     MAPPING_SAFE_SPEED_PROFILE,
@@ -97,13 +99,20 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
     speed_profile = load_formal_operation_speed_profile(
         speed_profile_file, requested_speed_profile
     )
-    nav2, cleaning_width = materialize_nav2_config(
+    nav2, declared_cleaning_envelope_width = materialize_nav2_config(
         base_params,
         motion_profile,
         clean_path_speed_mps=speed_profile.maximum_linear_speed_mps,
     )
+    if not math.isclose(
+        declared_cleaning_envelope_width,
+        FORMAL_DECLARED_CLEANING_ENVELOPE_WIDTH_M,
+        abs_tol=1e-9,
+    ):
+        raise RuntimeError("formal saved-map declared cleaning envelope must be exactly 1.32 m")
+    cleaning_width = FORMAL_CLEANING_LANE_SPACING_M
     if not math.isclose(cleaning_width, FORMAL_OPERATION_WIDTH_M, abs_tol=1e-9):
-        raise RuntimeError("formal saved-map cleaning width must be exactly 1.32 m")
+        raise RuntimeError("formal saved-map planning lane spacing must be exactly 0.600 m")
     smoother_speed = float(
         nav2["velocity_smoother"]["ros__parameters"]["max_velocity"][0]
     )

@@ -27,9 +27,17 @@ REQUIRED_SAVED_MAP_SUPPORT_FILES = frozenset({
 })
 MAPPING_POSE_SOURCE = "wheel_imu_ekf_lidar_scan_matching_gnss_consistency"
 MAXIMUM_SAVED_MAP_RESOLUTION_M = 0.10
+# The declared 1.32 m envelope includes disconnected side brushes.  It remains
+# relevant to vehicle clearance only.  Coverage planning and the product-side
+# sweep estimate use the central roller's continuous band and retain 20 mm
+# overlap between adjacent lanes.
+FORMAL_DECLARED_CLEANING_ENVELOPE_WIDTH_M = 1.32
+FORMAL_CONTINUOUS_CLEANING_BAND_WIDTH_M = 0.620
+FORMAL_CLEANING_LANE_OVERLAP_M = 0.020
+FORMAL_CLEANING_LANE_SPACING_M = 0.600
 # Frozen formal cleaning geometry: max deployed footprint radius (0.620, 0.695),
-# a 0.10 m safety margin and half the 1.32 m effective brush width, rounded up.
-FORMAL_COVERAGE_STATIC_OBSTACLE_INFLATION_M = math.ceil((math.hypot(0.620, 0.695) + 0.10 + 1.32 / 2.0) * 100.0) / 100.0
+# a 0.10 m safety margin and half the declared mechanism envelope, rounded up.
+FORMAL_COVERAGE_STATIC_OBSTACLE_INFLATION_M = math.ceil((math.hypot(0.620, 0.695) + 0.10 + FORMAL_DECLARED_CLEANING_ENVELOPE_WIDTH_M / 2.0) * 100.0) / 100.0
 MAXIMUM_COVERAGE_RECTANGLES = 4096
 
 

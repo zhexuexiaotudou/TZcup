@@ -105,9 +105,9 @@ def _fixture(tmp_path: Path) -> argparse.Namespace:
         "coverage_geometry_sha256": _sha(map_root / "coverage_geometry.yaml"),
         "coverage_planning_clearance_m": 1.70,
         "coverage_raster_resolution_m": 0.1,
-        "estimated_field_cells": 2_000_000,
-        "estimated_covered_cells": 1_950_000,
-        "estimated_coverage_fraction": 0.975,
+        "planning_proxy_field_cells": 2_000_000,
+        "planning_proxy_covered_cells": 1_950_000,
+        "planning_proxy_coverage_fraction": 0.975,
         "coverage_first_brush_enabled_monotonic_s": 100.0,
         "coverage_terminal_monotonic_s": 19_600.0,
         "coverage_actual_duration_sec": 19_500.0,
@@ -124,9 +124,15 @@ def _fixture(tmp_path: Path) -> argparse.Namespace:
         "schema_version": 1, "success": True, "terminal_state": "COMPLETED",
         "ground_truth_used_for_control": False, "brush_disabled_on_exit": True,
         "operation_width_m": 0.60,
+        "planning_lane_spacing_m": 0.60,
+        "continuous_cleaning_band_width_m": 0.620,
+        "continuous_cleaning_lane_overlap_m": 0.020,
+        "declared_effective_cleaning_width_m": 1.32,
         "operation_speed_profile": "dry_cleaning_competition_candidate",
         "maximum_linear_speed_mps": 1.0,
         "planned_swath_count": 100, "completed_swath_count": 100,
+        "planned_coverage_fraction": 0.95,
+        "planned_coverage_metric_basis": "planning_route_coverage_proxy_not_actual_cleaned_area",
         "planned_swath_length_m": 1100.0,
         "coverage_geometry_sha256": _sha(map_root / "coverage_geometry.yaml"),
         "planning_clearance_m": 1.70,
@@ -250,14 +256,15 @@ def test_generate_and_revalidate_complete_same_map_baseline(tmp_path: Path) -> N
     assert report["successful_distance_m"] == 1200.
     assert report["planner_comparison"]["candidate_planner"] == "q_learning"
     assert report["return_distance_included"] is False
-    assert report["competition_efficiency"] == {
+    assert report["planning_proxy_efficiency"] == {
         "threshold_m2_h": 3500.0,
-        "covered_area_m2": pytest.approx(19500.0),
+        "planning_proxy_area_m2": pytest.approx(19500.0),
         "actual_duration_sec": 19500.0,
-        "measured_net_efficiency_m2_h": pytest.approx(3600.0),
-        "recomputed_net_efficiency_m2_h": pytest.approx(3600.0),
+        "planning_proxy_efficiency_m2_h": pytest.approx(3600.0),
         "return_distance_included": False,
-        "passed": True,
+        "metric_basis": "amcl_base_centerline_planning_proxy_not_actual_swept_area",
+        "competition_metric_status": "NOT_MEASURED_BY_SAVED_MAP_LIFECYCLE",
+        "passed": False,
     }
     assert validate(args.output, args.session, args.snapshot) == report
 
@@ -507,19 +514,20 @@ def test_rejects_runtime_evidence_that_predates_session(tmp_path: Path) -> None:
         generate(args)
 
 
-def test_rejects_competition_efficiency_below_threshold(tmp_path: Path) -> None:
+def test_planning_proxy_efficiency_is_not_a_competition_acceptance_metric(tmp_path: Path) -> None:
     args = _fixture(tmp_path)
     _mutate_cleaning(args.cleaning_runtime, "coverage_terminal_monotonic_s", 20_162.0)
     _mutate_cleaning(args.cleaning_runtime, "coverage_actual_duration_sec", 20_062.0)
-    with pytest.raises(BaselineError, match="below 3500"):
-        generate(args)
+    report = generate(args)
+    assert report["planning_proxy_efficiency"]["competition_metric_status"] == "NOT_MEASURED_BY_SAVED_MAP_LIFECYCLE"
+    assert report["planning_proxy_efficiency"]["passed"] is False
 
 
 @pytest.mark.parametrize(
     ("key", "value", "message"),
     [
-        ("estimated_covered_cells", True, "positive integer JSON scalar"),
-        ("estimated_covered_cells", "1950000", "positive integer JSON scalar"),
+        ("planning_proxy_covered_cells", True, "positive integer JSON scalar"),
+        ("planning_proxy_covered_cells", "1950000", "positive integer JSON scalar"),
         ("coverage_actual_duration_sec", float("nan"), "must be finite"),
         ("trajectory_total_distance_m", float("inf"), "must be finite"),
     ],
@@ -554,7 +562,7 @@ def test_rejects_mismatched_live_duration_or_geometry_binding(tmp_path: Path) ->
         ("coverage_runtime", "cleanable_area_m2", 1.0, "cleanable_area_m2"),
         ("cleaning_runtime", "coverage_planning_clearance_m", 1.69, "planning_clearance_m"),
         ("cleaning_runtime", "coverage_raster_resolution_m", 0.2, "raster_resolution_m"),
-        ("cleaning_runtime", "estimated_field_cells", 1, "reachable_cleanable_cells"),
+        ("cleaning_runtime", "planning_proxy_field_cells", 1, "reachable_cleanable_cells"),
     ],
 )
 def test_rejects_schema1_or_cleaning_telemetry_geometry_mismatch(

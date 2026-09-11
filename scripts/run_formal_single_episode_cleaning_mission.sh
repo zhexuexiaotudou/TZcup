@@ -26,6 +26,7 @@ MULTISITE_MAP_ID=""
 MULTISITE_MISSION_INDEX=""
 A12_SCENARIO=""
 A12_MATRIX_SEED=""
+A12_CAPTURE_REQUESTED=0
 
 while (($#)); do
   case "$1" in
@@ -47,6 +48,7 @@ while (($#)); do
     --multisite-mission-index) MULTISITE_MISSION_INDEX="$2"; shift 2 ;;
     --a12-scenario) A12_SCENARIO="$2"; shift 2 ;;
     --a12-seed) A12_MATRIX_SEED="$2"; shift 2 ;;
+    --a12-capture) A12_CAPTURE_REQUESTED=1; shift ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
 done
@@ -74,6 +76,10 @@ if [[ -n "${A12_SCENARIO}" || -n "${A12_MATRIX_SEED}" ]]; then
   [[ -n "${A12_SCENARIO}" && -n "${A12_MATRIX_SEED}" ]] || { echo "--a12-scenario and --a12-seed are required together" >&2; exit 2; }
   [[ "${A12_MATRIX_SEED}" =~ ^[0-9]+$ ]] || { echo "A12 matrix seed must be a nonnegative integer" >&2; exit 2; }
   a12_execution_enabled=1
+fi
+a12_sidecar_enabled=0
+if (( a12_execution_enabled || A12_CAPTURE_REQUESTED )); then
+  a12_sidecar_enabled=1
 fi
 COLLECTOR_MULTISITE_ARGS=()
 if (( multisite_enabled )); then
@@ -269,36 +275,41 @@ PIDS+=("${GAZEBO_LAUNCH_PID}")
   --ros-args -r /model/tzcup_formal_sanitation_vehicle/dry_bin/status_json:=/evaluation/single_episode/dry_bin/status_json \
   >"${OUTPUT}/dry_bin_evaluator_bridge.log" 2>&1 & PIDS+=("$!")
 
-# One private supervisor owns the fixed trusted recorder and observation-only
-# video worker.  The collector receives an OS-observed identity from its fresh
-# readiness object, never recorder PID/PGID supplied on this runner's CLI.
-A12_TRUSTED_GT_RECORDER_NODE="/a12_trusted_gt_recorder"
-A12_BAG_DIR="${OUTPUT}/a12_execution.mcap"
-A12_CAPTURE_VIDEO="a12_execution.mp4"
-A12_CAPTURE_READY="a12_capture_ready.json"
-A12_VIDEO_WORKER_READY="a12_video_worker_ready.json"
-A12_SUPERVISOR_STATUS="a12_capture_supervisor_status.json"
-[[ ! -e "${A12_BAG_DIR}" && ! -e "${OUTPUT}/${A12_CAPTURE_VIDEO}" && ! -e "${OUTPUT}/${A12_CAPTURE_VIDEO}.json" && ! -e "${OUTPUT}/${A12_CAPTURE_READY}" && ! -e "${OUTPUT}/${A12_VIDEO_WORKER_READY}" && ! -e "${OUTPUT}/${A12_SUPERVISOR_STATUS}" ]] || {
-  echo "refusing to overwrite retained A12 capture evidence" >&2
-  exit 3
-}
-python3 "${ROOT}/scripts/formal_a12_single_execution_capture.py" \
-  --run-root "${OUTPUT}" --output "${A12_CAPTURE_VIDEO}" \
-  --ready-file "${A12_CAPTURE_READY}" --video-ready-file "${A12_VIDEO_WORKER_READY}" \
-  --session-status "${SESSION_STATUS}" --runtime-id "${RUNTIME_ID}" \
-  --bag-output "a12_execution.mcap" \
-  --collector-raw "raw_collection.json" --source-metrics "a12_source_metrics.json" \
-  --execution-receipt "a12_execution_receipt.json" --supervisor-status-file "${A12_SUPERVISOR_STATUS}" \
-  >"${OUTPUT}/a12_capture_supervisor.log" 2>&1 &
-A12_SUPERVISOR_PID=$!
-PIDS+=("${A12_SUPERVISOR_PID}")
-for ((attempt=0; attempt<240; attempt++)); do
-  [[ -f "${OUTPUT}/${A12_CAPTURE_READY}" ]] && break
-  kill -0 "${A12_SUPERVISOR_PID}" 2>/dev/null || { echo "A12 capture supervisor exited before readiness" >&2; exit 4; }
-  sleep 1
-done
-[[ -f "${OUTPUT}/${A12_CAPTURE_READY}" ]] || { echo "A12 capture supervisor did not establish readiness" >&2; exit 4; }
-readarray -t A12_RECORDER_IDENTITY < <(python3 - "${OUTPUT}/${A12_CAPTURE_READY}" <<'PY'
+COLLECTOR_TRUSTED_GT_ARGS=()
+# The MCAP/MP4 sidecar is evidence for an explicit A12 execution, or an
+# operator-requested capture.  A competition_sim_only core run does not start
+# the A12 supervisor and therefore does not inherit its blocked sidecar state.
+if (( a12_sidecar_enabled )); then
+  # One private supervisor owns the fixed trusted recorder and observation-only
+  # video worker.  The collector receives an OS-observed identity from its fresh
+  # readiness object, never recorder PID/PGID supplied on this runner's CLI.
+  A12_TRUSTED_GT_RECORDER_NODE="/a12_trusted_gt_recorder"
+  A12_BAG_DIR="${OUTPUT}/a12_execution.mcap"
+  A12_CAPTURE_VIDEO="a12_execution.mp4"
+  A12_CAPTURE_READY="a12_capture_ready.json"
+  A12_VIDEO_WORKER_READY="a12_video_worker_ready.json"
+  A12_SUPERVISOR_STATUS="a12_capture_supervisor_status.json"
+  [[ ! -e "${A12_BAG_DIR}" && ! -e "${OUTPUT}/${A12_CAPTURE_VIDEO}" && ! -e "${OUTPUT}/${A12_CAPTURE_VIDEO}.json" && ! -e "${OUTPUT}/${A12_CAPTURE_READY}" && ! -e "${OUTPUT}/${A12_VIDEO_WORKER_READY}" && ! -e "${OUTPUT}/${A12_SUPERVISOR_STATUS}" ]] || {
+    echo "refusing to overwrite retained A12 capture evidence" >&2
+    exit 3
+  }
+  python3 "${ROOT}/scripts/formal_a12_single_execution_capture.py" \
+    --run-root "${OUTPUT}" --output "${A12_CAPTURE_VIDEO}" \
+    --ready-file "${A12_CAPTURE_READY}" --video-ready-file "${A12_VIDEO_WORKER_READY}" \
+    --session-status "${SESSION_STATUS}" --runtime-id "${RUNTIME_ID}" \
+    --bag-output "a12_execution.mcap" \
+    --collector-raw "raw_collection.json" --source-metrics "a12_source_metrics.json" \
+    --execution-receipt "a12_execution_receipt.json" --supervisor-status-file "${A12_SUPERVISOR_STATUS}" \
+    >"${OUTPUT}/a12_capture_supervisor.log" 2>&1 &
+  A12_SUPERVISOR_PID=$!
+  PIDS+=("${A12_SUPERVISOR_PID}")
+  for ((attempt=0; attempt<240; attempt++)); do
+    [[ -f "${OUTPUT}/${A12_CAPTURE_READY}" ]] && break
+    kill -0 "${A12_SUPERVISOR_PID}" 2>/dev/null || { echo "A12 capture supervisor exited before readiness" >&2; exit 4; }
+    sleep 1
+  done
+  [[ -f "${OUTPUT}/${A12_CAPTURE_READY}" ]] || { echo "A12 capture supervisor did not establish readiness" >&2; exit 4; }
+  readarray -t A12_RECORDER_IDENTITY < <(python3 - "${OUTPUT}/${A12_CAPTURE_READY}" <<'PY'
 import json, sys
 row=json.load(open(sys.argv[1], encoding='utf-8'))
 recorder=row.get('trusted_gt_recorder', {})
@@ -310,12 +321,13 @@ for key in ('pid', 'pgid'):
 print(recorder['pid']); print(recorder['pgid'])
 PY
 )
-[[ "${#A12_RECORDER_IDENTITY[@]}" == 2 ]] || { echo "invalid A12 recorder identity" >&2; exit 4; }
-COLLECTOR_TRUSTED_GT_ARGS=(
-  --trusted-gt-recorder-node "${A12_TRUSTED_GT_RECORDER_NODE}"
-  --trusted-gt-recorder-pid "${A12_RECORDER_IDENTITY[0]}"
-  --trusted-gt-recorder-pgid "${A12_RECORDER_IDENTITY[1]}"
-)
+  [[ "${#A12_RECORDER_IDENTITY[@]}" == 2 ]] || { echo "invalid A12 recorder identity" >&2; exit 4; }
+  COLLECTOR_TRUSTED_GT_ARGS=(
+    --trusted-gt-recorder-node "${A12_TRUSTED_GT_RECORDER_NODE}"
+    --trusted-gt-recorder-pid "${A12_RECORDER_IDENTITY[0]}"
+    --trusted-gt-recorder-pgid "${A12_RECORDER_IDENTITY[1]}"
+  )
+fi
 
 "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" python3 "${ROOT}/scripts/collect_formal_single_episode_cleaning_mission.py" \
   --session-id "${SESSION_ID}" --episode-id "${EPISODE_ID}" --episode-seed "${EPISODE_SEED}" \
@@ -349,28 +361,32 @@ for ((attempt=0; attempt<240; attempt++)); do
 done
 [[ -f "${OUTPUT}/collector_ready.json" ]] || { echo "collector did not establish fail-closed pre-start state" >&2; exit 4; }
 
-# Require the video observer to have attached to the live product graph before
-# the sole operator-start write.
-for ((attempt=0; attempt<240; attempt++)); do
-  [[ -f "${OUTPUT}/${A12_VIDEO_WORKER_READY}" ]] && break
-  kill -0 "${A12_SUPERVISOR_PID}" 2>/dev/null || { echo "A12 capture supervisor exited before video readiness" >&2; exit 4; }
-  sleep 1
-done
-[[ -f "${OUTPUT}/${A12_VIDEO_WORKER_READY}" ]] || { echo "A12 capture did not establish fail-closed pre-start state" >&2; exit 4; }
+if (( a12_sidecar_enabled )); then
+  # Require the video observer to have attached to the live product graph before
+  # the sole operator-start write.
+  for ((attempt=0; attempt<240; attempt++)); do
+    [[ -f "${OUTPUT}/${A12_VIDEO_WORKER_READY}" ]] && break
+    kill -0 "${A12_SUPERVISOR_PID}" 2>/dev/null || { echo "A12 capture supervisor exited before video readiness" >&2; exit 4; }
+    sleep 1
+  done
+  [[ -f "${OUTPUT}/${A12_VIDEO_WORKER_READY}" ]] || { echo "A12 capture did not establish fail-closed pre-start state" >&2; exit 4; }
+fi
 
 # The evaluator never commands actuators or teleports the robot. This public
 # product operator gate is the only mission-start write.
 ros2 topic pub --once /product_demo/operator_start std_msgs/msg/Bool '{data: true}'
 wait "${COLLECTOR_PID}"
-wait "${A12_SUPERVISOR_PID}"
-python3 - "${OUTPUT}/${A12_SUPERVISOR_STATUS}" <<'PY'
+if (( a12_sidecar_enabled )); then
+  wait "${A12_SUPERVISOR_PID}"
+  python3 - "${OUTPUT}/${A12_SUPERVISOR_STATUS}" <<'PY'
 import json, sys
 row=json.load(open(sys.argv[1], encoding='utf-8'))
 if row.get('status') != 'A12_CAPTURE_SUPERVISOR_BLOCKED' or row.get('nonfatal_sidecar_blocked') is not True:
     raise SystemExit('A12 supervisor did not retain an explicit nonfatal BLOCKED sidecar status')
 print('A12 capture sidecar retained as BLOCKED pending canonical source-metrics/finalizer')
 PY
-[[ -f "${A12_BAG_DIR}/metadata.yaml" ]] || { echo "A12 recorder did not finalize MCAP metadata" >&2; exit 4; }
+  [[ -f "${A12_BAG_DIR}/metadata.yaml" ]] || { echo "A12 recorder did not finalize MCAP metadata" >&2; exit 4; }
+fi
 
 python3 "${ROOT}/scripts/finalize_product_capture_rescore.py" \
   --capture-root "${PRODUCT_CAPTURE_ROOT}" --public-manifest "${EPISODE_MANIFEST}" \

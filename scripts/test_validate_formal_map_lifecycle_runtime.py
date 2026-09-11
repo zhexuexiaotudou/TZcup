@@ -158,11 +158,17 @@ def test_validator_passes_only_complete_real_runtime_contract(tmp_path, monkeypa
             "success": True,
             "terminal_state": "COMPLETED",
             "ground_truth_used_for_control": False,
-            "operation_width_m": 1.32,
+                "operation_width_m": 0.60,
+                "planning_lane_spacing_m": 0.60,
+                "continuous_cleaning_band_width_m": 0.620,
+                "continuous_cleaning_lane_overlap_m": 0.020,
+                "declared_effective_cleaning_width_m": 1.32,
             "operation_speed_profile": "dry_cleaning_competition_candidate",
             "maximum_linear_speed_mps": 1.0,
             "planned_swath_count": 3,
                 "completed_swath_count": 3,
+                "planned_coverage_fraction": 0.95,
+                "planned_coverage_metric_basis": "planning_route_coverage_proxy_not_actual_cleaned_area",
                 "coverage_geometry_sha256": "0" * 64,
                 "cleanable_area_m2": 1.0,
                 "return_home": {"success": True, "goal_frame_id": "map", "final_cmd_vel_zero": True, "brush_control_released": True, "coverage_control_released": True},
@@ -173,7 +179,7 @@ def test_validator_passes_only_complete_real_runtime_contract(tmp_path, monkeypa
         "brush_state_transitions": 4,
         "brush_state_source": "/brush_enabled_product_runtime",
         "brush_disabled_on_exit": True,
-        "estimated_coverage_fraction": 0.95,
+        "planning_proxy_coverage_fraction": 0.95,
     })
     _seal_restart(root, mapping, cleaning)
     monkeypatch.setattr(MODULE, "_saved_pgm_quality_valid", lambda *_: True)
@@ -236,6 +242,16 @@ def test_validator_passes_only_complete_real_runtime_contract(tmp_path, monkeypa
         assert failed["passed"] is False
         assert failed["checks"]["saved_map_cleaning_runtime_passed"] is False
 
+    invalid_cleaning = copy.deepcopy(valid_cleaning)
+    invalid_cleaning["coverage_execution_report"]["planned_coverage_fraction"] = 0.949999
+    failed = MODULE.validate(
+        root,
+        mapping,
+        _write(tmp_path / "cleaning-short-route.json", invalid_cleaning),
+    )
+    assert failed["passed"] is False
+    assert failed["checks"]["saved_map_cleaning_runtime_passed"] is False
+
 
 @pytest.mark.parametrize(
     ("field", "value"),
@@ -246,7 +262,6 @@ def test_validator_passes_only_complete_real_runtime_contract(tmp_path, monkeypa
         ("brush_state_sample_count", 0),
         ("brush_state_transitions", 0),
         ("brush_disabled_on_exit", False),
-        ("estimated_coverage_fraction", 0.949999),
     ),
 )
 def test_cleaning_aggregate_fails_closed_without_real_coverage_evidence(
@@ -321,7 +336,7 @@ def test_cleaning_aggregate_fails_closed_without_real_coverage_evidence(
         "brush_state_transitions": 4,
         "brush_state_source": "/brush_enabled_product_runtime",
         "brush_disabled_on_exit": True,
-        "estimated_coverage_fraction": 0.95,
+        "planning_proxy_coverage_fraction": 0.95,
     }
     cleaning_value = copy.deepcopy(cleaning_value)
     cleaning_value[field] = value

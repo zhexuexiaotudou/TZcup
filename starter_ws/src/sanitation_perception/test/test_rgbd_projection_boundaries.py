@@ -119,8 +119,10 @@ def test_rgbd_context_accepts_registered_and_latched_calibration():
 def test_ros_rgbd_callback_validates_context_before_inference():
     source = (Path(__file__).resolve().parents[1] / "sanitation_perception" / "pc_open_vocab_adapter.py").read_text(encoding="utf-8")
     callback = source.split("def _on_rgbd(", 1)[1].split("def _diagnostic(", 1)[0]
-    assert callback.index("validate_rgbd_context(") < callback.index("self.detector.infer(")
-    assert callback.index("require_valid_depth(depth)") < callback.index("self.detector.infer(")
+    assert callback.index("validate_rgbd_context(") < callback.index("self._infer(")
+    inference = source.split("def _infer(", 1)[1].split("def _due(", 1)[0]
+    assert "self.detector.infer(rgb)" in inference
+    assert callback.index("require_valid_depth(depth)") < callback.index("self._infer(rgb)")
 
 
 @pytest.mark.parametrize("invalid", [0.0, -1.0, float("nan"), float("inf"), 100.0])

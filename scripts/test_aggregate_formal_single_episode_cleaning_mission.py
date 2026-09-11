@@ -186,9 +186,9 @@ def build_raw(tmp_path: Path) -> Path:
         "coverage_geometry_sha256": sha256_file(saved_map / "coverage_geometry.yaml"),
         "coverage_planning_clearance_m": 1.70,
         "coverage_raster_resolution_m": 0.1,
-        "estimated_field_cells": 2_000_000,
-        "estimated_covered_cells": 1_950_000,
-        "estimated_coverage_fraction": 0.975,
+        "planning_proxy_field_cells": 2_000_000,
+        "planning_proxy_covered_cells": 1_950_000,
+        "planning_proxy_coverage_fraction": 0.975,
         "coverage_first_brush_enabled_monotonic_s": 100.0,
         "coverage_terminal_monotonic_s": 19_600.0,
         "coverage_actual_duration_sec": 19_500.0,
@@ -204,10 +204,16 @@ def build_raw(tmp_path: Path) -> Path:
     coverage = _write(tmp_path / "coverage.json", {
         "schema_version": 1, "success": True, "terminal_state": "COMPLETED",
         "ground_truth_used_for_control": False, "brush_disabled_on_exit": True,
-        "operation_width_m": 1.32,
+        "operation_width_m": 0.60,
+        "planning_lane_spacing_m": 0.60,
+        "continuous_cleaning_band_width_m": 0.620,
+        "continuous_cleaning_lane_overlap_m": 0.020,
+        "declared_effective_cleaning_width_m": 1.32,
         "operation_speed_profile": "dry_cleaning_competition_candidate",
         "maximum_linear_speed_mps": 1.0,
         "planned_swath_count": 100, "completed_swath_count": 100,
+        "planned_coverage_fraction": 0.95,
+        "planned_coverage_metric_basis": "planning_route_coverage_proxy_not_actual_cleaned_area",
         "planned_swath_length_m": 980.0,
         "coverage_geometry_sha256": sha256_file(saved_map / "coverage_geometry.yaml"),
         "planning_clearance_m": 1.70,
@@ -337,14 +343,15 @@ def test_aggregate_one_live_run_has_manifest_derived_and_delta_evidence(tmp_path
     result = aggregate(build_raw(tmp_path))
     assert result["field"]["source"] == "episode.public.field"
     assert result["planning"]["planner"] == "q_learning"
-    assert result["planning"]["same_map_full_coverage_efficiency"] == {
+    assert result["planning"]["same_map_planning_proxy_efficiency"] == {
         "threshold_m2_h": 3500.0,
-        "covered_area_m2": pytest.approx(19500.0),
+        "planning_proxy_area_m2": pytest.approx(19500.0),
         "actual_duration_sec": 19500.0,
-        "measured_net_efficiency_m2_h": pytest.approx(3600.0),
-        "recomputed_net_efficiency_m2_h": pytest.approx(3600.0),
+        "planning_proxy_efficiency_m2_h": pytest.approx(3600.0),
         "return_distance_included": False,
-        "passed": True,
+        "metric_basis": "amcl_base_centerline_planning_proxy_not_actual_swept_area",
+        "competition_metric_status": "NOT_MEASURED_BY_SAVED_MAP_LIFECYCLE",
+        "passed": False,
     }
     assert result["discrete_litter"]["episode_target_ids"] == result["discrete_litter"]["successful_target_ids"]
     assert result["water_recovery"]["tank_mass_increment_kg"] == pytest.approx(1.92)
@@ -449,7 +456,7 @@ def test_rejects_tampered_same_map_competition_efficiency(tmp_path: Path) -> Non
     raw = json.loads(path.read_text())
     baseline_path = Path(raw["input_binding"]["artifacts"]["same_map_baseline"]["path"])
     baseline = json.loads(baseline_path.read_text())
-    baseline["competition_efficiency"]["measured_net_efficiency_m2_h"] = 3499.0
+    baseline["planning_proxy_efficiency"]["planning_proxy_efficiency_m2_h"] = 3499.0
     _write(baseline_path, baseline)
     with pytest.raises(AggregateError, match="input hash mismatch"):
         aggregate(path)

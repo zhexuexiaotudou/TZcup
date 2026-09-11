@@ -151,7 +151,8 @@ def test_saved_map_coverage_is_real_product_action_execution_with_fixed_envelope
     ).read_text(encoding="utf-8")
     assert "<exec_depend>action_msgs</exec_depend>" in package_manifest
     assert 'coverage_parameters["operation_width"] = cleaning_width' in launch
-    assert "formal saved-map cleaning width must be exactly 1.32 m" in launch
+    assert "formal saved-map declared cleaning envelope must be exactly 1.32 m" in launch
+    assert "formal saved-map planning lane spacing must be exactly 0.600 m" in launch
     assert "formal saved-map maximum linear speed disagrees with profile" in launch
     assert "default_value=DRY_CLEANING_SPEED_PROFILE" in launch
     assert 'executable="formal-saved-map-coverage-executor"' in launch

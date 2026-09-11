@@ -55,6 +55,7 @@ def test_prepared_probe_and_server_share_real_cleaning_width(tmp_path: Path) -> 
     assert probe["declared_effective_cleaning_width_m"] == pytest.approx(1.32)
     transverse = probe["transverse_cleaning_geometry"]
     assert transverse["continuous_band_width_m"] == pytest.approx(0.62)
+    assert transverse["continuous_band_overlap_m"] == pytest.approx(0.02)
     assert transverse["interior_gaps_y_m"] == [[-0.395, -0.31], [0.31, 0.395]]
     assert params["robot_width"] == pytest.approx(1.39)
     assert probe["planning_swath_spacing_m"] <= probe["operation_width_m"]

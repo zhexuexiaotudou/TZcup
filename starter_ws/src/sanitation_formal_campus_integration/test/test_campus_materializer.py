@@ -200,7 +200,11 @@ def test_materializes_consistent_public_only_maps_and_formal_mission(tmp_path):
     assert mission["robot_footprint"] == (
         profile["motion_footprints"]["cleaning_deployed"]["footprint_xy_m"]
     )
-    assert mission["operation_width_m"] == pytest.approx(1.32)
+    assert mission["operation_width_m"] == pytest.approx(0.60)
+    assert mission["planning_swath_spacing_m"] == pytest.approx(0.60)
+    assert mission["continuous_cleaning_band_width_m"] == pytest.approx(0.620)
+    assert mission["continuous_cleaning_lane_overlap_m"] == pytest.approx(0.020)
+    assert mission["declared_effective_cleaning_width_m"] == pytest.approx(1.32)
     assert mission["kinematic_model"] == "four_wheel_skid_steer"
     assert mission["planning_kinematic_constraint"] == (
         "curvature_limited_reference_path_for_skid_steer"
@@ -219,7 +223,8 @@ def test_materializes_consistent_public_only_maps_and_formal_mission(tmp_path):
         ]
     )
     assert mission["headland"]["width_m"] == pytest.approx(
-        cleaning_radius + mission["safety_margin_m"] + mission["operation_width_m"] / 2.0
+        cleaning_radius + mission["safety_margin_m"]
+        + mission["declared_effective_cleaning_width_m"] / 2.0
     )
 
     report = yaml.safe_load(artifacts.contract_report.read_text(encoding="utf-8"))
