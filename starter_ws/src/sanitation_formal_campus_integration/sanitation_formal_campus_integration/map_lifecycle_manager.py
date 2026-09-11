@@ -18,6 +18,7 @@ import yaml
 from .map_lifecycle_core import (
     MAPPING_POSE_SOURCE,
     MapLifecycleError,
+    assess_saved_pgm_observation,
     assess_grid_observation,
     load_campus_map_contract,
     materialize_saved_map_coverage_geometry,
@@ -52,6 +53,10 @@ class FormalMapLifecycleManager(Node):
         self.declare_parameter("observation_threshold", 0.95)
         self.declare_parameter("stable_samples_required", 3)
         self.declare_parameter("quality_period_sec", 5.0)
+        # SLAM publishes every 2 s; allow three 5 s quality periods, never replay.
+        # EKF/navsat run at 50/20 Hz; 5 s is a conservative hard stale ceiling.
+        self.declare_parameter("map_max_age_sec", 15.0)
+        self.declare_parameter("odometry_max_age_sec", 5.0)
         self.declare_parameter("fixed_start_position_tolerance_m", 0.50)
         self.declare_parameter("fixed_start_yaw_tolerance_rad", 0.35)
         self.declare_parameter("gnss_odometry_consistency_tolerance_m", 2.0)
@@ -60,6 +65,17 @@ class FormalMapLifecycleManager(Node):
             "mapping_pose_source",
             MAPPING_POSE_SOURCE,
         )
+        threshold = float(self.get_parameter("observation_threshold").value)
+        samples = self.get_parameter("stable_samples_required").value
+        if not 0.95 <= threshold <= 1.0 or type(samples) is not int or samples < 3:
+            raise MapLifecycleError("formal mapping requires threshold >= 0.95 and >= 3 samples")
+        for name in ("quality_period_sec", "map_max_age_sec", "odometry_max_age_sec"):
+            value = float(self.get_parameter(name).value)
+            if not math.isfinite(value) or value <= 0:
+                raise MapLifecycleError(f"{name} must be positive and finite")
+        for name, ceiling in (("map_max_age_sec", 15.0), ("odometry_max_age_sec", 5.0)):
+            if float(self.get_parameter(name).value) > ceiling:
+                raise MapLifecycleError(f"{name} cannot exceed {ceiling} seconds")
         self._mapping_pose_source = str(
             self.get_parameter("mapping_pose_source").value
         )
@@ -105,6 +121,13 @@ class FormalMapLifecycleManager(Node):
         self._start_checked = False
         self._latest_odom_xy: tuple[float, float] | None = None
         self._latest_gps_xy: tuple[float, float] | None = None
+        self._map_received_at: float | None = None
+        self._odom_received_at: float | None = None
+        self._gps_received_at: float | None = None
+        self._odom_stamp_ns: int | None = None
+        self._gps_stamp_ns: int | None = None
+        self._map_stamp_ns: int | None = None
+        self._consumed_map_stamp_ns: int | None = None
         self._stable = 0
         self._saving = False
         self._finished = False
@@ -166,11 +189,55 @@ class FormalMapLifecycleManager(Node):
         flag.data = ready
         self._ready.publish(flag)
 
+    def _valid_source_header(self, message, stream: str, frame: str, maximum_age: float) -> bool:
+        stamp = message.header.stamp
+        stamp_ns = stamp.sec * 1_000_000_000 + stamp.nanosec
+        previous = getattr(self, f"_{stream}_stamp_ns")
+        age = (self.get_clock().now().nanoseconds - stamp_ns) / 1e9
+        valid = (
+            message.header.frame_id == frame and stamp.sec >= 0
+            and 0 <= stamp.nanosec < 1_000_000_000 and stamp_ns > 0
+            and (previous is None or stamp_ns > previous)
+            and 0 <= age <= maximum_age
+        )
+        if valid:
+            setattr(self, f"_{stream}_stamp_ns", stamp_ns)
+        return valid
+
+    def _inputs_fresh(self, now: float) -> bool:
+        source_now = self.get_clock().now().nanoseconds
+        for stream, parameter, ceiling in (
+            ("map", "map_max_age_sec", 15.0),
+            ("odom", "odometry_max_age_sec", 5.0),
+            ("gps", "odometry_max_age_sec", 5.0),
+        ):
+            maximum = float(self.get_parameter(parameter).value)
+            received = getattr(self, f"_{stream}_received_at")
+            stamp = getattr(self, f"_{stream}_stamp_ns")
+            if (not 0 < maximum <= ceiling or received is None or stamp is None
+                    or not 0 <= now - received <= maximum
+                    or not 0 <= (source_now - stamp) / 1e9 <= maximum):
+                return False
+        return True
+
     def _on_odom(self, message: Odometry) -> None:
         pose = message.pose.pose
-        if math.isfinite(pose.position.x) and math.isfinite(pose.position.y):
+        if (self._valid_source_header(message, "odom", "odom", 5.0)
+                and math.isfinite(pose.position.x) and math.isfinite(pose.position.y)):
             self._latest_odom_xy = (pose.position.x, pose.position.y)
+            self._odom_received_at = time.monotonic()
+        else:
+            self._latest_odom_xy = None
+            self._odom_received_at = None
+            self._stable = 0
+            return
         if self._start_checked:
+            return
+        quaternion = pose.orientation
+        components = (quaternion.x, quaternion.y, quaternion.z, quaternion.w)
+        if (not all(math.isfinite(value) for value in components)
+                or not math.isclose(sum(value*value for value in components), 1.0, abs_tol=1e-3)):
+            self._stable = 0
             return
         tolerance = float(
             self.get_parameter("fixed_start_position_tolerance_m").value
@@ -187,21 +254,67 @@ class FormalMapLifecycleManager(Node):
 
     def _on_gps_odom(self, message: Odometry) -> None:
         pose = message.pose.pose
-        if math.isfinite(pose.position.x) and math.isfinite(pose.position.y):
+        if (self._valid_source_header(message, "gps", "odom", 5.0)
+                and math.isfinite(pose.position.x) and math.isfinite(pose.position.y)):
             self._latest_gps_xy = (pose.position.x, pose.position.y)
+            self._gps_received_at = time.monotonic()
+        else:
+            self._latest_gps_xy = None
+            self._gps_received_at = None
+            self._stable = 0
 
     def _on_map(self, message: OccupancyGrid) -> None:
+        if self._finished:
+            return
+        stamp = message.header.stamp
+        stamp_ns = stamp.sec * 1_000_000_000 + stamp.nanosec
+        origin = message.info.origin
+        quaternion = origin.orientation
+        values = (origin.position.x, origin.position.y, origin.position.z,
+                  quaternion.x, quaternion.y, quaternion.z, quaternion.w)
+        valid = (
+            self._valid_source_header(message, "map", "map", 15.0)
+            and all(math.isfinite(value) for value in values)
+            and math.isclose(sum(value * value for value in values[3:]), 1.0, abs_tol=1e-3)
+            and abs(quaternion.x) <= 1e-6 and abs(quaternion.y) <= 1e-6
+            and message.info.width > 0 and message.info.height > 0
+            and len(message.data) == message.info.width * message.info.height
+            and all(-1 <= value <= 100 for value in message.data)
+            and math.isfinite(message.info.resolution)
+            and 0 < message.info.resolution <= 0.10
+        )
+        if not valid:
+            self._latest_map = None
+            self._map_received_at = None
+            self._stable = 0
+            self._publish("invalid_or_replayed_slam_map", False, {})
+            return
         self._latest_map = message
+        self._map_stamp_ns = stamp_ns
+        self._map_received_at = time.monotonic()
 
     def _evaluate(self) -> None:
         if self._finished or self._saving or self._latest_map is None:
             return
         now = time.monotonic()
+        threshold = float(self.get_parameter("observation_threshold").value)
+        required = self.get_parameter("stable_samples_required").value
+        if not 0.95 <= threshold <= 1.0 or type(required) is not int or required < 3:
+            self._stable = 0
+            self._publish("invalid_mapping_quality_parameters", False, {})
+            return
+        if not self._inputs_fresh(now):
+            self._stable = 0
+            self._publish("waiting_for_fresh_mapping_inputs", False, {})
+            return
+        if self._map_stamp_ns == self._consumed_map_stamp_ns:
+            return
         if now - self._last_quality_monotonic < float(
             self.get_parameter("quality_period_sec").value
         ):
             return
         self._last_quality_monotonic = now
+        self._consumed_map_stamp_ns = self._map_stamp_ns
         if not self._start_ok:
             self._stable = 0
             self._publish("fixed_start_gate_failed", False, {})
@@ -225,18 +338,12 @@ class FormalMapLifecycleManager(Node):
                 },
             )
             return
-        message = self._latest_map
-        quality = assess_grid_observation(
-            message.data,
-            width=message.info.width,
-            height=message.info.height,
-            resolution=message.info.resolution,
-            origin_x=message.info.origin.position.x,
-            origin_y=message.info.origin.position.y,
-            origin_yaw=_yaw(message.info.origin.orientation),
-            geofence=self._contract.geofence,
-            threshold=float(self.get_parameter("observation_threshold").value),
-        )
+        try:
+            quality = self._assess_latest_map()
+        except MapLifecycleError as exc:
+            self._stable = 0
+            self._publish("invalid_slam_grid_quality", False, {"error": str(exc)})
+            return
         self._stable = self._stable + 1 if quality.passed else 0
         details = {
             "observed_cells": quality.observed_cells,
@@ -262,8 +369,30 @@ class FormalMapLifecycleManager(Node):
         future.add_done_callback(lambda result: self._on_save(result, details))
         self._publish("saving_quality_gated_map", False, details)
 
+    def _assess_latest_map(self):  # type: ignore[no-untyped-def]
+        message = self._latest_map
+        return assess_grid_observation(
+            message.data,
+            width=message.info.width,
+            height=message.info.height,
+            resolution=message.info.resolution,
+            origin_x=message.info.origin.position.x,
+            origin_y=message.info.origin.position.y,
+            origin_yaw=_yaw(message.info.origin.orientation),
+            geofence=self._contract.geofence,
+            threshold=float(self.get_parameter("observation_threshold").value),
+        )
+
     def _on_save(self, future, details: dict) -> None:  # type: ignore[no-untyped-def]
         try:
+            now = time.monotonic()
+            if self._stable < 3 or self._latest_map is None or not self._inputs_fresh(now):
+                raise MapLifecycleError("mapping inputs expired or became invalid while saving")
+            threshold = float(self.get_parameter("observation_threshold").value)
+            required = self.get_parameter("stable_samples_required").value
+            if (not 0.95 <= threshold <= 1.0 or type(required) is not int or required < 3
+                    or self._stable < required or not self._assess_latest_map().passed):
+                raise MapLifecycleError("mapping quality changed while saving")
             response = future.result()
             if response is None or int(response.result) != 0:
                 raise MapLifecycleError("slam_toolbox save_map returned failure")
@@ -283,6 +412,14 @@ class FormalMapLifecycleManager(Node):
             if not image_path.is_file():
                 raise MapLifecycleError("saved map image is missing")
             materialize_saved_map_coverage_geometry(self._root, self._contract)
+            pgm_observation = assess_saved_pgm_observation(
+                metadata,
+                image_path.read_bytes(),
+                geofence=self._contract.geofence,
+                threshold=float(self.get_parameter("observation_threshold").value),
+            )
+            if not pgm_observation.passed:
+                raise MapLifecycleError("saved occupancy PGM did not meet the observation threshold")
             hashes = {
                 map_yaml.name: sha256(map_yaml),
                 image_path.name: sha256(image_path),
@@ -315,9 +452,12 @@ class FormalMapLifecycleManager(Node):
                 "episode_id": self._contract.episode_id,
                 "map_id": self._contract.map_id,
                 "occupancy_map": map_yaml.name,
-                "observed_fraction": details["observed_fraction"],
-                "observed_area_m2": details["observed_area_m2"],
-                "field_sampled_area_m2": details["field_sampled_area_m2"],
+                "observed_fraction": pgm_observation.observed_fraction,
+                "observed_area_m2": pgm_observation.observed_area_m2,
+                "field_sampled_area_m2": pgm_observation.field_sampled_area_m2,
+                "saved_pgm_observed_fraction": pgm_observation.observed_fraction,
+                "saved_pgm_observed_cells": pgm_observation.observed_cells,
+                "saved_pgm_field_cells": pgm_observation.field_cells,
                 "quality_threshold": float(
                     self.get_parameter("observation_threshold").value
                 ),

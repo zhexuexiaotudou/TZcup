@@ -10,6 +10,7 @@ from sanitation_formal_campus_integration.map_lifecycle_core import (
     MAXIMUM_SAVED_MAP_RESOLUTION_M,
     MapLifecycleError,
     assess_grid_observation,
+    assess_saved_pgm_observation,
     goal_tangent_yaw,
     hard_restart_record_valid,
     load_campus_map_contract,
@@ -37,6 +38,39 @@ def test_binary_pgm_flips_top_first_raster_into_map_row_order(tmp_path):
     path = tmp_path / "map.pgm"
     path.write_bytes(b"P5\n2 2\n255\n" + bytes([1, 2, 3, 4]))
     assert read_binary_pgm(path) == (2, 2, [bytearray([3, 4]), bytearray([1, 2])])
+
+
+def test_saved_pgm_observation_uses_trinary_thresholds_and_map_row_order():
+    metadata = {
+        "resolution": 0.1,
+        "origin": [0.0, 0.0, 0.0],
+        "negate": 0,
+        "free_thresh": 0.20,
+        "occupied_thresh": 0.80,
+        "mode": "trinary",
+    }
+    # PGM order is top row then bottom row. Values exactly at each threshold
+    # are unknown; 255 is free and 0 is occupied.
+    pgm = b"P5\n2 2\n255\n" + bytes([204, 51, 255, 0])
+    report = assess_saved_pgm_observation(
+        metadata, pgm, geofence=((0, 0), (0.2, 0), (0.2, 0.2), (0, 0.2)), threshold=0.5
+    )
+    assert report.observed_cells == 2
+    assert report.field_cells == 4
+    assert report.observed_fraction == 0.5
+
+
+@pytest.mark.parametrize("metadata", [
+    {"resolution": 0.1, "origin": [0, 0], "mode": "trinary"},
+    {"resolution": 0.1, "origin": [0, 0, 0], "mode": "scale"},
+    {"resolution": 0.1, "origin": [0, 0, 0], "negate": False, "mode": "trinary"},
+    {"resolution": 0.1, "origin": [0, 0, 0.1], "mode": "trinary"},
+])
+def test_saved_pgm_observation_rejects_nonformal_metadata(metadata):
+    with pytest.raises(MapLifecycleError):
+        assess_saved_pgm_observation(
+            metadata, b"P5\n1 1\n255\n\xff", geofence=((0, 0), (1, 0), (1, 1), (0, 1)), threshold=0.95
+        )
 
 
 def test_occupancy_union_uses_one_boundary_not_adjacent_keepout_boxes():
@@ -79,9 +113,9 @@ def test_hard_restart_record_binds_pids_exit_order_and_hashes(tmp_path):
     root = tmp_path / "map"
     root.mkdir()
     for name, content in (
-        ("map_lifecycle_manifest.json", b"manifest"),
-        ("mapping_runtime.json", b"runtime"),
-        ("mapping_handoff_record.json", b"handoff"),
+        ("map_lifecycle_manifest.json", b'{"status": "ready_for_localization_cleaning"}'),
+        ("mapping_runtime.json", b'{"passed": true}'),
+        ("runtime_gate_binding.json", b'{"session_id": "mapping-session-001"}'),
     ):
         (root / name).write_bytes(content)
     record = {
@@ -99,10 +133,25 @@ def test_hard_restart_record_binds_pids_exit_order_and_hashes(tmp_path):
         "mapping_collector_pid": 103,
         "cleaning_runner_pid": 201,
         "cleaning_launch_pid": 202,
-        "map_lifecycle_manifest_sha256": hashlib.sha256(b"manifest").hexdigest(),
-        "mapping_runtime_sha256": hashlib.sha256(b"runtime").hexdigest(),
-        "mapping_handoff_record_sha256": hashlib.sha256(b"handoff").hexdigest(),
     }
+    for field, name in (
+        ("map_lifecycle_manifest_sha256", "map_lifecycle_manifest.json"),
+        ("mapping_runtime_sha256", "mapping_runtime.json"),
+        ("mapping_runtime_gate_binding_sha256", "runtime_gate_binding.json"),
+    ):
+        record[field] = hashlib.sha256((root / name).read_bytes()).hexdigest()
+    handoff = {key: record[key] for key in (
+        "schema_version", "mapping_runner_exit_code", "mapping_runner_pid",
+        "mapping_launch_pid", "mapping_collector_pid", "mapping_completion_wall_time",
+        "mapping_cleanup_wall_time", "map_lifecycle_manifest_sha256",
+        "mapping_runtime_sha256", "mapping_runtime_gate_binding_sha256",
+    )}
+    handoff.update(mapping_runner_completed=True, mapping_process_groups_stopped=True)
+    handoff_path = root / "mapping_handoff_record.json"
+    handoff_path.write_text(json.dumps(handoff), encoding="utf-8")
+    record["mapping_handoff_record_sha256"] = hashlib.sha256(
+        handoff_path.read_bytes()
+    ).hexdigest()
     assert hard_restart_record_valid(record, root)
     for field, value in (
         ("mapping_runner_exit_code", 1),
@@ -380,7 +429,10 @@ def _materialized_saved_map(root: Path) -> tuple[CampusMapContract, dict[str, Pa
         "episode_id": contract.episode_id,
         "map_id": contract.map_id,
         "occupancy_map": "occupancy.yaml",
-        "observed_fraction": 0.95,
+        "observed_fraction": 1.0,
+        "saved_pgm_observed_fraction": 1.0,
+        "saved_pgm_observed_cells": 2500,
+        "saved_pgm_field_cells": 2500,
         "quality_threshold": 0.95,
         "stable_gate_samples": 3,
         "fixed_start_verified": True,
@@ -404,6 +456,34 @@ def test_materialized_geometry_is_preapplied_and_fully_manifest_sealed(tmp_path)
     assert geometry["planning_clearance_preapplied"] is True
     assert mission["saved_occupancy_coverage"]["planning_clearance_preapplied"] is True
     assert validate_saved_map_artifact(root, contract)["status"] == "ready_for_localization_cleaning"
+
+
+def test_cleaning_admission_recomputes_pgm_observation_after_a_resealed_map_change(tmp_path):
+    root = tmp_path / "maps"
+    contract, _ = _materialized_saved_map(root)
+    image = bytearray((root / "occupancy.pgm").read_bytes())
+    image[len(b"P5\n60 60\n255\n") + 30 * 60 + 30] = 180  # trinary unknown
+    (root / "occupancy.pgm").write_bytes(image)
+    geometry_path = root / "coverage_geometry.yaml"
+    geometry = yaml.safe_load(geometry_path.read_text(encoding="utf-8"))
+    geometry["occupancy_image_sha256"] = hashlib.sha256(image).hexdigest()
+    geometry_path.write_text(yaml.safe_dump(geometry), encoding="utf-8")
+    mission_path = root / "mission_geometry.yaml"
+    mission = yaml.safe_load(mission_path.read_text(encoding="utf-8"))
+    mission["saved_occupancy_coverage"]["sha256"] = hashlib.sha256(
+        geometry_path.read_bytes()
+    ).hexdigest()
+    mission_path.write_text(yaml.safe_dump(mission), encoding="utf-8")
+    manifest_path = root / "map_lifecycle_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["sha256"] = {
+        name: hashlib.sha256((root / name).read_bytes()).hexdigest()
+        for name in manifest["sha256"]
+    }
+    # A forged/resealed manifest still reports the previous all-known PGM.
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(MapLifecycleError, match="PGM observation"):
+        validate_saved_map_artifact(root, contract)
 
 
 def test_saved_map_validator_uses_one_snapshot_per_sealed_artifact(tmp_path, monkeypatch):
@@ -463,7 +543,7 @@ def test_materialization_blocks_a_cell_exactly_at_free_threshold(tmp_path):
         materialize_saved_map_coverage_geometry(root, contract, obstacle_inflation_m=0.1)
 
 
-def test_cleaning_admission_requires_hash_valid_saved_map(tmp_path):
+def test_cleaning_admission_rejects_old_manifest_that_lacks_pgm_observation_proof(tmp_path):
     contract = load_campus_map_contract(_manifest(tmp_path / "episode.json"))
     root = tmp_path / "maps"
     prepare_public_lifecycle_artifacts(contract, root)
@@ -536,7 +616,8 @@ def test_cleaning_admission_requires_hash_valid_saved_map(tmp_path):
     (root / "map_lifecycle_manifest.json").write_text(
         json.dumps(manifest), encoding="utf-8"
     )
-    assert validate_saved_map_artifact(root, contract)["observed_fraction"] == 0.95
+    with pytest.raises(MapLifecycleError, match="PGM observation"):
+        validate_saved_map_artifact(root, contract)
     (root / "occupancy.pgm").write_bytes(b"tampered")
     with pytest.raises(MapLifecycleError, match="integrity"):
         validate_saved_map_artifact(root, contract)

@@ -26,7 +26,51 @@ def _write(path: Path, value: dict) -> Path:
     return path
 
 
-def test_validator_passes_only_complete_real_runtime_contract(tmp_path):
+def _seal_restart(root, mapping, cleaning):
+    """Build independent file-backed process and source/session receipts."""
+    binding = {
+        "schema_version": 1, "status": "FORMAL_RUNTIME_GATE_BOUND", "verified_epoch_ns": 1787911199000000000,
+        "acceptance_session_binding": {
+            "session_status_at_gate": "FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING",
+            "session_started_epoch_ns": 1787911198000000000, "session_manifest_sha256": "a" * 64,
+            "snapshot": {"source_inventory_sha256": "b" * 64},
+        },
+        "runtime_closure_binding": {
+            "status": "FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED",
+            "runtime_install_root": str((root / "install").resolve()),
+            "source_inventory_sha256": "c" * 64,
+        },
+    }
+    _write(root / "runtime_gate_binding.json", binding)
+    _write(cleaning.parent / "runtime_gate_binding.json", {**binding, "verified_epoch_ns": 1787911201500000000})
+    (root / "mapping_runtime.json").write_bytes(mapping.read_bytes())
+    handoff = {
+        "schema_version": 2, "mapping_runner_completed": True,
+        "mapping_runner_exit_code": 0, "mapping_process_groups_stopped": True,
+        "mapping_runner_pid": 101, "mapping_launch_pid": 102, "mapping_collector_pid": 103,
+        "mapping_completion_wall_time": "2026-08-28T10:00:00+00:00",
+        "mapping_cleanup_wall_time": "2026-08-28T10:00:01+00:00",
+    }
+    for key, filename in (
+        ("map_lifecycle_manifest_sha256", "map_lifecycle_manifest.json"),
+        ("mapping_runtime_sha256", "mapping_runtime.json"),
+        ("mapping_runtime_gate_binding_sha256", "runtime_gate_binding.json"),
+    ):
+        handoff[key] = hashlib.sha256((root / filename).read_bytes()).hexdigest()
+    handoff_path = _write(root / "mapping_handoff_record.json", handoff)
+    restart = {
+        **handoff, "mapping_stopped_before_cleaning": True,
+        "mapping_process_count_before_cleaning": 0, "mapping_pid_alive_count_before_cleaning": 0,
+        "restart_type": "separate_process_hard_restart", "cleaning_runner_pid": 201,
+        "cleaning_launch_pid": 202, "cleaning_start_wall_time": "2026-08-28T10:00:02+00:00",
+        "mapping_handoff_record_sha256": hashlib.sha256(handoff_path.read_bytes()).hexdigest(),
+    }
+    value = json.loads(cleaning.read_text())
+    value["hard_restart_record"] = restart
+    _write(cleaning, value)
+
+
+def test_validator_passes_only_complete_real_runtime_contract(tmp_path, monkeypatch):
     root = tmp_path / "map"
     root.mkdir()
     (root / "occupancy.yaml").write_text("image: occupancy.pgm\n", encoding="utf-8")
@@ -130,6 +174,8 @@ def test_validator_passes_only_complete_real_runtime_contract(tmp_path):
         "brush_disabled_on_exit": True,
         "estimated_coverage_fraction": 0.95,
     })
+    _seal_restart(root, mapping, cleaning)
+    monkeypatch.setattr(MODULE, "_saved_pgm_quality_valid", lambda *_: True)
     result = MODULE.validate(root, mapping, cleaning)
     assert result["passed"] is True
     assert result["status"] == MODULE.PASS_STATUS
@@ -291,7 +337,114 @@ def test_validator_blocks_missing_or_tampered_evidence(tmp_path):
     result = MODULE.validate(tmp_path / "map", tmp_path / "m.json", tmp_path / "c.json")
     assert result["passed"] is False
     assert result["status"] == MODULE.BLOCKED_STATUS
-    assert len(result["blockers"]) == 3
+    assert len(result["blockers"]) == 6
+    assert "saved_pgm_observation_reverified" in result["blockers"]
+
+
+@pytest.fixture
+def handoff_files(tmp_path):
+    root = tmp_path / "map"
+    root.mkdir()
+    _write(root / "map_lifecycle_manifest.json", {})
+    mapping = _write(tmp_path / "mapping.json", {"passed": True})
+    cleaning = _write(tmp_path / "cleaning.json", {"hard_restart_verified": True})
+    _seal_restart(root, mapping, cleaning)
+    return root, mapping, cleaning, tmp_path / "runtime_gate_binding.json"
+
+
+def test_mapping_binding_accepts_only_same_identity_with_later_gate(handoff_files):
+    root, _, _, current = handoff_files
+    MODULE.validate_mapping_runtime_binding(root, current)
+
+
+@pytest.mark.parametrize("mutation", [
+    "session", "source", "closure", "extra_field", "missing", "tampered_mapping",
+    "future_mapping", "cleanup_after_cleaning", "missing_timezone",
+])
+def test_mapping_binding_rejects_cross_session_and_changed_evidence(handoff_files, mutation):
+    root, _, _, current = handoff_files
+    value = json.loads(current.read_text())
+    if mutation == "session":
+        value["acceptance_session_binding"]["session_manifest_sha256"] = "f" * 64
+    elif mutation == "source":
+        value["acceptance_session_binding"]["snapshot"]["source_inventory_sha256"] = "f" * 64
+    elif mutation == "closure":
+        value["runtime_closure_binding"]["source_inventory_sha256"] = "f" * 64
+    elif mutation == "extra_field":
+        value["unrecognized_identity"] = "different"
+    elif mutation == "missing":
+        current.unlink()
+    elif mutation == "tampered_mapping":
+        (root / "runtime_gate_binding.json").write_text("{}")
+    elif mutation == "future_mapping":
+        value["verified_epoch_ns"] = 1
+    else:
+        handoff = json.loads((root / "mapping_handoff_record.json").read_text())
+        handoff["mapping_cleanup_wall_time"] = (
+            "2026-08-28T10:00:03+00:00" if mutation == "cleanup_after_cleaning"
+            else "2026-08-28T10:00:01"
+        )
+        _write(root / "mapping_handoff_record.json", handoff)
+    if mutation != "missing":
+        _write(current, value)
+    with pytest.raises(MODULE.RuntimeGateError):
+        MODULE.validate_mapping_runtime_binding(root, current)
+
+
+@pytest.mark.parametrize("filename", ["mapping_handoff_record.json", "mapping_runtime.json"])
+def test_aggregate_rechecks_restart_files_after_collector(handoff_files, filename):
+    root, mapping, cleaning, current = handoff_files
+    before = MODULE.validate(root, mapping, cleaning)
+    assert before["checks"]["hard_restart_record_reverified"] is True
+    assert before["checks"]["mapping_cleaning_runtime_binding_verified"] is True
+    (root / filename).write_text("{}")
+    result = MODULE.validate(root, mapping, cleaning)
+    assert result["checks"]["hard_restart_record_reverified"] is False
+
+
+def test_aggregate_cannot_omit_binding_or_substitute_mapping_runtime(handoff_files):
+    root, mapping, cleaning, current = handoff_files
+    mapping.write_text('{"passed": true, "substituted": true}')
+    result = MODULE.validate(root, mapping, cleaning)
+    assert result["checks"]["hard_restart_record_reverified"] is False
+    current.unlink()
+    result = MODULE.validate(root, mapping, cleaning)
+    assert result["checks"]["mapping_cleaning_runtime_binding_verified"] is False
+
+
+@pytest.mark.parametrize("corruption", ["session", "exit_bool", "pid_string", "valid"])
+def test_cleaning_runner_executes_binding_gate_before_launch(handoff_files, monkeypatch, corruption):
+    root, _, _, current = handoff_files
+    value = json.loads(current.read_text())
+    if corruption == "session":
+        value["acceptance_session_binding"]["session_manifest_sha256"] = "f" * 64
+        _write(current, value)
+    elif corruption != "valid":
+        path = root / "mapping_handoff_record.json"
+        handoff = json.loads(path.read_text())
+        field, value = ("mapping_runner_exit_code", False) if corruption == "exit_bool" else ("mapping_runner_pid", "101")
+        handoff[field] = value
+        _write(path, handoff)
+    runner = SCRIPT.with_name("run_formal_saved_map_cleaning_lifecycle.sh").read_text()
+    marker = '"${mapping_handoff_record}" "${repo_root}/scripts" "${runtime_binding}" <<\'PY\'\n'
+    preflight = runner.split(marker, 1)[1].split("\nPY\n", 1)[0]
+    assert runner.index(marker) < runner.index('"${FORMAL_RUNTIME_SESSION_PREFIX[@]}" "${launch_command[@]}"')
+    import sanitation_formal_campus_integration.map_lifecycle_core as core
+    # The public contract loader is orthogonal to the binding gate exercised
+    # here; no ROS launch or live process is involved in this executable test.
+    monkeypatch.setattr(core, "load_campus_map_contract", lambda _: object())
+    monkeypatch.setattr(core, "validate_saved_map_artifact", lambda *_: {})
+    monkeypatch.setitem(sys.modules, "validate_formal_map_lifecycle_runtime", MODULE)
+    monkeypatch.setattr(sys, "argv", [
+        "-", "unused-episode.json", str(root), str(root / "mapping_handoff_record.json"),
+        str(SCRIPT.parent), str(current),
+    ])
+    if corruption == "valid":
+        exec(compile(preflight, "cleaning-runner-preflight", "exec"), {})
+    else:
+        exception = MODULE.RuntimeGateError if corruption == "session" else core.MapLifecycleError
+        with pytest.raises(exception):
+            exec(compile(preflight, "cleaning-runner-preflight", "exec"), {})
 
 
 def test_bound_report_preserves_existing_binding_and_writes_canonical_sidecar(
@@ -416,7 +569,7 @@ def test_runtime_collectors_preserve_safety_and_hard_restart_contract():
     assert "mapping_process_count_before_cleaning" in cleaning_runner
     assert "mapping_pid_alive_count_before_cleaning" in cleaning_runner
     assert 'os.kill(pid, 0)' in cleaning_runner
-    assert 'handoff.get("mapping_runner_exit_code") != 0' in cleaning_runner
+    assert 'validate_mapping_handoff_record(root)' in cleaning_runner
     assert '"mapping_handoff_record_sha256"' in cleaning_runner
     assert '"map_lifecycle_manifest_sha256"' in cleaning_runner
     assert '"mapping_runtime_sha256"' in cleaning_runner
