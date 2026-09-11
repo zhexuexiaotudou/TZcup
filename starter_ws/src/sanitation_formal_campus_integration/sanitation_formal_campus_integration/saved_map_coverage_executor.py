@@ -8,7 +8,7 @@ from pathlib import Path
 import time
 
 from action_msgs.msg import GoalStatus
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped, TwistStamped
 from nav2_msgs.action import FollowPath, NavigateToPose
 from nav_msgs.msg import Path as NavPath
 from opennav_coverage_msgs.action import ComputeCoveragePath
@@ -24,8 +24,13 @@ from .saved_map_coverage_core import (
     FORMAL_OPERATION_WIDTH_M,
     FormalOperationSpeedProfile,
     load_product_mission_geometry,
+    load_saved_map_home_pose,
     polygon_area,
     validate_execution_parameters,
+)
+from .map_lifecycle_core import (
+    load_campus_map_contract,
+    validate_saved_map_cleaning_consumer_bundle,
 )
 from .map_lifecycle_core import FORMAL_COVERAGE_STATIC_OBSTACLE_INFLATION_M
 
@@ -36,6 +41,13 @@ class FormalSavedMapCoverageExecutor(Node):
     def __init__(self) -> None:
         super().__init__("formal_saved_map_coverage_executor")
         self.declare_parameter("mission_geometry_path", "")
+        self.declare_parameter("episode_manifest", "")
+        self.declare_parameter("artifact_directory", "")
+        self.declare_parameter("route_sanity_path", "")
+        self.declare_parameter("session_id", "")
+        self.declare_parameter("runtime_id", "")
+        self.declare_parameter("return_home_position_tolerance_m", 0.50)
+        self.declare_parameter("return_home_yaw_tolerance_rad", 0.35)
         self.declare_parameter("output_path", "coverage_execution.json")
         self.declare_parameter("operation_width_m", FORMAL_OPERATION_WIDTH_M)
         self.declare_parameter("maximum_linear_speed_mps", FORMAL_MAX_LINEAR_SPEED_MPS)
@@ -53,6 +65,18 @@ class FormalSavedMapCoverageExecutor(Node):
         self._navigate = ActionClient(self, NavigateToPose, "/navigate_to_pose")
         self._follow = ActionClient(self, FollowPath, "/follow_path")
         self._brush_state = False
+        self._last_amcl_pose: tuple[float, float, float] | None = None
+        self._last_base_command: tuple[float, float] | None = None
+        self.create_subscription(PoseWithCovarianceStamped, "/amcl_pose", self._amcl, 20)
+        self.create_subscription(TwistStamped, "/base_controller/cmd_vel", self._base_command, 20)
+
+    def _amcl(self, message: PoseWithCovarianceStamped) -> None:
+        orientation = message.pose.pose.orientation
+        yaw = math.atan2(2.0 * (orientation.w * orientation.z + orientation.x * orientation.y), 1.0 - 2.0 * (orientation.y ** 2 + orientation.z ** 2))
+        self._last_amcl_pose = (message.pose.pose.position.x, message.pose.pose.position.y, yaw)
+
+    def _base_command(self, message: TwistStamped) -> None:
+        self._last_base_command = (message.twist.linear.x, message.twist.angular.z)
 
     def _publish_state(self, state: str, **details) -> None:  # type: ignore[no-untyped-def]
         message = String()
@@ -178,6 +202,20 @@ class FormalSavedMapCoverageExecutor(Node):
         ]
         return {"success": bool(swaths), "swaths": swaths}
 
+    def _return_home(self, home: tuple[float, float, float], timeout: float, identity: dict[str, str]) -> dict:
+        goal = NavigateToPose.Goal()
+        goal.pose = self._pose(*home)
+        self._publish_state("RETURNING_HOME", home_frame_id="map", **identity)
+        result = self._run_action(self._navigate, goal, timeout, "return_home")
+        pose, command = self._last_amcl_pose, self._last_base_command
+        position_tolerance = float(self.get_parameter("return_home_position_tolerance_m").value)
+        yaw_tolerance = float(self.get_parameter("return_home_yaw_tolerance_rad").value)
+        valid_tolerance = all(math.isfinite(value) and value > 0.0 for value in (position_tolerance, yaw_tolerance))
+        position_error = math.dist(home[:2], pose[:2]) if pose is not None else math.inf
+        yaw_error = abs((pose[2] - home[2] + math.pi) % (2.0 * math.pi) - math.pi) if pose is not None else math.inf
+        final_cmd_zero = command is not None and abs(command[0]) <= 1e-4 and abs(command[1]) <= 1e-4
+        return {"success": bool(valid_tolerance and result.get("success") and position_error <= position_tolerance and yaw_error <= yaw_tolerance and final_cmd_zero and not self._brush_state), "nav2": result, "goal_frame_id": "map", "home_pose_map": {"x_m": home[0], "y_m": home[1], "yaw_rad": home[2]}, "position_error_m": position_error, "yaw_error_rad": yaw_error, "position_tolerance_m": position_tolerance, "yaw_tolerance_rad": yaw_tolerance, "final_cmd_vel_zero": final_cmd_zero, "brush_control_released": not self._brush_state, "coverage_control_released": True, **identity}
+
     def execute(self) -> dict:
         width = float(self.get_parameter("operation_width_m").value)
         speed = float(self.get_parameter("maximum_linear_speed_mps").value)
@@ -185,9 +223,37 @@ class FormalSavedMapCoverageExecutor(Node):
             str(self.get_parameter("operation_speed_profile").value), speed
         )
         validate_execution_parameters(width, speed, speed_profile)
+        artifact_directory = str(self.get_parameter("artifact_directory").value)
+        episode_manifest = str(self.get_parameter("episode_manifest").value)
+        session_id = str(self.get_parameter("session_id").value)
+        runtime_id = str(self.get_parameter("runtime_id").value)
+        contract = load_campus_map_contract(episode_manifest)
+        if not session_id or not runtime_id:
+            return self._finish(False, "FAILED", {"error": "return_home_identity_missing"}, speed_profile)
+        identity = {"session_id": session_id, "runtime_id": runtime_id, "episode_id": contract.episode_id}
+        validate_saved_map_cleaning_consumer_bundle(
+            artifact_directory, contract
+        )
+        route_sanity_path = Path(str(self.get_parameter("route_sanity_path").value))
+        route_sanity = json.loads(route_sanity_path.read_text(encoding="utf-8"))
+        if (
+            route_sanity.get("passed") is not True
+            or not route_sanity.get("candidate_lanes_summary_only")
+            or route_sanity.get("planner_path_authority")
+            != "opennav_coverage_compute_coverage_path"
+            or not math.isclose(
+                float(route_sanity.get("operation_width_m", 0.0)), width, abs_tol=1e-9
+            )
+            or float(route_sanity.get("recommended_max_lane_spacing_m", 0.0)) > 1.056
+            or float(route_sanity.get("realized_lane_spacing_m", math.inf)) > 1.056
+        ):
+            return self._finish(
+                False, "FAILED", {"error": "coverage_route_sanity_invalid"}, speed_profile
+            )
         geometry = load_product_mission_geometry(
             str(self.get_parameter("mission_geometry_path").value)
         )
+        home = load_saved_map_home_pose(str(self.get_parameter("mission_geometry_path").value))
         clearance = float(self.get_parameter("planning_clearance_m").value)
         if not math.isclose(clearance, geometry.planning_clearance_m, abs_tol=1e-9):
             return self._finish(False, "FAILED", {"error": "coverage_clearance_mismatch"}, speed_profile)
@@ -264,6 +330,10 @@ class FormalSavedMapCoverageExecutor(Node):
                     "component_results": results,
                 }, speed_profile)
         length = sum(math.dist(start, end) for start, end in swaths)
+        self._set_brush(False)
+        return_home = self._return_home(home, max(300.0, maximum_transit_timeout), identity)
+        if not return_home["success"]:
+            return self._finish(False, "FAILED", {"planned_swath_count": len(swaths), "completed_swath_count": len(swaths), "return_home": return_home, "component_results": results}, speed_profile)
         return self._finish(True, "COMPLETED", {
             "planned_swath_count": len(swaths),
             "completed_swath_count": len(swaths),
@@ -277,6 +347,8 @@ class FormalSavedMapCoverageExecutor(Node):
             "reachable_cleanable_cells": len(geometry.free_cells),
             "cleanable_area_m2": len(geometry.free_cells) * geometry.raster_resolution_m ** 2,
             "component_results": results,
+            "return_home": return_home,
+            **identity,
         }, speed_profile)
 
     def _finish(

@@ -71,6 +71,29 @@ formal_source_bound_verify_overlay "${runtime_install}"
 export TZCUP_REPOSITORY_ROOT="${repo_root}"
 export ROS_DOMAIN_ID="${domain}"
 export GZ_PARTITION="${GZ_PARTITION:-tzcup_formal_saved_map_cleaning_${domain}_$$}"
+episode_id="$(python3 - "${episode}/public/episode_manifest.json" <<'PY'
+import json
+import pathlib
+import sys
+value = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+episode_id = value.get("episode_id")
+if not isinstance(episode_id, str) or not episode_id:
+    raise SystemExit("episode manifest has no episode_id")
+print(episode_id)
+PY
+)"
+runtime_id="${episode_id}:saved-map-cleaning:${GZ_PARTITION}"
+session_id="$(python3 - "${runtime_binding}" <<'PY'
+import json
+import pathlib
+import sys
+value = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+session_id = value.get("acceptance_session_binding", {}).get("session_manifest_sha256")
+if not isinstance(session_id, str) or len(session_id) != 64:
+    raise SystemExit("runtime binding has no session identity")
+print(session_id)
+PY
+)"
 
 # Reject a missing, low-coverage, wrong-map or tampered map before Gazebo,
 # AMCL or coverage is allowed to start. Bind the restart to the exact mapping
@@ -90,14 +113,27 @@ from sanitation_formal_campus_integration.map_lifecycle_core import (
     load_campus_map_contract,
     validate_mapping_handoff_record,
     validate_saved_map_artifact,
+    validate_saved_map_cleaning_consumer_bundle,
 )
 
 contract = load_campus_map_contract(pathlib.Path(sys.argv[1]))
 root = pathlib.Path(sys.argv[2])
 validate_mapping_runtime_binding(root, pathlib.Path(sys.argv[5]))
 validate_saved_map_artifact(root, contract)
+validate_saved_map_cleaning_consumer_bundle(root, contract)
 validate_mapping_handoff_record(root)
 PY
+
+# This cross-verifiable summary is deliberately not the OpenNav route.  It
+# makes the sealed free-space raster, effective 1.32 m cleaning width, and the
+# <=1.056 m candidate-row spacing fail closed before Gazebo is started.
+coverage_route_sanity="${map_root}/coverage_route_sanity.json"
+if [[ "${cleaning_planner}" == "full_coverage" ]]; then
+  python3 "${repo_root}/scripts/validate_saved_map_coverage_route_sanity.py" \
+    --map-root "${map_root}" \
+    --episode-manifest "${episode}/public/episode_manifest.json" \
+    --output "${coverage_route_sanity}"
+fi
 
 # The mapping launch must be gone, not merely lifecycle-inactive.  Use the
 # exact map artifact argument so unrelated ROS processes are outside scope.
@@ -173,6 +209,8 @@ else
     start_pedestrians:=true
     start_coverage:=true
     coverage_evidence_dir:="${runtime}"
+    session_id:="${session_id}"
+    runtime_id:="${runtime_id}"
     operation_speed_profile:="${operation_speed_profile}"
   )
 fi
@@ -258,6 +296,17 @@ if (( collector_status == 0 )); then
   collector_status=$?
 fi
 set -e
+
+python3 "${repo_root}/scripts/write_saved_map_cleaning_requirement_evidence.py" \
+  --episode-manifest "${episode}/public/episode_manifest.json" \
+  --runtime-binding "${runtime_binding}" \
+  --runtime-id "${runtime_id}" \
+  --restart-record "${restart_record}" \
+  --cleaning-runtime "${cleaning_runtime}" \
+  --coverage-report "${coverage_execution}" \
+  --route-sanity "${coverage_route_sanity}" \
+  --output "${runtime}/requirement_evidence.json" \
+  --artifact-manifest "${runtime}/runtime_artifact_manifest.json"
 
 set +e
 python3 "${repo_root}/scripts/validate_formal_map_lifecycle_runtime.py" \

@@ -165,6 +165,7 @@ def test_validator_passes_only_complete_real_runtime_contract(tmp_path, monkeypa
                 "completed_swath_count": 3,
                 "coverage_geometry_sha256": "0" * 64,
                 "cleanable_area_m2": 1.0,
+                "return_home": {"success": True, "goal_frame_id": "map", "final_cmd_vel_zero": True, "brush_control_released": True, "coverage_control_released": True},
         },
         "trajectory_total_distance_m": 100.0,
         "brush_enabled_distance_m": 95.0,
@@ -434,6 +435,7 @@ def test_cleaning_runner_executes_binding_gate_before_launch(handoff_files, monk
     # here; no ROS launch or live process is involved in this executable test.
     monkeypatch.setattr(core, "load_campus_map_contract", lambda _: object())
     monkeypatch.setattr(core, "validate_saved_map_artifact", lambda *_: {})
+    monkeypatch.setattr(core, "validate_saved_map_cleaning_consumer_bundle", lambda *_: {})
     monkeypatch.setitem(sys.modules, "validate_formal_map_lifecycle_runtime", MODULE)
     monkeypatch.setattr(sys, "argv", [
         "-", "unused-episode.json", str(root), str(root / "mapping_handoff_record.json"),
@@ -557,6 +559,10 @@ def test_runtime_collectors_preserve_safety_and_hard_restart_contract():
     assert "mission_mode:=cleaning" in cleaning_runner
     assert "start_pedestrians:=true" in cleaning_runner
     assert "start_coverage:=true" in cleaning_runner
+    assert "validate_saved_map_coverage_route_sanity.py" in cleaning_runner
+    assert 'coverage_route_sanity="${map_root}/coverage_route_sanity.json"' in cleaning_runner
+    assert "write_saved_map_cleaning_requirement_evidence.py" in cleaning_runner
+    assert "requirement_evidence.json" in cleaning_runner
     assert 'FORMAL_CLEANING_PLANNER:-full_coverage' in cleaning_runner
     assert 'FORMAL_PERCEPTION_ARTIFACT_ROOT' in cleaning_runner
     assert 'FORMAL_POLICY_CHECKPOINT' in cleaning_runner
