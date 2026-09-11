@@ -679,6 +679,7 @@ def run_ros_independent_tests() -> None:
         ROOT / "scripts" / "test_run_formal_single_episode_cleaning_mission.py",
         ROOT / "scripts" / "test_formal_a12_single_execution_capture.py",
         ROOT / "scripts" / "test_formal_a12_execution_registry.py",
+        ROOT / "scripts" / "test_generate_demo_artifact_manifest.py",
         ROOT / "scripts" / "test_collect_formal_single_episode_cleaning_mission.py",
         ROOT / "scripts" / "test_collect_formal_single_episode_trusted_recorder_args.py",
         ROOT / "scripts" / "test_formal_manipulator_control_contract.py",
