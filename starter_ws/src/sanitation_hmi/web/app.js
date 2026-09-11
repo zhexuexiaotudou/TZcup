@@ -22,6 +22,7 @@ const layerNames = {
   local: "局部规划", trajectory: "实际轨迹", vehicle: "车辆姿态", slam: "SLAM 占据栅格",
 };
 let snapshot = null;
+let liveSnapshot = null;
 let mapView = "operation";
 let replay = null;
 let replayIndex = 0;
@@ -57,17 +58,25 @@ function systemLabel(status) {
 }
 
 function safetyLabel(safety) {
-  return ({ ready: "安全就绪", emergency_stopped: "急停中", unknown: "接口就绪·状态未知" })[safety?.status] || "未知";
+  return ({ ready: "安全就绪", emergency_stopped: "急停中", unknown: "状态未知" })[safety?.status] || "未知";
 }
 
 function refreshState(data) {
+  liveSnapshot = data;
+  if (replay) {
+    // The replay contract records poses, not synchronized maps or perception.
+    data = { ...data, reference: {}, slam_map: null, planned_path: [], local_path: [],
+      trajectory: replay.samples.map((row) => [row.x, row.y]), vehicle: {}, targets: {}, events: [],
+      mission: { coverage_state: "轨迹回放 · 任务结论见原始报告", coverage_metrics: {},
+        next_action: "仅回放记录轨迹；当前实时安全状态独立显示" } };
+  }
   snapshot = data;
   const sources = data.sources || {};
   setText("scene-name", data.scene?.name, "场景未配置");
-  setText("source-mode", data.mode === "live" ? "实时模式" : "历史回放");
-  setStatus("system-status", systemLabel(data.system_status), data.system_status);
-  setStatus("localization-status", sourceLabel(sources.slam_map), sources.slam_map?.status);
-  setStatus("safety-status", safetyLabel(data.safety), data.safety?.status === "ready" ? "ready" : data.safety?.status === "emergency_stopped" ? "offline" : "degraded");
+  setText("source-mode", replay ? "历史轨迹回放" : data.mode === "live" ? "实时模式" : "历史回放");
+  setStatus("system-status", `${replay ? "当前实时：" : ""}${systemLabel(data.system_status)}`, data.system_status);
+  setStatus("localization-status", `${replay ? "当前实时：" : ""}${sourceLabel(sources.slam_map)}`, sources.slam_map?.status);
+  setStatus("safety-status", `${replay ? "当前实时：" : ""}${safetyLabel(data.safety)}`, data.safety?.status === "ready" ? "ready" : data.safety?.status === "emergency_stopped" ? "offline" : "degraded");
   setText("mission-state", data.mission?.coverage_state);
   setText("mission-name", data.reference?.mission?.id ? `任务 ${data.reference.mission.id}` : "等待任务配置");
   setText("mission-boundary", data.capabilities?.task_dispatch ? "安全任务编排器已连接。" : "任务编排器尚未接入，任务按钮保持失败关闭；监测与急停能力分开显示。");
@@ -76,11 +85,11 @@ function refreshState(data) {
   setText("planned-coverage", percent(metrics.planned_ratio));
   setText(
     "target-count",
-    data.sources?.perception?.status === "live"
+    !replay && data.sources?.perception?.status === "live"
       ? (data.targets?.predictions?.length ?? 0)
       : "--",
   );
-  setText("current-action", currentAction(data));
+  setText("current-action", replay ? "历史轨迹回放；未记录历史动作状态" : currentAction(data));
   setText("next-action", data.mission?.next_action);
   setText("route-reason", routeReason(data));
   setText("map-difference", mapDifference(data));
@@ -88,17 +97,17 @@ function refreshState(data) {
   refreshSources(sources);
   refreshEvents(data.events || []);
   refreshCapabilities(data.capabilities || {});
-  refreshImages(sources);
+  refreshImages(replay ? {} : sources);
   draw();
 }
 
 function currentAction(data) {
   if (data.safety?.emergency_stop === true) return "紧急停止，车辆控制输出被抑制";
+  if (data.system_status === "offline") return "等待 ROS 数据源";
+  if (data.system_status === "degraded") return "监测数据降级，等待源恢复";
   const coverage = String(data.mission?.coverage_state || "").toUpperCase();
   if (coverage.includes("RUN") || coverage.includes("FOLLOW")) return "沿规划路径执行覆盖清扫";
   if (coverage.includes("PAUSE")) return "覆盖任务已暂停";
-  if (data.system_status === "offline") return "等待 ROS 数据源";
-  if (data.system_status === "degraded") return "监测数据降级，等待源恢复";
   return "安全监测已连接，等待任务编排器";
 }
 
@@ -178,12 +187,22 @@ function refreshImage(name, source, imageId, emptyId, labelId) {
   const empty = $(emptyId);
   setText(labelId, sourceLabel(source));
   if (!source || !["live", "stale"].includes(source.status)) {
+    image.onload = null;
+    image.onerror = null;
+    image.removeAttribute("src");
     image.style.display = "none";
     empty.style.display = "block";
     return;
   }
-  image.onload = () => { image.style.display = "block"; empty.style.display = "none"; };
-  image.onerror = () => { image.style.display = "none"; empty.style.display = "block"; };
+  const revision = imageRevision;
+  image.onload = () => {
+    if (revision !== imageRevision || replay) return;
+    image.style.display = "block"; empty.style.display = "none";
+  };
+  image.onerror = () => {
+    if (revision !== imageRevision) return;
+    image.style.display = "none"; empty.style.display = "block";
+  };
   image.src = `/api/v1/images/${name}?v=${imageRevision}`;
 }
 
@@ -216,7 +235,7 @@ function allWorldPoints(data, includeAll = false) {
 
 function fitMap(includeAll = false) {
   const points = allWorldPoints(snapshot, includeAll);
-  if (!points.length) { view.cx = 0; view.cy = 0; view.scale = 22; draw(); return; }
+  if (!points.length) { view.cx = 0; view.cy = 0; view.scale = 22; view.fitted = true; draw(); return; }
   const xs = points.map((p) => p[0]);
   const ys = points.map((p) => p[1]);
   const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
@@ -388,7 +407,9 @@ function draw() {
   drawGrid();
   if (!snapshot) { showMapMessage("等待监督数据"); return; }
   if (!view.fitted) { fitMap(mapView !== "operation"); return; }
-  if (mapView === "compare") {
+  if (replay) {
+    drawDynamic(snapshot);
+  } else if (mapView === "compare") {
     const half = width / 2;
     drawHalf(snapshot, "reference", { offset: 0, width: half });
     drawHalf(snapshot, "slam", { offset: half, width: half });
@@ -399,8 +420,8 @@ function draw() {
     else drawReference(snapshot);
     if (mapView === "operation" || mapView === "slam") drawDynamic(snapshot);
   }
-  if (mapView === "slam" && !snapshot.slam_map) showMapMessage("SLAM 地图不可用，未以参考地图替代");
-  else if (replay) showMapMessage("历史真实记录回放，不代表当前车辆状态");
+  if (replay) showMapMessage("历史轨迹回放；未记录的地图、规划、感知和影像不显示");
+  else if (mapView === "slam" && !snapshot.slam_map) showMapMessage("SLAM 地图不可用，未以参考地图替代");
   else showMapMessage("");
 }
 
@@ -416,7 +437,10 @@ async function poll() {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     refreshState(await response.json());
   } catch (error) {
-    setStatus("system-status", "连接失败", "offline");
+    refreshState({ mode: "live", system_status: "offline", sources: {},
+      safety: { status: "unknown", emergency_stop: null }, capabilities: {},
+      mission: { coverage_state: "连接失败 · 当前任务状态未知" } });
+    setStatus("system-status", `${replay ? "当前实时：" : ""}连接失败`, "offline");
     showMapMessage(`监督服务不可用：${error.message}`);
   }
 }
@@ -451,16 +475,22 @@ async function enterReplay() {
   try {
     const response = await fetch("/api/v1/replay", { cache: "no-store" });
     if (!response.ok) throw new Error("未装载真实历史记录");
-    replay = await response.json(); replayIndex = 0; view.fitted = false;
+    const record = await response.json();
+    if (!Array.isArray(record.samples) || !record.samples.length || record.samples.some((row) =>
+      !hasNumber(row.x) || !hasNumber(row.y) || !hasNumber(row.t))) throw new Error("轨迹记录无有效样本");
+    window.clearInterval(replayTimer); replayTimer = null;
+    replay = record; replayIndex = 0; view.fitted = false;
     $("replay-range").max = Math.max(0, replay.samples.length - 1);
-    $("replay-range").value = 0; $("replay-warning").textContent = replay.warning;
-    $("replay-bar").hidden = false; setText("source-mode", "历史回放"); updateReplayLabel(); draw();
+    $("replay-range").value = 0;
+    $("replay-warning").textContent = `${replay.warning || "历史轨迹记录"} 原始报告：${replay.success === true ? "成功" : replay.success === false ? "失败" : "未提供成功结论"}。${replay.execution_boundary || ""}`;
+    $("replay-bar").hidden = false; $("replay-toggle").textContent = "播放";
+    updateReplayLabel(); refreshState(liveSnapshot || {});
   } catch (error) { showCommandResult(error.message, true); }
 }
 
 function exitReplay() {
   window.clearInterval(replayTimer); replayTimer = null; replay = null; $("replay-bar").hidden = true;
-  $("replay-toggle").textContent = "播放"; view.fitted = false; setText("source-mode", "实时模式"); draw();
+  $("replay-toggle").textContent = "播放"; view.fitted = false; refreshState(liveSnapshot || {});
 }
 
 function toggleReplay() {

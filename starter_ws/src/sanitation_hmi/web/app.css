@@ -187,10 +187,14 @@ button:active, a:active { transform: translateY(1px); }
   .mode-switch, .top-status { justify-content: flex-start; flex-wrap: wrap; }
   .workspace, .media-row { grid-template-columns: 1fr; }
   .map-panel { min-height: 520px; }
+  .map-heading { flex-direction: column; align-items: stretch; }
+  .map-actions { flex-wrap: wrap; }
+  .map-panel { grid-template-rows: auto minmax(360px, 1fr) auto; }
   .mission-panel { overflow: visible; }
   .media-panel, .timeline-panel { min-height: 260px; }
   .controlbar { grid-template-columns: 1fr; }
   .task-controls, .safety-controls { flex-wrap: wrap; }
+  .safety-controls button:disabled { opacity: .45; cursor: not-allowed; }
   .legend { flex-wrap: wrap; padding-block: 8px; }
 }
 
