@@ -58,6 +58,7 @@ def main() -> int:
     runtime_sha = _sha256(args.cleaning_runtime)
     coverage_sha = _sha256(args.coverage_report)
     route_sha = _sha256(args.route_sanity)
+    return_home = coverage.get("return_home") if isinstance(coverage.get("return_home"), dict) else {}
 
     def row(requirement_id: str, observed: bool, source: str, artifact: Path, digest: str | None, metrics: dict, reason: str | None = None) -> dict:
         return {
@@ -77,7 +78,17 @@ def main() -> int:
     localization = bool(runtime.get("amcl_pose_sample_count", 0) > 0 and runtime.get("nav2_action_ready") is True)
     started = bool(runtime.get("coverage_first_brush_enabled_monotonic_s") is not None)
     progress = bool(runtime.get("brush_enabled_distance_m", 0.0) > 0 and runtime.get("trajectory_total_distance_m", 0.0) > 0)
-    completed = bool(runtime.get("coverage_action_terminal_passed") is True and coverage.get("success") is True)
+    home = bool(
+        return_home.get("success") is True
+        and return_home.get("session_id") == session_id
+        and return_home.get("runtime_id") == args.runtime_id
+        and return_home.get("episode_id") == episode_id
+        and return_home.get("goal_frame_id") == "map"
+        and return_home.get("final_cmd_vel_zero") is True
+        and return_home.get("brush_control_released") is True
+        and return_home.get("coverage_control_released") is True
+    )
+    completed = bool(runtime.get("coverage_action_terminal_passed") is True and coverage.get("success") is True and home)
     evidence = {
         "schema_version": 1,
         "identity": identity,
@@ -85,7 +96,8 @@ def main() -> int:
             row("localization_navigation", localization, "collect_formal_map_lifecycle_runtime", args.cleaning_runtime, runtime_sha, {"amcl_pose_sample_count": runtime.get("amcl_pose_sample_count", 0), "nav2_action_ready": runtime.get("nav2_action_ready")}, "AMCL pose or Nav2 readiness not observed"),
             row("coverage_start", started, "collect_formal_map_lifecycle_runtime", args.cleaning_runtime, runtime_sha, {"coverage_started_event": runtime.get("coverage_started_event"), "first_brush_enabled_monotonic_s": runtime.get("coverage_first_brush_enabled_monotonic_s")}, "brush-enabled coverage start not observed"),
             row("coverage_progress", progress, "collect_formal_map_lifecycle_runtime", args.cleaning_runtime, runtime_sha, {"brush_enabled_distance_m": runtime.get("brush_enabled_distance_m", 0.0), "trajectory_total_distance_m": runtime.get("trajectory_total_distance_m", 0.0), "coverage_ratio": runtime.get("estimated_coverage_fraction")}, "nonzero brush-enabled trajectory not observed"),
-            row("coverage_complete", completed, "coverage_execution_and_route_sanity", args.coverage_report, coverage_sha, {"coverage_action_terminal_passed": runtime.get("coverage_action_terminal_passed"), "coverage_success": coverage.get("success"), "coverage_ratio": runtime.get("estimated_coverage_fraction"), "route_spacing_m": route.get("realized_lane_spacing_m"), "route_spacing_limit_m": route.get("recommended_max_lane_spacing_m"), "free_space_turn_continuity": not bool(route.get("disconnected_turn_rows")), "geofence_consumer_bundle_valid": route.get("passed") is True, "route_sanity_artifact_path": str(args.route_sanity), "route_sanity_artifact_sha256": route_sha}, "coverage terminal success not observed"),
+            row("coverage_complete", completed, "coverage_execution_and_route_sanity", args.coverage_report, coverage_sha, {"coverage_action_terminal_passed": runtime.get("coverage_action_terminal_passed"), "coverage_success": coverage.get("success"), "coverage_ratio": runtime.get("estimated_coverage_fraction"), "route_spacing_m": route.get("realized_lane_spacing_m"), "route_spacing_limit_m": route.get("recommended_max_lane_spacing_m"), "free_space_turn_continuity": not bool(route.get("disconnected_turn_rows")), "geofence_consumer_bundle_valid": route.get("passed") is True, "route_sanity_artifact_path": str(args.route_sanity), "route_sanity_artifact_sha256": route_sha, "return_home_observed": home}, "coverage terminal success and return-home closure not observed"),
+            row("return_home", home, "formal_saved_map_coverage_executor", args.coverage_report, coverage_sha, return_home, "Nav2 home goal/result, pose tolerance, final stop, or control release not observed"),
         ],
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)

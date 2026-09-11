@@ -364,6 +364,8 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                         "mode": mode,
                         "episode_manifest": str(manifest_path),
                         "artifact_directory": str(artifact_root),
+                        "session_id": LaunchConfiguration("session_id"),
+                        "runtime_id": LaunchConfiguration("runtime_id"),
                         "support_artifacts_prepared": True,
                         "mapping_pose_source": (
                             "wheel_imu_ekf_lidar_scan_matching_gnss_consistency"
@@ -453,6 +455,8 @@ def generate_launch_description() -> LaunchDescription:
         DeclareLaunchArgument("world"),
         DeclareLaunchArgument("world_name", default_value="campus_formal"),
         DeclareLaunchArgument("episode_manifest"),
+        DeclareLaunchArgument("session_id", default_value=""),
+        DeclareLaunchArgument("runtime_id", default_value=""),
         DeclareLaunchArgument("map_artifact_dir"),
         DeclareLaunchArgument("pedestrian_schedule", default_value=""),
         DeclareLaunchArgument("start_pedestrians", default_value="true"),

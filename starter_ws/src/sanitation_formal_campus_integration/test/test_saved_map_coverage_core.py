@@ -18,6 +18,7 @@ from sanitation_formal_campus_integration.saved_map_coverage_core import (
     coverage_execution_passed,
     load_formal_operation_speed_profile,
     load_product_mission_geometry,
+    load_saved_map_home_pose,
     validate_execution_parameters,
 )
 
@@ -54,6 +55,7 @@ def _mission(path: Path) -> Path:
     }), encoding="utf-8")
     path.write_text(yaml.safe_dump({
         "outer_polygon": [[0, 0], [200, 0], [200, 100], [0, 100]],
+        "vehicle_start_pose_map": {"x_m": 0.0, "y_m": 0.0, "yaw_rad": 0.0},
         "keepout_polygons": [],
         "headland": {"enabled": True, "width_m": 1.70},
         "saved_occupancy_coverage": {
@@ -126,6 +128,7 @@ def test_formal_width_and_speed_are_exact_single_source(tmp_path):
 def test_public_mission_requires_20000_m2_and_truth_isolation(tmp_path):
     path = _mission(tmp_path / "mission.yaml")
     assert len(load_product_mission_geometry(path).outer_polygon) == 4
+    assert load_saved_map_home_pose(path) == (0.0, 0.0, 0.0)
     value = yaml.safe_load(path.read_text(encoding="utf-8"))
     value["truth_boundary"]["evaluator_truth_used"] = True
     path.write_text(yaml.safe_dump(value), encoding="utf-8")
@@ -242,6 +245,7 @@ def test_execution_pass_requires_real_terminal_and_all_swaths():
         "completed_swath_count": 3,
         "coverage_geometry_sha256": "0" * 64,
         "cleanable_area_m2": 1.0,
+        "return_home": {"success": True, "goal_frame_id": "map", "final_cmd_vel_zero": True, "brush_control_released": True, "coverage_control_released": True},
     }
     assert coverage_execution_passed(report)
     for field, value in (

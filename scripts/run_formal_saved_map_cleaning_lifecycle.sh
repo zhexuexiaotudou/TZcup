@@ -83,6 +83,17 @@ print(episode_id)
 PY
 )"
 runtime_id="${episode_id}:saved-map-cleaning:${GZ_PARTITION}"
+session_id="$(python3 - "${runtime_binding}" <<'PY'
+import json
+import pathlib
+import sys
+value = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+session_id = value.get("acceptance_session_binding", {}).get("session_manifest_sha256")
+if not isinstance(session_id, str) or len(session_id) != 64:
+    raise SystemExit("runtime binding has no session identity")
+print(session_id)
+PY
+)"
 
 # Reject a missing, low-coverage, wrong-map or tampered map before Gazebo,
 # AMCL or coverage is allowed to start. Bind the restart to the exact mapping
@@ -198,6 +209,8 @@ else
     start_pedestrians:=true
     start_coverage:=true
     coverage_evidence_dir:="${runtime}"
+    session_id:="${session_id}"
+    runtime_id:="${runtime_id}"
     operation_speed_profile:="${operation_speed_profile}"
   )
 fi

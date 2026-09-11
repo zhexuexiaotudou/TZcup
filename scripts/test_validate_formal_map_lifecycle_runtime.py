@@ -165,6 +165,7 @@ def test_validator_passes_only_complete_real_runtime_contract(tmp_path, monkeypa
                 "completed_swath_count": 3,
                 "coverage_geometry_sha256": "0" * 64,
                 "cleanable_area_m2": 1.0,
+                "return_home": {"success": True, "goal_frame_id": "map", "final_cmd_vel_zero": True, "brush_control_released": True, "coverage_control_released": True},
         },
         "trajectory_total_distance_m": 100.0,
         "brush_enabled_distance_m": 95.0,

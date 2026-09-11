@@ -28,7 +28,7 @@ def test_requirement_evidence_binds_one_identity_and_records_missing(tmp_path, m
     _write(binding, {"acceptance_session_binding": {"session_manifest_sha256": "a" * 64}})
     _write(restart, {"cleaning_start_wall_time": "2026-09-11T00:00:00+00:00"})
     _write(runtime, {"amcl_pose_sample_count": 2, "nav2_action_ready": True, "coverage_first_brush_enabled_monotonic_s": 1.0, "brush_enabled_distance_m": 3.0, "trajectory_total_distance_m": 4.0, "coverage_action_terminal_passed": True, "estimated_coverage_fraction": 0.95})
-    _write(coverage, {"success": True})
+    _write(coverage, {"success": True, "return_home": {"success": True, "session_id": "a" * 64, "runtime_id": "run-1", "episode_id": "ep-1", "goal_frame_id": "map", "final_cmd_vel_zero": True, "brush_control_released": True, "coverage_control_released": True}})
     _write(route, {"passed": True, "realized_lane_spacing_m": 1.0, "recommended_max_lane_spacing_m": 1.056, "disconnected_turn_rows": []})
     monkeypatch.setattr(sys, "argv", ["evidence", "--episode-manifest", str(episode), "--runtime-binding", str(binding), "--runtime-id", "run-1", "--restart-record", str(restart), "--cleaning-runtime", str(runtime), "--coverage-report", str(coverage), "--route-sanity", str(route), "--output", str(output), "--artifact-manifest", str(manifest)])
     assert MODULE.main() == 0
