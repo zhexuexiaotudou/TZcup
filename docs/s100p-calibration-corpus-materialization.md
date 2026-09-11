@@ -27,11 +27,24 @@ py -3 scripts/materialize_s100p_calibration_corpus.py `
   --scenario-id <immutable scene identifier>
 ```
 
-Run the same command again with the same three values after the next retained
-product capture; it resumes only after revalidating every prior output.  New
-captures must come from the already-running product adapter's
-`intermediate_capture_root` output.  Do not point this command at a Gazebo
-pilot, a rosbag replay, COCO, or a copied frame directory.
+For a fresh physical product runtime, assign a new session directory to the
+already-running adapter's `intermediate_capture_root`; never reuse a previous
+session directory or copy its frames.  After retaining several sessions,
+materialize them together by repeating `--capture-root` in a stable order:
+
+```powershell
+py -3 scripts/materialize_s100p_calibration_corpus.py `
+  --capture-root <physical-session-001> `
+  --capture-root <physical-session-002> `
+  --output <same-private-corpus-root> `
+  --scenario-id <immutable campaign identifier>
+```
+
+The state binds the ordered root prefix: it permits only an append of new
+sessions after revalidating every prior record, and rejects reordering,
+replacement, removal, or changes to the scenario, holdout, contract, or oracle.
+Do not point the tool at a Gazebo pilot, a rosbag replay, COCO, or a copied
+frame directory.
 
 ## Current local input inventory (2026-09-11)
 

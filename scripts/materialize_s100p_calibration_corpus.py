@@ -131,7 +131,15 @@ def _read_state(output: Path, configuration: dict[str, Any]) -> dict[str, Any]:
     if output.is_symlink() or not output.is_dir() or not state_path.is_file():
         raise CalibrationRejected("output_not_resumable_owned_corpus")
     state = _load_object(state_path, "materialization_state")
-    if state.get("schema_version") != 1 or state.get("configuration") != configuration or not isinstance(state.get("records"), list):
+    existing_configuration = state.get("configuration")
+    if state.get("schema_version") != 1 or not isinstance(existing_configuration, dict) or not isinstance(state.get("records"), list):
+        raise CalibrationRejected("resume_configuration_or_state_mismatch")
+    old_roots = existing_configuration.get("capture_roots")
+    new_roots = configuration.get("capture_roots")
+    comparable_old = {key: value for key, value in existing_configuration.items() if key != "capture_roots"}
+    comparable_new = {key: value for key, value in configuration.items() if key != "capture_roots"}
+    if (not isinstance(old_roots, list) or not isinstance(new_roots, list)
+            or comparable_old != comparable_new or old_roots != new_roots[:len(old_roots)]):
         raise CalibrationRejected("resume_configuration_or_state_mismatch")
     for name in ("samples", "provenance"):
         if not (output / name).is_dir() or (output / name).is_symlink():
@@ -152,6 +160,9 @@ def _read_state(output: Path, configuration: dict[str, Any]) -> dict[str, Any]:
         value = _load_object(provenance, "resume_provenance")
         if value.get("source_rgb_sha256") != row.get("source_sha256"):
             raise CalibrationRejected(f"resume_provenance_drift:{index}")
+    if old_roots != new_roots:
+        state["configuration"] = configuration
+        atomic_write_json(state_path, state)
     return state
 
 
@@ -163,20 +174,29 @@ def _write_tensor(path: Path, tensor: np.ndarray) -> str:
     return sha256_file(path)
 
 
-def materialize(*, capture_root: Path, output: Path, scenario_id: str, contract_path: Path = DEFAULT_CONTRACT,
+def materialize(*, capture_root: Path | None = None, capture_roots: list[Path] | None = None,
+                output: Path, scenario_id: str, contract_path: Path = DEFAULT_CONTRACT,
                 oracle_receipt: Path | None = None, holdout_source_hashes: set[str] | None = None) -> Path:
     """Copy each unique product RGB frame once and record enough provenance to audit it."""
     if not scenario_id.strip():
         raise CalibrationRejected("scenario_id_required")
-    if capture_root.is_symlink() or not capture_root.is_dir():
-        raise CalibrationRejected("capture_root_not_regular_directory")
+    supplied = ([capture_root] if capture_root is not None else []) + list(capture_roots or [])
+    resolved_roots: list[Path] = []
+    for root in supplied:
+        if root is None or root.is_symlink() or not root.is_dir():
+            raise CalibrationRejected("capture_root_not_regular_directory")
+        resolved = root.resolve()
+        if resolved not in resolved_roots:
+            resolved_roots.append(resolved)
+    if not resolved_roots:
+        raise CalibrationRejected("capture_root_required")
     contract = _load_contract(contract_path)
     oracle_status, oracle_identity = _verified_oracle(oracle_receipt)
     holdout = holdout_source_hashes or set()
     if any(not isinstance(value, str) or len(value) != 64 for value in holdout):
         raise CalibrationRejected("holdout_hash_invalid")
     configuration = {
-        "capture_root": str(capture_root.resolve()), "scenario_id": scenario_id,
+        "capture_roots": [str(root) for root in resolved_roots], "scenario_id": scenario_id,
         "contract_sha256": sha256_file(contract_path), "oracle_status": oracle_status,
         "oracle_identity": oracle_identity, "holdout_source_sha256": sorted(holdout),
     }
@@ -185,41 +205,42 @@ def materialize(*, capture_root: Path, output: Path, scenario_id: str, contract_
     seen_sources = {row.get("source_sha256") for row in records if isinstance(row, dict)}
     seen_tensors = {row.get("sha256") for row in records if isinstance(row, dict)}
     allowed = set(contract["vocabulary"]["semantic_class_ids"])
-    frames_root = capture_root / "frames"
-    if frames_root.is_symlink() or not frames_root.is_dir():
-        raise CalibrationRejected("capture_frames_root_missing")
-    for frame in sorted(path for path in frames_root.iterdir() if path.name.startswith("frame-")):
-        rgb, metadata, source_sha, frame_manifest_sha = _frame_bundle(frame)
-        if source_sha in holdout:
-            raise CalibrationRejected("evaluation_holdout_overlap")
-        if source_sha in seen_sources:
-            continue
-        tensor = preprocess_dosod_rgb(rgb)
-        index = len(records)
-        relative = f"samples/frame_{index:06d}.npy"
-        tensor_path = _relative(output, relative, "sample")
-        tensor_sha = _write_tensor(tensor_path, tensor)
-        if tensor_sha in seen_tensors:
-            tensor_path.unlink()
-            continue
-        provenance_relative = f"provenance/frame_{index:06d}.json"
-        provenance = {
-            "source_capture_frame": str(frame.resolve()), "source_capture_manifest_sha256": frame_manifest_sha,
-            "source_rgb_sha256": source_sha, "timestamp_s": metadata["rgb_stamp_s"],
-            "camera_frame_id": metadata["camera_info"]["frame_id"], "scenario_id": scenario_id,
-            "class_ids": _classes(metadata, allowed), "preprocessing_contract_sha256": canonical_sha256(contract["preprocessing"]),
-            "preprocessing_evidence": {"status": oracle_status, "identity": oracle_identity},
-        }
-        atomic_write_json(_relative(output, provenance_relative, "provenance"), provenance)
-        records.append({
-            "relative_path": relative, "byte_size": tensor_path.stat().st_size, "sha256": tensor_sha,
-            "source_sha256": source_sha, "source_role": "calibration_only", "provenance_relative_path": provenance_relative,
-            "timestamp_s": metadata["rgb_stamp_s"], "camera_frame_id": metadata["camera_info"]["frame_id"],
-            "scenario_id": scenario_id, "class_ids": provenance["class_ids"],
-        })
-        seen_sources.add(source_sha); seen_tensors.add(tensor_sha)
-        state["records"] = records
-        atomic_write_json(output / STATE_NAME, state)
+    for capture_root in resolved_roots:
+        frames_root = capture_root / "frames"
+        if frames_root.is_symlink() or not frames_root.is_dir():
+            raise CalibrationRejected("capture_frames_root_missing")
+        for frame in sorted(path for path in frames_root.iterdir() if path.name.startswith("frame-")):
+            rgb, metadata, source_sha, frame_manifest_sha = _frame_bundle(frame)
+            if source_sha in holdout:
+                raise CalibrationRejected("evaluation_holdout_overlap")
+            if source_sha in seen_sources:
+                continue
+            tensor = preprocess_dosod_rgb(rgb)
+            index = len(records)
+            relative = f"samples/frame_{index:06d}.npy"
+            tensor_path = _relative(output, relative, "sample")
+            tensor_sha = _write_tensor(tensor_path, tensor)
+            if tensor_sha in seen_tensors:
+                tensor_path.unlink()
+                continue
+            provenance_relative = f"provenance/frame_{index:06d}.json"
+            provenance = {
+                "source_capture_frame": str(frame.resolve()), "source_capture_manifest_sha256": frame_manifest_sha,
+                "source_capture_root": str(capture_root), "source_rgb_sha256": source_sha, "timestamp_s": metadata["rgb_stamp_s"],
+                "camera_frame_id": metadata["camera_info"]["frame_id"], "scenario_id": scenario_id,
+                "class_ids": _classes(metadata, allowed), "preprocessing_contract_sha256": canonical_sha256(contract["preprocessing"]),
+                "preprocessing_evidence": {"status": oracle_status, "identity": oracle_identity},
+            }
+            atomic_write_json(_relative(output, provenance_relative, "provenance"), provenance)
+            records.append({
+                "relative_path": relative, "byte_size": tensor_path.stat().st_size, "sha256": tensor_sha,
+                "source_sha256": source_sha, "source_role": "calibration_only", "provenance_relative_path": provenance_relative,
+                "timestamp_s": metadata["rgb_stamp_s"], "camera_frame_id": metadata["camera_info"]["frame_id"],
+                "scenario_id": scenario_id, "class_ids": provenance["class_ids"],
+            })
+            seen_sources.add(source_sha); seen_tensors.add(tensor_sha)
+            state["records"] = records
+            atomic_write_json(output / STATE_NAME, state)
     classes: dict[str, int] = {}
     scenarios: dict[str, int] = {}
     for row in records:
@@ -251,12 +272,12 @@ def materialize(*, capture_root: Path, output: Path, scenario_id: str, contract_
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--capture-root", type=Path, required=True); parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--capture-root", type=Path, action="append", required=True); parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--scenario-id", required=True); parser.add_argument("--contract", type=Path, default=DEFAULT_CONTRACT)
     parser.add_argument("--oracle-receipt", type=Path); parser.add_argument("--holdout-source-sha256", action="append", default=[])
     args = parser.parse_args()
     try:
-        receipt = materialize(capture_root=args.capture_root, output=args.output, scenario_id=args.scenario_id,
+        receipt = materialize(capture_roots=args.capture_root, output=args.output, scenario_id=args.scenario_id,
                               contract_path=args.contract, oracle_receipt=args.oracle_receipt,
                               holdout_source_hashes=set(args.holdout_source_sha256))
         print(json.dumps(_load_object(receipt, "receipt"), sort_keys=True))

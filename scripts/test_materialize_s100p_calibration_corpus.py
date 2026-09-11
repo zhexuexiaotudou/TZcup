@@ -54,6 +54,18 @@ def test_duplicate_source_or_tensor_never_fills_count(tmp_path: Path) -> None:
     assert receipt["record_count"] == 1
 
 
+def test_multiple_fresh_runtime_capture_roots_accumulate_without_duplicates(tmp_path: Path) -> None:
+    first = _capture(tmp_path / "physical-session-a", [1, 2])
+    second = _capture(tmp_path / "physical-session-b", [2, 3])
+    SUBJECT.materialize(capture_root=first, output=tmp_path / "out", scenario_id="yard-a")
+    receipt = json.loads(SUBJECT.materialize(
+        capture_roots=[first, second], output=tmp_path / "out", scenario_id="yard-a"
+    ).read_text(encoding="utf-8"))
+    assert receipt["record_count"] == 3
+    state = json.loads((tmp_path / "out" / SUBJECT.STATE_NAME).read_text(encoding="utf-8"))
+    assert state["configuration"]["capture_roots"] == [str(first.resolve()), str(second.resolve())]
+
+
 def test_tampered_product_capture_and_resume_configuration_are_rejected(tmp_path: Path) -> None:
     capture = _capture(tmp_path / "capture", [7])
     (capture / "frames" / "frame-0000" / "metadata.json").write_text("{}", encoding="utf-8")
