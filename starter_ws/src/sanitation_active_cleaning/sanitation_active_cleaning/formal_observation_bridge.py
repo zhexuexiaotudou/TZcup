@@ -9,6 +9,7 @@ from .formal_observation_core import (
     FormalObservationBridgeCore,
     ProductTargetObservation,
     PublicPlanningMap,
+    observation_stamp_reason,
 )
 
 
@@ -66,7 +67,10 @@ def main() -> None:
             )
             self._last_mask_time: float | None = None
             self._last_targets_time: float | None = None
+            self._last_mask_stamp: int | None = None
+            self._last_targets_stamp: int | None = None
             self._last_mask_reason = "not_received"
+            self._last_targets_reason = "not_received"
             self._target_count = 0
             latched = QoSProfile(
                 depth=1,
@@ -106,6 +110,15 @@ def main() -> None:
             self._publish_status()
 
         def _on_mask(self, message: Image) -> None:
+            stamp = self._stamp_ns(message.header.stamp)
+            self._last_mask_reason = observation_stamp_reason(
+                stamp, self.get_clock().now().nanoseconds, self._max_age,
+                self._last_mask_stamp,
+            )
+            if self._last_mask_reason != "accepted":
+                self._last_mask_time = None
+                self._publish_status()
+                return
             update = self._core.update_projected_mask(
                 frame_id=message.header.frame_id,
                 width=int(message.width),
@@ -116,18 +129,37 @@ def main() -> None:
             )
             self._last_mask_reason = update.reason
             if not update.accepted:
+                self._last_mask_time = None
                 self.get_logger().error(
                     f"map-projected dirt mask rejected: {update.reason}"
                 )
                 self._publish_status()
                 return
             self._last_mask_time = time.monotonic()
+            self._last_mask_stamp = stamp
             self._publish_belief()
             self._publish_status()
 
         def _on_targets(self, message: GarbageTargetArray) -> None:
+            stamp = self._stamp_ns(message.header.stamp)
+            now_ns = self.get_clock().now().nanoseconds
+            self._last_targets_reason = observation_stamp_reason(
+                stamp, now_ns, self._max_age, self._last_targets_stamp,
+            )
             if message.header.frame_id != self._core.map.frame_id:
-                self.get_logger().error("garbage targets rejected: frame mismatch")
+                self._last_targets_reason = "frame_mismatch"
+            for target in message.targets:
+                if target.header.frame_id != self._core.map.frame_id:
+                    self._last_targets_reason = "target_frame_mismatch"
+                    break
+                if any(observation_stamp_reason(self._stamp_ns(value), now_ns,
+                                                self._max_age) != "accepted"
+                       for value in (target.header.stamp, target.source_stamp,
+                                     target.last_seen)):
+                    self._last_targets_reason = "target_source_stamp_invalid"
+                    break
+            if self._last_targets_reason != "accepted":
+                self._last_targets_time = None
                 self._publish_status()
                 return
             candidates = []
@@ -153,7 +185,14 @@ def main() -> None:
             self._targets_publisher.publish(output)
             self._target_count = len(output.targets)
             self._last_targets_time = time.monotonic()
+            self._last_targets_stamp = stamp
             self._publish_status()
+
+        @staticmethod
+        def _stamp_ns(stamp) -> int:
+            if stamp.sec < 0 or not 0 <= stamp.nanosec < 1_000_000_000:
+                return -1
+            return int(stamp.sec) * 1_000_000_000 + int(stamp.nanosec)
 
         def _publish_belief(self) -> None:
             planning_map = self._core.map
@@ -171,13 +210,18 @@ def main() -> None:
 
         def _publish_status(self) -> None:
             now = time.monotonic()
+            now_ns = self.get_clock().now().nanoseconds
             mask_fresh = (
                 self._last_mask_time is not None
                 and 0.0 <= now - self._last_mask_time <= self._max_age
+                and observation_stamp_reason(self._last_mask_stamp or 0, now_ns,
+                                             self._max_age) == "accepted"
             )
             targets_fresh = (
                 self._last_targets_time is not None
                 and 0.0 <= now - self._last_targets_time <= self._max_age
+                and observation_stamp_reason(self._last_targets_stamp or 0, now_ns,
+                                             self._max_age) == "accepted"
             )
             ready = mask_fresh and targets_fresh
             self._ready_publisher.publish(Bool(data=ready))
@@ -192,6 +236,7 @@ def main() -> None:
                 KeyValue(key="mask_fresh", value=str(mask_fresh).lower()),
                 KeyValue(key="targets_fresh", value=str(targets_fresh).lower()),
                 KeyValue(key="last_mask_reason", value=self._last_mask_reason),
+                KeyValue(key="last_targets_reason", value=self._last_targets_reason),
                 KeyValue(key="accepted_target_count", value=str(self._target_count)),
                 KeyValue(key="control_input_contract", value="product_only"),
             ]

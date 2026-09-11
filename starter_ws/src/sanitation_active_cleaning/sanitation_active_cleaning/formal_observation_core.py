@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from collections import Counter
 import math
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
@@ -19,6 +20,20 @@ MIN_DIRT_VALUE = 2
 
 class FormalObservationError(RuntimeError):
     """Raised when a public map or product observation violates the contract."""
+
+
+def observation_stamp_reason(stamp_ns: int, now_ns: int, max_age: float,
+                             previous_ns: int | None = None) -> str:
+    """Validate acquisition time in the ROS clock domain, including replay order."""
+    if stamp_ns <= 0:
+        return "invalid_source_stamp"
+    if stamp_ns > now_ns:
+        return "future_source_stamp"
+    if now_ns - stamp_ns > max_age * 1_000_000_000:
+        return "stale_source_stamp"
+    if previous_ns is not None and stamp_ns <= previous_ns:
+        return "replayed_source_stamp"
+    return "accepted"
 
 
 @dataclass(frozen=True)
@@ -61,6 +76,8 @@ class PublicPlanningMap:
             origin = occupancy["origin"]
             origin_x, origin_y = float(origin[0]), float(origin[1])
             occupied_threshold = float(occupancy["occupied_thresh"])
+            free_threshold = float(occupancy["free_thresh"])
+            origin_yaw = float(origin[2])
             negate = int(occupancy.get("negate", 0))
         except (KeyError, TypeError, ValueError, IndexError) as exc:
             raise FormalObservationError("occupancy metadata is incomplete") from exc
@@ -70,6 +87,10 @@ class PublicPlanningMap:
             raise FormalObservationError("occupancy geometry is invalid")
         if negate not in (0, 1):
             raise FormalObservationError("occupancy negate must be zero or one")
+        if not 0.0 <= free_threshold < occupied_threshold <= 1.0:
+            raise FormalObservationError("occupancy thresholds are invalid")
+        if not math.isfinite(origin_yaw) or origin_yaw != 0.0:
+            raise FormalObservationError("rotated occupancy maps are unsupported")
         traversable_rows: list[bool] = []
         for image_row in range(height - 1, -1, -1):
             row_start = image_row * width
@@ -77,7 +98,7 @@ class PublicPlanningMap:
                 occupancy_probability = (
                     pixel / 255.0 if negate else (255 - pixel) / 255.0
                 )
-                traversable_rows.append(occupancy_probability < occupied_threshold)
+                traversable_rows.append(occupancy_probability < free_threshold)
         outer = _polygon(mission.get("outer_polygon"), "outer_polygon")
         keepouts = tuple(
             _polygon(item, "keepout_polygon")
@@ -188,7 +209,11 @@ class FormalObservationBridgeCore:
     ) -> tuple[ProductTargetObservation, ...]:
         accepted: list[ProductTargetObservation] = []
         next_targets: dict[str, KnownTarget] = {}
+        targets = tuple(targets)
+        counts = Counter(target.target_id for target in targets)
         for target in targets:
+            if counts[target.target_id] != 1:
+                continue
             backend = target.source_backend.strip().lower()
             if not target.target_id or backend in {"ground_truth", "evaluator"}:
                 continue
@@ -212,7 +237,7 @@ class FormalObservationBridgeCore:
                 continue
             if not self.map.point_is_traversable(target.x, target.y):
                 continue
-            cleared = target.track_state.upper() in {"CLEARED", "IN_BIN"}
+            cleared = target.track_state.upper() in {"CLEANED", "IN_BIN"}
             next_targets[target.target_id] = KnownTarget(
                 target_id=target.target_id,
                 x=target.x,
