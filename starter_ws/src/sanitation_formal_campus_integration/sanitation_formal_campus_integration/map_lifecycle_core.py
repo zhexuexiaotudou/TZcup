@@ -31,57 +31,106 @@ class MapLifecycleError(RuntimeError):
     """Raised when a formal map artifact fails closed."""
 
 
-def hard_restart_record_valid(record: dict, map_root: str | Path) -> bool:
-    """Verify a separate saved-map process start against immutable map evidence."""
+def validate_mapping_handoff_record(map_root: str | Path) -> dict:
+    """Validate the completed mapping handoff before starting another process."""
     root = Path(map_root)
     try:
-        mapping_completion = datetime.datetime.fromisoformat(
-            str(record["mapping_completion_wall_time"])
-        )
-        mapping_cleanup = datetime.datetime.fromisoformat(
-            str(record["mapping_cleanup_wall_time"])
-        )
-        cleaning_start = datetime.datetime.fromisoformat(
-            str(record["cleaning_start_wall_time"])
-        )
-        manifest_hash = hashlib.sha256(
-            (root / "map_lifecycle_manifest.json").read_bytes()
-        ).hexdigest()
-        mapping_runtime_hash = hashlib.sha256(
-            (root / "mapping_runtime.json").read_bytes()
-        ).hexdigest()
-        handoff_hash = hashlib.sha256(
-            (root / "mapping_handoff_record.json").read_bytes()
-        ).hexdigest()
-    except (KeyError, OSError, ValueError):
+        path = root / "mapping_handoff_record.json"
+        if path.is_symlink():
+            raise ValueError("symlink handoff")
+        handoff = json.loads(path.read_bytes())
+        if not isinstance(handoff, dict):
+            raise ValueError("handoff is not an object")
+        pids = [handoff.get(key) for key in (
+            "mapping_runner_pid", "mapping_launch_pid", "mapping_collector_pid",
+        )]
+        if (any(type(pid) is not int or pid <= 0 for pid in pids)
+                or len(set(pids)) != 3
+                or type(handoff.get("schema_version")) is not int
+                or handoff["schema_version"] != 2
+                or handoff.get("mapping_runner_completed") is not True
+                or handoff.get("mapping_process_groups_stopped") is not True
+                or type(handoff.get("mapping_runner_exit_code")) is not int
+                or handoff["mapping_runner_exit_code"] != 0):
+            raise ValueError("invalid mapping process completion")
+        completed, stopped = [datetime.datetime.fromisoformat(handoff[key]) for key in (
+            "mapping_completion_wall_time", "mapping_cleanup_wall_time",
+        )]
+        if completed.utcoffset() is None or stopped.utcoffset() is None or completed > stopped:
+            raise ValueError("invalid mapping completion chronology")
+        for key, name in (
+            ("map_lifecycle_manifest_sha256", "map_lifecycle_manifest.json"),
+            ("mapping_runtime_sha256", "mapping_runtime.json"),
+            ("mapping_runtime_gate_binding_sha256", "runtime_gate_binding.json"),
+        ):
+            artifact = root / name
+            if artifact.is_symlink() or handoff.get(key) != sha256(artifact):
+                raise ValueError(f"mapping handoff hash mismatch: {name}")
+    except (KeyError, OSError, ValueError, TypeError, OverflowError) as exc:
+        raise MapLifecycleError(f"invalid mapping handoff: {exc}") from exc
+    return handoff
+
+
+def hard_restart_record_valid(record: dict, map_root: str | Path) -> bool:
+    """Bind a separate cleaning start to the completed mapping handoff bytes."""
+    if not isinstance(record, dict):
         return False
-    mapping_pids = {
-        record.get("mapping_runner_pid"),
-        record.get("mapping_launch_pid"),
-        record.get("mapping_collector_pid"),
-    }
-    cleaning_pids = {
-        record.get("cleaning_runner_pid"),
-        record.get("cleaning_launch_pid"),
-    }
+    root = Path(map_root)
+    try:
+        handoff = validate_mapping_handoff_record(root)
+        handoff_bytes = (root / "mapping_handoff_record.json").read_bytes()
+        if json.loads(handoff_bytes) != handoff:
+            return False
+        manifest_hash = sha256(root / "map_lifecycle_manifest.json")
+        mapping_runtime_hash = sha256(root / "mapping_runtime.json")
+        mapping_binding_hash = sha256(root / "runtime_gate_binding.json")
+        times = [datetime.datetime.fromisoformat(record[key]) for key in (
+            "mapping_completion_wall_time", "mapping_cleanup_wall_time",
+            "cleaning_start_wall_time",
+        )]
+        if any(value.utcoffset() is None for value in times):
+            return False
+        if not times[0] <= times[1] <= times[2]:
+            return False
+    except (MapLifecycleError, KeyError, OSError, ValueError, TypeError, OverflowError):
+        return False
+    mapping_keys = ("mapping_runner_pid", "mapping_launch_pid", "mapping_collector_pid")
+    cleaning_keys = ("cleaning_runner_pid", "cleaning_launch_pid")
+    if any(type(record.get(key)) is not int or record[key] <= 0
+           for key in (*mapping_keys, *cleaning_keys)):
+        return False
+    mapping_pids = {record[key] for key in mapping_keys}
+    cleaning_pids = {record[key] for key in cleaning_keys}
+    copied_fields = (*mapping_keys, "mapping_runner_exit_code",
+                     "mapping_completion_wall_time", "mapping_cleanup_wall_time")
     return (
-        record.get("schema_version") == 2
+        type(record.get("schema_version")) is int
+        and record["schema_version"] == 2
+        and type(handoff.get("schema_version")) is int
+        and handoff["schema_version"] == 2
+        and handoff.get("mapping_runner_completed") is True
+        and handoff.get("mapping_process_groups_stopped") is True
+        and type(handoff.get("mapping_runner_exit_code")) is int
+        and handoff["mapping_runner_exit_code"] == 0
+        and all(type(handoff.get(key)) is int for key in mapping_keys)
+        and all(record.get(key) == handoff.get(key) for key in copied_fields)
         and record.get("mapping_stopped_before_cleaning") is True
-        and record.get("mapping_process_count_before_cleaning") == 0
-        and record.get("mapping_pid_alive_count_before_cleaning") == 0
-        and record.get("mapping_runner_exit_code") == 0
+        and all(type(record.get(key)) is int and record[key] == 0 for key in (
+            "mapping_process_count_before_cleaning",
+            "mapping_pid_alive_count_before_cleaning", "mapping_runner_exit_code",
+        ))
         and record.get("restart_type") == "separate_process_hard_restart"
-        and mapping_completion <= mapping_cleanup <= cleaning_start
-        and len(mapping_pids) == 3
-        and len(cleaning_pids) == 2
-        and all(isinstance(pid, int) and pid > 0 for pid in mapping_pids)
-        and all(isinstance(pid, int) and pid > 0 for pid in cleaning_pids)
+        and len(mapping_pids) == 3 and len(cleaning_pids) == 2
         and mapping_pids.isdisjoint(cleaning_pids)
         and record.get("map_lifecycle_manifest_sha256") == manifest_hash
+        and handoff.get("map_lifecycle_manifest_sha256") == manifest_hash
         and record.get("mapping_runtime_sha256") == mapping_runtime_hash
-        and record.get("mapping_handoff_record_sha256") == handoff_hash
+        and handoff.get("mapping_runtime_sha256") == mapping_runtime_hash
+        and record.get("mapping_runtime_gate_binding_sha256") == mapping_binding_hash
+        and handoff.get("mapping_runtime_gate_binding_sha256") == mapping_binding_hash
+        and record.get("mapping_handoff_record_sha256")
+        == hashlib.sha256(handoff_bytes).hexdigest()
     )
-
 
 @dataclass(frozen=True)
 class CampusMapContract:
