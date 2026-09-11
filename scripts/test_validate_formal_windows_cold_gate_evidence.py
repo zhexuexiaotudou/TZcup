@@ -35,6 +35,7 @@ def _payload() -> dict[str, object]:
             "docker_private_at_most_configured_maximum": True,
             "wsl_vm_stopped_when_required": True,
             "wsl_vm_running_when_required": True,
+            "no_suspected_ndis_nonpaged_pool_leak": True,
         },
         "docker_was_signalled_or_stopped": False,
     }
@@ -81,4 +82,19 @@ def test_rejects_weakened_thresholds_and_running_wsl(tmp_path: Path) -> None:
     path = tmp_path / "gate.json"
     _write(path, payload)
     with pytest.raises(EvidenceError, match="below 12.5 GiB"):
+        validate_evidence(path, now_ns=NOW_NS)
+
+
+@pytest.mark.parametrize("missing", [False, True])
+def test_rejects_unproven_ndis_pool_safety(tmp_path: Path, missing: bool) -> None:
+    payload = _payload()
+    checks = payload["checks"]
+    assert isinstance(checks, dict)
+    if missing:
+        checks.pop("no_suspected_ndis_nonpaged_pool_leak")
+    else:
+        checks["no_suspected_ndis_nonpaged_pool_leak"] = False
+    path = tmp_path / "gate.json"
+    _write(path, payload)
+    with pytest.raises(EvidenceError, match="incomplete or not all true"):
         validate_evidence(path, now_ns=NOW_NS)

@@ -15,7 +15,9 @@ from aggregate_formal_single_episode_cleaning_mission import (
     canonical_session_id,
 )
 from collect_formal_single_episode_cleaning_mission import (
-    CONTROL_PROHIBITED_TRUTH_TOPICS, REQUIRED_RUNTIME_NODES,
+    CONTROL_PROHIBITED_TRUTH_TOPICS, RAW_GROUND_TRUTH_ADAPTER_NODE, RAW_GROUND_TRUTH_TOPIC,
+    REPLAY_METRIC_TOPICS, REQUIRED_RUNTIME_NODES,
+    TRUSTED_GT_RECORDER_NODE,
     build_input_binding, sha256_file,
 )
 from generate_formal_same_map_baseline import build_report
@@ -128,18 +130,40 @@ def build_raw(tmp_path: Path) -> Path:
     saved_map = tmp_path / "saved_map"
     saved_map.mkdir()
     _write(saved_map / "occupancy.yaml", "image: occupancy.pgm\n")
+    (saved_map / "occupancy.pgm").write_bytes(b"P5\n1 1\n255\n\xff")
+    (saved_map / "coverage_free_space.pgm").write_bytes(b"P5\n1 1\n255\n\xff")
+    coverage_geometry = {
+        "source": "saved_slam_occupancy_only",
+        "free_space_map": "coverage_free_space.pgm",
+        "free_space_map_sha256": sha256_file(saved_map / "coverage_free_space.pgm"),
+        "resolution_m": 0.1,
+        "planning_clearance_m": 1.70,
+        "obstacle_inflation_m": 1.70,
+        "reachable_cleanable_cells": 2_000_000,
+        "reachable_cleanable_area_m2": 20_000.0,
+    }
+    (saved_map / "coverage_geometry.yaml").write_text(
+        yaml.safe_dump(coverage_geometry, sort_keys=False), encoding="utf-8"
+    )
     mission = {
         "schema_version": 1, "mission_id": f"formal-lifecycle-{episode_id}",
         "vehicle_start_pose_map": {"x_m": 0., "y_m": 0., "yaw_rad": 0.},
         "source_fixed_start_pose": [-98., 0., 0.],
         "truth_boundary": {"world_geometry_used_for_product_map": False,
             "evaluator_truth_used": False, "dirt_truth_used": False},
+        "saved_occupancy_coverage": {
+            "geometry": "coverage_geometry.yaml",
+            "free_space_map": "coverage_free_space.pgm",
+            "sha256": sha256_file(saved_map / "coverage_geometry.yaml"),
+        },
     }
     (saved_map / "mission_geometry.yaml").write_text(
         yaml.safe_dump(mission, sort_keys=False), encoding="utf-8"
     )
-    manifest_hashes = {name: sha256_file(saved_map / name)
-                       for name in ("occupancy.yaml", "mission_geometry.yaml")}
+    manifest_hashes = {name: sha256_file(saved_map / name) for name in (
+        "occupancy.yaml", "occupancy.pgm", "mission_geometry.yaml",
+        "coverage_geometry.yaml", "coverage_free_space.pgm",
+    )}
     _write(saved_map / "map_lifecycle_manifest.json", {
         "status": "ready_for_localization_cleaning", "episode_id": episode_id,
         "map_id": map_id, "observed_fraction": .96, "fixed_start_verified": True,
@@ -156,6 +180,18 @@ def build_raw(tmp_path: Path) -> Path:
         "saved_map_sha256_verified": True, "hard_restart_verified": True,
         "cleaning_stack_ready": True, "coverage_server_ready": True,
         "world_derived_map_fallback": False,
+        "trajectory_total_distance_m": 1000.0,
+        "coverage_pose_source": "amcl_pose_product_estimate",
+        "brush_state_source": "/brush_enabled_product_runtime",
+        "coverage_geometry_sha256": sha256_file(saved_map / "coverage_geometry.yaml"),
+        "coverage_planning_clearance_m": 1.70,
+        "coverage_raster_resolution_m": 0.1,
+        "estimated_field_cells": 2_000_000,
+        "estimated_covered_cells": 1_950_000,
+        "estimated_coverage_fraction": 0.975,
+        "coverage_first_brush_enabled_monotonic_s": 100.0,
+        "coverage_terminal_monotonic_s": 19_600.0,
+        "coverage_actual_duration_sec": 19_500.0,
         "hard_restart_record": {"mapping_stopped_before_cleaning": True,
             "mapping_process_count_before_cleaning": 0,
             "restart_type": "separate_process_hard_restart"},
@@ -166,20 +202,18 @@ def build_raw(tmp_path: Path) -> Path:
         "checks": {"map": True, "mapping": True, "cleaning": True},
     })
     coverage = _write(tmp_path / "coverage.json", {
-        "schema_version": 2, "mission_id": mission["mission_id"],
-        "planner": "OpenNav Coverage + Fields2Cover", "success": True,
-        "planning_success": True, "full_execution_success": True,
-        "coverage_quality_success": True, "safety_success": True,
-        "localization_success": True,
-        "competition_efficiency_pass": True,
-        "evaluation_injection": {"ground_truth_used_for_control": False},
-        "planned_metrics": {"path_length_m": 980.},
-        "empirical_metrics": {
-            "actual_path_length_m": 1000.,
-            "covered_area_m2": 20000.,
-            "actual_duration_sec": 20000.,
-            "net_efficiency_m2_h": 3600.,
-        },
+        "schema_version": 1, "success": True, "terminal_state": "COMPLETED",
+        "ground_truth_used_for_control": False, "brush_disabled_on_exit": True,
+        "operation_width_m": 1.32,
+        "operation_speed_profile": "dry_cleaning_competition_candidate",
+        "maximum_linear_speed_mps": 1.0,
+        "planned_swath_count": 100, "completed_swath_count": 100,
+        "planned_swath_length_m": 980.0,
+        "coverage_geometry_sha256": sha256_file(saved_map / "coverage_geometry.yaml"),
+        "planning_clearance_m": 1.70,
+        "coverage_raster_resolution_m": 0.1,
+        "reachable_cleanable_cells": 2_000_000,
+        "cleanable_area_m2": 20_000.0,
     })
     baseline = _write(tmp_path / "baseline.json", build_report(
         episode_manifest=episode, map_root=saved_map,
@@ -238,6 +272,12 @@ def build_raw(tmp_path: Path) -> Path:
         "pedestrians": {"state": "ACTIVE", "pedestrian_count": 3}}
     subscribers = {topic: ["/formal_single_episode_cleaning_collector"]
                    for topic in CONTROL_PROHIBITED_TRUTH_TOPICS}
+    ground_truth_topic = REPLAY_METRIC_TOPICS["ground_truth_odom"]["name"]
+    allowed_gt_subscribers = sorted([
+        "/formal_single_episode_cleaning_collector", TRUSTED_GT_RECORDER_NODE,
+    ])
+    subscribers[ground_truth_topic] = allowed_gt_subscribers
+    subscribers[RAW_GROUND_TRUTH_TOPIC] = [RAW_GROUND_TRUTH_ADAPTER_NODE]
     planner = {"diagnostic_name": "formal_active_cleaning_policy_planner",
         "hardware_id": "frozen_truth_free_q_policy", "level": 0, "state": "COMPLETE",
         "reason": "task_complete_and_fixed_start_pose_reached", "truth_used_for_control": "false",
@@ -260,7 +300,14 @@ def build_raw(tmp_path: Path) -> Path:
                           "artifacts": binding["artifacts"]}, "metric_sources": sources,
         "runtime_graph": {"nodes": sorted(REQUIRED_RUNTIME_NODES | {"/formal_single_episode_cleaning_collector"}),
             "required_nodes": sorted(REQUIRED_RUNTIME_NODES), "required_nodes_present": True,
-            "control_prohibited_truth_topic_subscribers": subscribers},
+            "truth_subscription_audit_enabled": True,
+            "control_prohibited_truth_topic_subscribers": subscribers,
+            "ground_truth_odom_allowed_subscribers": allowed_gt_subscribers,
+            "ground_truth_model_odom_raw_allowed_subscribers": [RAW_GROUND_TRUTH_ADAPTER_NODE],
+            "ground_truth_odom_trusted_recorder": {
+                "node": TRUSTED_GT_RECORDER_NODE, "pid": 4201, "pgid": 4200,
+                "pid_pgid_match": True,
+            }},
         "runtime_parameters": {"/formal_active_cleaning_policy_planner": {
                 "policy_checkpoint": str(policy.resolve()), "episode_seed": seed,
                 "maximum_task_distance_m": 1000.},
@@ -292,10 +339,10 @@ def test_aggregate_one_live_run_has_manifest_derived_and_delta_evidence(tmp_path
     assert result["planning"]["planner"] == "q_learning"
     assert result["planning"]["same_map_full_coverage_efficiency"] == {
         "threshold_m2_h": 3500.0,
-        "covered_area_m2": 20000.0,
-        "actual_duration_sec": 20000.0,
-        "measured_net_efficiency_m2_h": 3600.0,
-        "recomputed_net_efficiency_m2_h": 3600.0,
+        "covered_area_m2": pytest.approx(19500.0),
+        "actual_duration_sec": 19500.0,
+        "measured_net_efficiency_m2_h": pytest.approx(3600.0),
+        "recomputed_net_efficiency_m2_h": pytest.approx(3600.0),
         "return_distance_included": False,
         "passed": True,
     }
@@ -317,6 +364,27 @@ def test_rejects_truth_subscription_by_product_node(tmp_path: Path) -> None:
     row["runtime_graph"]["control_prohibited_truth_topic_subscribers"][topic].append("/planner")
     _write(path, row)
     with pytest.raises(AggregateError, match="non-collector subscriber"):
+        aggregate(path)
+
+
+def test_rejects_ground_truth_odom_outside_fixed_collector_recorder_boundary(tmp_path: Path) -> None:
+    path = build_raw(tmp_path)
+    row = json.loads(path.read_text())
+    graph = row["runtime_graph"]
+    graph["control_prohibited_truth_topic_subscribers"]["/ground_truth/odom"].append("/planner")
+    _write(path, row)
+    with pytest.raises(AggregateError, match="ground-truth odom has a subscriber outside"):
+        aggregate(path)
+
+
+def test_rejects_raw_model_ground_truth_subscriber_outside_adapter_boundary(tmp_path: Path) -> None:
+    path = build_raw(tmp_path)
+    row = json.loads(path.read_text())
+    row["runtime_graph"]["control_prohibited_truth_topic_subscribers"][RAW_GROUND_TRUTH_TOPIC].append(
+        "/formal_single_episode_cleaning_collector"
+    )
+    _write(path, row)
+    with pytest.raises(AggregateError, match="raw model ground-truth has a subscriber outside"):
         aggregate(path)
 
 

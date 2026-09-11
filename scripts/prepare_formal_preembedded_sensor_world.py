@@ -42,6 +42,12 @@ FORMAL_WATER_CONTACT_SENSOR_LINKS = {
     "left_side_brush_ground_contact": "left_side_brush_link",
     "right_side_brush_ground_contact": "right_side_brush_link",
     "central_roller_ground_contact": "central_roller_link",
+    "charge_receptacle_contact_sensor": "base_footprint",
+    "wastewater_drain_coupling_contact_sensor": "base_footprint",
+}
+FORMAL_SERVICE_CONTACT_TOPICS = {
+    "charge_receptacle_contact_sensor": "/formal_vehicle/gazebo/charge_receptacle/contact",
+    "wastewater_drain_coupling_contact_sensor": "/formal_vehicle/gazebo/wastewater_drain_coupling/contact",
 }
 
 
@@ -265,12 +271,34 @@ def restore_sensor_attachments(
 
     restored: list[dict[str, str]] = []
     for name in sorted(attachments):
-        target_link, source_pose, _sensor_type = attachments[name]
+        target_link, source_pose, sensor_type = attachments[name]
         target = links.get(target_link)
         sensor = converted[name]
         current = parents.get(sensor)
         if current is None or current.tag != "link":
             raise PreparationError(f"converted sensor {name} has no owning link")
+        # A reduced fixed link takes its collision with it.  Keep a contact
+        # sensor on that converted collision owner when its selector resolves
+        # there; moving only the sensor back would leave it on a collision-free
+        # reconstructed holder and Gazebo would publish no contacts.
+        selector = (sensor.findtext("contact/collision") or "").strip()
+        if sensor_type == "contact" and selector:
+            matching_collisions = [
+                collision
+                for collision in current.findall("collision")
+                if collision.get("name") == selector
+            ]
+            if len(matching_collisions) == 1:
+                restored.append(
+                    {
+                        "sensor": name,
+                        "converted_link": current.get("name", ""),
+                        "restored_link": current.get("name", ""),
+                        "local_pose": sensor.findtext("pose", default="0 0 0 0 0 0"),
+                        "attachment_status": "retained_on_converted_collision_owner",
+                    }
+                )
+                continue
         attachment_status = "restored_urdf_reference_link"
         # sdformat reduces fixed joint chains, including camera and lidar
         # brackets, and bakes their initial poses into a surviving link.  Restore
@@ -367,6 +395,18 @@ def validate_formal_water_contact_sensor_bindings(
                 f"formal contact sensor {sensor_name} selector {selector!r} must match "
                 f"exactly one collision on {expected_link}, found {len(matches)}"
             )
+        expected_topic = FORMAL_SERVICE_CONTACT_TOPICS.get(sensor_name)
+        if expected_topic is not None:
+            if sensor.find("topic") is not None:
+                raise PreparationError(
+                    f"formal contact sensor {sensor_name} has a misplaced direct topic"
+                )
+            actual_topic = (sensor.findtext("contact/topic") or "").strip()
+            if actual_topic != expected_topic:
+                raise PreparationError(
+                    f"formal contact sensor {sensor_name} contact topic must be "
+                    f"{expected_topic!r}, found {actual_topic or '<empty>'!r}"
+                )
 
 
 def build_preembedded_world(

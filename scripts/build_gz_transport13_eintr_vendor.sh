@@ -170,8 +170,8 @@ for path in \
     exit 3
   }
 done
-[[ -x "${system_protobuf_protoc}" ]] || {
-  echo "required system protoc is missing or not executable: ${system_protobuf_protoc}" >&2
+[[ -f "${system_protobuf_protoc}" && ! -L "${system_protobuf_protoc}" ]] || {
+  echo "required system protoc is missing, non-regular, or linked: ${system_protobuf_protoc}" >&2
   exit 3
 }
 [[ "$("${system_protobuf_protoc}" --version)" == "libprotoc ${system_protobuf_version}" ]] || {
