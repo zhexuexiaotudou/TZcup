@@ -107,8 +107,14 @@ def test_validator_passes_only_complete_real_runtime_contract(tmp_path, monkeypa
         "gnss_odometry_tolerance_m": 2.0,
         "gnss_odometry_pair_max_skew_sec": 0.1,
         "gnss_odometry_stamp_delta_sec": 0.05,
-        "gnss_odometry_odom_sample": {"source_topic": "/odom"},
-        "gnss_odometry_gps_sample": {"source_topic": "/odometry/gps"},
+        "gnss_odometry_odom_sample": {
+            "source_topic": "/odom", "frame_id": "odom",
+            "child_frame_id": "base_footprint",
+        },
+        "gnss_odometry_gps_sample": {
+            "source_topic": "/odometry/gps", "frame_id": "odom",
+            "child_frame_id": "",
+        },
         "mapping_pose_source": (
             "wheel_imu_ekf_lidar_scan_matching_gnss_consistency"
         ),
@@ -202,6 +208,20 @@ def test_validator_passes_only_complete_real_runtime_contract(tmp_path, monkeypa
         "mapping_safe": pytest.approx(0.45),
         "dry_cleaning": pytest.approx(1.0),
     }
+
+    valid_manifest = json.loads((root / "map_lifecycle_manifest.json").read_text(encoding="utf-8"))
+    for sample_name, child_frame_id in (
+        ("gnss_odometry_odom_sample", ""),
+        ("gnss_odometry_odom_sample", "base_link"),
+        ("gnss_odometry_gps_sample", "base_footprint"),
+        ("gnss_odometry_gps_sample", "base_link"),
+    ):
+        invalid_manifest = copy.deepcopy(valid_manifest)
+        invalid_manifest[sample_name]["child_frame_id"] = child_frame_id
+        _write(root / "map_lifecycle_manifest.json", invalid_manifest)
+        failed = MODULE.validate(root, mapping, cleaning)
+        assert failed["checks"]["quality_gated_map_manifest"] is False
+    _write(root / "map_lifecycle_manifest.json", valid_manifest)
 
     valid_mapping = json.loads(mapping.read_text(encoding="utf-8"))
     for field, value in (

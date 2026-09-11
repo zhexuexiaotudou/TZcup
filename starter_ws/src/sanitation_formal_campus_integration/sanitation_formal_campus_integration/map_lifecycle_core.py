@@ -962,7 +962,9 @@ def _validate_timestamp_paired_gnss_odometry(manifest: dict[str, Any]) -> None:
     ):
         raise MapLifecycleError("saved map GNSS/odometry gate evidence is outside the formal contract")
 
-    def sample(name: str, topic: str) -> tuple[int, tuple[float, float]]:
+    def sample(
+        name: str, topic: str, child_frame_id: str
+    ) -> tuple[int, tuple[float, float]]:
         value = manifest.get(name)
         if not isinstance(value, dict):
             raise MapLifecycleError("saved map GNSS/odometry sample is missing")
@@ -975,7 +977,7 @@ def _validate_timestamp_paired_gnss_odometry(manifest: dict[str, Any]) -> None:
             or stamp_ns <= 0
             or value.get("source_topic") != topic
             or value.get("frame_id") != "odom"
-            or value.get("child_frame_id") != "base_footprint"
+            or value.get("child_frame_id") != child_frame_id
             or not isinstance(xy, list)
             or len(xy) != 2
             or not isinstance(covariance, list)
@@ -999,8 +1001,12 @@ def _validate_timestamp_paired_gnss_odometry(manifest: dict[str, Any]) -> None:
             raise MapLifecycleError("saved map GNSS/odometry sample is invalid")
         return stamp_ns, (x, y)
 
-    odom_stamp_ns, odom_xy = sample("gnss_odometry_odom_sample", "/odom")
-    gps_stamp_ns, gps_xy = sample("gnss_odometry_gps_sample", "/odometry/gps")
+    odom_stamp_ns, odom_xy = sample(
+        "gnss_odometry_odom_sample", "/odom", "base_footprint"
+    )
+    gps_stamp_ns, gps_xy = sample(
+        "gnss_odometry_gps_sample", "/odometry/gps", ""
+    )
     computed_skew_sec = abs(odom_stamp_ns - gps_stamp_ns) / 1_000_000_000.0
     computed_disagreement_m = math.dist(odom_xy, gps_xy)
     if (

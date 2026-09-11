@@ -236,6 +236,8 @@ def validate(
     except (TypeError, ValueError):
         observed_fraction = quality_threshold = math.nan
         stable_samples = 0
+    odom_sample = manifest.get("gnss_odometry_odom_sample")
+    gps_sample = manifest.get("gnss_odometry_gps_sample")
     checks = {
         "mapping_cleaning_runtime_binding_verified": binding_valid,
         "hard_restart_record_reverified": restart_valid and mapping_bytes_match,
@@ -253,8 +255,14 @@ def validate(
             and manifest.get("fixed_start_verified") is True
             and manifest.get("gnss_mapping_reference_observed") is True
             and manifest.get("gnss_odometry_pairing_status") == "time_aligned"
-            and isinstance(manifest.get("gnss_odometry_odom_sample"), dict)
-            and isinstance(manifest.get("gnss_odometry_gps_sample"), dict)
+            and isinstance(odom_sample, dict)
+            and odom_sample.get("source_topic") == "/odom"
+            and odom_sample.get("frame_id") == "odom"
+            and odom_sample.get("child_frame_id") == "base_footprint"
+            and isinstance(gps_sample, dict)
+            and gps_sample.get("source_topic") == "/odometry/gps"
+            and gps_sample.get("frame_id") == "odom"
+            and gps_sample.get("child_frame_id") == ""
             and all(
                 isinstance(manifest.get(name), (int, float))
                 and not isinstance(manifest.get(name), bool)

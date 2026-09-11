@@ -79,10 +79,16 @@ def odometry(stamp, *, nanosec=0, x=0., y=0., covariance=(0.1, 0.2)):
     )
 
 
+def gps_odometry(stamp, **kwargs):
+    message = odometry(stamp, **kwargs)
+    message.child_frame_id = ""
+    return message
+
+
 def fresh_inputs(node):
     stamp = node.get_clock().now().nanoseconds // 1_000_000_000
     node._on_odom(odometry(stamp))
-    node._on_gps_odom(odometry(stamp))
+    node._on_gps_odom(gps_odometry(stamp))
 
 
 def test_one_map_cannot_count_three_timer_ticks(manager):
@@ -198,7 +204,10 @@ def test_source_stamp_rejected_despite_fresh_arrival(manager, stream, stamp):
     callback = {"map":node._on_map, "odom":node._on_odom, "gps":node._on_gps_odom}[stream]
     # Isolate source age rejection from duplicate/reordered-stamp rejection.
     setattr(node, f"_{stream}_stamp_ns", None)
-    callback(grid(stamp) if stream == "map" else odometry(stamp))
+    message = grid(stamp) if stream == "map" else (
+        gps_odometry(stamp) if stream == "gps" else odometry(stamp)
+    )
+    callback(message)
     node._evaluate()
     assert node._stable == 0
     assert not node.saves
@@ -211,7 +220,7 @@ def test_repeated_odometry_cannot_refresh_age(manager, stream):
     node._on_map(grid(10)); node._evaluate()
     clock.value = 12.
     callback = node._on_odom if stream == "odom" else node._on_gps_odom
-    callback(odometry(10))
+    callback(gps_odometry(10) if stream == "gps" else odometry(10))
     assert getattr(node, f"_{stream}_received_at") is None
     assert node._stable == 0
 
@@ -220,7 +229,8 @@ def test_repeated_odometry_cannot_refresh_age(manager, stream):
 def test_wrong_odometry_frame_is_rejected(manager, stream):
     node, _ = manager
     fresh_inputs(node)
-    msg = odometry(11); msg.header.frame_id = "map"
+    msg = gps_odometry(11) if stream == "gps" else odometry(11)
+    msg.header.frame_id = "map"
     callback = node._on_odom if stream == "odom" else node._on_gps_odom
     callback(msg)
     assert getattr(node, f"_{stream}_received_at") is None
@@ -231,7 +241,7 @@ def test_time_aligned_pair_exposes_sources_coordinates_covariance_and_skew(manag
     clock.value = 11.
     node._on_odom(odometry(10, x=2.0, y=3.0, covariance=(0.3, 0.4)))
     node._on_gps_odom(
-        odometry(10, nanosec=50_000_000, x=2.2, y=3.1, covariance=(0.5, 0.6))
+        gps_odometry(10, nanosec=50_000_000, x=2.2, y=3.1, covariance=(0.5, 0.6))
     )
     details = node._gnss_odometry_pair_details()
     assert details["gnss_odometry_pairing_status"] == "time_aligned"
@@ -242,6 +252,7 @@ def test_time_aligned_pair_exposes_sources_coordinates_covariance_and_skew(manag
         "xy_m": [2.0, 3.0], "pose_covariance_xy_m2": [0.3, 0.4],
     }
     assert details["gnss_odometry_gps_sample"]["source_topic"] == "/odometry/gps"
+    assert details["gnss_odometry_gps_sample"]["child_frame_id"] == ""
     assert details["gnss_odometry_gps_sample"]["xy_m"] == [2.2, 3.1]
     assert details["gnss_odometry_gps_sample"]["pose_covariance_xy_m2"] == [0.5, 0.6]
 
@@ -250,7 +261,7 @@ def test_out_of_skew_pair_fails_closed_without_using_an_old_pair(manager):
     node, clock = manager
     clock.value = 11.
     node._on_odom(odometry(10, x=1.0, y=1.0))
-    node._on_gps_odom(odometry(10, nanosec=50_000_000, x=1.0, y=1.0))
+    node._on_gps_odom(gps_odometry(10, nanosec=50_000_000, x=1.0, y=1.0))
     assert node._latest_gnss_odometry_pair is not None
     # A later unmatched odom must clear the old pair; it cannot reuse the
     # earlier aligned samples while the current streams have diverged.
@@ -270,7 +281,7 @@ def test_pair_skew_parameter_cannot_be_relaxed_above_100ms(manager):
     original = node.get_parameter
     node.get_parameter = lambda key: NS(value=.11) if key == "gnss_odometry_max_pair_skew_sec" else original(key)
     node._on_odom(odometry(10))
-    node._on_gps_odom(odometry(10, nanosec=50_000_000))
+    node._on_gps_odom(gps_odometry(10, nanosec=50_000_000))
     assert node._latest_gnss_odometry_pair is None
     assert node._gnss_odometry_pair_details()["gnss_odometry_pairing_status"] == "invalid_pair_skew_parameter"
 
@@ -292,7 +303,7 @@ def test_gnss_pair_requires_finite_nonnegative_covariance(manager, covariance):
     node, clock = manager
     clock.value = 11.
     node._on_odom(odometry(10, covariance=covariance))
-    node._on_gps_odom(odometry(10, nanosec=50_000_000))
+    node._on_gps_odom(gps_odometry(10, nanosec=50_000_000))
     status, _ = node._gnss_odometry_consistency_details()
     assert status == "invalid_gnss_odometry_covariance"
 
@@ -320,7 +331,7 @@ def test_save_callback_rechecks_current_pair_before_writing_manifest(manager):
     node._map_received_at = 11.
     node._map_stamp_ns = 10_000_000_000
     node._on_odom(odometry(10))
-    node._on_gps_odom(odometry(10, nanosec=50_000_000))
+    node._on_gps_odom(gps_odometry(10, nanosec=50_000_000))
     node._on_odom(odometry(10, nanosec=200_000_000))
     assert node._latest_gnss_odometry_pair is None
     node._on_save(NS(result=lambda: NS(result=0)), {"stale": "details"})
@@ -329,14 +340,28 @@ def test_save_callback_rechecks_current_pair_before_writing_manifest(manager):
     assert "GNSS/odometry consistency changed while saving" in node.statuses[-1][2]["error"]
 
 
-@pytest.mark.parametrize("stream", ["odom", "gps"])
-def test_wrong_odometry_child_frame_is_rejected(manager, stream):
+def test_gps_empty_child_frame_is_accepted(manager):
+    node, _ = manager
+    node._on_gps_odom(gps_odometry(10))
+    assert node._gps_received_at is not None
+
+
+@pytest.mark.parametrize("child_frame_id", ["base_footprint", "base_link"])
+def test_gps_robot_child_frame_is_rejected(manager, child_frame_id):
+    node, _ = manager
+    message = gps_odometry(10)
+    message.child_frame_id = child_frame_id
+    node._on_gps_odom(message)
+    assert node._gps_received_at is None
+
+
+@pytest.mark.parametrize("child_frame_id", ["", "base_link"])
+def test_odom_non_product_child_frame_is_rejected(manager, child_frame_id):
     node, _ = manager
     message = odometry(10)
-    message.child_frame_id = "base_link"
-    callback = node._on_odom if stream == "odom" else node._on_gps_odom
-    callback(message)
-    assert getattr(node, f"_{stream}_received_at") is None
+    message.child_frame_id = child_frame_id
+    node._on_odom(message)
+    assert node._odom_received_at is None
 
 
 def test_ready_is_not_revoked_by_late_replayed_map(manager):

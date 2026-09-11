@@ -453,7 +453,7 @@ def _materialized_saved_map(root: Path) -> tuple[CampusMapContract, dict[str, Pa
         },
         "gnss_odometry_gps_sample": {
             "source_topic": "/odometry/gps", "stamp_ns": 10_050_000_000,
-            "stamp_sec": 10.05, "frame_id": "odom", "child_frame_id": "base_footprint",
+            "stamp_sec": 10.05, "frame_id": "odom", "child_frame_id": "",
             "xy_m": [0.0, 0.0], "pose_covariance_xy_m2": [0.0, 0.0],
         },
         "mapping_pose_source": "wheel_imu_ekf_lidar_scan_matching_gnss_consistency",
@@ -505,6 +505,15 @@ def test_saved_map_rejects_gnss_sample_frame_or_threshold_tampering(tmp_path):
     manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
     with pytest.raises(MapLifecycleError, match="frame contract"):
         validate_saved_map_artifact(root, contract)
+
+    for invalid_child_frame_id in ("base_footprint", "base_link"):
+        contract, _ = _materialized_saved_map(root)
+        manifest_path = root / "map_lifecycle_manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["gnss_odometry_gps_sample"]["child_frame_id"] = invalid_child_frame_id
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+        with pytest.raises(MapLifecycleError, match="frame contract"):
+            validate_saved_map_artifact(root, contract)
 
     contract, _ = _materialized_saved_map(root)
     manifest_path = root / "map_lifecycle_manifest.json"
@@ -710,7 +719,7 @@ def test_cleaning_admission_rejects_old_manifest_that_lacks_pgm_observation_proo
         },
         "gnss_odometry_gps_sample": {
             "source_topic": "/odometry/gps", "stamp_ns": 10_050_000_000,
-            "stamp_sec": 10.05, "frame_id": "odom", "child_frame_id": "base_footprint",
+            "stamp_sec": 10.05, "frame_id": "odom", "child_frame_id": "",
             "xy_m": [0.0, 0.0], "pose_covariance_xy_m2": [0.0, 0.0],
         },
         "mapping_pose_source": (
@@ -762,7 +771,7 @@ def test_cleaning_admission_rejects_partial_or_traversing_hash_seal(tmp_path):
         },
         "gnss_odometry_gps_sample": {
             "source_topic": "/odometry/gps", "stamp_ns": 10_050_000_000,
-            "stamp_sec": 10.05, "frame_id": "odom", "child_frame_id": "base_footprint",
+            "stamp_sec": 10.05, "frame_id": "odom", "child_frame_id": "",
             "xy_m": [0.0, 0.0], "pose_covariance_xy_m2": [0.0, 0.0],
         },
         "mapping_pose_source": (

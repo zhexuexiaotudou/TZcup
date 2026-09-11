@@ -417,7 +417,11 @@ class FormalMapLifecycleManager(Node):
 
     def _on_gps_odom(self, message: Odometry) -> None:
         pose = message.pose.pose
-        if (self._valid_source_header(message, "gps", "odom", "base_footprint", 5.0)
+        # navsat_transform's /odometry/gps is an Odometry position reference,
+        # not the product odom->base transform.  Its standard child frame is
+        # intentionally empty; accepting a robot child here would conflate the
+        # two evidence streams.
+        if (self._valid_source_header(message, "gps", "odom", "", 5.0)
                 and math.isfinite(pose.position.x) and math.isfinite(pose.position.y)):
             self._latest_gps_xy = (pose.position.x, pose.position.y)
             self._latest_gps_sample = self._pose_sample(message, self._gps_source_topic)
