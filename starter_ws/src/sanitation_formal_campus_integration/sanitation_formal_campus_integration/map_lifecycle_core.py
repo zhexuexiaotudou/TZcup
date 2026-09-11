@@ -415,6 +415,61 @@ def read_binary_pgm(path: Path) -> tuple[int, int, list[bytearray]]:
     return parse_binary_pgm(path.read_bytes())
 
 
+def assess_saved_pgm_observation(
+    occupancy_metadata: Any,
+    occupancy_image: bytes,
+    *,
+    geofence: Sequence[tuple[float, float]],
+    threshold: float,
+) -> GridObservation:
+    """Recompute formal-field observation from a sealed trinary SLAM PGM."""
+    if not isinstance(occupancy_metadata, dict):
+        raise MapLifecycleError("saved occupancy metadata is invalid")
+    try:
+        resolution = float(occupancy_metadata["resolution"])
+        origin_x, origin_y, origin_yaw = (float(value) for value in occupancy_metadata["origin"])
+        occupied_threshold = float(occupancy_metadata.get("occupied_thresh", 0.65))
+        free_threshold = float(occupancy_metadata.get("free_thresh", 0.25))
+        negate = occupancy_metadata.get("negate", 0)
+    except (KeyError, TypeError, ValueError) as exc:
+        raise MapLifecycleError("saved occupancy metadata is invalid") from exc
+    if (
+        isinstance(negate, bool)
+        or negate not in {0, 1}
+        or occupancy_metadata.get("mode", "trinary") != "trinary"
+        or not 0.0 < resolution <= MAXIMUM_SAVED_MAP_RESOLUTION_M
+        or not all(math.isfinite(value) for value in (
+            origin_x, origin_y, origin_yaw, occupied_threshold, free_threshold,
+        ))
+        or abs(origin_yaw) > 1e-9
+        or not 0.0 <= free_threshold < occupied_threshold <= 1.0
+    ):
+        raise MapLifecycleError("saved occupancy metadata is outside the formal contract")
+    width, height, rows = parse_binary_pgm(occupancy_image)
+    data: list[int] = []
+    for row in rows:
+        for pixel in row:
+            probability = pixel / 255.0 if negate else (255 - pixel) / 255.0
+            if probability > occupied_threshold:
+                data.append(100)
+            elif probability < free_threshold:
+                data.append(0)
+            else:
+                # In trinary mode the interval including both thresholds is unknown.
+                data.append(-1)
+    return assess_grid_observation(
+        data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=origin_x,
+        origin_y=origin_y,
+        origin_yaw=origin_yaw,
+        geofence=geofence,
+        threshold=threshold,
+    )
+
+
 def _rectangles_from_mask(
     mask: Sequence[Sequence[bool]], *, resolution: float, origin_x: float, origin_y: float
 ) -> list[list[list[float]]]:
@@ -892,6 +947,20 @@ def validate_saved_map_artifact(
     )
     if sealed_image_name != image_name:
         raise MapLifecycleError("formal saved map must use occupancy.pgm")
+    pgm_observation = assess_saved_pgm_observation(
+        occupancy_metadata,
+        snapshots[image_name],
+        geofence=contract.geofence,
+        threshold=quality_threshold,
+    )
+    if (
+        not pgm_observation.passed
+        or not math.isclose(observed_fraction, pgm_observation.observed_fraction, abs_tol=1e-12)
+        or manifest.get("saved_pgm_observed_fraction") != pgm_observation.observed_fraction
+        or manifest.get("saved_pgm_observed_cells") != pgm_observation.observed_cells
+        or manifest.get("saved_pgm_field_cells") != pgm_observation.field_cells
+    ):
+        raise MapLifecycleError("saved occupancy PGM observation does not match the lifecycle manifest")
     try:
         mission = yaml.safe_load(snapshots["mission_geometry.yaml"])
         coverage = mission["saved_occupancy_coverage"]

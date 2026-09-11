@@ -92,6 +92,7 @@ PY
     --map-root "${output}" \
     --mapping-runtime "${output}/mapping_runtime.json" \
     --cleaning-runtime "${output}/saved_map_cleaning_runtime/cleaning_runtime.json" \
+    --episode-manifest "${episode}/public/episode_manifest.json" \
     --output "${output}/mapping_only_lifecycle_boundary.json" >/dev/null 2>&1 || true
   return "${cleanup_status}"
 }

@@ -270,6 +270,7 @@ python3 "${repo_root}/scripts/validate_formal_map_lifecycle_runtime.py" \
   --map-root "${map_root}" \
   --mapping-runtime "${map_root}/mapping_runtime.json" \
   --cleaning-runtime "${cleaning_runtime}" \
+  --episode-manifest "${episode}/public/episode_manifest.json" \
   --runtime-binding "${runtime_binding}" \
   --output "${output}"
 validation_status=$?
