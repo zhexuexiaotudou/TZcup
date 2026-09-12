@@ -130,7 +130,7 @@ A300DrivetrainPlantOutput A300DrivetrainPlantCore::Step(
   if (output.drive_permitted) {
     stopped_elapsed_s_ = 0.0;
     const double maximum_speed_rad_s =
-      parameters_.maximum_vehicle_speed_mps / parameters_.control_wheel_radius_m;
+      parameters_.maximum_vehicle_speed_mps / parameters_.physical_wheel_radius_m;
     const double per_motor_power_w =
       parameters_.total_motor_output_power_w / static_cast<double>(kA300WheelCount);
     const double current_torque_limit_nm =

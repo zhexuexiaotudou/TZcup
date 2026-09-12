@@ -122,6 +122,13 @@ plant_model:
     brake_response_delay_s: 0.08
     brake_ramp_time_s: 0.12
     drivetrain_efficiency: 0.80
+  rigid_simulation_wheel_radius:
+    physical_rolling_radius_m: 0.1651
+    upstream_control_configuration_radius_m: 0.1625
+    command_conversion_radius_m: 0.1651
+    maximum_wheel_speed_radius_m: 0.1651
+    odometry_integration_radius_m: 0.1651
+    rationale: rigid_collision_wheel_has_no_tire_deflection_model
   integration_boundary:
     active_in_cmake: true
     loaded_by_current_vehicle: true

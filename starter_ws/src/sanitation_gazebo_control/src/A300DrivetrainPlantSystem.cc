@@ -222,7 +222,11 @@ private:
   {
     const double linearMps = message.linear().x();
     const double angularRadS = message.angular().z();
-    const double radius = this->plant.Parameters().control_wheel_radius_m;
+    // This rigid-wheel simulation has no tyre-deflection model.  Convert the
+    // requested ground speed with the collision rolling radius; the locked
+    // upstream 0.1625 m controller value remains provenance, not a second
+    // physical radius for this plant.
+    const double radius = this->plant.Parameters().physical_wheel_radius_m;
     const double halfTrack = this->wheelTrackM * 0.5;
     const double leftRadS = (linearMps - angularRadS * halfTrack) / radius;
     const double rightRadS = (linearMps + angularRadS * halfTrack) / radius;
@@ -345,7 +349,10 @@ private:
     }
     const double leftRadS = (wheelSpeedRadS[0] + wheelSpeedRadS[2]) * 0.5;
     const double rightRadS = (wheelSpeedRadS[1] + wheelSpeedRadS[3]) * 0.5;
-    const double radius = this->plant.Parameters().control_wheel_radius_m;
+    // Integrate the same rolling radius used by the rigid wheel contact and
+    // command conversion so encoder odometry retains the physical distance
+    // scale instead of accumulating the upstream configuration mismatch.
+    const double radius = this->plant.Parameters().physical_wheel_radius_m;
     const double linearMps = radius * (leftRadS + rightRadS) * 0.5;
     const double angularRadS = radius * (rightRadS - leftRadS) / this->wheelTrackM;
     this->odomYawRad += angularRadS * stepS;

@@ -4,8 +4,9 @@
     Clearpath Husky A300 40 Ah nominal model.  Visible chassis, livery, status
     lights, top plate and tyres are the BSD-3-Clause Clearpath meshes pinned in
     meshes/vendor/SOURCES.yaml.  Primitive geometry remains only for collision
-    and inertia.  Physical tyre radius is the official-description 0.1651 m;
-    the effort plant keeps the locked upstream control radius of 0.1625 m.
+    and inertia.  Physical tyre radius is the official-description 0.1651 m.
+    The rigid-wheel effort plant uses that rolling radius at runtime while the
+    locked upstream 0.1625 m controller value remains a provenance boundary.
   -->
 
   <xacro:macro name="hf_box_inertia" params="mass x y z">

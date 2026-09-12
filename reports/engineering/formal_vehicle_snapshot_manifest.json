@@ -971,8 +971,8 @@
       "size_bytes": 18624
     },
     "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/a300_platform.xacro": {
-      "sha256": "294a160cd22adf46f25724b7fe96404e184ab5863c841a93fd48215d59c6dad3",
-      "size_bytes": 24083
+      "sha256": "5c1995784cb6b33f4b92bf55c91ae233715c15dd1b6d22e2e871bc124c23ead5",
+      "size_bytes": 24164
     },
     "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/bodywork.xacro": {
       "sha256": "30ee05a49364553a262a38a04217e38d1fb3b848eef29e29e989b2601893c6e2",
@@ -1003,5 +1003,5 @@
       "size_bytes": 26704
     }
   },
-  "source_inventory_sha256": "a372117fe6ac5974a80ea22117fb4c5c049fcb12788f77b43192a15863d66151"
+  "source_inventory_sha256": "47a2718890b82baf498ef85e3a1f6deead4ae35b15fdfac3294e9b162f3182cc"
 }

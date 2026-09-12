@@ -124,9 +124,10 @@ are runtime acceptance and hardware correlation:
 3. Use the typed adapter whose enable comes from the unique product
    safety authority. Gazebo helper topics must not become a second final
    publisher.
-4. Resolve the current frozen model's use of 0.1651 m for control against the
-   upstream controller's 0.1625 m effective odometry radius. Retain 0.1651 m
-   as the physical collision radius.
+4. Keep the rigid simulation's command conversion, speed ceiling and odometry
+   integration aligned with the 0.1651 m physical collision radius. Retain the
+   upstream controller's 0.1625 m value as provenance only, and validate the
+   wheel-radius correlation independently before any real-vehicle claim.
 5. Identify torque/current/brake parameters from acceleration, coast-down,
    loaded-grade and stopping tests. Validate stopping distance in the actual
    target environment as required by the A300 manual.

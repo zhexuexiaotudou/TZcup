@@ -47,7 +47,7 @@ void TestOverspeedAndContinuousCurrentLimits()
   input.step_s = 0.25;
   input.commanded_speed_rad_s.fill(100.0);
   const auto output = plant.Step(input);
-  const double expected_maximum = 2.0 / 0.1625;
+  const double expected_maximum = 2.0 / 0.1651;
   Require(output.drive_permitted, "nominal drive must be permitted");
   Require(output.current_limited, "four-wheel continuous current must limit torque");
   Require(!output.power_limited, "zero-speed command must not be power limited");

@@ -27,6 +27,14 @@ def test_committed_a300_drivetrain_integration_is_static_valid() -> None:
     assert result["mesh_count"] == 5
     assert result["published_mass_kg"] == 78.5
     assert result["allocated_mass_kg"] == 78.5
+    assert result["rigid_simulation_wheel_radius"] == {
+        "physical_rolling_radius_m": 0.1651,
+        "upstream_control_configuration_radius_m": 0.1625,
+        "command_conversion_radius_m": 0.1651,
+        "maximum_wheel_speed_radius_m": 0.1651,
+        "odometry_integration_radius_m": 0.1651,
+        "rationale": "rigid_collision_wheel_has_no_tire_deflection_model",
+    }
     assert result["runtime_integrated"] is True
     assert result["runtime_revalidation_pending"] is True
 
@@ -97,4 +105,21 @@ def test_selected_odom_authority_cannot_drift(tmp_path: Path) -> None:
 
     contract = _mutated_contract(tmp_path, mutate)
     with pytest.raises(A300DrivetrainContractError, match="selected_odometry_publisher"):
+        validate(contract)
+
+
+@pytest.mark.parametrize(
+    "key",
+    (
+        "command_conversion_radius_m",
+        "maximum_wheel_speed_radius_m",
+        "odometry_integration_radius_m",
+    ),
+)
+def test_rigid_runtime_distance_scale_cannot_drift(tmp_path: Path, key: str) -> None:
+    def mutate(data: dict) -> None:
+        data["plant_model"]["rigid_simulation_wheel_radius"][key] = 0.1625
+
+    contract = _mutated_contract(tmp_path, mutate)
+    with pytest.raises(A300DrivetrainContractError, match=key):
         validate(contract)

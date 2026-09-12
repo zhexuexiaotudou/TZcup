@@ -21,8 +21,9 @@ enum class A300DrivetrainStopReason : std::uint8_t
 
 struct A300DrivetrainPlantParameters
 {
-  // Published A300 40 Ah boundaries. See the companion contract for exact
-  // provenance and the distinction between physical and odometry radii.
+  // Published A300 40 Ah boundaries. The upstream controller radius is kept
+  // for provenance. This rigid-wheel plant uses physical_wheel_radius_m for
+  // command conversion, the speed ceiling, and odometry integration.
   double physical_wheel_radius_m{0.1651};
   double control_wheel_radius_m{0.1625};
   double maximum_vehicle_speed_mps{2.0};

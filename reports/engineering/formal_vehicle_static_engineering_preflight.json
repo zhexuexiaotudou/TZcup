@@ -4542,7 +4542,7 @@
             },
             {
               "evidence": {
-                "line": 296,
+                "line": 300,
                 "path": "starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainPlantSystem.cc",
                 "token": "resistive_brake_active"
               },
@@ -4566,7 +4566,7 @@
             },
             {
               "evidence": {
-                "line": 87,
+                "line": 90,
                 "path": "scripts/formal_vehicle_mobility_metrics.py",
                 "token": "vehicle_stopped_after_zero_command"
               },
@@ -5108,7 +5108,7 @@
           "checks": [
             {
               "evidence": {
-                "line": 309,
+                "line": 310,
                 "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/a300_platform.xacro",
                 "token": "name=\"s100_cabinet_roof_mount_joint\""
               },
@@ -5116,7 +5116,7 @@
             },
             {
               "evidence": {
-                "line": 339,
+                "line": 340,
                 "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/a300_platform.xacro",
                 "token": "Explicit protected power path"
               },
