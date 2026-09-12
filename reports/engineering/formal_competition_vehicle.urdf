@@ -8,8 +8,9 @@
     Clearpath Husky A300 40 Ah nominal model.  Visible chassis, livery, status
     lights, top plate and tyres are the BSD-3-Clause Clearpath meshes pinned in
     meshes/vendor/SOURCES.yaml.  Primitive geometry remains only for collision
-    and inertia.  Physical tyre radius is the official-description 0.1651 m;
-    the effort plant keeps the locked upstream control radius of 0.1625 m.
+    and inertia.  Physical tyre radius is the official-description 0.1651 m.
+    The rigid-wheel effort plant uses that rolling radius at runtime while the
+    locked upstream 0.1625 m controller value remains a provenance boundary.
   -->
   <!-- Project-authored sensor envelopes based on the frozen public dimensions.
        Gazebo Harmonic sensor topics deliberately match pre_urdf_contract.yaml. -->
@@ -614,7 +615,7 @@
         <color rgba="0.035 0.040 0.045 1"/>
       </material>
     </visual>
-    <collision name="front_left_wheel_collision">
+    <collision>
       <origin rpy="1.5707963267948966 0 0"/>
       <geometry>
         <cylinder length="0.1143" radius="0.1651"/>
@@ -633,9 +634,14 @@
     <limit effort="250" velocity="12.2"/>
     <dynamics damping="0.15" friction="0.05"/>
   </joint>
+  <!-- URDF-to-SDF only applies this link extension to its unnamed primary
+         collision. A named wheel collision silently lost the whole surface
+         block and left DART's isotropic 1.0 default in runtime. -->
   <gazebo reference="front_left_wheel_link">
     <mu1>0.9</mu1>
     <mu2>0.72</mu2>
+    <!-- collision-local X is the rolling / vehicle-longitudinal direction -->
+    <fdir1>1 0 0</fdir1>
     <kp>1000000</kp>
     <kd>100</kd>
     <minDepth>0.001</minDepth>
@@ -707,7 +713,7 @@
         <color rgba="0.035 0.040 0.045 1"/>
       </material>
     </visual>
-    <collision name="rear_left_wheel_collision">
+    <collision>
       <origin rpy="1.5707963267948966 0 0"/>
       <geometry>
         <cylinder length="0.1143" radius="0.1651"/>
@@ -726,9 +732,14 @@
     <limit effort="250" velocity="12.2"/>
     <dynamics damping="0.15" friction="0.05"/>
   </joint>
+  <!-- URDF-to-SDF only applies this link extension to its unnamed primary
+         collision. A named wheel collision silently lost the whole surface
+         block and left DART's isotropic 1.0 default in runtime. -->
   <gazebo reference="rear_left_wheel_link">
     <mu1>0.9</mu1>
     <mu2>0.72</mu2>
+    <!-- collision-local X is the rolling / vehicle-longitudinal direction -->
+    <fdir1>1 0 0</fdir1>
     <kp>1000000</kp>
     <kd>100</kd>
     <minDepth>0.001</minDepth>
@@ -852,7 +863,7 @@
         <color rgba="0.035 0.040 0.045 1"/>
       </material>
     </visual>
-    <collision name="front_right_wheel_collision">
+    <collision>
       <origin rpy="1.5707963267948966 0 0"/>
       <geometry>
         <cylinder length="0.1143" radius="0.1651"/>
@@ -871,9 +882,14 @@
     <limit effort="250" velocity="12.2"/>
     <dynamics damping="0.15" friction="0.05"/>
   </joint>
+  <!-- URDF-to-SDF only applies this link extension to its unnamed primary
+         collision. A named wheel collision silently lost the whole surface
+         block and left DART's isotropic 1.0 default in runtime. -->
   <gazebo reference="front_right_wheel_link">
     <mu1>0.9</mu1>
     <mu2>0.72</mu2>
+    <!-- collision-local X is the rolling / vehicle-longitudinal direction -->
+    <fdir1>1 0 0</fdir1>
     <kp>1000000</kp>
     <kd>100</kd>
     <minDepth>0.001</minDepth>
@@ -945,7 +961,7 @@
         <color rgba="0.035 0.040 0.045 1"/>
       </material>
     </visual>
-    <collision name="rear_right_wheel_collision">
+    <collision>
       <origin rpy="1.5707963267948966 0 0"/>
       <geometry>
         <cylinder length="0.1143" radius="0.1651"/>
@@ -964,9 +980,14 @@
     <limit effort="250" velocity="12.2"/>
     <dynamics damping="0.15" friction="0.05"/>
   </joint>
+  <!-- URDF-to-SDF only applies this link extension to its unnamed primary
+         collision. A named wheel collision silently lost the whole surface
+         block and left DART's isotropic 1.0 default in runtime. -->
   <gazebo reference="rear_right_wheel_link">
     <mu1>0.9</mu1>
     <mu2>0.72</mu2>
+    <!-- collision-local X is the rolling / vehicle-longitudinal direction -->
+    <fdir1>1 0 0</fdir1>
     <kp>1000000</kp>
     <kd>100</kd>
     <minDepth>0.001</minDepth>
