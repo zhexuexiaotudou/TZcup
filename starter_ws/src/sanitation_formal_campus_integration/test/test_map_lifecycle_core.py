@@ -1,5 +1,6 @@
 import hashlib
 import json
+import math
 from pathlib import Path
 
 import pytest
@@ -324,6 +325,88 @@ def test_frontier_goal_is_known_free_inside_geofence():
     assert goal is not None
     column, row = int(goal[0] / 0.1), int(goal[1] / 0.1)
     assert data[row * 7 + column] == 0
+
+
+def test_frontier_goal_rejects_candidates_outside_live_global_costmap_window():
+    data = [-1] * 81
+    data[3 * 9 + 3] = 0
+    goal = select_frontier_goal(
+        data,
+        width=9,
+        height=9,
+        resolution=1.0,
+        origin_x=0.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((0.0, 0.0), (9.0, 0.0), (9.0, 9.0), (0.0, 9.0)),
+        robot_x=4.5,
+        robot_y=4.5,
+        sample_spacing_m=1.0,
+        planning_window=(4, 6, 1.0, 2.0, 1.0, 0.0),
+    )
+    assert goal is not None
+    assert 3.0 <= goal[0] < 5.0
+    assert 1.0 <= goal[1] < 7.0
+
+
+def test_frontier_goal_uses_rotated_global_costmap_origin_and_inset():
+    data = [-1] * 25
+    data[1 * 5 + 1] = 0  # world (6.5, 21.5): rotated upper edge, rejected
+    data[1 * 5 + 3] = 0  # world (8.5, 21.5): rotated interior, accepted
+    goal = select_frontier_goal(
+        data,
+        width=5,
+        height=5,
+        resolution=1.0,
+        origin_x=5.0,
+        origin_y=20.0,
+        origin_yaw=0.0,
+        geofence=((5.0, 20.0), (10.0, 20.0), (10.0, 25.0), (5.0, 25.0)),
+        robot_x=7.5,
+        robot_y=22.5,
+        sample_spacing_m=0.5,
+        planning_window=(4, 4, 1.0, 10.0, 20.0, math.pi / 2.0),
+    )
+    assert goal == pytest.approx((8.5, 21.5))
+
+
+def test_frontier_goal_keeps_lower_inset_and_rejects_half_open_upper_inset():
+    data = [-1] * 36
+    data[1 * 6 + 1] = 0  # x=0.5 is the permitted lower inset boundary.
+    data[1 * 6 + 4] = 0  # x=3.5 is the rejected half-open upper boundary.
+    goal = select_frontier_goal(
+        data,
+        width=6,
+        height=6,
+        resolution=1.0,
+        origin_x=-1.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((-1.0, 0.0), (5.0, 0.0), (5.0, 6.0), (-1.0, 6.0)),
+        robot_x=2.0,
+        robot_y=2.0,
+        sample_spacing_m=0.5,
+        planning_window=(4, 4, 1.0, 0.0, 0.0, 0.0),
+    )
+    assert goal == pytest.approx((0.5, 1.5))
+
+
+def test_frontier_goal_returns_none_for_invalid_live_global_costmap_window():
+    data = [-1] * 9
+    data[4] = 0
+    assert select_frontier_goal(
+        data,
+        width=3,
+        height=3,
+        resolution=1.0,
+        origin_x=0.0,
+        origin_y=0.0,
+        origin_yaw=0.0,
+        geofence=((0.0, 0.0), (3.0, 0.0), (3.0, 3.0), (0.0, 3.0)),
+        robot_x=1.0,
+        robot_y=1.0,
+        planning_window=(0, 1, 1.0, 0.0, 0.0, 0.0),
+    ) is None
 
 
 @pytest.mark.parametrize(

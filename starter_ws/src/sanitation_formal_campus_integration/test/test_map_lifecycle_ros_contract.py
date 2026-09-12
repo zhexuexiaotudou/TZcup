@@ -33,6 +33,18 @@ def test_frontier_goals_use_current_map_frame_pose_and_tangent_yaw():
     assert "goal.pose.pose.orientation.w = 1.0" not in source
 
 
+def test_frontier_goals_require_a_fresh_map_frame_global_costmap_window():
+    source = (
+        PACKAGE
+        / "sanitation_formal_campus_integration"
+        / "frontier_explorer.py"
+    ).read_text(encoding="utf-8")
+    assert '"/global_costmap/costmap"' in source
+    assert "waiting_for_fresh_global_costmap" in source
+    assert "waiting_for_global_costmap_map_frame" in source
+    assert "planning_window=planning_window" in source
+
+
 def test_formal_launch_separates_mapping_and_saved_map_cleaning():
     source = (
         PACKAGE / "launch" / "formal_campus_map_lifecycle.launch.py"

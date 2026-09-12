@@ -378,10 +378,47 @@ def select_frontier_goal(
     previous_goals: Sequence[tuple[float, float]] = (),
     sample_spacing_m: float = 0.50,
     previous_goal_clearance_m: float = 1.0,
+    planning_window: tuple[int, int, float, float, float, float] | None = None,
 ) -> tuple[float, float] | None:
-    """Select a known-free frontier; Nav2 remains responsible for its path."""
+    """Select a known-free frontier inside the current Nav2 planning window."""
     if width <= 2 or height <= 2 or len(data) != width * height:
         return None
+    if planning_window is not None:
+        (
+            planning_width,
+            planning_height,
+            planning_resolution,
+            planning_origin_x,
+            planning_origin_y,
+            planning_origin_yaw,
+        ) = planning_window
+        if (
+            planning_width <= 0
+            or planning_height <= 0
+            or not all(
+                math.isfinite(value)
+                for value in (
+                    planning_resolution,
+                    planning_origin_x,
+                    planning_origin_y,
+                    planning_origin_yaw,
+                )
+            )
+            or planning_resolution <= 0.0
+        ):
+            return None
+        planning_cosine = math.cos(planning_origin_yaw)
+        planning_sine = math.sin(planning_origin_yaw)
+        planning_extent_x = planning_width * planning_resolution
+        planning_extent_y = planning_height * planning_resolution
+        planning_inset_m = sample_spacing_m
+        if (
+            not math.isfinite(planning_inset_m)
+            or planning_inset_m < 0.0
+            or planning_extent_x <= 2.0 * planning_inset_m
+            or planning_extent_y <= 2.0 * planning_inset_m
+        ):
+            return None
     stride = max(1, round(sample_spacing_m / resolution))
     cosine, sine = math.cos(origin_yaw), math.sin(origin_yaw)
     best: tuple[float, float] | None = None
@@ -401,6 +438,16 @@ def select_frontier_goal(
             y = origin_y + sine * local_x + cosine * local_y
             if not _inside(x, y, geofence):
                 continue
+            if planning_window is not None:
+                offset_x = x - planning_origin_x
+                offset_y = y - planning_origin_y
+                planning_x = planning_cosine * offset_x + planning_sine * offset_y
+                planning_y = -planning_sine * offset_x + planning_cosine * offset_y
+                if not (
+                    planning_inset_m <= planning_x < planning_extent_x - planning_inset_m
+                    and planning_inset_m <= planning_y < planning_extent_y - planning_inset_m
+                ):
+                    continue
             if any(
                 math.hypot(x - old_x, y - old_y) < previous_goal_clearance_m
                 for old_x, old_y in previous_goals
