@@ -21,7 +21,9 @@ def test_local_ekf_is_the_only_odom_to_base_owner():
     assert local["imu0"] == "/imu/data"
     assert len(local["odom0_config"]) == 15
     assert len(local["imu0_config"]) == 15
+    assert local["odom0_config"][:6] == [False] * 6
     assert local["odom0_config"][6] is True
+    assert local["odom0_config"][7] is True
     assert local["odom0_config"][11] is True
     assert local["imu0_config"][5] is True
     assert local["imu0_config"][11] is True
