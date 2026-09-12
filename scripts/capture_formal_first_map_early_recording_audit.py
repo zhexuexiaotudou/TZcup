@@ -217,9 +217,12 @@ def main(argv: list[str] | None=None) -> int:
     signal.signal(signal.SIGINT,stop); signal.signal(signal.SIGTERM,stop)
     def write_message(topic: str,message: Any) -> None:
         nonlocal error,stopped
+        # MCAP storage time must be the host receive epoch, never simulated or
+        # payload time.  Keep payload/header/Clock fields untouched.
+        received_epoch_ns = time.time_ns()
         if error is not None:return
         try:
-            now=time.monotonic_ns(); stamp=clock_value(message) if topic==CLOCK else stamped_or_now(message,node.get_clock().now().nanoseconds); writer.write(topic,serialize_message(message),stamp); tracker.written(topic,message,now)
+            now=time.monotonic_ns(); writer.write(topic,serialize_message(message),received_epoch_ns); tracker.written(topic,message,now)
         except Exception as exc: error=str(exc); invalidate(error); stopped=True
     def observe_clock(message: Any) -> None:
         nonlocal error,stopped

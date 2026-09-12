@@ -93,9 +93,10 @@ def test_closed_bag_summary_requires_exact_counts_and_mcap_framing(tmp_path):
     assert MODULE.closed_summary(bag, counts)["metadata_message_counts"] == counts
 
 
-def _install_fake_ros(monkeypatch, failure: str | None, *, deliver_message: bool):
+def _install_fake_ros(monkeypatch, failure: str | None, *, deliver_message: bool,
+                      deliveries: list[tuple[int, object]] | None = None):
     """Exercise main() error paths without a ROS graph or a real writer."""
-    state = {"delivered": False, "writers": []}
+    state = {"delivered": False, "writers": [], "writes": [], "serialized": []}
 
     class FakeClockMessage:
         def __init__(self):
@@ -125,6 +126,7 @@ def _install_fake_ros(monkeypatch, failure: str | None, *, deliver_message: bool
         def write(self, *_):
             if failure == "write":
                 raise RuntimeError("write failure")
+            state["writes"].append(_)
         def close(self):
             self.closed = True
             if failure == "close":
@@ -133,15 +135,20 @@ def _install_fake_ros(monkeypatch, failure: str | None, *, deliver_message: bool
     rclpy = types.ModuleType("rclpy")
     rclpy.init = lambda: None
     rclpy.shutdown = lambda: None
+    pending = list(deliveries or [])
     def spin_once(node, **_):
-        if deliver_message and not state["delivered"]:
+        if pending:
+            index, message = pending.pop(0)
+            node.callbacks[index](message)
+        elif deliver_message and not state["delivered"]:
             state["delivered"] = True
             node.callbacks[0](FakeClockMessage())
     rclpy.spin_once = spin_once
     node_mod = types.ModuleType("rclpy.node"); node_mod.Node = FakeNode
     qos_mod = types.ModuleType("rclpy.qos"); qos_mod.qos_profile_sensor_data = object()
     serialization_mod = types.ModuleType("rclpy.serialization")
-    def serialize(_):
+    def serialize(message):
+        state["serialized"].append(message)
         if failure == "serialize":
             raise RuntimeError("serialize failure")
         return b"cdr"
@@ -167,6 +174,32 @@ def _install_fake_ros(monkeypatch, failure: str | None, *, deliver_message: bool
     monkeypatch.setattr(MODULE, "start_ticks", lambda _pid: 1)
     monkeypatch.setattr(MODULE.os, "getpgid", lambda _pid: 1, raising=False)
     return state
+
+
+def test_writer_uses_receive_epoch_not_clock_or_header_stamp(monkeypatch, tmp_path):
+    clock = _clock(987_654_321_000)
+    payload = SimpleNamespace(
+        header=SimpleNamespace(stamp=SimpleNamespace(sec=123, nanosec=456)),
+        marker="payload must remain unchanged",
+    )
+    state = _install_fake_ros(
+        monkeypatch, None, deliver_message=False,
+        deliveries=[(0, clock), (1, payload)],
+    )
+    session = tmp_path / "session.json"; session.write_text("{}", encoding="utf-8")
+    monkeypatch.setenv("FORMAL_ACCEPTANCE_SESSION", str(session))
+    monkeypatch.setenv("FORMAL_RECORDING_RUN_TOKEN", "token")
+    monkeypatch.setenv("FORMAL_OBSERVATION_DEADLINE_MONOTONIC_NS", str(MODULE.time.monotonic_ns() + 100_000_000))
+    receive_epoch_ns = 1_777_777_777_123_456_789
+    monkeypatch.setattr(MODULE.time, "time_ns", lambda: receive_epoch_ns)
+    monkeypatch.setattr(MODULE, "closed_summary", lambda *_: {})
+    assert MODULE.main(["--output", str(tmp_path), "--role", "early", "--timeout", "1"]) == 2
+    assert [entry[2] for entry in state["writes"]] == [receive_epoch_ns, receive_epoch_ns]
+    assert receive_epoch_ns != MODULE.clock_value(clock)
+    assert receive_epoch_ns != 123_000_000_456
+    assert state["serialized"] == [clock, payload]
+    assert payload.header.stamp.sec == 123 and payload.header.stamp.nanosec == 456
+    assert payload.marker == "payload must remain unchanged"
 
 
 @pytest.mark.parametrize("failure", ["serialize", "write"])
