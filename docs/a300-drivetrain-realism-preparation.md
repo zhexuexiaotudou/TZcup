@@ -56,7 +56,13 @@ changing the published total.
 ## Effort-domain plant
 
 `A300DrivetrainPlantCore` takes four commanded and measured wheel speeds and
-returns four wheel torques. The drive request is proportional to speed error,
+returns four wheel torques. The local repair candidate adds a bounded integral
+term to the proportional speed-error request. Its provisional engineering
+gains are Kp = 12 Nm/(rad/s) and Ki = 6 Nm/rad (integral time 2 s); these are
+not published A300 controller gains and require fresh physics validation.
+The integral is cleared on non-permitted drive states, Reset and a zero
+wheel-speed command, and integration is constrained when actuator limits
+prevent the requested torque. The resulting drive request is
 then limited by the minimum of the engineering low-speed torque cap, the
 continuous per-motor current cap and the torque-speed power envelope. A second
 aggregate limiter enforces 1080 W. Current estimation enforces both 17 A per

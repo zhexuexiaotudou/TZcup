@@ -124,14 +124,18 @@ finalize_localization_bag() {
 }
 cleanup() {
   local cleanup_status=0
-  formal_runtime_cleanup_groups "${GZ_PARTITION}" \
-    "${estop_pid}" "${power_pid}" "${collector_pid}" "${launch_pid}" || cleanup_status=1
+  # Stop and reap the recorder while its publishers are still alive.  This
+  # lets rosbag2 write metadata and the closing MCAP footer before any launch
+  # or Gazebo process is interrupted.  A process-group broadcast here would
+  # race the recorder's SIGINT handler and can leave a truncated active copy.
   if [[ "${localization_bag_finalized}" != true ]]; then
     finalize_localization_bag || cleanup_status=1
   fi
   if [[ -n "${localization_bag_pid}" ]]; then
     formal_runtime_cleanup_groups "${GZ_PARTITION}" "${localization_bag_pid}" || cleanup_status=1
   fi
+  formal_runtime_cleanup_groups "${GZ_PARTITION}" \
+    "${estop_pid}" "${power_pid}" "${collector_pid}" "${launch_pid}" || cleanup_status=1
   if [[ -f "${handoff_record}" ]]; then
     python3 - "${handoff_record}" "${cleanup_status}" <<'PY'
 import datetime

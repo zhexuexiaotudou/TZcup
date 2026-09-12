@@ -30,3 +30,11 @@ def test_blocked_or_unreaped_recorder_cannot_fall_through_to_handoff():
     assert 'wait "${bag_pid}"' in source
     handoff_marker = 'python3 - ' + '\\' + '\n      "${handoff_record}"'
     assert source.index('if ! finalize_localization_bag; then') < source.index(handoff_marker)
+
+
+def test_cleanup_closes_recorder_before_stopping_mapping_publishers():
+    source = RUNNER.read_text(encoding="utf-8")
+    cleanup = source[source.index("cleanup() {"):source.index("formal_runtime_install_traps cleanup")]
+    recorder_stop = 'finalize_localization_bag || cleanup_status=1'
+    publisher_stop = '"${estop_pid}" "${power_pid}" "${collector_pid}" "${launch_pid}"'
+    assert cleanup.index(recorder_stop) < cleanup.index(publisher_stop)
