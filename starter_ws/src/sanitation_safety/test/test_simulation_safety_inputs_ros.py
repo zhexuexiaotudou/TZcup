@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import threading
 import time
 
@@ -31,6 +32,7 @@ class Observer(Node):
         self.work_lights = []
         self.status = []
         self.critical_status = []
+        self.relay_diagnostics = []
         self.front_bumper = []
         self.rear_bumper = []
         # Stand in for the one-way physical Gazebo latch bridge in this node
@@ -103,6 +105,12 @@ class Observer(Node):
             20,
         )
         self.create_subscription(
+            String,
+            "/formal_vehicle/auxiliary/critical_safety_relay_diagnostic_json",
+            lambda msg: self.relay_diagnostics.append(json.loads(msg.data)),
+            20,
+        )
+        self.create_subscription(
             Contacts,
             "/safety/front_bumper/contact",
             lambda msg: self.front_bumper.append(bool(msg.contacts)),
@@ -151,6 +159,7 @@ def test_node_health_inputs_commands_and_product_interface_are_observable():
             and observer.heartbeat_count >= 2
             and observer.status
             and observer.critical_status
+            and observer.relay_diagnostics
             and observer.front_bumper
             and observer.rear_bumper,
             tick=publish_initial_safe_inputs,
@@ -161,6 +170,40 @@ def test_node_health_inputs_commands_and_product_interface_are_observable():
         assert critical_snapshot["thread_error"] is None
         assert critical_snapshot["front_bumper_available"] is True
         assert critical_snapshot["rear_bumper_available"] is True
+        relay_diagnostic = observer.relay_diagnostics[-1]
+        assert any(
+            diagnostic["cycle_id"] == critical_snapshot["publish_count"]
+            for diagnostic in observer.relay_diagnostics
+        )
+        assert relay_diagnostic["producer"]["pid"] == os.getpid()
+        assert set(relay_diagnostic["inputs"]) == {
+            "emergency_stop",
+            "main_power",
+            "battery",
+            "main_isolator",
+            "main_contactor",
+            "charge",
+        }
+        for name in (
+            "emergency_stop",
+            "main_power",
+            "battery",
+            "main_isolator",
+            "main_contactor",
+        ):
+            assert set(relay_diagnostic["inputs"][name]) == {
+                "last_received_raw_value",
+                "effective_value",
+                "seen",
+                "last_rx_monotonic_sec",
+                "age_sec",
+                "effective_timeout_sec",
+                "fresh",
+                "sequence",
+                "seq",
+            }
+        assert relay_diagnostic["relay_conditions"]["relay_enabled"] is False
+        assert relay_diagnostic["relay_conditions"]["charge_interlock_active"] is False
         critical_count = len(observer.critical_status)
         time.sleep(0.30)
         assert 4 <= len(observer.critical_status) - critical_count <= 8
@@ -334,6 +377,92 @@ def test_critical_status_failure_is_supervised_and_relay_fails_closed():
     finally:
         source._critical_status_pub = original_status_publisher
         source._relay_pub = original_relay_publisher
+        source.destroy_node()
+        rclpy.shutdown()
+
+
+def test_relay_diagnostic_failure_does_not_fail_closed_critical_output():
+    rclpy.init()
+    source = SimulationSafetyInputs()
+    source._stop_safety_publish_loop()
+    original_diagnostic_publisher = source._relay_diagnostic_pub
+    relay_attempts = []
+
+    class FailingDiagnosticPublisher:
+        @staticmethod
+        def publish(_message):
+            raise RuntimeError("injected_relay_diagnostic_publish_failure")
+
+    class RecordingRelayPublisher:
+        @staticmethod
+        def publish(message):
+            relay_attempts.append(bool(message.data))
+
+    original_relay_publisher = source._relay_pub
+    try:
+        source._relay_diagnostic_pub = FailingDiagnosticPublisher()
+        source._relay_pub = RecordingRelayPublisher()
+        source._publish_critical_safety()
+        assert relay_attempts == [False]
+        assert source._safety_publish_thread_error is None
+        _wait_until(
+            lambda: source._relay_diagnostic_worker.health()["errors"] == 1
+        )
+    finally:
+        source._relay_diagnostic_pub = original_diagnostic_publisher
+        source._relay_pub = original_relay_publisher
+        source.destroy_node()
+        rclpy.shutdown()
+
+
+def test_stale_override_snapshot_is_not_torn_by_a_callback_interleave():
+    rclpy.init()
+    source = SimulationSafetyInputs()
+    source._stop_safety_publish_loop()
+    captured_step_inputs = {}
+    original_step = source._core.step
+
+    def recording_step(**kwargs):
+        # _publish has already released its state lock after taking its input
+        # snapshot. This callback interleave must affect only a later cycle,
+        # never turn the current stale override into a mixed input tuple.
+        updater = threading.Thread(
+            target=lambda: (
+                source._on_estop_state(Bool(data=False)),
+                source._on_main_power(Bool(data=True)),
+            )
+        )
+        updater.start()
+        updater.join(timeout=1.0)
+        assert not updater.is_alive()
+        captured_step_inputs.update(kwargs)
+        return original_step(**kwargs)
+
+    try:
+        source._core.step = recording_step
+        stale_time = time.monotonic() - 5.0
+        with source._state_lock:
+            source._estop_active = False
+            source._main_power_requested = True
+            source._estop_state_time = stale_time
+            source._main_power_command_time = stale_time
+            source._battery_state_monotonic = stale_time
+            source._charge_connected_monotonic = stale_time
+            source._main_isolator_state_time = stale_time
+            source._main_contactor_state_time = stale_time
+
+        source._publish()
+
+        assert captured_step_inputs["emergency_stop_active"] is True
+        assert captured_step_inputs["main_power_requested"] is False
+        with source._state_lock:
+            _, _, _, snapshot = source._critical_safety_snapshot_locked(
+                time.monotonic(), 0, source._safety_publish_count + 1
+            )
+        assert snapshot["inputs"]["emergency_stop"]["effective_value"] is False
+        assert snapshot["inputs"]["main_power"]["effective_value"] is True
+    finally:
+        source._core.step = original_step
         source.destroy_node()
         rclpy.shutdown()
 

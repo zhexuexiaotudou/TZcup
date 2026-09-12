@@ -17,7 +17,7 @@ from controller_manager_msgs.msg import ControllerState
 from controller_manager_msgs.srv import ListControllers, SwitchController
 from action_msgs.srv import CancelGoal
 from diagnostic_msgs.msg import DiagnosticArray
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, TwistStamped
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 from rclpy.parameter import Parameter
@@ -50,8 +50,10 @@ class Harness(Node):
         self.brush_outputs = []
         self.pump_outputs = []
         self.permits = []
+        self.base_outputs = []
         self.safety_status_outputs = []
         self.safety_status_json_outputs = []
+        self.relay_cycle_diagnostic_outputs = []
         self.hold_outputs = {
             "cleaning_controller": [],
             "arm_controller": [],
@@ -139,6 +141,12 @@ class Harness(Node):
             20,
         )
         self.create_subscription(
+            TwistStamped,
+            "/base_controller/cmd_vel",
+            lambda message: self.base_outputs.append(message),
+            20,
+        )
+        self.create_subscription(
             Bool,
             "/safety/actuators_enabled",
             lambda message: self.permits.append(bool(message.data)),
@@ -156,6 +164,14 @@ class Harness(Node):
             String,
             "/safety/status_json",
             lambda message: self.safety_status_json_outputs.append(
+                (time.monotonic(), json.loads(message.data))
+            ),
+            1,
+        )
+        self.create_subscription(
+            String,
+            "/safety/relay_cycle_diagnostic_json",
+            lambda message: self.relay_cycle_diagnostic_outputs.append(
                 (time.monotonic(), json.loads(message.data))
             ),
             1,
@@ -259,6 +275,7 @@ def test_periodic_status_is_volatile_while_actuator_permit_is_latched():
         for publisher in (
             manager._status_publisher,
             manager._status_json_publisher,
+            manager._relay_cycle_diagnostic_publisher,
         ):
             assert publisher.qos_profile.depth == 1
             assert publisher.qos_profile.reliability is ReliabilityPolicy.RELIABLE
@@ -397,7 +414,7 @@ def test_unsafe_edge_holds_positions_without_waiting_for_cancel_responses():
                 (controller, joints, positions)
             )
         )
-        manager._publish_immediate_stop = lambda _positions: None
+        manager._publish_immediate_stop = lambda *_args, **_kwargs: None
 
         manager._stop_on_unsafe_edge(trigger_positions)
 
@@ -525,6 +542,85 @@ def test_ros_gateway_zeros_velocity_actuators_and_switches_trajectory_controller
         assert int(status_json["consumed_unsafe_generation"]) == (
             manager._consumed_unsafe_generation
         )
+        expected_status_publish_count = status_json["status_publish_count"]
+        _wait_until(
+            lambda: any(
+                payload.get("event") == "periodic_publish"
+                and payload.get("status_publish_count")
+                == expected_status_publish_count
+                for _, payload in harness.relay_cycle_diagnostic_outputs
+            )
+        )
+        relay_diagnostic = next(
+            payload
+            for _, payload in reversed(harness.relay_cycle_diagnostic_outputs)
+            if payload.get("event") == "periodic_publish"
+            and payload.get("status_publish_count")
+            == expected_status_publish_count
+        )
+        assert relay_diagnostic["producer"] == manager._diagnostic_process_identity
+        assert relay_diagnostic["status_publish_count"] == expected_status_publish_count
+        assert relay_diagnostic["same_cycle_decision"]["state"] == status_json["state"]
+        expected_reasons = (
+            []
+            if not status_json["active_reasons"]
+            else status_json["active_reasons"].split(",")
+        )
+        assert relay_diagnostic["same_cycle_decision"]["active_reasons"] == expected_reasons
+        assert (
+            relay_diagnostic["base_command_publish"]["effective_permit"]
+            is status_json["actuators_enabled"]
+        )
+        assert (
+            relay_diagnostic["base_command_publish"]["effective_permit"]
+            is (
+                status_json["safety_inputs_permit_actuators"]
+                and status_json["managed_controllers_active"]
+            )
+        )
+        expected_base_stamp = relay_diagnostic["base_command_publish"][
+            "header_stamp_ns"
+        ]
+        _wait_until(
+            lambda: any(
+                message.header.stamp.sec * 1_000_000_000
+                + message.header.stamp.nanosec
+                == expected_base_stamp
+                for message in harness.base_outputs
+            )
+        )
+        actual_base = next(
+            message
+            for message in reversed(harness.base_outputs)
+            if message.header.stamp.sec * 1_000_000_000
+            + message.header.stamp.nanosec
+            == expected_base_stamp
+        )
+        assert actual_base.twist.linear.x == relay_diagnostic["base_command_publish"]["linear_x"]
+        assert actual_base.twist.angular.z == relay_diagnostic["base_command_publish"]["angular_z"]
+        base_enabled = relay_diagnostic["same_cycle_decision"][
+            "base_command_enabled"
+        ]
+        global_permit = status_json["safety_inputs_permit_actuators"]
+        assert not base_enabled or global_permit
+        if status_json["state"] == SafetyState.ENABLED.value:
+            assert global_permit is True
+            assert base_enabled is True
+        elif status_json["state"] == SafetyState.BASE_COMMAND_STOPPED.value:
+            assert global_permit is True
+            assert base_enabled is False
+        elif status_json["state"] == SafetyState.INHIBITED.value:
+            assert global_permit is False
+            assert base_enabled is False
+        else:
+            raise AssertionError(f"unexpected safety state {status_json['state']}")
+        if not base_enabled:
+            assert actual_base.twist.linear.x == 0.0
+            assert actual_base.twist.angular.z == 0.0
+        assert relay_diagnostic["last_callback_value"] is True
+        assert relay_diagnostic["consumed_unsafe_generation"] == (
+            manager._consumed_unsafe_generation
+        )
         _wait_until(
             lambda: manager._last_decision is not None
             and manager._last_decision.actuators_enabled
@@ -621,7 +717,7 @@ def test_input_callbacks_only_mutate_latest_state_until_the_next_publish_cycle()
     immediate_stop_calls = []
     manager._publish = lambda: publish_calls.append(time.monotonic())
     manager._publish_immediate_stop = (
-        lambda *_args: immediate_stop_calls.append(time.monotonic())
+        lambda *_args, **_kwargs: immediate_stop_calls.append(time.monotonic())
     )
     try:
         for _ in range(200):
@@ -656,6 +752,109 @@ def test_input_callbacks_only_mutate_latest_state_until_the_next_publish_cycle()
         assert len(immediate_stop_calls) == 601
         assert manager._core.evaluate(time.monotonic()).actuators_enabled is False
     finally:
+        manager.destroy_node()
+        rclpy.shutdown()
+
+
+def test_relay_diagnostic_tracks_false_edge_recovery_and_consumption():
+    rclpy.init()
+    manager = _new_stopped_manager()
+    original_stop_on_unsafe_edge = manager._stop_on_unsafe_edge
+    trigger_snapshots = []
+    try:
+        _prime_healthy_inputs(manager)
+        manager._stop_on_unsafe_edge = (
+            lambda _positions, **kwargs: trigger_snapshots.append(
+                kwargs["relay_trigger_snapshot"]
+            )
+        )
+        manager._on_safety_relay(Bool(data=False))
+        with manager._state_lock:
+            decision, _ = manager._evaluate_locked(time.monotonic())
+            diagnostic = manager._relay_diagnostic_locked(
+                decision,
+                cycle_id=1,
+                evaluation_monotonic_sec=time.monotonic(),
+                evaluation_ros_time_ns=0,
+                status_publish_count=1,
+            )
+        false_callback = diagnostic["last_false_callback"]
+        first_false_sequence = false_callback["sequence"]
+        first_false_time = false_callback["arrival_monotonic_sec"]
+        assert diagnostic["last_callback_value"] is False
+        assert diagnostic["last_callback_was_unsafe_edge"] is True
+        assert false_callback["value"] is False
+        assert false_callback["unsafe_generation"] == diagnostic[
+            "consumed_unsafe_generation"
+        ]
+        assert trigger_snapshots == [false_callback]
+        assert "safety_relay_disabled" in diagnostic["same_cycle_decision"][
+            "active_reasons"
+        ]
+
+        manager._on_safety_relay(Bool(data=True))
+        with manager._state_lock:
+            decision, _ = manager._evaluate_locked(time.monotonic())
+            diagnostic = manager._relay_diagnostic_locked(
+                decision,
+                cycle_id=2,
+                evaluation_monotonic_sec=time.monotonic(),
+                evaluation_ros_time_ns=0,
+                status_publish_count=2,
+            )
+        assert diagnostic["last_callback_value"] is True
+        assert diagnostic["last_recovery_callback"]["value"] is True
+        first_recovery_sequence = diagnostic["last_recovery_callback"]["sequence"]
+        first_recovery_time = diagnostic["last_recovery_callback"][
+            "arrival_monotonic_sec"
+        ]
+        manager._on_safety_relay(Bool(data=True))
+        with manager._state_lock:
+            decision, _ = manager._evaluate_locked(time.monotonic())
+            diagnostic = manager._relay_diagnostic_locked(
+                decision,
+                cycle_id=3,
+                evaluation_monotonic_sec=time.monotonic(),
+                evaluation_ros_time_ns=0,
+                status_publish_count=3,
+            )
+        assert diagnostic["last_recovery_callback"]["sequence"] == first_recovery_sequence
+        assert diagnostic["last_recovery_callback"]["arrival_monotonic_sec"] == first_recovery_time
+        assert diagnostic["last_false_callback"]["value"] is False
+        assert diagnostic["last_false_callback"]["sequence"] == first_false_sequence
+        assert diagnostic["last_false_callback"]["arrival_monotonic_sec"] == first_false_time
+        assert trigger_snapshots == [false_callback]
+    finally:
+        manager._stop_on_unsafe_edge = original_stop_on_unsafe_edge
+        manager.destroy_node()
+        rclpy.shutdown()
+
+
+def test_relay_diagnostic_publish_failure_does_not_mutate_safety_state():
+    rclpy.init()
+    manager = _new_stopped_manager()
+    original_publisher = manager._relay_cycle_diagnostic_publisher
+
+    class FailingDiagnosticPublisher:
+        @staticmethod
+        def publish(_message):
+            raise RuntimeError("injected_relay_diagnostic_publish_failure")
+
+    try:
+        with manager._state_lock:
+            unsafe_generation = manager._unsafe_generation
+            consumed_generation = manager._consumed_unsafe_generation
+        manager._relay_cycle_diagnostic_publisher = FailingDiagnosticPublisher()
+        manager._emit_relay_cycle_diagnostic({"schema_version": 1})
+        with manager._state_lock:
+            assert manager._unsafe_generation == unsafe_generation
+            assert manager._consumed_unsafe_generation == consumed_generation
+            _wait_until(
+                lambda: manager._relay_diagnostic_worker.health()["errors"] == 1
+            )
+            assert manager._publish_thread_error is None
+    finally:
+        manager._relay_cycle_diagnostic_publisher = original_publisher
         manager.destroy_node()
         rclpy.shutdown()
 
@@ -817,7 +1016,7 @@ def test_publish_thread_join_timeout_is_fatal():
 def test_short_unsafe_pulse_is_consumed_by_one_periodic_decision():
     rclpy.init()
     manager = _new_stopped_manager()
-    manager._publish_immediate_stop = lambda *_args: None
+    manager._publish_immediate_stop = lambda *_args, **_kwargs: None
     try:
         _prime_healthy_inputs(manager)
         with manager._state_lock:
@@ -848,7 +1047,7 @@ def test_short_unsafe_pulse_is_consumed_by_one_periodic_decision():
 def test_concurrent_unsafe_then_safe_update_preserves_generation_latch():
     rclpy.init()
     manager = _new_stopped_manager()
-    manager._publish_immediate_stop = lambda *_args: None
+    manager._publish_immediate_stop = lambda *_args, **_kwargs: None
     unsafe_written = threading.Event()
     errors = []
 
