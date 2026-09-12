@@ -89,3 +89,79 @@ def test_progress_watchdog_refreshes_only_after_material_progress():
     )
     assert unchanged == pytest.approx(best)
     assert no_refresh is None
+
+
+def test_progress_ignores_initial_zero_placeholder_then_tracks_real_distance():
+    best, deadline = progress_deadline_after_feedback(
+        previous_best_distance_m=math.inf,
+        distance_remaining_m=0.0,
+        now_monotonic=10.0,
+        timeout_sec=120.0,
+    )
+    assert math.isinf(best)
+    assert deadline is None
+
+    best, deadline = progress_deadline_after_feedback(
+        previous_best_distance_m=best,
+        distance_remaining_m=13.158895,
+        now_monotonic=11.0,
+        timeout_sec=120.0,
+    )
+    assert best == pytest.approx(13.158895)
+    assert deadline == pytest.approx(131.0)
+
+    best, deadline = progress_deadline_after_feedback(
+        previous_best_distance_m=best,
+        distance_remaining_m=12.573,
+        now_monotonic=12.0,
+        timeout_sec=120.0,
+    )
+    assert best == pytest.approx(12.573)
+    assert deadline == pytest.approx(132.0)
+
+
+def test_zero_after_positive_distance_obeys_existing_minimum_progress_rule():
+    best, deadline = progress_deadline_after_feedback(
+        previous_best_distance_m=0.08,
+        distance_remaining_m=0.0,
+        now_monotonic=50.0,
+        timeout_sec=120.0,
+    )
+    assert best == 0.0
+    assert deadline == pytest.approx(170.0)
+
+
+def test_small_positive_baseline_to_zero_does_not_bypass_minimum_progress():
+    best, deadline = progress_deadline_after_feedback(
+        previous_best_distance_m=0.01,
+        distance_remaining_m=0.0,
+        now_monotonic=50.0,
+        timeout_sec=120.0,
+    )
+    assert best == pytest.approx(0.01)
+    assert deadline is None
+
+
+def test_zero_to_zero_does_not_refresh_progress_deadline():
+    best, deadline = progress_deadline_after_feedback(
+        previous_best_distance_m=0.0,
+        distance_remaining_m=0.0,
+        now_monotonic=50.0,
+        timeout_sec=120.0,
+    )
+    assert best == 0.0
+    assert deadline is None
+
+
+def test_only_initial_zero_feedback_leaves_existing_watchdog_to_timeout():
+    best, deadline = progress_deadline_after_feedback(
+        previous_best_distance_m=math.inf,
+        distance_remaining_m=0.0,
+        now_monotonic=30.0,
+        timeout_sec=120.0,
+    )
+    assert math.isinf(best)
+    assert deadline is None
+    assert active_goal_timed_out(
+        goal_active=True, deadline_monotonic=120.0, now_monotonic=120.0
+    )
