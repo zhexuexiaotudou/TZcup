@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "evidence_id": "day1-task-decomposition-round2",
+  "status": "PASS",
+  "source_commit": "d40953a",
+  "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-task-decomposition",
+  "source_artifacts": [
+    "artifacts/day1_task_decomposition_round2_evidence/summary.json",
+    "artifacts/day1_task_decomposition_round2_evidence/validation.json",
+    "artifacts/day1_task_decomposition_round2_evidence/report.md",
+    "artifacts/day1_task_decomposition_round2_evidence/after/development/metrics.json",
+    "artifacts/day1_task_decomposition_round2_evidence/after/holdout/metrics.json"
+  ],
+  "measurement_boundary": "Frozen UTF-8 transcripts scored only through the deterministic transcript-to-DSL parser. This is an internal frozen regression evaluation, not public blind or external validation.",
+  "results": {
+    "development": {
+      "cases": 37,
+      "passed": 36,
+      "exact_task_accuracy": 0.972972972972973,
+      "failures": [
+        "reject-005"
+      ]
+    },
+    "internal_frozen_holdout": {
+      "cases": 32,
+      "passed": 32,
+      "exact_task_accuracy": 1.0,
+      "failures": []
+    },
+    "official_scoring_table_threshold": 0.9,
+    "repository_acceptance_spec_threshold": 0.95
+  },
+  "development_miss": {
+    "case_id": "reject-005",
+    "transcript": "开始区域 A 清扫然后暂停",
+    "old_label": "reject_as_ambiguous",
+    "round2_output": [
+      "mission.start_coverage",
+      "mission.pause"
+    ],
+    "disposition": "Retained as a measured development miss; the case and old label were not rewritten."
+  },
+  "tests": {
+    "focused_hmi_auto10_evaluation_pytest": "29 passed in 0.42s",
+    "legacy_auto10_1200_case_matrix": "semantic/tool/argument accuracy 1.0; ambiguity fail-closed 1.0; unsafe execution 0; direct actuator access 0",
+    "python_compilation": "passed",
+    "ci_fast": "BLOCKED_BY_PREEXISTING_README_LENGTH"
+  },
+  "not_measured": [
+    "speech_recognition_accuracy",
+    "audio_quality",
+    "mission_execution_success",
+    "hardware_or_simulation_runtime"
+  ],
+  "limitations": [
+    "Internal frozen regression only; not public blind or external validation.",
+    "The development miss reject-005 remains visible.",
+    "Passing transcript-to-DSL thresholds does not establish speech recognition or mission execution success."
+  ]
+}

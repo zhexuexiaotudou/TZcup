@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "evidence_id": "day1-dust-bin-design-stage",
+  "status": "DESIGN_STAGE_ONLY",
+  "source_commit": "2aefb12",
+  "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-value-package",
+  "source_evidence": [
+    "application-value-package/03-dust-bin-volume.md",
+    "application-value-package/design/dust_bin_design.json",
+    "application-value-package/evidence/verification-report.json",
+    "application-value-package/pdf/TZcup-application-value-package.pdf"
+  ],
+  "design_geometry": {
+    "external_envelope_l": 72.128,
+    "internal_clear_l": 68.915384,
+    "usable_estimate_l": 48.347384,
+    "wall_mm": 3,
+    "ten_mm_wall_sensitivity_l": 41.208
+  },
+  "verification": {
+    "nine_baseline_fit_checks": "PASS",
+    "minimum_axis_clearance_m": 0.015,
+    "package_pdf_pages": 19,
+    "package_verification_status": "PASS"
+  },
+  "claim_boundary": "Design-stage geometry and deterministic volume arithmetic only. The values are not measured physical fill capacity.",
+  "not_measured": [
+    "physical fill capacity",
+    "water calibration",
+    "real leaf or mixed-waste effective payload",
+    "manufacturing tolerances, strength, sealing, vibration, and airflow",
+    "production validation"
+  ]
+}

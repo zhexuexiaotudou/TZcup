@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "evidence_id": "day1-demo-evidence-final",
+  "status": "TWO_RETAINED_LAUNCH_FAILURES_NO_VIDEO",
+  "source_commit": "12c2a6acf58cc2558cf4c1a82cec4da47c874e0c",
+  "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-evidence",
+  "source_evidence": [
+    "docs/competition-day1-demo-evidence.md",
+    "docs/competition-day1-demo-evidence-manifest.json",
+    "scripts/verify_day1_demo_evidence.py",
+    "scripts/test_verify_day1_demo_evidence.py"
+  ],
+  "demo_run": {
+    "status": "RUN_FAILED",
+    "final_outcome": "NO_GAZEBO_LAUNCH",
+    "attempt_count": 2,
+    "failure_phase": "ros2_daemon_start",
+    "gazebo_started": false,
+    "mcaps": 0,
+    "mp4s": 0,
+    "rviz_substitute_used": false,
+    "dashboard_substitute_used": false,
+    "video": "NOT_MEASURED"
+  },
+  "preserved_package": {
+    "nine_minute_demo_script": "docs/competition-day1-demo-evidence.md",
+    "manifest_and_claim_boundaries": "docs/competition-day1-demo-evidence-manifest.json",
+    "pre_run_and_post_run_checklists": "included"
+  },
+  "unchanged_controlled_evidence": {
+    "continuous_width_mm": 600,
+    "fixed_window_efficiency_m2_h": 4320,
+    "in_motion_estop_sim_s": 0.489
+  },
+  "claim_boundary": "No Demo execution or video claim. The two failures are retained, and neither RViz nor a dashboard replay was substituted for a real Gazebo recording."
+}

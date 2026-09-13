@@ -94,5 +94,110 @@
       "linear extrapolations are estimates, not completion guarantees",
       "offline reload was not a second live map-server relocation acceptance run"
     ]
+  },
+  {
+    "local_evidence": "evidence/day1/competition-task-decomposition.json",
+    "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-task-decomposition",
+    "source_commit": "d40953a",
+    "run_id": "task-decomposition-round2-20260914",
+    "rollback_commit": "839595675f1086b637bc9051583670294f482f7e",
+    "accepted_facts": [
+      "development exact transcript-to-DSL accuracy 36/37 = 0.972973",
+      "internal frozen holdout exact transcript-to-DSL accuracy 32/32 = 1.0",
+      "both reported thresholds >=0.90 and >=0.95 are met"
+    ],
+    "limitations": [
+      "internal frozen regression only; not public blind or external validation",
+      "development miss reject-005 remains visible",
+      "speech recognition and mission execution remain NOT_MEASURED"
+    ]
+  },
+  {
+    "local_evidence": "evidence/day1/competition-perception-recovery.json",
+    "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-perception-recovery",
+    "source_commit": "c09e030",
+    "run_id": "perception-score-20260913-01/offline-replay",
+    "rollback_commit": "210c4dd39af5d39a354e41e0b39316b517e96d33",
+    "accepted_facts": [
+      "Stage5B original raw result 0 TP / 654 FP / 76 FN",
+      "Stage5A matching-profile raw replay 33 TP / 50 FP / 43 FN",
+      "policy-layer replay remains 0 TP / 0 FP / 76 FN"
+    ],
+    "limitations": [
+      "same frozen MCAP offline replay only",
+      "recognition quality remains FAIL",
+      "official >=95 percent recognition remains unmet"
+    ]
+  },
+  {
+    "local_evidence": "evidence/day1/competition-localization-diagnosis.json",
+    "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-localization-diagnosis",
+    "source_commit": "f1f2282",
+    "run_id": "localization-root-cause-20260914",
+    "rollback_commit": "0685688",
+    "accepted_facts": [
+      "configured cleaning map-to-odom owner is uniquely /global_ekf",
+      "NavSat input is mode-aware: /odom for slam and /localization/fused_odom for amcl",
+      "44 focused tests passed"
+    ],
+    "limitations": [
+      "diagnosis was static and offline; no Gazebo or S100P run",
+      "only a future bounded dynamic diagnostic is GO",
+      "50 mm localization remains FAIL or not demonstrated"
+    ]
+  },
+  {
+    "local_evidence": "evidence/day1/competition-board-evidence-day1.json",
+    "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-board-evidence",
+    "source_commit": "a283c26",
+    "run_id": "s100p-board-module-replay-day1",
+    "rollback_commit": "a283c26",
+    "accepted_facts": [
+      "mapping/localization synthetic replay passed",
+      "fresh control replay passed with 61 outputs",
+      "planning replay was limited; perception was blocked"
+    ],
+    "limitations": [
+      "synthetic or simulation replay only",
+      "formal nash-m DOSOD HBM is absent",
+      "no same-run board autonomy, HIL, real actuator, or perception acceptance"
+    ]
+  },
+  {
+    "local_evidence": "evidence/day1/application-value-dust-bin-design.json",
+    "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-value-package",
+    "source_commit": "2aefb12",
+    "run_id": "dust-bin-design-20260914",
+    "rollback_commit": "a72debd4b7cd0ff10acdd735a5f74c1b616b895c",
+    "accepted_facts": [
+      "design external envelope 72.128 L",
+      "design internal clear volume 68.915384 L",
+      "design usable estimate 48.347384 L",
+      "10 mm wall sensitivity 41.208 L",
+      "nine baseline fit checks passed and the 19-page package verified"
+    ],
+    "limitations": [
+      "design-stage geometry and arithmetic only",
+      "physical fill is NOT_MEASURED",
+      "production validation is NOT_MEASURED"
+    ]
+  },
+  {
+    "local_evidence": "evidence/day1/competition-day1-demo-evidence.json",
+    "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-evidence",
+    "source_commit": "12c2a6acf58cc2558cf4c1a82cec4da47c874e0c",
+    "run_id": "day1-demo-pre-gazebo-failures",
+    "rollback_commit": "12c2a6acf58cc2558cf4c1a82cec4da47c874e0c",
+    "accepted_facts": [
+      "two real Gazebo launch attempts were retained",
+      "both failed at the ROS daemon stage before Gazebo started",
+      "no MCAP, MP4, RViz, or dashboard substitute exists",
+      "the 9-minute demo script and pre/post-run checklist are preserved"
+    ],
+    "limitations": [
+      "video remains NOT_MEASURED",
+      "the two failures do not establish a demo run",
+      "the existing controlled 600 mm, 4320 m2/h, and 0.489 s evidence is unchanged"
+    ]
   }
 ]

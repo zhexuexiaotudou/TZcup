@@ -2,8 +2,8 @@
 
 当前整体未达到完整提交条件。技术报告、板端证据与结果接入工具已成稿；没有伪造视频或未测PASS。
 
-- `docs/技术方案报告.pdf`：22页中文报告，页数由最终构建读取。
-- `metrics/验收矩阵.md` / `results.json`：唯一仿真六功能、五项数字指标及两项额外题面量状态源。
+- `docs/技术方案报告.pdf`：23页中文报告，页数由最终构建读取。
+- `metrics/验收矩阵.md` / `results.json`：唯一结果矩阵，明确区分measured_simulation、internal_frozen_regression、offline_replay、synthetic_replay、design_calculation与not_measured。
 - `metrics/板端证明.md`：独立于仿真的板端证据。
 - `提交清单.md`：必交格式、三张短表、缺件和命名。
 - `evidence/index.json`：原件来源与复制时间；相对路径内证据可随包搬运。

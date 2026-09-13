@@ -268,5 +268,41 @@
     "file": "evidence/day1/competition-mapping-probe.md",
     "source": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-board-evidence\\docs\\competition-mapping-probe.md",
     "copied_utc": "2026-09-14T00:26:03+08:00"
+  },
+  {
+    "file": "evidence/day1/competition-task-decomposition.json",
+    "source": "git:d40953a:artifacts/day1_task_decomposition_round2_evidence",
+    "source_commit": "d40953a",
+    "copied_utc": "2026-09-14T00:49:23+08:00"
+  },
+  {
+    "file": "evidence/day1/competition-perception-recovery.json",
+    "source": "git:c09e030:docs/competition-perception-score.md",
+    "source_commit": "c09e030",
+    "copied_utc": "2026-09-14T00:49:23+08:00"
+  },
+  {
+    "file": "evidence/day1/competition-localization-diagnosis.json",
+    "source": "git:f1f2282:docs/competition-localization-root-cause.md",
+    "source_commit": "f1f2282",
+    "copied_utc": "2026-09-14T00:49:23+08:00"
+  },
+  {
+    "file": "evidence/day1/competition-board-evidence-day1.json",
+    "source": "git:a283c26:docs/s100p-board-evidence-day1.md and reports/engineering/s100p_board_evidence_day1.json",
+    "source_commit": "a283c26",
+    "copied_utc": "2026-09-14T00:49:23+08:00"
+  },
+  {
+    "file": "evidence/day1/application-value-dust-bin-design.json",
+    "source": "git:2aefb12:application-value-package/03-dust-bin-volume.md and evidence/verification-report.json",
+    "source_commit": "2aefb12",
+    "copied_utc": "2026-09-14T00:49:23+08:00"
+  },
+  {
+    "file": "evidence/day1/competition-day1-demo-evidence.json",
+    "source": "git:12c2a6acf58cc2558cf4c1a82cec4da47c874e0c:docs/competition-day1-demo-evidence-manifest.json",
+    "source_commit": "12c2a6acf58cc2558cf4c1a82cec4da47c874e0c",
+    "copied_utc": "2026-09-14T00:49:23+08:00"
   }
 ]

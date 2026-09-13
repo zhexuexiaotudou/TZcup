@@ -8,6 +8,14 @@ parser.add_argument('--intake',type=Path)
 args=parser.parse_args()
 rows=json.loads((P/'metrics/results.json').read_text(encoding='utf-8'))
 allowed_statuses=['PASS','FAIL','PARTIAL','NOT_MEASURED']
+allowed_bases={
+    'measured_simulation',
+    'internal_frozen_regression',
+    'offline_replay',
+    'synthetic_replay',
+    'design_calculation',
+    'not_measured',
+}
 if args.intake:
     incoming=json.loads(args.intake.read_text(encoding='utf-8-sig'))
     known={r['id']:r for r in rows}
@@ -15,8 +23,8 @@ if args.intake:
     for update in incoming:
         if update['id'] not in known or update['status'] not in allowed_statuses:
             raise ValueError('Unknown id or invalid status')
-        if update['status']!='NOT_MEASURED' and (update.get('basis')!='measured_simulation' or not update.get('evidence')):
-            raise ValueError('PASS/FAIL intake requires measured_simulation and actual evidence')
+        if update['status']!='NOT_MEASURED' and (update.get('basis') not in allowed_bases or not update.get('evidence')):
+            raise ValueError('Measured or bounded intake requires a declared evidence basis and actual evidence')
         if not update.get('note') or not update.get('run_id') or not update.get('source_commit'):
             raise ValueError('Need note, run_id, source_commit')
         evidence=[Path(x).resolve(strict=True) for x in update.get('evidence',[])]
@@ -48,7 +56,7 @@ if args.intake:
 for r in rows:
     assert r['status'] in allowed_statuses
     if r['status']!='NOT_MEASURED':
-        assert r['basis']=='measured_simulation' and r['evidence']
+        assert r['basis'] in allowed_bases and r['evidence']
     if r['status'] in ['PASS','FAIL','PARTIAL']:
         assert r.get('run_id') and r.get('source_commit') and r.get('evidence')
     if r['id'] in ['localization_mm','mapped_area_m2','cleaning_m2_h','width_mm','braking_s'] and r['status']!='NOT_MEASURED':
@@ -78,6 +86,7 @@ sections=json.loads((P/'docs/sections.json').read_text(encoding='utf-8'))
 if len(sections)!=len(rows)+9:
     raise ValueError(f'Expected {len(rows)+9} report sections, found {len(sections)}')
 for i,r in enumerate(rows):
+    sections[i+2][0]=f'{i+3:02d} {r["item"]}'
     sections[i+2][1]=['当前状态：'+r['status']+'。'+r['note'], '最短测量与判定口径：'+r['minimum_measurement'], '证据范围：'+r['basis']+'；截至 '+r['as_of_utc']+'。只依据列明运行判定，历史局部结果不替代当前全程。', '证据文件：'+'；'.join(r['evidence'])]
 (P/'docs/sections.json').write_text(json.dumps(sections,ensure_ascii=False,indent=2),encoding='utf-8')
 total_pages=len(sections)

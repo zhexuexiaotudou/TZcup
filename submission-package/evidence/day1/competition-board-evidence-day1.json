@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "evidence_id": "day1-s100p-board-evidence",
+  "status": "SEALED_MODULE_REPLAY_NO_BOARD_AUTONOMY_ACCEPTANCE",
+  "source_commit": "a283c26",
+  "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-board-evidence",
+  "source_evidence": [
+    "docs/s100p-board-evidence-day1.md",
+    "reports/engineering/s100p_board_evidence_day1.json"
+  ],
+  "board": {
+    "model": "D-Robotics RDK S100P V1P0",
+    "architecture": "aarch64",
+    "bpu_node": "/dev/bpu_core0"
+  },
+  "modules": {
+    "perception": {
+      "status": "BLOCKED",
+      "reason": "Formal nash-m DOSOD HBM is absent; the product adapter rejected the development manifest before product-node startup.",
+      "semantic_accuracy": "NOT_EVALUATED"
+    },
+    "mapping_localization": {
+      "status": "PASSED_SYNTHETIC_REPLAY",
+      "evidence": "slam_toolbox OccupancyGrid updates and robot_localization filtered motion response.",
+      "claim_boundary": "No area, RMSE, 50 mm localization, or full-mission claim."
+    },
+    "planning_decision": {
+      "status": "REPLAY_PASS_LIMITED",
+      "coverage_policy": "full_coverage 3/3; sensing_greedy 2/3; oracle 1/3 evaluation-only",
+      "qlearning": "train/validation/test success rates 1.0 with no split overlap and no truth access",
+      "claim_boundary": "Limited policy replay; failed fractions remain visible."
+    },
+    "control": {
+      "status": "PASSED_REPLAY",
+      "fresh_replay": "61 outputs; positive clipping, emergency-stop zeroing, recovery, and output variation passed.",
+      "claim_boundary": "No moving vehicle, real actuator, HIL, or field safety claim."
+    }
+  },
+  "claim_boundary": "Synthetic or simulation replay only. This is not full on-board autonomy, a same-run closed loop, real-sensor evidence, HIL, or field acceptance.",
+  "retained_failures": [
+    "Failed setup attempt before the fresh control replay.",
+    "Perception development manifest rejection.",
+    "Planning oracle 1/3 and sensing_greedy 2/3."
+  ]
+}

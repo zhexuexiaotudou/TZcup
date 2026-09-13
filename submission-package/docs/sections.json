@@ -2,8 +2,9 @@
   [
     "01 项目背景与交付边界",
     [
-      "面向智慧环卫场景的国产系统无人清扫车关键技术攻关，赛题DG-202604。本报告只整理截至2026-09-13已封存的仿真运行、独立评分、失败留存和板端历史回放，不把新近部分结果包装成完整比赛通过。",
-      "当前可确认的通过项只有受控直线试验中的600mm连续清扫宽度和行驶中完整急停0.489s；4320m²/h只来自固定10s窗口，状态为PARTIAL。动态定位与工程识别质量为FAIL，官方识别≥95%、避障和任务分解仍未测。",
+      "面向智慧环卫场景的国产系统无人清扫车关键技术攻关，赛题DG-202604。本报告整理截至2026-09-14已封存的仿真运行、独立评分、失败留存、板端回放和设计计算，不把新增局部PASS包装成完整比赛通过。",
+      "当前可确认的通过项包括受控直线试验中的600mm连续清扫宽度、行驶中完整急停0.489s，以及冻结转写经确定性DSL解析得到的任务分解97.2973%（开发集36/37，内部冻结holdout 32/32）。4320m²/h只来自固定10s窗口，状态为PARTIAL。动态定位、建图和工程识别质量为FAIL，官方识别≥95%仍未达到。",
+      "任务分解PASS仅限内部冻结回归，不是公开盲测或外部验证；语音识别、任务执行和S100P完整自主仍NOT_MEASURED。尘箱40L新增结论仅限设计几何，物理填充与生产验证仍NOT_MEASURED。",
       "题面明确把“关键技术指标未达到最低要求”列为一票否决风险。因此本报告即使形成完整20-50页PDF，也只表示材料可审阅，不表示整包已达到提交资格或可以合并不同版本的局部PASS。"
     ]
   ],
@@ -27,41 +28,41 @@
   [
     "04 循迹",
     [
-      "当前状态：FAIL。动态路线run-01在仿真时间12.953s因Nav2中止而未达到2m位移与返回段；这是受控失败，不是完整任务成功率。",
+      "当前状态：FAIL。动态路线run-01在仿真时间12.953s因Nav2中止而未达到2m位移与返回段；后续诊断证明配置上map→odom由/global_ekf唯一拥有，并修复NavSat输入帧的模式选择，但只批准未来一次有界动态诊断，未产生新的完整任务成功率。",
       "最短测量与判定口径：一次任务的路线点、实际轨迹、终态与中止事件；区分定位失败、规划失败和车辆控制失败。",
       "证据范围：measured_simulation；截至 2026-09-13T07:46:40+00:00。只依据列明运行判定，历史局部结果不替代当前全程。",
-      "证据文件：evidence/day1/competition-localization-50mm.md；evidence/day1/competition-localization-replay.md"
+      "证据文件：evidence/day1/competition-localization-50mm.md；evidence/day1/competition-localization-replay.md；evidence/day1/competition-localization-diagnosis.json"
     ]
   ],
   [
     "05 垃圾识别与定位",
     [
-      "当前状态：FAIL。固定相机RGB-D链路可执行，但独立评分30帧/76实例上原始与策略层正确类别召回均为0%；策略层仍有8个误检，识别质量FAIL。",
+      "当前状态：FAIL。原始FAIL保留：Stage5B在30帧/76实例上为raw 0/654/76、policy 0/8/76。根因是受控彩色夹具误配Stage5B；改用匹配的Stage5A档案后raw提升为33/50/43，但策略层仍0/0/76，黄色叶堆仍失败，识别质量继续FAIL，官方≥95%仍未达到。",
       "最短测量与判定口径：同帧图像、检测类别框、深度/标定/TF、预测地图坐标及独立标签对照；分别报告原始层和策略层精确率/召回率。",
-      "证据范围：measured_simulation；截至 2026-09-13T08:47:13+00:00。只依据列明运行判定，历史局部结果不替代当前全程。",
-      "证据文件：evidence/day1/competition-perception-score.md；evidence/board/development-liveness.json；evidence/board/perception-rejected.log"
+      "证据范围：measured_simulation；截至 2026-09-14T00:49:23+08:00。只依据列明运行判定，历史局部结果不替代当前全程。",
+      "证据文件：evidence/day1/competition-perception-score.md；evidence/day1/competition-perception-recovery.json；evidence/board/development-liveness.json；evidence/board/perception-rejected.log"
     ]
   ],
   [
-    "06 识别准确率≥95%",
+    "06 物体识别准确率≥95%",
     [
-      "当前状态：NOT_MEASURED。题面未给出“识别准确率”的精确定义；工程P/R评分已FAIL，但不得把工程分数擅自替代官方R01，因此官方≥95%指标保持NOT_MEASURED。",
+      "当前状态：NOT_MEASURED。题面未给出“识别准确率”的精确定义；Stage5A离线重放虽把raw提升为33/50/43，但策略层仍0/0/76且叶堆失败，官方≥95%既未达到也未按官方定义测量，因此保持NOT_MEASURED。",
       "最短测量与判定口径：先冻结官方类别、样本域、匹配规则和统计分母，再用独立标注集报告每类与宏平均P/R及总体正确率。",
-      "证据范围：not_measured；截至 2026-09-13T08:47:13+00:00。只依据列明运行判定，历史局部结果不替代当前全程。",
-      "证据文件：evidence/day1/competition-perception-score.md；evidence/reference/contest-brief.txt"
+      "证据范围：not_measured；截至 2026-09-14T00:49:23+08:00。只依据列明运行判定，历史局部结果不替代当前全程。",
+      "证据文件：evidence/day1/competition-perception-score.md；evidence/day1/competition-perception-recovery.json；evidence/reference/contest-brief.txt"
     ]
   ],
   [
     "07 定位≤50mm",
     [
-      "当前状态：FAIL。动态run-01仅4/359个严格配对，覆盖率1.1142%，配对RMSE 12.152933m、P95 12.514197m、最大12.538851m；条件和误差均不通过，样本仅为诊断值。",
+      "当前状态：FAIL。动态run-01仍为FAIL：仅4/359个严格配对、覆盖率1.1142%，配对RMSE 12.152933m、P95 12.514197m、最大12.538851m。诊断确认配置上/global_ekf是唯一map→odom发布者并完成NavSat模式化帧修复、44项聚焦测试，但只给未来有界动态运行GO；50mm仍未证明。",
       "最短测量与判定口径：同坐标系、同仿真时间配对估计与真值；先满足覆盖率和位移条件，再报告RMSE/P95/max，阈值采用max≤50mm。",
       "证据范围：measured_simulation；截至 2026-09-13T07:46:40+00:00。只依据列明运行判定，历史局部结果不替代当前全程。",
-      "证据文件：evidence/day1/competition-localization-50mm.md；evidence/day1/competition-localization-replay.md"
+      "证据文件：evidence/day1/competition-localization-50mm.md；evidence/day1/competition-localization-replay.md；evidence/day1/competition-localization-diagnosis.json"
     ]
   ],
   [
-    "08 建图面积≥20000m²",
+    "08 建图≥20000m²",
     [
       "当前状态：FAIL。300.013s墙钟探针得到560870个已知栅格、约0.05m分辨率、有效观测面积1402.175m²（7.01%）；未启动长跑，20000m²门FAIL。",
       "最短测量与判定口径：有效已知栅格数×resolution²；未知区排除，保存原始NPZ/PGM/YAML、面积时序与负载日志。",
@@ -79,7 +80,7 @@
     ]
   ],
   [
-    "10 清扫效率≥3500m²/h",
+    "10 效率≥3500m²/h",
     [
       "当前状态：PARTIAL。44.051-54.051s固定10s窗口清除12.00m²，换算4320m²/h；这是受控稳态短窗，不是完整任务平均效率，因此只能PARTIAL。",
       "最短测量与判定口径：实际清除有效面积并集÷完整作业仿真秒数×3600；计入转弯、等待、避障，另报墙钟与RTF。",
@@ -124,67 +125,78 @@
     ]
   ],
   [
-    "15 任务分解正确率",
+    "15 任务分解正确率≥90%（正文口径另列≥95%）",
     [
-      "当前状态：NOT_MEASURED。题面同时出现正文≥95%和评分表≥90%口径；本轮没有自然语言任务分解运行、标注命令集或正确率统计。",
-      "最短测量与判定口径：冻结题面版本、指令集、分解输出和评分规则，报告逐条正确率与总体正确率；不得用架构描述代替测量。",
-      "证据范围：not_measured；截至 2026-09-13T08:47:13+00:00。只依据列明运行判定，历史局部结果不替代当前全程。",
-      "证据文件：evidence/reference/contest-brief.txt；evidence/reference/historical-assessment.md"
+      "当前状态：PASS。冻结UTF-8转写经确定性DSL解析：开发集36/37=0.972973，独立内部冻结holdout 32/32=1.0，均高于90%和95%阈值。此PASS只限内部冻结回归，不是公开盲测或外部验证；reject-005仍为开发集miss，语音识别与任务执行仍NOT_MEASURED。",
+      "最短测量与判定口径：冻结题面版本、转写输入、DSL输出和评分规则，分别报告开发集与独立holdout；进一步用未参与调参的公开/外部盲测验证泛化。",
+      "证据范围：internal_frozen_regression；截至 2026-09-14T00:49:23+08:00。只依据列明运行判定，历史局部结果不替代当前全程。",
+      "证据文件：evidence/day1/competition-task-decomposition.json；evidence/reference/contest-brief.txt；evidence/reference/historical-assessment.md"
     ]
   ],
   [
-    "16 S100P连接与感知开发证明",
+    "16 尘箱承载≥40L（设计阶段）",
+    [
+      "当前状态：PARTIAL。设计阶段外接包络72.128L、3mm壁内部净腔68.915384L、设计可用估算48.347384L，10mm壁厚敏感度41.208L，九项基线装配净空检查通过，补充包PDF 19页校验通过。仅证明设计几何，物理填充与生产验证仍NOT_MEASURED。",
+      "最短测量与判定口径：冻结制造CAD，完成额定姿态水容积标定和真实落叶/混合垃圾有效装入测试，再报告制造公差、强度、密封、振动与防溢验证。",
+      "证据范围：design_calculation；截至 2026-09-14T00:49:23+08:00。只依据列明运行判定，历史局部结果不替代当前全程。",
+      "证据文件：evidence/day1/application-value-dust-bin-design.json"
+    ]
+  ],
+  [
+    "17 S100P连接与感知开发证明",
     [
       "环境证据：evidence/board/full-board-inventory.json；设备S100P V1P0、架构aarch64、存在BPU设备节点，历史release版本6731784。这里只证明历史部署环境，不证明当前实时连接。",
-      "感知证据：development-liveness.json来自开发ABI模式，semantic_status为NOT_EVALUATED；perception-rejected.log记录产品适配器拒绝非nash-m开发目标。映射、规划、Q-learning和控制回放文件仍保留，均按各自输入范围和失败记录解释。",
-      "板端感知语义正确率、每类P/R、端到端时延和功耗均NOT_MEASURED。本轮工程识别评分来自独立仿真相机场景，不能反向把板端开发活性升级为识别通过。"
+      "Day-1板端证据提交a283c26确认：mapping/localization为synthetic replay PASS，control为replay PASS，planning为有限replay PASS；perception为BLOCKED，缺少正式nash-m DOSOD HBM且产品适配器拒绝开发manifest。",
+      "板端感知语义正确率、每类P/R、端到端时延和功耗均NOT_MEASURED。上述回放不是同run闭环、真实传感器、HIL、实车或板端完整自主。"
     ]
   ],
   [
-    "17 S100P建图、定位与规划回放",
+    "18 S100P建图、定位与规划回放",
     [
-      "mapping-replay-01/report.json证明slam_toolbox产生含已知和占用栅格的OccupancyGrid；localization-replay-01/report.json包含69个输出和运动响应。两者均为synthetic replay，不提供20000m²完整建图或50mm定位证明。",
+      "mapping-replay-01与localization-replay-01证明slam_toolbox产生含已知和占用栅格的OccupancyGrid、robot_localization产生过滤输出和运动响应。两者均为synthetic replay，不提供20000m²完整建图或50mm定位证明。",
       "planning-replay-02与qlearning-replay-01保留有限回放结果：full_coverage 3/3、sensing_greedy 2/3、oracle 1/3且evaluation_only；Q-learning三split成功率1.0，但不能覆盖规划失败或证明产品策略跨场景可靠。",
-      "板端控制回放有61个输出，检查了正向限幅、急停归零、恢复后反向限幅和输出变化，但没有连接实体执行器，不能替代本轮Gazebo行驶中完整急停证据。"
+      "新鲜控制回放有61个输出，检查了正向限幅、急停归零、恢复后反向限幅和输出变化，但没有连接实体执行器，不能替代Gazebo行驶中完整急停证据。"
     ]
   ],
   [
-    "18 S100P控制、性能与局限",
+    "19 S100P控制、性能与局限",
     [
       "板端联合负载、持续运行、峰值内存、功耗、温度、BPU利用率、P95端到端时延均NOT_MEASURED。进程状态文件只反映采样时点，不能外推为峰值或稳定性。",
-      "本轮仿真证据也不证明实车制动距离、物理安全继电器动作或全工况可靠性。0.489s是仿真时间下的完整急停结果，墙钟4.809955s单独披露，不互换时钟口径。"
+      "本轮仿真证据也不证明实车制动距离、物理安全继电器动作或全工况可靠性。0.489s是仿真时间下的完整急停结果，墙钟4.809955s单独披露，不互换时钟口径。",
+      "Day-1板端证据只证明选定模块可在对应输入上执行，不证明完整板端自主任务，也不弥补正式模型载荷、依赖闭包和性能回执缺口。"
     ]
   ],
   [
-    "19 关键技术与创新边界",
+    "20 关键技术与创新边界",
     [
       "当前方案的核心是把RGB-D感知、定位/规划、刷清扫和独立真值评分分成可审计链路，并以污物清除单元并集而不是规划面积计算宽度与短窗效率。该方法在受控直线试验中可复算，但不声称全球首创。",
-      "本轮修复了侧刷碰撞几何与GroundDirt工作姿态的78mm一致性，补齐Contact系统与作用域传感器绑定，并让清除栅格、仿真时间和完整急停遥测进入MCAP复算。该修复只解决对应受控试验，不等于定位、感知或整任务闭环已经完成。",
+      "定位诊断证明配置上/global_ekf唯一拥有cleaning模式map→odom，并把NavSat输入改为slam用/odom、amcl用/localization/fused_odom；44项聚焦测试通过。该修复只支持未来一次有界动态诊断，50mm仍FAIL。",
+      "感知根因是受控彩色夹具误配Stage5B；Stage5A重放把raw从0/654/76提高到33/50/43，但策略层仍0/0/76，识别质量继续FAIL。该结果证明域绑定问题，不证明识别已改善到产品可用。",
       "Nav2、SLAM Toolbox、robot_localization和其他第三方软件按原许可与边界披露。采用国产计算板不能推导操作系统、模型和全部依赖已经国产化；本报告不主张未经验证的算法领先或产业效果。"
     ]
   ],
   [
-    "20 应用落地、产业协同与部署边界",
+    "21 应用落地、产业协同与部署边界",
     [
-      "应用路径是把清扫宽度、净清扫效率、建图面积和急停响应作为运营验收指标，要求来源于同场任务的实际清除、定位配准和时间记录。当前只有固定短窗与单次急停证据，尚未形成园区班次、能耗、运维和成本模型。",
-      "板端部署仍以历史release和有限回放为准，云卡/仿真主机只在隔离worktree和独立证据根内运行。没有完成当前完整任务、报名信息、授权链和回滚演练前，不应对外宣称可直接量产、跨场地部署或满足智慧环卫运营SLA。",
-      "后续产业验证至少需要同源任务日志、GPS/定位精度分布、真实垃圾类别分布、故障恢复、耗材和能耗数据。上述均为下一阶段条件，不是本轮已测结果。"
+      "应用路径是把清扫宽度、净清扫效率、建图面积和急停响应作为运营验收指标。当前只有固定短窗、受控直线和一次诊断运行证据，尚未形成园区班次、能耗、运维和成本模型。",
+      "尘箱设计包2aefb12给出外接包络72.128L、3mm壁内部净腔68.915384L、设计可用估算48.347384L、10mm壁厚敏感度41.208L；九项基线装配净空检查通过，19页补充包PDF校验通过。该结果只属设计阶段，物理填充和生产验证仍NOT_MEASURED。",
+      "板端部署仍以历史release和有限回放为准。没有完成当前完整任务、报名信息、授权链和回滚演练前，不应对外宣称可直接量产、跨场地部署或满足智慧环卫运营SLA。"
     ]
   ],
   [
-    "21 完整性、一票否决风险与失败留存",
+    "22 完整性、一票否决风险与失败留存",
     [
-      "完整性结论：宽度、制动和受控清扫链路已有可复算结果；效率只PARTIAL；动态定位、循迹和工程识别质量FAIL；完整建图、避障、官方识别≥95%、任务分解、尘箱40L、两种交互和人机数字性能仍未测。不同版本的局部PASS不能拼成完整任务PASS。",
-      "一票否决风险：题面保存件第9-10页把负载能力、识别准确率等关键技术指标未达到最低要求列为否决项。当前定位FAIL和识别质量FAIL已经足以阻止整包宣称达标；未测项也不能通过删去或改名为加分项来规避。",
-      "证据与回滚：evidence/day1/competition-width-efficiency-estop.md对应回滚d967ddd；competition-localization-50mm.md与competition-localization-replay.md对应候选9542db7和210c4dd，回退a9691b4；competition-perception-score.md回滚210c4dd；competition-mapping-probe.md回退106f118。完整关联见evidence/day1/evidence-index.json。"
+      "完整性结论：宽度、制动、受控清扫和内部冻结任务分解已有边界明确的结果；效率与尘箱只PARTIAL；动态定位、循迹、建图和工程识别质量FAIL；避障和官方识别≥95%仍NOT_MEASURED。不同版本的局部PASS不能拼成完整任务PASS。",
+      "一票否决风险：题面第9-10页把负载能力、识别准确率等关键技术指标未达到最低要求列为否决项。当前定位FAIL、建图FAIL和识别质量FAIL已经足以阻止整包宣称达标；未测项也不能删去或改名规避。",
+      "失败留存：任务分解开发集保留reject-005；感知保留Stage5B与Stage5A两层结果；定位保留4样本FAIL；板端保留感知BLOCKED和有限规划；Demo保留两次ROS daemon阶段失败且无视频。完整关联见evidence/day1/evidence-index.json。"
     ]
   ],
   [
-    "22 提交格式、证据接入、回滚与复现",
+    "23 提交格式、证据接入、回滚与复现",
     [
       "题面要求技术方案PDF为20-50页，并要求完整软件仿真或实物、5-10分钟含操作说明的视频、审核通过的报名表和规定命名的压缩包。本包只完成可审阅报告与证据接入；没有Demo视频、报名表、申报人命名信息或完整任务成功分母。",
-      "证据源以metrics/results.json为唯一状态源，refresh.py读取已存在的本地证据并重建metrics/验收矩阵.md、metrics/sim-metrics.csv、技术方案报告.md和PDF。本工具不运行ROS、Gazebo、板端、网络或视频采集，不生成测量值。",
-      "回滚遵循各专题证据源中记录的提交，不覆盖历史MCAP、失败日志或旧证据。发布前仍须完成当前完整任务复测、视频、报名材料、PDF目视复核、包内哈希和最终身份命名；这些是未完成硬门，不是已经从结果中推出的结论。"
+      "Demo证据最终提交12c2a6a保留两次真实Gazebo启动尝试：两次均在ROS daemon阶段超时，Gazebo未启动；没有MCAP、MP4、RViz或dashboard替代，视频保持NOT_MEASURED。9分钟演示脚本和运行前后检查表已归档；600mm、4320m²/h、0.489s受控证据不变。",
+      "证据源以metrics/results.json为唯一状态源，refresh.py读取已存在的本地证据并重建metrics/验收矩阵.md、metrics/sim-metrics.csv、技术方案报告.md和PDF。释放前的20-50页检查、JSON校验、逐页渲染、哈希和diff检查只证明包内一致性，不把任何未测/FAIL升级为PASS。"
     ]
   ]
 ]

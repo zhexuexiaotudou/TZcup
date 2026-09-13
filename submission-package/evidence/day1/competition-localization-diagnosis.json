@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "evidence_id": "day1-localization-diagnosis",
+  "status": "FAIL",
+  "source_commit": "f1f2282",
+  "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-localization-diagnosis",
+  "source_evidence": "docs/competition-localization-root-cause.md",
+  "proven_facts": [
+    "The configured cleaning-mode map->odom owner is uniquely /global_ekf; local EKF owns odom->base_footprint.",
+    "The old unconditional NavSat remap fed /odom while the global EKF worked in map. The fix selects /odom only for slam mapping and /localization/fused_odom for amcl cleaning mode.",
+    "The offline scorer has a fail-closed static authority contract for the single unjoinable Cyclone DDS map->odom GID.",
+    "Focused verification passed 44 tests; Python compilation and git diff --check passed.",
+    "A broader localization/campus run passed 290 tests with 2 skipped after excluding an unrelated pre-existing frontier test-fixture NameError."
+  ],
+  "decision": {
+    "dynamic_diagnostic_run": "GO_ONLY_FOR_ONE_FUTURE_BOUNDED_RUN",
+    "formal_50mm_acceptance": "NO_GO",
+    "localization_50mm": "FAIL_OR_NOT_DEMONSTRATED",
+    "reason": "The retained diagnostic has only four strictly paired samples and 1.668454 m displacement; it does not meet the acceptance denominator or motion precondition. The previously recorded maximum error remains 12.5388507595 m."
+  },
+  "future_run_preconditions": [
+    "Use the patched cleaning configuration in an isolated runtime and fresh output directory.",
+    "Set PROBE_FOCUS_VALIDATION=1 and PROBE_AMCL_TF_BROADCAST=false.",
+    "Capture per-key effective parameters for /local_ekf, /global_ekf, /amcl, and /navsat_transform.",
+    "Require map-referenced /localization/fused_odom and /odometry/gps, odom-referenced /odom, one runtime map->odom GID, and the static authority contract.",
+    "Preserve failure logs and MCAP hashes even if the bounded run fails."
+  ],
+  "limitations": [
+    "Static and offline diagnosis only; no Gazebo or S100P run was started for this evidence.",
+    "The frame feedback mechanism is supported by replay and source review, but the contribution of zero GNSS covariance and clock pairing is not isolated.",
+    "The future bounded run is a diagnostic GO, not a 50 mm acceptance claim."
+  ]
+}
