@@ -6,6 +6,8 @@ GitHub delivery, deployment or HBM claim is made by this diagnostic.
 
 2026-09-13 follow-up: the bounded width / steady raster productivity / full moving E-stop results and retained contact-instrumentation failures are documented in [competition-width-efficiency-estop.md](competition-width-efficiency-estop.md).
 
+Localization follow-up: [dynamic 50 mm diagnostic](competition-localization-50mm.md) records the failed first route, global-fusion drift, unresolved TF identity mapping, retained raw evidence and the real Gazebo GUI entry. Localization is not accepted.
+
 ## Proven prior command chain
 
 `NavigateToPose accepted -> controller /cmd_vel_nav (Twist, max 0.45 m/s)
