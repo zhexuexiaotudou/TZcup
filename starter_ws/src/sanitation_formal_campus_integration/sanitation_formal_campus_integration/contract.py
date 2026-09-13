@@ -26,6 +26,21 @@ class IntegrationContractError(RuntimeError):
     """Raised when a campus integration input violates the formal contract."""
 
 
+def select_navsat_odometry_input(localization_backend: str) -> str:
+    """Return the odometry frame source required by the active localization mode."""
+    if localization_backend == "slam":
+        # slam_toolbox owns map->odom and global_ekf is disabled, so NavSat
+        # must still receive the local odom frame to publish /odometry/gps.
+        return "/odom"
+    if localization_backend == "amcl":
+        # navsat_transform derives world_frame_id_ from this message.  In
+        # cleaning mode the global EKF output carries the map frame.
+        return "/localization/fused_odom"
+    raise IntegrationContractError(
+        f"unsupported localization backend: {localization_backend}"
+    )
+
+
 def load_yaml_mapping(path: str | Path) -> dict[str, Any]:
     value = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
     if not isinstance(value, dict):

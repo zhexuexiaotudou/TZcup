@@ -14,12 +14,21 @@ def generate_launch_description() -> LaunchDescription:
     start_local_fusion = LaunchConfiguration("start_local_fusion")
     start_navsat_transform = LaunchConfiguration("start_navsat_transform")
     start_global_fusion = LaunchConfiguration("start_global_fusion")
+    navsat_odometry_input = LaunchConfiguration("navsat_odometry_input")
     return LaunchDescription(
         [
             DeclareLaunchArgument("use_sim_time", default_value="true"),
             DeclareLaunchArgument("start_local_fusion", default_value="true"),
             DeclareLaunchArgument("start_navsat_transform", default_value="true"),
             DeclareLaunchArgument("start_global_fusion", default_value="true"),
+            DeclareLaunchArgument(
+                "navsat_odometry_input",
+                default_value="/localization/fused_odom",
+                description=(
+                    "navsat_transform derives its measurement/output frame from "
+                    "this Odometry source."
+                ),
+            ),
             DeclareLaunchArgument(
                 "params_file",
                 default_value=PathJoinSubstitution(
@@ -48,7 +57,7 @@ def generate_launch_description() -> LaunchDescription:
                 remappings=[
                     ("imu", "/imu/data"),
                     ("gps/fix", "/gnss/fix"),
-                    ("odometry/filtered", "/localization/fused_odom"),
+                    ("odometry/filtered", navsat_odometry_input),
                     ("odometry/gps", "/odometry/gps"),
                 ],
                 output="screen",

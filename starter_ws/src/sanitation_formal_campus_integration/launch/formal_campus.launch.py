@@ -35,6 +35,7 @@ from sanitation_formal_campus_integration.campus_materializer import (
 from sanitation_formal_campus_integration.contract import (
     materialize_nav2_config,
     resolve_spawn_pose,
+    select_navsat_odometry_input,
 )
 from sanitation_formal_campus_integration.saved_map_coverage_core import (
     DRY_CLEANING_SPEED_PROFILE,
@@ -224,6 +225,7 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
     localization_backend = context.perform_substitution(
         LaunchConfiguration("localization_backend")
     ).strip()
+    navsat_odometry_input = select_navsat_odometry_input(localization_backend)
     start_global_fusion = "false" if localization_backend == "slam" else "true"
     coverage_params = PathJoinSubstitution(
         [FindPackageShare("sanitation_coverage"), "config", "coverage_skid_steer_optimized.yaml"]
@@ -292,6 +294,7 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                 "spawn_x": str(source_pose[0]),
                 "spawn_y": str(source_pose[1]),
                 "spawn_yaw": str(source_pose[2]),
+                "navsat_odometry_input": navsat_odometry_input,
             }.items(),
         ),
         IncludeLaunchDescription(

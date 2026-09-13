@@ -1,5 +1,6 @@
 import copy
 import importlib.util
+import json
 from pathlib import Path
 import pytest
 spec=importlib.util.spec_from_file_location('focus',Path(__file__).with_name('competition_localization_focus.py'))
@@ -10,7 +11,7 @@ def sample():
     d={'gt':copy.deepcopy(rows),'fused':copy.deepcopy(rows),'odom':copy.deepcopy(rows),'tf':[[r[0],0.,0.,0.] for r in rows],'local_tf':[r[:4] for r in rows],
        'counts':{k:500 for k in ('/odom/unfiltered','/imu/data','/amcl_pose','/odometry/gps','/gnss/fix')},'tf_future_max_s':0.,'tf_past_max_s':0.}
     for r in d['gt']:r[1]-=98
-    a={'tf_edges':{'map->odom':{'message_count':500,'messages_by_gid':{'one':500}}},'endpoint_registry':{'one':{'node':'/global_ekf'}}}
+    a={'graph_nodes':['/global_ekf'],'tf_edges':{'map->odom':{'message_count':500,'messages_by_gid':{'one':500}}},'endpoint_registry':{'one':{'node':'/global_ekf'}},'topics':{'/localization/fused_odom':{'message_count':500,'publishers':[{'node':'/global_ekf'}]},'/odometry/gps':{'subscriptions':[{'node':'/global_ekf'}]}}}
     m={'vehicle_start_pose_source_world':{'x_m':-98.,'y_m':0.,'yaw_rad':0.},'vehicle_start_pose_localization_map':{'x_m':0.,'y_m':0.,'yaw_rad':0.}}
     return d,a,m
 
@@ -25,6 +26,49 @@ def test_static_is_rejected():
 def test_two_tf_gids_rejected_even_if_same_node():
     d,a,m=sample();a['tf_edges']['map->odom']['messages_by_gid']['two']=4;a['endpoint_registry']['two']={'node':'/global_ekf'}
     assert focus.assess(d,a,m)['status']=='FAIL'
+
+def test_static_contract_attributes_single_cyclone_gid_without_registry_match():
+    d,a,m=sample();a['endpoint_registry']={}
+    contract={'owner':'/global_ekf'}
+    result=focus.assess(d,a,m,contract)
+    assert result['status']=='PASS'
+    assert result['authority']['basis']=='single_gid_static_contract'
+
+def test_static_contract_never_overrides_missing_runtime_global_ekf():
+    d,a,m=sample();a['endpoint_registry']={}
+    a['topics']['/localization/fused_odom']['publishers']=[]
+    result=focus.assess(d,a,m,{'owner':'/global_ekf'})
+    assert result['status']=='FAIL'
+    assert result['authority']['basis']=='unproven'
+
+def test_source_static_authority_contract_is_complete(tmp_path):
+    effective={
+        'schema_version':1,
+        'all_expected':True,
+        'nodes':{
+            name:{'fixture':{'expected':True,'actual':True,'matched':True}}
+            for name in ('/local_ekf','/global_ekf','/amcl','/navsat_transform')
+        },
+    }
+    path=tmp_path/'effective-parameters-fixture.json'
+    path.write_text(json.dumps(effective),encoding='utf-8')
+    contract=focus.static_authority_contract(Path(__file__).resolve().parents[1],path)
+    assert contract['owner']=='/global_ekf'
+    assert all(contract['checks'].values())
+
+def test_source_static_authority_contract_rejects_unmatched_parameters(tmp_path):
+    effective={
+        'schema_version':1,
+        'all_expected':True,
+        'nodes':{
+            name:{'fixture':{'expected':True,'actual':False,'matched':False}}
+            for name in ('/local_ekf','/global_ekf','/amcl','/navsat_transform')
+        },
+    }
+    path=tmp_path/'effective-parameters-fixture.json'
+    path.write_text(json.dumps(effective),encoding='utf-8')
+    with pytest.raises(ValueError,match='effective_parameters_expected'):
+        focus.static_authority_contract(Path(__file__).resolve().parents[1],path)
 
 @pytest.mark.parametrize('field,value',[('tf_future_max_s',.5),('tf_past_max_s',1),('fused',[]),('frame_errors',['wrong_frame']),('counts',{})])
 def test_fail_closed_missing_or_stale(field,value):

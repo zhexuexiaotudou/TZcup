@@ -56,8 +56,11 @@ def test_navsat_uses_real_product_sensor_aliases_and_no_second_utm_tf():
     assert navsat["broadcast_utm_transform"] is False
     assert navsat["broadcast_cartesian_transform"] is False
     launch = (ROOT / "launch/formal_localization_fusion.launch.py").read_text()
+    assert '"navsat_odometry_input"' in launch
+    assert 'default_value="/localization/fused_odom"' in launch
     for topic in ("/imu/data", "/gnss/fix", "/odometry/gps"):
         assert topic in launch
+    assert '("odometry/filtered", navsat_odometry_input)' in launch
 
 
 def test_mapping_mode_can_disable_global_map_to_odom_owner():

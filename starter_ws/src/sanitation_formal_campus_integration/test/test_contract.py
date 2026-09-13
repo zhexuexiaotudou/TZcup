@@ -17,6 +17,7 @@ from sanitation_formal_campus_integration.contract import (  # noqa: E402
     _navigation_inset_radius,
     materialize_nav2_config,
     resolve_spawn_pose,
+    select_navsat_odometry_input,
 )
 
 
@@ -245,6 +246,13 @@ def test_spawn_pose_defaults_to_public_manifest_and_allows_explicit_override(tmp
         resolve_spawn_pose(manifest)
 
 
+def test_navsat_odometry_input_matches_localization_mode():
+    assert select_navsat_odometry_input("slam") == "/odom"
+    assert select_navsat_odometry_input("amcl") == "/localization/fused_odom"
+    with pytest.raises(IntegrationContractError, match="unsupported localization backend"):
+        select_navsat_odometry_input("unknown")
+
+
 def test_launch_is_parseable_and_keeps_safety_and_controller_ownership_explicit():
     source = LAUNCH.read_text(encoding="utf-8")
     ast.parse(source)
@@ -273,6 +281,11 @@ def test_launch_is_parseable_and_keeps_safety_and_controller_ownership_explicit(
     assert 'name="formal_campus_set_pose_bridge"' in source
     assert 'set_pose@ros_gz_interfaces/srv/SetEntityPose' in source
     assert "ackermann" not in source.lower()
+    assert (
+        "navsat_odometry_input = select_navsat_odometry_input(localization_backend)"
+        in source
+    )
+    assert '"navsat_odometry_input": navsat_odometry_input' in source
 
     formal_vehicle_launch = (
         ROOT / "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py"
@@ -282,6 +295,9 @@ def test_launch_is_parseable_and_keeps_safety_and_controller_ownership_explicit(
         assert f'DeclareLaunchArgument("spawn_{axis}", default_value="0.0")' in formal_vehicle_launch
     assert '"-x", spawn_x, "-y", spawn_y, "-Y", spawn_yaw, "-z", "0.005"' in formal_vehicle_launch
     assert '"-z", "0.005"' in formal_vehicle_launch
+    assert '"navsat_odometry_input"' in formal_vehicle_launch
+    assert 'default_value="/odom"' in formal_vehicle_launch
+    assert '"navsat_odometry_input": navsat_odometry_input' in formal_vehicle_launch
 
     lifecycle = (PACKAGE / "launch/formal_campus_map_lifecycle.launch.py").read_text(
         encoding="utf-8"

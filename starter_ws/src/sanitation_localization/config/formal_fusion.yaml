@@ -1,7 +1,7 @@
 # Product localization ownership:
 #   local_ekf: odom -> base_footprint and /odom
 #   AMCL: lidar-map pose measurement only (tf_broadcast=false in Nav2 config)
-#   navsat_transform: GNSS -> map-referenced odometry measurement
+#   navsat_transform: GNSS -> odometry in the launch-selected ownership frame
 #   global_ekf: map -> odom and /localization/fused_odom
 # Mapping mode does not start global_ekf because slam_toolbox owns map -> odom.
 local_ekf:
@@ -99,7 +99,8 @@ global_ekf:
     pose0_differential: false
     pose0_relative: false
     odom1: /odometry/gps
-    # NavSatFix is converted to metric map-frame x/y by navsat_transform.
+    # NavSatFix becomes metric x/y in the launch-selected NavSat frame:
+    # odom during mapping, map during global-EKF cleaning.
     odom1_config: [true,  true,  false,
                    false, false, false,
                    false, false, false,

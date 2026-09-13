@@ -79,6 +79,9 @@ if [[ "$PROBE_FOCUS_VALIDATION" == 1 ]]; then
   timeout 25s ros2 param dump /amcl >"$OUTPUT/amcl.params.yaml"
   timeout 25s ros2 param dump /local_ekf >"$OUTPUT/local_ekf.params.yaml"
   timeout 25s ros2 param dump /global_ekf >"$OUTPUT/global_ekf.params.yaml"
+  python3 "$SOURCE/scripts/capture_competition_localization_parameters.py" \
+    --output "$OUTPUT/effective_parameters.json" \
+    >"$OUTPUT/effective_parameters.log" 2>&1
   timeout 25s ros2 node info /local_ekf >"$OUTPUT/local_ekf.node.txt"
   timeout 25s ros2 node info /global_ekf >"$OUTPUT/global_ekf.node.txt"
   setsid ros2 run sanitation_localization_acceptance formal_localization_runtime_collector \
@@ -114,6 +117,7 @@ if [[ "$PROBE_FOCUS_VALIDATION" == 1 ]]; then
   authority_pid=''
   python3 "$SOURCE/scripts/competition_localization_focus.py" \
     --bag-dir "$OUTPUT/bag" --authority "$OUTPUT/tf_authority.json" \
+    --effective-parameters "$OUTPUT/effective_parameters.json" \
     --manifest "$EPISODE/public/episode_manifest.json" \
     --revision "$CANDIDATE_REVISION" --output "$OUTPUT/localization_focus.json"
 fi

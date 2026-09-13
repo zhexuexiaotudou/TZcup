@@ -53,6 +53,7 @@ def generate_launch_description() -> LaunchDescription:
         "simulation_initial_estop_active"
     )
     use_sim_time = LaunchConfiguration("use_sim_time")
+    navsat_odometry_input = LaunchConfiguration("navsat_odometry_input")
     physics_engine = LaunchConfiguration("physics_engine")
     bodywork_visible = LaunchConfiguration("bodywork_visible")
     high_bandwidth_sensor_runtime = LaunchConfiguration(
@@ -580,6 +581,14 @@ def generate_launch_description() -> LaunchDescription:
                 description="Power-up E-stop state for simulation inputs.",
             ),
             DeclareLaunchArgument("use_sim_time", default_value="true"),
+            DeclareLaunchArgument(
+                "navsat_odometry_input",
+                default_value="/odom",
+                description=(
+                    "Odometry frame source consumed by navsat_transform. "
+                    "Mapping uses /odom; AMCL cleaning uses the global EKF output."
+                ),
+            ),
             DeclareLaunchArgument("bodywork_visible", default_value="true"),
             DeclareLaunchArgument(
                 "high_bandwidth_sensor_runtime",
@@ -900,6 +909,7 @@ def generate_launch_description() -> LaunchDescription:
                     "use_sim_time": use_sim_time,
                     "start_local_fusion": "true",
                     "start_global_fusion": "false",
+                    "navsat_odometry_input": navsat_odometry_input,
                 }.items(),
             ),
             charge_receptacle_contact_bridge,

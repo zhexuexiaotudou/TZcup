@@ -11,6 +11,7 @@ import json
 import math
 from pathlib import Path
 import statistics
+import yaml
 
 
 def metrics(values):
@@ -39,17 +40,130 @@ def interpolate(rows, t, gap):
     return v
 
 
-def authority_check(report):
+def static_authority_contract(source_root, effective_parameters):
+    """Prove the configured cleaning authority without relying on DDS GIDs."""
+    fusion_path = (
+        source_root
+        / 'starter_ws/src/sanitation_localization/config/formal_fusion.yaml'
+    )
+    probe_path = source_root / 'scripts/run_competition_motion_cleaning_probe.sh'
+    capture_path = (
+        source_root / 'scripts/capture_competition_localization_parameters.py'
+    )
+    lifecycle_path = (
+        source_root
+        / 'starter_ws/src/sanitation_formal_campus_integration/launch/formal_campus_map_lifecycle.launch.py'
+    )
+    fusion = yaml.safe_load(fusion_path.read_text())
+    local = fusion['local_ekf']['ros__parameters']
+    global_ = fusion['global_ekf']['ros__parameters']
+    navsat = fusion['navsat_transform']['ros__parameters']
+    effective = json.loads(effective_parameters.read_text())
+    effective_nodes = effective.get('nodes', {})
+    expected_nodes = {'/local_ekf', '/global_ekf', '/amcl', '/navsat_transform'}
+    effective_matched = all(
+        isinstance(effective_nodes.get(node), dict)
+        and bool(effective_nodes[node])
+        and all(
+            value.get('matched') is True
+            and value.get('actual') == value.get('expected')
+            for value in effective_nodes[node].values()
+        )
+        for node in expected_nodes
+    )
+    checks = {
+        'local_ekf_publishes_odom_tf': (
+            local.get('publish_tf') is True
+            and local.get('world_frame') == 'odom'
+            and local.get('odom_frame') == 'odom'
+            and local.get('base_link_frame') == 'base_footprint'
+        ),
+        'global_ekf_publishes_map_tf': (
+            global_.get('publish_tf') is True
+            and global_.get('world_frame') == 'map'
+            and global_.get('map_frame') == 'map'
+            and global_.get('odom_frame') == 'odom'
+            and global_.get('base_link_frame') == 'base_footprint'
+        ),
+        'navsat_publishes_no_tf': (
+            navsat.get('broadcast_utm_transform') is False
+            and navsat.get('broadcast_cartesian_transform') is False
+        ),
+        'probe_amcl_tf_default_false': (
+            'export PROBE_AMCL_TF_BROADCAST="${PROBE_AMCL_TF_BROADCAST:-false}"'
+            in probe_path.read_text()
+        ),
+        'probe_amcl_tf_is_explicit': (
+            "nav['amcl']['ros__parameters']['tf_broadcast']="
+            "os.environ['PROBE_AMCL_TF_BROADCAST']=='true'"
+            in probe_path.read_text()
+        ),
+        'lifecycle_amcl_tf_false': (
+            'nav2["amcl"]["ros__parameters"]["tf_broadcast"] = False'
+            in lifecycle_path.read_text()
+        ),
+        'effective_parameters_expected': (
+            effective.get('schema_version') == 1
+            and effective.get('all_expected') is True
+            and set(effective_nodes) == expected_nodes
+            and effective_matched
+        ),
+    }
+    if not all(checks.values()):
+        failed = ','.join(name for name, passed in checks.items() if not passed)
+        raise ValueError(f'static map->odom authority contract failed: {failed}')
+    return {
+        'owner': '/global_ekf',
+        'checks': checks,
+        'source_files': [
+            str(fusion_path),
+            str(probe_path),
+            str(capture_path),
+            str(lifecycle_path),
+            str(effective_parameters),
+        ],
+    }
+
+
+def authority_check(report, contract=None):
     gids = {g for g,n in report.get('tf_edges',{}).get('map->odom',{}).get('messages_by_gid',{}).items() if n > 0}
     registry = report.get('endpoint_registry',{})
     nodes = [registry.get(g,{}).get('node') for g in gids]
     count = report.get('tf_edges',{}).get('map->odom',{}).get('message_count',0)
-    return len(gids)==1 and nodes==['/global_ekf'] and count>=3, {'gids': sorted(gids), 'nodes': nodes, 'count': count}
+    exact = len(gids) == 1 and nodes == ['/global_ekf'] and count >= 3
+    fused = report.get('topics',{}).get('/localization/fused_odom',{})
+    fused_publishers = {x.get('node') for x in fused.get('publishers',[])}
+    gps_subscribers = {
+        x.get('node')
+        for x in report.get('topics',{}).get('/odometry/gps',{}).get('subscriptions',[])
+    }
+    configured = (contract or {}).get('owner') == '/global_ekf'
+    runtime_proves_global = (
+        '/global_ekf' in set(report.get('graph_nodes',[]))
+        and fused_publishers == {'/global_ekf'}
+        and '/global_ekf' in gps_subscribers
+        and int(fused.get('message_count',0)) >= 3
+    )
+    attributed = len(gids) == 1 and count >= 3 and configured and runtime_proves_global
+    return (exact or attributed), {
+        'gids': sorted(gids),
+        'nodes': nodes,
+        'count': count,
+        'basis': (
+            'exact_endpoint_gid'
+            if exact
+            else ('single_gid_static_contract' if attributed else 'unproven')
+        ),
+        'configured_owner': (contract or {}).get('owner'),
+        'runtime_global_ekf': runtime_proves_global,
+        'fused_publishers': sorted(x for x in fused_publishers if x),
+        'gps_subscribers': sorted(x for x in gps_subscribers if x),
+    }
 
 
-def assess(data, authority, manifest):
+def assess(data, authority, manifest, authority_contract=None):
     failures=[]
-    unique, owners=authority_check(authority)
+    unique, owners=authority_check(authority, authority_contract)
     if not unique: failures.append('map_to_odom_authority_not_unique_global_ekf')
     for name in ('gt','fused','odom','tf','local_tf'):
         rows=data.get(name,[])
@@ -148,14 +262,40 @@ def decode(paths):
 
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--bag-dir',type=Path,required=True);p.add_argument('--authority',type=Path,required=True);p.add_argument('--manifest',type=Path,required=True);p.add_argument('--revision',required=True);p.add_argument('--output',type=Path,required=True);a=p.parse_args()
+    p = argparse.ArgumentParser()
+    p.add_argument('--bag-dir',type=Path,required=True)
+    p.add_argument('--authority',type=Path,required=True)
+    p.add_argument('--effective-parameters',type=Path,required=True)
+    p.add_argument('--manifest',type=Path,required=True)
+    p.add_argument('--revision',required=True)
+    p.add_argument('--output',type=Path,required=True)
+    a=p.parse_args()
     if a.output.exists():raise SystemExit('fresh output required')
     paths=sorted(a.bag_dir.glob('*.mcap'))
     if not paths:raise SystemExit('no MCAP')
     try:
-        result=assess(decode(paths),json.loads(a.authority.read_text()),json.loads(a.manifest.read_text()))
+        source_root=Path(__file__).resolve().parents[1]
+        contract=static_authority_contract(source_root,a.effective_parameters)
+        result=assess(
+            decode(paths),
+            json.loads(a.authority.read_text()),
+            json.loads(a.manifest.read_text()),
+            contract,
+        )
     except Exception as e:result={'status':'FAIL','failures':[type(e).__name__+': '+str(e)]}
-    result.update(revision=a.revision,run_id=a.bag_dir.parent.name,files={str(x):hashlib.sha256(x.read_bytes()).hexdigest() for x in paths+[a.authority,a.manifest]})
+    contract_files=[
+        Path(x)
+        for x in ((contract if 'contract' in locals() else {}).get('source_files',[]))
+    ]
+    result.update(
+        revision=a.revision,
+        run_id=a.bag_dir.parent.name,
+        files={
+            str(x): hashlib.sha256(x.read_bytes()).hexdigest()
+            for x in paths + [a.authority, a.manifest] + contract_files
+        },
+    )
+    if 'contract' in locals():result['authority_contract']=contract
     a.output.write_text(json.dumps(result,indent=2,allow_nan=False)+'\n')
     return 0 if result['status']=='PASS' else 2
 
