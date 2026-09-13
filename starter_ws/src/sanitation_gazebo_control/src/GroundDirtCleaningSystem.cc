@@ -209,6 +209,7 @@ class GroundDirtCleaningSystem final:
     this->rightWorld = right;
     this->rollerWorld = roller;
 
+    this->simulationTimeS = std::chrono::duration<double>(_info.simTime).count();
     this->publishAccumulator += dt;
     const double period = this->publishRateHz > 0.0
         ? 1.0 / this->publishRateHz : 0.1;
@@ -388,7 +389,17 @@ class GroundDirtCleaningSystem final:
         << ",\"right_world_y\":" << this->rightWorld.centre.Y()
         << ",\"roller_world_x\":" << this->rollerWorld.centre.X()
         << ",\"roller_world_y\":" << this->rollerWorld.centre.Y()
-        << ",\"rigid_litter_entities_modified\":0}";
+        << ",\"sim_time_s\":" << this->simulationTimeS
+        << ",\"cleaned_cells_xy\":[";
+    bool first = true;
+    for (const auto &cell : this->cells)
+    {
+      if (!cell.cleaned) continue;
+      if (!first) stream << ",";
+      stream << "[" << cell.centre.X() << "," << cell.centre.Y() << "]";
+      first = false;
+    }
+    stream << "],\"rigid_litter_entities_modified\":0}";
     gz::msgs::StringMsg status;
     status.set_data(stream.str());
     this->statusPublisher.Publish(status);
@@ -433,6 +444,7 @@ class GroundDirtCleaningSystem final:
   private: bool rightReady{false};
   private: bool rollerReady{false};
   private: double publishAccumulator{0.0};
+  private: double simulationTimeS{0.0};
   private: double liftPositionM{0.0};
   private: double leftVelocityRadS{0.0};
   private: double rightVelocityRadS{0.0};
@@ -445,7 +457,7 @@ class GroundDirtCleaningSystem final:
   private: double minimumRotationRadS{2.0};
   private: double minimumLiftPositionM{0.095};
   private: double sideBrushRadiusM{0.15};
-  private: double sideBrushLinkToGroundM{0.083};
+  private: double sideBrushLinkToGroundM{0.078};
   private: double rollerRadiusM{0.10};
   private: double rollerWidthM{0.62};
   private: double minimumContactClearanceM{-0.004};

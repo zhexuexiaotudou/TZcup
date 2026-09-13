@@ -232,7 +232,7 @@
         <minimum_rotation_rad_s>2.0</minimum_rotation_rad_s>
         <minimum_lift_position_m>0.095</minimum_lift_position_m>
         <side_brush_radius_m>0.15</side_brush_radius_m>
-        <side_brush_link_to_ground_m>0.083</side_brush_link_to_ground_m>
+        <side_brush_link_to_ground_m>0.078</side_brush_link_to_ground_m>
         <roller_radius_m>0.10</roller_radius_m>
         <roller_width_m>0.62</roller_width_m>
         <maximum_contact_clearance_m>0.015</maximum_contact_clearance_m>
