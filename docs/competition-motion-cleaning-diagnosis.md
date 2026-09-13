@@ -4,6 +4,8 @@ Scope: COMPETITION_HARD_MINIMUM; candidate base `1a211400ca2dc4d6007e4fd838e1f28
 Use the existing isolated worktree and built runtime. No formal acceptance, full rebuild,
 GitHub delivery, deployment or HBM claim is made by this diagnostic.
 
+2026-09-13 follow-up: the bounded width / steady raster productivity / full moving E-stop results and retained contact-instrumentation failures are documented in [competition-width-efficiency-estop.md](competition-width-efficiency-estop.md).
+
 ## Proven prior command chain
 
 `NavigateToPose accepted -> controller /cmd_vel_nav (Twist, max 0.45 m/s)
