@@ -191,20 +191,24 @@
   },
   {
     "local_evidence": "evidence/day1/competition-day1-demo-evidence.json",
-    "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-evidence",
-    "source_commit": "12c2a6acf58cc2558cf4c1a82cec4da47c874e0c",
+    "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-daemon-fix",
+    "source_commit": "56d1689",
     "failure_retention_manifest": "evidence/day1/demo-failure-retention.json",
-    "run_id": "day1-demo-pre-gazebo-failures",
-    "rollback_commit": "12c2a6acf58cc2558cf4c1a82cec4da47c874e0c",
+    "run_id": "day1-demo-partial-gui-and-bounded-full-task-failures",
+    "rollback_commit": "42dcd85",
     "accepted_facts": [
-      "two real Gazebo launch attempts were retained",
-      "both failed at the ROS daemon stage before Gazebo started",
-      "no MCAP, MP4, RViz, or dashboard substitute exists",
+      "two earlier Gazebo launch attempts failed at the ROS daemon stage before Gazebo started",
+      "two bounded full-task attempts started Gazebo and produced nonblack real GUI clips",
+      "the canonical clip is 95 frames, 6.333333 s, SHA-256 a00efd0cb447533573edc463ed1c1d0667dc3bafdcdcc8591438c4e18b837676",
+      "the later emergency-fix clip is 43 frames, 2.866667 s, SHA-256 04fdba5022fc7cc76740f176fbb5279b711db9863310be4217c974b9a98fb836",
+      "both full-task attempts stopped before task start and produced zero-message MCAP containers",
       "the 9-minute demo script and pre/post-run checklist are preserved"
     ],
     "limitations": [
-      "video remains NOT_MEASURED",
-      "the two failures do not establish a demo run",
+      "the short GUI clips are not a valid 5-10 minute task demo and contain no operation narration",
+      "no task, cleaning, or coverage result exists",
+      "no usable MCAP evidence exists",
+      "the post-attempt heartbeat hardening was not rerun after the one-attempt authorization was exhausted",
       "the existing controlled 600 mm, 4320 m2/h, and 0.489 s evidence is unchanged"
     ]
   }

@@ -1,27 +1,121 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "evidence_id": "day1-demo-evidence-final",
-  "status": "TWO_RETAINED_LAUNCH_FAILURES_NO_VIDEO",
-  "source_commit": "12c2a6acf58cc2558cf4c1a82cec4da47c874e0c",
-  "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-evidence",
+  "status": "PARTIAL_GAZEBO_GUI_CLIP_TWO_FULL_TASK_ATTEMPTS_NO_TASK_START",
+  "verified_utc": "2026-09-13T18:36:20.6954349Z",
+  "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-daemon-fix",
+  "evidence_commits": {
+    "partial_attempt_recorded": "42dcd85",
+    "post_attempt_hardening_recorded": "56d1689",
+    "run_source_commits": [
+      "476525fbf48e9b667094eb0316db9047c58c3d95",
+      "022714a17a4140e9358190c2fa5751e667d7f646"
+    ]
+  },
   "failure_retention_manifest": "evidence/day1/demo-failure-retention.json",
   "source_evidence": [
+    "evidence/day1/demo/partial-gazebo-gui-6.333s/attempt.json",
+    "evidence/day1/demo/partial-gazebo-gui-6.333s/visual_demo.mp4",
+    "evidence/day1/demo/partial-gazebo-gui-6.333s/gazebo_viewport.png",
+    "evidence/day1/demo/failed-emergency-heartbeat-2.866s/attempt.json",
+    "evidence/day1/demo/failed-emergency-heartbeat-2.866s/visual_demo.mp4",
+    "evidence/day1/demo/failed-emergency-heartbeat-2.866s/gazebo_viewport.png",
     "docs/competition-day1-demo-evidence.md",
     "docs/competition-day1-demo-evidence-manifest.json",
     "scripts/verify_day1_demo_evidence.py",
     "scripts/test_verify_day1_demo_evidence.py"
   ],
   "demo_run": {
-    "status": "RUN_FAILED",
-    "final_outcome": "NO_GAZEBO_LAUNCH",
+    "status": "PARTIAL_GUI_ONLY",
+    "final_outcome": "BOTH_FULL_TASK_ATTEMPTS_FAILED_BEFORE_TASK_START",
+    "full_task_attempt_count": 2,
+    "task_started": false,
+    "task_completed": false,
+    "coverage_result_available": false,
+    "cleaning_result_available": false,
+    "valid_demo_video": false,
+    "video": "PARTIAL_GUI_CLIP_ONLY_NOT_VALID_5_TO_10_MINUTE_DEMO"
+  },
+  "canonical_partial_capture": {
+    "run_id": "demo-run-post-gui-fix",
+    "source_commit": "476525fbf48e9b667094eb0316db9047c58c3d95",
+    "attempt_record_commit": "42dcd85",
+    "outcome": "FAIL_EMERGENCY_STOP_AVAILABILITY",
+    "gazebo_gui_observed": true,
+    "native_mission_control_discovery_s": 9.604163755000172,
+    "viewport_nonblack": true,
+    "frame_count": 95,
+    "duration_seconds": 6.333333,
+    "width": 1200,
+    "height": 1000,
+    "video": {
+      "package_path": "evidence/day1/demo/partial-gazebo-gui-6.333s/visual_demo.mp4",
+      "bytes": 7237,
+      "sha256": "a00efd0cb447533573edc463ed1c1d0667dc3bafdcdcc8591438c4e18b837676"
+    },
+    "representative_frame": {
+      "package_path": "evidence/day1/demo/partial-gazebo-gui-6.333s/gazebo_viewport.png",
+      "bytes": 94265,
+      "sha256": "1ba4eea2aa263fcf2c3ce0ec1405e456fe028bbf183b8a758b602c643e657034"
+    },
+    "task_result": {
+      "dashboard_status": "BOOTING",
+      "completed_components": 0,
+      "expected_components": 17,
+      "coverage_report_exists": false,
+      "acceptance_summary_exists": false
+    }
+  },
+  "later_failed_attempt": {
+    "run_id": "demo-run-emergency-fix",
+    "source_commit": "022714a17a4140e9358190c2fa5751e667d7f646",
+    "attempt_record_commit": "56d1689",
+    "outcome": "FAIL_EMERGENCY_STOP_GATE_NO_RESULT",
+    "gazebo_gui_observed": true,
+    "native_mission_control_discovery_s": 9.371410707999985,
+    "viewport_nonblack": true,
+    "frame_count": 43,
+    "duration_seconds": 2.866667,
+    "width": 1200,
+    "height": 1000,
+    "video": {
+      "package_path": "evidence/day1/demo/failed-emergency-heartbeat-2.866s/visual_demo.mp4",
+      "bytes": 4247,
+      "sha256": "04fdba5022fc7cc76740f176fbb5279b711db9863310be4217c974b9a98fb836"
+    },
+    "representative_frame": {
+      "package_path": "evidence/day1/demo/failed-emergency-heartbeat-2.866s/gazebo_viewport.png",
+      "bytes": 94338,
+      "sha256": "229223b98d4e25dbb5949075aebac11d5da73ebefc683e86eb7fee33c242262d"
+    },
+    "task_result": {
+      "dashboard_status": "BOOTING",
+      "completed_components": 0,
+      "expected_components": 17,
+      "coverage_report_exists": false,
+      "acceptance_summary_exists": false
+    },
+    "post_attempt_hardening_not_rerun": {
+      "commit": "56d1689",
+      "focused_tests": "56 passed",
+      "authorization_boundary": "The one authorized post-change Demo attempt was exhausted before task start."
+    }
+  },
+  "mcap": {
+    "usable_task_mcap_count": 0,
+    "zero_message_container_count": 2,
+    "container_bytes_each": 1301,
+    "container_sha256_each": "1bb84b76145cc354988dc45a687a225a2660cf84ae0dce9686a67421b5c6a564",
+    "message_count_each": 0,
+    "duration_ns_each": 0,
+    "claim": "Empty MCAP containers exist, but there is no usable task MCAP evidence."
+  },
+  "prior_pre_gazebo_failures": {
     "attempt_count": 2,
-    "failure_phase": "ros2_daemon_start",
     "gazebo_started": false,
-    "mcaps": 0,
-    "mp4s": 0,
+    "failure_phase": "ros2_daemon_start",
     "rviz_substitute_used": false,
-    "dashboard_substitute_used": false,
-    "video": "NOT_MEASURED"
+    "dashboard_substitute_used": false
   },
   "preserved_package": {
     "nine_minute_demo_script": "docs/competition-day1-demo-evidence.md",
@@ -33,5 +127,5 @@
     "fixed_window_efficiency_m2_h": 4320,
     "in_motion_estop_sim_s": 0.489
   },
-  "claim_boundary": "No Demo execution or video claim. The two failures are retained, and neither RViz nor a dashboard replay was substituted for a real Gazebo recording."
+  "claim_boundary": "A real Gazebo GUI partial clip exists, but it is not a valid 5-10 minute task demo. Both bounded full-task attempts remained before task start, so no task, cleaning, or coverage result exists. The MCAP containers contain zero messages and do not constitute usable MCAP evidence. The two earlier pre-Gazebo launch failures remain retained, and neither RViz nor a dashboard replay was substituted for the real GUI capture."
 }

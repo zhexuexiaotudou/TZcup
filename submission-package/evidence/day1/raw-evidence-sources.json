@@ -1,9 +1,79 @@
 {
   "schema_version": 1,
   "verified_utc": "2026-09-13T17:03:21Z",
-  "purpose": "Portable locator for raw evidence that remains in its source run roots. This file records exact existing paths and hashes; it does not claim that raw MCAP, timeline, image, or video payloads were copied into this package.",
-  "claim_boundary": "The package contains compact reports and manifests only. Raw payloads must be read from the absolute source locator roots listed below.",
+  "purpose": "Portable locator for raw evidence that remains in its source run roots. This file records exact existing paths and hashes. Compact demo clips and representative frames are copied separately; raw task MCAP and timeline payloads are not copied.",
+  "claim_boundary": "Large raw payloads must be read from the absolute source locator roots listed below. The copied Day-1 demo media are short GUI clips only and do not establish task, cleaning, coverage, or usable MCAP evidence.",
   "entries": [
+    {
+      "id": "day1-demo-post-gui-fix",
+      "run_id": "demo-run-post-gui-fix",
+      "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-daemon-fix",
+      "source_worktree_head_at_verification": "56d1689",
+      "run_source_commit": "476525fbf48e9b667094eb0316db9047c58c3d95",
+      "attempt_record_commit": "42dcd85",
+      "run_root": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-daemon-fix\\.work\\day1-readiness-diagnostics-20260914T013700Z\\demo-run-post-gui-fix",
+      "outcome": "FAIL_EMERGENCY_STOP_AVAILABILITY_BEFORE_TASK_START",
+      "package_copy": {
+        "video": "evidence/day1/demo/partial-gazebo-gui-6.333s/visual_demo.mp4",
+        "representative_frame": "evidence/day1/demo/partial-gazebo-gui-6.333s/gazebo_viewport.png",
+        "attempt_record": "evidence/day1/demo/partial-gazebo-gui-6.333s/attempt.json"
+      },
+      "files": [
+        {
+          "file": "visual_demo.mp4",
+          "bytes": 7237,
+          "sha256": "a00efd0cb447533573edc463ed1c1d0667dc3bafdcdcc8591438c4e18b837676",
+          "role": "95-frame 6.333333 s nonblack GUI clip"
+        },
+        {
+          "file": "gazebo_viewport.png",
+          "bytes": 94265,
+          "sha256": "1ba4eea2aa263fcf2c3ce0ec1405e456fe028bbf183b8a758b602c643e657034",
+          "role": "representative nonblack viewport frame"
+        },
+        {
+          "file": "visual_demo_bag\\visual_demo_bag_0.mcap",
+          "bytes": 1301,
+          "sha256": "1bb84b76145cc354988dc45a687a225a2660cf84ae0dce9686a67421b5c6a564",
+          "role": "empty MCAP container with 0 messages and 0 duration; not usable task evidence"
+        }
+      ]
+    },
+    {
+      "id": "day1-demo-emergency-fix",
+      "run_id": "demo-run-emergency-fix",
+      "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-daemon-fix",
+      "source_worktree_head_at_verification": "56d1689",
+      "run_source_commit": "022714a17a4140e9358190c2fa5751e667d7f646",
+      "attempt_record_commit": "56d1689",
+      "run_root": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-daemon-fix\\.work\\day1-readiness-diagnostics-20260914T013700Z\\demo-run-emergency-fix",
+      "outcome": "FAIL_EMERGENCY_STOP_GATE_NO_RESULT_BEFORE_TASK_START",
+      "package_copy": {
+        "video": "evidence/day1/demo/failed-emergency-heartbeat-2.866s/visual_demo.mp4",
+        "representative_frame": "evidence/day1/demo/failed-emergency-heartbeat-2.866s/gazebo_viewport.png",
+        "attempt_record": "evidence/day1/demo/failed-emergency-heartbeat-2.866s/attempt.json"
+      },
+      "files": [
+        {
+          "file": "visual_demo.mp4",
+          "bytes": 4247,
+          "sha256": "04fdba5022fc7cc76740f176fbb5279b711db9863310be4217c974b9a98fb836",
+          "role": "43-frame 2.866667 s nonblack GUI clip"
+        },
+        {
+          "file": "gazebo_viewport.png",
+          "bytes": 94338,
+          "sha256": "229223b98d4e25dbb5949075aebac11d5da73ebefc683e86eb7fee33c242262d",
+          "role": "representative nonblack viewport frame"
+        },
+        {
+          "file": "visual_demo_bag\\visual_demo_bag_0.mcap",
+          "bytes": 1301,
+          "sha256": "1bb84b76145cc354988dc45a687a225a2660cf84ae0dce9686a67421b5c6a564",
+          "role": "empty MCAP container with 0 messages and 0 duration; not usable task evidence"
+        }
+      ]
+    },
     {
       "id": "width-efficiency-estop-20260913-01",
       "run_id": "width-efficiency-estop-20260913-01/steady-02",

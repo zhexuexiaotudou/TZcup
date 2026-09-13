@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "task": "day1-post-gui-fix-bounded-demo",
+  "branch": "codex/day1-demo-daemon-fix",
+  "source_commit": "476525fbf48e9b667094eb0316db9047c58c3d95",
+  "status": "FAIL_EMERGENCY_STOP_AVAILABILITY",
+  "demo_exit_code": 4,
+  "gui_discovery": {
+    "native_mission_control_observed": true,
+    "elapsed_wall_s": 9.604163755000172,
+    "supervised_pid_alive": true
+  },
+  "localization_readiness": {
+    "passed": true,
+    "clock_advanced": true,
+    "dynamic_odom_to_base_footprint": true,
+    "discovery_range": "LOCALHOST"
+  },
+  "runtime_readiness": {
+    "passed": true,
+    "controller_state": 3,
+    "planner_state": 3,
+    "dashboard_healthy": true
+  },
+  "real_gazebo_window_capture": {
+    "window_title": "Gazebo Sim",
+    "window_id": "0xa00012",
+    "geometry": "1200x1000+-32730+-32709",
+    "frame_count": 95,
+    "duration_seconds": 6.333333,
+    "nonempty_frame_gate_passed": true,
+    "viewport_render_visible": true,
+    "video_path": "visual_demo.mp4",
+    "video_bytes": 7237,
+    "video_sha256": "a00efd0cb447533573edc463ed1c1d0667dc3bafdcdcc8591438c4e18b837676",
+    "representative_frame": {
+      "path": "gazebo_viewport.png",
+      "bytes": 94265,
+      "sha256": "1ba4eea2aa263fcf2c3ce0ec1405e456fe028bbf183b8a758b602c643e657034"
+    }
+  },
+  "mcap": {
+    "path": "visual_demo_bag/visual_demo_bag_0.mcap",
+    "bytes": 1301,
+    "sha256": "1bb84b76145cc354988dc45a687a225a2660cf84ae0dce9686a67421b5c6a564",
+    "message_count": 0,
+    "duration_ns": 0
+  },
+  "task_and_cleaning_evidence": {
+    "coverage_report_exists": false,
+    "acceptance_summary_exists": false,
+    "coverage_process_exit_code_exists": false,
+    "dashboard_status": "BOOTING",
+    "completed_components": 0,
+    "expected_components": 17,
+    "claim_status": "GUI_AND_CAPTURE_FIX_VERIFIED_TASK_NOT_STARTED"
+  },
+  "resource_release": {
+    "checked_after_processes_exit": true,
+    "formal_gazebo_lock": "FREE",
+    "task_processes_remaining": 0
+  },
+  "raw_evidence": {
+    "root": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-daemon-fix\\.work\\day1-readiness-diagnostics-20260914T013700Z\\demo-run-post-gui-fix",
+    "files": [
+      {
+        "path": "visual_demo.mp4",
+        "bytes": 7237,
+        "sha256": "a00efd0cb447533573edc463ed1c1d0667dc3bafdcdcc8591438c4e18b837676"
+      },
+      {
+        "path": "gazebo_window_capture.json",
+        "bytes": 380,
+        "sha256": "e681733e319be1e35d9c7a846b5df1e94a26315ae10ddf2c2bbae9231a65bf6f"
+      },
+      {
+        "path": "gazebo_viewport.png",
+        "bytes": 94265,
+        "sha256": "1ba4eea2aa263fcf2c3ce0ec1405e456fe028bbf183b8a758b602c643e657034"
+      },
+      {
+        "path": "gazebo_gui_graph_readiness.json",
+        "bytes": 417,
+        "sha256": "1794d0ca54a7ece175ea62043ba0a868fc7775ee815a004da97a59f273559497"
+      },
+      {
+        "path": "runtime_readiness.json",
+        "bytes": 578,
+        "sha256": "6a310d515f27a9f0e6f09f111f0b8141ffca8bea7acacb514efcef3301a10e57"
+      },
+      {
+        "path": "visual_demo_bag/visual_demo_bag_0.mcap",
+        "bytes": 1301,
+        "sha256": "1bb84b76145cc354988dc45a687a225a2660cf84ae0dce9686a67421b5c6a564"
+      },
+      {
+        "path": "visual_demo_bag/metadata.yaml",
+        "bytes": 537,
+        "sha256": "aec7f5e3a4f3e10ebd013c59466dab4024af38f7e96fbb8c2269be9e6b2e4774"
+      },
+      {
+        "path": "resource_release.json",
+        "bytes": 180,
+        "sha256": "a8a5abb25311e4e9a8261c9ff77c24a72859844817a330a2943665ef76f0f9c7"
+      }
+    ]
+  }
+}

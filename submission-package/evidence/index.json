@@ -301,9 +301,9 @@
   },
   {
     "file": "evidence/day1/competition-day1-demo-evidence.json",
-    "source": "git:12c2a6acf58cc2558cf4c1a82cec4da47c874e0c:docs/competition-day1-demo-evidence-manifest.json",
-    "source_commit": "12c2a6acf58cc2558cf4c1a82cec4da47c874e0c",
-    "copied_utc": "2026-09-14T00:49:23+08:00"
+    "source": "derived from bounded run records in TZcup-day1-demo-daemon-fix",
+    "source_commit": "56d1689",
+    "copied_utc": "2026-09-14T02:36:20+08:00"
   },
   {
     "file": "evidence/day1/competition-perception-replay-status.json",
@@ -313,12 +313,48 @@
   },
   {
     "file": "evidence/day1/raw-evidence-sources.json",
-    "source": "derived locator for existing raw run roots; no raw payload copied",
-    "verified_utc": "2026-09-13T17:03:21Z"
+    "source": "derived locator for existing raw run roots; compact demo media copied separately, raw task MCAP not copied",
+    "verified_utc": "2026-09-13T18:36:20.6954349Z"
   },
   {
     "file": "evidence/day1/demo-failure-retention.json",
-    "source": "derived compact locator for ignored .work failure directories; no MP4 or MCAP copied",
-    "verified_utc": "2026-09-13T17:03:21Z"
+    "source": "derived compact locator for two pre-Gazebo failures and two bounded full-task failures; compact MP4 and PNG files copied, empty MCAP not copied",
+    "verified_utc": "2026-09-13T18:36:20.6954349Z"
+  },
+  {
+    "file": "evidence/day1/demo/partial-gazebo-gui-6.333s/visual_demo.mp4",
+    "source": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-daemon-fix\\.work\\day1-readiness-diagnostics-20260914T013700Z\\demo-run-post-gui-fix\\visual_demo.mp4",
+    "source_commit": "476525fbf48e9b667094eb0316db9047c58c3d95",
+    "copied_utc": "2026-09-14T02:36:20.6954349+08:00"
+  },
+  {
+    "file": "evidence/day1/demo/partial-gazebo-gui-6.333s/gazebo_viewport.png",
+    "source": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-daemon-fix\\.work\\day1-readiness-diagnostics-20260914T013700Z\\demo-run-post-gui-fix\\gazebo_viewport.png",
+    "source_commit": "476525fbf48e9b667094eb0316db9047c58c3d95",
+    "copied_utc": "2026-09-14T02:36:20.6954349+08:00"
+  },
+  {
+    "file": "evidence/day1/demo/partial-gazebo-gui-6.333s/attempt.json",
+    "source": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-daemon-fix\\artifacts\\competition_day1_readiness_diagnostics_20260914\\post_gui_fix_attempt.json",
+    "source_commit": "42dcd85",
+    "copied_utc": "2026-09-14T02:36:20.6954349+08:00"
+  },
+  {
+    "file": "evidence/day1/demo/failed-emergency-heartbeat-2.866s/visual_demo.mp4",
+    "source": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-daemon-fix\\.work\\day1-readiness-diagnostics-20260914T013700Z\\demo-run-emergency-fix\\visual_demo.mp4",
+    "source_commit": "022714a17a4140e9358190c2fa5751e667d7f646",
+    "copied_utc": "2026-09-14T02:36:20.6954349+08:00"
+  },
+  {
+    "file": "evidence/day1/demo/failed-emergency-heartbeat-2.866s/gazebo_viewport.png",
+    "source": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-daemon-fix\\.work\\day1-readiness-diagnostics-20260914T013700Z\\demo-run-emergency-fix\\gazebo_viewport.png",
+    "source_commit": "022714a17a4140e9358190c2fa5751e667d7f646",
+    "copied_utc": "2026-09-14T02:36:20.6954349+08:00"
+  },
+  {
+    "file": "evidence/day1/demo/failed-emergency-heartbeat-2.866s/attempt.json",
+    "source": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-daemon-fix\\artifacts\\competition_day1_readiness_diagnostics_20260914\\emergency_fix_attempt.json",
+    "source_commit": "56d1689",
+    "copied_utc": "2026-09-14T02:36:20.6954349+08:00"
   }
 ]
