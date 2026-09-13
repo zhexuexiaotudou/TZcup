@@ -10,6 +10,7 @@ from std_msgs.msg import Bool,Empty,Float64MultiArray,String
 from geometry_msgs.msg import Twist
 from trajectory_msgs.msg import JointTrajectory,JointTrajectoryPoint
 from sensor_msgs.msg import JointState
+from ros_gz_interfaces.msg import Contacts
 
 def main():
  p=argparse.ArgumentParser();p.add_argument('--output',type=Path,required=True);p.add_argument('--mode',choices=['probe','steady'],required=True);a=p.parse_args()
@@ -25,6 +26,8 @@ def main():
  n.create_subscription(Bool,'/safety/actuators_enabled',lambda m:state.update(permit=m.data),10)
  n.create_subscription(JointState,'/joint_states',lambda m:log('joints',{'name':list(m.name),'position':list(m.position),'velocity':list(m.velocity)}),qos_profile_sensor_data)
  n.create_subscription(String,'/safety/status',lambda m:log('safety',m.data),10)
+ for brush in ['left_side_brush','right_side_brush','central_roller']:
+  n.create_subscription(Contacts,'/cleaning/'+brush+'/contact',lambda m,b=brush:log('contact_'+b,{'count':len(m.contacts),'pairs':[[str(c.collision1),str(c.collision2)] for c in m.contacts[:2]]}),qos_profile_sensor_data)
  specs=[('power',Bool,'/formal_vehicle/simulation/command/main_power'),('estop',Bool,'/formal_vehicle/simulation/command/emergency_stop'),('reset',Bool,'/formal_vehicle/simulation/command/emergency_stop_reset'),('heartbeat',Empty,'/safety/control_heartbeat'),('brush',Float64MultiArray,'/safety/command/brush'),('lift',JointTrajectory,'/cleaning_controller/joint_trajectory'),('enable',Bool,'/model/tzcup_formal_sanitation_vehicle/ground_dirt/command/enable'),('velocity',Twist,'/cmd_vel_gate'),('qual',Bool,'/safety/dry_cleaning_qualification_active'),('dry',Bool,'/brush_enabled')]
  pubs={k:n.create_publisher(t,topic,10) for k,t,topic in specs}
  lift=False;ready_since=None;motion=None;estop=None;last=-1e9;progress=-1e9;first_sim=None

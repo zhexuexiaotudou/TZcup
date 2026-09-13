@@ -51,6 +51,9 @@ setsid ros2 run sanitation_formal_campus_integration formal-scan-self-filter --r
 setsid ros2 run ros_gz_bridge parameter_bridge \
   '/model/tzcup_formal_sanitation_vehicle/ground_dirt/command/enable@std_msgs/msg/Bool]gz.msgs.Boolean' \
   '/model/tzcup_formal_sanitation_vehicle/ground_dirt/status_json@std_msgs/msg/String[gz.msgs.StringMsg' \
+  '/cleaning/left_side_brush/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts' \
+  '/cleaning/right_side_brush/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts' \
+  '/cleaning/central_roller/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts' \
   >"$OUTPUT/dirt_bridge.log" 2>&1 & bridge_pid=$!
 sleep 40
 if [[ -n "${PERCEPTION_LAUNCH:-}" ]]; then
@@ -60,6 +63,7 @@ if [[ -n "${PERCEPTION_LAUNCH:-}" ]]; then
     >"$OUTPUT/perception.log" 2>&1 & perception_pid=$!
 fi
 setsid ros2 bag record --storage mcap --output "$OUTPUT/bag" \
+  /cleaning/left_side_brush/contact /cleaning/right_side_brush/contact /cleaning/central_roller/contact \
   /clock /ground_truth/model_odom_raw /odom /odometry/gps /scan /scan/navigation \
   /cmd_vel_nav /cmd_vel_smoothed /cmd_vel_gate /base_controller/cmd_vel \
   /collision_monitor_state /joint_states /safety/status /tf /tf_static \
