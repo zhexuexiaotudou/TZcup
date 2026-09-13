@@ -43,6 +43,12 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
     mode = context.perform_substitution(LaunchConfiguration("mission_mode"))
     if mode not in {"mapping", "cleaning"}:
         raise RuntimeError("mission_mode must be mapping or cleaning")
+    candidate_flag = context.perform_substitution(LaunchConfiguration("competition_29m_candidate"))
+    if candidate_flag not in {"true", "false"}:
+        raise RuntimeError("competition_29m_candidate must be true or false")
+    competition_candidate = candidate_flag == "true"
+    if competition_candidate and mode != "mapping":
+        raise RuntimeError("29 m candidate is mapping-only")
     mapping_high_bandwidth_sensor_runtime = context.perform_substitution(
         LaunchConfiguration("mapping_high_bandwidth_sensor_runtime")
     )
@@ -201,8 +207,12 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
     # KT_TOLERANCE.  Normalize physical +Inf no-return samples to the exact
     # threshold: the ray expands known free space but cannot form a 12 m ring.
     expected_sensor_range_max = 30.0
+    if competition_candidate:
+        # Same physical rays; never replace finite hits or self-occluded NaNs.
+        slam_params["max_laser_range"] = 29.0
+        slam_params["scan_buffer_maximum_scan_distance"] = 29.0
     slam_max_laser_range = float(slam_params["max_laser_range"])
-    normalized_no_return_range = 12.0
+    normalized_no_return_range = 29.0 if competition_candidate else 12.0
     if slam_max_laser_range != normalized_no_return_range:
         raise RuntimeError(
             "slam max_laser_range must exactly match the normalized formal "
@@ -375,6 +385,9 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                         "artifact_directory": str(artifact_root),
                         "session_id": LaunchConfiguration("session_id"),
                         "runtime_id": LaunchConfiguration("runtime_id"),
+                        # 95% of this fixed 20000 m2 field is only 19000 m2.
+                        # Candidate must not terminate/save at that lower gate.
+                        "observation_threshold": 1.0 if competition_candidate else 0.95,
                         "support_artifacts_prepared": True,
                         "mapping_pose_source": (
                             "wheel_imu_ekf_lidar_scan_matching_gnss_consistency"
@@ -455,6 +468,7 @@ def generate_launch_description() -> LaunchDescription:
     repository_root = EnvironmentVariable("TZCUP_REPOSITORY_ROOT", default_value=".")
     return LaunchDescription([
         DeclareLaunchArgument("mission_mode", default_value="mapping"),
+        DeclareLaunchArgument("competition_29m_candidate", default_value="false"),
         DeclareLaunchArgument(
             "mapping_high_bandwidth_sensor_runtime", default_value="false",
             description="Mapping defaults to scan-only; public mobile calibration opts in explicitly.",
