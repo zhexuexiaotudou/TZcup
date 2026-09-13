@@ -29,6 +29,8 @@ def test_formal_motion_cleaning_profile_matches_source_geometry() -> None:
     )
     assert result["wheel_radius_m"] == pytest.approx(0.1651)
     assert result["control_wheel_radius_m"] == pytest.approx(0.1625)
+    assert result["nav2_footprint_padding_m"] == pytest.approx(0.01)
+    assert result["nav2_inflation_radius_m"] == pytest.approx(0.56)
     assert result["planning_kinematic_constraint"] == (
         "curvature_limited_reference_path_for_skid_steer"
     )
@@ -174,6 +176,8 @@ def test_profile_declares_the_single_explicit_nav2_footprint_padding() -> None:
     assert PROFILE.read_text(encoding="utf-8").count("nav2_footprint_padding_m:") == 1
     profile = yaml.safe_load(PROFILE.read_text(encoding="utf-8"))
     assert profile["nav2_footprint_padding_m"] == pytest.approx(0.01)
+    assert PROFILE.read_text(encoding="utf-8").count("nav2_inflation_radius_m:") == 1
+    assert profile["nav2_inflation_radius_m"] == pytest.approx(0.56)
 
 
 def test_rejects_duplicate_top_level_nav2_footprint_padding(tmp_path: Path) -> None:
@@ -186,6 +190,32 @@ def test_rejects_duplicate_top_level_nav2_footprint_padding(tmp_path: Path) -> N
     path = tmp_path / "duplicate-padding-profile.yaml"
     path.write_text(duplicate, encoding="utf-8")
     with pytest.raises(FormalMotionCleaningProfileError, match="exactly one nav2_footprint_padding_m"):
+        validate_profile(profile_path=path)
+
+
+def test_rejects_nav2_inflation_at_or_below_enabled_inset_boundary(
+    tmp_path: Path,
+) -> None:
+    path = _mutated_profile(
+        tmp_path,
+        lambda data: data.update({"nav2_inflation_radius_m": 0.55}),
+    )
+    with pytest.raises(FormalMotionCleaningProfileError, match="Nav2 inflation radius"):
+        validate_profile(profile_path=path)
+
+
+def test_rejects_duplicate_top_level_nav2_inflation_radius(tmp_path: Path) -> None:
+    source = PROFILE.read_text(encoding="utf-8")
+    duplicate = source.replace(
+        "nav2_inflation_radius_m: 0.56",
+        "nav2_inflation_radius_m: 0.56\nnav2_inflation_radius_m: 0.57",
+        1,
+    )
+    path = tmp_path / "duplicate-inflation-profile.yaml"
+    path.write_text(duplicate, encoding="utf-8")
+    with pytest.raises(
+        FormalMotionCleaningProfileError, match="exactly one nav2_inflation_radius_m"
+    ):
         validate_profile(profile_path=path)
 
 

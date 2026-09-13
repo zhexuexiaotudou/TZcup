@@ -49,20 +49,21 @@ def load_yaml_mapping(path: str | Path) -> dict[str, Any]:
 
 
 def load_formal_motion_profile(path: str | Path) -> dict[str, Any]:
-    """Load the profile only when its one authoritative padding key is unique."""
+    """Load the profile only when its authoritative Nav2 keys are unique."""
     source = Path(path).read_text(encoding="utf-8")
     document = yaml.compose(source)
     if not isinstance(document, MappingNode):
         raise IntegrationContractError(f"expected YAML mapping: {path}")
-    padding_keys = [
-        key.value
-        for key, _ in document.value
-        if isinstance(key, ScalarNode) and key.value == "nav2_footprint_padding_m"
-    ]
-    if len(padding_keys) != 1:
-        raise IntegrationContractError(
-            "formal motion profile must declare exactly one nav2_footprint_padding_m"
-        )
+    for key_name in ("nav2_footprint_padding_m", "nav2_inflation_radius_m"):
+        keys = [
+            key.value
+            for key, _ in document.value
+            if isinstance(key, ScalarNode) and key.value == key_name
+        ]
+        if len(keys) != 1:
+            raise IntegrationContractError(
+                f"formal motion profile must declare exactly one {key_name}"
+            )
     value = yaml.safe_load(source)
     if not isinstance(value, dict):
         raise IntegrationContractError(f"expected YAML mapping: {path}")
@@ -222,6 +223,15 @@ def materialize_nav2_config(
     if padding < 0.0:
         raise IntegrationContractError("Nav2 footprint padding must be nonnegative")
     required_inflation_radius = _navigation_inset_radius(profile, padding)
+    verified_inflation_radius = _finite_number(
+        profile.get("nav2_inflation_radius_m"), "Nav2 inflation radius"
+    )
+    if verified_inflation_radius <= required_inflation_radius:
+        raise IntegrationContractError(
+            "Nav2 inflation radius must be strictly greater than the "
+            "enabled-footprint inset radius plus padding "
+            f"({required_inflation_radius})"
+        )
     config = deepcopy(load_yaml_mapping(base_nav2_path))
     points, cleaning_width = formal_motion_values(
         motion_profile_path,
@@ -235,20 +245,16 @@ def materialize_nav2_config(
         global_parameters["footprint"] = polygon
         local_parameters["footprint_padding"] = padding
         global_parameters["footprint_padding"] = padding
-        strict_minimum = math.nextafter(required_inflation_radius, math.inf)
         for name, parameters in (
             ("local_costmap", local_parameters),
             ("global_costmap", global_parameters),
         ):
-            inflation_radius = _finite_number(
-                parameters.get("inflation_layer", {}).get("inflation_radius"),
-                f"{name} inflation_radius",
-            )
-            if inflation_radius < strict_minimum:
+            inflation_layer = parameters.get("inflation_layer")
+            if not isinstance(inflation_layer, dict):
                 raise IntegrationContractError(
-                    f"{name} inflation_radius must be strictly greater than "
-                    f"the enabled-footprint inset radius plus padding ({required_inflation_radius})"
+                    f"{name} has no inflation_layer configuration"
                 )
+            inflation_layer["inflation_radius"] = verified_inflation_radius
         if clean_path_speed_mps is not None:
             speed = float(clean_path_speed_mps)
             if not math.isfinite(speed) or speed <= 0.0:

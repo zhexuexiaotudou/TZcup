@@ -75,6 +75,7 @@ def test_nav2_costmaps_are_materialized_from_formal_motion_profile():
     global_parameters = config["global_costmap"]["global_costmap"]["ros__parameters"]
     assert local_parameters["footprint_padding"] == pytest.approx(0.01)
     assert global_parameters["footprint_padding"] == pytest.approx(0.01)
+    assert profile["nav2_inflation_radius_m"] == pytest.approx(0.56)
     assert local_parameters["inflation_layer"]["inflation_radius"] == pytest.approx(0.56)
     assert global_parameters["inflation_layer"]["inflation_radius"] == pytest.approx(0.56)
     assert "0.4,0.36" not in local.lower()
@@ -154,35 +155,44 @@ def test_materializer_rejects_duplicate_top_level_footprint_padding(tmp_path):
         materialize_nav2_config(BASE_NAV2, path)
 
 
-def test_materializer_rejects_costmap_inflation_at_or_below_enabled_inset_boundary(tmp_path):
+def test_materializer_rejects_profile_inflation_at_enabled_inset_boundary(tmp_path):
     profile = yaml.safe_load(MOTION_PROFILE.read_text(encoding="utf-8"))
-    # The disabled arm has a 1.05 m inradius and must not make the 0.56 m
-    # navigation costmaps fail.  Only navigation_allowed footprints contribute.
     assert profile["motion_footprints"]["arm_deployed"]["navigation_allowed"] is False
+    profile["nav2_inflation_radius_m"] = 0.55
+    bad = tmp_path / "boundary-profile.yaml"
+    bad.write_text(yaml.safe_dump(profile), encoding="utf-8")
+    with pytest.raises(IntegrationContractError, match="Nav2 inflation radius"):
+        materialize_nav2_config(BASE_NAV2, bad)
+
+
+def test_materializer_overrides_underlay_inflation_with_verified_profile_value(tmp_path):
     base = yaml.safe_load(BASE_NAV2.read_text(encoding="utf-8"))
     local = base["local_costmap"]["local_costmap"]["ros__parameters"]
     global_ = base["global_costmap"]["global_costmap"]["ros__parameters"]
     local["inflation_layer"]["inflation_radius"] = 0.55
-    global_["inflation_layer"]["inflation_radius"] = 0.56
-    boundary = tmp_path / "boundary-nav2.yaml"
-    boundary.write_text(yaml.safe_dump(base), encoding="utf-8")
-    with pytest.raises(IntegrationContractError, match="local_costmap inflation_radius"):
-        materialize_nav2_config(boundary, MOTION_PROFILE)
-
-    local["inflation_layer"]["inflation_radius"] = 0.56
     global_["inflation_layer"]["inflation_radius"] = 0.55
-    inconsistent = tmp_path / "inconsistent-nav2.yaml"
-    inconsistent.write_text(yaml.safe_dump(base), encoding="utf-8")
-    with pytest.raises(IntegrationContractError, match="global_costmap inflation_radius"):
-        materialize_nav2_config(inconsistent, MOTION_PROFILE)
+    stale = tmp_path / "stale-nav2.yaml"
+    stale.write_text(yaml.safe_dump(base), encoding="utf-8")
+    config, _ = materialize_nav2_config(stale, MOTION_PROFILE)
+    materialized_local = config["local_costmap"]["local_costmap"]["ros__parameters"]
+    materialized_global = config["global_costmap"]["global_costmap"]["ros__parameters"]
+    assert materialized_local["inflation_layer"]["inflation_radius"] == pytest.approx(0.56)
+    assert materialized_global["inflation_layer"]["inflation_radius"] == pytest.approx(0.56)
 
-    global_["inflation_layer"]["inflation_radius"] = 0.56
-    accepted = tmp_path / "accepted-nav2.yaml"
-    accepted.write_text(yaml.safe_dump(base), encoding="utf-8")
-    config, _ = materialize_nav2_config(accepted, MOTION_PROFILE)
-    assert config["local_costmap"]["local_costmap"]["ros__parameters"]["inflation_layer"][
-        "inflation_radius"
-    ] == pytest.approx(0.56)
+
+def test_materializer_rejects_duplicate_top_level_inflation_radius(tmp_path):
+    source = MOTION_PROFILE.read_text(encoding="utf-8")
+    duplicate = source.replace(
+        "nav2_inflation_radius_m: 0.56",
+        "nav2_inflation_radius_m: 0.56\nnav2_inflation_radius_m: 0.57",
+        1,
+    )
+    path = tmp_path / "duplicate-inflation-profile.yaml"
+    path.write_text(duplicate, encoding="utf-8")
+    with pytest.raises(
+        IntegrationContractError, match="exactly one nav2_inflation_radius_m"
+    ):
+        materialize_nav2_config(BASE_NAV2, path)
 
 
 def test_navigation_inset_radius_uses_nav2_sign_padded_vertices_not_plain_addition():
