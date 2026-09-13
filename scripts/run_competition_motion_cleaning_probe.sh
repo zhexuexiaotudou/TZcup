@@ -2,8 +2,16 @@
 # Competition-only diagnostic. Existing built runtime; no formal gate claim.
 set -eo pipefail
 : "${SOURCE:?}" "${RUNTIME:?}" "${OUTPUT:?}" "${EPISODE:?}" "${MAP_SOURCE:?}" "${DRIVER:?}"
+# Candidate-only diagnostics; reversing this patch is the behavior rollback.
+export PROBE_FOCUS_VALIDATION="${PROBE_FOCUS_VALIDATION:-1}"
+[[ "$PROBE_FOCUS_VALIDATION" == 0 || "$PROBE_FOCUS_VALIDATION" == 1 ]] || exit 2
+if [[ "$PROBE_FOCUS_VALIDATION" == 1 ]]; then : "${CANDIDATE_REVISION:?}"; fi
 source /opt/ros/jazzy/setup.bash
 source "$RUNTIME/install/setup.bash"
+if [[ -n "${COMPETITION_RUNTIME_OVERLAY:-}" ]]; then source "$COMPETITION_RUNTIME_OVERLAY/install/local_setup.bash"; fi
+if [[ -n "${LOCALIZATION_COLLECTOR_OVERLAY:-}" ]]; then source "$LOCALIZATION_COLLECTOR_OVERLAY/install/local_setup.bash"; fi
+export PROBE_AMCL_TF_BROADCAST="${PROBE_AMCL_TF_BROADCAST:-false}"
+[[ "$PROBE_AMCL_TF_BROADCAST" == false || "$PROBE_AMCL_TF_BROADCAST" == true ]] || exit 2
 source "$SOURCE/scripts/run_formal_runtime_isolation.sh"
 export TZCUP_REPOSITORY_ROOT="$SOURCE" ROS_DOMAIN_ID="${PROBE_DOMAIN:-98}" GZ_PARTITION="${PROBE_PARTITION:-tzcup_motion_cleaning_20260913_02}"
 formal_runtime_configure "$ROS_DOMAIN_ID"
@@ -16,6 +24,9 @@ nav=yaml.safe_load((source/'starter_ws/src/sanitation_navigation/config/nav2.yam
 for name in ('controller_server','velocity_smoother','collision_monitor'):
     nav[name]['ros__parameters']['enable_stamped_cmd_vel']=False
 nav['amcl']['ros__parameters']['scan_topic']='/scan/navigation'
+# formal_campus.launch.py starts global_ekf in cleaning mode. AMCL is a
+# measurement source, never a second publisher of map -> odom.
+nav['amcl']['ros__parameters']['tf_broadcast']=os.environ['PROBE_AMCL_TF_BROADCAST']=='true'
 collision=nav['collision_monitor']['ros__parameters']
 collision['observation_sources']=['scan'];collision.pop('mid360',None)
 collision['scan']['topic']='/scan/navigation'
@@ -25,19 +36,19 @@ for name in ('local_costmap','global_costmap'):
     obstacle['scan']['topic']='/scan/navigation'
 (out/'nav2.yaml').write_text(yaml.safe_dump(nav,sort_keys=False))
 PY
-launch_pid=''; nav_pid=''; filter_pid=''; bridge_pid=''; recorder_pid=''; perception_pid=''
+launch_pid=''; nav_pid=''; filter_pid=''; bridge_pid=''; recorder_pid=''; perception_pid=''; authority_pid=''
 cleanup() {
   if [[ -n "$recorder_pid" ]] && kill -0 "$recorder_pid" 2>/dev/null; then
     kill -TERM -- "-$recorder_pid" 2>/dev/null || true
     for _ in {1..100}; do kill -0 "$recorder_pid" 2>/dev/null || break; sleep 0.1; done
   fi
-  formal_runtime_cleanup_groups "$GZ_PARTITION" "$perception_pid" "$nav_pid" "$filter_pid" "$bridge_pid" "$launch_pid" || true
+  formal_runtime_cleanup_groups "$GZ_PARTITION" "$authority_pid" "$perception_pid" "$nav_pid" "$filter_pid" "$bridge_pid" "$launch_pid" || true
 }
 trap cleanup EXIT INT TERM
 setsid ros2 launch sanitation_formal_campus_integration formal_campus.launch.py \
   gui:=false world:="$EPISODE/public/world.sdf" world_name:=campus_formal \
   episode_manifest:="$EPISODE/public/episode_manifest.json" \
-  pedestrian_schedule:="$EPISODE/environment/pedestrian_schedule.json" start_pedestrians:=true \
+  pedestrian_schedule:="$EPISODE/environment/pedestrian_schedule.json" start_pedestrians:="${PROBE_PEDESTRIANS:-true}" \
   high_bandwidth_sensor_runtime:="${PROBE_CAMERAS:-false}" enable_training_gt:=false \
   runtime_artifact_dir:="$OUTPUT" materialize_static_maps:=false \
   start_navigation:=false start_coverage:=false localization_backend:=amcl \
@@ -62,8 +73,22 @@ if [[ -n "${PERCEPTION_LAUNCH:-}" ]]; then
     ros2 launch "$PERCEPTION_LAUNCH" model_path:="$PERCEPTION_MODEL" \
     >"$OUTPUT/perception.log" 2>&1 & perception_pid=$!
 fi
+if [[ "$PROBE_FOCUS_VALIDATION" == 1 ]]; then
+  # Run the existing GID-aware collector for the entire possible driver window.
+  # Its output is required; never infer TF authority from a /tf topic count.
+  timeout 25s ros2 param dump /amcl >"$OUTPUT/amcl.params.yaml"
+  timeout 25s ros2 param dump /local_ekf >"$OUTPUT/local_ekf.params.yaml"
+  timeout 25s ros2 param dump /global_ekf >"$OUTPUT/global_ekf.params.yaml"
+  timeout 25s ros2 node info /local_ekf >"$OUTPUT/local_ekf.node.txt"
+  timeout 25s ros2 node info /global_ekf >"$OUTPUT/global_ekf.node.txt"
+  setsid ros2 run sanitation_localization_acceptance formal_localization_runtime_collector \
+    --mode cleaning --output "$OUTPUT/tf_authority.json" --stop-file "$OUTPUT/authority.stop" \
+    --duration-seconds "$(( ${PROBE_SECONDS:-120} + ${PROBE_PREPARE_SECONDS:-420} + 40 ))" \
+    >"$OUTPUT/tf_authority.log" 2>&1 & authority_pid=$!
+fi
 setsid ros2 bag record --storage mcap --output "$OUTPUT/bag" \
   /clock /ground_truth/model_odom_raw /odom /odometry/gps /scan /scan/navigation \
+  /odom/unfiltered /imu/data /gnss/fix /amcl_pose /localization/fused_odom /diagnostics \
   /cmd_vel_nav /cmd_vel_smoothed /cmd_vel_gate /base_controller/cmd_vel \
   /collision_monitor_state /joint_states /safety/status /tf /tf_static \
   /safety/command/brush /brush_controller/commands /cleaning_controller/joint_trajectory \
@@ -83,4 +108,13 @@ if kill -0 "$recorder_pid" 2>/dev/null; then echo 'recorder did not stop' >&2; e
 recorder_pid=''
 timeout --signal=TERM --kill-after=5s 15s ros2 bag info "$OUTPUT/bag" >"$OUTPUT/bag_info.txt" 2>&1
 echo "$result" >"$OUTPUT/probe.rc"
+if [[ "$PROBE_FOCUS_VALIDATION" == 1 ]]; then
+  touch "$OUTPUT/authority.stop"
+  wait "$authority_pid"  # normal collector exit while ROS context is still valid
+  authority_pid=''
+  python3 "$SOURCE/scripts/competition_localization_focus.py" \
+    --bag-dir "$OUTPUT/bag" --authority "$OUTPUT/tf_authority.json" \
+    --manifest "$EPISODE/public/episode_manifest.json" \
+    --revision "$CANDIDATE_REVISION" --output "$OUTPUT/localization_focus.json"
+fi
 exit "$result"

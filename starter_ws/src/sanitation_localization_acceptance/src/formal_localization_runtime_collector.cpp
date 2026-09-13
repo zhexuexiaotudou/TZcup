@@ -1,3 +1,4 @@
+#include <filesystem>
 #include <array>
 #include <chrono>
 #include <cstdint>
@@ -65,6 +66,7 @@ struct Options
   std::string mode;
   std::string output;
   double duration_seconds{20.0};
+  std::string stop_file;
 };
 
 Options parse_options(int argc, char ** argv)
@@ -76,6 +78,8 @@ Options parse_options(int argc, char ** argv)
       options.mode = argv[++index];
     } else if (argument == "--output" && index + 1 < argc) {
       options.output = argv[++index];
+    } else if (argument == "--stop-file" && index + 1 < argc) {
+      options.stop_file = argv[++index];
     } else if (argument == "--duration-seconds" && index + 1 < argc) {
       options.duration_seconds = std::stod(argv[++index]);
     }
@@ -253,7 +257,8 @@ int main(int argc, char ** argv)
     const auto node = std::make_shared<Collector>(options.mode);
     const auto started = std::chrono::steady_clock::now();
     const auto deadline = started + std::chrono::duration<double>(options.duration_seconds);
-    while (rclcpp::ok() && std::chrono::steady_clock::now() < deadline) {
+    while (rclcpp::ok() && std::chrono::steady_clock::now() < deadline &&
+      (options.stop_file.empty() || !std::filesystem::exists(options.stop_file))) {
       rclcpp::spin_some(node);
       node->snapshot_graph();
       std::this_thread::sleep_for(20ms);
