@@ -1,12 +1,13 @@
 {
   "schema_version": 2,
   "evidence_id": "day1-demo-evidence-final",
-  "status": "PARTIAL_GAZEBO_GUI_CLIP_TWO_FULL_TASK_ATTEMPTS_NO_TASK_START",
-  "verified_utc": "2026-09-13T18:36:20.6954349Z",
+  "status": "PARTIAL_GAZEBO_GUI_CLIPS_THREE_FULL_TASK_ATTEMPTS_NO_TASK_START",
+  "verified_utc": "2026-09-14T03:23:13+08:00",
   "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-daemon-fix",
   "evidence_commits": {
     "partial_attempt_recorded": "42dcd85",
     "post_attempt_hardening_recorded": "56d1689",
+    "final_verification_recorded": "339b549",
     "run_source_commits": [
       "476525fbf48e9b667094eb0316db9047c58c3d95",
       "022714a17a4140e9358190c2fa5751e667d7f646"
@@ -27,8 +28,8 @@
   ],
   "demo_run": {
     "status": "PARTIAL_GUI_ONLY",
-    "final_outcome": "BOTH_FULL_TASK_ATTEMPTS_FAILED_BEFORE_TASK_START",
-    "full_task_attempt_count": 2,
+    "final_outcome": "DEMO_ROUTE_STOPPED_PERMANENTLY_AFTER_THIRD_FULL_TASK_ATTEMPT_FAILED_BEFORE_TASK_START",
+    "full_task_attempt_count": 3,
     "task_started": false,
     "task_completed": false,
     "coverage_result_available": false,
@@ -95,15 +96,21 @@
       "coverage_report_exists": false,
       "acceptance_summary_exists": false
     },
-    "post_attempt_hardening_not_rerun": {
-      "commit": "56d1689",
+    "post_attempt_hardening_final_verification": {
+      "hardening_commit": "56d1689",
+      "verification_commit": "339b549",
+      "outcome": "FAIL_EMERGENCY_STOP_PROBE_TIMEOUT",
+      "task_started": false,
+      "gui_clip_frame_count": 44,
+      "gui_clip_duration_seconds": 2.933333,
+      "package_attempt_record": "evidence/day1/demo/heartbeat-hardened-verify-failure/attempt.json",
       "focused_tests": "56 passed",
-      "authorization_boundary": "The one authorized post-change Demo attempt was exhausted before task start."
+      "route_outcome": "STOPPED_PERMANENTLY_NO_RETRY"
     }
   },
   "mcap": {
     "usable_task_mcap_count": 0,
-    "zero_message_container_count": 2,
+    "zero_message_container_count": 3,
     "container_bytes_each": 1301,
     "container_sha256_each": "1bb84b76145cc354988dc45a687a225a2660cf84ae0dce9686a67421b5c6a564",
     "message_count_each": 0,
@@ -127,5 +134,15 @@
     "fixed_window_efficiency_m2_h": 4320,
     "in_motion_estop_sim_s": 0.489
   },
-  "claim_boundary": "A real Gazebo GUI partial clip exists, but it is not a valid 5-10 minute task demo. Both bounded full-task attempts remained before task start, so no task, cleaning, or coverage result exists. The MCAP containers contain zero messages and do not constitute usable MCAP evidence. The two earlier pre-Gazebo launch failures remain retained, and neither RViz nor a dashboard replay was substituted for the real GUI capture."
+  "final_route_stop": {
+    "status": "STOPPED_PERMANENTLY",
+    "commit": "339b549f5af56e90996462168054c6199e722780",
+    "verification_of_commit": "56d1689233bd19cda5b678fd7e73cf775f072323",
+    "outcome": "FAIL_EMERGENCY_STOP_PROBE_TIMEOUT",
+    "task_started": false,
+    "coverage_result_available": false,
+    "usable_mcap_available": false,
+    "no_retry_authorized": true
+  },
+  "claim_boundary": "Real Gazebo GUI partial clips exist, but they are not a valid 5-10 minute task demo. The final Demo route stopped permanently at 339b549 after the 56d1689 hardening verification still failed before task start at the emergency-stop probe. No task, cleaning, coverage, or usable MCAP result exists, and neither RViz nor a dashboard replay was substituted for the real GUI capture."
 }

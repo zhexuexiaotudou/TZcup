@@ -192,7 +192,8 @@
   {
     "local_evidence": "evidence/day1/competition-day1-demo-evidence.json",
     "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-daemon-fix",
-    "source_commit": "56d1689",
+    "source_commit": "339b549",
+    "hardening_commit": "56d1689",
     "failure_retention_manifest": "evidence/day1/demo-failure-retention.json",
     "run_id": "day1-demo-partial-gui-and-bounded-full-task-failures",
     "rollback_commit": "42dcd85",
@@ -201,15 +202,38 @@
       "two bounded full-task attempts started Gazebo and produced nonblack real GUI clips",
       "the canonical clip is 95 frames, 6.333333 s, SHA-256 a00efd0cb447533573edc463ed1c1d0667dc3bafdcdcc8591438c4e18b837676",
       "the later emergency-fix clip is 43 frames, 2.866667 s, SHA-256 04fdba5022fc7cc76740f176fbb5279b711db9863310be4217c974b9a98fb836",
-      "both full-task attempts stopped before task start and produced zero-message MCAP containers",
+      "the final heartbeat-hardened verification stopped before task start at the emergency-stop probe and the Demo route stopped permanently at 339b549",
+      "all full-task attempts stopped before task start and produced zero-message MCAP containers",
       "the 9-minute demo script and pre/post-run checklist are preserved"
     ],
     "limitations": [
       "the short GUI clips are not a valid 5-10 minute task demo and contain no operation narration",
       "no task, cleaning, or coverage result exists",
       "no usable MCAP evidence exists",
-      "the post-attempt heartbeat hardening was not rerun after the one-attempt authorization was exhausted",
+      "the final verification remains evidence of failure only; no retry is authorized",
       "the existing controlled 600 mm, 4320 m2/h, and 0.489 s evidence is unchanged"
+    ]
+  },
+  {
+    "local_evidence": "evidence/day1/competition-localization-day1-final-run.md",
+    "failure_receipt": "evidence/day1/localization-run-02/run-02-failure_receipt.json",
+    "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-localization-run",
+    "source_commit": "2a7d201",
+    "code_fix_commit": "06b99b6",
+    "run_id": "localization-50mm-20260914-run-02",
+    "rollback_commit": "66dd49b",
+    "accepted_facts": [
+      "local and global costmap inflation_radius materialized to 0.56 m",
+      "Gazebo started, but the run stopped before bagging or dynamic data",
+      "/amcl global_frame_id parameter capture timed out after 10.0 seconds",
+      "MCAP files 0 and strict paired samples 0",
+      "RMSE, P95, and maximum error are null"
+    ],
+    "limitations": [
+      "the 50 mm criterion was not evaluated in run-02 and is NOT_MEASURED",
+      "no route, coverage, TF authority, or usable MCAP evidence was produced",
+      "the run stopped permanently without an authorized retry",
+      "the earlier run-01 localization FAIL remains authoritative for the existing metric row"
     ]
   }
 ]

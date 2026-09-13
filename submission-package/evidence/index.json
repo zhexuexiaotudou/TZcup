@@ -302,8 +302,8 @@
   {
     "file": "evidence/day1/competition-day1-demo-evidence.json",
     "source": "derived from bounded run records in TZcup-day1-demo-daemon-fix",
-    "source_commit": "56d1689",
-    "copied_utc": "2026-09-14T02:36:20+08:00"
+    "source_commit": "339b549",
+    "copied_utc": "2026-09-14T03:23:13+08:00"
   },
   {
     "file": "evidence/day1/competition-perception-replay-status.json",
@@ -314,12 +314,12 @@
   {
     "file": "evidence/day1/raw-evidence-sources.json",
     "source": "derived locator for existing raw run roots; compact demo media copied separately, raw task MCAP not copied",
-    "verified_utc": "2026-09-13T18:36:20.6954349Z"
+    "verified_utc": "2026-09-14T03:23:13+08:00"
   },
   {
     "file": "evidence/day1/demo-failure-retention.json",
-    "source": "derived compact locator for two pre-Gazebo failures and two bounded full-task failures; compact MP4 and PNG files copied, empty MCAP not copied",
-    "verified_utc": "2026-09-13T18:36:20.6954349Z"
+    "source": "derived compact locator for two pre-Gazebo failures and three bounded full-task failures; compact MP4 and PNG files copied for the first two Gazebo attempts, empty MCAP not copied",
+    "verified_utc": "2026-09-14T03:20:41+08:00"
   },
   {
     "file": "evidence/day1/demo/partial-gazebo-gui-6.333s/visual_demo.mp4",
@@ -356,5 +356,23 @@
     "source": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-daemon-fix\\artifacts\\competition_day1_readiness_diagnostics_20260914\\emergency_fix_attempt.json",
     "source_commit": "56d1689",
     "copied_utc": "2026-09-14T02:36:20.6954349+08:00"
+  },
+  {
+    "file": "evidence/day1/demo/heartbeat-hardened-verify-failure/attempt.json",
+    "source": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-daemon-fix\\artifacts\\competition_day1_readiness_diagnostics_20260914\\heartbeat_hardened_verify_attempt.json",
+    "source_commit": "339b549",
+    "copied_utc": "2026-09-14T03:23:13+08:00"
+  },
+  {
+    "file": "evidence/day1/competition-localization-day1-final-run.md",
+    "source": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-localization-run\\docs\\competition-localization-day1-final-run.md",
+    "source_commit": "2a7d201",
+    "copied_utc": "2026-09-14T03:23:13+08:00"
+  },
+  {
+    "file": "evidence/day1/localization-run-02/run-02-failure_receipt.json",
+    "source": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-localization-run\\artifacts\\day1_localization_20260914\\run-02-failure_receipt.json",
+    "source_commit": "2a7d201",
+    "copied_utc": "2026-09-14T03:23:13+08:00"
   }
 ]

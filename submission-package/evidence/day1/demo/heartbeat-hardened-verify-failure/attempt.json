@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "task": "day1-heartbeat-hardened-final-verification",
+  "branch": "codex/day1-demo-daemon-fix",
+  "source_commit": "56d1689233bd19cda5b678fd7e73cf775f072323",
+  "status": "FAIL_EMERGENCY_STOP_PROBE_TIMEOUT",
+  "demo_exit_code": 4,
+  "localization_readiness": {
+    "passed": true,
+    "elapsed_s": 79.036435216,
+    "clock_samples": 200,
+    "raw_odometry_messages": 375,
+    "ekf_odometry_messages": 41,
+    "fused_pose_messages": 41,
+    "scan_messages": 76,
+    "dynamic_odom_to_base_footprint": true,
+    "discovery_range": "LOCALHOST"
+  },
+  "runtime_readiness": {
+    "passed": true,
+    "controller_state": 3,
+    "planner_state": 3,
+    "dashboard_healthy": true
+  },
+  "gui_discovery": {
+    "passed": true,
+    "elapsed_wall_s": 9.667168603999983
+  },
+  "real_gazebo_window_capture": {
+    "window_title": "Gazebo Sim",
+    "window_id": "0xa00012",
+    "frame_count": 44,
+    "duration_seconds": 2.933333,
+    "nonempty_frame_gate_passed": true,
+    "video_path": "visual_demo.mp4",
+    "video_bytes": 4296,
+    "video_sha256": "a3728a9d30389808cb932ad466554e1dfbfc429c395cb35a650f4bd4bb145aaa",
+    "representative_frame": {
+      "path": "gazebo_viewport.png",
+      "bytes": 94268,
+      "sha256": "5997f388cdfeb045ba66d3077511d314dc8c3dcef8ebd4a50769e7cbff6e0f42"
+    }
+  },
+  "emergency_stop": {
+    "result_path": "emergency_stop_available.json",
+    "result_exists": false,
+    "failure": "probe timed out before producing a result"
+  },
+  "mcap": {
+    "path": "visual_demo_bag/visual_demo_bag_0.mcap",
+    "bytes": 1301,
+    "sha256": "1bb84b76145cc354988dc45a687a225a2660cf84ae0dce9686a67421b5c6a564",
+    "message_count": 0,
+    "duration_ns": 0
+  },
+  "task_and_cleaning_evidence": {
+    "coverage_report_exists": false,
+    "acceptance_summary_exists": false,
+    "dashboard_status": "BOOTING",
+    "completed_components": 0,
+    "expected_components": 17,
+    "claim_status": "NO_TASK_OR_CLEANING_RESULT; DEMO_ROUTE_STOPPED"
+  },
+  "resource_release": {
+    "checked_after_processes_exit": true,
+    "demo_exit_code": 4,
+    "capture_exit_code": 0,
+    "formal_gazebo_lock": "FREE",
+    "task_processes_remaining": 0
+  },
+  "raw_evidence": {
+    "root": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-daemon-fix\\.work\\day1-readiness-diagnostics-20260914T013700Z\\demo-run-heartbeat-hardened-verify"
+  }
+}

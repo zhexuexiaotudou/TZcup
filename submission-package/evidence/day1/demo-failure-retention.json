@@ -1,11 +1,11 @@
 {
   "schema_version": 2,
-  "verified_utc": "2026-09-13T18:36:20.6954349Z",
+  "verified_utc": "2026-09-14T03:23:13+08:00",
   "evidence_id": "day1-demo-failure-retention",
   "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-evidence",
   "source_commit": "12c2a6acf58cc2558cf4c1a82cec4da47c874e0c",
   "full_task_source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-daemon-fix",
-  "full_task_evidence_commit": "56d1689",
+  "full_task_evidence_commit": "339b549",
   "source_manifest": {
     "file": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-evidence\\docs\\competition-day1-demo-evidence-manifest.json",
     "bytes": 13188,
@@ -17,19 +17,19 @@
     "sha256": "8D93E0D2D3A375CA48018D4E9D94F721F24D2B4CBA21C4CCB0DF8E8057F5DE1E"
   },
   "ignored_storage_pattern": ".work/",
-  "final_outcome": "BOTH_BOUNDED_FULL_TASK_ATTEMPTS_FAILED_BEFORE_TASK_START",
-  "attempt_count": 4,
+  "final_outcome": "DEMO_ROUTE_STOPPED_PERMANENTLY_AFTER_THREE_BOUNDED_FULL_TASK_ATTEMPTS_FAILED_BEFORE_TASK_START",
+  "attempt_count": 5,
   "prior_pre_gazebo_attempt_count": 2,
-  "bounded_full_task_attempt_count": 2,
+  "bounded_full_task_attempt_count": 3,
   "gazebo_started": true,
   "task_started": false,
   "task_completed": false,
   "partial_gui_capture_available": true,
   "valid_full_task_video": false,
   "raw_media": {
-    "mcap_container_count": 2,
+    "mcap_container_count": 3,
     "usable_mcap_count": 0,
-    "mp4_count": 2,
+    "mp4_count": 3,
     "rviz_substitute_used": false,
     "dashboard_substitute_used": false
   },
@@ -139,10 +139,35 @@
       },
       "coverage_result_available": false,
       "cleaning_result_available": false,
-      "post_attempt_hardening_not_rerun": {
-        "commit": "56d1689",
-        "focused_tests": "56 passed"
+      "post_attempt_hardening_follow_up": {
+        "hardening_commit": "56d1689",
+        "final_verification_commit": "339b549"
       }
+    },
+    {
+      "attempt_number": 5,
+      "run_id": "demo-run-heartbeat-hardened-verify",
+      "source_commit": "56d1689233bd19cda5b678fd7e73cf775f072323",
+      "attempt_record_commit": "339b549f5af56e90996462168054c6199e722780",
+      "outcome": "FAIL_EMERGENCY_STOP_PROBE_TIMEOUT",
+      "task_started": false,
+      "gazebo_gui_observed": true,
+      "frame_count": 44,
+      "duration_seconds": 2.933333,
+      "video_bytes": 4296,
+      "video_sha256": "a3728a9d30389808cb932ad466554e1dfbfc429c395cb35a650f4bd4bb145aaa",
+      "representative_frame_sha256": "5997f388cdfeb045ba66d3077511d314dc8c3dcef8ebd4a50769e7cbff6e0f42",
+      "package_attempt_record": "evidence/day1/demo/heartbeat-hardened-verify-failure/attempt.json",
+      "evidence_directory": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-daemon-fix\\.work\\day1-readiness-diagnostics-20260914T013700Z\\demo-run-heartbeat-hardened-verify",
+      "mcap": {
+        "message_count": 0,
+        "duration_ns": 0,
+        "bytes": 1301,
+        "sha256": "1bb84b76145cc354988dc45a687a225a2660cf84ae0dce9686a67421b5c6a564"
+      },
+      "coverage_result_available": false,
+      "cleaning_result_available": false,
+      "route_outcome": "STOPPED_PERMANENTLY_NO_RETRY"
     }
   ],
   "daemon_diagnosis": {
@@ -155,5 +180,5 @@
       }
     ]
   },
-  "claim_boundary": "This compact ledger retains two pre-Gazebo launch failures and two bounded full-task attempts. Both full-task attempts produced real nonblack Gazebo GUI clips but stopped before task start. The two attached MCAP files contain zero messages and are not usable task evidence. There is no task, cleaning, or coverage result, and the short GUI clips are not a valid 5-10 minute demo."
+  "claim_boundary": "This compact ledger retains two pre-Gazebo launch failures and three bounded full-task attempts. The Gazebo attempts produced real nonblack GUI clips but all stopped before task start. The final Demo route stopped permanently at 339b549 after the 56d1689 hardening verification failed at the emergency-stop probe. The empty MCAP containers are not usable task evidence. There is no task, cleaning, or coverage result, and the short GUI clips are not a valid 5-10 minute demo."
 }

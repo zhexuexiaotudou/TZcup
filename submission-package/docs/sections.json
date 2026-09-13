@@ -2,8 +2,8 @@
   [
     "01 项目背景与交付边界",
     [
-      "面向智慧环卫场景的国产系统无人清扫车关键技术攻关，赛题DG-202604。本报告整理截至2026-09-14已封存的仿真运行、独立评分、失败留存、板端回放和设计计算，不把新增局部PASS包装成完整比赛通过；当前有真实Gazebo GUI 6.333s partial clip，但不构成5-10分钟完整任务Demo。",
-      "当前可确认的通过项包括受控直线试验中的600mm连续清扫宽度、行驶中完整急停0.489s，以及冻结转写经确定性DSL解析得到的任务分解97.2973%（开发集36/37，内部冻结holdout 32/32）。4320m²/h只来自固定10s窗口，状态为PARTIAL。动态定位、建图和工程识别质量为FAIL；官方识别≥95%未按官方定义测量，状态为NOT_MEASURED。",
+      "面向智慧环卫场景的国产系统无人清扫车关键技术攻关，赛题DG-202604。本报告整理截至2026-09-14已封存的仿真运行、独立评分、失败留存、板端回放和设计计算，不把新增局部PASS包装成完整比赛通过；Demo路线已在339b549永久停止，之前复制的真实Gazebo GUI partial clip仅是局部证据，不构成5-10分钟完整任务Demo。",
+      "当前可确认的通过项包括受控直线试验中的600mm连续清扫宽度、行驶中完整急停0.489s，以及冻结转写经确定性DSL解析得到的任务分解97.2973%（开发集36/37，内部冻结holdout 32/32）。4320m²/h只来自固定10s窗口，状态为PARTIAL。动态定位、建图和工程识别质量为FAIL；有界定位run-02在动态数据前停止，50mm为NOT_MEASURED；官方识别≥95%未按官方定义测量，状态为NOT_MEASURED。",
       "任务分解PASS仅限内部冻结回归，不是公开盲测或外部验证；语音识别、任务执行和S100P完整自主仍NOT_MEASURED。尘箱40L新增结论仅限设计几何，物理填充与生产验证仍NOT_MEASURED。",
       "题面明确把“关键技术指标未达到最低要求”列为一票否决风险。因此本报告即使形成完整20-50页PDF，也只表示材料可审阅，不表示整包已达到提交资格或可以合并不同版本的局部PASS。"
     ]
@@ -28,10 +28,10 @@
   [
     "04 循迹",
     [
-      "当前状态：FAIL。动态路线run-01在仿真时间12.953s因Nav2中止而未达到2m位移与返回段；后续诊断证明配置上map→odom由/global_ekf唯一拥有，并修复NavSat输入帧的模式选择，但只批准未来一次有界动态诊断，未产生新的完整任务成功率。",
+      "当前状态：FAIL。动态路线run-01在仿真时间12.953s因Nav2中止而未达到2m位移与返回段，循迹仍为FAIL。后续有界run-02由06b99b6生成0.56m局部/全局costmap膨胀半径并成功启动Gazebo，但在bagging和动态数据前因/amcl global_frame_id参数捕获10s超时停止；证据提交2a7d201。run-02无route样本、无MCAP，无新增循迹或任务成功声明。",
       "最短测量与判定口径：一次任务的路线点、实际轨迹、终态与中止事件；区分定位失败、规划失败和车辆控制失败。",
-      "证据范围：measured_simulation；截至 2026-09-13T07:46:40+00:00。只依据列明运行判定，历史局部结果不替代当前全程。",
-      "证据文件：evidence/day1/competition-localization-50mm.md；evidence/day1/competition-localization-replay.md；evidence/day1/competition-localization-diagnosis.json"
+      "证据范围：measured_simulation；截至 2026-09-14T03:20:41+08:00。只依据列明运行判定，历史局部结果不替代当前全程。",
+      "证据文件：evidence/day1/competition-localization-50mm.md；evidence/day1/competition-localization-replay.md；evidence/day1/competition-localization-diagnosis.json；evidence/day1/competition-localization-day1-final-run.md；evidence/day1/localization-run-02/run-02-failure_receipt.json"
     ]
   ],
   [
@@ -55,10 +55,10 @@
   [
     "07 定位≤50mm",
     [
-      "当前状态：FAIL。动态run-01仍为FAIL：仅4/359个严格配对、覆盖率1.1142%，配对RMSE 12.152933m、P95 12.514197m、最大12.538851m。诊断确认配置上/global_ekf是唯一map→odom发布者并完成NavSat模式化帧修复、44项聚焦测试，但只给未来有界动态运行GO；50mm仍未证明。",
+      "当前状态：FAIL。run-01仍为FAIL：仅4/359个严格配对、覆盖率1.1142%，配对RMSE 12.152933m、P95 12.514197m、最大12.538851m，所以本行状态保持FAIL。有界run-02由06b99b6生成0.56m局部/全局costmap膨胀半径并启动Gazebo，但在动态窗口前因/amcl global_frame_id捕获10s超时停止，证据提交2a7d201；MCAP=0、paired=0，RMSE/P95/max均为null，run-02的50mm判据为NOT_MEASURED。",
       "最短测量与判定口径：同坐标系、同仿真时间配对估计与真值；先满足覆盖率和位移条件，再报告RMSE/P95/max，阈值采用max≤50mm。",
-      "证据范围：measured_simulation；截至 2026-09-13T07:46:40+00:00。只依据列明运行判定，历史局部结果不替代当前全程。",
-      "证据文件：evidence/day1/competition-localization-50mm.md；evidence/day1/competition-localization-replay.md；evidence/day1/competition-localization-diagnosis.json"
+      "证据范围：measured_simulation；截至 2026-09-14T03:20:41+08:00。只依据列明运行判定，历史局部结果不替代当前全程。",
+      "证据文件：evidence/day1/competition-localization-50mm.md；evidence/day1/competition-localization-replay.md；evidence/day1/competition-localization-diagnosis.json；evidence/day1/competition-localization-day1-final-run.md；evidence/day1/localization-run-02/run-02-failure_receipt.json"
     ]
   ],
   [
@@ -170,7 +170,7 @@
     "20 关键技术与创新边界",
     [
       "当前方案的核心是把RGB-D感知、定位/规划、刷清扫和独立真值评分分成可审计链路，并以污物清除单元并集而不是规划面积计算宽度与短窗效率。该方法在受控直线试验中可复算，但不声称全球首创。",
-      "定位诊断证明配置上/global_ekf唯一拥有cleaning模式map→odom，并把NavSat输入改为slam用/odom、amcl用/localization/fused_odom；44项聚焦测试通过。该修复只支持未来一次有界动态诊断，50mm仍FAIL。",
+      "定位诊断证明配置上/global_ekf唯一拥有cleaning模式map→odom，并把NavSat输入改为slam用/odom、amcl用/localization/fused_odom；44项聚焦测试通过。后续run-02由06b99b6生成0.56m局部/全局costmap半径并启动Gazebo，但在动态数据前因/amcl global_frame_id捕获10s超时停止，证据提交2a7d201；run-02的50mm为NOT_MEASURED，整体定位状态仍因run-01实测FAIL而保持FAIL。",
       "感知根因是受控彩色夹具误配Stage5B；仅保留可复现的受控域raw诊断：Stage5B 0/654/76、Stage5A 33/50/43，黄色叶堆仍未通过。离线policy replay为NOT_RUN/NOT_MEASURED，旧Stage5A policy 0/0/76已因缺少depth/ROI/tracking上下文而撤回；工程识别质量仅为已测量raw证据判FAIL。",
       "Nav2、SLAM Toolbox、robot_localization和其他第三方软件按原许可与边界披露。采用国产计算板不能推导操作系统、模型和全部依赖已经国产化；本报告不主张未经验证的算法领先或产业效果。"
     ]
@@ -188,14 +188,14 @@
     [
       "完整性结论：宽度、制动、受控清扫和内部冻结任务分解已有边界明确的结果；效率与尘箱只PARTIAL；动态定位、循迹、建图和工程识别质量FAIL；避障和官方识别≥95%仍NOT_MEASURED。官方识别状态与工程识别FAIL是两条并行口径，不能互相替代；不同版本的局部PASS也不能拼成完整任务PASS。",
       "一票否决风险：题面第9-10页把负载能力、识别准确率等关键技术指标未达到最低要求列为否决项。当前定位FAIL、建图FAIL和识别质量FAIL已经足以阻止整包宣称达标；未测项也不能删去或改名规避。",
-      "失败留存：任务分解开发集保留reject-005；感知保留Stage5B与Stage5A的可复现raw诊断，并把policy replay明确标为NOT_RUN/NOT_MEASURED；定位保留4样本FAIL；板端保留感知BLOCKED和有限规划；Demo保留两次预Gazebo启动失败和两次有界full-task失败。后两次均出现真实Gazebo GUI并分别留下95帧/6.333333s与43帧/2.866667s nonblack clip，但都在任务启动前停止，MCAP均为0消息；没有task、cleaning、coverage或可用MCAP证据。完整关联见evidence/day1/evidence-index.json。"
+      "失败留存：任务分解开发集保留reject-005；感知保留Stage5B与Stage5A的可复现raw诊断，并把policy replay明确标为NOT_RUN/NOT_MEASURED；定位保留run-01的4样本FAIL，并封存run-02在MCAP=0、paired=0、RMSE/P95/max=null时停止的记录；板端保留感知BLOCKED和有限规划；Demo路线在339b549永久停止。包内已有的95帧/6.333333s与43帧/2.866667s真实Gazebo GUI clip仍是有效局部证据，但均未启动task，也没有task、cleaning、coverage或可用MCAP声明。完整关联见evidence/day1/evidence-index.json。"
     ]
   ],
   [
     "23 提交格式、证据接入、回滚与复现",
     [
       "题面要求技术方案PDF为20-50页，并要求完整软件仿真或实物、5-10分钟含操作说明的视频、审核通过的报名表和规定命名的压缩包。本包只完成可审阅报告与证据接入；已有真实Gazebo GUI partial clip，但没有有效的5-10分钟完整任务Demo、报名表、申报人命名信息或完整任务成功分母。",
-      "Demo证据保留两次预Gazebo启动失败和两次有界full-task失败。后两次分别得到95帧/6.333333s和43帧/2.866667s真实nonblack GUI clip，但都未启动task，且各自MCAP为0消息、0 duration；没有task、cleaning、coverage或可用MCAP证据，也没有用RViz或dashboard替代。56d1689 heartbeat hardening未获授权重跑；9分钟演示脚本和运行前后检查表已归档；600mm、4320m²/h、0.489s受控证据不变。",
+      "Demo证据保留两次预Gazebo启动失败和两次有界full-task失败，并封存56d1689 hardening后的339b549最终验证：仍在task启动前的急停探针阶段失败，Demo路线随后永久停止。包内已有的95帧/6.333333s和43帧/2.866667s真实nonblack GUI clip仍是局部证据，但都没有task、cleaning、coverage或可用MCAP证据，也没有用RViz或dashboard替代；600mm、4320m²/h、0.489s受控证据不变。",
       "证据源以metrics/results.json为唯一状态源，refresh.py读取已存在的本地证据并重建metrics/验收矩阵.md、metrics/sim-metrics.csv、技术方案报告.md和PDF。释放前的20-50页检查、JSON校验、逐页渲染、哈希和diff检查只证明包内一致性，不把任何未测/FAIL升级为PASS。"
     ]
   ]

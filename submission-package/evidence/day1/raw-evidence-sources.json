@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "verified_utc": "2026-09-13T17:03:21Z",
+  "verified_utc": "2026-09-14T03:23:13+08:00",
   "purpose": "Portable locator for raw evidence that remains in its source run roots. This file records exact existing paths and hashes. Compact demo clips and representative frames are copied separately; raw task MCAP and timeline payloads are not copied.",
   "claim_boundary": "Large raw payloads must be read from the absolute source locator roots listed below. The copied Day-1 demo media are short GUI clips only and do not establish task, cleaning, coverage, or usable MCAP evidence.",
   "entries": [
@@ -270,6 +270,71 @@
           "bytes": 409062960,
           "sha256": "AEF144B23165CF158767A55D40462D9D69F321484FB4999CDDD1230D2A811799",
           "role": "raw MCAP payload, not copied"
+        }
+      ]
+    },
+    {
+      "id": "day1-demo-heartbeat-hardened-verify",
+      "run_id": "demo-run-heartbeat-hardened-verify",
+      "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-daemon-fix",
+      "source_worktree_head_at_verification": "339b549f5af56e90996462168054c6199e722780",
+      "run_source_commit": "56d1689233bd19cda5b678fd7e73cf775f072323",
+      "attempt_record_commit": "339b549f5af56e90996462168054c6199e722780",
+      "run_root": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-daemon-fix\\.work\\day1-readiness-diagnostics-20260914T013700Z\\demo-run-heartbeat-hardened-verify",
+      "outcome": "FAIL_EMERGENCY_STOP_PROBE_TIMEOUT_BEFORE_TASK_START",
+      "route_outcome": "STOPPED_PERMANENTLY_NO_RETRY",
+      "package_copy": {
+        "attempt_record": "evidence/day1/demo/heartbeat-hardened-verify-failure/attempt.json"
+      },
+      "files": [
+        {
+          "file": "heartbeat_hardened_verify_attempt.json",
+          "bytes": 2371,
+          "sha256": "5465F076049AE2639B20145A3E9F03E1C7932ABB3541E2D8B9579E35FF9A1F3C",
+          "role": "compact final Demo failure record"
+        },
+        {
+          "file": "visual_demo_bag\\visual_demo_bag_0.mcap",
+          "bytes": 1301,
+          "sha256": "1bb84b76145cc354988dc45a687a225a2660cf84ae0dce9686a67421b5c6a564",
+          "role": "empty MCAP container with 0 messages and 0 duration; not copied"
+        }
+      ]
+    },
+    {
+      "id": "localization-50mm-20260914-run-02",
+      "run_id": "localization-50mm-20260914-run-02",
+      "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-localization-run",
+      "source_worktree_head_at_verification": "2a7d201304c40987ae15356c6f9066d69e9803a1",
+      "code_fix_commit": "06b99b6cb64e91ec470ac5623ded4c6db22df321",
+      "evidence_commit": "2a7d201304c40987ae15356c6f9066d69e9803a1",
+      "run_root": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-localization-run\\.work\\day1-localization-run\\evidence\\run-02",
+      "outcome": "NOT_MEASURED_STOPPED_BEFORE_DYNAMIC_DATA",
+      "generated_costmap_radii_m": {
+        "local": 0.56,
+        "global": 0.56
+      },
+      "failure": {
+        "stage": "sealed_parameter_capture_before_dynamic_window",
+        "unmatched_parameter": "/amcl global_frame_id",
+        "error": "TimeoutExpired after 10.0 seconds"
+      },
+      "package_copy": {
+        "failure_receipt": "evidence/day1/localization-run-02/run-02-failure_receipt.json",
+        "final_run_doc": "evidence/day1/competition-localization-day1-final-run.md"
+      },
+      "files": [
+        {
+          "file": "run-02-failure_receipt.json",
+          "bytes": 2602,
+          "sha256": "655F5E98D8A821DFC79373E7BF0C4AB20F3B84B00E8153D555893EF757EBDD26",
+          "role": "compact run-02 failure receipt"
+        },
+        {
+          "file": "competition-localization-day1-final-run.md",
+          "bytes": 2208,
+          "sha256": "9B62E8ED6132E55B6584996BED22D4E06A72BDCF1EC9F01C65F2C68406A3708B",
+          "role": "final bounded localization run record"
         }
       ]
     }
