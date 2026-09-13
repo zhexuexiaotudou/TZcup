@@ -1,0 +1,145 @@
+[
+  {
+    "id": "mapping",
+    "item": "建图",
+    "status": "NOT_MEASURED",
+    "value": null,
+    "basis": "not_measured",
+    "evidence": [
+      "evidence/reference/execution-status-snapshot.md"
+    ],
+    "note": "完整首图尚未封存；历史45分钟运行未完成。",
+    "minimum_measurement": "保存地图、分辨率、已知栅格数和建图日志；重新加载后输出定位。",
+    "as_of_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "id": "following",
+    "item": "循迹",
+    "status": "NOT_MEASURED",
+    "value": null,
+    "basis": "not_measured",
+    "evidence": [
+      "evidence/reference/execution-status-snapshot.md"
+    ],
+    "note": "短程左右转不等于自主路线完成。",
+    "minimum_measurement": "一次任务的路线点、实际轨迹、终态和操作视频；记录中止事件。",
+    "as_of_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "id": "perception",
+    "item": "垃圾识别与定位",
+    "status": "NOT_MEASURED",
+    "value": null,
+    "basis": "not_measured",
+    "evidence": [
+      "evidence/reference/execution-status-snapshot.md"
+    ],
+    "note": "板端开发HBM仅有消息活性；当前完整仿真识别定位未验收。",
+    "minimum_measurement": "同帧图像、检测类别框、深度/标定/TF、预测地图坐标及独立标签对照。",
+    "as_of_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "id": "cleaning",
+    "item": "一种清扫方式",
+    "status": "NOT_MEASURED",
+    "value": null,
+    "basis": "not_measured",
+    "evidence": [
+      "evidence/reference/execution-status-snapshot.md"
+    ],
+    "note": "采用边刷与中央滚刷；历史规划概率清除不证明本次动力学清扫。",
+    "minimum_measurement": "同次任务GroundDirt前后状态、刷启停和清除事件；一段前后截图。",
+    "as_of_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "id": "avoidance",
+    "item": "避障",
+    "status": "NOT_MEASURED",
+    "value": null,
+    "basis": "not_measured",
+    "evidence": [
+      "evidence/reference/execution-status-snapshot.md"
+    ],
+    "note": "历史分模块避障不能外推本次整链。",
+    "minimum_measurement": "任务中插入一次动态障碍；记录无碰撞、绕行或等待及恢复任务。",
+    "as_of_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "id": "estop_function",
+    "item": "应急制动功能",
+    "status": "NOT_MEASURED",
+    "value": null,
+    "basis": "not_measured",
+    "evidence": [
+      "evidence/reference/turn-diagnostic.md"
+    ],
+    "note": "历史急停触发前已停稳；控制回放归零不是运动中车辆急停。",
+    "minimum_measurement": "行驶中触发急停，保留触发事件和实际线/角速度，不只记录速度命令。",
+    "as_of_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "id": "localization_mm",
+    "item": "定位≤50mm",
+    "status": "FAIL",
+    "value": 259.544,
+    "basis": "historical_limited_measurement",
+    "evidence": [
+      "evidence/reference/turn-diagnostic.md"
+    ],
+    "note": "历史短程656/656配对，15ms最大跨度；EKF最大误差259.544mm。仅历史局部失败，当前全程未测。",
+    "minimum_measurement": "同坐标系、同仿真时间配对估计与真值，导出RMSE/P95/max；预先采用max≤50mm的保守口径。",
+    "as_of_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "id": "mapped_area_m2",
+    "item": "建图≥20000m²",
+    "status": "NOT_MEASURED",
+    "value": null,
+    "basis": "not_measured",
+    "evidence": [
+      "evidence/reference/execution-status-snapshot.md"
+    ],
+    "note": "200m×100m场景边界不是已建图面积。",
+    "minimum_measurement": "有效已知栅格数×resolution²；未知区排除，保留地图文件与面积口径。",
+    "as_of_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "id": "cleaning_m2_h",
+    "item": "效率≥3500m²/h",
+    "status": "NOT_MEASURED",
+    "value": null,
+    "basis": "not_measured",
+    "evidence": [
+      "evidence/reference/execution-status-snapshot.md"
+    ],
+    "note": "4205.81为历史离线估计；1.32×1×3600×0.75=3564亦是理论估计。",
+    "minimum_measurement": "实际清除有效面积并集÷完整作业仿真秒数×3600；计入转弯、等待、避障，另报墙钟与RTF。",
+    "as_of_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "id": "width_mm",
+    "item": "清扫宽度≥600mm",
+    "status": "NOT_MEASURED",
+    "value": null,
+    "basis": "not_measured",
+    "evidence": [
+      "evidence/reference/execution-status-snapshot.md"
+    ],
+    "note": "0.65m模型刷宽、1.32m展开设计值不作为有效清扫实测。",
+    "minimum_measurement": "直线短段运行，取实际污物清除带横向宽度；保存刷状态、轨迹与前后图。",
+    "as_of_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "id": "braking_s",
+    "item": "制动≤1s",
+    "status": "NOT_MEASURED",
+    "value": null,
+    "basis": "not_measured",
+    "evidence": [
+      "evidence/reference/turn-diagnostic.md"
+    ],
+    "note": "历史174个静止GT样本未覆盖行驶到停车过程。",
+    "minimum_measurement": "同一时钟下从急停触发至实际|v|≤0.01m/s且|ω|≤0.01rad/s，持续0.2s；报告采样频率与上界。",
+    "as_of_utc": "2026-09-13T03:48:05.727823+00:00"
+  }
+]

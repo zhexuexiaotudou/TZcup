@@ -1,0 +1,143 @@
+{
+  "checks": {
+    "map_has_known_cells": true,
+    "map_has_occupied_cells": true,
+    "map_resolution_is_configured": true,
+    "occupancy_grid_received": true
+  },
+  "input_class": "synthetic_replay",
+  "map_samples": [
+    {
+      "height": 162,
+      "known_cells": 360,
+      "monotonic_offset_s": 0.2637953250668943,
+      "occupied_cells": 0,
+      "resolution": 0.05000000074505806,
+      "width": 169
+    },
+    {
+      "height": 166,
+      "known_cells": 10426,
+      "monotonic_offset_s": 0.7640074000228196,
+      "occupied_cells": 361,
+      "resolution": 0.05000000074505806,
+      "width": 172
+    },
+    {
+      "height": 167,
+      "known_cells": 13372,
+      "monotonic_offset_s": 1.2642017001053318,
+      "occupied_cells": 522,
+      "resolution": 0.05000000074505806,
+      "width": 174
+    },
+    {
+      "height": 168,
+      "known_cells": 15338,
+      "monotonic_offset_s": 1.7644510250538588,
+      "occupied_cells": 522,
+      "resolution": 0.05000000074505806,
+      "width": 174
+    },
+    {
+      "height": 168,
+      "known_cells": 15516,
+      "monotonic_offset_s": 2.2647456499980763,
+      "occupied_cells": 486,
+      "resolution": 0.05000000074505806,
+      "width": 174
+    },
+    {
+      "height": 168,
+      "known_cells": 15992,
+      "monotonic_offset_s": 2.7650086500216275,
+      "occupied_cells": 533,
+      "resolution": 0.05000000074505806,
+      "width": 174
+    },
+    {
+      "height": 168,
+      "known_cells": 16508,
+      "monotonic_offset_s": 3.265255125006661,
+      "occupied_cells": 748,
+      "resolution": 0.05000000074505806,
+      "width": 174
+    },
+    {
+      "height": 168,
+      "known_cells": 16958,
+      "monotonic_offset_s": 3.7655609500361606,
+      "occupied_cells": 958,
+      "resolution": 0.05000000074505806,
+      "width": 174
+    },
+    {
+      "height": 168,
+      "known_cells": 17674,
+      "monotonic_offset_s": 4.265750275109895,
+      "occupied_cells": 1153,
+      "resolution": 0.05000000074505806,
+      "width": 174
+    },
+    {
+      "height": 168,
+      "known_cells": 18045,
+      "monotonic_offset_s": 4.766069375094958,
+      "occupied_cells": 1283,
+      "resolution": 0.05000000074505806,
+      "width": 174
+    },
+    {
+      "height": 168,
+      "known_cells": 18088,
+      "monotonic_offset_s": 5.266270100022666,
+      "occupied_cells": 1310,
+      "resolution": 0.05000000074505806,
+      "width": 174
+    },
+    {
+      "height": 168,
+      "known_cells": 18157,
+      "monotonic_offset_s": 5.766542900004424,
+      "occupied_cells": 1344,
+      "resolution": 0.05000000074505806,
+      "width": 174
+    },
+    {
+      "height": 168,
+      "known_cells": 18314,
+      "monotonic_offset_s": 6.266820075106807,
+      "occupied_cells": 1417,
+      "resolution": 0.05000000074505806,
+      "width": 174
+    },
+    {
+      "height": 168,
+      "known_cells": 18572,
+      "monotonic_offset_s": 6.767088300082833,
+      "occupied_cells": 1538,
+      "resolution": 0.05000000074505806,
+      "width": 174
+    },
+    {
+      "height": 168,
+      "known_cells": 18815,
+      "monotonic_offset_s": 7.2673051750753075,
+      "occupied_cells": 1606,
+      "resolution": 0.05000000074505806,
+      "width": 174
+    },
+    {
+      "height": 168,
+      "known_cells": 19079,
+      "monotonic_offset_s": 7.7676710250088945,
+      "occupied_cells": 1628,
+      "resolution": 0.05000000074505806,
+      "width": 174
+    }
+  ],
+  "passed": true,
+  "report_id": "tzcup_s100p_mapping_replay_v1",
+  "schema_version": 1,
+  "status": "S100P_MAPPING_REPLAY_PASSED"
+}

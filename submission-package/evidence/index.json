@@ -1,0 +1,247 @@
+[
+  {
+    "file": "evidence/board/mapping-replay-01/input-hashes.txt",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\mapping-replay-01\\input-hashes.txt",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/mapping-replay-01/report.json",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\mapping-replay-01\\report.json",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/mapping-replay-01/slam-cmdline.txt",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\mapping-replay-01\\slam-cmdline.txt",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/mapping-replay-01/slam-proc-status.txt",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\mapping-replay-01\\slam-proc-status.txt",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/mapping-replay-01/slam.log",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\mapping-replay-01\\slam.log",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/mapping-replay-01/witness.log",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\mapping-replay-01\\witness.log",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/mapping-replay-01/witness.rc",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\mapping-replay-01\\witness.rc",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/localization-replay-01/ekf-cmdline.txt",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\localization-replay-01\\ekf-cmdline.txt",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/localization-replay-01/ekf-proc-status.txt",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\localization-replay-01\\ekf-proc-status.txt",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/localization-replay-01/ekf.log",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\localization-replay-01\\ekf.log",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/localization-replay-01/input-hashes.txt",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\localization-replay-01\\input-hashes.txt",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/localization-replay-01/report.json",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\localization-replay-01\\report.json",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/localization-replay-01/witness.log",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\localization-replay-01\\witness.log",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/localization-replay-01/witness.rc",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\localization-replay-01\\witness.rc",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/planning-replay-01/input-hashes.txt",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\planning-replay-01\\input-hashes.txt",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/planning-replay-01/resource.log",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\planning-replay-01\\resource.log",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/planning-replay-01/stdout.log",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\planning-replay-01\\stdout.log",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/planning-replay-02/cmdline.txt",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\planning-replay-02\\cmdline.txt",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/planning-replay-02/input-hashes.txt",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\planning-replay-02\\input-hashes.txt",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/planning-replay-02/proc-status-start.txt",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\planning-replay-02\\proc-status-start.txt",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/planning-replay-02/report.json",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\planning-replay-02\\report.json",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/planning-replay-02/stderr.log",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\planning-replay-02\\stderr.log",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/planning-replay-02/stdout.log",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\planning-replay-02\\stdout.log",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/qlearning-replay-01/checkpoint.json",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\qlearning-replay-01\\checkpoint.json",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/qlearning-replay-01/cmdline.txt",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\qlearning-replay-01\\cmdline.txt",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/qlearning-replay-01/input-hashes.txt",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\qlearning-replay-01\\input-hashes.txt",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/qlearning-replay-01/proc-status-start.txt",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\qlearning-replay-01\\proc-status-start.txt",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/qlearning-replay-01/report.json",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\qlearning-replay-01\\report.json",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/qlearning-replay-01/stderr.log",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\qlearning-replay-01\\stderr.log",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/qlearning-replay-01/stdout.log",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\qlearning-replay-01\\stdout.log",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/control-replay-01/gate-cmdline.txt",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\control-replay-01\\gate-cmdline.txt",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/control-replay-01/gate-proc-status.txt",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\control-replay-01\\gate-proc-status.txt",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/control-replay-01/gate.log",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\control-replay-01\\gate.log",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/control-replay-01/input-hashes.txt",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\control-replay-01\\input-hashes.txt",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/control-replay-01/report.json",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\control-replay-01\\report.json",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/control-replay-01/witness.log",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\control-replay-01\\witness.log",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/control-replay-01/witness.rc",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\control-replay-01\\witness.rc",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/board-module-summary.json",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\board-module-summary.json",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/full-board-inventory.json",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\full-board-inventory.json",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/development-liveness.json",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\s100p-r14d-product-liveness-template-20260908T114500Z-28bbe2e\\board_results\\witness.json",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/board/perception-rejected.log",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-board\\evidence\\perception-replay-01\\graph.log",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/reference/turn-diagnostic.md",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\mobility-turn-e999e53-02-closed\\RESULT.md",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/reference/historical-assessment.md",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-20260912-final-assessment\\ASSESSMENT.md",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/reference/execution-status-snapshot.md",
+    "source": "F:\\Project\\TZcup\\.workspace\\plans\\simulation-only-completion-20260912\\EXECUTION_STATUS.md",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/reference/contest-brief.txt",
+    "source": "F:\\Project\\TZcup\\_contest_brief.txt",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "dependencies/historical-runtime-commands.md",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-t7-turn-handoff-20260912T102409Z\\final-package\\sources\\docs\\formal-final-acceptance-orchestration.md",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "dependencies/model-and-asset-licenses.md",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-sim-only-t7-turn-handoff-20260912T102409Z\\final-package\\inputs\\model_and_asset_licenses.md",
+    "copied_utc": "2026-09-13T03:48:05.727823+00:00"
+  },
+  {
+    "file": "evidence/reference/build.receipt.json",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-hard-minimum-01\\build.receipt.json",
+    "copied_utc": "2026-09-13T03:51:28.185916+00:00"
+  },
+  {
+    "file": "evidence/reference/build.stdout.log",
+    "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-hard-minimum-01\\build.stdout.log",
+    "copied_utc": "2026-09-13T03:51:28.185931+00:00"
+  }
+]

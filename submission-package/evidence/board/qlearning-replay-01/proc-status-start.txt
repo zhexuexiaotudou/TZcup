@@ -1,0 +1,56 @@
+Name:	active_cleaning
+Umask:	0000
+State:	R (running)
+Tgid:	2173261
+Ngid:	0
+Pid:	2173261
+PPid:	2173250
+TracerPid:	0
+Uid:	0	0	0	0
+Gid:	0	0	0	0
+FDSize:	64
+Groups:	1003 1004 1007 1011 1015 1028 3001 3002 3003 3006 
+NStgid:	2173261
+NSpid:	2173261
+NSpgid:	2173250
+NSsid:	2173250
+VmPeak:	   11840 kB
+VmSize:	   11840 kB
+VmLck:	       0 kB
+VmPin:	       0 kB
+VmHWM:	    5120 kB
+VmRSS:	    5120 kB
+RssAnon:	    1920 kB
+RssFile:	    3200 kB
+RssShmem:	       0 kB
+VmData:	    2944 kB
+VmStk:	     192 kB
+VmExe:	    5312 kB
+VmLib:	    2752 kB
+VmPTE:	     384 kB
+VmSwap:	       0 kB
+CoreDumping:	0
+THP_enabled:	0
+Threads:	1
+SigQ:	0/21761
+SigPnd:	0000000000000000
+ShdPnd:	0000000000000000
+SigBlk:	0000000000000000
+SigIgn:	0000000000001006
+SigCgt:	0000000000000000
+CapInh:	0000000000000000
+CapPrm:	000001ffffffffff
+CapEff:	000001ffffffffff
+CapBnd:	000001ffffffffff
+CapAmb:	0000000000000000
+NoNewPrivs:	0
+Seccomp:	0
+Seccomp_filters:	0
+Speculation_Store_Bypass:	thread vulnerable
+SpeculationIndirectBranch:	unknown
+Cpus_allowed:	3f
+Cpus_allowed_list:	0-5
+Mems_allowed:	1
+Mems_allowed_list:	0
+voluntary_ctxt_switches:	0
+nonvoluntary_ctxt_switches:	0

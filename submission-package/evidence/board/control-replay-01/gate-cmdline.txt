@@ -1,0 +1,1 @@
+/usr/bin/python3 /opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_safety/velocity_gate --ros-args -p command_timeout_sec:=0.5 

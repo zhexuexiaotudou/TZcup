@@ -1,0 +1,12 @@
+﻿id,item,status,value,basis,note,evidence,as_of_utc
+mapping,建图,NOT_MEASURED,,not_measured,完整首图尚未封存；历史45分钟运行未完成。,['evidence/reference/execution-status-snapshot.md'],2026-09-13T03:48:05.727823+00:00
+following,循迹,NOT_MEASURED,,not_measured,短程左右转不等于自主路线完成。,['evidence/reference/execution-status-snapshot.md'],2026-09-13T03:48:05.727823+00:00
+perception,垃圾识别与定位,NOT_MEASURED,,not_measured,板端开发HBM仅有消息活性；当前完整仿真识别定位未验收。,['evidence/reference/execution-status-snapshot.md'],2026-09-13T03:48:05.727823+00:00
+cleaning,一种清扫方式,NOT_MEASURED,,not_measured,采用边刷与中央滚刷；历史规划概率清除不证明本次动力学清扫。,['evidence/reference/execution-status-snapshot.md'],2026-09-13T03:48:05.727823+00:00
+avoidance,避障,NOT_MEASURED,,not_measured,历史分模块避障不能外推本次整链。,['evidence/reference/execution-status-snapshot.md'],2026-09-13T03:48:05.727823+00:00
+estop_function,应急制动功能,NOT_MEASURED,,not_measured,历史急停触发前已停稳；控制回放归零不是运动中车辆急停。,['evidence/reference/turn-diagnostic.md'],2026-09-13T03:48:05.727823+00:00
+localization_mm,定位≤50mm,FAIL,259.544,historical_limited_measurement,历史短程656/656配对，15ms最大跨度；EKF最大误差259.544mm。仅历史局部失败，当前全程未测。,['evidence/reference/turn-diagnostic.md'],2026-09-13T03:48:05.727823+00:00
+mapped_area_m2,建图≥20000m²,NOT_MEASURED,,not_measured,200m×100m场景边界不是已建图面积。,['evidence/reference/execution-status-snapshot.md'],2026-09-13T03:48:05.727823+00:00
+cleaning_m2_h,效率≥3500m²/h,NOT_MEASURED,,not_measured,4205.81为历史离线估计；1.32×1×3600×0.75=3564亦是理论估计。,['evidence/reference/execution-status-snapshot.md'],2026-09-13T03:48:05.727823+00:00
+width_mm,清扫宽度≥600mm,NOT_MEASURED,,not_measured,0.65m模型刷宽、1.32m展开设计值不作为有效清扫实测。,['evidence/reference/execution-status-snapshot.md'],2026-09-13T03:48:05.727823+00:00
+braking_s,制动≤1s,NOT_MEASURED,,not_measured,历史174个静止GT样本未覆盖行驶到停车过程。,['evidence/reference/turn-diagnostic.md'],2026-09-13T03:48:05.727823+00:00

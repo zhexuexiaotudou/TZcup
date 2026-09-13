@@ -1,0 +1,1 @@
+/opt/ros/humble/lib/robot_localization/ekf_node --ros-args --params-file /opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/source/ekf_replay.yaml 

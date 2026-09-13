@@ -1,0 +1,1 @@
+{"status": "S100P_MAPPING_REPLAY_PASSED", "map_sample_count": 16, "checks": {"occupancy_grid_received": true, "map_has_known_cells": true, "map_has_occupied_cells": true, "map_resolution_is_configured": true}}

@@ -1,0 +1,917 @@
+FORMAL_NATIVE_LINUX_COLD_START_EVIDENCE_BOUND: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/formal_windows_cold_start_evidence.json
+{
+  "base_commit": "224118081c4c8de651f1db621053ab873b08f13d",
+  "base_tree": "dbb7402ad1e62b621f1e3a5323ab2a3826127298",
+  "bundle_sha256": "a6b70fdc3e50a86118d3263fb05042c4e20ea294675bff17b53417c9c6309629",
+  "patch_sha256": "c101a9bfa3078139566fe8577f63a4cc525bde71d8fb3f244fdc2beb846af0b1",
+  "patched_commit": "52cf7f6bf5f8c61ebb95055b7d829a2595c16d62",
+  "patched_diff_sha256": "020ff2ba8b51a0d905a4bac3b1f75c9ac62eb20d9c4dea93ad1ea74c7b4ef592",
+  "patched_tree": "c131854aee6868e12a1748af690eed5d3712d517",
+  "repository": "opennav_coverage",
+  "required_packages": [
+    "opennav_coverage_msgs",
+    "opennav_coverage"
+  ],
+  "schema_version": 1,
+  "working_tree_clean": true
+}
+{
+  "cmake_config": {
+    "path": "/opt/ros/jazzy/lib/x86_64-linux-gnu/cmake/Fields2Cover/Fields2CoverConfig.cmake",
+    "sha256": "cf24d25582b1a440652a316f3ff23e0debbda46ac4f31bae2270d28434ad3a9a",
+    "size_bytes": 1296
+  },
+  "cmake_targets": {
+    "lib/x86_64-linux-gnu/cmake/Fields2Cover/Fields2CoverTargets-none.cmake": {
+      "sha256": "979cd2375d6e8ea888de4e6a747d3eb2cf3082fa23bc2e48483e09f080ec16c3",
+      "size_bytes": 2205
+    },
+    "lib/x86_64-linux-gnu/cmake/Fields2Cover/Fields2CoverTargets.cmake": {
+      "sha256": "cc83695f3588b45253d17b083b0490448082021883ec618cecb8cd3e0249b78a",
+      "size_bytes": 4970
+    }
+  },
+  "cmake_targets_sha256": "9122990444e8089aa7098362197c954a65640a5c65c060a0dc53e491196ac0a5",
+  "debian_architecture": "amd64",
+  "debian_binary_package": "ros-jazzy-fields2cover",
+  "debian_package": "ros-jazzy-fields2cover",
+  "debian_status": "ii",
+  "debian_version": "2.0.0-10noble.20260226.022902",
+  "dpkg_architecture": "amd64",
+  "headers": {
+    "include/fields2cover/decomposition/boustrophedon_decomp.h": {
+      "sha256": "fd8ab6b6d77539dc38c8aef9c0762bb7b3314c154396086e4f4d0801298764a8",
+      "size_bytes": 1358
+    },
+    "include/fields2cover/decomposition/decomposition_base.h": {
+      "sha256": "5270be956e5c97fee158dc355ff6255619cef9a66ab7c8166d7f687fd5259584",
+      "size_bytes": 2100
+    },
+    "include/fields2cover/decomposition/trapezoidal_decomp.h": {
+      "sha256": "7feeaa7d62023b7d844625b352e0516fe0d182cddc3fd3003822480e2b5d539c",
+      "size_bytes": 1363
+    },
+    "include/fields2cover/headland_generator/constant_headland.h": {
+      "sha256": "58b26fc52c8ec625c7b7a0de48c442748c706557d75ca88f63dfccb819db2fd8",
+      "size_bytes": 2320
+    },
+    "include/fields2cover/headland_generator/headland_generator_base.h": {
+      "sha256": "ba9096cf5597f3721778186aa9d82d275b5776f4445be6d002637a4a01c10e61",
+      "size_bytes": 2181
+    },
+    "include/fields2cover/objectives/base_objective.h": {
+      "sha256": "f92b7725b58a34690f4fec46e113ba2be20c48c7c09e7a5112c6fba3107b2d7d",
+      "size_bytes": 2154
+    },
+    "include/fields2cover/objectives/decomp_obj/decomp_objective.h": {
+      "sha256": "a2593308d6de640a6c073081488f11c41f67f6f6c5e7603610c9b168fd733782",
+      "size_bytes": 843
+    },
+    "include/fields2cover/objectives/hg_obj/hg_objective.h": {
+      "sha256": "8dd2b65c0733dcbdbdaee0f8306045a42bb0393420e59e03922c1859e638318d",
+      "size_bytes": 1130
+    },
+    "include/fields2cover/objectives/hg_obj/rem_area.h": {
+      "sha256": "e7c4f0fbe0d52d0cbdcd6afdcc12f0ceec9ca440e535ef3e396f7b956a041524",
+      "size_bytes": 790
+    },
+    "include/fields2cover/objectives/pp_obj/path_length.h": {
+      "sha256": "a5e85289c2aab444e7c2350c43f728b10317b8f61ba7dd822fe3676b69585fab",
+      "size_bytes": 732
+    },
+    "include/fields2cover/objectives/pp_obj/pp_objective.h": {
+      "sha256": "6299ca05e969e30de9fbb427da774908019277ffc6daeeb5d146703f198a61e0",
+      "size_bytes": 856
+    },
+    "include/fields2cover/objectives/rp_obj/complete_turn_path_obj.h": {
+      "sha256": "35f06b97d2fb8544e67032930a28a7a128748d6ab98cb463c1f7fee31e8d5c91",
+      "size_bytes": 2916
+    },
+    "include/fields2cover/objectives/rp_obj/direct_dist_path_obj.h": {
+      "sha256": "59d8bada691a9ef510ffc02ef0cc2d9ad72c409136ee660ac8d34ce78d5957aa",
+      "size_bytes": 883
+    },
+    "include/fields2cover/objectives/rp_obj/rp_objective.h": {
+      "sha256": "eec141c141cd162d6d80180fdeffc0d5995f02f9f0b9a4c8462822d3953282fd",
+      "size_bytes": 5124
+    },
+    "include/fields2cover/objectives/sg_obj/field_coverage.h": {
+      "sha256": "a27483ed06af255091a9aa226eead8d019389412c783b4193097cc01002eec2b",
+      "size_bytes": 1071
+    },
+    "include/fields2cover/objectives/sg_obj/n_swath.h": {
+      "sha256": "888d60638cbe17f0495c4d43478d7a3987703bcec4ada0328c20f02028ea0a50",
+      "size_bytes": 989
+    },
+    "include/fields2cover/objectives/sg_obj/n_swath_modified.h": {
+      "sha256": "50bb6c53fe5acfdbd3592e2c629a47e7c44cc51290260cfb22ea3dce3be4fa2a",
+      "size_bytes": 1069
+    },
+    "include/fields2cover/objectives/sg_obj/overlaps.h": {
+      "sha256": "c4c258860a2c4e5ffb08312f559e22cc97c2c7743b9a168ea146a32b6fea433b",
+      "size_bytes": 947
+    },
+    "include/fields2cover/objectives/sg_obj/sg_objective.h": {
+      "sha256": "8d8e9d1ff097d43489a04dffe55f7ddd866c088fac56f8a6c7e60af73aa6b556",
+      "size_bytes": 2216
+    },
+    "include/fields2cover/objectives/sg_obj/swath_length.h": {
+      "sha256": "8baa2771f5bd4fa6d84c96f5400ef3d9fa0fc4058784cc561a9e54dc8e0e7166",
+      "size_bytes": 828
+    },
+    "include/fields2cover/path_planning/dubins_curves.h": {
+      "sha256": "dc5dd57a34b4967db61671f44b16c171e983918a7dfb83a5cc44c3608236cc05",
+      "size_bytes": 833
+    },
+    "include/fields2cover/path_planning/dubins_curves_cc.h": {
+      "sha256": "cc49a7efc6a4abc0c142c32bdde3870d7187ea45f5ce43bd0404ec6e930469ff",
+      "size_bytes": 873
+    },
+    "include/fields2cover/path_planning/path_planning.h": {
+      "sha256": "28735e09d6d33d23d160872903275209e63e3ae973b7e22bbefa3688e40ad0cc",
+      "size_bytes": 1990
+    },
+    "include/fields2cover/path_planning/reeds_shepp_curves.h": {
+      "sha256": "0079f9afa6ddacdad6f464df1ba7eef735368cfd20cd63a0514ceeb6bc568659",
+      "size_bytes": 858
+    },
+    "include/fields2cover/path_planning/reeds_shepp_curves_hc.h": {
+      "sha256": "3035b04ac45355bf50f90c9155d8d3a9b4f5dc80b3db583198a39564b3f1a656",
+      "size_bytes": 892
+    },
+    "include/fields2cover/path_planning/steer_to_path.hpp": {
+      "sha256": "45a68e9c51b289cc2daeba37af6b90fc591c376304e86a7ef5518443d5d81089",
+      "size_bytes": 1978
+    },
+    "include/fields2cover/path_planning/turning_base.h": {
+      "sha256": "a63631fecd1e347ac268c2a22118a0a9aa825ec2274c6b539642f883d86a07f5",
+      "size_bytes": 3561
+    },
+    "include/fields2cover/route_planning/boustrophedon_order.h": {
+      "sha256": "728c30a0dff44238ba1b10d249e37c0a20c6811b25857c585a227e48b63194ad",
+      "size_bytes": 795
+    },
+    "include/fields2cover/route_planning/custom_order.h": {
+      "sha256": "5ee621e37f50d7f556291a5e37ca20ed8f092f3c043686b21f4eeafee578899b",
+      "size_bytes": 787
+    },
+    "include/fields2cover/route_planning/route_planner_base.h": {
+      "sha256": "a53f7c9769b9eb6d7d68a48a04a82c423a5b53bf51b1e323a2708d393fbb4970",
+      "size_bytes": 3270
+    },
+    "include/fields2cover/route_planning/single_cell_swaths_order_base.h": {
+      "sha256": "12c703fba2389484b65e006fb2d55073668dd4fee156714229700eb87405ede6",
+      "size_bytes": 964
+    },
+    "include/fields2cover/route_planning/snake_order.h": {
+      "sha256": "e505e6660e862bda25bb0d23ab466ef5f4983c78784cc55200f9d8ae89fbeefa",
+      "size_bytes": 762
+    },
+    "include/fields2cover/route_planning/spiral_order.h": {
+      "sha256": "e19997416b9119831484a8fac8b675a49966c4c09457b1654a575cccc677b45e",
+      "size_bytes": 659
+    },
+    "include/fields2cover/swath_generator/brute_force.h": {
+      "sha256": "dde7dd26ba0031b3265ce06b41996efbd7581a2c1ad567e8574e8081324c9ce7",
+      "size_bytes": 1029
+    },
+    "include/fields2cover/swath_generator/swath_generator_base.h": {
+      "sha256": "224c50454e9258b076dd9d816ad13f7843c37dd578456c227cc65d8521e890ff",
+      "size_bytes": 1531
+    },
+    "include/fields2cover/types.h": {
+      "sha256": "3f4d544b689eb92e0a16281af083d5fe77fe7da86d3078cfe61e8815a3932a74",
+      "size_bytes": 2012
+    },
+    "include/fields2cover/types/Cell.h": {
+      "sha256": "031f58d559562cc49f8da351c5f3b9b0ca64c0e894d334058064698c32bddfe6",
+      "size_bytes": 3630
+    },
+    "include/fields2cover/types/Cells.h": {
+      "sha256": "112512d561359b050fa6a29ad604aedc86aa043967e30f2363755f133b5c5943",
+      "size_bytes": 3109
+    },
+    "include/fields2cover/types/Field.h": {
+      "sha256": "7150b8c8e3d3d9b58e407ddeabbe53eca09c09468f1814825d0030c931747e65",
+      "size_bytes": 2453
+    },
+    "include/fields2cover/types/Geometries.h": {
+      "sha256": "37900a5e8a3d7b523d22859e8dc965502ccebf9349ea004edd5dfc3baa2dce01",
+      "size_bytes": 2777
+    },
+    "include/fields2cover/types/Geometries_impl.hpp": {
+      "sha256": "b0d572557df1e5858ce86d35e4996696ceaa7a59cfb1cd57b0c92d48f31892b9",
+      "size_bytes": 8020
+    },
+    "include/fields2cover/types/Geometry.h": {
+      "sha256": "689d3207beb148d0a31fe358d972aa95b9cd2d1e50b95180a7dab2d522de3933",
+      "size_bytes": 5216
+    },
+    "include/fields2cover/types/Geometry_impl.hpp": {
+      "sha256": "df7e2a282d013c830144023d018fe9cc13649c9fe0c78b9af2aefb0809cd6434",
+      "size_bytes": 11732
+    },
+    "include/fields2cover/types/Graph.h": {
+      "sha256": "10194d0f7080124a29d607d02a429e8d3d904da4d2258aca1c8649d11dfe3fee",
+      "size_bytes": 1826
+    },
+    "include/fields2cover/types/Graph2D.h": {
+      "sha256": "95d656b05ad41455b79d12ec4d60cca9b5a99b1e441f567d1c379aba717c6d1d",
+      "size_bytes": 2038
+    },
+    "include/fields2cover/types/LineString.h": {
+      "sha256": "9f0c03d1493cd4f83c7a58945914fd22283a0a569355d3340e2b5d2d23e0ab41",
+      "size_bytes": 1894
+    },
+    "include/fields2cover/types/LinearRing.h": {
+      "sha256": "ffe54704556616e0646f24a75811ba35fa165702634be3a961d8cb8bb79e187f",
+      "size_bytes": 1635
+    },
+    "include/fields2cover/types/MultiLineString.h": {
+      "sha256": "0936abe12899234d101822bbfe00de0c04b911056d03f365bdbd96b560350a42",
+      "size_bytes": 2537
+    },
+    "include/fields2cover/types/MultiPoint.h": {
+      "sha256": "978a336af079217fc50af2b200b412e36c3b3cc6b97a1158fbc97214cd062edd",
+      "size_bytes": 1581
+    },
+    "include/fields2cover/types/Path.h": {
+      "sha256": "96efc565bb7ae35606d1f896ebb4c57f3198817071d23773e6c5e08cc9349e42",
+      "size_bytes": 2897
+    },
+    "include/fields2cover/types/PathState.h": {
+      "sha256": "5081db5931ccb5e81c51a4c7e2cbf1e2253f1b4cb6589ee37d98b4ad04a2d715",
+      "size_bytes": 953
+    },
+    "include/fields2cover/types/Point.h": {
+      "sha256": "07fd7ad6edd7c69e2735e6675e1034e79f5b37698f19efdcd14e9f15eb11bff3",
+      "size_bytes": 4637
+    },
+    "include/fields2cover/types/Robot.h": {
+      "sha256": "6ab342abb07969130baf6d9732d3dc381dc2f307ea3be8a33221e0a955b912ea",
+      "size_bytes": 2136
+    },
+    "include/fields2cover/types/Route.h": {
+      "sha256": "6747ddfaac5342da15c412b2d66634518476849907a8f33da94a103c6fff6598",
+      "size_bytes": 2016
+    },
+    "include/fields2cover/types/Strip.h": {
+      "sha256": "9d3dd24adf200949fba4e95a94c99f17632a9679caa60d03255edb96d8335ca6",
+      "size_bytes": 806
+    },
+    "include/fields2cover/types/Swath.h": {
+      "sha256": "d65739d06635992a9da8cd5be9fd2d9441488c325da357d341fa6fb09585576b",
+      "size_bytes": 2682
+    },
+    "include/fields2cover/types/Swaths.h": {
+      "sha256": "edf62de1156129053d1ce2f2d83ad0e940c9da10dee0ce02fe7f0c68897c8a4d",
+      "size_bytes": 2357
+    },
+    "include/fields2cover/types/SwathsByCells.h": {
+      "sha256": "e5f475665e6189268a34c2374e6f4106a93387d3702fda1e665d29e9d1c68b16",
+      "size_bytes": 1590
+    },
+    "include/fields2cover/utils/parser.h": {
+      "sha256": "a6f46a0141d8e7abfda5b877c2e9540d47f16d886e91c608b3953909cf63ba4b",
+      "size_bytes": 1555
+    },
+    "include/fields2cover/utils/random.h": {
+      "sha256": "6e430053064103db691b981c8226d56f2aa84834b2dd5f194f6e3e6591243b8e",
+      "size_bytes": 3171
+    },
+    "include/fields2cover/utils/spline.h": {
+      "sha256": "d373497db165ee2b30ba1a3bac7b5b2e0f554d58b89d3708d7c878001d94329c",
+      "size_bytes": 2283
+    },
+    "include/fields2cover/utils/transformation.h": {
+      "sha256": "9b5bcbf66f2d1d34f9e7dfbbd96a8a1be00e3d190c9156d081cc6a747faffcbc",
+      "size_bytes": 4145
+    },
+    "include/fields2cover/utils/visualizer.h": {
+      "sha256": "c91d4f337b53ab7a49ecc23511c311eb044d648f94277661bd989cfda1e945b6",
+      "size_bytes": 5143
+    }
+  },
+  "headers_sha256": "0aef5497e7ae53c38b534849fd58c451caa15b42004e75ee9b9b66627436bf3a",
+  "libraries_copied_into_runtime": false,
+  "library": {
+    "declared_path": "/opt/ros/jazzy/lib/x86_64-linux-gnu/libFields2Cover.so",
+    "resolved_path": "/opt/ros/jazzy/lib/x86_64-linux-gnu/libFields2Cover.so",
+    "sha256": "9af6b3592363e7f097e0033b04eeb2aef0ff977448da043bda500af2f2c366e1",
+    "size_bytes": 2567384
+  }
+}
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: is subject to change. To configure the initial branch name to use in all
+hint: of your new repositories, which will suppress this warning, call:
+hint: 
+hint: 	git config --global init.defaultBranch <name>
+hint: 
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint: 
+hint: 	git branch -m <name>
+Initialized empty Git repository in /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/vendor/gz_transport13_eintr_build/source/.git/
+/workspace/tzcup-competition-sim-only-20260912/source/TZcup-f9909a2/.work/runtime-dependencies/gz-transport13-complete.bundle is okay
+The bundle contains this ref:
+7232d0b163b08f79dd390ad9913d6ea72efaf209 refs/tags/gz-transport13_13.5.0
+The bundle records a complete history.
+The bundle uses this hash algorithm: sha1
+From /workspace/tzcup-competition-sim-only-20260912/source/TZcup-f9909a2/.work/runtime-dependencies/gz-transport13-complete.bundle
+ * tag               gz-transport13_13.5.0 -> FETCH_HEAD
+notice: HEAD points to an unborn branch (master)
+notice: No default references
+dangling commit 7232d0b163b08f79dd390ad9913d6ea72efaf209
+HEAD is now at 7232d0b1 Prepare for 13.5.0 Release (#738)
+-- The C compiler identification is GNU 13.2.0
+-- The CXX compiler identification is GNU 13.2.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- gz-transport13 version 13.5.0
+-- Operating system is Linux
+-- Found CPack generators: DEB
+-- 
+
+-- ====== Finding Dependencies ======
+-- Found Python3: /usr/bin/python3 (found version "3.12.3") found components: Interpreter Development Development.Module Development.Embed 
+-- Found Protobuf: /usr/lib/x86_64-linux-gnu/libprotobuf.so (found version "3.21.12") 
+-- Looking for Protobuf - found
+
+-- Config-file not installed for ZeroMQ -- checking for pkg-config
+-- Checking for module 'libzmq >= 4'
+--   Found libzmq, version 4.3.5
+-- Found ZeroMQ: TRUE (Required is at least version "4") 
+-- Looking for ZeroMQ - found
+
+-- Looking for CppZMQ - found
+
+-- Checking for module 'uuid'
+--   Found uuid, version 2.39.3
+-- Found UUID: TRUE  
+-- Looking for UUID - found
+
+-- Looking for gz-utils2 -- found version 2.2.1
+-- Searching for dependencies of gz-utils2
+-- Searching for <gz-utils2> component [cli]
+-- Looking for gz-utils2-cli -- found version 2.2.1
+-- Searching for dependencies of gz-utils2-cli
+-- Looking for gz-utils2 - found
+
+-- Looking for gz-msgs10 -- found version 10.3.2
+-- Searching for dependencies of gz-msgs10
+-- Looking for gz-utils2 -- found version 2.2.1
+-- Looking for gz-math7 -- found version 7.6.0
+-- Searching for dependencies of gz-math7
+-- Looking for gz-utils2 -- found version 2.2.1
+-- Checking for module 'tinyxml2'
+--   Found tinyxml2, version 10.0.0
+-- Looking for gz-msgs10 - found
+
+-- Looking for IFADDRS - found
+
+-- Checking for module 'sqlite3 >= 3.7.13'
+--   Found sqlite3, version 3.45.1
+-- Looking for sqlite3 - found
+
+-- 
+-- Searching for host SSE information
+-- SSE2 found
+-- SSE3 found
+-- SSE4.1 found
+-- SSE4.2 found
+-- Configuring library: gz-transport13
+-- Performing Test COMPILER_HAS_HIDDEN_VISIBILITY
+-- Performing Test COMPILER_HAS_HIDDEN_VISIBILITY - Success
+-- Performing Test COMPILER_HAS_HIDDEN_INLINE_VISIBILITY
+-- Performing Test COMPILER_HAS_HIDDEN_INLINE_VISIBILITY - Success
+-- Performing Test COMPILER_HAS_DEPRECATED_ATTR
+-- Performing Test COMPILER_HAS_DEPRECATED_ATTR - Success
+-- Testing is disabled -- skipping UNIT tests
+-- Testing is disabled -- skipping UNIT tests
+-- Configuring library: gz-transport13-log
+-- Testing is disabled -- skipping UNIT tests
+-- Configuring library: gz-transport13-parameters
+-- Testing is disabled -- skipping UNIT tests
+-- Adding codecheck target
+-- Build configuration successful
+-- Performing Test HAS_FLTO
+-- Performing Test HAS_FLTO - Success
+-- Searching for pybind11 - found version 2.11.1.
+-- Building pybind11 interfaces
+-- Build type: Release
+-- Install prefix: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install
+-- Could NOT find Doxygen (missing: DOXYGEN_EXECUTABLE) 
+-- Configuring done (15.2s)
+-- Generating done (0.3s)
+-- Build files have been written to: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/vendor/gz_transport13_eintr_build/build
+[  2%] Building CXX object src/CMakeFiles/gz-transport13.dir/AdvertiseOptions.cc.o
+[  4%] Building CXX object src/CMakeFiles/gz-transport13.dir/CIface.cc.o
+[  6%] Building CXX object src/CMakeFiles/gz-transport13.dir/Clock.cc.o
+[  8%] Building CXX object src/CMakeFiles/gz-transport13.dir/Discovery.cc.o
+[ 11%] Building CXX object src/CMakeFiles/gz-transport13.dir/Helpers.cc.o
+[ 13%] Building CXX object src/CMakeFiles/gz-transport13.dir/MessageInfo.cc.o
+[ 15%] Building CXX object src/CMakeFiles/gz-transport13.dir/NetUtils.cc.o
+[ 17%] Building CXX object src/CMakeFiles/gz-transport13.dir/Node.cc.o
+[ 20%] Building CXX object src/CMakeFiles/gz-transport13.dir/NodeOptions.cc.o
+[ 22%] Building CXX object src/CMakeFiles/gz-transport13.dir/NodeShared.cc.o
+[ 24%] Building CXX object src/CMakeFiles/gz-transport13.dir/Publisher.cc.o
+[ 26%] Building CXX object src/CMakeFiles/gz-transport13.dir/SubscribeOptions.cc.o
+[ 28%] Building CXX object src/CMakeFiles/gz-transport13.dir/SubscriptionHandler.cc.o
+[ 31%] Building CXX object src/CMakeFiles/gz-transport13.dir/TopicStatistics.cc.o
+[ 33%] Building CXX object src/CMakeFiles/gz-transport13.dir/TopicUtils.cc.o
+[ 35%] Building CXX object src/CMakeFiles/gz-transport13.dir/Uuid.cc.o
+[ 37%] Linking CXX shared library ../lib/libgz-transport13.so
+[ 37%] Built target gz-transport13
+[ 40%] Building CXX object src/cmd/CMakeFiles/gz.dir/gz.cc.o
+[ 42%] Linking CXX static library ../../lib/libgz.a
+[ 42%] Built target gz
+[ 44%] Building CXX object src/cmd/CMakeFiles/gz-transport-topic.dir/topic_main.cc.o
+[ 46%] Linking CXX executable ../../bin/gz-transport-topic
+[ 46%] Built target gz-transport-topic
+[ 48%] Building CXX object src/cmd/CMakeFiles/gz-transport-service.dir/service_main.cc.o
+[ 51%] Linking CXX executable ../../bin/gz-transport-service
+[ 51%] Built target gz-transport-service
+[ 53%] Building CXX object log/src/CMakeFiles/gz-transport13-log.dir/Batch.cc.o
+[ 55%] Building CXX object log/src/CMakeFiles/gz-transport13-log.dir/Console.cc.o
+[ 57%] Building CXX object log/src/CMakeFiles/gz-transport13-log.dir/Descriptor.cc.o
+[ 60%] Building CXX object log/src/CMakeFiles/gz-transport13-log.dir/Log.cc.o
+[ 62%] Building CXX object log/src/CMakeFiles/gz-transport13-log.dir/Message.cc.o
+[ 64%] Building CXX object log/src/CMakeFiles/gz-transport13-log.dir/MsgIter.cc.o
+[ 66%] Building CXX object log/src/CMakeFiles/gz-transport13-log.dir/Playback.cc.o
+[ 68%] Building CXX object log/src/CMakeFiles/gz-transport13-log.dir/QualifiedTime.cc.o
+[ 71%] Building CXX object log/src/CMakeFiles/gz-transport13-log.dir/QueryOptions.cc.o
+[ 73%] Building CXX object log/src/CMakeFiles/gz-transport13-log.dir/Recorder.cc.o
+[ 75%] Building CXX object log/src/CMakeFiles/gz-transport13-log.dir/SqlStatement.cc.o
+[ 77%] Building CXX object log/src/CMakeFiles/gz-transport13-log.dir/raii-sqlite3.cc.o
+[ 80%] Building CXX object log/src/CMakeFiles/gz-transport13-log.dir/cmd/LogCommandAPI.cc.o
+[ 82%] Linking CXX shared library ../../lib/libgz-transport13-log.so
+[ 82%] Built target gz-transport13-log
+[ 84%] Building CXX object parameters/src/CMakeFiles/gz-transport13-parameters.dir/Client.cc.o
+[ 86%] Building CXX object parameters/src/CMakeFiles/gz-transport13-parameters.dir/Registry.cc.o
+[ 88%] Building CXX object parameters/src/CMakeFiles/gz-transport13-parameters.dir/Utils.cc.o
+[ 91%] Building CXX object parameters/src/CMakeFiles/gz-transport13-parameters.dir/result.cc.o
+[ 93%] Building CXX object parameters/src/CMakeFiles/gz-transport13-parameters.dir/cmd/ParamCommandAPI.cc.o
+[ 95%] Linking CXX shared library ../../lib/libgz-transport13-parameters.so
+[ 95%] Built target gz-transport13-parameters
+[ 97%] Building CXX object python/CMakeFiles/_transport.dir/src/transport/_gz_transport_pybind11.cc.o
+[100%] Linking CXX shared module ../lib/_transport.cpython-312-x86_64-linux-gnu.so
+lto-wrapper: warning: using serial compilation of 4 LTRANS jobs
+lto-wrapper: note: see the ‘-flto’ option documentation for more information
+[100%] Built target _transport
+-- Install configuration: "Release"
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/cmake/gz-transport13-all/gz-transport13-all-config.cmake
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/cmake/gz-transport13-all/gz-transport13-all-config-version.cmake
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/cmake/gz-transport13-all/gz-transport13-all-targets.cmake
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/detail/Export.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/Export.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/libgz-transport13.so.13.5.0
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/libgz-transport13.so.13
+-- Set non-toolchain portion of runtime path of "/workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/libgz-transport13.so.13.5.0" to ""
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/libgz-transport13.so
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/cmake/gz-transport13/gz-transport13-config.cmake
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/cmake/gz-transport13/gz-transport13-config-version.cmake
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/cmake/gz-transport13/gz-transport13-targets.cmake
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/cmake/gz-transport13/gz-transport13-targets-release.cmake
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/pkgconfig/gz-transport13.pc
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/libexec/gz/transport13/gz-transport-topic
+-- Set non-toolchain portion of runtime path of "/workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/libexec/gz/transport13/gz-transport-topic" to ""
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/libexec/gz/transport13/gz-transport-service
+-- Set non-toolchain portion of runtime path of "/workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/libexec/gz/transport13/gz-transport-service" to ""
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/ruby/gz/cmdtransport13.rb
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/share/gz/gz2.completion.d/transport13.bash_completion.sh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/AdvertiseOptions.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/CIface.h
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/Clock.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/Discovery.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/HandlerStorage.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/Helpers.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/MessageInfo.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/NetUtils.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/Node.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/NodeOptions.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/NodeShared.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/Publisher.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/RepHandler.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/ReqHandler.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/SubscribeOptions.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/SubscriptionHandler.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/TopicStatistics.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/TopicStorage.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/TopicUtils.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/TransportTypes.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/Uuid.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/config.hh
+-- Up-to-date: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/detail
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/detail/Node.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/log/detail/Export.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/log/Export.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/libgz-transport13-log.so.13.5.0
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/libgz-transport13-log.so.13
+-- Set non-toolchain portion of runtime path of "/workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/libgz-transport13-log.so.13.5.0" to ""
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/libgz-transport13-log.so
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/cmake/gz-transport13-log/gz-transport13-log-config.cmake
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/cmake/gz-transport13-log/gz-transport13-log-config-version.cmake
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/cmake/gz-transport13-log/gz-transport13-log-targets.cmake
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/cmake/gz-transport13-log/gz-transport13-log-targets-release.cmake
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/pkgconfig/gz-transport13-log.pc
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/share/gz/gz-transport13/sql
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/share/gz/gz-transport13/sql/0.1.0.sql
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/ruby/gz/cmdlog13.rb
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/share/gz/transportlog13.yaml
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/log/Batch.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/log/Descriptor.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/log/Log.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/log/Message.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/log/MsgIter.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/log/Playback.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/log/QualifiedTime.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/log/QueryOptions.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/log/Recorder.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/log/SqlStatement.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/log/detail/QueryOptions.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/log.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/parameters/detail/Export.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/parameters/Export.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/libgz-transport13-parameters.so.13.5.0
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/libgz-transport13-parameters.so.13
+-- Set non-toolchain portion of runtime path of "/workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/libgz-transport13-parameters.so.13.5.0" to ""
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/libgz-transport13-parameters.so
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/cmake/gz-transport13-parameters/gz-transport13-parameters-config.cmake
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/cmake/gz-transport13-parameters/gz-transport13-parameters-config-version.cmake
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/cmake/gz-transport13-parameters/gz-transport13-parameters-targets.cmake
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/cmake/gz-transport13-parameters/gz-transport13-parameters-targets-release.cmake
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/pkgconfig/gz-transport13-parameters.pc
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/ruby/gz/cmdparam13.rb
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/share/gz/transportparam13.yaml
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/parameters/Client.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/parameters/Interface.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/parameters/Registry.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/parameters/result.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/include/gz/transport13/gz/transport/parameters.hh
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/share/gz/transport13.yaml
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/python/gz/transport13/_transport.cpython-312-x86_64-linux-gnu.so
+-- Set non-toolchain portion of runtime path of "/workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/python/gz/transport13/_transport.cpython-312-x86_64-linux-gnu.so" to ""
+-- Installing: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/lib/python/gz/transport13/__init__.py
+patched gz-transport13 installed: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install
+build report: /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/gz_transport13_eintr_vendor_build_report.json
+activation: source /workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/vendor/gz_transport13_eintr_build/activate_patched_runtime.sh
+Starting >>> sanitation_safety
+--- stderr: sanitation_safety
+warning: build_py: byte-compiling is disabled, skipping.
+
+warning: install_lib: byte-compiling is disabled, skipping.
+
+---
+Finished <<< sanitation_safety [4.81s]
+Starting >>> sanitation_gazebo_auxiliary
+[Processing: sanitation_gazebo_auxiliary]
+[Processing: sanitation_gazebo_auxiliary]
+Finished <<< sanitation_gazebo_auxiliary [1min 4s]
+Starting >>> sanitation_gazebo_control
+[Processing: sanitation_gazebo_control]
+[Processing: sanitation_gazebo_control]
+[Processing: sanitation_gazebo_control]
+[Processing: sanitation_gazebo_control]
+[Processing: sanitation_gazebo_control]
+[Processing: sanitation_gazebo_control]
+[Processing: sanitation_gazebo_control]
+[Processing: sanitation_gazebo_control]
+[Processing: sanitation_gazebo_control]
+[Processing: sanitation_gazebo_control]
+[Processing: sanitation_gazebo_control]
+[Processing: sanitation_gazebo_control]
+[Processing: sanitation_gazebo_control]
+[Processing: sanitation_gazebo_control]
+Finished <<< sanitation_gazebo_control [7min 5s]
+Starting >>> sanitation_localization
+--- stderr: sanitation_localization
+warning: build_py: byte-compiling is disabled, skipping.
+
+warning: install_lib: byte-compiling is disabled, skipping.
+
+---
+Finished <<< sanitation_localization [5.21s]
+Starting >>> sanitation_power_system
+--- stderr: sanitation_power_system
+warning: build_py: byte-compiling is disabled, skipping.
+
+warning: install_lib: byte-compiling is disabled, skipping.
+
+---
+Finished <<< sanitation_power_system [4.42s]
+Starting >>> sanitation_tasks
+--- stderr: sanitation_tasks
+warning: build_py: byte-compiling is disabled, skipping.
+
+warning: install_lib: byte-compiling is disabled, skipping.
+
+---
+Finished <<< sanitation_tasks [4.47s]
+Starting >>> opennav_coverage_msgs
+--- stderr: opennav_coverage_msgs
+CMake Warning:
+  Manually-specified variables were not used by the project:
+
+    Protobuf_DIR
+    Protobuf_INCLUDE_DIR
+    Protobuf_LIBRARY
+    Protobuf_LIBRARY_RELEASE
+    Protobuf_LITE_LIBRARY
+    Protobuf_LITE_LIBRARY_RELEASE
+    Protobuf_PROTOC_EXECUTABLE
+    Protobuf_PROTOC_LIBRARY
+    Protobuf_PROTOC_LIBRARY_RELEASE
+    Protobuf_USE_STATIC_LIBS
+
+
+---
+[Processing: opennav_coverage_msgs]
+[Processing: opennav_coverage_msgs]
+[Processing: opennav_coverage_msgs]
+[Processing: opennav_coverage_msgs]
+[Processing: opennav_coverage_msgs]
+Finished <<< opennav_coverage_msgs [2min 56s]
+Starting >>> sanitation_vehicle_description
+--- stderr: sanitation_vehicle_description
+CMake Warning:
+  Manually-specified variables were not used by the project:
+
+    CMAKE_EXPORT_COMPILE_COMMANDS
+    Protobuf_DIR
+    Protobuf_INCLUDE_DIR
+    Protobuf_LIBRARY
+    Protobuf_LIBRARY_RELEASE
+    Protobuf_LITE_LIBRARY
+    Protobuf_LITE_LIBRARY_RELEASE
+    Protobuf_PROTOC_EXECUTABLE
+    Protobuf_PROTOC_LIBRARY
+    Protobuf_PROTOC_LIBRARY_RELEASE
+    Protobuf_USE_STATIC_LIBS
+
+
+---
+Finished <<< sanitation_vehicle_description [6.18s]
+Starting >>> sanitation_perception_interfaces
+--- stderr: sanitation_perception_interfaces
+CMake Warning:
+  Manually-specified variables were not used by the project:
+
+    Protobuf_DIR
+    Protobuf_INCLUDE_DIR
+    Protobuf_LIBRARY
+    Protobuf_LIBRARY_RELEASE
+    Protobuf_LITE_LIBRARY
+    Protobuf_LITE_LIBRARY_RELEASE
+    Protobuf_PROTOC_EXECUTABLE
+    Protobuf_PROTOC_LIBRARY
+    Protobuf_PROTOC_LIBRARY_RELEASE
+    Protobuf_USE_STATIC_LIBS
+
+
+---
+[Processing: sanitation_perception_interfaces]
+[Processing: sanitation_perception_interfaces]
+[Processing: sanitation_perception_interfaces]
+Finished <<< sanitation_perception_interfaces [1min 58s]
+Starting >>> opennav_coverage
+--- stderr: opennav_coverage
+CMake Warning:
+  Manually-specified variables were not used by the project:
+
+    Protobuf_DIR
+    Protobuf_INCLUDE_DIR
+    Protobuf_LIBRARY
+    Protobuf_LIBRARY_RELEASE
+    Protobuf_LITE_LIBRARY
+    Protobuf_LITE_LIBRARY_RELEASE
+    Protobuf_PROTOC_EXECUTABLE
+    Protobuf_PROTOC_LIBRARY
+    Protobuf_PROTOC_LIBRARY_RELEASE
+    Protobuf_USE_STATIC_LIBS
+
+
+---
+[Processing: opennav_coverage]
+[Processing: opennav_coverage]
+[Processing: opennav_coverage]
+[Processing: opennav_coverage]
+[Processing: opennav_coverage]
+[Processing: opennav_coverage]
+[Processing: opennav_coverage]
+[Processing: opennav_coverage]
+[Processing: opennav_coverage]
+[Processing: opennav_coverage]
+[Processing: opennav_coverage]
+[Processing: opennav_coverage]
+[Processing: opennav_coverage]
+[Processing: opennav_coverage]
+[Processing: opennav_coverage]
+[Processing: opennav_coverage]
+Finished <<< opennav_coverage [8min 17s]
+Starting >>> sanitation_campus_scenario
+--- stderr: sanitation_campus_scenario
+warning: build_py: byte-compiling is disabled, skipping.
+
+warning: install_lib: byte-compiling is disabled, skipping.
+
+---
+Finished <<< sanitation_campus_scenario [6.64s]
+Starting >>> sanitation_navigation
+--- stderr: sanitation_navigation
+CMake Warning:
+  Manually-specified variables were not used by the project:
+
+    CMAKE_EXPORT_COMPILE_COMMANDS
+    Protobuf_DIR
+    Protobuf_INCLUDE_DIR
+    Protobuf_LIBRARY
+    Protobuf_LIBRARY_RELEASE
+    Protobuf_LITE_LIBRARY
+    Protobuf_LITE_LIBRARY_RELEASE
+    Protobuf_PROTOC_EXECUTABLE
+    Protobuf_PROTOC_LIBRARY
+    Protobuf_PROTOC_LIBRARY_RELEASE
+    Protobuf_USE_STATIC_LIBS
+
+
+---
+Finished <<< sanitation_navigation [6.35s]
+Starting >>> sanitation_coverage
+--- stderr: sanitation_coverage
+warning: build_py: byte-compiling is disabled, skipping.
+
+warning: install_lib: byte-compiling is disabled, skipping.
+
+---
+Finished <<< sanitation_coverage [6.63s]
+Starting >>> sanitation_manipulation
+--- stderr: sanitation_manipulation
+warning: build_py: byte-compiling is disabled, skipping.
+
+warning: install_lib: byte-compiling is disabled, skipping.
+
+---
+Finished <<< sanitation_manipulation [6.35s]
+Starting >>> sanitation_perception
+--- stderr: sanitation_perception
+warning: build_py: byte-compiling is disabled, skipping.
+
+warning: install_lib: byte-compiling is disabled, skipping.
+
+---
+Finished <<< sanitation_perception [7.20s]
+Starting >>> sanitation_formal_campus_integration
+--- stderr: sanitation_formal_campus_integration
+warning: build_py: byte-compiling is disabled, skipping.
+
+warning: install_lib: byte-compiling is disabled, skipping.
+
+---
+Finished <<< sanitation_formal_campus_integration [8.11s]
+Starting >>> sanitation_active_cleaning
+--- stderr: sanitation_active_cleaning
+warning: build_py: byte-compiling is disabled, skipping.
+
+warning: install_lib: byte-compiling is disabled, skipping.
+
+---
+Finished <<< sanitation_active_cleaning [8.19s]
+Starting >>> sanitation_perception_evaluator
+--- stderr: sanitation_perception_evaluator
+warning: build_py: byte-compiling is disabled, skipping.
+
+warning: install_lib: byte-compiling is disabled, skipping.
+
+---
+Finished <<< sanitation_perception_evaluator [7.60s]
+Starting >>> sanitation_service_acceptance
+--- stderr: sanitation_service_acceptance
+warning: build_py: byte-compiling is disabled, skipping.
+
+warning: install_lib: byte-compiling is disabled, skipping.
+
+---
+Finished <<< sanitation_service_acceptance [7.08s]
+Starting >>> sanitation_product_demo_integration
+--- stderr: sanitation_product_demo_integration
+warning: build_py: byte-compiling is disabled, skipping.
+
+warning: install_lib: byte-compiling is disabled, skipping.
+
+---
+Finished <<< sanitation_product_demo_integration [8.01s]
+
+Summary: 20 packages finished [22min 58s]
+  18 packages had stderr output: opennav_coverage opennav_coverage_msgs sanitation_active_cleaning sanitation_campus_scenario sanitation_coverage sanitation_formal_campus_integration sanitation_localization sanitation_manipulation sanitation_navigation sanitation_perception sanitation_perception_evaluator sanitation_perception_interfaces sanitation_power_system sanitation_product_demo_integration sanitation_safety sanitation_service_acceptance sanitation_tasks sanitation_vehicle_description
+{
+  "central_expected": {
+    "kd": 50.0,
+    "kp": 1500.0,
+    "length_m": 0.62,
+    "max_vel": 0.2,
+    "min_depth": 0.003,
+    "mu": 0.08,
+    "mu2": 0.08,
+    "pose_z_m": 0.0,
+    "radius_m": 0.1
+  },
+  "central_roller": {
+    "collision": "central_roller_link_collision",
+    "collision_count_on_link": 1,
+    "collision_index": 0,
+    "joint": "central_roller_joint",
+    "length_m": 0.62,
+    "link": "central_roller_link",
+    "pose_z_m": 0.0,
+    "radius_m": 0.1,
+    "surface": {
+      "kd": 50.0,
+      "kp": 1500.0,
+      "max_vel": 0.2,
+      "min_depth": 0.003,
+      "mu": 0.08,
+      "mu2": 0.08
+    }
+  },
+  "claim_boundary": "This gate proves xacro-to-sdformat serialization. With gz-physics 7 DART, only friction ode mu/mu2 from these side-brush and central-roller bristle-sweep proxies are runtime-effective; contact ode kp/kd/max_vel/min_depth are preserved evidence, not a claim of DART compliance.",
+  "expanded_sdf_sha256": "3400f046c9005cf5c1980500caaaa5806a05e960102c067c7f12d5615fa9e5de",
+  "expected": {
+    "kd": 50.0,
+    "kp": 1500.0,
+    "length_m": 0.026,
+    "max_vel": 0.2,
+    "min_depth": 0.003,
+    "mu": 0.08,
+    "mu2": 0.08,
+    "pose_z_m": -0.065,
+    "radius_m": 0.15
+  },
+  "runtime_effectiveness": {
+    "dart_effective_from_surface_friction_ode": [
+      "mu",
+      "mu2"
+    ],
+    "dynamic_acceptance_required": "same-update signed measured_speed/current/temperature/fault telemetry for side brushes and central roller",
+    "serialized_but_not_consumed_by_gz_physics_7_dart": [
+      "kp",
+      "kd",
+      "max_vel",
+      "min_depth"
+    ]
+  },
+  "schema_version": 2,
+  "sides": {
+    "left": {
+      "collision": "left_side_brush_link_collision",
+      "collision_count_on_link": 3,
+      "collision_index": 0,
+      "joint": "left_side_brush_joint",
+      "length_m": 0.026,
+      "link": "left_side_brush_link",
+      "pose_z_m": -0.065,
+      "radius_m": 0.15,
+      "surface": {
+        "kd": 50.0,
+        "kp": 1500.0,
+        "max_vel": 0.2,
+        "min_depth": 0.003,
+        "mu": 0.08,
+        "mu2": 0.08
+      }
+    },
+    "right": {
+      "collision": "right_side_brush_link_collision",
+      "collision_count_on_link": 3,
+      "collision_index": 0,
+      "joint": "right_side_brush_joint",
+      "length_m": 0.026,
+      "link": "right_side_brush_link",
+      "pose_z_m": -0.065,
+      "radius_m": 0.15,
+      "surface": {
+        "kd": 50.0,
+        "kp": 1500.0,
+        "max_vel": 0.2,
+        "min_depth": 0.003,
+        "mu": 0.08,
+        "mu2": 0.08
+      }
+    }
+  },
+  "source": {
+    "expanded_urdf_sha256": "9ca14753a857283d89c98fda2bcdc5e1d2d2929142ef645d79f3c5c759159b26",
+    "mode": "xacro_to_gz_sdf",
+    "path": "/workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install/share/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro",
+    "sha256": "2454fdbd962062eee9574654e081c467b4651db5a2c8fc03393f2aa78a2c5016"
+  },
+  "status": "FORMAL_SIDE_BRUSH_EXPANDED_SDF_SURFACE_PASSED"
+}

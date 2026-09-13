@@ -1,0 +1,76 @@
+[INFO] [launch]: All log files can be found below /root/.ros/log/2026-09-12-02-49-31-473486-digua-2171311
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [rgb_to_nv12_adapter-1]: process started with pid [2171316]
+[INFO] [hobot_dosod-2]: process started with pid [2171318]
+[INFO] [mono_edgesam-3]: process started with pid [2171320]
+[INFO] [open_vocab_product_adapter-4]: process started with pid [2171322]
+[mono_edgesam-3] [UCP]: log level = 3
+[mono_edgesam-3] [UCP]: UCP version = 3.13.6
+[hobot_dosod-2] [UCP]: log level = 3
+[hobot_dosod-2] [UCP]: UCP version = 3.13.6
+[hobot_dosod-2] [VP]: log level = 3
+[hobot_dosod-2] [DNN]: log level = 3
+[hobot_dosod-2] [HPL]: log level = 3
+[mono_edgesam-3] [VP]: log level = 3
+[mono_edgesam-3] [DNN]: log level = 3
+[hobot_dosod-2] [UCPT]: log level = 6
+[mono_edgesam-3] [HPL]: log level = 3
+[mono_edgesam-3] [UCPT]: log level = 6
+[hobot_dosod-2] [WARN] [1789152571.717007800] [hobot_dosod]: This is hobot dosod!
+[mono_edgesam-3] [WARN] [1789152571.766357350] [mono_edgesam]: Parameter:
+[mono_edgesam-3]  cache_len_limit: 8
+[mono_edgesam-3]  dump_render_img: 0
+[mono_edgesam-3]  feed_type(0:local, 1:sub): 1
+[mono_edgesam-3]  image: ./config/4.jpg
+[mono_edgesam-3]  encoder_model_file_name: /opt/tzcup/s100p/artifacts/development-smoke/dosod-product-liveness-r14d-20260908T114500Z/edgesam/edgesam_encoder_512.hbm
+[mono_edgesam-3]  decoder_model_file_name: /opt/tzcup/s100p/artifacts/development-smoke/dosod-product-liveness-r14d-20260908T114500Z/edgesam/edgesam_decoder_512.hbm
+[mono_edgesam-3]  is_regular_box: 0
+[mono_edgesam-3]  is_padding_seg: 0
+[mono_edgesam-3]  is_shared_mem_sub: 0
+[mono_edgesam-3]  is_sync_mode: 0
+[mono_edgesam-3]  ai_msg_pub_topic_name: /perception/open_vocab/edgesam_raw
+[mono_edgesam-3]  ai_msg_sub_topic_name: /perception/open_vocab/edgesam_prompts
+[mono_edgesam-3]  ros_img_sub_topic_name: /perception/open_vocab/front_edgesam_nv12
+[hobot_dosod-2] [WARN] [1789152571.769417650] [hobot_dosod]: Parameter:
+[hobot_dosod-2]  model_file_name: /opt/tzcup/s100p/artifacts/development-smoke/dosod-product-liveness-r14d-20260908T114500Z/dosod/dosod_mlp3x_s_tzcup_rep-int16.hbm
+[hobot_dosod-2]  vocabulary_file_name: /opt/tzcup/s100p/artifacts/development-smoke/dosod-product-liveness-r14d-20260908T114500Z/dosod/tzcup_offline_vocabulary.json
+[hobot_dosod-2]  feed_type(0:local, 1:sub): 1
+[hobot_dosod-2]  image: config/000000160864.jpg
+[hobot_dosod-2]  dump_ai_result: 0
+[hobot_dosod-2]  dump_raw_img: 0
+[hobot_dosod-2]  dump_render_img: 0
+[hobot_dosod-2]  dump_ai_path: .
+[hobot_dosod-2]  dump_raw_path: .
+[hobot_dosod-2]  dump_render_path: .
+[hobot_dosod-2]  is_shared_mem_sub: 0
+[hobot_dosod-2]  score_threshold: 0.002
+[hobot_dosod-2]  iou_threshold: 0.65
+[hobot_dosod-2]  nms_top_k: 300
+[hobot_dosod-2]  is_homography: 0
+[hobot_dosod-2]  trigger_mode: 0
+[hobot_dosod-2]  class_mode: 0
+[hobot_dosod-2]  task_num: 2
+[hobot_dosod-2]  roi: 0
+[hobot_dosod-2]  y_offset: 950
+[hobot_dosod-2]  ai_msg_pub_topic_name: /perception/open_vocab/dosod_raw
+[hobot_dosod-2]  ros_img_sub_topic_name: /perception/open_vocab/front_dosod_nv12
+[hobot_dosod-2] [WARN] [1789152571.769631625] [hobot_dosod]: model_file_name_: /opt/tzcup/s100p/artifacts/development-smoke/dosod-product-liveness-r14d-20260908T114500Z/dosod/dosod_mlp3x_s_tzcup_rep-int16.hbm, task_num: 2
+[open_vocab_product_adapter-4] Traceback (most recent call last):
+[open_vocab_product_adapter-4]   File "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_perception/open_vocab_product_adapter", line 33, in <module>
+[open_vocab_product_adapter-4]     sys.exit(load_entry_point('sanitation-perception==0.1.0', 'console_scripts', 'open_vocab_product_adapter')())
+[open_vocab_product_adapter-4]   File "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/python3.10/site-packages/sanitation_perception/s100p_product_adapter.py", line 879, in main
+[open_vocab_product_adapter-4]     node = S100PProductAdapter()
+[open_vocab_product_adapter-4]   File "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/python3.10/site-packages/sanitation_perception/s100p_product_adapter.py", line 178, in __init__
+[open_vocab_product_adapter-4]     artifact_contract = load_verified_board_artifact_contract(
+[open_vocab_product_adapter-4]   File "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/python3.10/site-packages/sanitation_perception/s100p_product_adapter_core.py", line 360, in load_verified_board_artifact_contract
+[open_vocab_product_adapter-4]     raise S100PProductAdapterError("board artifact manifest target is not the formal S100P nash-m contract")
+[open_vocab_product_adapter-4] sanitation_perception.s100p_product_adapter_core.S100PProductAdapterError: board artifact manifest target is not the formal S100P nash-m contract
+[ERROR] [open_vocab_product_adapter-4]: process has died [pid 2171322, exit code 1, cmd '/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_perception/open_vocab_product_adapter --ros-args -r __node:=open_vocab_product_adapter --params-file /tmp/launch_params_iii8536k'].
+[mono_edgesam-3] [BPU][[BPU_MONITOR]][281473034995776][INFO]BPULib verison(2, 2, 15)[f21ee84]!
+[mono_edgesam-3] [DNN]: 3.13.6_(4.7.5 HBRT)
+[hobot_dosod-2] [BPU][[BPU_MONITOR]][281473486742112][INFO]BPULib verison(2, 2, 15)[f21ee84]!
+[hobot_dosod-2] [DNN]: 3.13.6_(4.7.5 HBRT)
+[mono_edgesam-3] [WARN] [1789152572.617867675] [mono_edgesam]: Create subscription with topic_name: /perception/open_vocab/front_edgesam_nv12
+[hobot_dosod-2] [WARN] [1789152572.645760400] [hobot_dosod]: Get model name: dosod_mlp3x_s_tzcup_rep-int16 from load model.
+[hobot_dosod-2] [WARN] [1789152572.645952575] [hobot_dosod]: Create ai msg publisher with topic_name: /perception/open_vocab/dosod_raw
+[hobot_dosod-2] [WARN] [1789152572.651960975] [hobot_dosod]: Create img subscription with topic_name: /perception/open_vocab/front_dosod_nv12

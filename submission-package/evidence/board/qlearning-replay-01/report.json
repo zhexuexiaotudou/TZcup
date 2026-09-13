@@ -1,0 +1,97 @@
+{
+  "policy": "q_learning",
+  "policy_seed": 7,
+  "q_state_count": 51,
+  "role_seed_scheme": "splitmix64-v1",
+  "role_seeds": {
+    "test": [
+      {
+        "dynamics": 8355731938860543016,
+        "grasp": 1574821877019804133,
+        "layout": 4734171782473141022,
+        "policy": 5997566215948905259,
+        "task": 310
+      },
+      {
+        "dynamics": 3573203628295105949,
+        "grasp": 2469935211816203506,
+        "layout": 8826591015326365747,
+        "policy": 7280014872935423856,
+        "task": 311
+      }
+    ],
+    "train": [
+      {
+        "dynamics": 7290915719361136684,
+        "grasp": 3648813931024502698,
+        "layout": 1243045329627533100,
+        "policy": 6502166337888288570,
+        "task": 110
+      },
+      {
+        "dynamics": 7986528781650413661,
+        "grasp": 1291584805156474988,
+        "layout": 5837309841816999703,
+        "policy": 8388390890527421129,
+        "task": 111
+      },
+      {
+        "dynamics": 6503626550444426307,
+        "grasp": 5794448896293243067,
+        "layout": 4440128420063121787,
+        "policy": 4446780831668452786,
+        "task": 112
+      }
+    ],
+    "validation": [
+      {
+        "dynamics": 7776018140912201639,
+        "grasp": 5111481547331065600,
+        "layout": 1685873221196327412,
+        "policy": 5130049263495066442,
+        "task": 210
+      },
+      {
+        "dynamics": 9182196173255629288,
+        "grasp": 4246085302153847182,
+        "layout": 8346100818921284029,
+        "policy": 970867923130203813,
+        "task": 211
+      }
+    ]
+  },
+  "schema_version": 1,
+  "split_overlap": false,
+  "test": {
+    "mean_observed_ratio": 0.9761092150170649,
+    "mean_reward": 4.751453670606512,
+    "mean_task_distance": 60.86145887791528,
+    "seeds": [
+      310,
+      311
+    ],
+    "success_rate": 1.0
+  },
+  "train": {
+    "mean_observed_ratio": 0.9806598407281001,
+    "mean_reward": 5.049531015563251,
+    "mean_task_distance": 78.94468438924234,
+    "seeds": [
+      110,
+      111,
+      112
+    ],
+    "success_rate": 1.0
+  },
+  "truth_access_used": false,
+  "validation": {
+    "mean_observed_ratio": 0.9931740614334471,
+    "mean_reward": 5.229937438167145,
+    "mean_task_distance": 64.71956676349026,
+    "seeds": [
+      210,
+      211
+    ],
+    "success_rate": 1.0
+  }
+}

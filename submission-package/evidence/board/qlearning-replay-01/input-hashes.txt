@@ -1,0 +1,2 @@
+32113a1e7aa5279d25097e39f21560606b02ece1f31132f2b0e7d3947004ab9f  /opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_active_cleaning/active_cleaning_train
+5cf8dcc0c8f8a9c206ea3b4a0d615f9084090870ae676031d24abcea0ef22a89  /opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_active_cleaning/config/demo_task.json

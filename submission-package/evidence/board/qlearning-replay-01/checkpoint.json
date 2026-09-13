@@ -1,0 +1,331 @@
+{
+  "actions": [
+    "target",
+    "dirt",
+    "frontier",
+    "wait"
+  ],
+  "discount": 0.95,
+  "epsilon": 0.2,
+  "learning_rate": 0.25,
+  "policy": "q_learning",
+  "policy_seed": 7,
+  "q_table": {
+    "1,0,0,1,2": {
+      "dirt": 0.0,
+      "frontier": -0.001326647570725906,
+      "target": 0.0,
+      "wait": 0.0
+    },
+    "1,0,1,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.0,
+      "target": 0.0,
+      "wait": 0.0
+    },
+    "1,1,0,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.019130127090088024,
+      "target": 0.0,
+      "wait": 0.0
+    },
+    "1,1,1,1,2": {
+      "dirt": 0.0276468296709349,
+      "frontier": 0.0,
+      "target": -0.002043516159503522,
+      "wait": 0.0
+    },
+    "1,1,2,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.0,
+      "target": 0.01481807211870299,
+      "wait": 0.0
+    },
+    "1,2,0,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.0,
+      "target": 0.0,
+      "wait": 0.0
+    },
+    "1,2,1,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.0,
+      "target": 0.027446744584291166,
+      "wait": 0.0
+    },
+    "1,2,2,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.0,
+      "target": 0.25,
+      "wait": 0.0
+    },
+    "2,1,0,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.015020831284179848,
+      "target": 0.0,
+      "wait": 0.0
+    },
+    "2,1,1,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.0,
+      "target": 0.0009058576381115388,
+      "wait": 0.0
+    },
+    "2,2,1,1,2": {
+      "dirt": 0.1612786860495113,
+      "frontier": 0.0,
+      "target": -0.006731501272661632,
+      "wait": 0.0
+    },
+    "2,2,2,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.0,
+      "target": 0.0,
+      "wait": 0.0
+    },
+    "3,0,0,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.07952064328332481,
+      "target": 0.0,
+      "wait": 0.0
+    },
+    "3,1,0,1,2": {
+      "dirt": 0.09174769510336422,
+      "frontier": 0.0,
+      "target": 0.0,
+      "wait": 0.0
+    },
+    "3,1,1,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.0,
+      "target": 0.25921896214692663,
+      "wait": 0.0
+    },
+    "3,1,2,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.0,
+      "target": 0.0,
+      "wait": 0.0
+    },
+    "3,2,0,1,2": {
+      "dirt": 0.08700361019703372,
+      "frontier": 0.0,
+      "target": 0.0,
+      "wait": 0.0
+    },
+    "3,2,1,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.056971001968194365,
+      "target": 0.43825059704562547,
+      "wait": 0.0
+    },
+    "4,0,0,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.0,
+      "target": 0.0,
+      "wait": 0.0
+    },
+    "4,0,1,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.0,
+      "target": 0.030120388707754783,
+      "wait": 0.0
+    },
+    "4,1,0,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.0,
+      "target": 0.0,
+      "wait": 0.0
+    },
+    "4,1,1,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.0,
+      "target": 0.0,
+      "wait": 0.0
+    },
+    "4,1,2,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.0,
+      "target": 0.0,
+      "wait": 0.0
+    },
+    "4,2,1,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.0,
+      "target": 0.0,
+      "wait": 0.0
+    },
+    "5,1,0,1,2": {
+      "dirt": 0.12410001046574848,
+      "frontier": 0.0,
+      "target": 0.0,
+      "wait": 0.0
+    },
+    "5,1,1,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.0,
+      "target": 0.25,
+      "wait": 0.0
+    },
+    "5,2,0,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.0,
+      "target": 0.0,
+      "wait": 0.0
+    },
+    "5,2,1,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.0,
+      "target": 0.010263810997929449,
+      "wait": 0.0
+    },
+    "6,1,1,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.0,
+      "target": 0.0,
+      "wait": 0.0
+    },
+    "6,2,0,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.029295607285141943,
+      "target": 0.0,
+      "wait": 0.0
+    },
+    "6,2,1,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.0,
+      "target": 0.25,
+      "wait": 0.0
+    },
+    "7,0,1,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.0016080779629708778,
+      "target": 0.0,
+      "wait": 0.0
+    },
+    "7,1,0,1,2": {
+      "dirt": 0.03909665557408959,
+      "frontier": 0.0,
+      "target": 0.0,
+      "wait": 0.0
+    },
+    "7,1,1,1,2": {
+      "dirt": 0.05189816424910355,
+      "frontier": 0.0,
+      "target": 0.0,
+      "wait": 0.0
+    },
+    "7,2,0,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.0,
+      "target": 0.0,
+      "wait": 0.0
+    },
+    "7,2,1,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.0,
+      "target": 0.0,
+      "wait": 0.0
+    },
+    "7,2,2,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.0,
+      "target": 0.0,
+      "wait": 0.0
+    },
+    "8,0,0,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.014954227319256611,
+      "target": 0.0,
+      "wait": 0.0
+    },
+    "8,0,1,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.05476136360490588,
+      "target": 0.0,
+      "wait": 0.0
+    },
+    "8,0,2,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.0,
+      "target": 0.24871947992930157,
+      "wait": 0.0
+    },
+    "8,1,1,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.0,
+      "target": 0.0,
+      "wait": 0.0
+    },
+    "8,2,0,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.0,
+      "target": 0.0,
+      "wait": 0.0
+    },
+    "8,2,1,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.009871727351817919,
+      "target": 0.0036317794477151045,
+      "wait": 0.0
+    },
+    "8,2,2,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.0,
+      "target": 0.0,
+      "wait": 0.0
+    },
+    "9,0,0,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.0,
+      "target": 0.0,
+      "wait": 0.0
+    },
+    "9,0,1,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.028560915611701723,
+      "target": 0.3930964042534286,
+      "wait": 0.0
+    },
+    "9,0,2,1,2": {
+      "dirt": 0.0,
+      "frontier": -0.0006776793708708664,
+      "target": 0.25016150347646365,
+      "wait": 0.0
+    },
+    "9,1,0,1,2": {
+      "dirt": 0.00525522240849273,
+      "frontier": 0.0,
+      "target": 0.0,
+      "wait": 0.0
+    },
+    "9,1,1,1,2": {
+      "dirt": 0.10155547371387666,
+      "frontier": 0.0,
+      "target": 0.23931864846823706,
+      "wait": 0.0
+    },
+    "9,2,1,1,2": {
+      "dirt": 0.11110278036597837,
+      "frontier": 0.012536826961223178,
+      "target": -0.01,
+      "wait": 0.0
+    },
+    "9,2,2,1,2": {
+      "dirt": 0.0,
+      "frontier": 0.0,
+      "target": 0.252009385665529,
+      "wait": 0.0
+    }
+  },
+  "schema_version": 1,
+  "state_features": [
+    "observed_ratio_bin",
+    "known_dirt_count_bin",
+    "known_target_count_bin",
+    "current_pedestrian_count_bin",
+    "distance_budget_bin"
+  ],
+  "truth_access_used": false,
+  "wait_action_mask": "only_when_no_productive_belief_action_or_all_blocked"
+}

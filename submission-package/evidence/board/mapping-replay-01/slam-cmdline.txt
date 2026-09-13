@@ -1,0 +1,1 @@
+/opt/ros/humble/lib/slam_toolbox/async_slam_toolbox_node --ros-args --params-file /opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/source/slam_replay.yaml 

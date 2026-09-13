@@ -1,0 +1,1580 @@
+{
+  "claim_boundary": "Deployment and executable identity only; algorithm correctness requires separate live compute reports.",
+  "deployment_marker": {
+    "immutable_source_head": "6731784c03261652bce70a1161fee921c9738291",
+    "immutable_source_tree": "6bad835f4316a5976d2d2c6c0ce7e852a234f0cb",
+    "input_class": "simulation_or_replay_only",
+    "release_root": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912"
+  },
+  "device": {
+    "architecture": "aarch64",
+    "bpu_nodes": [
+      "/dev/bpu_core0"
+    ],
+    "kernel": "6.1.158-rt58-DR-4.0.5-2603031328-g9f678e-g6caa4d",
+    "model": "D-Robotics RDK S100P V1P0"
+  },
+  "executables": {
+    "sanitation_active_cleaning": [
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_active_cleaning/active_cleaning_demo",
+        "sha256": "7d5b64d028510c182b3cdd20dae1f1ab833ea0d893c9da1a562eb52ddce14847",
+        "size_bytes": 1041
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_active_cleaning/active_cleaning_train",
+        "sha256": "32113a1e7aa5279d25097e39f21560606b02ece1f31132f2b0e7d3947004ab9f",
+        "size_bytes": 1043
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_active_cleaning/formal_active_cleaning_train",
+        "sha256": "0acbb2ec41459d08c7d6fcc9fbf04145c516df3f9f4045cc747a381a1afc24e6",
+        "size_bytes": 1057
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_active_cleaning/formal_cleaning_coordinator",
+        "sha256": "52af63223ef01d74aeb0d7813298f6dbcd1ab69cda89c0d981edb9ed9dbbaa7b",
+        "size_bytes": 1055
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_active_cleaning/formal_observation_bridge",
+        "sha256": "ff546e9da61ceb13eb1ff2640c403aaf1666df53a3bae80f224751e919e684b6",
+        "size_bytes": 1051
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_active_cleaning/formal_planning_preflight",
+        "sha256": "ec41017dadcfc603320cb3ab164cf85127f742d409c23312213d4b5bce69e3c8",
+        "size_bytes": 1051
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_active_cleaning/formal_policy_planner",
+        "sha256": "b8699da4b9e8cb32142f6ff5b13182b0614fcde1edf4ef179cb3e3ecaed0ed13",
+        "size_bytes": 1043
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_active_cleaning/formal_stage_a_active_cleaning_train",
+        "sha256": "cf8776f2dd20384637374b5db888f833c329fe1c79047afdca4cf28e5db193f1",
+        "size_bytes": 1073
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_active_cleaning/formal_trajectory_executor",
+        "sha256": "71a38cf8c4e676f7ee55f4326d22529ed081c474bb559260daf9428105e56762",
+        "size_bytes": 1053
+      }
+    ],
+    "sanitation_localization": [
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_localization/validate_formal_localization_runtime",
+        "sha256": "2a376a06f21272b5eeb6507a82c988de6ea7291a8cc40590c69f4bf97bbe04c6",
+        "size_bytes": 1064
+      }
+    ],
+    "sanitation_navigation": [
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_navigation/pointcloud_self_filter",
+        "sha256": "5035ec87deda406655104b1e6a81d8bffb984d391573b9630f0da10bb1a21628",
+        "size_bytes": 5483
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_navigation/scan_self_filter",
+        "sha256": "3e6e183579f5f05f6b71e4a162ee1ab460a47a5478085040c7f8efd40a126f7e",
+        "size_bytes": 3404
+      }
+    ],
+    "sanitation_perception": [
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_perception/formal_perception_preflight",
+        "sha256": "a9723d27c836615b7b03179b6e3f9e9e479e719ca5ffc278df2c84c77dc82972",
+        "size_bytes": 1040
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_perception/garbage_perception_node",
+        "sha256": "e199c1e7eb438cef3eda8adce506fe71c1b2d6fd045083e8abca62077f378cee",
+        "size_bytes": 1032
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_perception/open_vocab_product_adapter",
+        "sha256": "f7c15da45f7ffed85c2a933fdf82f8619e7721b40cf8a6ec04769284c45ed5b6",
+        "size_bytes": 1038
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_perception/pc_open_vocab_product_adapter",
+        "sha256": "0dc791a98558abd90332119aa16269cdd45a84cffc5db59651c33f9b41dd14bb",
+        "size_bytes": 1044
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_perception/rgb_to_nv12_adapter",
+        "sha256": "32dde3ba8994c88a37d83b090f4f7e6f9a5d8b7fb31532d8c786baef005c8547",
+        "size_bytes": 1024
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_perception/stage5a_backend_probe",
+        "sha256": "d05d17e0d4e4f5ea8328f947bbc1c0e1f66dc5a06a63b804319fee59a9f51866",
+        "size_bytes": 1028
+      }
+    ],
+    "sanitation_perception_interfaces": [],
+    "sanitation_safety": [
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_safety/service_drain_safety_manager",
+        "sha256": "ca0ea3fe1018a02166439aa247a8e43dc504f5a5755ec6ad63572109c73ddd7c",
+        "size_bytes": 1030
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_safety/simulation_safety_inputs",
+        "sha256": "90d48cf45b603d20d0e83ea7332c6f9fbdf93555a53356767025dedf85a9e1be",
+        "size_bytes": 1022
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_safety/velocity_gate",
+        "sha256": "8d9b5c4eb488e232410b31832940c24ef11dc2f47c35c0bee94db03bd133e434",
+        "size_bytes": 1000
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_safety/whole_vehicle_safety_manager",
+        "sha256": "ef3395393f15f7fd73c09d57f6324b80a2c140bfdcea85b239033e892125d79a",
+        "size_bytes": 1030
+      }
+    ],
+    "sanitation_tasks": [
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_tasks/sanitation_covariance_audit",
+        "sha256": "b1b50b18a1d6af5dbb55c2742a91bdc3f52b714c50cb7f969d5b64d9ebefc65f",
+        "size_bytes": 1025
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_tasks/sanitation_dynamic_obstacle_probe",
+        "sha256": "713150d3beea64ed7eebd71d31266d150f095d5f5fde286400b3bad911789e8c",
+        "size_bytes": 1037
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_tasks/sanitation_filter_probe",
+        "sha256": "3df64ad343c3dfffa11159f1b529ddcc51a890cf43ada98c449e244f4fa7c6b6",
+        "size_bytes": 1017
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_tasks/sanitation_ground_truth_adapter",
+        "sha256": "f5f15c8ad4d1cf52b89571bf5e3def66b1fe617a080c4d25763ec2b7f9b545c2",
+        "size_bytes": 1033
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_tasks/sanitation_ground_truth_identity_probe",
+        "sha256": "3844e62502a1b8fcaace2bbb72ad51aa74947f4909090940b4fb06c1b31e5653",
+        "size_bytes": 1047
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_tasks/sanitation_image_capture",
+        "sha256": "1f413fd8a513d5aa3f637f580a85892116d5596c0d425b09a9f1342a4ffae640",
+        "size_bytes": 1019
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_tasks/sanitation_localization_evaluator",
+        "sha256": "89f998334bbc943cf81be42c00863c8a281e318eae2df399ab70d28d75598348",
+        "size_bytes": 1037
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_tasks/sanitation_map_quality",
+        "sha256": "1f80d79bc9d118b2656c1a89a63b23be20d4d733dad71e2d2d1b2183127ea829",
+        "size_bytes": 1015
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_tasks/sanitation_mapping_probe",
+        "sha256": "6233f3b6f3ba903bc6d94f0270830987f61dc5403a7ccfcc94843ad10802cdca",
+        "size_bytes": 1019
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_tasks/sanitation_measurement_adapter",
+        "sha256": "0c3e0801ed43f4fb169436a013714941e7d89a951b7298ee3ca75214ef226015",
+        "size_bytes": 1031
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_tasks/sanitation_motion_calibration_runner",
+        "sha256": "206dca8c239eb479ee32dc4d0d7b8ac6e16e49fb23a6ca4da5912867fd97eb57",
+        "size_bytes": 1043
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_tasks/sanitation_motion_fit_probe",
+        "sha256": "2f5f32cb15a86804b3d0c7bdd2b9aa07f05aa5163a138f3cc2ea6eccc32c2702",
+        "size_bytes": 1025
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_tasks/sanitation_navigation_probe",
+        "sha256": "0329e947144a057de66203c623d6cb2a4de6345ba1ec166854cd80ad674119a2",
+        "size_bytes": 1025
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_tasks/sanitation_operational_envelope_audit",
+        "sha256": "7cd225e49391a7c261629dea05ff05231a9b52f79833751af4c22fb0d14df33f",
+        "size_bytes": 1045
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_tasks/sanitation_oracle_odom_adapter",
+        "sha256": "a51f96ed80c0a962dc07bd3ad12a1d39b920cb8bce1f6a6ec2fa71b6e716e1ef",
+        "size_bytes": 1031
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_tasks/sanitation_runtime_probe",
+        "sha256": "7b56cc52318ee50b45d0dfae31cba5143d563d0c6a66085a8d43df1c5659e88d",
+        "size_bytes": 1019
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_tasks/sanitation_safety_probe",
+        "sha256": "c93bfb9ad612066d5409a06184c8fb96947c01bd3ab93c1a5726b76902105d50",
+        "size_bytes": 1017
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_tasks/sanitation_smoke_check",
+        "sha256": "5b9b4e552a3413a4b8b44667d71486f0ff702ce6318c00ac1b9ed7472d636b14",
+        "size_bytes": 1015
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_tasks/sanitation_tf_ownership_audit",
+        "sha256": "2fed19adb2a7860f3e138a20504d61d74b01000652135ef2dc077cf0b2c890b6",
+        "size_bytes": 1029
+      },
+      {
+        "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/lib/sanitation_tasks/sanitation_transient_response_runner",
+        "sha256": "3baf1c716f8fb29e410535a5ec1846a0fafc7bb3805530417965818748402dd4",
+        "size_bytes": 1043
+      }
+    ]
+  },
+  "generated_utc": "2026-09-11T18:47:38.913355+00:00",
+  "installed_configs": [
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/ament_index/resource_index/package_run_dependencies/sanitation_navigation",
+      "sha256": "b226c640dc200b20a5b39809969cd961b3f13b87ded0f2a6de075060b9e25c56",
+      "size_bytes": 187
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/ament_index/resource_index/package_run_dependencies/sanitation_perception_interfaces",
+      "sha256": "249299e1460cc228bc1b14478d4a628fe0091000520c29a37f0b0369e80dac35",
+      "size_bytes": 64
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/ament_index/resource_index/packages/sanitation_active_cleaning",
+      "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+      "size_bytes": 2
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/ament_index/resource_index/packages/sanitation_localization",
+      "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+      "size_bytes": 2
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/ament_index/resource_index/packages/sanitation_navigation",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/ament_index/resource_index/packages/sanitation_perception",
+      "sha256": "f9e7d0c24881caf877bdfeabd8dafb70c63ca5d00e6e17d5cb73e30399603218",
+      "size_bytes": 23
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/ament_index/resource_index/packages/sanitation_perception_interfaces",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/ament_index/resource_index/packages/sanitation_safety",
+      "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+      "size_bytes": 2
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/ament_index/resource_index/packages/sanitation_tasks",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/ament_index/resource_index/parent_prefix_path/sanitation_navigation",
+      "sha256": "bf224f90e00e3d2e49ad116c496aa19bfc87e344044aac8d53c67dcb7e41ca8c",
+      "size_bytes": 90
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/ament_index/resource_index/parent_prefix_path/sanitation_perception_interfaces",
+      "sha256": "ed58bed9c9ed6979b95b9187736a0c6d3c51cab32e5037f15d5f6b411dc6f3a7",
+      "size_bytes": 15
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/ament_index/resource_index/rosidl_interfaces/sanitation_perception_interfaces",
+      "sha256": "685d6dd8e52a547800a97620d3708135d43a1d8c856deb3272d302aff5430673",
+      "size_bytes": 338
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/colcon-core/packages/sanitation_active_cleaning",
+      "sha256": "6831f27ce947fc7f374713d6a95669a36957f83540f0c86526b96babd8185303",
+      "size_bytes": 209
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/colcon-core/packages/sanitation_localization",
+      "sha256": "86797c3897bf11cbc56556febbc2682f63ec785537556c3d661aa1095c2da297",
+      "size_bytes": 86
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/colcon-core/packages/sanitation_navigation",
+      "sha256": "a1999bd6700cfa71ed55b0979e66d03e68c7cf6783caff305f19c5bba42b5f7d",
+      "size_bytes": 153
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/colcon-core/packages/sanitation_perception",
+      "sha256": "b850a04a4f0cbe7ae82e87b6c3facfa623a0493e38511dddff2827893d0bc5c3",
+      "size_bytes": 208
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/colcon-core/packages/sanitation_perception_interfaces",
+      "sha256": "033d7a4867ffbdef79c68acd606582058214e095a987d7e38806864c7648f8b4",
+      "size_bytes": 64
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/colcon-core/packages/sanitation_safety",
+      "sha256": "7fe68a81ba802071e1229e882f8f3c9b89333fd442f78c83b5c12aaa2b436811",
+      "size_bytes": 145
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/colcon-core/packages/sanitation_tasks",
+      "sha256": "5714afd73d40520f3cf5f225d831002600025b8217f958d2b24406d800e4ddfd",
+      "size_bytes": 135
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_active_cleaning/config/demo_task.json",
+      "sha256": "5cf8dcc0c8f8a9c206ea3b4a0d615f9084090870ae676031d24abcea0ef22a89",
+      "size_bytes": 783
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_active_cleaning/config/formal_dual_mode_planning.yaml",
+      "sha256": "bc1f2e3ae847f263aa7b01751cecf5dfa0c4a08cd574f281286aa5e5d7af3f12",
+      "size_bytes": 2389
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_active_cleaning/config/formal_rl_budget_contract.yaml",
+      "sha256": "7d7f028b00bc43cd48a00eebbdba67fff9b3bf97c2ac5e025a481c5c5163e05f",
+      "size_bytes": 1335
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_active_cleaning/config/formal_runtime.yaml",
+      "sha256": "46b2772eeac0e17ad71569c7e183feab9fe450db0c1f0a07170168a2bf70899e",
+      "size_bytes": 3066
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_active_cleaning/hook/ament_prefix_path.dsv",
+      "sha256": "c4797d0a0670c70b4d3bcb5b7d47563635c7950595603f3af66f70af546ad57e",
+      "size_bytes": 41
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_active_cleaning/hook/ament_prefix_path.ps1",
+      "sha256": "0aad623e5d52cbe955cc1d27b5002c3ce9a4c1f8de754b6afd4e6ac27e1eb2dd",
+      "size_bytes": 152
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_active_cleaning/hook/ament_prefix_path.sh",
+      "sha256": "c07f082a166d9644cabb3237d58e59177e5830868363f0fc32b646e1fb5cb3a5",
+      "size_bytes": 142
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_active_cleaning/hook/cmake_prefix_path.dsv",
+      "sha256": "7ab2eb0a25c282f9a5bf62596b4c098865cd3a8aa5740601a9efa8620acd69d3",
+      "size_bytes": 41
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_active_cleaning/hook/cmake_prefix_path.ps1",
+      "sha256": "0c7394c1d89765deec81cb10e59a36d0d98867690b4b8781d5bc9186fc67885a",
+      "size_bytes": 152
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_active_cleaning/hook/cmake_prefix_path.sh",
+      "sha256": "ee9849def404b669097010f38735aa521e0731366a319b6e1abe996c793494b2",
+      "size_bytes": 142
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_active_cleaning/hook/ld_library_path_lib.dsv",
+      "sha256": "038195297fbe5e22d78680bf0f2b1b182fea46aaececf77d84daadad1fdfa665",
+      "size_bytes": 42
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_active_cleaning/hook/ld_library_path_lib.ps1",
+      "sha256": "c6e5dc5fc7ca92a59dec3b4107c761602c03e4ca0b4211ec2634efc3b43ef84e",
+      "size_bytes": 154
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_active_cleaning/hook/ld_library_path_lib.sh",
+      "sha256": "535fe00314bc8acdb36d1057e32d60c215005141a8c30a99bf665a29fed4e222",
+      "size_bytes": 144
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_active_cleaning/hook/pythonpath.dsv",
+      "sha256": "cfce05cf41576f99a9a11fda6cf7d4db2551b4f291d3a5a04a63171ada4ac911",
+      "size_bytes": 62
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_active_cleaning/hook/pythonpath.ps1",
+      "sha256": "fa6f7248f005ec99fa329faeb2ded431fb4a9e9c21a94f083899b1cd94efafd6",
+      "size_bytes": 174
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_active_cleaning/hook/pythonpath.sh",
+      "sha256": "bf815589093fe891f26abdd945cffc27230d749fe330c8dd2725f2b82ef02dad",
+      "size_bytes": 164
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_active_cleaning/launch/formal_active_cleaning.launch.py",
+      "sha256": "d674966ad998d714829b4e09ab4c507d29a0936f5b22111a25a3641907d7089d",
+      "size_bytes": 3716
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_active_cleaning/package.bash",
+      "sha256": "07ac2c50176f4c255c09d53350622885e9d88dee450fff58ba02b6ab3e369db3",
+      "size_bytes": 1088
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_active_cleaning/package.dsv",
+      "sha256": "e772389faabc62d332545813f4a037117fb92b7058e7fc09619f65aa331ccda5",
+      "size_bytes": 785
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_active_cleaning/package.ps1",
+      "sha256": "7ffc28f3b139f7c3b56d5fad47df85fffa816e69301b9f3c081714a8c46bbee3",
+      "size_bytes": 3545
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_active_cleaning/package.sh",
+      "sha256": "f9eabd9c7210361c4fa2fb51cf92aba3f96a7388e18c27d0fb1e6e186c0f33e6",
+      "size_bytes": 3162
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_active_cleaning/package.xml",
+      "sha256": "18b40398cafc649305fbc6be9c69b55f71b4ee49049e4c71f463abc6c4e3528a",
+      "size_bytes": 1118
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_active_cleaning/package.zsh",
+      "sha256": "9205739fba2370788dc5bc9adf2d0e9afc17cbc8a8b8c258e55c1ef32e56c841",
+      "size_bytes": 1376
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_localization/README.md",
+      "sha256": "20782cf6a2e88866ec852bb59dfdb635fc8c664a74e8c24e2f126539f014eeff",
+      "size_bytes": 2610
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_localization/config/formal_fusion.yaml",
+      "sha256": "a0c967494bd4145f9c05615d23c5f5dffec0138898509f96e0c1e43b81df6b74",
+      "size_bytes": 3881
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_localization/hook/ament_prefix_path.dsv",
+      "sha256": "c4797d0a0670c70b4d3bcb5b7d47563635c7950595603f3af66f70af546ad57e",
+      "size_bytes": 41
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_localization/hook/ament_prefix_path.ps1",
+      "sha256": "0aad623e5d52cbe955cc1d27b5002c3ce9a4c1f8de754b6afd4e6ac27e1eb2dd",
+      "size_bytes": 152
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_localization/hook/ament_prefix_path.sh",
+      "sha256": "c07f082a166d9644cabb3237d58e59177e5830868363f0fc32b646e1fb5cb3a5",
+      "size_bytes": 142
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_localization/hook/pythonpath.dsv",
+      "sha256": "cfce05cf41576f99a9a11fda6cf7d4db2551b4f291d3a5a04a63171ada4ac911",
+      "size_bytes": 62
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_localization/hook/pythonpath.ps1",
+      "sha256": "fa6f7248f005ec99fa329faeb2ded431fb4a9e9c21a94f083899b1cd94efafd6",
+      "size_bytes": 174
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_localization/hook/pythonpath.sh",
+      "sha256": "bf815589093fe891f26abdd945cffc27230d749fe330c8dd2725f2b82ef02dad",
+      "size_bytes": 164
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_localization/launch/formal_localization_fusion.launch.py",
+      "sha256": "a259ec90366c7b873134e68ae2931ef0da5bc31aba0ae21f9ea184d774665d80",
+      "size_bytes": 2861
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_localization/package.bash",
+      "sha256": "3bd49064dc01c609e76af6b645fc7dccaf57138f4c975276db556887ed9b0742",
+      "size_bytes": 1085
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_localization/package.dsv",
+      "sha256": "1ec77c7393fee8f5365176f34b5a56606fdb43c6af1b35c7e0c66bc40e811a54",
+      "size_bytes": 361
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_localization/package.ps1",
+      "sha256": "300b008f423db96e00201c481cbb1bef0da49d0c0d003fca4e128e77dbdbabbd",
+      "size_bytes": 3279
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_localization/package.sh",
+      "sha256": "53727e45d3ea14e514372cb7d16f5c9b170096095487c879b2e6bd4c8fa99a03",
+      "size_bytes": 2920
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_localization/package.xml",
+      "sha256": "7313e09f4e8c02cd8501902e0719e31384f4e29024f1a126b99d386e4f083101",
+      "size_bytes": 910
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_localization/package.zsh",
+      "sha256": "1b63634f3e720320558e000fe7b008241297ab1cc149900cb01f23455f6280f6",
+      "size_bytes": 1373
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/cmake/sanitation_navigationConfig-version.cmake",
+      "sha256": "5df7fb3481e154840dd6ac6d1b6eb53c81ed9cadd5e7a00398962383332be7ea",
+      "size_bytes": 432
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/cmake/sanitation_navigationConfig.cmake",
+      "sha256": "07f242fe1c95dff0e533a8680003c85963dfcfac92ae4afc4579d0ec8e2e7810",
+      "size_bytes": 1398
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/config/auto01_g1_height_banded.yaml",
+      "sha256": "36cc45ed9acb8eda97dba63bbb12ba85e9240b25ab2a622fec5a3a4722024824",
+      "size_bytes": 1944
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/config/auto01_g2_v5_retracted.yaml",
+      "sha256": "e3dc4e9f10587dc2f8f6eeb646dcfe16946d757b06ac0943914a8feef23d8fe5",
+      "size_bytes": 2153
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/config/auto12_efficiency_v1.yaml",
+      "sha256": "29b619653112c29eb532ba15fd98de85c408d2a3bd8905562766197b0be10427",
+      "size_bytes": 1647
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/config/autonomous_navigation_profile_v1.yaml",
+      "sha256": "3f821d70ae1098aae9e4cee7159924408094ad3f1ed893198ef28cadcfdc1426",
+      "size_bytes": 2141
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/config/nav2.yaml",
+      "sha256": "d06110ade22952cd840bb40c6774097aaef075e7186ee13e962efb632697cc30",
+      "size_bytes": 13943
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/config/nav2_auto12.yaml",
+      "sha256": "297126811bc3814a3797d22821e874baff3d6c4ee0f36f52a966860f0eefe168",
+      "size_bytes": 13529
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/config/slam.yaml",
+      "sha256": "a1977ce9170af8a70e63e4adfe3c65e23daa48a88f85a680d939c62cd7a748b3",
+      "size_bytes": 1774
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/config/slam_002.yaml",
+      "sha256": "9d845a1946c033999afa26073245d08df3e7649868da1ed5fcf470abfda2edd3",
+      "size_bytes": 1774
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/config/slam_localization.yaml",
+      "sha256": "6e3205d490fb1779cf66d2ed85804b0aa3a20df5f38ad7a665110a6dbb9a16e9",
+      "size_bytes": 1536
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/config/stage5br6w_v4_candidate_footprint.yaml",
+      "sha256": "3bc8b6fa9e82c01dfa8b77acff8c03a287c09be6986a584cfc683ae9390d7255",
+      "size_bytes": 1003
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/environment/ament_prefix_path.dsv",
+      "sha256": "c4797d0a0670c70b4d3bcb5b7d47563635c7950595603f3af66f70af546ad57e",
+      "size_bytes": 41
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/environment/ament_prefix_path.sh",
+      "sha256": "6658f14efe913e291c0bf2c74059a9e14fb8abdb5a31628bef61d3b41e206679",
+      "size_bytes": 160
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/environment/path.dsv",
+      "sha256": "3f2cdf6234ea2525c1670c140b6a03700d98a2408e7a232107791fa96c08b58b",
+      "size_bytes": 41
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/environment/path.sh",
+      "sha256": "abe10a0452bc4b93f665fc343a7e6d32fe3f3a2b6beb90d338044a71d2583f18",
+      "size_bytes": 185
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/hook/cmake_prefix_path.dsv",
+      "sha256": "7ab2eb0a25c282f9a5bf62596b4c098865cd3a8aa5740601a9efa8620acd69d3",
+      "size_bytes": 41
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/hook/cmake_prefix_path.ps1",
+      "sha256": "0c7394c1d89765deec81cb10e59a36d0d98867690b4b8781d5bc9186fc67885a",
+      "size_bytes": 152
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/hook/cmake_prefix_path.sh",
+      "sha256": "ee9849def404b669097010f38735aa521e0731366a319b6e1abe996c793494b2",
+      "size_bytes": 142
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/hook/ld_library_path_lib.dsv",
+      "sha256": "038195297fbe5e22d78680bf0f2b1b182fea46aaececf77d84daadad1fdfa665",
+      "size_bytes": 42
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/hook/ld_library_path_lib.ps1",
+      "sha256": "c6e5dc5fc7ca92a59dec3b4107c761602c03e4ca0b4211ec2634efc3b43ef84e",
+      "size_bytes": 154
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/hook/ld_library_path_lib.sh",
+      "sha256": "535fe00314bc8acdb36d1057e32d60c215005141a8c30a99bf665a29fed4e222",
+      "size_bytes": 144
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/hook/pythonpath.dsv",
+      "sha256": "cfce05cf41576f99a9a11fda6cf7d4db2551b4f291d3a5a04a63171ada4ac911",
+      "size_bytes": 62
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/hook/pythonpath.ps1",
+      "sha256": "fa6f7248f005ec99fa329faeb2ded431fb4a9e9c21a94f083899b1cd94efafd6",
+      "size_bytes": 174
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/hook/pythonpath.sh",
+      "sha256": "bf815589093fe891f26abdd945cffc27230d749fe330c8dd2725f2b82ef02dad",
+      "size_bytes": 164
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/launch/navigation.launch.py",
+      "sha256": "fb08bec6d405f5b7c66b39da85f42326cd29fad2c082839a81c968a2870df113",
+      "size_bytes": 10915
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/launch/slam.launch.py",
+      "sha256": "fb1e842826e95ffa7f21750addb0f67bde14c8f9e6fd6693e91839b6e8401e1d",
+      "size_bytes": 2823
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/local_setup.bash",
+      "sha256": "41b30b6c107da94a2478e43953b8cbd0d920f5e8fc1ea847c61a213623d623b0",
+      "size_bytes": 1594
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/local_setup.dsv",
+      "sha256": "909644b875b05ee6d4b8dfd972aaf1ead5baf560954dcf510a33c9c62f52ac2b",
+      "size_bytes": 123
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/local_setup.sh",
+      "sha256": "f348bcb966f229141bf7d532da58bf29312d9f26bb166dcc35934f9b1d02139b",
+      "size_bytes": 5066
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/local_setup.zsh",
+      "sha256": "56942873096201f4e7fe5e7b9bd87e56cc42ced33fadb53fbc25766fd9149c81",
+      "size_bytes": 1957
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/maps/sanitation_test_map.pgm",
+      "sha256": "cc8124eb323471ce3e0296949d49716bce1fe1766ac27b2c7ac9793616f18796",
+      "size_bytes": 3869
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/maps/sanitation_test_map.yaml",
+      "sha256": "f3d36b307a33bb62381ae53bb9d118681a209c2a3fbdef20f597ea95206ef92c",
+      "size_bytes": 139
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/maps/stage4v_filters/keepout_mask.pgm",
+      "sha256": "ce7a5fc1f821f103bdb7d0d0bea1518c9789dd24243b3bda640ed0dce4975ca4",
+      "size_bytes": 1376985
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/maps/stage4v_filters/keepout_mask.yaml",
+      "sha256": "11cd69686555db550256714e9ed6e8cdaa4121078f1180145c887891b5e6a36f",
+      "size_bytes": 145
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/maps/stage4v_filters/speed_mask.pgm",
+      "sha256": "6d498a6f6f91e335f608aba742f15a9ed232815a21b676cc5e3a629b514fccbe",
+      "size_bytes": 1376985
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/maps/stage4v_filters/speed_mask.yaml",
+      "sha256": "b7c6634abda6438a6e78247bc498e6858528abc02cddc8eab2e411f294a11c15",
+      "size_bytes": 143
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/maps/stage4v_map_frame_calibration.yaml",
+      "sha256": "09adf987f9a4c4417e1cfe18f2324a4f87b68049e23891494a0758db2c1da9a7",
+      "size_bytes": 1335
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/maps/stage4v_surveyed_reference.pgm",
+      "sha256": "49801fee5abc336ea450c36080bddb531cfc3e5db1422ae8389f1e24cb26b4d6",
+      "size_bytes": 1376985
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/maps/stage4v_surveyed_reference.yaml",
+      "sha256": "9aeb25a907a05aad5ec8f4f29b9fe7c3d94a5b0421bfbd8fe44277994d037e68",
+      "size_bytes": 164
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/package.bash",
+      "sha256": "32437044da1569008b9b91a4e06cf10c6a0ea49aa224584353159b9a3e50ba22",
+      "size_bytes": 1392
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/package.dsv",
+      "sha256": "172d5c3f67ef96fb57c7a189a270e92e1c5cb81fe33a2ca8efa3fe5ddb7c6771",
+      "size_bytes": 795
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/package.ps1",
+      "sha256": "83e18a1febeacdbfd9119cbb4f34ec8b3784e51d8dc08e00c1b2edb8794f28cf",
+      "size_bytes": 3514
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/package.sh",
+      "sha256": "d1480a0fa603f6fceb772221522abab4325ddb797554358bc1ce8fdd3785202d",
+      "size_bytes": 3131
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/package.xml",
+      "sha256": "71b55ec10dc7c9c4b0bd5b998454d7d19c9728329a202efd41b12c6166cf9316",
+      "size_bytes": 1047
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_navigation/package.zsh",
+      "sha256": "2f4b91214018c7d7c713e3bc27d42673d0662aa1b80d6b47ce5a982581a7afb2",
+      "size_bytes": 1676
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/config/formal_open_vocab_perception.yaml",
+      "sha256": "570e5b929790ec9984e9dfcfecd9d76ccb85bd4e7757223eeaf455ec7bb12967",
+      "size_bytes": 9777
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/config/formal_pc_open_vocab.yaml",
+      "sha256": "ce852c88d50cd077d04795b5203bfa1156c1e1f41213cca4c9945d87d741032b",
+      "size_bytes": 836
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/config/formal_random_scene_acceptance.yaml",
+      "sha256": "a1d1c72fbc38cba46cd98d7e99e5630e46e7d804848353ca740d14727866c3f8",
+      "size_bytes": 1874
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/config/garbage_registry.yaml",
+      "sha256": "45df1f0bb8cdde3c2bea8dc7a86125777470cbf1d632497ed3e1484dc8bb339b",
+      "size_bytes": 2035
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/config/model_manifest.yaml",
+      "sha256": "f0ed41c819e972a0dddb6ef19a44cc110d4131cc7e1f762ac99f1e0fc5f46760",
+      "size_bytes": 525
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/config/open_vocab_s100_profile.yaml",
+      "sha256": "caf4eea4c9f34b80a792b5916de22ba135fa17b1a6e4b77845f2d05596118ffb",
+      "size_bytes": 4159
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/config/operator_inventory.json",
+      "sha256": "78e65ab61dfa4b2ff4b8767fd22e9f6a3b096d8077b99aa317abf30ca3dba725",
+      "size_bytes": 315
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/config/postprocess_spec.yaml",
+      "sha256": "9bcd337b6425735114658cc2701d23e9ce81d9b410d33d448163b25182905051",
+      "size_bytes": 333
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/config/preprocess_spec.yaml",
+      "sha256": "4f58ed07593bc7e72374a1f52e5b3b5a92f821281527abc9fa974b33586b2b35",
+      "size_bytes": 160
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/config/registry_schema.json",
+      "sha256": "855350da57a873897317ace8689270d3388b5dbf1570f8ea237f110299fa8b97",
+      "size_bytes": 764
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/config/s100p_product_board_launch_parameters.json",
+      "sha256": "a0e30d1c4932c5a0c65043db3f26b94564890f93b14532a2fe41a2257fb4519c",
+      "size_bytes": 1333
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/config/s100p_product_overlay_packages.json",
+      "sha256": "f28f3e73a2f0ec73f676e6987aaf7acf7f605b3651067a7e94bf0b480a2e953c",
+      "size_bytes": 2408
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/hook/ament_prefix_path.dsv",
+      "sha256": "c4797d0a0670c70b4d3bcb5b7d47563635c7950595603f3af66f70af546ad57e",
+      "size_bytes": 41
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/hook/ament_prefix_path.ps1",
+      "sha256": "0aad623e5d52cbe955cc1d27b5002c3ce9a4c1f8de754b6afd4e6ac27e1eb2dd",
+      "size_bytes": 152
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/hook/ament_prefix_path.sh",
+      "sha256": "c07f082a166d9644cabb3237d58e59177e5830868363f0fc32b646e1fb5cb3a5",
+      "size_bytes": 142
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/hook/cmake_prefix_path.dsv",
+      "sha256": "7ab2eb0a25c282f9a5bf62596b4c098865cd3a8aa5740601a9efa8620acd69d3",
+      "size_bytes": 41
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/hook/cmake_prefix_path.ps1",
+      "sha256": "0c7394c1d89765deec81cb10e59a36d0d98867690b4b8781d5bc9186fc67885a",
+      "size_bytes": 152
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/hook/cmake_prefix_path.sh",
+      "sha256": "ee9849def404b669097010f38735aa521e0731366a319b6e1abe996c793494b2",
+      "size_bytes": 142
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/hook/ld_library_path_lib.dsv",
+      "sha256": "038195297fbe5e22d78680bf0f2b1b182fea46aaececf77d84daadad1fdfa665",
+      "size_bytes": 42
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/hook/ld_library_path_lib.ps1",
+      "sha256": "c6e5dc5fc7ca92a59dec3b4107c761602c03e4ca0b4211ec2634efc3b43ef84e",
+      "size_bytes": 154
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/hook/ld_library_path_lib.sh",
+      "sha256": "535fe00314bc8acdb36d1057e32d60c215005141a8c30a99bf665a29fed4e222",
+      "size_bytes": 144
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/hook/pythonpath.dsv",
+      "sha256": "cfce05cf41576f99a9a11fda6cf7d4db2551b4f291d3a5a04a63171ada4ac911",
+      "size_bytes": 62
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/hook/pythonpath.ps1",
+      "sha256": "fa6f7248f005ec99fa329faeb2ded431fb4a9e9c21a94f083899b1cd94efafd6",
+      "size_bytes": 174
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/hook/pythonpath.sh",
+      "sha256": "bf815589093fe891f26abdd945cffc27230d749fe330c8dd2725f2b82ef02dad",
+      "size_bytes": 164
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/launch/formal_pc_open_vocab.launch.py",
+      "sha256": "fcb85da1d6cfd9724501e591e9631f5bd28470141f12408189053719ad7878f3",
+      "size_bytes": 2092
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/launch/formal_perception_preflight.launch.py",
+      "sha256": "d9596569e1d43c0d38d7602073259757760082d4aa8adc08bf09717c9f44dc07",
+      "size_bytes": 1432
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/launch/formal_s100p_open_vocab.launch.py",
+      "sha256": "cbe73e72bb3dbb76131766ed6d241602a74b4dc1ccc4467c1ebc26454507a7c5",
+      "size_bytes": 10484
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/launch/stage5a_perception.launch.py",
+      "sha256": "43642887e85379258323f2129696e43d58dc9fd036abab93631323116fbb73a1",
+      "size_bytes": 1483
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/launch/stage5b_perception.launch.py",
+      "sha256": "b24003aaa68a68e5be70026ebc462bd9a6ff3255f268e0548df7c51f125999be",
+      "size_bytes": 1678
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/package.bash",
+      "sha256": "e507a7a751e345eeda906d058333153fc1b31981c29bc199ea5dd0170fe24dca",
+      "size_bytes": 1083
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/package.dsv",
+      "sha256": "ed4b13edb5bd02d37079a94c794de5cd5da9a1324edaacfca82206f7d2d21485",
+      "size_bytes": 725
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/package.ps1",
+      "sha256": "2d4449e5620352e5038172b617344921d70c8aae9cf4aa086782064972dd1494",
+      "size_bytes": 3525
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/package.sh",
+      "sha256": "89933637f446767dd59818b1324ad9b13c016b3737ed5595ee535510c3e7db5a",
+      "size_bytes": 3142
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/package.xml",
+      "sha256": "19f3d5e37a87e52f48962b809d67fd7c4d18b331f99192ed15bc84fbd039440e",
+      "size_bytes": 1194
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception/package.zsh",
+      "sha256": "23bbc0e2b1aa871a97adc930679ee2a9a3120657fa8846fe986c331a5cba2e36",
+      "size_bytes": 1371
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/action/PickCube.action",
+      "sha256": "639727486f08b1548f1195371955f3adc23f748ee217f1775610ce4598a56822",
+      "size_bytes": 352
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/action/PickCube.idl",
+      "sha256": "1a676950a249741e4056a476dd872119e75628dacd2cc6adc8137fd18e28b869",
+      "size_bytes": 940
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/cmake/ament_cmake_export_dependencies-extras.cmake",
+      "sha256": "4d2d021681a2d4b29d3f029e22cec3787b7f5fb594671bf8232a7acc9641e789",
+      "size_bytes": 4829
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/cmake/ament_cmake_export_include_directories-extras.cmake",
+      "sha256": "569e5a03f9e03b4bbc580b96887fc529d68a9cf636c68116969d19098141fc2e",
+      "size_bytes": 890
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/cmake/ament_cmake_export_libraries-extras.cmake",
+      "sha256": "0457055b86f5cf5973680d5db228e15edf1e8c589ab5ae3d787b32924ea8a91e",
+      "size_bytes": 5533
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/cmake/ament_cmake_export_targets-extras.cmake",
+      "sha256": "65d26fa2fd9d874fde3354d09ad7822e5228d7ef39e0f03ebcc3e27f7b5b6b1a",
+      "size_bytes": 1580
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/cmake/export_sanitation_perception_interfaces__rosidl_generator_cExport-noconfig.cmake",
+      "sha256": "5337bfb954967bded0421e373df0aedb1d3cfa411a892323e96386bc38d66e32",
+      "size_bytes": 1290
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/cmake/export_sanitation_perception_interfaces__rosidl_generator_cExport.cmake",
+      "sha256": "f5ae14464f193071df47cfeaa566341588e66140fbcd35c3e62f8758982339c3",
+      "size_bytes": 4163
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/cmake/export_sanitation_perception_interfaces__rosidl_generator_cppExport.cmake",
+      "sha256": "af7f17f373f6c73ef25ffd6380c11c49fdb5bbd0f4213ad0d06db0f544d442bb",
+      "size_bytes": 4112
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/cmake/export_sanitation_perception_interfaces__rosidl_generator_pyExport-noconfig.cmake",
+      "sha256": "9c4dfb3fa8cf74b4a182a17ccee0dd16b55a4eaa276ff4075be6de7b3a2038bb",
+      "size_bytes": 1298
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/cmake/export_sanitation_perception_interfaces__rosidl_generator_pyExport.cmake",
+      "sha256": "6469a7c169bebd363357c8a831e276066402fa6f5e57234a1ca15019c06cc137",
+      "size_bytes": 5138
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/cmake/export_sanitation_perception_interfaces__rosidl_typesupport_fastrtps_cExport-noconfig.cmake",
+      "sha256": "aeee6d85043efd56c31a9ac029c9b98b140b9922b76d7b0e6509d25fe998be36",
+      "size_bytes": 1378
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/cmake/export_sanitation_perception_interfaces__rosidl_typesupport_fastrtps_cExport.cmake",
+      "sha256": "69772af47bdb156afbcbaf01b2f4255727117825ab557437cbf656c7382bc5b9",
+      "size_bytes": 5374
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/cmake/export_sanitation_perception_interfaces__rosidl_typesupport_fastrtps_cppExport-noconfig.cmake",
+      "sha256": "288ddd5b20e4ff1fedf5adf34e9e0ce8d4c206b66c0224492adbb696cd02fe8d",
+      "size_bytes": 1394
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/cmake/export_sanitation_perception_interfaces__rosidl_typesupport_fastrtps_cppExport.cmake",
+      "sha256": "3e7aaad8534f5fc4d515fe8a687b006bc951d6f4f7437eaec194305d6f45a709",
+      "size_bytes": 5346
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/cmake/rosidl_cmake-extras.cmake",
+      "sha256": "a5b7ca5bb4111ad615878305e045d4aef35276c094ad3bb1d351e8b6d736ede0",
+      "size_bytes": 511
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/cmake/rosidl_cmake_export_typesupport_libraries-extras.cmake",
+      "sha256": "26575453ec90a86c9a56f7065ff3f632676afb49e66f67129581f4cf87f35788",
+      "size_bytes": 2142
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/cmake/rosidl_cmake_export_typesupport_targets-extras.cmake",
+      "sha256": "2cb28d17ea9e8316a898de9929a2292ddf026096863a018333d7976faff5e9eb",
+      "size_bytes": 1639
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/cmake/sanitation_perception_interfacesConfig-version.cmake",
+      "sha256": "5df7fb3481e154840dd6ac6d1b6eb53c81ed9cadd5e7a00398962383332be7ea",
+      "size_bytes": 432
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/cmake/sanitation_perception_interfacesConfig.cmake",
+      "sha256": "d014c009e02932cfb1e0a21293d66ef60acfe55f7ea68774a7b62da144e18881",
+      "size_bytes": 1853
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/cmake/sanitation_perception_interfaces__rosidl_typesupport_cExport-noconfig.cmake",
+      "sha256": "dff569110b867c8a957c501f202b3bea278f220bae17330581a6eccc71a55ae2",
+      "size_bytes": 1431
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/cmake/sanitation_perception_interfaces__rosidl_typesupport_cExport.cmake",
+      "sha256": "c62159e774cad35288681bb6c5c5d7fe4d61729663a230a87916f5c9cffa8bdc",
+      "size_bytes": 4917
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/cmake/sanitation_perception_interfaces__rosidl_typesupport_cppExport-noconfig.cmake",
+      "sha256": "9749faa2f9b85e45dfd1e886db0131249f742e2a3167ea272300435cec20d130",
+      "size_bytes": 1494
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/cmake/sanitation_perception_interfaces__rosidl_typesupport_cppExport.cmake",
+      "sha256": "aaf67b83c68e4466c88c7f18b619ba30841dfa09c690494cd234a32fdcf74fcb",
+      "size_bytes": 4941
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/cmake/sanitation_perception_interfaces__rosidl_typesupport_introspection_cExport-noconfig.cmake",
+      "sha256": "37692c82e265f98da3313e8766f93637d25d85fd90d17c843c5b302550819255",
+      "size_bytes": 1418
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/cmake/sanitation_perception_interfaces__rosidl_typesupport_introspection_cExport.cmake",
+      "sha256": "90dcf7af9fce59edfaa492d5ca4b1dae5038379532058c753bad4e45c80909dc",
+      "size_bytes": 5221
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/cmake/sanitation_perception_interfaces__rosidl_typesupport_introspection_cppExport-noconfig.cmake",
+      "sha256": "f17e857306291f8574acd1de157a998a57dd757cc295a38d04f4154c7bbb576a",
+      "size_bytes": 1434
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/cmake/sanitation_perception_interfaces__rosidl_typesupport_introspection_cppExport.cmake",
+      "sha256": "cda23c29bcbccead8c33e2bcbeb42a36740e48ff404c1c061c5e94fd7299b73e",
+      "size_bytes": 5343
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/environment/ament_prefix_path.dsv",
+      "sha256": "c4797d0a0670c70b4d3bcb5b7d47563635c7950595603f3af66f70af546ad57e",
+      "size_bytes": 41
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/environment/ament_prefix_path.sh",
+      "sha256": "6658f14efe913e291c0bf2c74059a9e14fb8abdb5a31628bef61d3b41e206679",
+      "size_bytes": 160
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/environment/library_path.dsv",
+      "sha256": "038195297fbe5e22d78680bf0f2b1b182fea46aaececf77d84daadad1fdfa665",
+      "size_bytes": 42
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/environment/library_path.sh",
+      "sha256": "9f85b113cb295c5c431b91985839eb7838a7e3c4416552f7b29bb6530fd2166e",
+      "size_bytes": 411
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/environment/path.dsv",
+      "sha256": "3f2cdf6234ea2525c1670c140b6a03700d98a2408e7a232107791fa96c08b58b",
+      "size_bytes": 41
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/environment/path.sh",
+      "sha256": "abe10a0452bc4b93f665fc343a7e6d32fe3f3a2b6beb90d338044a71d2583f18",
+      "size_bytes": 185
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/environment/pythonpath.dsv",
+      "sha256": "780d0e12b09c94b2580e6330171daffa565f20e00f918321b306ad7e91ca1422",
+      "size_bytes": 68
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/environment/pythonpath.sh",
+      "sha256": "4d08a80ef02d135f153568876f1b48e847147aaf68734e71cb92f00f79a5aec7",
+      "size_bytes": 172
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/hook/cmake_prefix_path.dsv",
+      "sha256": "7ab2eb0a25c282f9a5bf62596b4c098865cd3a8aa5740601a9efa8620acd69d3",
+      "size_bytes": 41
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/hook/cmake_prefix_path.ps1",
+      "sha256": "0c7394c1d89765deec81cb10e59a36d0d98867690b4b8781d5bc9186fc67885a",
+      "size_bytes": 152
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/hook/cmake_prefix_path.sh",
+      "sha256": "ee9849def404b669097010f38735aa521e0731366a319b6e1abe996c793494b2",
+      "size_bytes": 142
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/hook/ld_library_path_lib.dsv",
+      "sha256": "038195297fbe5e22d78680bf0f2b1b182fea46aaececf77d84daadad1fdfa665",
+      "size_bytes": 42
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/hook/ld_library_path_lib.ps1",
+      "sha256": "c6e5dc5fc7ca92a59dec3b4107c761602c03e4ca0b4211ec2634efc3b43ef84e",
+      "size_bytes": 154
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/hook/ld_library_path_lib.sh",
+      "sha256": "535fe00314bc8acdb36d1057e32d60c215005141a8c30a99bf665a29fed4e222",
+      "size_bytes": 144
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/hook/pythonpath.dsv",
+      "sha256": "cfce05cf41576f99a9a11fda6cf7d4db2551b4f291d3a5a04a63171ada4ac911",
+      "size_bytes": 62
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/hook/pythonpath.ps1",
+      "sha256": "fa6f7248f005ec99fa329faeb2ded431fb4a9e9c21a94f083899b1cd94efafd6",
+      "size_bytes": 174
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/hook/pythonpath.sh",
+      "sha256": "bf815589093fe891f26abdd945cffc27230d749fe330c8dd2725f2b82ef02dad",
+      "size_bytes": 164
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/local_setup.bash",
+      "sha256": "41b30b6c107da94a2478e43953b8cbd0d920f5e8fc1ea847c61a213623d623b0",
+      "size_bytes": 1594
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/local_setup.dsv",
+      "sha256": "3a9d11cd071eded74644d6d8998b1245b015b62d8b227d7d0ce48e0736a3f323",
+      "size_bytes": 291
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/local_setup.sh",
+      "sha256": "52903b7b572aa7e6f9ff04b50528a26f5c8a3980f149d0ceaff16090da798337",
+      "size_bytes": 5354
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/local_setup.zsh",
+      "sha256": "56942873096201f4e7fe5e7b9bd87e56cc42ced33fadb53fbc25766fd9149c81",
+      "size_bytes": 1957
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/msg/CleaningEvent.idl",
+      "sha256": "c6accb786266ed4148d889e6e35179afb3c571dd02ffa478e667b0c227f00d1a",
+      "size_bytes": 612
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/msg/CleaningEvent.msg",
+      "sha256": "9e5eaa1b31d3cbff5e39babbbb0c8b9b5d85851701810b6b7f123a287f323b7f",
+      "size_bytes": 216
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/msg/CubeGraspCandidate.idl",
+      "sha256": "dd6ea0daa8e246b180c88511c54de40a51bfd746c18447e0b097789b6c07c8c9",
+      "size_bytes": 641
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/msg/CubeGraspCandidate.msg",
+      "sha256": "a500587be055553a90f9dc89d3c4eed9ca73bd138f7b846a9c92029cd76b8cd9",
+      "size_bytes": 198
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/msg/CubeTargetState.idl",
+      "sha256": "7ad3d8b1af46154d5dfba0edac6af8e2bf38d7ece039b6816b5fc575bd1d4817",
+      "size_bytes": 959
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/msg/CubeTargetState.msg",
+      "sha256": "b51f1e78d0d22a3068fea83532b12fb5dad8b55ea8b5bbfaf555ec7395f81e80",
+      "size_bytes": 370
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/msg/GarbageTarget.idl",
+      "sha256": "086e9a1e6fd2e080dc9edbe71b9ac65a911f9ec92f925d2cd9cb4fd5d30de047",
+      "size_bytes": 1118
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/msg/GarbageTarget.msg",
+      "sha256": "77199b1f800ade16b336ecbd8bba0f8cd58ad06f73102364d026fae06dd8bf66",
+      "size_bytes": 460
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/msg/GarbageTargetArray.idl",
+      "sha256": "95552e220efd871afaf006be6dc91fde749e98c5e70e7976397347b875277cd8",
+      "size_bytes": 539
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/msg/GarbageTargetArray.msg",
+      "sha256": "205942bf3af55a40b902bc955d3d58d8debaa0828cf5902750d49e37f96f7d7d",
+      "size_bytes": 73
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/msg/GraspVerification.idl",
+      "sha256": "782c1b1356cbc4d13e7944a07cede2942578fd3a0298dc2f94129cb57466fe1d",
+      "size_bytes": 599
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/msg/GraspVerification.msg",
+      "sha256": "8160ef950d9d64eaefa379f95668065ae530973fdeca6b22f341e514a58eba9a",
+      "size_bytes": 198
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/package.bash",
+      "sha256": "62cf626165144960345c406ca3e5b05a13f81087427e323f1ed1c5e2941491eb",
+      "size_bytes": 1414
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/package.dsv",
+      "sha256": "52bba0e67f807ef4958ca0e523df012dbc269960737b291c8e35375e76d2177e",
+      "size_bytes": 949
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/package.ps1",
+      "sha256": "44983cfe9393c0cdc51a194ef7f0f1d49f9c4be4e55e281542f83b41cda9f3bd",
+      "size_bytes": 3558
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/package.sh",
+      "sha256": "456c371997d773dcfca9ec17878c62ac8706bb2b8975ee5bd7dd60cbc8346877",
+      "size_bytes": 3175
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/package.xml",
+      "sha256": "192d6a7db318698d668b9845dadd36541f389b201d1fd009ae6e84c5490d9dc9",
+      "size_bytes": 737
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_perception_interfaces/package.zsh",
+      "sha256": "9aa3625abd0c035f332d4c53fa28d9363604b6f67aca22a7e5c7f7a384bac78f",
+      "size_bytes": 1698
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_safety/config/operational_envelopes.yaml",
+      "sha256": "166b085155e406323cf4f1972a1987ff0d49b2f5a913b27152bf205ff2f414a2",
+      "size_bytes": 777
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_safety/hook/ament_prefix_path.dsv",
+      "sha256": "c4797d0a0670c70b4d3bcb5b7d47563635c7950595603f3af66f70af546ad57e",
+      "size_bytes": 41
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_safety/hook/ament_prefix_path.ps1",
+      "sha256": "0aad623e5d52cbe955cc1d27b5002c3ce9a4c1f8de754b6afd4e6ac27e1eb2dd",
+      "size_bytes": 152
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_safety/hook/ament_prefix_path.sh",
+      "sha256": "c07f082a166d9644cabb3237d58e59177e5830868363f0fc32b646e1fb5cb3a5",
+      "size_bytes": 142
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_safety/hook/cmake_prefix_path.dsv",
+      "sha256": "7ab2eb0a25c282f9a5bf62596b4c098865cd3a8aa5740601a9efa8620acd69d3",
+      "size_bytes": 41
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_safety/hook/cmake_prefix_path.ps1",
+      "sha256": "0c7394c1d89765deec81cb10e59a36d0d98867690b4b8781d5bc9186fc67885a",
+      "size_bytes": 152
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_safety/hook/cmake_prefix_path.sh",
+      "sha256": "ee9849def404b669097010f38735aa521e0731366a319b6e1abe996c793494b2",
+      "size_bytes": 142
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_safety/hook/ld_library_path_lib.dsv",
+      "sha256": "038195297fbe5e22d78680bf0f2b1b182fea46aaececf77d84daadad1fdfa665",
+      "size_bytes": 42
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_safety/hook/ld_library_path_lib.ps1",
+      "sha256": "c6e5dc5fc7ca92a59dec3b4107c761602c03e4ca0b4211ec2634efc3b43ef84e",
+      "size_bytes": 154
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_safety/hook/ld_library_path_lib.sh",
+      "sha256": "535fe00314bc8acdb36d1057e32d60c215005141a8c30a99bf665a29fed4e222",
+      "size_bytes": 144
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_safety/hook/pythonpath.dsv",
+      "sha256": "cfce05cf41576f99a9a11fda6cf7d4db2551b4f291d3a5a04a63171ada4ac911",
+      "size_bytes": 62
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_safety/hook/pythonpath.ps1",
+      "sha256": "fa6f7248f005ec99fa329faeb2ded431fb4a9e9c21a94f083899b1cd94efafd6",
+      "size_bytes": 174
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_safety/hook/pythonpath.sh",
+      "sha256": "bf815589093fe891f26abdd945cffc27230d749fe330c8dd2725f2b82ef02dad",
+      "size_bytes": 164
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_safety/package.bash",
+      "sha256": "e78b35dbc596ef35083b71bb31f8bf2a0a972b7736773e4d4d49a55eb5be5079",
+      "size_bytes": 1079
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_safety/package.dsv",
+      "sha256": "48877e4c3316cd391e2b55df78569c68ba496e27f0ec39709ef72d0834b07788",
+      "size_bytes": 677
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_safety/package.ps1",
+      "sha256": "289a7b66107fdb73d1b700771f3edb7d7ef781bbf657c9124b0545d11eb333ef",
+      "size_bytes": 3509
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_safety/package.sh",
+      "sha256": "55a20c6fff6ab5a460f039fcab75cd9bcfc37a5b1cadb94ae2b68efc8084362a",
+      "size_bytes": 3126
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_safety/package.xml",
+      "sha256": "4fc6b6aedc9397ca2863cf2201342534d3ce0424fae5c284c521808b39d91db1",
+      "size_bytes": 1000
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_safety/package.zsh",
+      "sha256": "113f6d18afb2a50a9504eaf5b63a09ff713c5c57d131c2aef92072391fc68257",
+      "size_bytes": 1367
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_tasks/config/competition_demo_area.yaml",
+      "sha256": "c8d4524360b5b33953109842e1262cc55089c9b104d1fd99cae8e265b2f2f4a1",
+      "size_bytes": 1979
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_tasks/config/competition_demo_area_skid_steer_optimized.yaml",
+      "sha256": "faa4e597060becdecd77d5a86c360ac1f46d67aa0ec2f77a7aebdfa9f3812f6a",
+      "size_bytes": 3159
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_tasks/config/demo_area.yaml",
+      "sha256": "0a343118a8559e314ca7d59765abb084568d5f1a0a9f61abfe476d8795779ae5",
+      "size_bytes": 788
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_tasks/config/demo_area_auto12.yaml",
+      "sha256": "1034c1501ed91e598b5b940cc31968d7e189740add5a1b264ac46d024c49470a",
+      "size_bytes": 556
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_tasks/config/hardware_interface_contract.yaml",
+      "sha256": "30c9e0f02275cb522ca6d44d092cefd760bd0143f1a7bef4bd70f3df88da1a40",
+      "size_bytes": 2025
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_tasks/config/localization_route.json",
+      "sha256": "ec740868eec692c4406b650588dc401c80c934055246f53586d50ff3617cb463",
+      "size_bytes": 89
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_tasks/config/mapping_completion_route.json",
+      "sha256": "c21ba08f60c5db8660d292fb2f73fd0fa0f32b02ec5b41e49d0155e29d037319",
+      "size_bytes": 67
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_tasks/config/measurement_covariance.yaml",
+      "sha256": "9fa3d55403e3e1bf9929fa098d7854d14b6f7de505ce7218112cc0efadfdc024",
+      "size_bytes": 925
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_tasks/config/mission_schema.json",
+      "sha256": "837ebd23948c57e965d67fd131f31c249151dab2c6d354f86aceb12555ed5f0a",
+      "size_bytes": 2574
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_tasks/config/showcase_area.yaml",
+      "sha256": "53e21d669106374f62f4eff1cfa34210a04b8b37aaf37aeb6b6d36755fad1fde",
+      "size_bytes": 577
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_tasks/config/sim2real_fault_profiles.yaml",
+      "sha256": "c03843c966ca045c99a53e7efb58f35fa1b2d83d865542830f14372e1b35dc09",
+      "size_bytes": 547
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_tasks/hook/ament_prefix_path.dsv",
+      "sha256": "c4797d0a0670c70b4d3bcb5b7d47563635c7950595603f3af66f70af546ad57e",
+      "size_bytes": 41
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_tasks/hook/ament_prefix_path.ps1",
+      "sha256": "0aad623e5d52cbe955cc1d27b5002c3ce9a4c1f8de754b6afd4e6ac27e1eb2dd",
+      "size_bytes": 152
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_tasks/hook/ament_prefix_path.sh",
+      "sha256": "c07f082a166d9644cabb3237d58e59177e5830868363f0fc32b646e1fb5cb3a5",
+      "size_bytes": 142
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_tasks/hook/cmake_prefix_path.dsv",
+      "sha256": "7ab2eb0a25c282f9a5bf62596b4c098865cd3a8aa5740601a9efa8620acd69d3",
+      "size_bytes": 41
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_tasks/hook/cmake_prefix_path.ps1",
+      "sha256": "0c7394c1d89765deec81cb10e59a36d0d98867690b4b8781d5bc9186fc67885a",
+      "size_bytes": 152
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_tasks/hook/cmake_prefix_path.sh",
+      "sha256": "ee9849def404b669097010f38735aa521e0731366a319b6e1abe996c793494b2",
+      "size_bytes": 142
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_tasks/hook/ld_library_path_lib.dsv",
+      "sha256": "038195297fbe5e22d78680bf0f2b1b182fea46aaececf77d84daadad1fdfa665",
+      "size_bytes": 42
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_tasks/hook/ld_library_path_lib.ps1",
+      "sha256": "c6e5dc5fc7ca92a59dec3b4107c761602c03e4ca0b4211ec2634efc3b43ef84e",
+      "size_bytes": 154
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_tasks/hook/ld_library_path_lib.sh",
+      "sha256": "535fe00314bc8acdb36d1057e32d60c215005141a8c30a99bf665a29fed4e222",
+      "size_bytes": 144
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_tasks/hook/pythonpath.dsv",
+      "sha256": "cfce05cf41576f99a9a11fda6cf7d4db2551b4f291d3a5a04a63171ada4ac911",
+      "size_bytes": 62
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_tasks/hook/pythonpath.ps1",
+      "sha256": "fa6f7248f005ec99fa329faeb2ded431fb4a9e9c21a94f083899b1cd94efafd6",
+      "size_bytes": 174
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_tasks/hook/pythonpath.sh",
+      "sha256": "bf815589093fe891f26abdd945cffc27230d749fe330c8dd2725f2b82ef02dad",
+      "size_bytes": 164
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_tasks/package.bash",
+      "sha256": "2b86e6352453313c118d72d45f9bc8ab575cbe243f51b5009b7cbb3cb4a490a2",
+      "size_bytes": 1078
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_tasks/package.dsv",
+      "sha256": "13e367e203b6bfaf6ea6e8a4d129ef8064ce73a18327dc239f200e688a07d8fc",
+      "size_bytes": 665
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_tasks/package.ps1",
+      "sha256": "0bfee6fcff14ffffde6791c9b7015d6f5f27856b18c2db0488937f317289bc23",
+      "size_bytes": 3505
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_tasks/package.sh",
+      "sha256": "c556d4a51d94b684b0c541cdf9049a226dc71795a4f14fc18abef0bf8a194095",
+      "size_bytes": 3122
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_tasks/package.xml",
+      "sha256": "44533367ec2f9f02d723d055fe1343584ca9128290b4dbe2e3d210cae6d8a901",
+      "size_bytes": 916
+    },
+    {
+      "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/share/sanitation_tasks/package.zsh",
+      "sha256": "7abd3845c09cef122f51404a7a5d4fe4e5f7741ed26060db0352b5747cb738d0",
+      "size_bytes": 1366
+    }
+  ],
+  "models": [
+    {
+      "path": "/opt/tzcup/s100p/artifacts/dosod/tzcup_offline_vocabulary.json",
+      "sha256": "c5b10ba0e26ee28cdbf5192775e7d2ddb3f5852e515f59a074b38b7ed69d7ffd",
+      "size_bytes": 188
+    },
+    {
+      "path": "/opt/tzcup/s100p/artifacts/edgesam/edgesam_decoder_512.hbm",
+      "sha256": "c4f32f9340a9c4f6365599d62588fcce572791840c3b905c939d1d297cd40388",
+      "size_bytes": 13844912
+    },
+    {
+      "path": "/opt/tzcup/s100p/artifacts/edgesam/edgesam_encoder_512.hbm",
+      "sha256": "82557c8f270f227035aee0246237d743e555b1816c2d7eb2e5694a4fa17fbfef",
+      "size_bytes": 12383448
+    }
+  ],
+  "overlay_setup": {
+    "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install/setup.sh",
+    "sha256": "df29fa71b2a7fd4ba0bce116ebba1e5e7f878548ad490e575935d6105646597f",
+    "size_bytes": 1951
+  },
+  "packages": {
+    "sanitation_active_cleaning": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install",
+    "sanitation_localization": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install",
+    "sanitation_navigation": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install",
+    "sanitation_perception": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install",
+    "sanitation_perception_interfaces": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install",
+    "sanitation_safety": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install",
+    "sanitation_tasks": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/ws/install"
+  },
+  "report_id": "tzcup_competition_sim_only_s100p_full_inventory_v1",
+  "runtime": {
+    "dpkg": [
+      "python3-colcon-common-extensions\t0.3.0-100\tall",
+      "ros-humble-nav2-bringup\t1.1.20-1jammy.20260805.020157\tarm64",
+      "ros-humble-robot-localization\t3.5.4-1jammy.20260804.194918\tarm64",
+      "ros-humble-slam-toolbox\t2.6.10-1jammy.20260805.012523\tarm64"
+    ],
+    "python_implementation": "CPython",
+    "python_soabi": "cpython-310-aarch64-linux-gnu",
+    "python_version": "3.10.12",
+    "ros_distro": "humble",
+    "ros_version": "2",
+    "tros_prefix_present": true
+  },
+  "schema_version": 1,
+  "source_transfer": {
+    "archive_sha256": "50e47a9e4725c22bc282f48323a162b76dac2a35fc2d9cb4a77d965df84d0d17",
+    "archive_size_bytes": 5795840,
+    "head": "6731784c03261652bce70a1161fee921c9738291",
+    "packages": [
+      "sanitation_perception_interfaces",
+      "sanitation_perception",
+      "sanitation_localization",
+      "sanitation_navigation",
+      "sanitation_active_cleaning",
+      "sanitation_safety",
+      "sanitation_tasks"
+    ],
+    "report_id": "tzcup_s100p_source_transfer_v1",
+    "schema_version": 1,
+    "tree": "6bad835f4316a5976d2d2c6c0ce7e852a234f0cb"
+  },
+  "source_transfer_manifest": {
+    "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/source/source-transfer-manifest.json",
+    "sha256": "424c6109933ee8e6e4140a8495e156bcd8b7b886e587f0a6337765e4024fb955",
+    "size_bytes": 553
+  },
+  "status": "S100P_RUNTIME_INVENTORY_FROZEN"
+}

@@ -1,0 +1,1 @@
+{"status": "S100P_LOCALIZATION_REPLAY_PASSED", "output_count": 69, "checks": {"filtered_output_received": true, "speed_response_varied": true, "yaw_rate_response_varied": true, "pose_advanced": true}}

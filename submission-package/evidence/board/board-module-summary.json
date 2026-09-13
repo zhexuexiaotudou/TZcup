@@ -1,0 +1,112 @@
+{
+  "claim_boundary": "S100P computation with simulation/replay inputs only; not HIL or field validation.",
+  "generated_utc": "2026-09-11T19:04:10.660839+00:00",
+  "modules": {
+    "BOARD-01": {
+      "evidence": [
+        {
+          "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/evidence/perception-replay-01/witness.json",
+          "sha256": "99fa8f95ba6b2630dfb0834595035ce93434df7ab2e5cba98177feab0985e01f",
+          "size_bytes": 106456
+        },
+        {
+          "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/evidence/perception-replay-01/graph.log",
+          "sha256": "ed3aa9ae3129ac4dd7a987090ce37e486bbc17d13e4fd5a4602220974960d8f4",
+          "size_bytes": 6006
+        }
+      ],
+      "fresh_process_observation": {
+        "bpu_latency_observations": [],
+        "capture_complete": true,
+        "product_liveness": []
+      },
+      "module": "perception",
+      "reason": "Only NON_FORMAL_ABI_DEVELOPMENT HBM manifest is available; current product adapter rejected the non-nash-m target and no semantic accuracy was evaluated.",
+      "status": "BLOCKED"
+    },
+    "BOARD-02": {
+      "checks": {
+        "localization": {
+          "filtered_output_received": true,
+          "pose_advanced": true,
+          "speed_response_varied": true,
+          "yaw_rate_response_varied": true
+        },
+        "mapping": {
+          "map_has_known_cells": true,
+          "map_has_occupied_cells": true,
+          "map_resolution_is_configured": true,
+          "occupancy_grid_received": true
+        }
+      },
+      "evidence": [
+        {
+          "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/evidence/mapping-replay-01/report.json",
+          "sha256": "ece56f657c63cbb4d3f553ea063a8dee372e6ec9bfa21ed515d06becf393b4ff",
+          "size_bytes": 3542
+        },
+        {
+          "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/evidence/localization-replay-01/report.json",
+          "sha256": "b03f53b603a86543275138a8f5c5d747fbf619f95cf30d60f1b0d29692adfe04",
+          "size_bytes": 17781
+        }
+      ],
+      "input_class": "synthetic_replay",
+      "module": "mapping_localization",
+      "status": "PASSED"
+    },
+    "BOARD-03": {
+      "checks": {
+        "qlearning_split_overlap": false,
+        "qlearning_test_success_rate": 1.0,
+        "qlearning_train_success_rate": 1.0,
+        "qlearning_truth_access_used": false,
+        "qlearning_validation_success_rate": 1.0
+      },
+      "evidence": [
+        {
+          "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/evidence/qlearning-replay-01/report.json",
+          "sha256": "e3d57c13dbf57fd1368a3b057b5d168fbca3114812545cf5507988814130066f",
+          "size_bytes": 2296
+        },
+        {
+          "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/evidence/qlearning-replay-01/checkpoint.json",
+          "sha256": "3deff603984e3c02596f6a1bab0c02e56c5201a03fe9f86258eb89cb921b3cb1",
+          "size_bytes": 6599
+        },
+        {
+          "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/evidence/planning-replay-02/report.json",
+          "sha256": "2e5b71fc7498438bef0fcf5194070da5426cd7cf41aa3f97c852bb2ff4055027",
+          "size_bytes": 14584
+        }
+      ],
+      "input_class": "simulation_replay",
+      "module": "planning_decision",
+      "status": "PASSED"
+    },
+    "BOARD-04": {
+      "checks": {
+        "emergency_stop_zeroed": true,
+        "negative_command_clipped_after_recovery": true,
+        "output_varied": true,
+        "positive_command_clipped": true
+      },
+      "evidence": [
+        {
+          "path": "/opt/tzcup/s100p/releases/competition-sim-only-6731784-20260912/evidence/control-replay-01/report.json",
+          "sha256": "51476eb5d3130fa321bbb70c1ff779f1e5f99c4331bd3759effc256d30ca4835",
+          "size_bytes": 7003
+        }
+      ],
+      "input_class": "replay",
+      "module": "control",
+      "status": "PASSED"
+    }
+  },
+  "passed": false,
+  "report_id": "tzcup_competition_sim_only_s100p_module_summary_v1",
+  "schema_version": 1,
+  "source_head": "6731784c03261652bce70a1161fee921c9738291",
+  "source_tree": "6bad835f4316a5976d2d2c6c0ce7e852a234f0cb",
+  "status": "BOARD_ALGORITHMS_BLOCKED"
+}
