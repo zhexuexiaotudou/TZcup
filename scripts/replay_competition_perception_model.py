@@ -109,6 +109,7 @@ def main():
         "model_sha256": model_sha256,
         "replay_status": "OFFLINE_FROZEN_FRAME_REPLAY",
         "policy_replay_status": "NOT_RUN",
+        "policy_metrics": None,
         "scored_raw_output_frame_count": sum(bool(frame["predictions"]) for frame in replay),
     })
     args.output.parent.mkdir(parents=True, exist_ok=True)

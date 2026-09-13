@@ -522,6 +522,7 @@ def run_ros_independent_tests() -> None:
         perception_package / "test" / "test_rgb_to_nv12_adapter.py",
         perception_package / "test" / "test_s100p_board_launch_contract.py",
         perception_package / "test" / "test_s100p_product_adapter_core.py",
+        ROOT / "scripts" / "test_verify_competition_perception_replay_evidence.py",
         dataset_package / "test" / "test_synthetic.py",
         ground_truth_package / "test" / "test_visibility.py",
         spot_cleaning_package / "test" / "test_coordinator.py",
