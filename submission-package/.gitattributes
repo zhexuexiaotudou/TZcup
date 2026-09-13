@@ -1,0 +1,2 @@
+# Preserve copied evidence bytes, including original line endings and trailing spaces.
+evidence/** -text
