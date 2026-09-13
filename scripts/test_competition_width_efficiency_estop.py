@@ -20,3 +20,17 @@ def test_sparse_side_strips_do_not_inflate_contiguous_width_or_union_area():
 
 def test_missing_physical_motion_is_fail_closed():
  assert evaluate([],'steady')['estop_status']=='FAIL'
+
+def test_fixture_preserves_grid_and_enables_physical_contact_system(tmp_path):
+ import subprocess,xml.etree.ElementTree as E,json
+ base=tmp_path/'base';(base/'public').mkdir(parents=True);(base/'environment').mkdir()
+ (base/'public/world.sdf').write_text('<sdf version="1.9"><world name="campus_formal"><model name="surface_old"/><model name="road"/></world></sdf>')
+ (base/'environment/pedestrian_schedule.json').write_text('{}')
+ out=tmp_path/'new'
+ subprocess.run([sys.executable,str(Path(__file__).with_name('prepare_competition_width_efficiency_fixture.py')),'--base-episode',str(base),'--output-dir',str(out)],check=True)
+ t=E.parse(out/'episode/public/world.sdf')
+ assert len(t.findall('.//world/plugin[@filename="gz-sim-contact-system"]'))==1
+ assert len(t.findall('.//visual'))==4400
+ data=json.loads((out/'fixture.json').read_text());assert data['grid_m']==.1
+ assert len(set(tuple(c) for c in data['cells_xy']))==4400
+ assert t.find('.//model[@name="road"]') is not None
