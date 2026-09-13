@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "candidate_revision": "06b99b6cb64e91ec470ac5623ded4c6db22df321",
+  "branch": "codex/day1-localization-run",
+  "status": "NOT_MEASURED",
+  "decision": "STOPPED_BEFORE_DYNAMIC_DATA_NO_RETRY",
+  "generated_costmap_radii": {
+    "local_inflation_radius_m": 0.56,
+    "global_inflation_radius_m": 0.56,
+    "nav2_footprint_padding_m": 0.01,
+    "required_strict_boundary_m": 0.55
+  },
+  "predeclared_criterion": {
+    "evaluated": false,
+    "maximum_error_le_50mm": null,
+    "minimum_dynamic_pairs": 100,
+    "minimum_pair_coverage_fraction": 0.95,
+    "minimum_displacement_m_strictly_greater_than": 2.0
+  },
+  "sample_counts": {
+    "mcap_files": 0,
+    "dynamic_reference_samples": 0,
+    "paired_samples": 0,
+    "route_samples": 0,
+    "tf_authority_reports": 0
+  },
+  "error_statistics": {
+    "rmse_m": null,
+    "p95_m": null,
+    "max_m": null,
+    "displacement_m": null,
+    "pair_coverage": null
+  },
+  "failure": {
+    "stage": "sealed_parameter_capture_before_dynamic_window",
+    "gazebo_started": true,
+    "dynamic_data_obtained": false,
+    "effective_parameters_all_expected": false,
+    "unmatched": [
+      {
+        "node": "/amcl",
+        "parameter": "global_frame_id",
+        "error": "TimeoutExpired after 10.0 seconds"
+      }
+    ],
+    "all_other_expected_parameters_matched": true,
+    "no_localization_focus_json": true,
+    "no_tf_authority_json": true,
+    "no_bag": true,
+    "no_driver_log": true,
+    "no_probe_rc": true
+  },
+  "evidence_hashes": {
+    "effective_parameters_json": "29d228812101c652f5abfb5215d2f08428cf6901e0cffccf5a1956a061b868cc",
+    "formal_campus_generated_nav2_yaml": "baaf2420d94b7187fca23b04d1f95e45b1b7807e7afbbe531fa6d7c308a700ff",
+    "launch_log": "02ef7aaefee611f37ae533bbec396a7d256f9237ee13af772cf3a907b10d26b1",
+    "navigation_log": "853a427dc17b2d698983051333c6bb77359e9bdb71991f4e5dddf82036ad37a5",
+    "amcl_parameters": "32caaf2cc9679da400f8b699f1cfbd65937b23479e5e9919f69e5015cf6b7cf4",
+    "local_ekf_parameters": "60abb0815a16b40376d04fc827b4df7e262a0c759455f13c0fbe8c3ba95a63bd",
+    "global_ekf_parameters": "a7fab09ca7f664742c898e1fa574a43460d857021bd01a6a2c98d62250d95f00",
+    "build_log": "bc04962261bba6a6f99750735c2d00d249a67719943ccebd48ca0ab04ebdd5c7",
+    "input_binding": "53b008597b0c5a3555dfd60e0dc1a88c51db18164fda88bee5743fa4f764679d"
+  },
+  "resource_release": {
+    "gazebo_lock_free": true,
+    "gazebo_process_remaining": false,
+    "ros_runtime_process_remaining": false,
+    "sim_resource_released": true
+  },
+  "raw_evidence": ".work/day1-localization-run/evidence/run-02"
+}
