@@ -334,6 +334,12 @@ ament_environment_hooks(
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_ground_dirt_visual_event
+    test/test_ground_dirt_visual_event.cc
+  )
+  target_link_libraries(test_ground_dirt_visual_event
+    gz-sim8::gz-sim8 gz-transport13::gz-transport13 gz-msgs10::gz-msgs10
+  )
   ament_add_gtest(test_contact_gate_core
     test/test_contact_gate_core.cc
   )

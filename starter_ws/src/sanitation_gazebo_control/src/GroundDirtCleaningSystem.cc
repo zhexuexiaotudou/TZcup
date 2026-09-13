@@ -71,11 +71,11 @@ double DistanceToSegment(
 /// cleaning joints and link poses.
 ///
 /// Dirt is a deterministic raster of visual cells emitted by the campus
-/// generator.  A cell becomes transparent only when its centre is inside the
+/// generator. A cell is retired visually only when its centre is inside the
 /// measured world-space sweep of a lowered, rotating side brush or central
-/// roller.  The system never owns rigid litter models and never removes any
-/// entity; discrete litter remains available exclusively to the manipulation
-/// and dry-bin chain.
+/// roller. Only the discovered dirt Visual entity is removed, never its parent
+/// link or model. Discrete litter remains exclusively owned by manipulation
+/// and the dry-bin chain. The cell ledger survives visual removal.
 class GroundDirtCleaningSystem final:
     public gz::sim::System,
     public gz::sim::ISystemConfigure,
@@ -342,6 +342,11 @@ class GroundDirtCleaningSystem final:
     _ecm.SetChanged(_cell.visual,
         gz::sim::components::Transparency::typeId,
         gz::sim::ComponentState::OneTimeChange);
+    // Harmonic does not apply changed Transparency to an existing GUI visual.
+    // Its renderer does handle removed Visual entities. Retire only this
+    // measured-clean dirt visual; keep the cell ledger and all parent bodies.
+    if (_ecm.Component<gz::sim::components::Visual>(_cell.visual) != nullptr)
+      _ecm.RequestRemoveEntity(_cell.visual, false);
   }
 
   private: void PublishState()

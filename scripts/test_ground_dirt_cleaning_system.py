@@ -36,13 +36,16 @@ def test_plugin_uses_real_joint_state_world_pose_and_only_dirt_visual_cells():
         assert token in source
     for forbidden in (
         "requestRemoveEntity",
-        "RequestRemoveEntity",
         "removeEntity",
         "EntityCreator",
         '"object_',
         '"material_cube',
     ):
         assert forbidden not in source
+    # The visualization-only exception may retire the discovered dirt visual,
+    # never recursively remove a parent model or physical litter.
+    assert source.count("RequestRemoveEntity(") == 1
+    assert "RequestRemoveEntity(_cell.visual, false)" in source
 
 
 def test_plugin_wiring_and_product_ros_truth_isolation():
