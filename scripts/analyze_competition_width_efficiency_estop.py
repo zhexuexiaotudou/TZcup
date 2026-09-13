@@ -8,8 +8,9 @@ def evaluate(rows,mode):
  result={'scope':'COMPETITION_HARD_MINIMUM Gazebo simulation','mode':mode,'width_status':'FAIL','efficiency_status':'FAIL','estop_status':'FAIL','linear_threshold_mps':.01,'angular_threshold_radps':.01,'hold_sim_s':1.0}
  if 'motion_start' not in events or 'estop_trigger' not in events:return result
  t0=events['motion_start']['sim_s'];trigger=events['estop_trigger'];te=trigger['sim_s'];before=trigger['data']
- result['estop_trigger_sim_s']=te;result['pre_estop_velocity']=before
- after=[r for r in gt if r['sim_s'] is not None and r['sim_s']>=te];stable=None
+ result['estop_trigger_sim_s']=te;result['pre_estop_velocity']=before;result['estop_clock_note']='trigger uses latest physical dirt sim stamp; stop uses GT source stamp; trigger timestamp lag makes delay conservative'
+ result['contact_positive_samples']={k:sum(r['kind']=='contact_'+k and r['data']['count']>0 for r in rows) for k in ['left_side_brush','right_side_brush','central_roller']}
+ after=[dict(r, sim_s=r['data'].get('stamp',r['sim_s'])) for r in gt if r['data'].get('stamp',r['sim_s']) is not None and r['data'].get('stamp',r['sim_s'])>=te];stable=None
  for i,r in enumerate(after):
   if r['data']['linear']>.01 or r['data']['angular']>.01:continue
   tail=[x for x in after[i:] if x['sim_s']<=r['sim_s']+1.0]

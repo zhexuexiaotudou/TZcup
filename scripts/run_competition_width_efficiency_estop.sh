@@ -51,9 +51,10 @@ setsid ros2 run sanitation_formal_campus_integration formal-scan-self-filter --r
 setsid ros2 run ros_gz_bridge parameter_bridge \
   '/model/tzcup_formal_sanitation_vehicle/ground_dirt/command/enable@std_msgs/msg/Bool]gz.msgs.Boolean' \
   '/model/tzcup_formal_sanitation_vehicle/ground_dirt/status_json@std_msgs/msg/String[gz.msgs.StringMsg' \
-  '/cleaning/left_side_brush/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts' \
-  '/cleaning/right_side_brush/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts' \
-  '/cleaning/central_roller/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts' \
+  '/world/campus_formal/model/tzcup_formal_sanitation_vehicle/link/left_side_brush_link/sensor/left_side_brush_ground_contact/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts' \
+  '/world/campus_formal/model/tzcup_formal_sanitation_vehicle/link/right_side_brush_link/sensor/right_side_brush_ground_contact/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts' \
+  '/world/campus_formal/model/tzcup_formal_sanitation_vehicle/link/central_roller_link/sensor/central_roller_ground_contact/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts' \
+  --ros-args -r /world/campus_formal/model/tzcup_formal_sanitation_vehicle/link/left_side_brush_link/sensor/left_side_brush_ground_contact/contact:=/cleaning/left_side_brush/contact -r /world/campus_formal/model/tzcup_formal_sanitation_vehicle/link/right_side_brush_link/sensor/right_side_brush_ground_contact/contact:=/cleaning/right_side_brush/contact -r /world/campus_formal/model/tzcup_formal_sanitation_vehicle/link/central_roller_link/sensor/central_roller_ground_contact/contact:=/cleaning/central_roller/contact \
   >"$OUTPUT/dirt_bridge.log" 2>&1 & bridge_pid=$!
 sleep 40
 if [[ -n "${PERCEPTION_LAUNCH:-}" ]]; then
