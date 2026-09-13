@@ -2,6 +2,8 @@
 
 **FAIL; 50 mm has not been demonstrated.** Candidate `9542db7`, based on cleaning result `a9691b4`. Only candidate pack A was applied. B/C, mapping, perception, full CI, PR and deployment were outside this bounded run. Prior cleaning geometry and its runtime overlay were preserved.
 
+Follow-up: the [no-Gazebo replay gate](competition-localization-replay.md) captured actual installed configuration and per-key parameters, tested the three-change candidate, and returned NO-GO because exact TF publisher identity is unresolved. The second dynamic run was not started; the original metrics below remain unchanged.
+
 ## Changes and verification
 
 The probe defaults AMCL `tf_broadcast=false`, leaving global EKF as the intended map→odom owner. `PROBE_AMCL_TF_BROADCAST=true` restores the old diagnostic behavior; it does not relax the authority validator. The collector now seals normally through a stop file. The route driver uses Nav2 and safety commands, never ground truth. Ground truth is recorded for offline scoring only.

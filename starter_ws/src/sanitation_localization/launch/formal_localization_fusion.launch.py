@@ -48,7 +48,7 @@ def generate_launch_description() -> LaunchDescription:
                 remappings=[
                     ("imu", "/imu/data"),
                     ("gps/fix", "/gnss/fix"),
-                    ("odometry/filtered", "/odom"),
+                    ("odometry/filtered", "/localization/fused_odom"),
                     ("odometry/gps", "/odometry/gps"),
                 ],
                 output="screen",

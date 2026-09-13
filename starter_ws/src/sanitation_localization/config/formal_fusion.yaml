@@ -61,7 +61,7 @@ navsat_transform:
 global_ekf:
   ros__parameters:
     use_sim_time: true
-    frequency: 30.0
+    frequency: 50.0
     sensor_timeout: 0.35
     two_d_mode: true
     # The global filter owns a continuously queryable map -> odom edge.  Its
@@ -70,7 +70,7 @@ global_ekf:
     # time instead of repeatedly re-stamping the last measurement epoch.
     predict_to_current_time: true
     transform_time_offset: 0.0
-    transform_timeout: 0.10
+    transform_timeout: 0.0
     print_diagnostics: true
     publish_tf: true
     publish_acceleration: false
