@@ -12,6 +12,9 @@ import argparse, hashlib, json, os, pathlib, signal, sys, time
 from dataclasses import dataclass, field
 from typing import Any
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / 'starter_ws/src/sanitation_formal_campus_integration'))
+from sanitation_formal_campus_integration.lifecycle_health_protocol import validate_health
+
 CLOCK = "/clock"
 REQUIRED = {
     "/odom": "nav_msgs/msg/Odometry", "/odom/unfiltered": "nav_msgs/msg/Odometry",
@@ -83,6 +86,11 @@ def stamped_or_now(message: Any, now: int) -> int:
 @dataclass
 class Tracker:
     role: str; topics: dict[str, str]; session: str; session_sha: str; token: str; bag_dir: str
+    lifecycle_packet: dict | None = None
+    lifecycle_state: dict | None = None
+    lifecycle_wire_sha256: str | None = None
+    lifecycle_wire_text: str | None = None
+    lifecycle_error: str | None = None
     counts: dict[str, int] = field(init=False)
     last: dict[str, int] = field(default_factory=dict)
     clock_ns: int = 0; clock_advances: int = 0; previous_clock_ns: int = 0; clock_rollback: bool = False; last_clock_advance_monotonic_ns: int = 0
@@ -97,6 +105,21 @@ class Tracker:
         self.previous_clock_ns = value; self.clock_ns = value
     def written(self, topic: str, message: Any, mono: int) -> None:
         self.counts[topic] += 1; self.last[topic] = mono
+        if topic == '/formal_mapping/lifecycle_status':
+            try:
+                packet = json.loads(message.data)
+                wire_sha = hashlib.sha256(message.data.encode()).hexdigest()
+                state, error = validate_health(packet, self.lifecycle_state, mono,
+                                               self.session, self.session_sha, self.token,
+                                               wire_sha256=wire_sha, wire_text=message.data)
+                if error:
+                    self.lifecycle_error = self.lifecycle_error or error
+                else:
+                    self.lifecycle_packet, self.lifecycle_state = packet, state
+                    self.lifecycle_wire_sha256 = wire_sha
+                    self.lifecycle_wire_text = message.data
+            except (ValueError, TypeError, AttributeError):
+                self.lifecycle_error = self.lifecycle_error or 'invalid_lifecycle_payload'
         if topic == CLOCK: self.observe_clock(clock_value(message), mono)
         elif topic == "/base_controller/cmd_vel":
             t = message.twist
@@ -124,13 +147,24 @@ class Tracker:
             if state == "ACTIVE": self.pre_arm_active_seen = True
     def blockers(self, mono: int) -> list[str]:
         result = []
+        if self.lifecycle_packet is None:
+            result.append('lifecycle producer not observed')
+        elif self.lifecycle_error:
+            result.append('lifecycle producer invalid: ' + self.lifecycle_error)
+        else:
+            _, error = validate_health(self.lifecycle_packet, self.lifecycle_state, mono,
+                                       self.session, self.session_sha, self.token,
+                                       wire_sha256=self.lifecycle_wire_sha256, wire_text=self.lifecycle_wire_text)
+            if error:
+                self.lifecycle_error = error
+                result.append('lifecycle producer invalid: ' + error)
         if self.clock_rollback: result.append("clock rollback observed")
         if self.clock_ns <= 0 or self.clock_advances < 2: result.append("clock did not strictly advance at least twice")
         if self.last_clock_advance_monotonic_ns <= 0 or mono - self.last_clock_advance_monotonic_ns > FRESH_NS:
             result.append("clock evidence is stalled")
         for topic in REQUIRED:
             if self.counts.get(topic, 0) <= 0: result.append(f"writer has no message for {topic}"); continue
-            if topic not in self.last or mono - self.last[topic] > FRESH_NS: result.append(f"writer evidence for {topic} is stale")
+            if topic not in self.last or self.last[topic] > mono or (topic != "/formal_mapping/lifecycle_status" and mono - self.last[topic] > FRESH_NS): result.append(f"writer evidence for {topic} is stale")
         if self.role == "early":
             for topic in ASSOCIATION:
                 if self.counts.get(topic, 0) <= 0: result.append(f"writer has no message for {topic}")
@@ -140,7 +174,7 @@ class Tracker:
             if self.pre_arm_status_count is None: result.append("pre-arm safety status lacks status_publish_count")
         return result
     def ready(self, mono: int, status: str) -> dict[str, Any]:
-        return {"schema_version":1,"report_id":f"tzcup_formal_{self.role}_recording_ready_v1","status":status,"ready":not self.blockers(mono),"role":self.role,"formal_acceptance_session":self.session,"formal_acceptance_session_sha256":self.session_sha,"run_token":self.token,"owner_identity":identity(self.role,self.token),"bag_dir":self.bag_dir,"writer_message_counts":self.counts,"clock_ns":self.clock_ns,"clock_advances":self.clock_advances,"clock_rollback":self.clock_rollback,"last_clock_advance_monotonic_ns":self.last_clock_advance_monotonic_ns,"last_message_monotonic_ns_by_topic":self.last,"pre_arm_nonzero_seen":self.pre_arm_nonzero_seen,"pre_arm_unsafe_count":self.pre_arm_unsafe_count,"pre_arm_status_count":self.pre_arm_status_count,"pre_arm_status_messages_received":self.pre_arm_status_messages_received,"pre_arm_active_seen":self.pre_arm_active_seen,"pre_arm_latest_safety":self.pre_arm_latest_safety,"ready_epoch_ns":time.time_ns(),"ready_monotonic_ns":mono}
+        return {"lifecycle_wire_text":self.lifecycle_wire_text,"lifecycle_packet":self.lifecycle_packet,"lifecycle_state":self.lifecycle_state,"lifecycle_wire_sha256":self.lifecycle_wire_sha256,"schema_version":1,"report_id":f"tzcup_formal_{self.role}_recording_ready_v1","status":status,"ready":not self.blockers(mono),"role":self.role,"formal_acceptance_session":self.session,"formal_acceptance_session_sha256":self.session_sha,"run_token":self.token,"owner_identity":identity(self.role,self.token),"bag_dir":self.bag_dir,"writer_message_counts":self.counts,"clock_ns":self.clock_ns,"clock_advances":self.clock_advances,"clock_rollback":self.clock_rollback,"last_clock_advance_monotonic_ns":self.last_clock_advance_monotonic_ns,"last_message_monotonic_ns_by_topic":self.last,"pre_arm_nonzero_seen":self.pre_arm_nonzero_seen,"pre_arm_unsafe_count":self.pre_arm_unsafe_count,"pre_arm_status_count":self.pre_arm_status_count,"pre_arm_status_messages_received":self.pre_arm_status_messages_received,"pre_arm_active_seen":self.pre_arm_active_seen,"pre_arm_latest_safety":self.pre_arm_latest_safety,"ready_epoch_ns":time.time_ns(),"ready_monotonic_ns":mono}
 
 
 def owner_live(value: dict[str, Any]) -> bool:
@@ -160,7 +194,13 @@ def valid_local_ready(path: pathlib.Path, tracker: Tracker) -> tuple[dict[str, A
     counts=value.get("writer_message_counts"); last=value.get("last_message_monotonic_ns_by_topic")
     if not isinstance(counts,dict) or not isinstance(last,dict) or value.get("clock_ns",0)<=0 or value.get("clock_advances",0)<2 or value.get("clock_rollback") is not False or not isinstance(value.get("last_clock_advance_monotonic_ns"), int) or not 0 <= final_now-value["last_clock_advance_monotonic_ns"] <= FRESH_NS: return None
     for topic in REQUIRED:
-        if not isinstance(counts.get(topic),int) or counts[topic]<=0 or not isinstance(last.get(topic),int) or not 0 <= final_now-last[topic] <= FRESH_NS: return None
+        if not isinstance(counts.get(topic),int) or counts[topic]<=0 or not isinstance(last.get(topic),int) or (last[topic] > final_now or (topic != "/formal_mapping/lifecycle_status" and final_now-last[topic] > FRESH_NS)): return None
+    state, error = validate_health(value.get('lifecycle_packet'), value.get('lifecycle_state'),
+                                   final_now, tracker.session, tracker.session_sha, tracker.token,
+                                   wire_sha256=value.get('lifecycle_wire_sha256'),
+                                   wire_text=value.get('lifecycle_wire_text'))
+    if error or state != value.get('lifecycle_state'): return None
+    if tracker.lifecycle_state is None or state['producer_identity'] != tracker.lifecycle_state['producer_identity']: return None
     return value, final_now
 
 
@@ -183,7 +223,12 @@ def closed_summary(bag: pathlib.Path, counts: dict[str,int]) -> dict[str,Any]:
     return {"metadata_message_counts":actual,"metadata_message_count":info.get("message_count"),"data_files":files}
 
 
+def clock_sample() -> dict[str, int]:
+    return {'epoch_ns': time.time_ns(), 'monotonic_ns': time.monotonic_ns()}
+
+
 def main(argv: list[str] | None=None) -> int:
+    process_start_sample = clock_sample()  # main-entry marker, not kernel birth time
     parser=argparse.ArgumentParser(); parser.add_argument("--output",required=True,type=pathlib.Path); parser.add_argument("--role",required=True,choices=("early","localization")); parser.add_argument("--timeout",type=int,default=120); args=parser.parse_args(argv)
     if args.timeout<=0 or not args.output.is_dir() or args.output.is_symlink(): raise ValueError("output must be real and timeout positive")
     session=os.environ.get("FORMAL_ACCEPTANCE_SESSION",""); token=os.environ.get("FORMAL_RECORDING_RUN_TOKEN",""); deadline_text=os.environ.get("FORMAL_OBSERVATION_DEADLINE_MONOTONIC_NS",""); session_path=pathlib.Path(session)
@@ -193,6 +238,8 @@ def main(argv: list[str] | None=None) -> int:
     if shared_deadline<=time.monotonic_ns(): raise ValueError("deadline expired")
     prefix="formal_recording" if args.role=="early" else "formal_localization"; bag=args.output/("early_recording_audit" if args.role=="early" else "mapping_localization_diagnostic")
     paths={name:args.output/f"{prefix}_{suffix}.json" for name,suffix in {"open":"writer_open","ready":"ready","initial":"initial_ready","closed":"closed"}.items()}; paths["invalid"]=args.output/("formal_recording_invalid.json" if args.role=="early" else "formal_localization_recording_invalid.json"); paths["arm"]=args.output/"formal_recording_arm.json"
+    paths['timing_start'] = args.output / f'{prefix}_timing_start.json'
+    paths['timing_closed'] = args.output / f'{prefix}_timing_closed.json'
     for path in (*paths.values(),bag):
         if path.exists() or path.is_symlink() or not path.parent.is_dir() or path.parent.is_symlink(): raise FileExistsError(path)
     import rclpy, rosbag2_py
@@ -208,7 +255,11 @@ def main(argv: list[str] | None=None) -> int:
     topics=EARLY_TYPES if args.role=="early" else LOCAL_TYPES; tracker=Tracker(args.role,topics,session,sha(session_path),token,str(bag))
     rclpy.init(); node=Node(f"formal_first_map_{args.role}_recording"); writer=rosbag2_py.SequentialWriter(); writer.open(rosbag2_py.StorageOptions(uri=str(bag),storage_id="mcap"),rosbag2_py.ConverterOptions("cdr","cdr"))
     for index,(topic,type_name) in enumerate(topics.items()): writer.create_topic(rosbag2_py.TopicMetadata(id=index,name=topic,type=type_name,serialization_format="cdr",offered_qos_profiles=[]))
-    write_exclusive(paths["open"],{"schema_version":1,"report_id":f"tzcup_formal_{args.role}_writer_open_v1","status":"FORMAL_RECORDING_WRITER_OPEN","opened":True,"role":args.role,"formal_acceptance_session":session,"formal_acceptance_session_sha256":tracker.session_sha,"run_token":token,"owner_identity":identity(args.role,token),"bag_dir":str(bag),"topics":topics,"opened_epoch_ns":time.time_ns(),"opened_monotonic_ns":time.monotonic_ns()})
+    writer_ready_sample = clock_sample()
+    window_start_epoch_ns = writer_ready_sample['epoch_ns']
+    write_exclusive(paths["open"],{"schema_version":1,"report_id":f"tzcup_formal_{args.role}_writer_open_v1","status":"FORMAL_RECORDING_WRITER_OPEN","opened":True,"role":args.role,"formal_acceptance_session":session,"formal_acceptance_session_sha256":tracker.session_sha,"run_token":token,"owner_identity":identity(args.role,token),"bag_dir":str(bag),"topics":topics,"opened_epoch_ns":writer_ready_sample["epoch_ns"],"opened_monotonic_ns":writer_ready_sample["monotonic_ns"],"timing_schema_version":1,"process_start_sample":process_start_sample,"writer_ready_sample":writer_ready_sample,"acceptance_window_start_epoch_ns":window_start_epoch_ns,"window_contract":"writer_ready_after_database_topics_before_subscriptions_and_spin"})
+    open_receipt_sealed_sample = clock_sample()
+    callback_timing = []
     stopped=False; error: str|None=None; armed=False; last_refresh=0
     def invalidate(reason: str) -> None:
         write_exclusive(paths["invalid"],{"schema_version":1,"report_id":("tzcup_formal_recording_invalid_v1" if args.role=="early" else "tzcup_formal_localization_recording_invalid_v1"),"status":("FORMAL_RECORDING_INVALID" if args.role=="early" else "FORMAL_LOCALIZATION_RECORDING_INVALID"),"invalidated":True,"armed":False,"role":args.role,"writer_error":reason,"formal_acceptance_session":session,"formal_acceptance_session_sha256":tracker.session_sha,"run_token":token,"owner_identity":identity(args.role,token),"arm_receipt_path":str(paths["arm"]),"arm_receipt_sha256":sha(paths["arm"]) if paths["arm"].is_file() else None,"invalidated_epoch_ns":time.time_ns(),"invalidated_monotonic_ns":time.monotonic_ns()})
@@ -222,7 +273,16 @@ def main(argv: list[str] | None=None) -> int:
         received_epoch_ns = time.time_ns()
         if error is not None:return
         try:
-            now=time.monotonic_ns(); writer.write(topic,serialize_message(message),received_epoch_ns); tracker.written(topic,message,now)
+            now=time.monotonic_ns()
+            serialized = serialize_message(message)
+            row = {'sequence':len(callback_timing)+1,'topic':topic,'receive_epoch_ns':received_epoch_ns,
+                   'receive_monotonic_ns':now,'serialized_sha256':hashlib.sha256(serialized).hexdigest(),
+                   'write_completed':False}
+            callback_timing.append(row)
+            if received_epoch_ns < window_start_epoch_ns:
+                raise RuntimeError('receive epoch precedes sealed writer-ready window')
+            writer.write(topic,serialized,received_epoch_ns); row['write_completed']=True
+            tracker.written(topic,message,now)
         except Exception as exc: error=str(exc); invalidate(error); stopped=True
     def observe_clock(message: Any) -> None:
         nonlocal error,stopped
@@ -230,6 +290,16 @@ def main(argv: list[str] | None=None) -> int:
         except Exception as exc: error=str(exc); invalidate(error); stopped=True
     subscriptions=[node.create_subscription(classes[t],t,lambda message,t=t:write_message(t,message),qos_profile_sensor_data) for t in topics]
     if args.role=="localization": subscriptions.append(node.create_subscription(Clock,CLOCK,observe_clock,qos_profile_sensor_data))
+    subscription_created_sample = clock_sample()
+    spin_start_sample = clock_sample()
+    timing_start = {'schema_version':1,'owner_identity':identity(args.role,token),
+                    'formal_acceptance_session':session,'run_token':token,
+                    'process_start_sample':process_start_sample,'writer_ready_sample':writer_ready_sample,
+                    'open_receipt_sealed_sample':open_receipt_sealed_sample,
+                    'subscription_created_sample':subscription_created_sample,'spin_start_sample':spin_start_sample,
+                    'acceptance_window_start_epoch_ns':window_start_epoch_ns,
+                    'contract':'All startup markers sealed before first spin; process_start is main entry, kernel start ticks in identity'}
+    write_exclusive(paths['timing_start'], timing_start)
     _=subscriptions; rc=3
     try:
         while not stopped:
@@ -271,6 +341,8 @@ def main(argv: list[str] | None=None) -> int:
             rclpy.shutdown()
         try: summary=closed_summary(bag,tracker.counts)
         except Exception as exc: summary={"validation_error":str(exc)}; rc=1
+        write_exclusive(paths['timing_closed'], {'schema_version':1,'timing_start_sha256':sha(paths['timing_start']),
+                                                'closed_sample':clock_sample(),'callbacks':callback_timing})
         write_exclusive(paths["closed"],{"schema_version":1,"report_id":f"tzcup_formal_{args.role}_recording_closed_v1","status":"FORMAL_RECORDING_CLOSED","closed":True,"role":args.role,"close_rc":rc,"normal_close":rc==0 and error is None,"actual_writer_message_counts":tracker.counts,"bag_validation":summary,"writer_error":error,"closed_epoch_ns":time.time_ns(),"closed_monotonic_ns":time.monotonic_ns()})
     return rc
 

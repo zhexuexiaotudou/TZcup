@@ -54,6 +54,7 @@ def test_finalize_seals_mcap_hashes_and_required_topic_counts(tmp_path):
     bag, topics = _capture(tmp_path)
     receipt = tmp_path / "mapping_localization_diagnostic.json"
     report = MODULE.finalize(
+        require_writer_timing=False,  # Explicit historical fixture, not candidate acceptance.
         run_root=tmp_path,
         bag_dir=bag,
         topic_manifest=topics,
@@ -76,6 +77,7 @@ def test_finalize_fails_closed_for_missing_required_data_or_bad_recorder_rc(tmp_
     bag, topics = _capture(tmp_path, counts={"/odometry/gps": 0})
     receipt = tmp_path / "mapping_localization_diagnostic.json"
     report = MODULE.finalize(
+        require_writer_timing=False,  # Explicit historical fixture, not candidate acceptance.
         run_root=tmp_path,
         bag_dir=bag,
         topic_manifest=topics,
@@ -91,6 +93,7 @@ def test_finalize_fails_closed_for_missing_required_data_or_bad_recorder_rc(tmp_
     second_root = tmp_path / "second"
     bag, topics = _capture(second_root)
     report = MODULE.finalize(
+        require_writer_timing=False,  # Explicit historical fixture, not candidate acceptance.
         run_root=second_root,
         bag_dir=bag,
         topic_manifest=topics,
@@ -109,6 +112,7 @@ def test_finalize_rejects_fake_mcap_and_inconsistent_metadata(tmp_path):
     receipt = tmp_path / "mapping_localization_diagnostic.json"
     (bag / "mapping_localization_diagnostic_0.mcap").write_bytes(b"mcap")
     report = MODULE.finalize(
+        require_writer_timing=False,  # Explicit historical fixture, not candidate acceptance.
         run_root=tmp_path,
         bag_dir=bag,
         topic_manifest=topics,
@@ -128,6 +132,7 @@ def test_finalize_rejects_fake_mcap_and_inconsistent_metadata(tmp_path):
     metadata["rosbag2_bagfile_information"]["message_count"] = 1
     metadata_path.write_text(yaml.safe_dump(metadata), encoding="utf-8")
     report = MODULE.finalize(
+        require_writer_timing=False,  # Explicit historical fixture, not candidate acceptance.
         run_root=second_root,
         bag_dir=bag,
         topic_manifest=topics,
@@ -148,6 +153,7 @@ def test_finalize_rejects_type_or_freshness_mismatch(tmp_path):
     metadata["rosbag2_bagfile_information"]["topics_with_message_count"][0]["topic_metadata"]["type"] = "wrong/type"
     metadata_path.write_text(yaml.safe_dump(metadata), encoding="utf-8")
     report = MODULE.finalize(
+        require_writer_timing=False,  # Explicit historical fixture, not candidate acceptance.
         run_root=tmp_path,
         bag_dir=bag,
         topic_manifest=topics,
@@ -163,6 +169,7 @@ def test_finalize_rejects_type_or_freshness_mismatch(tmp_path):
     second_root = tmp_path / "second"
     bag, topics = _capture(second_root)
     report = MODULE.finalize(
+        require_writer_timing=False,  # Explicit historical fixture, not candidate acceptance.
         run_root=second_root,
         bag_dir=bag,
         topic_manifest=topics,
@@ -179,6 +186,7 @@ def test_finalize_rejects_type_or_freshness_mismatch(tmp_path):
 def test_finalize_rejects_bag_or_receipt_outside_the_fresh_run_root(tmp_path):
     bag, topics = _capture(tmp_path)
     report = MODULE.finalize(
+        require_writer_timing=False,  # Explicit historical fixture, not candidate acceptance.
         run_root=tmp_path,
         bag_dir=bag,
         topic_manifest=topics,
@@ -190,3 +198,54 @@ def test_finalize_rejects_bag_or_receipt_outside_the_fresh_run_root(tmp_path):
     )
     assert report["passed"] is False
     assert "direct child of run root" in report["blockers"][0]
+
+
+def test_sealed_writer_window_rejects_earlier_storage_without_slack(tmp_path):
+    import hashlib
+    import pytest
+    bag = tmp_path / 'mapping_localization_diagnostic'; bag.mkdir()
+    sample = {'epoch_ns': 1000, 'monotonic_ns': 2000}
+    opened = {'timing_schema_version':1,'acceptance_window_start_epoch_ns':1000,
+              'owner_identity':{'pid':1},'run_token':'token','formal_acceptance_session':'session',
+              'writer_ready_sample':sample,'bag_dir':str(bag)}
+    timing = {k:sample for k in ['process_start_sample','writer_ready_sample','open_receipt_sealed_sample','subscription_created_sample','spin_start_sample']}
+    timing.update(owner_identity=opened['owner_identity'],run_token='token',formal_acceptance_session='session',acceptance_window_start_epoch_ns=1000)
+    (tmp_path/'formal_localization_writer_open.json').write_text(json.dumps(opened))
+    path=tmp_path/'formal_localization_timing_start.json';path.write_text(json.dumps(timing))
+    (tmp_path/'formal_localization_timing_closed.json').write_text(json.dumps({'timing_start_sha256':hashlib.sha256(path.read_bytes()).hexdigest(),'closed_sample':{'epoch_ns':3000,'monotonic_ns':4000},'callbacks':[]}))
+    with pytest.raises(ValueError,match='outside sealed writer-ready window'):
+        MODULE._verify_writer_timing(tmp_path,bag,999,2000)
+
+
+def test_required_marker_cannot_fall_back_to_legacy(tmp_path):
+    import pytest
+    bag = tmp_path / 'bag'; bag.mkdir()
+    with pytest.raises(ValueError, match='marker missing'):
+        MODULE._verify_writer_timing(tmp_path, bag, 1000, 2000)
+    marker = tmp_path / 'formal_localization_writer_open.json'
+    marker.write_text('{}')
+    with pytest.raises(ValueError, match='downgraded'):
+        MODULE._verify_writer_timing(tmp_path, bag, 1000, 2000)
+    assert MODULE._verify_writer_timing(tmp_path, bag, 1000, 2000, require_writer_timing=False)['verified'] is False
+
+
+def test_callback_sequence_and_close_bounds_fail_closed(tmp_path):
+    import hashlib
+    import pytest
+    # Reuse the sealed-window fixture; it deliberately rejects before importing ROS.
+    test_sealed_writer_window_rejects_earlier_storage_without_slack(tmp_path)
+    path = tmp_path / 'formal_localization_timing_closed.json'
+    base = json.loads(path.read_bytes())
+    row = dict(sequence=1, topic='/x', receive_epoch_ns=1500, receive_monotonic_ns=2500,
+               serialized_sha256=hashlib.sha256(b'x').hexdigest(), write_completed=True)
+    cases = [
+        ([dict(row, sequence=2)], base['closed_sample'], 'sequence'),
+        ([dict(row, receive_monotonic_ns=4001)], base['closed_sample'], 'callback'),
+        ([row], dict(epoch_ns=3000, monotonic_ns=1999), 'close clock'),
+        ([row, dict(row, sequence=2, receive_monotonic_ns=2400)], base['closed_sample'], 'callback'),
+    ]
+    for rows, close, error in cases:
+        data = dict(base, callbacks=rows, closed_sample=close)
+        path.write_text(json.dumps(data))
+        with pytest.raises(ValueError, match=error):
+            MODULE._verify_writer_timing(tmp_path, tmp_path/'mapping_localization_diagnostic', 1000, 2000)

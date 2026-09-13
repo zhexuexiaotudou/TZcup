@@ -4,12 +4,16 @@ from __future__ import annotations
 
 import json
 import math
+import os
+import hashlib
 from pathlib import Path
 import time
 
 import rclpy
 from nav_msgs.msg import OccupancyGrid, Odometry
 from rclpy.node import Node
+from rclpy.clock import Clock, ClockType
+from .lifecycle_health_protocol import HealthProducer
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from slam_toolbox.srv import SaveMap
 from std_msgs.msg import Bool, String
@@ -130,6 +134,10 @@ class FormalMapLifecycleManager(Node):
             String, "/formal_mapping/lifecycle_status", latched
         )
         self._ready = self.create_publisher(Bool, "/formal_mapping/map_ready", latched)
+        self._health_producer = HealthProducer(os.environ['FORMAL_ACCEPTANCE_SESSION'],
+                                              os.environ['FORMAL_RECORDING_RUN_TOKEN'])
+        self._health_timer = self.create_timer(0.5, self._publish_health,
+                                               clock=Clock(clock_type=ClockType.STEADY_TIME))
         self._latest_map: OccupancyGrid | None = None
         self._start_ok = False
         self._start_checked = False
@@ -203,12 +211,24 @@ class FormalMapLifecycleManager(Node):
             "gnss_mapping_reference_observed": self._latest_gps_xy is not None,
             **details,
         }
-        text = String()
-        text.data = json.dumps(payload, sort_keys=True)
-        self._status.publish(text)
+        sealed = None
+        if status == 'ready_for_localization_cleaning' and ready:
+            episode = Path(str(self.get_parameter('episode_manifest').value))
+            sealed = {'artifact_root': str(self._root), 'episode_manifest': str(episode),
+                      'episode_sha256': hashlib.sha256(episode.read_bytes()).hexdigest(),
+                      'manifest_sha256': hashlib.sha256((self._root / 'map_lifecycle_manifest.json').read_bytes()).hexdigest()}
+        self._health_producer.evaluate(payload, sealed)
+        self._publish_health()
         flag = Bool()
         flag.data = ready
         self._ready.publish(flag)
+
+    def _publish_health(self) -> None:
+        payload = self._health_producer.heartbeat()
+        if payload is not None:
+            text = String()
+            text.data = json.dumps(payload, sort_keys=True)
+            self._status.publish(text)
 
     def _valid_source_header(
         self, message, stream: str, frame: str, child_frame: str, maximum_age: float

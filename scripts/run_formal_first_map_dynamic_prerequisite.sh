@@ -130,6 +130,7 @@ finalize_localization_bag() {
       --recorder-stop-rc "${localization_bag_stop_rc}" \
       --runtime-binding "${runtime_binding}" \
       --started-epoch-ns "${localization_bag_started_epoch_ns:-0}" \
+      --require-writer-timing \
       "${optional_args[@]}"; then
     finalizer_rc=0
   else

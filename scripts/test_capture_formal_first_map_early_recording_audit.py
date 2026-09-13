@@ -26,13 +26,23 @@ def _zero_twist():
     return SimpleNamespace(twist=SimpleNamespace(linear=vector, angular=vector))
 
 
-def _ready_tracker():
+def _ready_tracker(monkeypatch):
     tracker = MODULE.Tracker("early", MODULE.EARLY_TYPES, "/session", "s" * 64, "token", "/bag")
     base = 1_000_000_000
     for offset, value in enumerate((100, 200, 300)):
         tracker.written(MODULE.CLOCK, _clock(value), base + offset)
+    from sanitation_formal_campus_integration import lifecycle_health_protocol as protocol
+    monkeypatch.setattr(protocol, 'producer_alive', lambda *args, **kwargs: True)
+    business = {'status': 'waiting_for_fresh_mapping_inputs', 'ready': False}
+    packet = dict(business, lifecycle_health={
+        'version': 1, 'session': '/session', 'session_sha256': 's' * 64,
+        'run_token': 'token', 'producer_identity': {'boot_id':'fixture', 'pid':123, 'process_starttime_ticks':1},
+        'health_seq': 1, 'health_monotonic_ns': base + 10, 'eval_seq': 1,
+        'eval_monotonic_ns': base + 10, 'business_sha256': protocol.digest(business),
+        'validity_kind': 'evaluation_lease', 'business_valid_until_monotonic_ns': base + 15_000_000_000})
     for topic in MODULE.REQUIRED:
-        tracker.written(topic, SimpleNamespace(), base + 10)
+        message = SimpleNamespace(data=json.dumps(packet)) if topic == '/formal_mapping/lifecycle_status' else SimpleNamespace()
+        tracker.written(topic, message, base + 10)
     tracker.written("/base_controller/cmd_vel", _zero_twist(), base + 10)
     tracker.written("/safety/relay_cycle_diagnostic_json", SimpleNamespace(), base + 10)
     tracker.written("/formal_vehicle/auxiliary/critical_safety_relay_diagnostic_json", SimpleNamespace(), base + 10)
@@ -45,18 +55,18 @@ def _ready_tracker():
     return tracker, base + 11
 
 
-def test_arm_requires_actual_writes_and_strict_clock_advances():
+def test_arm_requires_actual_writes_and_strict_clock_advances(monkeypatch):
     tracker = MODULE.Tracker("early", MODULE.EARLY_TYPES, "/session", "s" * 64, "token", "/bag")
     assert "clock did not strictly advance at least twice" in tracker.blockers(1)
-    tracker, now = _ready_tracker()
+    tracker, now = _ready_tracker(monkeypatch)
     assert tracker.blockers(now) == []
     assert tracker.clock_advances == 2
     assert tracker.pre_arm_status_count == 42
     assert tracker.pre_arm_status_messages_received == tracker.counts["/safety/status_json"] == 1
 
 
-def test_non_safe_bootstrap_is_audit_only_but_active_is_a_permanent_arm_blocker():
-    tracker, now = _ready_tracker()
+def test_non_safe_bootstrap_is_audit_only_but_active_is_a_permanent_arm_blocker(monkeypatch):
+    tracker, now = _ready_tracker(monkeypatch)
     inhibited = {"state": "INHIBITED", "active_reasons": "manual_estop", "status_publish_count": 43}
     tracker.written("/safety/status_json", SimpleNamespace(data=json.dumps(inhibited)), now)
     assert tracker.pre_arm_unsafe_count == 1
@@ -67,8 +77,8 @@ def test_non_safe_bootstrap_is_audit_only_but_active_is_a_permanent_arm_blocker(
     assert "pre-arm ACTIVE safety evidence observed" in tracker.blockers(now + 1)
 
 
-def test_clock_stall_and_rollback_fail_closed_without_duplicate_clock_refresh():
-    tracker, now = _ready_tracker()
+def test_clock_stall_and_rollback_fail_closed_without_duplicate_clock_refresh(monkeypatch):
+    tracker, now = _ready_tracker(monkeypatch)
     tracker.written(MODULE.CLOCK, _clock(300), now)
     assert "clock evidence is stalled" in tracker.blockers(now + MODULE.FRESH_NS + 1)
     tracker.written(MODULE.CLOCK, _clock(299), now + 1)
@@ -257,3 +267,28 @@ def test_main_early_role_refuses_a_localization_invalid_receipt(monkeypatch, tmp
     monkeypatch.setenv("FORMAL_OBSERVATION_DEADLINE_MONOTONIC_NS", str(MODULE.time.monotonic_ns() + 1_000_000_000))
     assert MODULE.main(["--output", str(tmp_path), "--role", "early", "--timeout", "1"]) == 1
     assert (tmp_path / "formal_recording_invalid.json").is_file()
+
+
+def test_startup_markers_sealed_before_callbacks_and_clock_rollback_rejected(monkeypatch, tmp_path):
+    state = _install_fake_ros(monkeypatch, None, deliver_message=True)
+    session = tmp_path / 'session.json'; session.write_text('{}')
+    monkeypatch.setenv('FORMAL_ACCEPTANCE_SESSION', str(session))
+    monkeypatch.setenv('FORMAL_RECORDING_RUN_TOKEN', 'token')
+    monkeypatch.setenv('FORMAL_OBSERVATION_DEADLINE_MONOTONIC_NS', str(MODULE.time.monotonic_ns()+100_000_000))
+    monkeypatch.setattr(MODULE.time, 'time_ns', lambda: 100 if state['delivered'] else 200)
+    monkeypatch.setattr(MODULE, 'closed_summary', lambda *_: {})
+    spin = sys.modules['rclpy'].spin_once
+    def checked_spin(node, **kwargs):
+        startup = json.loads((tmp_path/'formal_recording_timing_start.json').read_bytes())
+        assert startup['acceptance_window_start_epoch_ns'] == 200
+        assert (tmp_path/'formal_recording_writer_open.json').is_file()
+        assert startup['writer_ready_sample']['monotonic_ns'] <= startup['subscription_created_sample']['monotonic_ns'] <= startup['spin_start_sample']['monotonic_ns']
+        return spin(node, **kwargs)
+    monkeypatch.setattr(sys.modules['rclpy'], 'spin_once', checked_spin)
+    assert MODULE.main(['--output',str(tmp_path),'--role','early','--timeout','1']) == 1
+    assert state['writes'] == []
+    invalid = json.loads((tmp_path/'formal_recording_invalid.json').read_bytes())
+    assert invalid['writer_error'] == 'receive epoch precedes sealed writer-ready window'
+    trace = json.loads((tmp_path/'formal_recording_timing_closed.json').read_bytes())
+    assert trace['callbacks'][0]['receive_epoch_ns'] == 100
+    assert trace['callbacks'][0]['write_completed'] is False

@@ -103,6 +103,72 @@ def _metadata_window(info: dict[str, Any], started_epoch_ns: int, binding_epoch_
     return start_ns, start_ns + duration_ns
 
 
+def _verify_writer_timing(root: Path, bag: Path, start_ns: int, end_ns: int, *, require_writer_timing: bool = True) -> dict[str, Any]:
+    opened_path = root / 'formal_localization_writer_open.json'
+    if not opened_path.exists():
+        if require_writer_timing:
+            raise ValueError('required writer timing marker missing')
+        return {'verified': False, 'mode': 'legacy_no_writer_timing_marker'}
+    opened_path = _direct_child(root, opened_path, 'writer open')
+    opened = json.loads(opened_path.read_bytes())
+    if opened.get('timing_schema_version') != 1:
+        if require_writer_timing:
+            raise ValueError('required writer timing schema missing or downgraded')
+        return {'verified': False, 'mode': 'legacy_writer_marker'}
+    timing_path = _direct_child(root, root / 'formal_localization_timing_start.json', 'timing start')
+    closed_path = _direct_child(root, root / 'formal_localization_timing_closed.json', 'timing closed')
+    timing = json.loads(timing_path.read_bytes())
+    closed = json.loads(closed_path.read_bytes())
+    window = opened['acceptance_window_start_epoch_ns']
+    if (closed['timing_start_sha256'] != _sha256(timing_path) or
+            opened['owner_identity'] != timing['owner_identity'] or
+            opened['run_token'] != timing['run_token'] or
+            opened['formal_acceptance_session'] != timing['formal_acceptance_session'] or
+            timing['acceptance_window_start_epoch_ns'] != window or
+            opened['writer_ready_sample'] != timing['writer_ready_sample'] or
+            window != timing['writer_ready_sample']['epoch_ns'] or
+            str(bag) != opened['bag_dir']):
+        raise ValueError('writer timing identity/window binding mismatch')
+    phases = [timing[k] for k in ('process_start_sample','writer_ready_sample','open_receipt_sealed_sample',
+                                  'subscription_created_sample','spin_start_sample')]
+    for field in ('epoch_ns', 'monotonic_ns'):
+        values = [phase[field] for phase in phases]
+        if any(type(v) is not int or v <= 0 for v in values) or values != sorted(values):
+            raise ValueError('writer startup clock/order evidence inconsistent')
+    if start_ns < window or end_ns > closed['closed_sample']['epoch_ns']:
+        raise ValueError('actual MCAP is outside sealed writer-ready window')
+    close_sample = closed['closed_sample']
+    spin_sample = timing['spin_start_sample']
+    for field in ('epoch_ns', 'monotonic_ns'):
+        if type(close_sample[field]) is not int or close_sample[field] < spin_sample[field]:
+            raise ValueError('writer close clock/order evidence inconsistent')
+    from collections import Counter
+    expected = Counter()
+    previous_mono = spin_sample['monotonic_ns']
+    for sequence, row in enumerate(closed['callbacks'], start=1):
+        if type(row['sequence']) is not int or row['sequence'] != sequence:
+            raise ValueError('callback sequence is not contiguous and ordered')
+        if (type(row['receive_epoch_ns']) is not int or type(row['receive_monotonic_ns']) is not int or
+                row['write_completed'] is not True or not window <= row['receive_epoch_ns'] <= close_sample['epoch_ns'] or
+                not previous_mono <= row['receive_monotonic_ns'] <= close_sample['monotonic_ns']):
+            raise ValueError('callback preceded sealed writer window or failed write')
+        previous_mono = row['receive_monotonic_ns']
+        expected[(row['topic'], row['receive_epoch_ns'], row['serialized_sha256'])] += 1
+    import rosbag2_py
+    reader = rosbag2_py.SequentialReader()
+    reader.open(rosbag2_py.StorageOptions(uri=str(bag), storage_id='mcap'), rosbag2_py.ConverterOptions('', ''))
+    actual = Counter()
+    while reader.has_next():
+        topic, data, stamp = reader.read_next()
+        actual[(topic, stamp, hashlib.sha256(bytes(data)).hexdigest())] += 1
+    del reader
+    if actual != expected or not actual:
+        raise ValueError('MCAP records differ from callback timestamp/payload trace')
+    return {'verified': True, 'window_start_epoch_ns': window,
+            'writer_open_sha256': _sha256(opened_path), 'timing_start_sha256': _sha256(timing_path),
+            'timing_closed_sha256': _sha256(closed_path), 'actual_records_verified': sum(actual.values())}
+
+
 def finalize(
     *,
     run_root: Path,
@@ -113,6 +179,7 @@ def finalize(
     optional_topics: tuple[str, ...],
     runtime_binding: Path,
     started_epoch_ns: int,
+    require_writer_timing: bool = True,
 ) -> dict[str, Any]:
     if run_root.is_symlink() or not run_root.is_dir():
         # Do not resolve or write through a non-fresh/symlinked run root.
@@ -213,6 +280,7 @@ def finalize(
         if missing:
             raise ValueError("diagnostic rosbag has no messages for: " + ",".join(missing))
         started_ns, ended_ns = _metadata_window(info, started_epoch_ns, binding_epoch_ns)
+        writer_timing = _verify_writer_timing(root, bag, started_ns, ended_ns, require_writer_timing=require_writer_timing)
         report: dict[str, Any] = {
             "schema_version": 1,
             "status": "FORMAL_FIRST_MAP_LOCALIZATION_DIAGNOSTIC_CAPTURED",
@@ -228,13 +296,14 @@ def finalize(
             "runtime_gate_binding_sha256": _sha256(binding_path),
             "runtime_gate_binding_verified_epoch_ns": binding_epoch_ns,
             "recorder_started_epoch_ns": started_epoch_ns,
+            "writer_timing_contract": writer_timing,
             "bag_started_epoch_ns": started_ns,
             "bag_ended_epoch_ns": ended_ns,
             "topics_with_message_count": topic_counts,
             "recorder_stop_rc": recorder_stop_rc,
             "bag_files_sha256": files,
         }
-    except (OSError, ValueError, TypeError, yaml.YAMLError) as exc:
+    except (OSError, ValueError, TypeError, KeyError, ImportError, yaml.YAMLError) as exc:
         report = {
             "schema_version": 1,
             "status": "FORMAL_FIRST_MAP_LOCALIZATION_DIAGNOSTIC_BLOCKED",
@@ -259,6 +328,9 @@ def main() -> int:
     parser.add_argument("--optional-topic", action="append", default=[])
     parser.add_argument("--runtime-binding", type=Path, required=True)
     parser.add_argument("--started-epoch-ns", type=int, required=True)
+    parser.add_argument("--require-writer-timing", action="store_true", default=True)
+    parser.add_argument("--allow-legacy-writer-timing", dest="require_writer_timing", action="store_false",
+                        help="Historical analysis only; does not satisfy the new candidate timing gate")
     args = parser.parse_args()
     report = finalize(
         run_root=args.run_root,
@@ -269,6 +341,7 @@ def main() -> int:
         optional_topics=tuple(args.optional_topic),
         runtime_binding=args.runtime_binding,
         started_epoch_ns=args.started_epoch_ns,
+        require_writer_timing=args.require_writer_timing,
     )
     return 0 if report["passed"] else 2
 
