@@ -8,6 +8,8 @@ GitHub delivery, deployment or HBM claim is made by this diagnostic.
 
 Localization follow-up: [dynamic 50 mm diagnostic](competition-localization-50mm.md) records the failed first route, global-fusion drift, unresolved TF identity mapping, retained raw evidence and the real Gazebo GUI entry. Localization is not accepted.
 
+Perception follow-up: [independent 30-frame scoring](competition-perception-score.md) records the single controlled RGB-D run, separate raw/policy P/R, corrected transition-frame truth and released resources. Recognition quality failed; no map-accuracy or cleaning-loop acceptance is claimed.
+
 ## Proven prior command chain
 
 `NavigateToPose accepted -> controller /cmd_vel_nav (Twist, max 0.45 m/s)
