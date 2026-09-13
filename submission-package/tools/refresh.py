@@ -7,6 +7,22 @@ parser=argparse.ArgumentParser()
 parser.add_argument('--intake',type=Path)
 args=parser.parse_args()
 rows=json.loads((P/'metrics/results.json').read_text(encoding='utf-8'))
+canonical_status={'perception':'FAIL','recognition_accuracy':'NOT_MEASURED'}
+for result_id,status in canonical_status.items():
+    matches=[r for r in rows if r['id']==result_id]
+    if len(matches)!=1 or matches[0]['status']!=status:
+        raise ValueError(f'Canonical status mismatch for {result_id}: expected {status}')
+recognition=next(r for r in rows if r['id']=='recognition_accuracy')
+if '未达到' in recognition['note']:
+    raise ValueError('Official recognition status must stay NOT_MEASURED without an unmet-result claim')
+perception=next(r for r in rows if r['id']=='perception')
+if ('0/0/76' in perception['note'] or 'policy 0/8/76' in perception['note']) and '撤回' not in perception['note']:
+    raise ValueError('Withdrawn perception policy metrics must not be reported as measured')
+if 'NOT_RUN' not in perception['note'] or 'NOT_MEASURED' not in perception['note']:
+    raise ValueError('Perception policy must remain explicitly NOT_RUN/NOT_MEASURED')
+braking=next(r for r in rows if r['id']=='braking_s')
+if '1.0s' not in braking['note'] or '1.5s' not in braking['note']:
+    raise ValueError('Braking result must distinguish the predeclared 1.0 s hold from the observed 1.5 s hold')
 allowed_statuses=['PASS','FAIL','PARTIAL','NOT_MEASURED']
 allowed_bases={
     'measured_simulation',

@@ -304,5 +304,21 @@
     "source": "git:12c2a6acf58cc2558cf4c1a82cec4da47c874e0c:docs/competition-day1-demo-evidence-manifest.json",
     "source_commit": "12c2a6acf58cc2558cf4c1a82cec4da47c874e0c",
     "copied_utc": "2026-09-14T00:49:23+08:00"
+  },
+  {
+    "file": "evidence/day1/competition-perception-replay-status.json",
+    "source": "git:3ae009a44f86bb2a66a9c095ba4b6db3c3a87d35:artifacts/perception_replay_20260914_review/replay_status.json",
+    "source_commit": "3ae009a44f86bb2a66a9c095ba4b6db3c3a87d35",
+    "copied_utc": "2026-09-14T01:10:00+08:00"
+  },
+  {
+    "file": "evidence/day1/raw-evidence-sources.json",
+    "source": "derived locator for existing raw run roots; no raw payload copied",
+    "verified_utc": "2026-09-13T17:03:21Z"
+  },
+  {
+    "file": "evidence/day1/demo-failure-retention.json",
+    "source": "derived compact locator for ignored .work failure directories; no MP4 or MCAP copied",
+    "verified_utc": "2026-09-13T17:03:21Z"
   }
 ]

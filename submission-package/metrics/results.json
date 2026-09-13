@@ -42,11 +42,12 @@
     "evidence": [
       "evidence/day1/competition-perception-score.md",
       "evidence/day1/competition-perception-recovery.json",
+      "evidence/day1/competition-perception-replay-status.json",
       "evidence/board/development-liveness.json",
       "evidence/board/perception-rejected.log"
     ],
-    "note": "原始FAIL保留：Stage5B在30帧/76实例上为raw 0/654/76、policy 0/8/76。根因是受控彩色夹具误配Stage5B；改用匹配的Stage5A档案后raw提升为33/50/43，但策略层仍0/0/76，黄色叶堆仍失败，识别质量继续FAIL，官方≥95%仍未达到。",
-    "minimum_measurement": "同帧图像、检测类别框、深度/标定/TF、预测地图坐标及独立标签对照；分别报告原始层和策略层精确率/召回率。",
+    "note": "只保留可复现的受控域raw诊断：Stage5B raw 0/654/76，Stage5A raw 33/50/43，黄色叶堆仍未通过；离线policy replay为NOT_RUN/NOT_MEASURED，原先Stage5A policy 0/0/76因缺少depth/ROI/tracking上下文不可复现且已撤回。工程识别质量仅就可能测到的raw证据判FAIL；官方≥95%保持NOT_MEASURED。",
+    "minimum_measurement": "同帧图像、检测类别框、深度/标定/TF、预测地图坐标及独立标签对照；raw与policy分栏报告。policy复跑必须保留可复算的depth/ROI/tracking上下文和版本哈希。",
     "run_id": "perception-score-20260913-01",
     "source_commit": "c09e030",
     "diagnostic_source_commit": "106f1189a5aacf856412d1c1bc1f76919c26962c",
@@ -62,10 +63,11 @@
     "evidence": [
       "evidence/day1/competition-perception-score.md",
       "evidence/day1/competition-perception-recovery.json",
+      "evidence/day1/competition-perception-replay-status.json",
       "evidence/reference/contest-brief.txt"
     ],
-    "note": "题面未给出“识别准确率”的精确定义；Stage5A离线重放虽把raw提升为33/50/43，但策略层仍0/0/76且叶堆失败，官方≥95%既未达到也未按官方定义测量，因此保持NOT_MEASURED。",
-    "minimum_measurement": "先冻结官方类别、样本域、匹配规则和统计分母，再用独立标注集报告每类与宏平均P/R及总体正确率。",
+    "note": "题面未给出“识别准确率”的精确定义；受控域仅有可复现raw诊断（Stage5B 0/654/76、Stage5A 33/50/43），policy replay为NOT_RUN/NOT_MEASURED，旧Stage5A policy 0/0/76已撤回。工程识别质量仅按已测量raw证据判FAIL；官方≥95%定义/结果未测得，保持NOT_MEASURED。",
+    "minimum_measurement": "先冻结官方类别、样本域、匹配规则和统计分母，再分别完成可复算的raw与policy replay，并用独立标注集报告每类与宏平均P/R及总体正确率。",
     "run_id": null,
     "source_commit": "106f1189a5aacf856412d1c1bc1f76919c26962c",
     "rollback_commit": null,
@@ -162,8 +164,8 @@
     "evidence": [
       "evidence/day1/competition-width-efficiency-estop.md"
     ],
-    "note": "行驶中触发完整急停：触发前GT线速度1.000026m/s、角速度0；此后三维速度模与角速度模均不超过0.01并持续1.5s。PASS仅覆盖仿真路径。",
-    "minimum_measurement": "行驶中触发急停，保留触发事件和实际线/角速度，不只记录速度命令；同时报告仿真时间和墙钟延迟。",
+    "note": "行驶中触发完整急停：触发前GT线速度1.000026m/s、角速度0；此后三维速度模与角速度模均不超过0.01，预先约定的判据为持续1.0s，本次实际观测持续1.5s。PASS仅覆盖仿真路径。",
+    "minimum_measurement": "行驶中触发急停，保留触发事件和实际线/角速度，不只记录速度命令；停止判据预先约定持续1.0s，并同时报告仿真时间和墙钟延迟。",
     "run_id": "width-efficiency-estop-20260913-01/steady-02",
     "source_commit": "a9691b41ff2e038b4bf072f814d4ce58c1615b32",
     "rollback_commit": "d967ddd24670476b2cc931e08dbc8fd49151ac5e",
@@ -178,8 +180,8 @@
     "evidence": [
       "evidence/day1/competition-width-efficiency-estop.md"
     ],
-    "note": "仿真时间延迟0.489s；墙钟延迟4.809955s单独列示，不替代仿真通过值。触发使用物理状态时间戳，停止判定持续1.5s。",
-    "minimum_measurement": "同一仿真时钟下从急停触发至实际|v|≤0.01m/s且|ω|≤0.01rad/s并持续1.5s；报告采样频率与墙钟延迟。",
+    "note": "仿真时间延迟0.489s；墙钟延迟4.809955s单独列示，不替代仿真通过值。触发使用物理状态时间戳；预先约定的停止判据为持续1.0s，本次观测实际保持1.5s，0.489s PASS不变。",
+    "minimum_measurement": "同一仿真时钟下从急停触发至实际|v|≤0.01m/s且|ω|≤0.01rad/s并持续预先约定的1.0s；报告采样频率、实际保持时长与墙钟延迟。",
     "run_id": "width-efficiency-estop-20260913-01/steady-02",
     "source_commit": "a9691b41ff2e038b4bf072f814d4ce58c1615b32",
     "rollback_commit": "d967ddd24670476b2cc931e08dbc8fd49151ac5e",

@@ -1,0 +1,207 @@
+{
+  "schema_version": 1,
+  "verified_utc": "2026-09-13T17:03:21Z",
+  "purpose": "Portable locator for raw evidence that remains in its source run roots. This file records exact existing paths and hashes; it does not claim that raw MCAP, timeline, image, or video payloads were copied into this package.",
+  "claim_boundary": "The package contains compact reports and manifests only. Raw payloads must be read from the absolute source locator roots listed below.",
+  "entries": [
+    {
+      "id": "width-efficiency-estop-20260913-01",
+      "run_id": "width-efficiency-estop-20260913-01/steady-02",
+      "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-simulation-only-completion",
+      "source_worktree_head_at_verification": "0685688ddada56833608565a388a65d6ba54a950",
+      "run_root": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-simulation-only-completion\\.work\\width-efficiency-estop-20260913-01\\evidence",
+      "cloud_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/width-efficiency-estop-20260913-01",
+      "source_binding": {
+        "file": "source_binding.json",
+        "bytes": 666,
+        "sha256": "C7ABC71F59BCFC04D03A285D2488469404BEA582F5EECFCA23E3A1EC61B4C541"
+      },
+      "files": [
+        {
+          "file": "run_integrity.json",
+          "bytes": 8147,
+          "sha256": "D9725E1E0E730A03B898771AE4F8533504A51BE346DDE42D72052E9908E8AD73",
+          "role": "success and failure ledger"
+        },
+        {
+          "file": "bag_verification.json",
+          "bytes": 1183,
+          "sha256": "2609EB403E29A6AABE9540E89BF3C80B4EDAD4E90B4EA2CC45B10A370F64E2F9",
+          "role": "MCAP to cleared-cell recomputation"
+        },
+        {
+          "file": "revision.json",
+          "bytes": 154,
+          "sha256": "6EB623BC99EC5BD641AAC6C87C811D202F0D93348CA4B21C41FF24AE52CED21B",
+          "role": "candidate, base, and runtime revisions"
+        },
+        {
+          "file": "steady-02\\protocol.json",
+          "bytes": 244,
+          "sha256": "4BAD476195823271E067CD9F7057907DC099B86BEC12D1251C14147DD0A8AEAE",
+          "role": "predeclared measurement and 1.0 s hold criterion"
+        },
+        {
+          "file": "steady-02\\probe.json",
+          "bytes": 85132,
+          "sha256": "E73E6A9276ACFA6ACEA0C730A259DF63CADFA74788609F748966E327E506CDF8",
+          "role": "final run state"
+        },
+        {
+          "file": "steady-02\\metrics.json",
+          "bytes": 47549,
+          "sha256": "853A482B5B91E24EA5E418046E1B35E6F4DE4270812437B0BE23EA0098DF304A",
+          "role": "recomputed metrics including observed 1.5 s hold"
+        },
+        {
+          "file": "steady-02\\bag_info.txt",
+          "bytes": 2877,
+          "sha256": "9CC717ABFC3ED81ED3F75153DFB1412E0B42C6BC6B2DB5DB5F2FBE14B8656009",
+          "role": "sealed bag inventory"
+        },
+        {
+          "file": "steady-02\\bag\\bag_0.mcap",
+          "bytes": 173969443,
+          "sha256": "5C9048405CC4F24EC518C6EA19A5C5F6E359E0CF8F62A16E185D1553184EC74D",
+          "role": "raw MCAP payload, not copied"
+        },
+        {
+          "file": "steady-02\\timeline.jsonl",
+          "bytes": 62606062,
+          "sha256": "8474D0E16A4CEFF11B3C0E4A319F051047D33B7A7AD796979663393B3D556C2D",
+          "role": "raw event timeline, not copied"
+        }
+      ]
+    },
+    {
+      "id": "localization-50mm-20260913-01",
+      "run_id": "localization-50mm-20260913-01/run-01",
+      "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-simulation-only-completion",
+      "source_worktree_head_at_verification": "0685688ddada56833608565a388a65d6ba54a950",
+      "run_root": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-simulation-only-completion\\.work\\localization-50mm-20260913-01\\evidence",
+      "cloud_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/localization-50mm-20260913-01",
+      "source_binding": {
+        "file": "source_binding.json",
+        "bytes": 206,
+        "sha256": "FA094AE48B3F27318C71EEA1B60CCE1F2910C98795C039CA232E7832DABFE09C"
+      },
+      "files": [
+        {
+          "file": "run-01\\localization_focus.json",
+          "bytes": 3674,
+          "sha256": "D3C2B8AB299B8B26E598A0619F1D95457CA3D4B95BBF3C568DC0213DAED1A22A",
+          "role": "authoritative FAIL, pairing coverage, and error statistics"
+        },
+        {
+          "file": "run-01\\route_protocol.json",
+          "bytes": 253,
+          "sha256": "99ADB14F23728F4539A9334C993EB52D31F8A0DF43A624ABD05CE2FF8C09691A",
+          "role": "predeclared route protocol"
+        },
+        {
+          "file": "run-01\\probe.rc",
+          "bytes": 2,
+          "sha256": "4355A46B19D348DC2F57C046F8EF63D4538EBB936000F3C9EE954A27460DD865",
+          "role": "probe return code"
+        },
+        {
+          "file": "run-01.primary.rc",
+          "bytes": 2,
+          "sha256": "53C234E5E8472B6AC51C1AE1CAB3FE06FAD053BEB8EBFD8977B010655BFDD3C3",
+          "role": "primary runner return code"
+        },
+        {
+          "file": "resource_release.json",
+          "bytes": 276,
+          "sha256": "7FDB2428308D8F9F855E32D4476963EDE838B3F48BC8A073C7942CA7DC2712E5",
+          "role": "resource release record"
+        },
+        {
+          "file": "run-01\\bag\\bag_0.mcap",
+          "bytes": 18410328,
+          "sha256": "B1CC5054C02B1F077FE7E7A22D1665687423300D14BA1979AA807372FDD1E718",
+          "role": "raw MCAP payload, not copied"
+        },
+        {
+          "file": "run-01\\tf_authority.json",
+          "bytes": 60657,
+          "sha256": "78EA2FD0C7FC67AFDEF9262377FF20D802F172B523E1DEF6062CBF0CC45328F0",
+          "role": "TF authority registry, not copied"
+        }
+      ]
+    },
+    {
+      "id": "perception-score-20260913-01",
+      "run_id": "perception-score-20260913-01/offline-reviewed-score",
+      "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-simulation-only-completion",
+      "source_worktree_head_at_verification": "0685688ddada56833608565a388a65d6ba54a950",
+      "run_root": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-simulation-only-completion\\.work\\perception-score-20260913-01",
+      "authoritative_score_directory": "evidence-reviewed\\score-reviewed",
+      "superseded_score_directory": "evidence-reviewed\\score",
+      "cloud_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/perception-score-20260913-01",
+      "source_binding": {
+        "file": "evidence-reviewed\\dispatch.json",
+        "bytes": 1097,
+        "sha256": "CE73E17C904CDE753B98D0AEE9A13CFAA0CD84EBA0AFEF0E63E6632AB29E3176"
+      },
+      "replay_status": {
+        "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-perception-recovery",
+        "source_commit": "3ae009a44f86bb2a66a9c095ba4b6db3c3a87d35",
+        "file": "artifacts\\perception_replay_20260914_review\\replay_status.json",
+        "bytes": 3177,
+        "sha256": "53B6B7E4A619FBF9EF99E709FE9AD73CEC2AC1BE00E0BC55E0F89FBD46C8DD8F",
+        "package_copy": "evidence/day1/competition-perception-replay-status.json"
+      },
+      "files": [
+        {
+          "file": "evidence-reviewed\\final-assessment.json",
+          "bytes": 603,
+          "sha256": "FC81E529EC855A03DFD90AEC7AF81BA0F4C52EF83D21303C1CEBF85A948E844C",
+          "role": "canonical engineering FAIL and official NOT_MEASURED classification"
+        },
+        {
+          "file": "evidence-reviewed\\model_card.json",
+          "bytes": 760,
+          "sha256": "D26D4FFCF7584CDFE1BF6CE49E9E8A8A4DFA630994CB441ED4F61681E1C6ED87",
+          "role": "model provenance and limitations"
+        },
+        {
+          "file": "evidence-reviewed\\run-01.rc",
+          "bytes": 1,
+          "sha256": "4B227777D4DD1FC61C6F884F48641D02B4D121D3FD328CB08B5531FCACDABF8A",
+          "role": "runner return code"
+        },
+        {
+          "file": "evidence-reviewed\\score-reviewed.rc",
+          "bytes": 1,
+          "sha256": "5FECEB66FFC86F38D952786C6D696C79C2DBC239DD4E91B46729D73A27FB57E9",
+          "role": "authoritative score return code"
+        },
+        {
+          "file": "evidence-reviewed\\resource_release.json",
+          "bytes": 144,
+          "sha256": "9A8DA8DDD2BD3BA13B71697980774A177E7F0A4F8F82F4B7BADB8902D6CC8DA8",
+          "role": "resource release record"
+        },
+        {
+          "file": "evidence-reviewed\\score-reviewed\\summary.json",
+          "bytes": 296007,
+          "sha256": "55CD8304FB01B8C83CC45F6B63F0E693D29ACB7EE45AED6977E1E5D88E42D8F9",
+          "role": "authoritative independent score summary"
+        },
+        {
+          "file": "visibility-annotations.json",
+          "bytes": 7038,
+          "sha256": "CF7FEA690D0C5F2AD16DA0844D4206F39201ED518157DBD4222939549D251215",
+          "role": "independent visibility annotations"
+        },
+        {
+          "file": "evidence-reviewed\\run-01\\bag\\bag_0.mcap",
+          "bytes": 409062960,
+          "sha256": "AEF144B23165CF158767A55D40462D9D69F321484FB4999CDDD1230D2A811799",
+          "role": "raw MCAP payload, not copied"
+        }
+      ]
+    }
+  ]
+}

@@ -2,10 +2,11 @@
   {
     "local_evidence": "evidence/day1/competition-width-efficiency-estop.md",
     "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-evidence",
+    "raw_source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-simulation-only-completion",
     "source_commit": "a9691b41ff2e038b4bf072f814d4ce58c1615b32",
     "run_id": "width-efficiency-estop-20260913-01/steady-02",
     "raw_evidence_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/width-efficiency-estop-20260913-01",
-    "local_raw_copy": ".work/width-efficiency-estop-20260913-01/evidence",
+    "source_locator": "evidence/day1/raw-evidence-sources.json#width-efficiency-estop-20260913-01",
     "rollback_commit": "d967ddd24670476b2cc931e08dbc8fd49151ac5e",
     "accepted_facts": [
       "maximum continuous cleared width 600 mm",
@@ -21,11 +22,12 @@
   {
     "local_evidence": "evidence/day1/competition-localization-50mm.md",
     "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-evidence",
+    "raw_source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-simulation-only-completion",
     "source_commit": "c229c6464f8f7954caed6fc85f506a8c67c56eb6",
     "candidate_commit": "9542db71c6eee8dd91ec4e38600d325769eacaf9",
     "run_id": "localization-50mm-20260913-01/run-01",
     "raw_evidence_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/localization-50mm-20260913-01",
-    "local_raw_copy": ".work/localization-50mm-20260913-01/evidence",
+    "source_locator": "evidence/day1/raw-evidence-sources.json#localization-50mm-20260913-01",
     "rollback_commit": "a9691b41ff2e038b4bf072f814d4ce58c1615b32",
     "accepted_facts": [
       "dynamic run FAIL",
@@ -41,6 +43,7 @@
   {
     "local_evidence": "evidence/day1/competition-localization-replay.md",
     "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-evidence",
+    "raw_source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-simulation-only-completion",
     "source_commit": "210c4dd39af5d39a354e41e0b39316b517e96d33",
     "run_id": "localization-replay-no-gazebo",
     "rollback_commit": "a9691b41ff2e038b4bf072f814d4ce58c1615b32",
@@ -57,17 +60,19 @@
   {
     "local_evidence": "evidence/day1/competition-perception-score.md",
     "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-evidence",
-    "source_commit": "106f1189a5aacf856412d1c1bc1f76919c26962c",
+    "source_commit": "3ae009a44f86bb2a66a9c095ba4b6db3c3a87d35",
     "fix_commit": "da3beec86733fe73bc45c39bd40562abfce9979e",
+    "replay_status": "evidence/day1/competition-perception-replay-status.json",
     "run_id": "perception-score-20260913-01",
     "raw_evidence_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/perception-score-20260913-01",
-    "local_raw_copy": ".work/perception-score-20260913-01/evidence-reviewed",
+    "source_locator": "evidence/day1/raw-evidence-sources.json#perception-score-20260913-01",
     "rollback_commit": "210c4dd39af5d39a354e41e0b39316b517e96d33",
     "accepted_facts": [
       "fixed camera RGB-D message-path smoke PASS",
       "30 frames and 76 independently labelled instances",
-      "raw and policy correct-category recall both 0 percent",
-      "policy layer retained 8 false positives",
+      "Stage5B raw controlled-domain diagnostic 0 TP / 654 FP / 76 FN",
+      "Stage5A raw controlled-domain diagnostic 33 TP / 50 FP / 43 FN",
+      "offline policy replay NOT_RUN / NOT_MEASURED; prior Stage5A policy 0/0/76 withdrawn",
       "official 95 percent recognition definition remains NOT_MEASURED"
     ],
     "limitations": [
@@ -115,18 +120,20 @@
   {
     "local_evidence": "evidence/day1/competition-perception-recovery.json",
     "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-perception-recovery",
-    "source_commit": "c09e030",
+    "source_commit": "3ae009a44f86bb2a66a9c095ba4b6db3c3a87d35",
     "run_id": "perception-score-20260913-01/offline-replay",
     "rollback_commit": "210c4dd39af5d39a354e41e0b39316b517e96d33",
     "accepted_facts": [
       "Stage5B original raw result 0 TP / 654 FP / 76 FN",
       "Stage5A matching-profile raw replay 33 TP / 50 FP / 43 FN",
-      "policy-layer replay remains 0 TP / 0 FP / 76 FN"
+      "offline policy replay NOT_RUN / NOT_MEASURED",
+      "prior Stage5A policy 0/0/76 withdrawn as not reproducible"
     ],
     "limitations": [
       "same frozen MCAP offline replay only",
       "recognition quality remains FAIL",
-      "official >=95 percent recognition remains unmet"
+      "engineering recognition quality remains FAIL for measured raw evidence",
+      "official >=95 percent recognition result remains NOT_MEASURED"
     ]
   },
   {
@@ -186,6 +193,7 @@
     "local_evidence": "evidence/day1/competition-day1-demo-evidence.json",
     "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-evidence",
     "source_commit": "12c2a6acf58cc2558cf4c1a82cec4da47c874e0c",
+    "failure_retention_manifest": "evidence/day1/demo-failure-retention.json",
     "run_id": "day1-demo-pre-gazebo-failures",
     "rollback_commit": "12c2a6acf58cc2558cf4c1a82cec4da47c874e0c",
     "accepted_facts": [

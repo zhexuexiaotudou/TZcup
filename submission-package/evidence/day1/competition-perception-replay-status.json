@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "scope": "controlled Stage5A/Stage5B competition perception replay evidence",
+  "audit_date": "2026-09-14",
+  "source_commit": "c09e030778f3a99df8a7ce7613424dd695111209",
+  "status": "RAW_REPLAY_RETAINED_POLICY_NOT_RUN",
+  "frame_count": 30,
+  "truth_instance_count": 76,
+  "raw_results": {
+    "stage5a_controlled_fixture": {
+      "status": "MEASURED_NOT_OFFICIAL_ACCEPTANCE",
+      "replay_status": "OFFLINE_FROZEN_FRAME_REPLAY",
+      "model_sha256": "f7a10487a2577dc6675abb6784769308a0c21bfb11c0c9eb42af6aa2a5152e73",
+      "scored_raw_output_frame_count": 17,
+      "totals": {
+        "tp": 33,
+        "fp": 50,
+        "fn": 43
+      },
+      "macro_precision_conservative": 0.5529411764705883,
+      "macro_recall_conservative": 0.4325,
+      "evidence": {
+        "path": ".work/stage5a-presence.json",
+        "bytes": 35068,
+        "sha256": "6e6e3f40740e6ec58d0a22521b9dae5d00dbe9e7418c72e0a8a0f6322b10b8a7"
+      }
+    },
+    "stage5b_original_model_replay": {
+      "status": "MEASURED_NOT_OFFICIAL_ACCEPTANCE",
+      "replay_status": "OFFLINE_FROZEN_FRAME_REPLAY",
+      "model_sha256": "6858863df0588f33083779f15c87a37e7f280d06d8241c37363277d4c9ecc328",
+      "scored_raw_output_frame_count": 17,
+      "totals": {
+        "tp": 0,
+        "fp": 654,
+        "fn": 76
+      },
+      "macro_precision_conservative": 0.0,
+      "macro_recall_conservative": 0.0,
+      "evidence": {
+        "path": ".work/stage5b-presence.json",
+        "bytes": 217638,
+        "sha256": "46df19ed1a36a4d316198ed056428b64d07203b17357e2d29add3eb1ed941b88"
+      }
+    }
+  },
+  "policy_results": {
+    "status": "NOT_RUN",
+    "metrics": null,
+    "reason": "The committed offline replay computes raw RGB candidates only and writes policy_replay_status=NOT_RUN. The retained JSON contains no policy-stage predictions and does not retain the depth, ROI, or tracking context needed to reproduce the policy stage. Therefore no policy TP/FP/FN result is available.",
+    "removed_unsupported_claim": {
+      "document": "docs/competition-perception-score.md",
+      "metric": "Stage5A policy TP/FP/FN",
+      "value": "REMOVED_NOT_REPRODUCIBLE"
+    }
+  },
+  "auxiliary_unfiltered_replays": {
+    "stage5a": {
+      "status": "NOT_USED_FOR_REPORTED_BASELINE",
+      "totals": {
+        "tp": 61,
+        "fp": 90,
+        "fn": 15
+      },
+      "policy_replay_status": "NOT_RUN",
+      "reason": "This replay did not apply the retained 17/30 raw-output presence mask.",
+      "evidence": {
+        "path": ".work/root-cause-replay-stage5a.json",
+        "bytes": 41342,
+        "sha256": "bd256599bf0058701429e7077ecf607bd85044bb8691a3caf8bb69eda2d92f52"
+      }
+    },
+    "stage5b": {
+      "status": "NOT_USED_FOR_REPORTED_BASELINE",
+      "totals": {
+        "tp": 0,
+        "fp": 1162,
+        "fn": 76
+      },
+      "policy_replay_status": "NOT_RUN",
+      "reason": "This replay did not apply the retained 17/30 raw-output presence mask.",
+      "evidence": {
+        "path": ".work/root-cause-replay-stage5b.json",
+        "bytes": 365944,
+        "sha256": "fc7cb97646e737f1996ad1af44f9f5dd21d973d33162fe69291313fda6d45420"
+      }
+    }
+  }
+}

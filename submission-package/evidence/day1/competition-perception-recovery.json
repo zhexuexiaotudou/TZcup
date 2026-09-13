@@ -2,9 +2,12 @@
   "schema_version": 1,
   "evidence_id": "day1-perception-recovery",
   "status": "FAIL",
-  "source_commit": "c09e030",
+  "source_commit": "3ae009a44f86bb2a66a9c095ba4b6db3c3a87d35",
   "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-perception-recovery",
-  "source_evidence": "docs/competition-perception-score.md",
+  "source_evidence": [
+    "docs/competition-perception-score.md",
+    "artifacts/perception_replay_20260914_review/replay_status.json"
+  ],
   "root_cause": {
     "classification": "fixture_model_profile_mismatch",
     "description": "The controlled primitive-color fixture had been scored with the Stage5B procedural-rendered learned model instead of the matching Stage5A synthetic color-prototype model."
@@ -16,32 +19,27 @@
       "fp": 654,
       "fn": 76
     },
-    "stage5b_original_policy": {
-      "tp": 0,
-      "fp": 8,
-      "fn": 76
-    },
     "stage5a_profile_recovery_raw": {
       "tp": 33,
       "fp": 50,
       "fn": 43,
       "output_frames_preserved": "17/30"
     },
-    "stage5a_profile_recovery_policy": {
-      "tp": 0,
-      "fp": 0,
-      "fn": 76
+    "offline_policy_replay": {
+      "status": "NOT_RUN",
+      "metrics": null,
+      "withdrawn_claim": "Stage5A policy 0/0/76 is not reproducible because depth, ROI, and tracking context were not retained."
     }
   },
   "decision": {
     "recognition_quality": "FAIL",
-    "official_recognition_accuracy_95_percent": "UNMET",
-    "reason": "The corrected raw replay recovers bottle, can, paper, and puddle detections, but the unchanged Stage5B policy threshold emits no Stage5A policy-layer matches; recognition remains 0 recall at the policy layer and yellow leaf piles still fail."
+    "official_recognition_accuracy_95_percent": "NOT_MEASURED",
+    "reason": "The measured controlled-domain raw diagnostics retain Stage5B 0/654/76 and Stage5A 33/50/43; yellow leaf piles still fail. Offline policy replay is NOT_RUN/NOT_MEASURED and the prior Stage5A policy 0/0/76 claim has been withdrawn as unsupported. Engineering recognition remains FAIL only for the actually measured raw evidence; the official >=95 percent definition/result was not measured."
   },
   "limitations": [
     "Offline replay of the same frozen MCAP only; Gazebo, ROS, localization, and board were not rerun.",
     "Highly correlated static fixture, not an independent scene population or public blind set.",
-    "Do not tune the policy threshold on this holdout; freeze Stage5A thresholds on an independent development set before a new holdout.",
-    "Recognition quality FAIL remains; the official >=95 percent requirement remains unmet."
+    "Do not tune the policy threshold on this holdout; policy replay must retain depth, ROI, and tracking context before any measured claim.",
+    "Engineering recognition quality remains FAIL for measured raw evidence; the official >=95 percent result remains NOT_MEASURED."
   ]
 }

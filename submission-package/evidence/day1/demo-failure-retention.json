@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "verified_utc": "2026-09-13T17:03:21Z",
+  "evidence_id": "day1-demo-failure-retention",
+  "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-evidence",
+  "source_commit": "12c2a6acf58cc2558cf4c1a82cec4da47c874e0c",
+  "source_manifest": {
+    "file": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-evidence\\docs\\competition-day1-demo-evidence-manifest.json",
+    "bytes": 13188,
+    "sha256": "8DA5A653D1BC55B91B14D5973B3BAA42E970E1EECDC3A36D27211232807BC6D8"
+  },
+  "source_script": {
+    "file": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-evidence\\docs\\competition-day1-demo-evidence.md",
+    "bytes": 6027,
+    "sha256": "8D93E0D2D3A375CA48018D4E9D94F721F24D2B4CBA21C4CCB0DF8E8057F5DE1E"
+  },
+  "ignored_storage_pattern": ".work/",
+  "final_outcome": "NO_GAZEBO_LAUNCH",
+  "attempt_count": 2,
+  "gazebo_started": false,
+  "raw_media": {
+    "mcap_count": 0,
+    "mp4_count": 0,
+    "rviz_substitute_used": false,
+    "dashboard_substitute_used": false
+  },
+  "retained_attempts": [
+    {
+      "attempt_number": 1,
+      "source_revision": "058a83c126308c6899e01e44d3bef6d1abc3c1a4",
+      "rollback_point": "058a83c126308c6899e01e44d3bef6d1abc3c1a4",
+      "failure_phase": "ros2_daemon_start",
+      "exit_code": 1,
+      "evidence_directory": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-evidence\\.work\\day1-demo-run-20260913T163003Z",
+      "files": [
+        {
+          "file": "hardware_interface_contract_validation.json",
+          "bytes": 297,
+          "sha256": "162A39F819C10D58737BFA0F2E1D2EA76CDD94674B01897BD087D640B9E21341"
+        },
+        {
+          "file": "overlay_build.log",
+          "bytes": 350230,
+          "sha256": "5ACEFF97C74A0213AD1D2C490725A8DA0AA8B1EAF6B25B2FCA1718FC2E59B9F2"
+        },
+        {
+          "file": "wsl_entry_memory_preflight.json",
+          "bytes": 1462,
+          "sha256": "84B09C5C16B8E38228C36FADB8548BF3C5C874C005C412B296048AC4E2089C48"
+        },
+        {
+          "file": "wsl_entry_memory_launch_preflight.json",
+          "bytes": 1462,
+          "sha256": "4676C6BB3B7279B54C55E639C092C14D08B58980AFBD425CF8D806B5D94C42C5"
+        }
+      ]
+    },
+    {
+      "attempt_number": 2,
+      "source_revision": "bf3e897b0a2342529755e44c10e6a9a528ff9a00",
+      "rollback_point": "bf3e897b0a2342529755e44c10e6a9a528ff9a00",
+      "failure_phase": "ros2_daemon_start",
+      "exit_code": 1,
+      "evidence_directory": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-evidence\\.work\\day1-demo-retry-20260913T164600Z",
+      "files": [
+        {
+          "file": "hardware_interface_contract_validation.json",
+          "bytes": 297,
+          "sha256": "162A39F819C10D58737BFA0F2E1D2EA76CDD94674B01897BD087D640B9E21341"
+        },
+        {
+          "file": "gazebo_capture.stop",
+          "bytes": 0,
+          "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+        }
+      ]
+    }
+  ],
+  "daemon_diagnosis": {
+    "evidence_directory": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-evidence\\.work\\day1-daemon-diagnosis-20260914",
+    "files": [
+      {
+        "file": "daemon_start.txt",
+        "bytes": 192,
+        "sha256": "068C2075B7AD25E78F3869842C7D95CFDFE995A4DDDD04C6CC9273A53DA2DB7B"
+      }
+    ]
+  },
+  "claim_boundary": "This is a compact locator for ignored failure directories. It preserves exact commit/hash and source paths without claiming that raw MP4 or MCAP files exist or are portable in this package."
+}

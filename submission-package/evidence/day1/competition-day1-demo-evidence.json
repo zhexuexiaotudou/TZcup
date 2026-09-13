@@ -4,6 +4,7 @@
   "status": "TWO_RETAINED_LAUNCH_FAILURES_NO_VIDEO",
   "source_commit": "12c2a6acf58cc2558cf4c1a82cec4da47c874e0c",
   "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-evidence",
+  "failure_retention_manifest": "evidence/day1/demo-failure-retention.json",
   "source_evidence": [
     "docs/competition-day1-demo-evidence.md",
     "docs/competition-day1-demo-evidence-manifest.json",
