@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "candidate_revision": "f1f228232aafd7ec2187e1ef4914f91f8fbe38d7",
+  "branch": "codex/day1-localization-run",
+  "status": "NOT_MEASURED",
+  "decision": "STOPPED_BEFORE_DYNAMIC_DATA",
+  "predeclared_criterion": {
+    "evaluated": false,
+    "maximum_error_le_50mm": null,
+    "minimum_dynamic_pairs": 100,
+    "minimum_pair_coverage_fraction": 0.95,
+    "minimum_displacement_m_strictly_greater_than": 2.0
+  },
+  "sample_counts": {
+    "mcap_files": 0,
+    "dynamic_reference_samples": 0,
+    "paired_samples": 0,
+    "route_samples": 0,
+    "tf_authority_reports": 0
+  },
+  "error_statistics": {
+    "rmse_m": null,
+    "p95_m": null,
+    "max_m": null,
+    "displacement_m": null,
+    "pair_coverage": null
+  },
+  "failure": {
+    "stage": "pre_dynamic_launch",
+    "gazebo_started": false,
+    "message": "local_costmap inflation_radius must be strictly greater than the enabled-footprint inset radius plus padding (0.55)",
+    "source": ".work/day1-localization-run/evidence/run-01/launch.log",
+    "launch_log_sha256": "fd31a2a6b51d67131c90b992d89ed1cce39b9ee4bdf503d6d1a3a02e0840c310",
+    "navigation_log_sha256": "1792759e2078958a80695746f13af02921e9b247939b00232ef51beb7741edcb",
+    "amcl_parameters_sha256": "32caaf2cc9679da400f8b699f1cfbd65937b23479e5e9919f69e5015cf6b7cf4",
+    "generated_nav2_sha256": "194630ddb49f27a6403c3bfd7608fb6a220280784ce128de361f05dc01f21a46",
+    "local_ekf_parameters_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "no_localization_focus_json": true,
+    "no_tf_authority_json": true,
+    "no_probe_rc": true
+  },
+  "input_binding": {
+    "base_manifest_sha256": "a97be33d0ceaf558a6fdf12dc914e7819567e9eaf4af33f473835c1731cfd4dc",
+    "base_world_sha256": "f7460fdcc7ad221e613fdda1d1731bedb23c872094f03c6e2664934d18a54471",
+    "reconstructed_manifest_sha256": "5145327d76f14ce6590e7c3005181559b93a6a9d6e47a2a5745132b315e28050",
+    "prior_expected_manifest_sha256": "6df919e8835807ca6a7c4e335fedc66f6e66503887d66b85622ccf6e8ac3fc58",
+    "exact_prior_manifest_match": false,
+    "start_pose_source_world": {
+      "x_m": -98.0,
+      "y_m": 0.0,
+      "yaw_rad": 0.0
+    },
+    "start_pose_localization_map": {
+      "x_m": 0.0,
+      "y_m": 0.0,
+      "yaw_rad": 0.0
+    },
+    "occupancy_sha256": "25b51cdf3f6b52a47db91ffa9e397c09e219e73684db9ddafe6023a5ef6997ca",
+    "occupancy_yaml_sha256": "02cecd0afc85cfd385d4a92a580e40bfc08b64115bce83e2020cd986fcffce17",
+    "input_binding_sha256": "53b008597b0c5a3555dfd60e0dc1a88c51db18164fda88bee5743fa4f764679d"
+  },
+  "runtime": {
+    "isolated_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-localization-run",
+    "base_runtime": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-integrated-functional-acceptance\\.work\\final_frozen_runtime_r40_timeout_boundary_20260831_231231",
+    "overlay": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-localization-run\\.work\\day1-localization-run\\overlay",
+    "build_log_sha256": "d39b1f3a8d5d26d6a96aeb5ab4577049fa4af77b6436d4a464843cee7b05e565",
+    "rmw": "rmw_cyclonedds_cpp",
+    "discovery": "LOCALHOST",
+    "amcl_tf_broadcast": false
+  },
+  "resource_release": {
+    "gazebo_lock_free": true,
+    "gazebo_process_remaining": false,
+    "ros_runtime_process_remaining": false,
+    "sim_resource_released": true
+  },
+  "raw_evidence": ".work/day1-localization-run/evidence/run-01"
+}
