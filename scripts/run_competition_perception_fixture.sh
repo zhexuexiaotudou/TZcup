@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 set -eo pipefail
-: "${SOURCE:?}" "${RUNTIME:?}" "${OUTPUT:?}" "${PERCEPTION_MODEL:?}" "${PERCEPTION_OVERLAY:?}" "${PERCEPTION_DEPS:?}"
+: "${SOURCE:?}" "${RUNTIME:?}" "${OUTPUT:?}" "${PERCEPTION_OVERLAY:?}" "${PERCEPTION_DEPS:?}"
+PERCEPTION_MODEL_PROFILE="${PERCEPTION_MODEL_PROFILE:-controlled_primitive_color_fixture}"
+PERCEPTION_MODEL="$(python3 "$SOURCE/scripts/competition_perception_model_profile.py" --source "$SOURCE" --profile "$PERCEPTION_MODEL_PROFILE" --field path)"
+EXPECTED_MODEL_SHA256="$(python3 "$SOURCE/scripts/competition_perception_model_profile.py" --source "$SOURCE" --profile "$PERCEPTION_MODEL_PROFILE" --field sha256)"
+ACTUAL_MODEL_SHA256="$(sha256sum "$PERCEPTION_MODEL" | awk '{print $1}')"
+if [[ "$ACTUAL_MODEL_SHA256" != "$EXPECTED_MODEL_SHA256" ]]; then
+  echo "perception fixture model hash mismatch" >&2
+  exit 2
+fi
 source /opt/ros/jazzy/setup.bash
 source "$RUNTIME/install/setup.bash"
 source "$PERCEPTION_OVERLAY/local_setup.bash"

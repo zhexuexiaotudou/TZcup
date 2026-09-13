@@ -60,3 +60,26 @@ runner 返回 4：录包进程在首个 10 s 退出等待窗口内未被判定�
 云端证据：`/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/perception-score-20260913-01`。本地封存副本：`.work/perception-score-20260913-01/evidence-reviewed`。权威评分目录为 `score-reviewed`，并有逐图哈希标注、完整 MCAP、参数/模型绑定、模型卡、源码、构建日志及释放证明。
 
 回滚点为 `210c4dd`；只反向撤销本次感知提交并省略感知 overlay，不撤销定位候选或清扫提交。工作树、分支、临时资产及证据均保留，等待用户确认后再考虑清理。项目文档已按 neat-freak 同步，未写入全局记忆。
+
+## 2026-09-14 离线根因复核
+
+原始结论保持 FAIL。复核未修改 30 帧标签、76 个失败分母、IoU 0.5 门、0.8 类阈值或 holdout。
+
+根因不是简单的类别索引错位，而是受控彩色夹具误用了错误的模型档案：原运行使用已在其冻结 test 上失败（离散 macro F1 `0.0076769537847382165`）的 `stage5b_learned_perception.onnx`。该夹具使用固定、简单颜色对象，模型域应绑定已有 `synthetic_perception_pass=true` 的 Stage5A 色彩原型模型，而不是 Stage5B 程序化渲染学习模型。
+
+修复将受控夹具绑定到 `controlled_primitive_color_fixture` 档案，并在启动前校验模型 SHA-256；默认不再接受任意 `PERCEPTION_MODEL` 绕过域绑定。没有训练、采样或调参。
+
+同一 `score-reviewed` 的 30 张 RGB 完全离线重放结果如下：
+
+| 模型与过滤 | 原始/策略 | TP / FP / FN |
+|---|---|---:|
+| Stage5B 原运行 | raw | 0 / 654 / 76 |
+| Stage5B 原运行 | policy | 0 / 8 / 76 |
+| Stage5A 档案修复，保留原 17/30 原始输出帧 | raw | **33 / 50 / 43** |
+| Stage5A 档案修复，0.8 阈值不变 | policy | **0 / 0 / 76** |
+
+Stage5A 在原有输出的 17 帧内恢复了瓶、罐、纸和积水；13 个没有原始输出的帧继续按空预测计分，没有删除或补造输出。黄色叶堆仍失败。原因是 Stage5A 固定背景原型近似黑色，而 controlled fixture 背景为灰色，整幅灰色地面被判为 `leaf_pile`，因此叶堆框的 IoU 不过门。修复没有查看 holdout 后重调背景原型。
+
+Stage5A 组件通过 0.8 软分类均值阈值时没有策略层输出。现有阈值是为 Stage5B 候选冻结的候选防线，并未针对 Stage5A 原型模型校准；本轮不事后降低阈值，所以策略层仍为 0 召回、完整识别仍为 FAIL。下一步需要在独立开发集上预先冻结 Stage5A 阈值及背景拒绝规则，再采集新的独立 holdout；现有 15 个重复正样本和 14 个背景样本只能支持此受控域诊断，不能证明 95%，也不能外推真实域。
+
+未验证边界：没有重跑 Gazebo、ROS、定位或板端；策略层指标来自同一封存 MCAP 的 offline replay；`competition_R01` 和完整功能可靠性仍保持 NOT_MEASURED/PARTIAL。

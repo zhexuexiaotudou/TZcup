@@ -2,8 +2,13 @@
 """Generate a small camera fixture and evaluator-only geometry; no model truth input."""
 import argparse,json,math,xml.etree.ElementTree as ET
 from pathlib import Path
+from competition_perception_model_profile import (
+    CONTROLLED_FIXTURE_PROFILE,
+    resolve_model_profile,
+)
 
 def create(source,out):
+ source=Path(source).resolve()
  out.mkdir(parents=True,exist_ok=False)
  root=ET.Element('sdf',version='1.9');world=ET.SubElement(root,'world',name='perception_fixture')
  def xml(parent,text):parent.append(ET.fromstring(text))
@@ -26,7 +31,8 @@ def create(source,out):
  xml(world,'<model name="negative_box"><static>true</static><pose>1.62 -0.55 0.2 0 0 0</pose><link name="link"><visual name="visual"><geometry><box><size>0.22 0.22 0.4</size></box></geometry><material><ambient>0.4 0.25 0.12 1</ambient><diffuse>0.4 0.25 0.12 1</diffuse></material></visual></link></model>')
  xml(world,'<model name="negative_paint"><static>true</static><pose>2.55 -0.55 0.002 0 0 0</pose><link name="link"><visual name="visual"><geometry><box><size>0.2 0.12 0.004</size></box></geometry><material><ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse></material></visual></link></model>')
  ET.indent(root);ET.ElementTree(root).write(out/'world.sdf',encoding='utf-8',xml_declaration=True)
- plan={'scope':'controlled primitive-asset RGB-D perception; not real-world recognition acceptance','control_use_prohibited':True,'camera_map_xyz':camxyz,'camera_map_optical_quaternion_xyzw':[1.,0.,0.,0.],'map_base_transform':'identity static calibrated fixture; no localization','objects':objects,'negative_objects':['negative_box','negative_paint','ground'],'positive_score_offsets_s':list(range(2,31,2)),'hide_garbage_at_offset_s':31.,'negative_score_offsets_s':list(range(32,61,2)),'end_offset_s':61.,'warmup_pause_sim_s':1.,'frame_selection':'nearest original RGB stamp to start+2k, k=1..30, within 0.26 s; missing outputs count as empty predictions','thresholds':'all five classes 0.8 fixed before capture; no holdout tuning','roi':[.4,3.,-.8,.8,-.08,.30],'annotation':'project fixture geometry, not model predictions; cylinders use dense silhouette vertices; verify visible first frame before starting score interval','statistical_boundary':'15 repeated positive views and 15 background views are correlated, not independent population samples'}
+ profile=resolve_model_profile(source,CONTROLLED_FIXTURE_PROFILE)
+ plan={'scope':'controlled primitive-asset RGB-D perception; not real-world recognition acceptance','control_use_prohibited':True,'model_profile':{'id':profile.profile_id,'path':str(profile.path.relative_to(source)).replace('\\','/'),'sha256':profile.sha256,'scope':profile.scope},'camera_map_xyz':camxyz,'camera_map_optical_quaternion_xyzw':[1.,0.,0.,0.],'map_base_transform':'identity static calibrated fixture; no localization','objects':objects,'negative_objects':['negative_box','negative_paint','ground'],'positive_score_offsets_s':list(range(2,31,2)),'hide_garbage_at_offset_s':31.,'negative_score_offsets_s':list(range(32,61,2)),'end_offset_s':61.,'warmup_pause_sim_s':1.,'frame_selection':'nearest original RGB stamp to start+2k, k=1..30, within 0.26 s; missing outputs count as empty predictions','thresholds':'all five classes 0.8 fixed before capture; no holdout tuning','roi':[.4,3.,-.8,.8,-.08,.30],'annotation':'project fixture geometry, not model predictions; cylinders use dense silhouette vertices; verify visible first frame before starting score interval','statistical_boundary':'15 repeated positive views and 15 background views are correlated, not independent population samples'}
  (out/'evaluation_plan.json').write_text(json.dumps(plan,indent=2));return plan
 
 if __name__=='__main__':
