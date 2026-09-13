@@ -1,0 +1,98 @@
+[
+  {
+    "local_evidence": "evidence/day1/competition-width-efficiency-estop.md",
+    "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-evidence",
+    "source_commit": "a9691b41ff2e038b4bf072f814d4ce58c1615b32",
+    "run_id": "width-efficiency-estop-20260913-01/steady-02",
+    "raw_evidence_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/width-efficiency-estop-20260913-01",
+    "local_raw_copy": ".work/width-efficiency-estop-20260913-01/evidence",
+    "rollback_commit": "d967ddd24670476b2cc931e08dbc8fd49151ac5e",
+    "accepted_facts": [
+      "maximum continuous cleared width 600 mm",
+      "fixed 10 s window efficiency 4320 m2/h; controlled partial only",
+      "in-motion full stop 0.489 s simulation time"
+    ],
+    "limitations": [
+      "controlled straight simulation only",
+      "10 s window is not full-mission average efficiency",
+      "not physical vehicle or HIL evidence"
+    ]
+  },
+  {
+    "local_evidence": "evidence/day1/competition-localization-50mm.md",
+    "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-evidence",
+    "source_commit": "c229c6464f8f7954caed6fc85f506a8c67c56eb6",
+    "candidate_commit": "9542db71c6eee8dd91ec4e38600d325769eacaf9",
+    "run_id": "localization-50mm-20260913-01/run-01",
+    "raw_evidence_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/localization-50mm-20260913-01",
+    "local_raw_copy": ".work/localization-50mm-20260913-01/evidence",
+    "rollback_commit": "a9691b41ff2e038b4bf072f814d4ce58c1615b32",
+    "accepted_facts": [
+      "dynamic run FAIL",
+      "strict pairing coverage 1.1142 percent",
+      "paired diagnostic RMSE 12.152933 m, P95 12.514197 m, maximum 12.538851 m"
+    ],
+    "limitations": [
+      "only 4 of 359 epochs strictly paired",
+      "Nav2 aborted before the required route and return leg",
+      "four-sample errors are diagnostic, not a valid completed acceptance dataset"
+    ]
+  },
+  {
+    "local_evidence": "evidence/day1/competition-localization-replay.md",
+    "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-evidence",
+    "source_commit": "210c4dd39af5d39a354e41e0b39316b517e96d33",
+    "run_id": "localization-replay-no-gazebo",
+    "rollback_commit": "a9691b41ff2e038b4bf072f814d4ce58c1615b32",
+    "accepted_facts": [
+      "three-change candidate returned NO-GO",
+      "exact map-to-odom TF publisher identity remains unresolved",
+      "second dynamic run was not started"
+    ],
+    "limitations": [
+      "no new dynamic metric",
+      "the original localization failure remains authoritative"
+    ]
+  },
+  {
+    "local_evidence": "evidence/day1/competition-perception-score.md",
+    "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-evidence",
+    "source_commit": "106f1189a5aacf856412d1c1bc1f76919c26962c",
+    "fix_commit": "da3beec86733fe73bc45c39bd40562abfce9979e",
+    "run_id": "perception-score-20260913-01",
+    "raw_evidence_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/perception-score-20260913-01",
+    "local_raw_copy": ".work/perception-score-20260913-01/evidence-reviewed",
+    "rollback_commit": "210c4dd39af5d39a354e41e0b39316b517e96d33",
+    "accepted_facts": [
+      "fixed camera RGB-D message-path smoke PASS",
+      "30 frames and 76 independently labelled instances",
+      "raw and policy correct-category recall both 0 percent",
+      "policy layer retained 8 false positives",
+      "official 95 percent recognition definition remains NOT_MEASURED"
+    ],
+    "limitations": [
+      "highly correlated static repeated view, not independent scenes",
+      "model is from procedural D1 training domain",
+      "counts of internal CONFIRMED states are not correct detections"
+    ]
+  },
+  {
+    "local_evidence": "evidence/day1/competition-mapping-probe.md",
+    "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-board-evidence",
+    "source_commit": "4c3c95930245155186ebed53eb822d314b1717c9",
+    "candidate_commit": "cd4985883a719edbf6c2b93c2dd090cafb580fb6",
+    "run_id": "tzcup_mapping_probe_20260913_01",
+    "rollback_commit": "106f1189a5aacf856412d1c1bc1f76919c26962c",
+    "accepted_facts": [
+      "one real Gazebo plus SLAM probe lasted 300.013 wall seconds",
+      "560870 known cells at about 0.05 m resolution",
+      "effective observed area 1402.175 m2 or 7.01 percent",
+      "20000 m2 gate FAIL and no formal long run started"
+    ],
+    "limitations": [
+      "geofence area and grid boundary are not observed map area",
+      "linear extrapolations are estimates, not completion guarantees",
+      "offline reload was not a second live map-server relocation acceptance run"
+    ]
+  }
+]

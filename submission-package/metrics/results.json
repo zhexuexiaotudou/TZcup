@@ -2,54 +2,183 @@
   {
     "id": "mapping",
     "item": "建图",
-    "status": "NOT_MEASURED",
+    "status": "FAIL",
     "value": null,
-    "basis": "not_measured",
+    "basis": "measured_simulation",
     "evidence": [
-      "evidence/reference/execution-status-snapshot.md"
+      "evidence/day1/competition-mapping-probe.md"
     ],
-    "note": "完整首图尚未封存；历史45分钟运行未完成。",
-    "minimum_measurement": "保存地图、分辨率、已知栅格数和建图日志；重新加载后输出定位。",
-    "as_of_utc": "2026-09-13T03:48:05.727823+00:00"
+    "note": "5分钟真实Gazebo+SLAM探针为NO-GO；只得到1402.175m²已知区，未完成首图长跑，尚不能形成完整建图结论。",
+    "minimum_measurement": "保存完整首图、分辨率、已知栅格数和建图日志；重新加载后输出定位，并以未知区排除的面积口径复核。",
+    "run_id": "tzcup_mapping_probe_20260913_01",
+    "source_commit": "4c3c95930245155186ebed53eb822d314b1717c9",
+    "rollback_commit": "106f1189a5aacf856412d1c1bc1f76919c26962c",
+    "as_of_utc": "2026-09-13T09:07:06+00:00"
   },
   {
     "id": "following",
     "item": "循迹",
-    "status": "NOT_MEASURED",
+    "status": "FAIL",
     "value": null,
-    "basis": "not_measured",
+    "basis": "measured_simulation",
     "evidence": [
-      "evidence/reference/execution-status-snapshot.md"
+      "evidence/day1/competition-localization-50mm.md",
+      "evidence/day1/competition-localization-replay.md"
     ],
-    "note": "短程左右转不等于自主路线完成。",
-    "minimum_measurement": "一次任务的路线点、实际轨迹、终态和操作视频；记录中止事件。",
-    "as_of_utc": "2026-09-13T03:48:05.727823+00:00"
+    "note": "动态路线run-01在仿真时间12.953s因Nav2中止而未达到2m位移与返回段；这是受控失败，不是完整任务成功率。",
+    "minimum_measurement": "一次任务的路线点、实际轨迹、终态与中止事件；区分定位失败、规划失败和车辆控制失败。",
+    "run_id": "localization-50mm-20260913-01/run-01",
+    "source_commit": "c229c6464f8f7954caed6fc85f506a8c67c56eb6",
+    "rollback_commit": "a9691b41ff2e038b4bf072f814d4ce58c1615b32",
+    "as_of_utc": "2026-09-13T07:46:40+00:00"
   },
   {
     "id": "perception",
     "item": "垃圾识别与定位",
+    "status": "FAIL",
+    "value": null,
+    "basis": "measured_simulation",
+    "evidence": [
+      "evidence/day1/competition-perception-score.md",
+      "evidence/board/development-liveness.json",
+      "evidence/board/perception-rejected.log"
+    ],
+    "note": "固定相机RGB-D链路可执行，但独立评分30帧/76实例上原始与策略层正确类别召回均为0%；策略层仍有8个误检，识别质量FAIL。",
+    "minimum_measurement": "同帧图像、检测类别框、深度/标定/TF、预测地图坐标及独立标签对照；分别报告原始层和策略层精确率/召回率。",
+    "run_id": "perception-score-20260913-01",
+    "source_commit": "106f1189a5aacf856412d1c1bc1f76919c26962c",
+    "rollback_commit": "210c4dd39af5d39a354e41e0b39316b517e96d33",
+    "as_of_utc": "2026-09-13T08:47:13+00:00"
+  },
+  {
+    "id": "recognition_accuracy",
+    "item": "物体识别准确率≥95%",
     "status": "NOT_MEASURED",
     "value": null,
     "basis": "not_measured",
     "evidence": [
-      "evidence/reference/execution-status-snapshot.md"
+      "evidence/day1/competition-perception-score.md",
+      "evidence/reference/contest-brief.txt"
     ],
-    "note": "板端开发HBM仅有消息活性；当前完整仿真识别定位未验收。",
-    "minimum_measurement": "同帧图像、检测类别框、深度/标定/TF、预测地图坐标及独立标签对照。",
-    "as_of_utc": "2026-09-13T03:48:05.727823+00:00"
+    "note": "题面未给出“识别准确率”的精确定义；工程P/R评分已FAIL，但不得把工程分数擅自替代官方R01，因此官方≥95%指标保持NOT_MEASURED。",
+    "minimum_measurement": "先冻结官方类别、样本域、匹配规则和统计分母，再用独立标注集报告每类与宏平均P/R及总体正确率。",
+    "run_id": null,
+    "source_commit": "106f1189a5aacf856412d1c1bc1f76919c26962c",
+    "rollback_commit": null,
+    "as_of_utc": "2026-09-13T08:47:13+00:00"
+  },
+  {
+    "id": "localization_mm",
+    "item": "定位≤50mm",
+    "status": "FAIL",
+    "value": 12152.933,
+    "basis": "measured_simulation",
+    "evidence": [
+      "evidence/day1/competition-localization-50mm.md",
+      "evidence/day1/competition-localization-replay.md"
+    ],
+    "note": "动态run-01仅4/359个严格配对，覆盖率1.1142%，配对RMSE 12.152933m、P95 12.514197m、最大12.538851m；条件和误差均不通过，样本仅为诊断值。",
+    "minimum_measurement": "同坐标系、同仿真时间配对估计与真值；先满足覆盖率和位移条件，再报告RMSE/P95/max，阈值采用max≤50mm。",
+    "run_id": "localization-50mm-20260913-01/run-01",
+    "source_commit": "c229c6464f8f7954caed6fc85f506a8c67c56eb6",
+    "rollback_commit": "a9691b41ff2e038b4bf072f814d4ce58c1615b32",
+    "as_of_utc": "2026-09-13T07:46:40+00:00"
+  },
+  {
+    "id": "mapped_area_m2",
+    "item": "建图≥20000m²",
+    "status": "FAIL",
+    "value": 1402.175,
+    "basis": "measured_simulation",
+    "evidence": [
+      "evidence/day1/competition-mapping-probe.md"
+    ],
+    "note": "300.013s墙钟探针得到560870个已知栅格、约0.05m分辨率、有效观测面积1402.175m²（7.01%）；未启动长跑，20000m²门FAIL。",
+    "minimum_measurement": "有效已知栅格数×resolution²；未知区排除，保存原始NPZ/PGM/YAML、面积时序与负载日志。",
+    "run_id": "tzcup_mapping_probe_20260913_01",
+    "source_commit": "4c3c95930245155186ebed53eb822d314b1717c9",
+    "rollback_commit": "106f1189a5aacf856412d1c1bc1f76919c26962c",
+    "as_of_utc": "2026-09-13T09:07:06+00:00"
   },
   {
     "id": "cleaning",
     "item": "一种清扫方式",
-    "status": "NOT_MEASURED",
+    "status": "PASS",
     "value": null,
-    "basis": "not_measured",
+    "basis": "measured_simulation",
     "evidence": [
-      "evidence/reference/execution-status-snapshot.md"
+      "evidence/day1/competition-width-efficiency-estop.md"
     ],
-    "note": "采用边刷与中央滚刷；历史规划概率清除不证明本次动力学清扫。",
-    "minimum_measurement": "同次任务GroundDirt前后状态、刷启停和清除事件；一段前后截图。",
-    "as_of_utc": "2026-09-13T03:48:05.727823+00:00"
+    "note": "受控直线试验中三刷均记录真实接触，GroundDirt清除计数由606增至1806；PASS仅覆盖该固定试验，不代表完整比赛任务。",
+    "minimum_measurement": "同次任务GroundDirt前后状态、刷启停、真实接触和清除事件；保存前后画面与运行日志。",
+    "run_id": "width-efficiency-estop-20260913-01/steady-02",
+    "source_commit": "a9691b41ff2e038b4bf072f814d4ce58c1615b32",
+    "rollback_commit": "d967ddd24670476b2cc931e08dbc8fd49151ac5e",
+    "as_of_utc": "2026-09-13T07:15:40+00:00"
+  },
+  {
+    "id": "cleaning_m2_h",
+    "item": "效率≥3500m²/h",
+    "status": "PARTIAL",
+    "value": 4320,
+    "basis": "measured_simulation",
+    "evidence": [
+      "evidence/day1/competition-width-efficiency-estop.md"
+    ],
+    "note": "44.051-54.051s固定10s窗口清除12.00m²，换算4320m²/h；这是受控稳态短窗，不是完整任务平均效率，因此只能PARTIAL。",
+    "minimum_measurement": "实际清除有效面积并集÷完整作业仿真秒数×3600；计入转弯、等待、避障，另报墙钟与RTF。",
+    "run_id": "width-efficiency-estop-20260913-01/steady-02",
+    "source_commit": "a9691b41ff2e038b4bf072f814d4ce58c1615b32",
+    "rollback_commit": "d967ddd24670476b2cc931e08dbc8fd49151ac5e",
+    "as_of_utc": "2026-09-13T07:15:40+00:00"
+  },
+  {
+    "id": "width_mm",
+    "item": "清扫宽度≥600mm",
+    "status": "PASS",
+    "value": 600,
+    "basis": "measured_simulation",
+    "evidence": [
+      "evidence/day1/competition-width-efficiency-estop.md"
+    ],
+    "note": "最大连续清除带为600mm；两侧分离清除带的1400mm总跨度含未清除空隙，不能宣称1400mm连续刷宽。栅格分辨率100mm。",
+    "minimum_measurement": "直线短段运行，取实际污物清除带最大连续宽度；保存刷状态、轨迹、前后图和原始栅格。",
+    "run_id": "width-efficiency-estop-20260913-01/steady-02",
+    "source_commit": "a9691b41ff2e038b4bf072f814d4ce58c1615b32",
+    "rollback_commit": "d967ddd24670476b2cc931e08dbc8fd49151ac5e",
+    "as_of_utc": "2026-09-13T07:15:40+00:00"
+  },
+  {
+    "id": "estop_function",
+    "item": "应急制动功能",
+    "status": "PASS",
+    "value": null,
+    "basis": "measured_simulation",
+    "evidence": [
+      "evidence/day1/competition-width-efficiency-estop.md"
+    ],
+    "note": "行驶中触发完整急停：触发前GT线速度1.000026m/s、角速度0；此后三维速度模与角速度模均不超过0.01并持续1.5s。PASS仅覆盖仿真路径。",
+    "minimum_measurement": "行驶中触发急停，保留触发事件和实际线/角速度，不只记录速度命令；同时报告仿真时间和墙钟延迟。",
+    "run_id": "width-efficiency-estop-20260913-01/steady-02",
+    "source_commit": "a9691b41ff2e038b4bf072f814d4ce58c1615b32",
+    "rollback_commit": "d967ddd24670476b2cc931e08dbc8fd49151ac5e",
+    "as_of_utc": "2026-09-13T07:15:40+00:00"
+  },
+  {
+    "id": "braking_s",
+    "item": "制动≤1s",
+    "status": "PASS",
+    "value": 0.489,
+    "basis": "measured_simulation",
+    "evidence": [
+      "evidence/day1/competition-width-efficiency-estop.md"
+    ],
+    "note": "仿真时间延迟0.489s；墙钟延迟4.809955s单独列示，不替代仿真通过值。触发使用物理状态时间戳，停止判定持续1.5s。",
+    "minimum_measurement": "同一仿真时钟下从急停触发至实际|v|≤0.01m/s且|ω|≤0.01rad/s并持续1.5s；报告采样频率与墙钟延迟。",
+    "run_id": "width-efficiency-estop-20260913-01/steady-02",
+    "source_commit": "a9691b41ff2e038b4bf072f814d4ce58c1615b32",
+    "rollback_commit": "d967ddd24670476b2cc931e08dbc8fd49151ac5e",
+    "as_of_utc": "2026-09-13T07:15:40+00:00"
   },
   {
     "id": "avoidance",
@@ -58,88 +187,31 @@
     "value": null,
     "basis": "not_measured",
     "evidence": [
-      "evidence/reference/execution-status-snapshot.md"
+      "evidence/reference/execution-status-snapshot.md",
+      "evidence/reference/contest-brief.txt"
     ],
-    "note": "历史分模块避障不能外推本次整链。",
-    "minimum_measurement": "任务中插入一次动态障碍；记录无碰撞、绕行或等待及恢复任务。",
-    "as_of_utc": "2026-09-13T03:48:05.727823+00:00"
+    "note": "本轮定位、感知、清扫与建图探针均没有执行可判定的整任务动态障碍场景；历史分模块避障不能外推。",
+    "minimum_measurement": "任务中插入一次动态障碍；记录无碰撞、绕行或等待及恢复任务，并报告成功率、最小间距或失败原因。",
+    "run_id": null,
+    "source_commit": null,
+    "rollback_commit": null,
+    "as_of_utc": "2026-09-13T08:47:13+00:00"
   },
   {
-    "id": "estop_function",
-    "item": "应急制动功能",
+    "id": "task_decomposition",
+    "item": "任务分解正确率≥90%（正文口径另列≥95%）",
     "status": "NOT_MEASURED",
     "value": null,
     "basis": "not_measured",
     "evidence": [
-      "evidence/reference/turn-diagnostic.md"
+      "evidence/reference/contest-brief.txt",
+      "evidence/reference/historical-assessment.md"
     ],
-    "note": "历史急停触发前已停稳；控制回放归零不是运动中车辆急停。",
-    "minimum_measurement": "行驶中触发急停，保留触发事件和实际线/角速度，不只记录速度命令。",
-    "as_of_utc": "2026-09-13T03:48:05.727823+00:00"
-  },
-  {
-    "id": "localization_mm",
-    "item": "定位≤50mm",
-    "status": "FAIL",
-    "value": 259.544,
-    "basis": "historical_limited_measurement",
-    "evidence": [
-      "evidence/reference/turn-diagnostic.md"
-    ],
-    "note": "历史短程656/656配对，15ms最大跨度；EKF最大误差259.544mm。仅历史局部失败，当前全程未测。",
-    "minimum_measurement": "同坐标系、同仿真时间配对估计与真值，导出RMSE/P95/max；预先采用max≤50mm的保守口径。",
-    "as_of_utc": "2026-09-13T03:48:05.727823+00:00"
-  },
-  {
-    "id": "mapped_area_m2",
-    "item": "建图≥20000m²",
-    "status": "NOT_MEASURED",
-    "value": null,
-    "basis": "not_measured",
-    "evidence": [
-      "evidence/reference/execution-status-snapshot.md"
-    ],
-    "note": "200m×100m场景边界不是已建图面积。",
-    "minimum_measurement": "有效已知栅格数×resolution²；未知区排除，保留地图文件与面积口径。",
-    "as_of_utc": "2026-09-13T03:48:05.727823+00:00"
-  },
-  {
-    "id": "cleaning_m2_h",
-    "item": "效率≥3500m²/h",
-    "status": "NOT_MEASURED",
-    "value": null,
-    "basis": "not_measured",
-    "evidence": [
-      "evidence/reference/execution-status-snapshot.md"
-    ],
-    "note": "4205.81为历史离线估计；1.32×1×3600×0.75=3564亦是理论估计。",
-    "minimum_measurement": "实际清除有效面积并集÷完整作业仿真秒数×3600；计入转弯、等待、避障，另报墙钟与RTF。",
-    "as_of_utc": "2026-09-13T03:48:05.727823+00:00"
-  },
-  {
-    "id": "width_mm",
-    "item": "清扫宽度≥600mm",
-    "status": "NOT_MEASURED",
-    "value": null,
-    "basis": "not_measured",
-    "evidence": [
-      "evidence/reference/execution-status-snapshot.md"
-    ],
-    "note": "0.65m模型刷宽、1.32m展开设计值不作为有效清扫实测。",
-    "minimum_measurement": "直线短段运行，取实际污物清除带横向宽度；保存刷状态、轨迹与前后图。",
-    "as_of_utc": "2026-09-13T03:48:05.727823+00:00"
-  },
-  {
-    "id": "braking_s",
-    "item": "制动≤1s",
-    "status": "NOT_MEASURED",
-    "value": null,
-    "basis": "not_measured",
-    "evidence": [
-      "evidence/reference/turn-diagnostic.md"
-    ],
-    "note": "历史174个静止GT样本未覆盖行驶到停车过程。",
-    "minimum_measurement": "同一时钟下从急停触发至实际|v|≤0.01m/s且|ω|≤0.01rad/s，持续0.2s；报告采样频率与上界。",
-    "as_of_utc": "2026-09-13T03:48:05.727823+00:00"
+    "note": "题面同时出现正文≥95%和评分表≥90%口径；本轮没有自然语言任务分解运行、标注命令集或正确率统计。",
+    "minimum_measurement": "冻结题面版本、指令集、分解输出和评分规则，报告逐条正确率与总体正确率；不得用架构描述代替测量。",
+    "run_id": null,
+    "source_commit": null,
+    "rollback_commit": null,
+    "as_of_utc": "2026-09-13T08:47:13+00:00"
   }
 ]

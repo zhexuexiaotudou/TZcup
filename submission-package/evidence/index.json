@@ -243,5 +243,30 @@
     "file": "evidence/reference/build.stdout.log",
     "source": "F:\\Project\\TZcup\\.workspace\\evidence\\competition-hard-minimum-01\\build.stdout.log",
     "copied_utc": "2026-09-13T03:51:28.185931+00:00"
+  },
+  {
+    "file": "evidence/day1/competition-width-efficiency-estop.md",
+    "source": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-evidence\\docs\\competition-width-efficiency-estop.md",
+    "copied_utc": "2026-09-14T00:26:03+08:00"
+  },
+  {
+    "file": "evidence/day1/competition-localization-50mm.md",
+    "source": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-evidence\\docs\\competition-localization-50mm.md",
+    "copied_utc": "2026-09-14T00:26:03+08:00"
+  },
+  {
+    "file": "evidence/day1/competition-localization-replay.md",
+    "source": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-evidence\\docs\\competition-localization-replay.md",
+    "copied_utc": "2026-09-14T00:26:03+08:00"
+  },
+  {
+    "file": "evidence/day1/competition-perception-score.md",
+    "source": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-demo-evidence\\docs\\competition-perception-score.md",
+    "copied_utc": "2026-09-14T00:26:03+08:00"
+  },
+  {
+    "file": "evidence/day1/competition-mapping-probe.md",
+    "source": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-board-evidence\\docs\\competition-mapping-probe.md",
+    "copied_utc": "2026-09-14T00:26:03+08:00"
   }
 ]

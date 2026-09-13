@@ -1,12 +1,14 @@
 ﻿id,item,status,value,basis,note,evidence,as_of_utc
-mapping,建图,NOT_MEASURED,,not_measured,完整首图尚未封存；历史45分钟运行未完成。,['evidence/reference/execution-status-snapshot.md'],2026-09-13T03:48:05.727823+00:00
-following,循迹,NOT_MEASURED,,not_measured,短程左右转不等于自主路线完成。,['evidence/reference/execution-status-snapshot.md'],2026-09-13T03:48:05.727823+00:00
-perception,垃圾识别与定位,NOT_MEASURED,,not_measured,板端开发HBM仅有消息活性；当前完整仿真识别定位未验收。,['evidence/reference/execution-status-snapshot.md'],2026-09-13T03:48:05.727823+00:00
-cleaning,一种清扫方式,NOT_MEASURED,,not_measured,采用边刷与中央滚刷；历史规划概率清除不证明本次动力学清扫。,['evidence/reference/execution-status-snapshot.md'],2026-09-13T03:48:05.727823+00:00
-avoidance,避障,NOT_MEASURED,,not_measured,历史分模块避障不能外推本次整链。,['evidence/reference/execution-status-snapshot.md'],2026-09-13T03:48:05.727823+00:00
-estop_function,应急制动功能,NOT_MEASURED,,not_measured,历史急停触发前已停稳；控制回放归零不是运动中车辆急停。,['evidence/reference/turn-diagnostic.md'],2026-09-13T03:48:05.727823+00:00
-localization_mm,定位≤50mm,FAIL,259.544,historical_limited_measurement,历史短程656/656配对，15ms最大跨度；EKF最大误差259.544mm。仅历史局部失败，当前全程未测。,['evidence/reference/turn-diagnostic.md'],2026-09-13T03:48:05.727823+00:00
-mapped_area_m2,建图≥20000m²,NOT_MEASURED,,not_measured,200m×100m场景边界不是已建图面积。,['evidence/reference/execution-status-snapshot.md'],2026-09-13T03:48:05.727823+00:00
-cleaning_m2_h,效率≥3500m²/h,NOT_MEASURED,,not_measured,4205.81为历史离线估计；1.32×1×3600×0.75=3564亦是理论估计。,['evidence/reference/execution-status-snapshot.md'],2026-09-13T03:48:05.727823+00:00
-width_mm,清扫宽度≥600mm,NOT_MEASURED,,not_measured,0.65m模型刷宽、1.32m展开设计值不作为有效清扫实测。,['evidence/reference/execution-status-snapshot.md'],2026-09-13T03:48:05.727823+00:00
-braking_s,制动≤1s,NOT_MEASURED,,not_measured,历史174个静止GT样本未覆盖行驶到停车过程。,['evidence/reference/turn-diagnostic.md'],2026-09-13T03:48:05.727823+00:00
+mapping,建图,FAIL,,measured_simulation,5分钟真实Gazebo+SLAM探针为NO-GO；只得到1402.175m²已知区，未完成首图长跑，尚不能形成完整建图结论。,['evidence/day1/competition-mapping-probe.md'],2026-09-13T09:07:06+00:00
+following,循迹,FAIL,,measured_simulation,动态路线run-01在仿真时间12.953s因Nav2中止而未达到2m位移与返回段；这是受控失败，不是完整任务成功率。,"['evidence/day1/competition-localization-50mm.md', 'evidence/day1/competition-localization-replay.md']",2026-09-13T07:46:40+00:00
+perception,垃圾识别与定位,FAIL,,measured_simulation,固定相机RGB-D链路可执行，但独立评分30帧/76实例上原始与策略层正确类别召回均为0%；策略层仍有8个误检，识别质量FAIL。,"['evidence/day1/competition-perception-score.md', 'evidence/board/development-liveness.json', 'evidence/board/perception-rejected.log']",2026-09-13T08:47:13+00:00
+recognition_accuracy,物体识别准确率≥95%,NOT_MEASURED,,not_measured,题面未给出“识别准确率”的精确定义；工程P/R评分已FAIL，但不得把工程分数擅自替代官方R01，因此官方≥95%指标保持NOT_MEASURED。,"['evidence/day1/competition-perception-score.md', 'evidence/reference/contest-brief.txt']",2026-09-13T08:47:13+00:00
+localization_mm,定位≤50mm,FAIL,12152.933,measured_simulation,动态run-01仅4/359个严格配对，覆盖率1.1142%，配对RMSE 12.152933m、P95 12.514197m、最大12.538851m；条件和误差均不通过，样本仅为诊断值。,"['evidence/day1/competition-localization-50mm.md', 'evidence/day1/competition-localization-replay.md']",2026-09-13T07:46:40+00:00
+mapped_area_m2,建图≥20000m²,FAIL,1402.175,measured_simulation,300.013s墙钟探针得到560870个已知栅格、约0.05m分辨率、有效观测面积1402.175m²（7.01%）；未启动长跑，20000m²门FAIL。,['evidence/day1/competition-mapping-probe.md'],2026-09-13T09:07:06+00:00
+cleaning,一种清扫方式,PASS,,measured_simulation,受控直线试验中三刷均记录真实接触，GroundDirt清除计数由606增至1806；PASS仅覆盖该固定试验，不代表完整比赛任务。,['evidence/day1/competition-width-efficiency-estop.md'],2026-09-13T07:15:40+00:00
+cleaning_m2_h,效率≥3500m²/h,PARTIAL,4320,measured_simulation,44.051-54.051s固定10s窗口清除12.00m²，换算4320m²/h；这是受控稳态短窗，不是完整任务平均效率，因此只能PARTIAL。,['evidence/day1/competition-width-efficiency-estop.md'],2026-09-13T07:15:40+00:00
+width_mm,清扫宽度≥600mm,PASS,600,measured_simulation,最大连续清除带为600mm；两侧分离清除带的1400mm总跨度含未清除空隙，不能宣称1400mm连续刷宽。栅格分辨率100mm。,['evidence/day1/competition-width-efficiency-estop.md'],2026-09-13T07:15:40+00:00
+estop_function,应急制动功能,PASS,,measured_simulation,行驶中触发完整急停：触发前GT线速度1.000026m/s、角速度0；此后三维速度模与角速度模均不超过0.01并持续1.5s。PASS仅覆盖仿真路径。,['evidence/day1/competition-width-efficiency-estop.md'],2026-09-13T07:15:40+00:00
+braking_s,制动≤1s,PASS,0.489,measured_simulation,仿真时间延迟0.489s；墙钟延迟4.809955s单独列示，不替代仿真通过值。触发使用物理状态时间戳，停止判定持续1.5s。,['evidence/day1/competition-width-efficiency-estop.md'],2026-09-13T07:15:40+00:00
+avoidance,避障,NOT_MEASURED,,not_measured,本轮定位、感知、清扫与建图探针均没有执行可判定的整任务动态障碍场景；历史分模块避障不能外推。,"['evidence/reference/execution-status-snapshot.md', 'evidence/reference/contest-brief.txt']",2026-09-13T08:47:13+00:00
+task_decomposition,任务分解正确率≥90%（正文口径另列≥95%）,NOT_MEASURED,,not_measured,题面同时出现正文≥95%和评分表≥90%口径；本轮没有自然语言任务分解运行、标注命令集或正确率统计。,"['evidence/reference/contest-brief.txt', 'evidence/reference/historical-assessment.md']",2026-09-13T08:47:13+00:00
