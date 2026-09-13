@@ -16,6 +16,7 @@ from geometry_msgs.msg import Twist, TwistStamped
 from rosgraph_msgs.msg import Clock
 from std_msgs.msg import Bool, Empty, Float64MultiArray, String
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+from sanitation_perception_interfaces.msg import GarbageTargetArray
 
 
 def main():
@@ -38,7 +39,8 @@ def main():
         ('enable', Bool, '/model/tzcup_formal_sanitation_vehicle/ground_dirt/command/enable'),
     ]}
     rows = []
-    state = {'sim_s': None, 'gt': [], 'dirt': [], 'maxima': {}, 'goal_accepted': False, 'permitted': False}
+    state = {'sim_s': None, 'gt': [], 'dirt': [], 'maxima': {}, 'goal_accepted': False, 'permitted': False,
+             'perception_messages': 0, 'perception_targets': []}
     def record(kind, data):
         rows.append({'wall_s': time.monotonic(), 'sim_s': state['sim_s'], 'kind': kind, 'data': data})
     def clock(msg):
@@ -56,10 +58,19 @@ def main():
         v = msg.twist if isinstance(msg, TwistStamped) else msg
         state['maxima'][topic] = max(state['maxima'].get(topic, 0), abs(v.linear.x))
         record(topic, [v.linear.x, v.angular.z])
+    def perception(msg):
+        state['perception_messages'] += 1
+        for target in msg.targets:
+            p=target.map_pose.pose.position
+            if len(state['perception_targets']) < 30:
+                state['perception_targets'].append({'class_id':target.class_id,'frame':msg.header.frame_id,
+                                                   'x_m':p.x,'y_m':p.y,'confidence':float(target.confidence)})
+        record('perception_target_count',len(msg.targets))
     node.create_subscription(Clock, '/clock', clock, qos_profile_sensor_data)
     node.create_subscription(Bool, '/safety/actuators_enabled', lambda msg: state.update(permitted=msg.data), 10)
     node.create_subscription(Odometry, '/ground_truth/model_odom_raw', gt, qos_profile_sensor_data)
     node.create_subscription(String, '/model/tzcup_formal_sanitation_vehicle/ground_dirt/status_json', dirt, 50)
+    node.create_subscription(GarbageTargetArray, '/perception/garbage/targets', perception, 10)
     for topic in ['/cmd_vel_nav', '/cmd_vel_smoothed', '/cmd_vel_gate', '/base_controller/cmd_vel']:
         node.create_subscription(TwistStamped if topic == '/base_controller/cmd_vel' else Twist,
                                  topic, lambda msg, t=topic: velocity(t, msg), 50)
@@ -142,10 +153,18 @@ def main():
         displacement = math.hypot(gt_rows[-1][0]-gt_rows[0][0], gt_rows[-1][1]-gt_rows[0][1]) if len(gt_rows)>1 else 0
         roller = max((abs(d.get('roller_velocity_rad_s', 0)) for d in state['dirt']), default=0)
         ready = any(d.get('roller_ready') for d in state['dirt'])
+        try:
+            perception_inputs=node.get_subscriber_names_and_types_by_node('competition_development_perception','/')
+        except Exception:
+            perception_inputs=[]
         result = {'scope': 'competition diagnostic, not formal acceptance',
                   'goal_accepted': state['goal_accepted'], 'max_linear_mps': state['maxima'],
                   'nav_result_status': result_future.result().status if result_future is not None and result_future.done() else None,
                   'moving_estop_requested': moving_estop_started is not None,
+                  'development_perception_messages':state['perception_messages'],
+                  'development_perception_targets':state['perception_targets'],
+                  'development_perception_input_topics':perception_inputs,
+                  'development_perception_accuracy_claim':False,
                   'gt_samples': len(gt_rows), 'gt_displacement_m': displacement,
                   'roller_velocity_max_rad_s': roller, 'roller_ready': ready,
                   'dirt_samples': len(state['dirt']), 'last_dirt': state['dirt'][-1] if state['dirt'] else None,
