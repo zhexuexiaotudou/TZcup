@@ -1,17 +1,20 @@
 """Camera-only Stage5B development smoke; no truth publisher or accuracy claim."""
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
+from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('model_path'),
+        DeclareLaunchArgument('policy_file', default_value=PathJoinSubstitution([
+            FindPackageShare('sanitation_perception'), 'config', 'competition_candidate.yaml'])),
         Node(
             package='sanitation_perception', executable='garbage_perception_node',
             name='competition_development_perception', output='screen',
-            parameters=[{
+            parameters=[LaunchConfiguration('policy_file'), {
                 'use_sim_time': True,
                 'backend': 'onnxruntime',
                 'model_path': LaunchConfiguration('model_path'),

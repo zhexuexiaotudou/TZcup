@@ -1,0 +1,11 @@
+/**:
+  ros__parameters:
+    # Candidate guards, NOT calibrated recognition acceptance thresholds.
+    publish_tentative_targets: false
+    rgbd_max_skew_s: 0.03
+    ground_roi_enabled: true
+    # base_footprint axes; never hard-code world positions of litter.
+    # Registry bottle height is 0.24 m; include its observed upper surface.
+    ground_roi_bounds: [0.4, 3.0, -0.8, 0.8, -0.08, 0.30]
+    class_thresholds_json: '{"plastic_bottle":0.8,"metal_can":0.8,"paper_litter":0.8,"leaf_pile":0.8,"puddle":0.8}'
+    minimum_component_pixels: 24
