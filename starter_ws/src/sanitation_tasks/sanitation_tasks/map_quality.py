@@ -10,7 +10,7 @@ def inspect_map(yaml_path):
     metadata = yaml.safe_load(Path(yaml_path).read_text(encoding="utf-8"))
     image_path = (Path(yaml_path).parent / metadata["image"]).resolve()
     image = Image.open(image_path).convert("L")
-    pixels = list(image.getdata())
+    pixels = list(image.tobytes())
     negate = int(metadata.get("negate", 0))
     occupied_threshold = float(metadata.get("occupied_thresh", 0.65))
     free_threshold = float(metadata.get("free_thresh", 0.25))
@@ -23,6 +23,7 @@ def inspect_map(yaml_path):
     width, height = image.size
     report = {
         "map_yaml": str(Path(yaml_path)), "map_image": str(image_path),
+        "mode": metadata.get("mode", "trinary"),
         "resolution_m": resolution, "width_cells": width, "height_cells": height,
         "span_x_m": width * resolution, "span_y_m": height * resolution,
         "occupied_cells": occupied, "free_cells": free, "unknown_cells": unknown,
