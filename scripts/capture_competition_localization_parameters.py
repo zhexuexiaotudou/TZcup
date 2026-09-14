@@ -67,7 +67,7 @@ def capture(
     timeout_sec: float,
     attempts: int = 3,
     spin_time_sec: float = 2.0,
-    discovery_timeout_sec: float = 5.0,
+    discovery_timeout_sec: int = 5,
     retry_delay_sec: float = 0.5,
     sleeper: Callable[[float], None] = time.sleep,
 ) -> dict[str, object]:
@@ -161,7 +161,7 @@ def main() -> int:
     parser.add_argument("--timeout-sec", type=float, default=20.0)
     parser.add_argument("--attempts", type=int, default=3)
     parser.add_argument("--spin-time-sec", type=float, default=2.0)
-    parser.add_argument("--discovery-timeout-sec", type=float, default=5.0)
+    parser.add_argument("--discovery-timeout-sec", type=int, default=5)
     parser.add_argument("--retry-delay-sec", type=float, default=0.5)
     args = parser.parse_args()
     if args.output.exists():

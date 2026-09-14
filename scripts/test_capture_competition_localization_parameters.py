@@ -103,11 +103,11 @@ def test_capture_uses_bounded_discovery_and_timeout_options():
         timeout_sec=1.0,
         attempts=1,
         spin_time_sec=3.0,
-        discovery_timeout_sec=7.0,
+        discovery_timeout_sec=7,
         sleeper=lambda _: None,
     )
     assert report["all_expected"] is True
     assert commands
     assert commands[0][:3] == ["ros2", "param", "get"]
     assert commands[0][3:5] == ["--spin-time", "3.0"]
-    assert commands[0][5:7] == ["--timeout", "7.0"]
+    assert commands[0][5:7] == ["--timeout", "7"]
