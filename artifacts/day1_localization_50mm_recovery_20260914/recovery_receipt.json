@@ -1,0 +1,190 @@
+{
+  "schema_version": 1,
+  "status": "OFFLINE_CANDIDATE_PASS",
+  "scope": "same sealed dynamic run; causal online-input replay",
+  "official_boundary": "Official text gives <=50 mm without defining whether RMSE, P95, or max controls acceptance. This receipt therefore reports a strict max<=50 mm offline candidate result, not official PASS.",
+  "candidate": {
+    "name": "causal_map_odom_first_order_lowpass",
+    "tau_sec": 1.5,
+    "max_dt_sec": 0.1,
+    "sampling": "latest map->odom and odom->base_footprint sample at or before each scored epoch",
+    "uses_future": false,
+    "uses_ground_truth": false
+  },
+  "online_inputs": [
+    "/tf map->odom",
+    "/tf odom->base_footprint",
+    "/odom velocity classification"
+  ],
+  "truth_usage": "paired_samples.gt_map_xy is used only after filtering, for scoring",
+  "same_session": true,
+  "time_alignment": "unchanged; original sim timestamps and denominator",
+  "sample_counts": {
+    "dynamic_reference": 2711,
+    "strict_paired_manifest": 2711,
+    "baseline": 2711,
+    "candidate": 2711,
+    "map_odom_raw": 3346,
+    "odom_base": 3346
+  },
+  "metrics": {
+    "strict_limit_m": 0.05,
+    "baseline": {
+      "samples": 2711,
+      "rmse_m": 0.039271209503686726,
+      "p95_m": 0.08377985790742562,
+      "max_m": 0.12632780257795784,
+      "rmse_mm": 39.27120950368673,
+      "p95_mm": 83.77985790742562,
+      "max_mm": 126.32780257795784
+    },
+    "candidate": {
+      "samples": 2711,
+      "rmse_m": 0.02919189697400822,
+      "p95_m": 0.040285014375691416,
+      "max_m": 0.04756582158794771,
+      "rmse_mm": 29.19189697400822,
+      "p95_mm": 40.28501437569142,
+      "max_mm": 47.56582158794771
+    },
+    "delta_mm": {
+      "rmse_mm": -10.079312529678507,
+      "p95_mm": -43.494843531734205,
+      "max_mm": -78.76198099001013
+    }
+  },
+  "strict_gates": {
+    "rmse_le_50mm": true,
+    "p95_le_50mm": true,
+    "max_le_50mm": true,
+    "all_strict": true
+  },
+  "motion_class_metrics": {
+    "straight": {
+      "samples": 2711,
+      "baseline": {
+        "samples": 2711,
+        "rmse_m": 0.039271209503686726,
+        "p95_m": 0.08377985790742562,
+        "max_m": 0.12632780257795784,
+        "rmse_mm": 39.27120950368673,
+        "p95_mm": 83.77985790742562,
+        "max_mm": 126.32780257795784
+      },
+      "candidate": {
+        "samples": 2711,
+        "rmse_m": 0.02919189697400822,
+        "p95_m": 0.040285014375691416,
+        "max_m": 0.04756582158794771,
+        "rmse_mm": 29.19189697400822,
+        "p95_mm": 40.28501437569142,
+        "max_mm": 47.56582158794771
+      }
+    }
+  },
+  "time_correlation": {
+    "baseline_error": {
+      "0.1s": 0.10986745382943972,
+      "0.5s": 0.15553171294200938,
+      "1s": 0.14232883485475104,
+      "5s": 0.03255857087280008
+    },
+    "candidate_error": {
+      "0.1s": 0.9934335014899879,
+      "0.5s": 0.9688540346881096,
+      "1s": 0.9215603343314058,
+      "5s": 0.37017572283851957
+    }
+  },
+  "parameter_sensitivity": {
+    "0.75": {
+      "tau_sec": 0.75,
+      "metrics": {
+        "samples": 2711,
+        "rmse_m": 0.026682350022621776,
+        "p95_m": 0.039148035762907304,
+        "max_m": 0.04965128720437647,
+        "rmse_mm": 26.682350022621776,
+        "p95_mm": 39.148035762907305,
+        "max_mm": 49.651287204376466
+      },
+      "strict_max_pass": true
+    },
+    "1": {
+      "tau_sec": 1.0,
+      "metrics": {
+        "samples": 2711,
+        "rmse_m": 0.02751819297938227,
+        "p95_m": 0.039323920993237255,
+        "max_m": 0.048964040189104836,
+        "rmse_mm": 27.51819297938227,
+        "p95_mm": 39.32392099323725,
+        "max_mm": 48.964040189104836
+      },
+      "strict_max_pass": true
+    },
+    "1.25": {
+      "tau_sec": 1.25,
+      "metrics": {
+        "samples": 2711,
+        "rmse_m": 0.02836146392642233,
+        "p95_m": 0.03984030484283928,
+        "max_m": 0.04814457813984524,
+        "rmse_mm": 28.36146392642233,
+        "p95_mm": 39.84030484283928,
+        "max_mm": 48.14457813984524
+      },
+      "strict_max_pass": true
+    },
+    "1.5": {
+      "tau_sec": 1.5,
+      "metrics": {
+        "samples": 2711,
+        "rmse_m": 0.02919189697400822,
+        "p95_m": 0.040285014375691416,
+        "max_m": 0.04756582158794771,
+        "rmse_mm": 29.19189697400822,
+        "p95_mm": 40.28501437569142,
+        "max_mm": 47.56582158794771
+      },
+      "strict_max_pass": true
+    },
+    "2": {
+      "tau_sec": 2.0,
+      "metrics": {
+        "samples": 2711,
+        "rmse_m": 0.030782103629705255,
+        "p95_m": 0.04107267841856359,
+        "max_m": 0.04466734802450471,
+        "rmse_mm": 30.782103629705254,
+        "p95_mm": 41.07267841856359,
+        "max_mm": 44.66734802450471
+      },
+      "strict_max_pass": true
+    },
+    "3": {
+      "tau_sec": 3.0,
+      "metrics": {
+        "samples": 2711,
+        "rmse_m": 0.03368829967124531,
+        "p95_m": 0.04655019381661614,
+        "max_m": 0.04819093290925291,
+        "rmse_mm": 33.68829967124531,
+        "p95_mm": 46.55019381661614,
+        "max_mm": 48.19093290925291
+      },
+      "strict_max_pass": true
+    }
+  },
+  "evidence": {
+    "mcap_path": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-localization-50mm-recovery\\.work\\localization-recovery\\remote-day1-final-20260914-02\\run-01\\bag\\bag_0.mcap",
+    "mcap_sha256": "8e64c0b7dd6a29247ad0d2f61ac719ba7f8c4f6b1957edf8bffc88aa38308047",
+    "focus_result_path": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-localization-50mm-recovery\\.work\\localization-recovery\\remote-day1-final-20260914-02\\run-01\\localization_focus.json",
+    "focus_result_sha256": "ca147bdc54824263b7c05c9bb16f4be542b59f2bbb1d81258b13659fd96ac939",
+    "candidate_csv": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-localization-50mm-recovery\\.work\\localization-recovery\\recovery-output-final2\\candidate_paired_samples.csv",
+    "candidate_csv_sha256": "8a8fbb4805117092b5346d1a56be777af47d22210b627b7e7eb1756c82d20bfe",
+    "rollback_point": "47e3cb3a7ecc01edd82aa23a3b54cbeaffc418bc",
+    "receipt_path": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-localization-50mm-recovery\\.work\\localization-recovery\\recovery-output-final2\\recovery_receipt.json"
+  },
+  "caveat": "This is a counterfactual same-run replay. It does not replace a live Gazebo rerun or prove general map-frame accuracy."
+}
