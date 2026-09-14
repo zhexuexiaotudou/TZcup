@@ -1,0 +1,574 @@
+{
+  "all_expected": true,
+  "nodes": {
+    "/amcl": {
+      "global_frame_id": {
+        "actual": "map",
+        "attempt_count": 1,
+        "attempts": [
+          {
+            "actual": "map",
+            "attempt": 1,
+            "error": "",
+            "raw": "String value is: map",
+            "returncode": 0
+          }
+        ],
+        "command": [
+          "ros2",
+          "param",
+          "get",
+          "--spin-time",
+          "2.0",
+          "--timeout",
+          "5",
+          "/amcl",
+          "global_frame_id"
+        ],
+        "error": "",
+        "expected": "map",
+        "matched": true,
+        "raw": "String value is: map"
+      },
+      "odom_frame_id": {
+        "actual": "odom",
+        "attempt_count": 1,
+        "attempts": [
+          {
+            "actual": "odom",
+            "attempt": 1,
+            "error": "",
+            "raw": "String value is: odom",
+            "returncode": 0
+          }
+        ],
+        "command": [
+          "ros2",
+          "param",
+          "get",
+          "--spin-time",
+          "2.0",
+          "--timeout",
+          "5",
+          "/amcl",
+          "odom_frame_id"
+        ],
+        "error": "",
+        "expected": "odom",
+        "matched": true,
+        "raw": "String value is: odom"
+      },
+      "tf_broadcast": {
+        "actual": false,
+        "attempt_count": 1,
+        "attempts": [
+          {
+            "actual": false,
+            "attempt": 1,
+            "error": "",
+            "raw": "Boolean value is: False",
+            "returncode": 0
+          }
+        ],
+        "command": [
+          "ros2",
+          "param",
+          "get",
+          "--spin-time",
+          "2.0",
+          "--timeout",
+          "5",
+          "/amcl",
+          "tf_broadcast"
+        ],
+        "error": "",
+        "expected": false,
+        "matched": true,
+        "raw": "Boolean value is: False"
+      }
+    },
+    "/global_ekf": {
+      "base_link_frame": {
+        "actual": "base_footprint",
+        "attempt_count": 1,
+        "attempts": [
+          {
+            "actual": "base_footprint",
+            "attempt": 1,
+            "error": "",
+            "raw": "String value is: base_footprint",
+            "returncode": 0
+          }
+        ],
+        "command": [
+          "ros2",
+          "param",
+          "get",
+          "--spin-time",
+          "2.0",
+          "--timeout",
+          "5",
+          "/global_ekf",
+          "base_link_frame"
+        ],
+        "error": "",
+        "expected": "base_footprint",
+        "matched": true,
+        "raw": "String value is: base_footprint"
+      },
+      "frequency": {
+        "actual": 50.0,
+        "attempt_count": 1,
+        "attempts": [
+          {
+            "actual": 50.0,
+            "attempt": 1,
+            "error": "",
+            "raw": "Double value is: 50.0",
+            "returncode": 0
+          }
+        ],
+        "command": [
+          "ros2",
+          "param",
+          "get",
+          "--spin-time",
+          "2.0",
+          "--timeout",
+          "5",
+          "/global_ekf",
+          "frequency"
+        ],
+        "error": "",
+        "expected": 50.0,
+        "matched": true,
+        "raw": "Double value is: 50.0"
+      },
+      "map_frame": {
+        "actual": "map",
+        "attempt_count": 1,
+        "attempts": [
+          {
+            "actual": "map",
+            "attempt": 1,
+            "error": "",
+            "raw": "String value is: map",
+            "returncode": 0
+          }
+        ],
+        "command": [
+          "ros2",
+          "param",
+          "get",
+          "--spin-time",
+          "2.0",
+          "--timeout",
+          "5",
+          "/global_ekf",
+          "map_frame"
+        ],
+        "error": "",
+        "expected": "map",
+        "matched": true,
+        "raw": "String value is: map"
+      },
+      "odom1": {
+        "actual": "/odometry/gps",
+        "attempt_count": 1,
+        "attempts": [
+          {
+            "actual": "/odometry/gps",
+            "attempt": 1,
+            "error": "",
+            "raw": "String value is: /odometry/gps",
+            "returncode": 0
+          }
+        ],
+        "command": [
+          "ros2",
+          "param",
+          "get",
+          "--spin-time",
+          "2.0",
+          "--timeout",
+          "5",
+          "/global_ekf",
+          "odom1"
+        ],
+        "error": "",
+        "expected": "/odometry/gps",
+        "matched": true,
+        "raw": "String value is: /odometry/gps"
+      },
+      "odom_frame": {
+        "actual": "odom",
+        "attempt_count": 1,
+        "attempts": [
+          {
+            "actual": "odom",
+            "attempt": 1,
+            "error": "",
+            "raw": "String value is: odom",
+            "returncode": 0
+          }
+        ],
+        "command": [
+          "ros2",
+          "param",
+          "get",
+          "--spin-time",
+          "2.0",
+          "--timeout",
+          "5",
+          "/global_ekf",
+          "odom_frame"
+        ],
+        "error": "",
+        "expected": "odom",
+        "matched": true,
+        "raw": "String value is: odom"
+      },
+      "pose0": {
+        "actual": "/amcl_pose",
+        "attempt_count": 1,
+        "attempts": [
+          {
+            "actual": "/amcl_pose",
+            "attempt": 1,
+            "error": "",
+            "raw": "String value is: /amcl_pose",
+            "returncode": 0
+          }
+        ],
+        "command": [
+          "ros2",
+          "param",
+          "get",
+          "--spin-time",
+          "2.0",
+          "--timeout",
+          "5",
+          "/global_ekf",
+          "pose0"
+        ],
+        "error": "",
+        "expected": "/amcl_pose",
+        "matched": true,
+        "raw": "String value is: /amcl_pose"
+      },
+      "publish_tf": {
+        "actual": true,
+        "attempt_count": 1,
+        "attempts": [
+          {
+            "actual": true,
+            "attempt": 1,
+            "error": "",
+            "raw": "Boolean value is: True",
+            "returncode": 0
+          }
+        ],
+        "command": [
+          "ros2",
+          "param",
+          "get",
+          "--spin-time",
+          "2.0",
+          "--timeout",
+          "5",
+          "/global_ekf",
+          "publish_tf"
+        ],
+        "error": "",
+        "expected": true,
+        "matched": true,
+        "raw": "Boolean value is: True"
+      },
+      "transform_timeout": {
+        "actual": 0.0,
+        "attempt_count": 1,
+        "attempts": [
+          {
+            "actual": 0.0,
+            "attempt": 1,
+            "error": "",
+            "raw": "Double value is: 0.0",
+            "returncode": 0
+          }
+        ],
+        "command": [
+          "ros2",
+          "param",
+          "get",
+          "--spin-time",
+          "2.0",
+          "--timeout",
+          "5",
+          "/global_ekf",
+          "transform_timeout"
+        ],
+        "error": "",
+        "expected": 0.0,
+        "matched": true,
+        "raw": "Double value is: 0.0"
+      },
+      "world_frame": {
+        "actual": "map",
+        "attempt_count": 1,
+        "attempts": [
+          {
+            "actual": "map",
+            "attempt": 1,
+            "error": "",
+            "raw": "String value is: map",
+            "returncode": 0
+          }
+        ],
+        "command": [
+          "ros2",
+          "param",
+          "get",
+          "--spin-time",
+          "2.0",
+          "--timeout",
+          "5",
+          "/global_ekf",
+          "world_frame"
+        ],
+        "error": "",
+        "expected": "map",
+        "matched": true,
+        "raw": "String value is: map"
+      }
+    },
+    "/local_ekf": {
+      "base_link_frame": {
+        "actual": "base_footprint",
+        "attempt_count": 1,
+        "attempts": [
+          {
+            "actual": "base_footprint",
+            "attempt": 1,
+            "error": "",
+            "raw": "String value is: base_footprint",
+            "returncode": 0
+          }
+        ],
+        "command": [
+          "ros2",
+          "param",
+          "get",
+          "--spin-time",
+          "2.0",
+          "--timeout",
+          "5",
+          "/local_ekf",
+          "base_link_frame"
+        ],
+        "error": "",
+        "expected": "base_footprint",
+        "matched": true,
+        "raw": "String value is: base_footprint"
+      },
+      "odom_frame": {
+        "actual": "odom",
+        "attempt_count": 1,
+        "attempts": [
+          {
+            "actual": "odom",
+            "attempt": 1,
+            "error": "",
+            "raw": "String value is: odom",
+            "returncode": 0
+          }
+        ],
+        "command": [
+          "ros2",
+          "param",
+          "get",
+          "--spin-time",
+          "2.0",
+          "--timeout",
+          "5",
+          "/local_ekf",
+          "odom_frame"
+        ],
+        "error": "",
+        "expected": "odom",
+        "matched": true,
+        "raw": "String value is: odom"
+      },
+      "publish_tf": {
+        "actual": true,
+        "attempt_count": 1,
+        "attempts": [
+          {
+            "actual": true,
+            "attempt": 1,
+            "error": "",
+            "raw": "Boolean value is: True",
+            "returncode": 0
+          }
+        ],
+        "command": [
+          "ros2",
+          "param",
+          "get",
+          "--spin-time",
+          "2.0",
+          "--timeout",
+          "5",
+          "/local_ekf",
+          "publish_tf"
+        ],
+        "error": "",
+        "expected": true,
+        "matched": true,
+        "raw": "Boolean value is: True"
+      },
+      "world_frame": {
+        "actual": "odom",
+        "attempt_count": 1,
+        "attempts": [
+          {
+            "actual": "odom",
+            "attempt": 1,
+            "error": "",
+            "raw": "String value is: odom",
+            "returncode": 0
+          }
+        ],
+        "command": [
+          "ros2",
+          "param",
+          "get",
+          "--spin-time",
+          "2.0",
+          "--timeout",
+          "5",
+          "/local_ekf",
+          "world_frame"
+        ],
+        "error": "",
+        "expected": "odom",
+        "matched": true,
+        "raw": "String value is: odom"
+      }
+    },
+    "/navsat_transform": {
+      "broadcast_cartesian_transform": {
+        "actual": false,
+        "attempt_count": 1,
+        "attempts": [
+          {
+            "actual": false,
+            "attempt": 1,
+            "error": "",
+            "raw": "Boolean value is: False",
+            "returncode": 0
+          }
+        ],
+        "command": [
+          "ros2",
+          "param",
+          "get",
+          "--spin-time",
+          "2.0",
+          "--timeout",
+          "5",
+          "/navsat_transform",
+          "broadcast_cartesian_transform"
+        ],
+        "error": "",
+        "expected": false,
+        "matched": true,
+        "raw": "Boolean value is: False"
+      },
+      "broadcast_utm_transform": {
+        "actual": false,
+        "attempt_count": 1,
+        "attempts": [
+          {
+            "actual": false,
+            "attempt": 1,
+            "error": "",
+            "raw": "Boolean value is: False",
+            "returncode": 0
+          }
+        ],
+        "command": [
+          "ros2",
+          "param",
+          "get",
+          "--spin-time",
+          "2.0",
+          "--timeout",
+          "5",
+          "/navsat_transform",
+          "broadcast_utm_transform"
+        ],
+        "error": "",
+        "expected": false,
+        "matched": true,
+        "raw": "Boolean value is: False"
+      },
+      "use_odometry_yaw": {
+        "actual": false,
+        "attempt_count": 1,
+        "attempts": [
+          {
+            "actual": false,
+            "attempt": 1,
+            "error": "",
+            "raw": "Boolean value is: False",
+            "returncode": 0
+          }
+        ],
+        "command": [
+          "ros2",
+          "param",
+          "get",
+          "--spin-time",
+          "2.0",
+          "--timeout",
+          "5",
+          "/navsat_transform",
+          "use_odometry_yaw"
+        ],
+        "error": "",
+        "expected": false,
+        "matched": true,
+        "raw": "Boolean value is: False"
+      },
+      "zero_altitude": {
+        "actual": true,
+        "attempt_count": 1,
+        "attempts": [
+          {
+            "actual": true,
+            "attempt": 1,
+            "error": "",
+            "raw": "Boolean value is: True",
+            "returncode": 0
+          }
+        ],
+        "command": [
+          "ros2",
+          "param",
+          "get",
+          "--spin-time",
+          "2.0",
+          "--timeout",
+          "5",
+          "/navsat_transform",
+          "zero_altitude"
+        ],
+        "error": "",
+        "expected": true,
+        "matched": true,
+        "raw": "Boolean value is: True"
+      }
+    }
+  },
+  "schema_version": 1
+}

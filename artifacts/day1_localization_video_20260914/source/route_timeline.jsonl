@@ -1,0 +1,6 @@
+{"wall_s": 1520667.911366214, "sim_s": 13.818, "kind": "goal_sent", "data": {"stage": 0, "x": 6.0}}
+{"wall_s": 1520667.912795507, "sim_s": 13.818, "kind": "goal_accepted", "data": true}
+{"wall_s": 1520782.432108197, "sim_s": 28.586, "kind": "goal_result", "data": {"stage": 0, "status": 4}}
+{"wall_s": 1520865.216730334, "sim_s": 40.0, "kind": "goal_sent", "data": {"stage": 1, "x": 0.0}}
+{"wall_s": 1520865.217478849, "sim_s": 40.0, "kind": "goal_accepted", "data": true}
+{"wall_s": 1521206.952258028, "sim_s": 79.556, "kind": "goal_result", "data": {"stage": 1, "status": 4}}

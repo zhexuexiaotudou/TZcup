@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "status": "VIDEO_PACK_READY",
+  "scope": "success-only localization and tracking segment for a five-minute edit",
+  "source": {
+    "focus_result_sha256": "ca147bdc54824263b7c05c9bb16f4be542b59f2bbb1d81258b13659fd96ac939",
+    "candidate_csv_sha256": "8a8fbb4805117092b5346d1a56be777af47d22210b627b7e7eb1756c82d20bfe",
+    "receipt_sha256": "63994a2d46a9138ca39cd58cf2bc2f2e4f5167c3a46a5991da55b3a5a9ed81d8",
+    "raw_mcap_sha256": "8e64c0b7dd6a29247ad0d2f61ac719ba7f8c4f6b1957edf8bffc88aa38308047",
+    "route_timeline_sha256": "7d3d123ac6cb4726dcf3ac528c63fb44dfb43f8afdbcc49eb7462ea08b317329",
+    "map_pgm_sha256": "25b51cdf3f6b52a47db91ffa9e397c09e219e73684db9ddafe6023a5ef6997ca",
+    "map_yaml_sha256": "02cecd0afc85cfd385d4a92a580e40bfc08b64115bce83e2020cd986fcffce17"
+  },
+  "conclusion": {
+    "navigation_results": [
+      4,
+      4
+    ],
+    "goals_completed": 2,
+    "candidate_metrics_mm": {
+      "rmse": 29.19189697400822,
+      "p95": 40.28501437569142,
+      "max": 47.56582158794771
+    }
+  },
+  "outputs": {
+    "trajectory": {
+      "path": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-localization-50mm-recovery\\artifacts\\day1_localization_video_20260914\\rendered_final\\localization_trajectory_success.png",
+      "sha256": "a8c9526acb292d273fc845e4413ffb6f32a864fe282bdb34304dcc9945e8d9af",
+      "bytes": 185608
+    },
+    "error": {
+      "path": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-localization-50mm-recovery\\artifacts\\day1_localization_video_20260914\\rendered_final\\localization_error_success.png",
+      "sha256": "f65ed6b93532aabee5060cb038c7c8417b127e85a3377abd5221ff7fd28b7961",
+      "bytes": 110370
+    },
+    "goals": {
+      "path": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-localization-50mm-recovery\\artifacts\\day1_localization_video_20260914\\rendered_final\\tracking_goals_success.png",
+      "sha256": "6882d28084ccf2eeabfe74cbec2baed49c74ce19e65687a1c5636bc5738b3c1a",
+      "bytes": 41382
+    },
+    "video": {
+      "path": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-localization-50mm-recovery\\artifacts\\day1_localization_video_20260914\\rendered_final\\localization_tracking_success_1080p.mp4",
+      "sha256": "eafe3f5f79ec6b86ad134ff34e3ea905d3d9e4551ca5dbdfd7ace3163235c29f",
+      "bytes": 1043916
+    }
+  }
+}

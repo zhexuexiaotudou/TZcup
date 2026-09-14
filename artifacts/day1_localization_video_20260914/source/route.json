@@ -1,0 +1,12 @@
+{
+  "nav_results": [
+    4,
+    4
+  ],
+  "passed": true,
+  "first_sim_s": 12.589,
+  "last_sim_s": 79.561,
+  "wall_duration_s": 549.6641091781203,
+  "ground_truth_used_for_control": false,
+  "stopped_by_signal": false
+}
