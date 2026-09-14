@@ -21,6 +21,17 @@ def test_live_harness_is_serialized_and_fail_closed():
     assert "resource_release.json" in source
     assert "live_candidate_receipt.json" in source
     assert "ros2 topic echo --full-length --once" in source
+    assert (
+        'LOCALIZATION_SCORE_DEPS_DIR="${LOCALIZATION_SCORE_DEPS_DIR:-'
+        '$SOURCE/.work/localization-score-deps}"' in source
+    )
+    assert "import mcap, mcap_ros2" in source
+    assert 'echo "$driver_status" >"$OUTPUT/driver.rc"' in source
+    assert 'echo "$focus_status" >"$OUTPUT/focus.rc"' in source
+    assert 'echo "$validator_status" >"$OUTPUT/validator.rc"' in source
+    assert source.index('echo "$driver_status" >"$OUTPUT/driver.rc"') < source.index(
+        "validate_day1_localization_stabilizer_live.py"
+    )
 
 
 def test_runtime_sources_do_not_use_ground_truth_for_control():

@@ -21,6 +21,12 @@ fi
 if [[ -n "${LOCALIZATION_COLLECTOR_OVERLAY:-}" ]]; then
   source "$LOCALIZATION_COLLECTOR_OVERLAY/install/local_setup.bash"
 fi
+LOCALIZATION_SCORE_DEPS_DIR="${LOCALIZATION_SCORE_DEPS_DIR:-$SOURCE/.work/localization-score-deps}"
+export PYTHONPATH="$LOCALIZATION_SCORE_DEPS_DIR${PYTHONPATH:+:$PYTHONPATH}"
+python3 -c 'import mcap, mcap_ros2' || {
+  echo "localization focus scorer dependencies are not available" >&2
+  exit 2
+}
 ros2 pkg executables sanitation_localization | grep -qx "sanitation_localization map_odom_stabilizer" || {
   echo "live stabilizer executable is not installed in the selected overlay" >&2
   exit 2
@@ -180,15 +186,23 @@ touch "$OUTPUT/authority.stop"
 wait "$authority_pid"
 authority_pid=''
 
+set +e
 python3 "$SOURCE/scripts/competition_localization_focus.py" \
   --bag-dir "$OUTPUT/bag" --authority "$OUTPUT/tf_authority.json" \
   --effective-parameters "$OUTPUT/effective_parameters.json" \
   --manifest "$EPISODE/public/episode_manifest.json" \
   --map-odom-owner /map_odom_stabilizer \
   --revision "$CANDIDATE_REVISION" --output "$OUTPUT/localization_focus.json"
+focus_status=$?
+set -e
 echo "$driver_status" >"$OUTPUT/driver.rc"
+echo "$focus_status" >"$OUTPUT/focus.rc"
 
 cleanup
+set +e
 python3 "$SOURCE/scripts/validate_day1_localization_stabilizer_live.py" \
   --run-dir "$OUTPUT" --output "$OUTPUT/live_candidate_receipt.json"
+validator_status=$?
+set -e
+echo "$validator_status" >"$OUTPUT/validator.rc"
 exit "$driver_status"
