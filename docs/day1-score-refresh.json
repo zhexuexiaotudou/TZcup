@@ -381,8 +381,8 @@
       "status": "ROOT_CAUSE_FIXED",
       "next_action": "run one bounded functional trial, then collect an independent repeat matrix",
       "evidence_paths": [
-        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-avoidance-recovery/docs/day1-avoidance-recovery-root-cause.md",
-        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-avoidance-recovery/artifacts/day1_dynamic_avoidance_recovery_20260914/failure_receipt.json"
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-video-report-sync/submission-package/evidence/day1/avoidance-recovery/day1-avoidance-recovery-root-cause.md",
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-video-report-sync/submission-package/evidence/day1/avoidance-recovery/failure_receipt.json"
       ],
       "not_claimable": ["95% rate", "successful one-trial as official rate", "history rewrite"]
     },

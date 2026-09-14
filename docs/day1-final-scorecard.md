@@ -42,7 +42,7 @@
 | 效率 >=3500 m2/h | 5 | `PARTIAL_MEASURED` | 在完整任务内计算有效清除面积并集除以总仿真时间 | `submission-package/evidence/day1/competition-width-efficiency-estop.md` |
 | 定位 <=50 mm | 5 | `OFFLINE_CANDIDATE_PASS`；live `NOT_MEASURED` | 把因果低通接入实时 TF 链，重跑 Gazebo 并报告 RMSE/P95/max | `F:/Project/TZcup/.workspace/worktrees/TZcup-day1-localization-50mm-recovery/artifacts/day1_localization_50mm_recovery_20260914/recovery_receipt.json` |
 | 建图 >=20000 m2 | 5 | `OFFLINE_ALGORITHM_PARTIAL` | fresh run 同时记录 SLAM 必需话题，再做 live 或离线 replay | `submission-package/evidence/day1/competition-mapping-offline-raycast.md` |
-| 避障 >=95% | 5 | `ROOT_CAUSE_FIXED`；率 `NOT_MEASURED` | 先做单次 functional，再做独立重复矩阵 | `F:/Project/TZcup/.workspace/worktrees/TZcup-day1-avoidance-recovery/docs/day1-avoidance-recovery-root-cause.md` |
+| 避障 >=95% | 5 | `ROOT_CAUSE_FIXED`；率 `NOT_MEASURED` | 先做单次 functional，再做独立重复矩阵 | `F:/Project/TZcup/.workspace/worktrees/TZcup-day1-video-report-sync/submission-package/evidence/day1/avoidance-recovery/day1-avoidance-recovery-root-cause.md` |
 | 识别 >=95% | 10 | `CONTROLLED_CANDIDATE`；官方 `NOT_MEASURED` | 冻结官方定义，再做真实域和 S100P 板端 | `submission-package/evidence/day1/perception-score95/artifacts/perception_score95_20260914/receipt.json` |
 | 复杂工况 | 5 | `DESIGN_OR_CONTROLLED_ONLY` | 浅积水和落叶各做一次受控复现 | `submission-package/supplements/nontechnical-score-closure/system-completeness.md` |
 | 硬件/软件完整 | 6 | `PARTIAL` | 同一任务串起输入、清扫、安全、coverage、返航和终态 | `submission-package/evidence/day1/tooling/full-mission-demo/docs/day1-full-mission-demo-wrapper.md` |
