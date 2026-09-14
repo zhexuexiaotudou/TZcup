@@ -15,6 +15,25 @@ $toolTarget = Join-Path $codeRoot "verification"
 New-Item -ItemType Directory -Force -Path $codeRoot, $rosTarget, $scriptTarget, $toolTarget | Out-Null
 
 Copy-Item -Path (Join-Path $rosSource "*") -Destination $rosTarget -Recurse -Force
+$localizationPackageFiles = & git -C $Root ls-tree -r --name-only 89257b1 -- starter_ws/src/sanitation_localization
+if ($LASTEXITCODE -ne 0) {
+    throw "failed to enumerate the localization package"
+}
+foreach ($relative in $localizationPackageFiles) {
+    $sourceText = (& git -C $Root show "89257b1:$relative") -join "`n"
+    if ($LASTEXITCODE -ne 0) {
+        throw "failed to read localization package file $relative"
+    }
+    $packageRelative = $relative -replace "^starter_ws/src/", ""
+    $target = Join-Path $rosTarget $packageRelative
+    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $target) | Out-Null
+    [IO.File]::WriteAllText(
+        $target,
+        $sourceText + "`n",
+        [Text.UTF8Encoding]::new($false)
+    )
+}
+
 $mapQualityPath = Join-Path $rosTarget "sanitation_tasks/sanitation_tasks/map_quality.py"
 $mapQualityText = [IO.File]::ReadAllText($mapQualityPath)
 $mapQualityText = $mapQualityText.Replace(
@@ -67,6 +86,40 @@ foreach ($relative in $historicalMappingFiles) {
     )
 }
 
+$localizationLiveFiles = @(
+    "scripts/competition_localization_route.py",
+    "scripts/run_day1_localization_stabilizer_live.sh",
+    "scripts/test_run_day1_localization_stabilizer_live_contract.py"
+)
+foreach ($relative in $localizationLiveFiles) {
+    $sourceText = (& git -C $Root show "89257b1:$relative") -join "`n"
+    if ($LASTEXITCODE -ne 0) {
+        throw "failed to read localization live source $relative"
+    }
+    $targetName = Split-Path -Leaf $relative
+    if ($targetName -eq "test_run_day1_localization_stabilizer_live_contract.py") {
+        $sourceText = $sourceText.Replace(
+            'ROOT = Path(__file__).resolve().parents[1]',
+            'ROOT = Path(__file__).resolve().parent'
+        )
+        $sourceText = $sourceText.Replace(
+            '(ROOT / "scripts/run_day1_localization_stabilizer_live.sh")',
+            '(ROOT / "run_day1_localization_stabilizer_live.sh")'
+        )
+        $sourceText = $sourceText.Replace(
+            'ROOT
+        / "starter_ws/src',
+            'ROOT.parent
+        / "ros2_ws/src'
+        )
+    }
+    [IO.File]::WriteAllText(
+        (Join-Path $scriptTarget $targetName),
+        $sourceText + "`n",
+        [Text.UTF8Encoding]::new($false)
+    )
+}
+
 Copy-Item -LiteralPath (Join-Path $packageRoot "video/tools/validate_video_package.py") `
     -Destination (Join-Path $toolTarget "validate_video_package.py") -Force
 Copy-Item -LiteralPath (Join-Path $packageRoot "tools/verify_evidence_index.py") `
@@ -100,6 +153,11 @@ raise SystemExit(
             "-v",
             str(ROOT / "project_scripts" / "test_offline_raycast_mapping.py"),
             str(ROOT / "project_scripts" / "test_verify_map_area.py"),
+            str(
+                ROOT
+                / "project_scripts"
+                / "test_run_day1_localization_stabilizer_live_contract.py"
+            ),
         ]
     )
 )
@@ -182,6 +240,8 @@ python3 project_scripts/offline_raycast_mapping.py --help
 - 任务分解：冻结 UTF-8 转写到确定性 DSL，开发集和内部冻结 holdout 分开报告。
 - 离线地图：冻结 SDF 几何、已知位姿、全圆测距和面积/质量门；明确不是 Gazebo live SLAM。
 - 视频生成：从成功分项素材按操作链重剪，生成旁白、字幕、章节、操作说明和媒体校验回执。
+- 定位 live：`competition_localization_route.py` 与 stabilizer harness 在
+  `map->odom` 长时间缺失时提前 fail-closed，避免再次空耗完整 420 秒窗口。
 
 ## 数据集与证据
 

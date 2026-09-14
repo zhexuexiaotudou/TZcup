@@ -25,6 +25,11 @@ raise SystemExit(
             "-v",
             str(ROOT / "project_scripts" / "test_offline_raycast_mapping.py"),
             str(ROOT / "project_scripts" / "test_verify_map_area.py"),
+            str(
+                ROOT
+                / "project_scripts"
+                / "test_run_day1_localization_stabilizer_live_contract.py"
+            ),
         ]
     )
 )

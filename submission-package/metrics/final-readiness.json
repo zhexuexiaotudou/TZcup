@@ -17,12 +17,12 @@
     },
     "optional_code_package_with_readme": {
       "status": "PASS",
-      "files": 98,
+      "files": 116,
       "manifest_path": "code/CODE_MANIFEST.sha256",
       "readme_path": "code/README.md",
       "offline_tests": {
         "status": "PASS",
-        "passed": 9,
+        "passed": 11,
         "command": "python3 run_offline_tests.py"
       }
     },

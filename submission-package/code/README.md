@@ -69,6 +69,8 @@ python3 project_scripts/offline_raycast_mapping.py --help
 - 任务分解：冻结 UTF-8 转写到确定性 DSL，开发集和内部冻结 holdout 分开报告。
 - 离线地图：冻结 SDF 几何、已知位姿、全圆测距和面积/质量门；明确不是 Gazebo live SLAM。
 - 视频生成：从成功分项素材按操作链重剪，生成旁白、字幕、章节、操作说明和媒体校验回执。
+- 定位 live：`competition_localization_route.py` 与 stabilizer harness 在
+  `map->odom` 长时间缺失时提前 fail-closed，避免再次空耗完整 420 秒窗口。
 
 ## 数据集与证据
 

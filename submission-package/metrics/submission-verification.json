@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at_utc": "2026-09-14T18:26:19.002726+00:00",
+  "generated_at_utc": "2026-09-14T18:29:41.128734+00:00",
   "status": "PASS",
   "checks": {
     "report_pdf": {
@@ -26,7 +26,7 @@
     },
     "code_package": {
       "status": "PASS",
-      "manifest_entries": 97,
+      "manifest_entries": 115,
       "offline_tests": "PASS",
       "errors": []
     },
