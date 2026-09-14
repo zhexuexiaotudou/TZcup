@@ -97,6 +97,8 @@ $mediaFiles = [ordered]@{
     "metrics/video-score-status.json" = "video score status"
     "code/README.md" = "submission code README"
     "code/CODE_MANIFEST.sha256" = "submission code manifest"
+    "metrics/score-estimate.md" = "internal official score estimate"
+    "metrics/score-estimate.json" = "machine-readable internal official score estimate"
 }
 
 $evidenceIndex = @(Read-Json $evidenceIndexPath)

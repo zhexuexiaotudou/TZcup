@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "internal_official_score_estimate",
+  "official_score_claimed": 0,
+  "scenarios": {
+    "conservative": {
+      "min": 49,
+      "max": 56
+    },
+    "reasonable": {
+      "min": 57,
+      "max": 65
+    },
+    "optimistic": {
+      "min": 66,
+      "max": 69
+    }
+  },
+  "dimension_totals": {
+    "technical_implementation": {
+      "max": 40,
+      "estimated_min": 18,
+      "estimated_max": 26
+    },
+    "innovation": {
+      "max": 30,
+      "estimated_min": 18,
+      "estimated_max": 22
+    },
+    "application_value": {
+      "max": 15,
+      "estimated_min": 2,
+      "estimated_max": 5
+    },
+    "completion": {
+      "max": 15,
+      "estimated_min": 11,
+      "estimated_max": 13
+    },
+    "bonus": {
+      "max": 5,
+      "estimated_min": 0,
+      "estimated_max": 3
+    }
+  },
+  "claim_boundary": "Internal estimate only. Controlled, offline, design-only and modular-video evidence are not official PASS. The competition organizer owns the official score."
+}

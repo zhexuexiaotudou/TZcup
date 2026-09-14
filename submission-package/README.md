@@ -4,6 +4,8 @@
 
 选交源码与算法材料位于 `code/`：包含 ROS 2 源码包、离线建图脚本、关键验收/渲染脚本、视频与证据校验器、README 和 SHA-256 清单。它只证明代码可审阅，不改变任何未测状态。
 
+内部评审估算位于 `metrics/score-estimate.md` 和 `metrics/score-estimate.json`：按官方四维度和加分项给出保守、合理、乐观区间；正式得分仍由组委会判定。
+
 - `docs/技术方案报告.pdf`：24页中文报告，第24页为补充技术证据索引；页数由最终构建读取。
 - `metrics/验收矩阵.md` / `results.json`：唯一结果矩阵，明确区分measured_simulation、internal_frozen_regression、offline_replay、offline_raycast_mapping、synthetic_replay、design_calculation与not_measured。
 - `metrics/video-score-status.json` / `演示视频评分状态.md`：视频项`DELIVERED_MODULAR_DEMO`、建议`2-3/4`、评委裁量上限`4/4`与不可升级边界。
