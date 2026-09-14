@@ -2,18 +2,24 @@
   {
     "id": "mapping",
     "item": "建图",
-    "status": "FAIL",
+    "status": "PARTIAL",
     "value": null,
-    "basis": "measured_simulation",
+    "basis": "offline_raycast_mapping",
     "evidence": [
-      "evidence/day1/competition-mapping-probe.md"
+      "evidence/day1/competition-mapping-offline-raycast.md",
+      "evidence/day1/offline-raycast-mapping/offline_raycast_manifest.json",
+      "evidence/day1/offline-raycast-mapping/map_area_verification.json",
+      "evidence/day1/offline-raycast-mapping/offline_raycast_seal.json",
+      "evidence/day1/competition-mapping-day1-run-06.md",
+      "evidence/day1/mapping-day1-run-06/day1_mapping_run_06_timeout.json"
     ],
-    "note": "5分钟真实Gazebo+SLAM探针为NO-GO；只得到1402.175m²已知区，未完成首图长跑，尚不能形成完整建图结论。",
-    "minimum_measurement": "保存完整首图、分辨率、已知栅格数和建图日志；重新加载后输出定位，并以未知区排除的面积口径复核。",
-    "run_id": "tzcup_mapping_probe_20260913_01",
-    "source_commit": "4c3c95930245155186ebed53eb822d314b1717c9",
-    "rollback_commit": "106f1189a5aacf856412d1c1bc1f76919c26962c",
-    "as_of_utc": "2026-09-13T09:07:06+00:00"
+    "note": "4ab39bb离线射线重建（mapping kind OFFLINE_RAYCAST_MAPPING）：已知22399.99m²，free 22386.035m²，occupied 13.955m²，unknown 700.01m²（3.03%），分辨率0.05m，source free recall 0.9999997407、occupied-boundary recall 1.0、precision 1.0。该结果仅证明冻结SDF几何的面积可行性，明确不是Gazebo live SLAM；run-06在3600s超时且没有最终地图，live SLAM与完整地图质量仍为NOT_MEASURED，因此整体只能PARTIAL。",
+    "minimum_measurement": "现场SLAM需在冻结世界完成首图长跑并保存occupancy.pgm/YAML、生命周期清单和未知区排除后的面积口径；离线射线重建只能作为可行性证据，不能替代现场建图。",
+    "run_id": "offline-raycast-mapping-4ab39bb",
+    "source_commit": "4ab39bb",
+    "live_slam_receipt_commit": "ab6252d",
+    "rollback_commit": "bf1e65f",
+    "as_of_utc": "2026-09-14"
   },
   {
     "id": "following",
@@ -99,18 +105,23 @@
   {
     "id": "mapped_area_m2",
     "item": "建图≥20000m²",
-    "status": "FAIL",
-    "value": 1402.175,
-    "basis": "measured_simulation",
+    "status": "PARTIAL",
+    "value": 22399.99,
+    "basis": "offline_raycast_mapping",
     "evidence": [
-      "evidence/day1/competition-mapping-probe.md"
+      "evidence/day1/competition-mapping-offline-raycast.md",
+      "evidence/day1/offline-raycast-mapping/map_area_verification.json",
+      "evidence/day1/offline-raycast-mapping/offline_raycast_manifest.json",
+      "evidence/day1/offline-raycast-mapping/offline_raycast_seal.json",
+      "evidence/day1/mapping-day1-run-06/day1_mapping_run_06_timeout.json"
     ],
-    "note": "300.013s墙钟探针得到560870个已知栅格、约0.05m分辨率、有效观测面积1402.175m²（7.01%）；未启动长跑，20000m²门FAIL。",
-    "minimum_measurement": "有效已知栅格数×resolution²；未知区排除，保存原始NPZ/PGM/YAML、面积时序与负载日志。",
-    "run_id": "tzcup_mapping_probe_20260913_01",
-    "source_commit": "4c3c95930245155186ebed53eb822d314b1717c9",
-    "rollback_commit": "106f1189a5aacf856412d1c1bc1f76919c26962c",
-    "as_of_utc": "2026-09-13T09:07:06+00:00"
+    "note": "4ab39bb离线射线面积门为22399.99m²；free 22386.035m²、occupied 13.955m²、unknown 700.01m²（3.03%），0.05m分辨率，source free recall 0.9999997407、occupied-boundary recall 1.0、precision 1.0，mapping kind OFFLINE_RAYCAST_MAPPING。该数值达到20000m²门，但只适用于离线冻结几何重建，明确不是Gazebo live SLAM；run-06超时无最终地图，live SLAM面积门仍NOT_MEASURED，故状态仅为PARTIAL。",
+    "minimum_measurement": "有效已知栅格数×resolution²且排除未知区；现场建图必须保存原始occupancy.pgm/YAML、面积时序和生命周期清单，并单独报告SLAM质量门。",
+    "run_id": "offline-raycast-mapping-4ab39bb",
+    "source_commit": "4ab39bb",
+    "live_slam_receipt_commit": "ab6252d",
+    "rollback_commit": "bf1e65f",
+    "as_of_utc": "2026-09-14"
   },
   {
     "id": "cleaning",

@@ -414,6 +414,77 @@
           "role": "compact closure-drift failure receipt"
         }
       ]
+    },
+    {
+      "id": "offline-raycast-mapping-4ab39bb",
+      "run_id": "offline-raycast-mapping-4ab39bb",
+      "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-offline-mapping",
+      "evidence_commit": "4ab39bb839e92fe50e22b1efe3891c5915f39bf0",
+      "source_world": "starter_ws/src/sanitation_worlds/worlds/sanitation_campus_large.sdf",
+      "source_world_sha256": "8eb1d75f0b610067a0634f7bc86cea3624aec982cc9b803f6888c0da9a999c4a",
+      "outcome": "OFFLINE_RAYCAST_MAPPING_PASS_LIVE_SLAM_NOT_CLAIMED",
+      "package_copy": {
+        "method_note": "evidence/day1/competition-mapping-offline-raycast.md",
+        "area_verification": "evidence/day1/offline-raycast-mapping/map_area_verification.json",
+        "manifest": "evidence/day1/offline-raycast-mapping/offline_raycast_manifest.json",
+        "seal": "evidence/day1/offline-raycast-mapping/offline_raycast_seal.json"
+      },
+      "files": [
+        {
+          "file": "reports\\mapping\\offline_raycast_mapping\\map_area_verification.json",
+          "bytes": 1284,
+          "sha256": "19429D4A612C4EF5F0D9C227B6AC8EA5CE7264A0B27F28F00CE70B2AFFDAEB48",
+          "role": "compact offline map-area verification"
+        },
+        {
+          "file": "reports\\mapping\\offline_raycast_mapping\\offline_raycast_manifest.json",
+          "bytes": 18649,
+          "sha256": "69718C19572F1BC5F2A0713F91149A11272D572C71A425D061F4CBCA26D262C0",
+          "role": "compact deterministic raycast manifest"
+        },
+        {
+          "file": "reports\\mapping\\offline_raycast_mapping\\offline_raycast_seal.json",
+          "bytes": 508,
+          "sha256": "B2669D31090FEEC4DD0ABD6B1B5E989CFC344DDF574A9D4A1C08632E14DE72B6",
+          "role": "hash seal and live-SLAM boundary"
+        },
+        {
+          "file": "reports\\mapping\\offline_raycast_mapping\\occupancy.pgm",
+          "sha256": "8b74f3688d279007e80a198935b983c09b9ecc2202d1e9636522453344586a63",
+          "role": "raw row-run PGM retained in the source commit only; not copied into the compact report package"
+        }
+      ]
+    },
+    {
+      "id": "day1-mapping-run-20260914-06",
+      "run_id": "day1-mapping-run-20260914-06",
+      "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-mapping-run",
+      "evidence_commit": "ab6252da1e1d58eb6c7f451d154a6a1041282a51",
+      "run_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-mapping-run-20260914-06",
+      "outcome": "NO_GO_TIMEOUT_NO_FINAL_MAP",
+      "final_result": "NOT_MEASURED",
+      "package_copy": {
+        "run_record": "evidence/day1/competition-mapping-day1-run-06.md",
+        "timeout_receipt": "evidence/day1/mapping-day1-run-06/day1_mapping_run_06_timeout.json"
+      },
+      "files": [
+        {
+          "file": "reports\\mapping\\day1_mapping_run_06_timeout.json",
+          "bytes": 7773,
+          "sha256": "1AABAB4B5936F1F0030CCAF0754479E360DD47CD5C5E5E4A60D193A0327FD912",
+          "role": "compact timeout and no-final-map receipt"
+        },
+        {
+          "file": "saved-map\\occupancy.yaml",
+          "status": "ABSENT",
+          "role": "required live SLAM map YAML was not produced"
+        },
+        {
+          "file": "saved-map\\occupancy.pgm",
+          "status": "ABSENT",
+          "role": "required live SLAM map PGM was not produced"
+        }
+      ]
     }
   ]
 }

@@ -37,6 +37,7 @@ allowed_bases={
     'measured_simulation',
     'internal_frozen_regression',
     'offline_replay',
+    'offline_raycast_mapping',
     'synthetic_replay',
     'design_calculation',
     'not_measured',

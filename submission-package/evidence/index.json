@@ -417,5 +417,41 @@
     "source": "git:b9e1c71:artifacts/day1_dynamic_avoidance_retry_20260914/remote/attempt_receipt_run04.json",
     "source_commit": "b9e1c71",
     "copied_utc": "2026-09-14"
+  },
+  {
+    "file": "evidence/day1/competition-mapping-offline-raycast.md",
+    "source": "git:4ab39bb:docs/offline-raycast-mapping.md",
+    "source_commit": "4ab39bb",
+    "copied_utc": "2026-09-14"
+  },
+  {
+    "file": "evidence/day1/offline-raycast-mapping/map_area_verification.json",
+    "source": "git:4ab39bb:reports/mapping/offline_raycast_mapping/map_area_verification.json",
+    "source_commit": "4ab39bb",
+    "copied_utc": "2026-09-14"
+  },
+  {
+    "file": "evidence/day1/offline-raycast-mapping/offline_raycast_manifest.json",
+    "source": "git:4ab39bb:reports/mapping/offline_raycast_mapping/offline_raycast_manifest.json",
+    "source_commit": "4ab39bb",
+    "copied_utc": "2026-09-14"
+  },
+  {
+    "file": "evidence/day1/offline-raycast-mapping/offline_raycast_seal.json",
+    "source": "git:4ab39bb:reports/mapping/offline_raycast_mapping/offline_raycast_seal.json",
+    "source_commit": "4ab39bb",
+    "copied_utc": "2026-09-14"
+  },
+  {
+    "file": "evidence/day1/competition-mapping-day1-run-06.md",
+    "source": "git:ab6252d:docs/competition-mapping-day1-run-06.md",
+    "source_commit": "ab6252d",
+    "copied_utc": "2026-09-14"
+  },
+  {
+    "file": "evidence/day1/mapping-day1-run-06/day1_mapping_run_06_timeout.json",
+    "source": "git:ab6252d:reports/mapping/day1_mapping_run_06_timeout.json",
+    "source_commit": "ab6252d",
+    "copied_utc": "2026-09-14"
   }
 ]

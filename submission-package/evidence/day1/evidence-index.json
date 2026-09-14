@@ -296,5 +296,44 @@
       "official dynamic-avoidance >=95 percent remains NOT_MEASURED",
       "no substitute simulation or inference is promoted to acceptance"
     ]
+  },
+  {
+    "local_evidence": "evidence/day1/competition-mapping-offline-raycast.md",
+    "metrics_evidence": "evidence/day1/offline-raycast-mapping/offline_raycast_manifest.json",
+    "area_verification": "evidence/day1/offline-raycast-mapping/map_area_verification.json",
+    "seal": "evidence/day1/offline-raycast-mapping/offline_raycast_seal.json",
+    "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-offline-mapping",
+    "source_commit": "4ab39bb",
+    "run_id": "offline-raycast-mapping-4ab39bb",
+    "accepted_facts": [
+      "mapping kind OFFLINE_RAYCAST_MAPPING from the frozen sanitation_campus_large SDF collision geometry",
+      "known area 22399.99 m2, free area 22386.035 m2, occupied area 13.955 m2, and unknown 700.01 m2 or 3.03 percent",
+      "resolution 0.05 m, source free recall 0.9999997407, occupied-boundary recall 1.0, occupied precision 1.0, and free precision 1.0",
+      "the offline area verifier passes the 20000 m2 threshold and the seal records OFFLINE_RAYCAST_MAPPING_PASS_LIVE_SLAM_NOT_CLAIMED"
+    ],
+    "limitations": [
+      "not Gazebo live SLAM, not a physical mapping run, and not localization, navigation, map reuse, or product acceptance",
+      "the occupancy PGM is not copied into the report package; only compact JSON metrics and the method note are retained",
+      "the result can support feasibility only because run-06 timed out without a final SLAM map"
+    ]
+  },
+  {
+    "local_evidence": "evidence/day1/competition-mapping-day1-run-06.md",
+    "metrics_evidence": "evidence/day1/mapping-day1-run-06/day1_mapping_run_06_timeout.json",
+    "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-mapping-run",
+    "source_commit": "ab6252d",
+    "run_id": "day1-mapping-run-20260914-06",
+    "accepted_facts": [
+      "the bounded first-map lifecycle reached its configured 3600 s timeout and exited with code 124",
+      "runner wall time was 3634 s and the last observed simulation time was 303.002 s",
+      "no occupancy.pgm, occupancy.yaml, map_lifecycle_manifest.json, or mapping_runtime.json was produced",
+      "192 mapping checkpoints were retained and the final explorer state was frontier_cancel_requested with progress_timeout",
+      "SIM_RESOURCE_RELEASED=true after the process exited and no orphan process or lock holder remained"
+    ],
+    "limitations": [
+      "the live SLAM area and complete map-quality lifecycle gates remain NOT_MEASURED",
+      "the 0.25 m pre-run geofence and neutral-speed masks are explicitly excluded from the 20000 m2 SLAM map gate",
+      "the timeout receipt does not establish that the 20000 m2 area is unreachable and does not substitute for a sealed map"
+    ]
   }
 ]
