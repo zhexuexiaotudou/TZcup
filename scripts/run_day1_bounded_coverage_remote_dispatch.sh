@@ -34,6 +34,7 @@ for required in \
   "$episode_host/public/world.sdf" \
   "$run_host/ops/run_day1_bounded_coverage_runner.sh" \
   "$run_host/ops/day1_bounded_coverage_cleaning_bridge.py" \
+  "$run_host/ops/day1_bounded_coverage_readiness.py" \
   "$run_host/ops/summarize_day1_bounded_coverage_run.py" \
   "$run_host/ops/day1_bounded_coverage_mission.yaml"; do
   [[ -e "$required" ]] || { echo "missing required path: $required" >&2; exit 3; }

@@ -26,6 +26,11 @@ from rclpy.qos import qos_profile_sensor_data
 from std_msgs.msg import Bool, Empty, Float64MultiArray, String
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
+from day1_bounded_coverage_readiness import (
+    PRECOVERAGE_LIFT_POSITION_M,
+    precoverage_actuator_readiness,
+)
+
 
 DIRT_STATUS_TOPIC = (
     "/model/tzcup_formal_sanitation_vehicle/ground_dirt/status_json"
@@ -109,6 +114,7 @@ class BoundedCoverageCleaningBridge(Node):
         self.brush_enabled = False
         self.brush_command_enabled = False
         self.lift_requested = False
+        self.last_lift_request_wall: float | None = None
         self.stop_requested = False
         self.fused_pose_messages = 0
         self.status_samples: list[dict[str, object]] = []
@@ -230,11 +236,16 @@ class BoundedCoverageCleaningBridge(Node):
         if finish_ready:
             ready_path = self.output_dir / "cleaning_bridge_ready.json"
             if not ready_path.exists():
+                readiness = precoverage_actuator_readiness(
+                    self.status_samples, self.permitted
+                )
                 ready_payload = {
                     "schema_version": 1,
                     "ready": True,
+                    "ready_scope": "precoverage_work_pose",
                     "permitted": self.permitted,
                     "brush_intent": self.brush_enabled,
+                    "readiness": readiness,
                     "status": sample,
                     "wall_s": time.monotonic() - self.started_wall,
                 }
@@ -248,12 +259,9 @@ class BoundedCoverageCleaningBridge(Node):
 
     def _finish_ready(self) -> bool:
         return bool(
-            self.status_samples
-            and self.permitted
-            and all(
-                self.status_samples[-1].get(key)
-                for key in ("left_ready", "right_ready", "roller_ready")
-            )
+            precoverage_actuator_readiness(
+                self.status_samples, self.permitted
+            )["ready"]
         )
 
     def _publish_lift_request(self) -> None:
@@ -266,7 +274,18 @@ class BoundedCoverageCleaningBridge(Node):
         trajectory.points = [point]
         self.pub["lift"].publish(trajectory)
         self.lift_requested = True
+        self.last_lift_request_wall = time.monotonic()
         self._event("cleaning_lift_requested", 0.10)
+
+    def _lift_at_work_pose(self) -> bool:
+        if not self.status_samples:
+            return False
+        return bool(
+            _finite_number(
+                self.status_samples[-1].get("lift_position_m")
+            )
+            >= PRECOVERAGE_LIFT_POSITION_M
+        )
 
     def _tick(self) -> None:
         if self.stop_file.exists():
@@ -288,12 +307,14 @@ class BoundedCoverageCleaningBridge(Node):
         )
         if (
             self.permitted
-            and not self.lift_requested
+            and not self._lift_at_work_pose()
             and self.pub["lift"].get_subscription_count() > 0
+            and (
+                self.last_lift_request_wall is None
+                or now - self.last_lift_request_wall >= 0.5
+            )
         ):
             self._publish_lift_request()
-        if self.stop_requested and now - self.started_wall > 1.0:
-            raise KeyboardInterrupt
 
     def finalize(self, reason: str) -> dict[str, object]:
         # Publish a bounded release state after the coverage process stops.

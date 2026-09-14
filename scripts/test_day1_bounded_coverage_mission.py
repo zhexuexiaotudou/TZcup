@@ -11,6 +11,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 SUMMARIZER_PATH = ROOT / "scripts/summarize_day1_bounded_coverage_run.py"
 BRIDGE_PATH = ROOT / "scripts/day1_bounded_coverage_cleaning_bridge.py"
+READINESS_PATH = ROOT / "scripts/day1_bounded_coverage_readiness.py"
 CONFIG_PATH = ROOT / "config/day1_bounded_coverage_mission.yaml"
 
 
@@ -80,6 +81,8 @@ def test_bounded_config_is_fixed_and_truth_safe() -> None:
 
 def test_bridge_has_no_motion_or_truth_interfaces() -> None:
     source = BRIDGE_PATH.read_text(encoding="utf-8")
+    assert "precoverage_actuator_readiness" in source
+    assert "raise KeyboardInterrupt" not in source
     tree = ast.parse(source)
     reserved_node_assignments = []
     for node in ast.walk(tree):
@@ -106,6 +109,50 @@ def test_bridge_has_no_motion_or_truth_interfaces() -> None:
         "FollowPath",
     ):
         assert forbidden not in source
+
+
+def test_precoverage_readiness_uses_work_pose_without_mission_spin() -> None:
+    module = _module(READINESS_PATH, "bounded_readiness")
+    status = {
+        "enabled": True,
+        "cell_layout_ready": True,
+        "cell_count": 300,
+        "lift_position_m": 0.100,
+        "left_clearance_m": -0.003,
+        "right_clearance_m": -0.003,
+        "roller_clearance_m": -0.001,
+        "left_ready": False,
+        "right_ready": False,
+        "roller_ready": False,
+    }
+    result = module.precoverage_actuator_readiness([status], True)
+    assert result["ready"] is True
+    assert result["mission_tool_ready_flags_required"] is True
+
+
+def test_precoverage_readiness_rejects_raised_or_unpermitted_tools() -> None:
+    module = _module(READINESS_PATH, "bounded_readiness_reject")
+    status = {
+        "enabled": True,
+        "cell_layout_ready": True,
+        "cell_count": 300,
+        "lift_position_m": 0.000,
+        "left_clearance_m": 0.095,
+        "right_clearance_m": 0.095,
+        "roller_clearance_m": 0.100,
+    }
+    assert (
+        module.precoverage_actuator_readiness([status], True)["ready"]
+        is False
+    )
+    status["lift_position_m"] = 0.100
+    status["left_clearance_m"] = -0.003
+    status["right_clearance_m"] = -0.003
+    status["roller_clearance_m"] = -0.001
+    assert (
+        module.precoverage_actuator_readiness([status], False)["ready"]
+        is False
+    )
 
 
 def test_summary_accepts_complete_bounded_mission() -> None:
