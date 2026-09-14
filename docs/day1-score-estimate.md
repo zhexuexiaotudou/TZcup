@@ -32,7 +32,7 @@
 | 1 | 紧急制动响应 <=1 s | 5 | `PASS_MEASURED` | 冻结触发、速度归零和墙钟边界，不再重跑 | `submission-package/evidence/day1/competition-width-efficiency-estop.md` | 不能写成实车法规级制动验证 |
 | 2 | 清扫宽度 >=600 mm | 5 | `PASS_MEASURED` | 冻结 600 mm 连续清除带和 100 mm 栅格 | `submission-package/evidence/day1/competition-width-efficiency-estop.md` | 不能写成 1400 mm 连续刷宽 |
 | 3 | 任务分解正确率 >=90% | 5 | `PASS_INTERNAL_FROZEN_REGRESSION` | 可补外部盲测；否则冻结开发集 36/37 和 holdout 32/32 | `submission-package/evidence/day1/competition-task-decomposition.json` | 不能写成公开盲测、语音识别或执行成功 |
-| 4 | 报告逻辑清晰、数据详实 | 5 | `DELIVERED` | 冻结 23 页报告、补充包和哈希 | `submission-package/docs/技术方案报告.pdf`；`submission-package/supplements/nontechnical-score-closure/pdf/TZcup-nontechnical-score-closure.pdf` | 文档完整不等于技术指标通过 |
+| 4 | 报告逻辑清晰、数据详实 | 5 | `DELIVERED` | 冻结 24 页报告、补充包和哈希 | `submission-package/docs/技术方案报告.pdf`；`submission-package/supplements/nontechnical-score-closure/pdf/TZcup-nontechnical-score-closure.pdf` | 文档完整不等于技术指标通过 |
 | 5 | 演示视频清晰流畅 | 4 | `DELIVERED_MODULAR_DEMO` | 冻结 300 s 成片、旁白/字幕、章节和哈希；另附 450 s 未剪辑连续 Gazebo 运动/安全片段，按 2-3/4 准备，评委接受综合演示时争取 4/4 | `F:/Project/TZcup/.workspace/worktrees/TZcup-day1-video-report-sync/submission-package/video/final/TZcup_5min_video.mp4`；`.../video/evidence/continuous-cleaning-safety-450s/gazebo-cleaning-raw.mp4`；`.../video/validation/video-package-validation.json` | 不能写成同一连续完整清扫任务、live SLAM、避障 95% 或实车验证通过 |
 | 6 | 尘箱承载 >=40 L | 5 | `PARTIAL_DESIGN_STAGE` | 保留设计可用 48.347384 L；实物填充需制造和密封验证 | `submission-package/evidence/day1/application-value-dust-bin-design.json` | 不能写成实物容量或量产验证 |
 | 7 | 跨学科融合 | 5 | `PARTIAL_SUBJECTIVE` | 把 ROS、控制、感知、嵌入式、仿真、环卫业务和材料串成模块证据图 | `submission-package/evidence/day1/integration-manifest.json`；`submission-package/docs/技术方案报告.pdf` | 不能用模块清单替代端到端闭环 |
@@ -92,7 +92,7 @@ run-11 的本地 ops 证据位于
 ## 证据与回滚
 
 - 报告合并：`codex/day1-evidence-integration@05481fc55e6ef89b9396070381797f760c6b72c4`
-- 报告 PDF SHA-256：`3cc8158de1d57f6e5b692fae0571e862f6ce4b7c6f06647af1d16447ac37cc8b`
+- 报告 PDF SHA-256：`169e3b04f1d3bb37591431422db8a205a714f1fec5e5df1a2897686c89fceb31`
 - 上一评分刷新：`codex/day1-score-refresh@c1c254ec27bcc9f746f8215533016d171ba1b2fa`，父提交为 `05481fc55e6ef89b9396070381797f760c6b72c4`
 - 视频归档：`codex/day1-video-final@b663ca9871d75caf26b83c8f8fd40b0d906b1539`
 - 视频成片 SHA-256：`631c2cfbf0e459bbcf74d7c3f9ddb6c1fc5a6519dbb6794bd4a6ea148d94e097`

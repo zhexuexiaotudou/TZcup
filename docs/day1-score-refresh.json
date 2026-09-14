@@ -28,6 +28,13 @@
     "hard_cap_basis": "The 76 ceiling requires evaluator acceptance of the modular composite demo for 4/4; it is not an official full-mission PASS.",
     "claim_guard": "Do not claim official full-mission PASS, live SLAM, avoidance 95 percent, board perception or vehicle validation from the modular demo."
   },
+  "current_report": {
+    "path": "submission-package/docs/技术方案报告.pdf",
+    "pages": 24,
+    "sha256": "169e3b04f1d3bb37591431422db8a205a714f1fec5e5df1a2897686c89fceb31",
+    "source_branch": "codex/day1-video-report-sync",
+    "source_commit": "14c80cc"
+  },
   "state_changes": {
     "perception": {
       "old": {

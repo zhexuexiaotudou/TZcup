@@ -31,7 +31,7 @@
 | 清扫宽度 >=600 mm | 5 | `PASS_MEASURED` | 最大连续清除带 600 mm | 不能写成 1400 mm 连续刷宽 |
 | 一种清扫方式 | - | `PASS_MEASURED` | 刷体接触、污物计数从 606 到 1806、前后状态齐全 | 只覆盖固定受控试验 |
 | 任务分解 >=90% | 5 | `PASS_INTERNAL_FROZEN_REGRESSION` | 开发集 36/37，内部 holdout 32/32 | 不是公开盲测、语音识别或任务执行 |
-| 文档质量 | 5 | `DELIVERED` | 23 页报告、14 页补充包、证据索引、哈希和复算工具 | 文档完整不代表技术项通过 |
+| 文档质量 | 5 | `DELIVERED` | 24 页报告、14 页补充包、证据索引、哈希和复算工具 | 文档完整不代表技术项通过 |
 | 尘箱 >=40 L | 5 | `PARTIAL_DESIGN_STAGE` | 设计可用 48.347384 L，10 mm 敏感度 41.208 L | 不是实物填充或量产容量 |
 | 演示视频清晰流畅 | 4 | `DELIVERED_MODULAR_DEMO` | 300.000 s、1920x1080、30 fps、H.264/AAC/mov_text；旁白、字幕、章节和完整解码均通过；另附 450 s 未剪辑连续 Gazebo 运动/安全片段；按 2-3/4 准备，评委接受综合演示时可争取 4/4 | 不是同一连续完整清扫任务、live SLAM、95% 避障或实车验证 |
 
@@ -79,7 +79,7 @@
 
 | 交付物 | 路径或提交 | 状态 |
 |---|---|---|
-| 合并技术报告 | `submission-package/docs/技术方案报告.pdf`；SHA-256 `3cc8158de1d57f6e5b692fae0571e862f6ce4b7c6f06647af1d16447ac37cc8b` | 23 页，已冻结 |
+| 合并技术报告 | `submission-package/docs/技术方案报告.pdf`；SHA-256 `169e3b04f1d3bb37591431422db8a205a714f1fec5e5df1a2897686c89fceb31` | 24 页，已冻结；第24页为补充技术证据索引 |
 | 非技术补充包 | `submission-package/supplements/nontechnical-score-closure/pdf/TZcup-nontechnical-score-closure.pdf` | 14 页，设计/计划/未测边界明确 |
 | 感知候选 | `3882dc34e756e1c361852027d49e55acac2b2a74` | 受控候选，不计官方 10 分 |
 | 定位候选 | `a7841c9e024175901065d2c583f32a4a2d89f50f` | 离线候选，不计 official PASS |
