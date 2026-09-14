@@ -1,20 +1,32 @@
 {
   "schema_version": 1,
   "document_type": "tzcup_day1_score_refresh",
-  "as_of": "2026-09-14",
+  "as_of": "2026-09-15",
   "baseline_commit": "05481fc55e6ef89b9396070381797f760c6b72c4",
   "previous_score_estimate_commit": "9501d1c8d6f6b4f4ec95c1eea31fb3a4ad351391",
+  "prior_refresh_commit": "c1c254ec27bcc9f746f8215533016d171ba1b2fa",
   "previous_score_estimate": {
     "conservative": [42, 52],
     "reasonable": [52, 62],
     "optimistic": [62, 70]
   },
-  "updated_score_estimate": {
+  "previous_refresh_estimate": {
     "conservative": [42, 50],
     "reasonable": [52, 62],
-    "optimistic": [64, 72],
-    "hard_cap_without_live_closure": 72,
-    "claim_guard": "Do not claim official PASS from controlled, offline, design-only or unfinished runs."
+    "optimistic": [64, 72]
+  },
+  "updated_score_estimate": {
+    "conservative": [44, 52],
+    "reasonable": [55, 65],
+    "optimistic": [67, 76],
+    "video_score_delta": {
+      "conservative": 2,
+      "reasonable": 3,
+      "optimistic": 4
+    },
+    "hard_cap_without_live_closure": 76,
+    "hard_cap_basis": "The 76 ceiling requires evaluator acceptance of the modular composite demo for 4/4; it is not an official full-mission PASS.",
+    "claim_guard": "Do not claim official full-mission PASS, live SLAM, avoidance 95 percent, board perception or vehicle validation from the modular demo."
   },
   "state_changes": {
     "perception": {
@@ -87,7 +99,34 @@
     },
     "full_mission_wrapper": {
       "official_points_claimed": 0.0,
-      "status": "TOOLING_AND_FAIL_CLOSED_BOUNDARY"
+      "status": "TOOLING_AND_FAIL_CLOSED_BOUNDARY",
+      "continuous_full_mission_video": "NOT_MEASURED"
+    },
+    "demo_video": {
+      "old": {
+        "status": "KIT_ONLY_VIDEO_NOT_MEASURED",
+        "duration_s": 6.333,
+        "interpretation": "GUI clip, not a 5-10 minute competition demo"
+      },
+      "current": {
+        "status": "DELIVERED_MODULAR_DEMO",
+        "duration_s": 300.0,
+        "resolution": "1920x1080",
+        "frame_rate": "30/1",
+        "frame_count": 9000,
+        "video_codec": "h264",
+        "profile": "High",
+        "audio_codec": "aac",
+        "subtitle_codec": "mov_text",
+        "sidecar_subtitle_cues": 35,
+        "embedded_subtitle_cues": 36,
+        "recommended_points_range": [2, 3],
+        "evaluator_maximum_points": 4,
+        "same_continuous_mission": false
+      },
+      "official_state": "DELIVERED_MODULAR_DEMO",
+      "official_full_mission_pass": false,
+      "full_mission_closure": "NOT_MEASURED"
     },
     "live_slam_fail_closed": {
       "official_points_claimed": 0.0,
@@ -141,6 +180,28 @@
     },
     {
       "rank": 5,
+      "id": "demo_video",
+      "official_item": "演示视频清晰流畅",
+      "points": 4,
+      "status": "DELIVERED_MODULAR_DEMO",
+      "recommended_points_range": [2, 3],
+      "evaluator_maximum_points": 4,
+      "next_action": "freeze the 300 s master, narration/subtitles, chapters and hashes; prepare a 2-3/4 claim and leave 4/4 to evaluator discretion",
+      "evidence_paths": [
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-video-final/submission-package/video/final/TZcup_5min_video.mp4",
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-video-final/submission-package/video/video-index.json",
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-video-final/submission-package/video/validation/video-package-validation.json"
+      ],
+      "not_claimable": [
+        "one continuous mission",
+        "official full-mission PASS",
+        "live SLAM",
+        "official avoidance 95 percent",
+        "physical vehicle validation"
+      ]
+    },
+    {
+      "rank": 6,
       "id": "dust_bin_volume",
       "official_item": "尘箱承载 >=40 L",
       "points": 5,
@@ -150,7 +211,7 @@
       "not_claimable": ["physical volume", "production validation"]
     },
     {
-      "rank": 6,
+      "rank": 7,
       "id": "interdisciplinary",
       "official_item": "跨学科融合",
       "points": 5,
@@ -163,7 +224,7 @@
       "not_claimable": ["end-to-end closure from module inventory alone"]
     },
     {
-      "rank": 7,
+      "rank": 8,
       "id": "algorithm_optimization",
       "official_item": "算法优化",
       "points": 10,
@@ -175,7 +236,7 @@
       "not_claimable": ["complete mission", "external public validation"]
     },
     {
-      "rank": 8,
+      "rank": 9,
       "id": "industrialization_bonus",
       "official_item": "可落地产业化方案",
       "points": 5,
@@ -188,7 +249,7 @@
       "not_claimable": ["orders", "quotations", "customer SLA", "field ROI"]
     },
     {
-      "rank": 9,
+      "rank": 10,
       "id": "complex_conditions",
       "official_item": "复杂工况适配创新",
       "points": 5,
@@ -201,7 +262,7 @@
       "not_claimable": ["real illumination", "real road surface", "long-term generalization"]
     },
     {
-      "rank": 10,
+      "rank": 11,
       "id": "maintenance_three_step",
       "official_item": "易损件更换 <=3 步",
       "points": 5,
@@ -214,7 +275,7 @@
       "not_claimable": ["physical tool-free replacement pass"]
     },
     {
-      "rank": 11,
+      "rank": 12,
       "id": "operator_training",
       "official_item": "3 天掌握操作",
       "points": 2,
@@ -227,7 +288,7 @@
       "not_claimable": ["actual novice mastery"]
     },
     {
-      "rank": 12,
+      "rank": 13,
       "id": "social_benefit",
       "official_item": "提升城市/园区清扫质量和效率",
       "points": 5,
@@ -240,7 +301,7 @@
       "not_claimable": ["realized field benefit"]
     },
     {
-      "rank": 13,
+      "rank": 14,
       "id": "hardware_software_complete",
       "official_item": "硬件/软件功能完整",
       "points": 6,
@@ -252,7 +313,7 @@
       "not_claimable": ["module replay as complete mission"]
     },
     {
-      "rank": 14,
+      "rank": 15,
       "id": "cleaning_m2_h",
       "official_item": "清扫效率 >=3500 m2/h",
       "points": 5,
@@ -265,7 +326,7 @@
       "not_claimable": ["4320 m2/h short-window result as full mission efficiency"]
     },
     {
-      "rank": 15,
+      "rank": 16,
       "id": "mapped_area_m2",
       "official_item": "建图面积 >=20000 m2",
       "points": 5,
@@ -278,7 +339,7 @@
       "not_claimable": ["22399.99 m2 offline raycast as live SLAM"]
     },
     {
-      "rank": 16,
+      "rank": 17,
       "id": "recognition_accuracy",
       "official_item": "物体识别准确率 >=95%",
       "points": 10,
@@ -291,7 +352,7 @@
       "not_claimable": ["official competition R01", "real-domain 95%", "board 95%"]
     },
     {
-      "rank": 17,
+      "rank": 18,
       "id": "localization_mm",
       "official_item": "定位精度 <=50 mm",
       "points": 5,
@@ -304,7 +365,7 @@
       "not_claimable": ["live PASS", "official PASS", "generalization beyond the sealed run"]
     },
     {
-      "rank": 18,
+      "rank": 19,
       "id": "avoidance",
       "official_item": "避障成功率 >=95%",
       "points": 5,
@@ -315,19 +376,6 @@
         "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-avoidance-recovery/artifacts/day1_dynamic_avoidance_recovery_20260914/failure_receipt.json"
       ],
       "not_claimable": ["95% rate", "successful one-trial as official rate", "history rewrite"]
-    },
-    {
-      "rank": 19,
-      "id": "demo_video",
-      "official_item": "演示视频清晰流畅",
-      "points": 4,
-      "status": "KIT_ONLY_VIDEO_NOT_MEASURED",
-      "next_action": "complete a full mission, then record 5-10 continuous minutes with version overlay",
-      "evidence_paths": [
-        "submission-package/video/视频索引.md",
-        "submission-package/supplements/nontechnical-score-closure/demo-video-production.md"
-      ],
-      "not_claimable": ["6.333 s GUI clip as full demo"]
     },
     {
       "rank": 20,
@@ -356,6 +404,59 @@
       "not_claimable": ["templates or outlines as bonus evidence"]
     }
   ],
+  "video_evidence": {
+    "artifact_id": "tzcup-day1-modular-demo-video",
+    "branch": "codex/day1-video-final",
+    "commit": "b663ca9871d75caf26b83c8f8fd40b0d906b1539",
+    "status": "DELIVERED_MODULAR_DEMO",
+    "official_full_mission_pass": false,
+    "same_continuous_mission": false,
+    "media": {
+      "path": "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-video-final/submission-package/video/final/TZcup_5min_video.mp4",
+      "bytes": 26137698,
+      "sha256": "631c2cfbf0e459bbcf74d7c3f9ddb6c1fc5a6519dbb6794bd4a6ea148d94e097",
+      "duration_s": 300.0,
+      "width": 1920,
+      "height": 1080,
+      "frame_rate": "30/1",
+      "average_frame_rate": "30/1",
+      "frame_count": 9000,
+      "video_codec": "h264",
+      "video_profile": "High",
+      "audio_codec": "aac",
+      "subtitle_codec": "mov_text",
+      "sidecar_subtitle_cues": 35,
+      "embedded_subtitle_cues": 36
+    },
+    "official_requirements": {
+      "duration_5_to_10_minutes": {
+        "status": "PROVEN",
+        "evidence": "300.000 s master"
+      },
+      "operation_instructions": {
+        "status": "PROVEN_BY_NARRATION_CHAPTERS_AND_SUBTITLES",
+        "evidence": "narration-script.md; chapters.json; zh-CN.srt"
+      },
+      "clarity_and_smooth_playback": {
+        "status": "PROVEN_BY_MEDIA_CONTRACT_AND_FULL_DECODE",
+        "evidence": "1920x1080; constant 30 fps; 9000 frames; video/audio/silent-master full decode PASS"
+      },
+      "single_continuous_mission": {
+        "status": "NOT_MEASURED",
+        "evidence": "The reel combines successful module clips and is not one continuous mission capture."
+      }
+    },
+    "recommended_points_range": [2, 3],
+    "evaluator_maximum_points": 4,
+    "official_points_claimed": 0.0,
+    "cannot_claim": [
+      "official full-mission PASS",
+      "all footage belongs to one continuous run",
+      "official 20000 m2 live SLAM",
+      "official avoidance >=95 percent",
+      "physical vehicle validation"
+    ]
+  },
   "coverage_evidence": {
     "run10_archive": {
       "path": "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-coverage-run/artifacts/day1_bounded_coverage_20260914/day1-coverage-run10-d115c89-evidence.tar.gz",
@@ -383,13 +484,16 @@
     "The official recognition R01 definition, domain, denominator and matching rule are not frozen.",
     "No live localization or live SLAM pass exists.",
     "No official dynamic-avoidance rate exists.",
-    "No complete cleaning mission, coverage run, return-home event or valid 5-10 minute demo exists.",
+    "The 5-10 minute modular demo exists, but no complete cleaning mission, coverage run, return-home event or single continuous full-mission video exists.",
     "No physical 40 L, maintenance, training, reliability or field social-benefit measurement exists.",
     "No patent filing or publication evidence exists."
   ],
   "rollback": {
     "score_docs_previous_commit": "9501d1c8d6f6b4f4ec95c1eea31fb3a4ad351391",
     "refresh_parent_commit": "05481fc55e6ef89b9396070381797f760c6b72c4",
+    "prior_refresh_commit": "c1c254ec27bcc9f746f8215533016d171ba1b2fa",
+    "video_package_commit": "b663ca9871d75caf26b83c8f8fd40b0d906b1539",
+    "video_package_rollback_commit": "e6caf27",
     "localization_candidate_commit": "a7841c9e024175901065d2c583f32a4a2d89f50f",
     "localization_rollback_commit": "47e3cb3a7ecc01edd82aa23a3b54cbeaffc418bc",
     "avoidance_fix_commit": "99ee7f0d01544d65443b68f189edb28fc21d0459",

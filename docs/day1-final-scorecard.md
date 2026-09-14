@@ -1,8 +1,12 @@
-# TZcup 2026-09-15 首轮提交最终记分板（刷新版）
+# TZcup 2026-09-15 首轮提交最终记分板（视频纳入版）
 
-更新时间：2026-09-14（Asia/Shanghai）
+更新时间：2026-09-15（Asia/Shanghai）
 
 刷新基线：`codex/day1-evidence-integration@05481fc55e6ef89b9396070381797f760c6b72c4`
+
+上一评分刷新：`codex/day1-score-refresh@c1c254ec27bcc9f746f8215533016d171ba1b2fa`
+
+视频归档基线：`codex/day1-video-final@b663ca9871d75caf26b83c8f8fd40b0d906b1539`
 
 本页记录当前交付、证据、边界和下一步。数值区间见 `docs/day1-score-estimate.md`，机器可读副本见 `docs/day1-score-refresh.json`。
 
@@ -14,7 +18,8 @@
 | 定位 | 原 run max 126.327803 mm，严格判据 FAIL | 同 run 因果低通离线候选，tau=1.5 s 时 RMSE/P95/max=29.192/40.285/47.566 mm | 严格 max 仅在离线因果重放通过；不是 live/official PASS，仍需 Gazebo 正式重跑 |
 | 避障 | run-19b/21/22 交互存在但 goal 失败 | root cause 定位为 global EKF 将 `navsat_transform` 生成的 `/odometry/gps` 作为自身反馈，导致 `map->odom` 漂移 | 最小修复和 single-trial harness 已提交；官方 95% 仍 `NOT_MEASURED`，下一次成功最多 `1/1 functional` |
 | Coverage | run-05 卡在 `/ground_truth/odom` | run-10 `headland=0.75` clearance 拒绝；run-11 `headland=1.35` clearance 通过，但 `default_headland_width=0` 导致 11 条 swath 越界 | run-12 未开始，coverage、清扫面积和完整任务效率均不能升级 |
-| Full mission | 只有 wrapper 设计 | fail-closed wrapper 已存在 | `official_points_claimed=0`；现有覆盖 run 缺 mission timeline、return-home、MCAP、video 和软硬件 manifest，必须判 FAIL |
+| 演示视频 | 只有 6.333 s GUI 片段 | 300.000 s 成片、1080p、30 fps、中文旁白/字幕、章节和完整校验包 | `DELIVERED_MODULAR_DEMO`；可主张 5-10 分钟、清晰流畅和操作说明，按 2-3/4 准备，评委接受模块化综合演示时可裁量至 4/4 |
+| Full mission | 只有 wrapper 设计 | fail-closed wrapper 已存在；模块化视频另包交付 | `official_points_claimed=0`；视频不是同一连续任务，完整 mission、return-home 和终态仍缺 |
 | Live SLAM | run-06 超时 | fail-closed replay 审计已存在 | run-06 缺 `/scan`、`/tf`、`/tf_static`，不能离线补成 live SLAM；`official_points_claimed=0` |
 
 ## 已可审阅或已计分
@@ -28,6 +33,7 @@
 | 任务分解 >=90% | 5 | `PASS_INTERNAL_FROZEN_REGRESSION` | 开发集 36/37，内部 holdout 32/32 | 不是公开盲测、语音识别或任务执行 |
 | 文档质量 | 5 | `DELIVERED` | 23 页报告、14 页补充包、证据索引、哈希和复算工具 | 文档完整不代表技术项通过 |
 | 尘箱 >=40 L | 5 | `PARTIAL_DESIGN_STAGE` | 设计可用 48.347384 L，10 mm 敏感度 41.208 L | 不是实物填充或量产容量 |
+| 演示视频清晰流畅 | 4 | `DELIVERED_MODULAR_DEMO` | 300.000 s、1920x1080、30 fps、H.264/AAC/mov_text；旁白、35 条侧车字幕、36 条内嵌字幕、章节和完整解码均通过；按 2-3/4 准备，评委接受模块化综合演示时可争取 4/4 | 不是同一连续任务、完整任务闭环、live SLAM、95% 避障或实车验证 |
 
 ## 部分得分与待补测
 
@@ -49,7 +55,7 @@
 | 易损件更换 <=3 步 | 5 | `DESIGN_ONLY` | 缺少物理步骤、工具托盘和锁止测试 |
 | 日均故障率 <1% | 3 | `NOT_MEASURED` | 无车辆日分母 |
 | 社会效益 | 5 | `MODEL_ONLY` | 无同区域同班次现场对照 |
-| 演示视频 | 4 | `KIT_ONLY_VIDEO_NOT_MEASURED` | 只有 6.333 s GUI 片段，没有 5-10 分钟完整任务 |
+| 同一连续完整任务视频 | - | `NOT_MEASURED` | 300 s 成片是模块化成功素材综合剪辑，不证明所有镜头属于同一连续任务 |
 | 产业化加分 | 5 | `REVIEW_READY_NOT_FIELD_VALIDATED` | 无真实订单、报价、SLA 或试点 |
 | 专利或论文加分 | 5 | `NOT_ELIGIBLE` | 无申请号、受理回执、DOI 或发表证明 |
 
@@ -65,9 +71,9 @@
 2. live 定位和 live SLAM 均未通过；离线候选只能放在候选章节。
 3. 避障官方 95% 无独立分母；单次 functional 通过也不能升级官方状态。
 4. 40 L、维护、培训和可靠性都没有实物或现场数据。
-5. 完整任务和 Demo 未闭环，不能把局部 MCAP、GUI 片段或工具回执当作最终演示。
+5. 模块化 Demo 已交付，但完整连续任务未闭环；不能把模块化综合演示当作完整 mission PASS。
 
-因此，本材料包可以审阅，但不能宣称为整包达标、关键技术全部通过或已进入稳定 70+。
+因此，本材料包可以审阅，但不能宣称为整包达标、关键技术全部通过或已进入稳定 70+；乐观 `76` 取决于评委是否接受模块化综合演示并给出视频 4/4。
 
 ## 交付入口
 
@@ -79,11 +85,14 @@
 | 定位候选 | `a7841c9e024175901065d2c583f32a4a2d89f50f` | 离线候选，不计 official PASS |
 | 避障修复 | `99ee7f0d01544d65443b68f189edb28fc21d0459` | 修复已提交，运行未完成 |
 | Coverage | `d2335f3061146fedef8b9f731eb54760b0f82386`；run-12 `NOT_STARTED` | 不计分 |
+| 5 分钟演示视频 | `codex/day1-video-final@b663ca9871d75caf26b83c8f8fd40b0d906b1539`；`F:/Project/TZcup/.workspace/worktrees/TZcup-day1-video-final/submission-package/video/final/TZcup_5min_video.mp4`；SHA-256 `631c2cfbf0e459bbcf74d7c3f9ddb6c1fc5a6519dbb6794bd4a6ea148d94e097` | `DELIVERED_MODULAR_DEMO`，建议 2-3/4，最高裁量 4/4；不是完整 mission PASS |
 
 ## 回滚与保留
 
 - 旧评分状态：`codex/day1-scoring@9501d1c8d6f6b4f4ec95c1eea31fb3a4ad351391`
-- 刷新父提交：`05481fc55e6ef89b9396070381797f760c6b72c4`
+- 上一评分刷新：`codex/day1-score-refresh@c1c254ec27bcc9f746f8215533016d171ba1b2fa`，父提交 `05481fc55e6ef89b9396070381797f760c6b72c4`
+- 视频归档提交：`b663ca9871d75caf26b83c8f8fd40b0d906b1539`
+- 视频回滚点：`e6caf27`
 - 定位回滚点：`47e3cb3a7ecc01edd82aa23a3b54cbeaffc418bc`
 - 避障回滚点：`b74c702777b9974932f959800076071663255752`
 - 感知回滚点：`906ea4f`
