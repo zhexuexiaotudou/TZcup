@@ -1,0 +1,81 @@
+{
+  "attempt_id": "day1-dynamic-avoidance-offline-map-retry-20260914-08",
+  "blocker": "product collector reached completion_reason=timeout with goal_accepted=false and zero Nav2 command samples; environment collector was then externally shut down and produced no environment_truth_telemetry.json",
+  "claim_boundary": "One started trial is retained with numerator 0 and denominator 1. No collision, clearance, reroute, wait, or goal-recovery claim is possible; official >=95% remains NOT_MEASURED.",
+  "collectors_started": true,
+  "contact_clearance_reroute_wait_goal_recovery_preserved": false,
+  "evidence_sha256": {
+    "dynamic_obstacle_acceptance.json": "02ef1a269a17e65d6f039202af16d3eb101da93bee8fbe3ffe4d08110eb0a77d",
+    "predeclared_obstacle_route.json": "5d9505dd27eb8a64e61590973c7b20bf27bbb8d15fb97edc0447a4b7b6e1a397",
+    "runtime/dynamic.launch.log": "c6f75b11f7b42c772a2c7f242da04ef245843a755485d527ac08c62b1aaf1447",
+    "runtime/environment_collector.log": "5b32da95c6947d615ff0ffc451bf47b66f610898319733828e8c8fcbfcfe4642",
+    "runtime/runtime_telemetry.json": "51d50f33f7e9dbfa897dbbfe64ab74d6d1513fe86a9bfbfe79c6d092af5b7bd8",
+    "single_run_evaluation.json": "db61598768778446d2a60dd8b0ea512f525963f8d2312ffc23746a516296dd15",
+    "single_run_timeline.json": "2e838cbf138d367f067163e5b911c2068e1db24177141657f8a6b699474d7cc3"
+  },
+  "formal_status": "FORMAL_DYNAMIC_OBSTACLE_AVOIDANCE_ACCEPTANCE_BLOCKED",
+  "gazebo_started": true,
+  "live_slam_claimed": false,
+  "map_source_label": "OFFLINE_MAP_SOURCE",
+  "map_source_mode": "OFFLINE_RAYCAST_MAPPING",
+  "mcap_preserved": false,
+  "official_metric": {
+    "formula": "N_noncollision_and_task_complete / N_total_trials",
+    "independent_run_count": 1,
+    "measured_value": null,
+    "metric_id": "dynamic_avoidance_success_rate",
+    "minimum_runs_per_scenario": 20,
+    "reason": "One started trial yields a single-run numerator and denominator only. It cannot measure or establish the >=95% campaign rate.",
+    "recommended_total_runs": 100,
+    "status": "NOT_MEASURED",
+    "threshold": 0.95
+  },
+  "resource_release": {
+    "cpu_busy_percent_sample": 12.0,
+    "formal_gazebo_lock_available": true,
+    "gpu_memory_total_mib": 12288,
+    "gpu_memory_used_mib": 1,
+    "gpu_utilization_percent": 0,
+    "measurement_window_s": 1.0,
+    "note": "run-08 completed the bounded runtime window; product collector reported timeout with no accepted Nav2 goal.",
+    "resource_released": true,
+    "run_id": "run-08",
+    "runtime_processes_remaining": [],
+    "schema_version": 1
+  },
+  "run_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-offline-map-retry-20260914-08/run-08",
+  "runtime_closure_sha256": "7f872a8b0c0b181ad55fdacfc9ea36f87261c2b7a6b6edce722ed3acf758c2cc",
+  "runtime_telemetry": {
+    "collision_monitor_intervention_count": 0,
+    "completion_reason": "timeout",
+    "dynamic_interaction_candidates": [],
+    "goal_accepted": false,
+    "nav2_goal_succeeded": false,
+    "topic_sample_counts": {
+      "/amcl_pose": 1,
+      "/base_controller/cmd_vel": 5827,
+      "/cmd_vel_gate": 0,
+      "/cmd_vel_nav": 0,
+      "/cmd_vel_smoothed": 0,
+      "/collision_monitor_state": 0,
+      "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/status": 230,
+      "/odom": 1156,
+      "/odom/unfiltered": 1117,
+      "/safety/status": 5814,
+      "/scan/navigation": 925,
+      "/sensors/lidar_3d/points": 128,
+      "/tf:odom->base_footprint": 1156
+    }
+  },
+  "schema_version": 1,
+  "single_run": {
+    "denominator": 1,
+    "functional_success": false,
+    "numerator": 0,
+    "observed_fraction": 0.0,
+    "post_launch_exclusions": 0,
+    "started": true
+  },
+  "single_run_status": "SINGLE_RUN_EVIDENCE_INVALID",
+  "status": "BLOCKED_PRODUCT_GOAL_TIMEOUT"
+}
