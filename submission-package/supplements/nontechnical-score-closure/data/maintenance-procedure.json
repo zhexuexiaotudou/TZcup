@@ -1,0 +1,84 @@
+{
+  "status": "DESIGN_ONLY_NOT_PHYSICALLY_MEASURED",
+  "step_count_rule": "Mechanical replacement starts when the service opening is opened and ends after the post-replacement check; safety isolation is a mandatory precondition and is not counted as a mechanical step.",
+  "required_tools": [],
+  "preconditions": [
+    {
+      "id": "M-PRE-1",
+      "action": "Park on level ground, cancel the task, enter maintenance mode, and verify drive inhibit."
+    },
+    {
+      "id": "M-PRE-2",
+      "action": "Apply electrical isolation or an approved equivalent energy-isolation state."
+    },
+    {
+      "id": "M-PRE-3",
+      "action": "Place warning controls and verify that the maintenance zone is clear."
+    }
+  ],
+  "procedures": [
+    {
+      "id": "BRUSH",
+      "title": "Brush replacement",
+      "steps": [
+        {
+          "number": 1,
+          "action": "Open the tool-free service door and expose the brush mounting interface."
+        },
+        {
+          "number": 2,
+          "action": "Release the captive lock, remove the old brush, align the keyed replacement, insert it, and verify lock engagement."
+        },
+        {
+          "number": 3,
+          "action": "Close and latch the service door, exit maintenance mode, and perform a low-speed no-load check."
+        }
+      ]
+    },
+    {
+      "id": "FILTER",
+      "title": "Filter replacement",
+      "steps": [
+        {
+          "number": 1,
+          "action": "Open the tool-free filter bay and verify that the fan and brush drive are stopped."
+        },
+        {
+          "number": 2,
+          "action": "Remove the old filter, inspect the seal, insert the replacement in the marked direction, and verify retention."
+        },
+        {
+          "number": 3,
+          "action": "Close and latch the bay, exit maintenance mode, and run a short no-load verification."
+        }
+      ]
+    }
+  ],
+  "physical_acceptance": [
+    {
+      "id": "PHY-STEP",
+      "criterion": "A non-maintenance operator completes each replacement in no more than three mechanical steps.",
+      "status": "PROPOSED_NOT_RUN"
+    },
+    {
+      "id": "PHY-TOOLS",
+      "criterion": "The operation is completed with an empty professional-tool tray.",
+      "status": "PROPOSED_NOT_RUN"
+    },
+    {
+      "id": "PHY-POKA",
+      "criterion": "Incorrect orientation cannot be latched or is rejected by an explicit mechanical cue.",
+      "status": "DESIGN_REQUIREMENT"
+    },
+    {
+      "id": "PHY-RETAIN",
+      "criterion": "The replacement remains retained after the frozen vibration and shock profile.",
+      "status": "PROPOSED_NOT_RUN"
+    },
+    {
+      "id": "PHY-INTERLOCK",
+      "criterion": "A remote task cannot release maintenance mode or re-enable motion.",
+      "status": "DESIGN_REQUIREMENT"
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "status": "INSTRUMENTED_NOT_MEASURED",
+  "primary_denominator": "vehicle_day",
+  "secondary_denominators": [
+    "task",
+    "runtime_hour"
+  ],
+  "vehicle_day_definition": "A calendar day on which a vehicle is scheduled for service. It remains in the denominator when the vehicle cannot start because of a vehicle fault.",
+  "primary_fault_event_ids": [
+    "FAIL_START",
+    "UNPLANNED_TASK_ABORT",
+    "SAFETY_TAKEOVER",
+    "CRITICAL_SENSOR_LOSS",
+    "LOCALIZATION_LOSS_STOP",
+    "COMMUNICATION_LOSS",
+    "CONTROL_FAULT",
+    "MECHANICAL_BLOCK_UNRECOVERED",
+    "BRAKE_FAULT",
+    "BATTERY_FAULT"
+  ],
+  "excluded_event_ids": [
+    "PLANNED_MAINTENANCE",
+    "NORMAL_FULL_BIN",
+    "OPERATOR_PAUSE",
+    "SITE_POWER_OUTAGE",
+    "TRAINING_ONLY"
+  ],
+  "severity": [
+    "S1_SAFETY_OR_TOTAL_LOSS",
+    "S2_MISSION_LOSS_RECOVERABLE",
+    "S3_DEGRADED_MINOR"
+  ],
+  "required_fields": [
+    "event_id",
+    "vehicle_id",
+    "software_version",
+    "hardware_version",
+    "map_version",
+    "start_timestamp",
+    "end_timestamp",
+    "timezone",
+    "clock_domain",
+    "severity",
+    "detection_method",
+    "recovery_method",
+    "recovery_seconds",
+    "evidence_path",
+    "exclusion_reason"
+  ],
+  "qualification": {
+    "confidence": 0.95,
+    "upper_bound_target": 0.01,
+    "zero_fault_min_vehicle_days": 299,
+    "one_fault_min_vehicle_days": 473,
+    "two_fault_min_vehicle_days": 628
+  }
+}

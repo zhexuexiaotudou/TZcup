@@ -1,0 +1,220 @@
+{
+  "schema_version": 1,
+  "report_id": "tzcup_live_slam_replay_input_audit_v1",
+  "generated_utc": "2026-09-14T14:55:39Z",
+  "run_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-mapping-run-20260914-06",
+  "source_revision": "6021e7b52ebf6a56aa7113b7b6d7742cbdfe0692",
+  "auditor_sha256": "61e6435e35fccbf195b2b9b542fc5bf4d5e68ec3b6e46f77a983627f9149fc10",
+  "status": "LIVE_SLAM_REPLAY_INPUT_BLOCKED",
+  "replay_eligible": false,
+  "slam_replay_claimed": false,
+  "area_gate": "NOT_MEASURED",
+  "required_topics": {
+    "/scan": "sensor_msgs/msg/LaserScan",
+    "/tf": "tf2_msgs/msg/TFMessage",
+    "/tf_static": "tf2_msgs/msg/TFMessage",
+    "/clock": "rosgraph_msgs/msg/Clock",
+    "/odom": "nav_msgs/msg/Odometry"
+  },
+  "observed_topics": {
+    "/base_controller/cmd_vel": {
+      "type": "geometry_msgs/msg/TwistStamped",
+      "message_count": 71349,
+      "bags": [
+        "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-mapping-run-20260914-06/saved-map/early_recording_audit"
+      ]
+    },
+    "/clock": {
+      "type": "rosgraph_msgs/msg/Clock",
+      "message_count": 236444,
+      "bags": [
+        "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-mapping-run-20260914-06/saved-map/early_recording_audit"
+      ]
+    },
+    "/formal_mapping/lifecycle_status": {
+      "type": "std_msgs/msg/String",
+      "message_count": 15233,
+      "bags": [
+        "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-mapping-run-20260914-06/saved-map/early_recording_audit",
+        "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-mapping-run-20260914-06/saved-map/mapping_localization_diagnostic"
+      ]
+    },
+    "/formal_vehicle/auxiliary/critical_safety_relay_diagnostic_json": {
+      "type": "std_msgs/msg/String",
+      "message_count": 71317,
+      "bags": [
+        "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-mapping-run-20260914-06/saved-map/early_recording_audit"
+      ]
+    },
+    "/gnss/fix": {
+      "type": "sensor_msgs/msg/NavSatFix",
+      "message_count": 6029,
+      "bags": [
+        "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-mapping-run-20260914-06/saved-map/early_recording_audit",
+        "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-mapping-run-20260914-06/saved-map/mapping_localization_diagnostic"
+      ]
+    },
+    "/odom": {
+      "type": "nav_msgs/msg/Odometry",
+      "message_count": 30132,
+      "bags": [
+        "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-mapping-run-20260914-06/saved-map/early_recording_audit",
+        "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-mapping-run-20260914-06/saved-map/mapping_localization_diagnostic"
+      ]
+    },
+    "/odom/unfiltered": {
+      "type": "nav_msgs/msg/Odometry",
+      "message_count": 29315,
+      "bags": [
+        "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-mapping-run-20260914-06/saved-map/early_recording_audit",
+        "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-mapping-run-20260914-06/saved-map/mapping_localization_diagnostic"
+      ]
+    },
+    "/odometry/gps": {
+      "type": "nav_msgs/msg/Odometry",
+      "message_count": 6027,
+      "bags": [
+        "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-mapping-run-20260914-06/saved-map/early_recording_audit",
+        "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-mapping-run-20260914-06/saved-map/mapping_localization_diagnostic"
+      ]
+    },
+    "/safety/relay_cycle_diagnostic_json": {
+      "type": "std_msgs/msg/String",
+      "message_count": 71346,
+      "bags": [
+        "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-mapping-run-20260914-06/saved-map/early_recording_audit"
+      ]
+    },
+    "/safety/status_json": {
+      "type": "std_msgs/msg/String",
+      "message_count": 71341,
+      "bags": [
+        "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-mapping-run-20260914-06/saved-map/early_recording_audit"
+      ]
+    },
+    "/ground_truth/odom": {
+      "type": "nav_msgs/msg/Odometry",
+      "message_count": 15094,
+      "bags": [
+        "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-mapping-run-20260914-06/saved-map/mapping_localization_diagnostic"
+      ]
+    }
+  },
+  "missing_requirements": [
+    {
+      "topic": "/scan",
+      "expected_type": "sensor_msgs/msg/LaserScan",
+      "reason": "topic absent"
+    },
+    {
+      "topic": "/tf",
+      "expected_type": "tf2_msgs/msg/TFMessage",
+      "reason": "topic absent"
+    },
+    {
+      "topic": "/tf_static",
+      "expected_type": "tf2_msgs/msg/TFMessage",
+      "reason": "topic absent"
+    }
+  ],
+  "errors": [],
+  "bags": [
+    {
+      "bag_dir": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-mapping-run-20260914-06/saved-map/early_recording_audit",
+      "metadata_path": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-mapping-run-20260914-06/saved-map/early_recording_audit/metadata.yaml",
+      "metadata_sha256": "487af1251703a9278067a58d047c43f92e602a7d119fc5f8043f58ecf5662bf7",
+      "message_count": 565089,
+      "duration_ns": 3570477621837,
+      "topics": {
+        "/base_controller/cmd_vel": {
+          "type": "geometry_msgs/msg/TwistStamped",
+          "message_count": 71349
+        },
+        "/clock": {
+          "type": "rosgraph_msgs/msg/Clock",
+          "message_count": 236444
+        },
+        "/formal_mapping/lifecycle_status": {
+          "type": "std_msgs/msg/String",
+          "message_count": 7605
+        },
+        "/formal_vehicle/auxiliary/critical_safety_relay_diagnostic_json": {
+          "type": "std_msgs/msg/String",
+          "message_count": 71317
+        },
+        "/gnss/fix": {
+          "type": "sensor_msgs/msg/NavSatFix",
+          "message_count": 3010
+        },
+        "/odom": {
+          "type": "nav_msgs/msg/Odometry",
+          "message_count": 15038
+        },
+        "/odom/unfiltered": {
+          "type": "nav_msgs/msg/Odometry",
+          "message_count": 14630
+        },
+        "/odometry/gps": {
+          "type": "nav_msgs/msg/Odometry",
+          "message_count": 3009
+        },
+        "/safety/relay_cycle_diagnostic_json": {
+          "type": "std_msgs/msg/String",
+          "message_count": 71346
+        },
+        "/safety/status_json": {
+          "type": "std_msgs/msg/String",
+          "message_count": 71341
+        }
+      },
+      "data_files": [
+        {
+          "path": "early_recording_audit_0.mcap",
+          "size_bytes": 395927215,
+          "sha256": "754c867d638c9cbcd7b7528e420a0392a79b9d5fb1c28b8d4b22b57f5f5fc672"
+        }
+      ]
+    },
+    {
+      "bag_dir": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-mapping-run-20260914-06/saved-map/mapping_localization_diagnostic",
+      "metadata_path": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-mapping-run-20260914-06/saved-map/mapping_localization_diagnostic/metadata.yaml",
+      "metadata_sha256": "b2db23f8769834ca630ff7500b78084ae14347e10c8d181ce537e0560263f559",
+      "message_count": 58538,
+      "duration_ns": 3571421521860,
+      "topics": {
+        "/formal_mapping/lifecycle_status": {
+          "type": "std_msgs/msg/String",
+          "message_count": 7628
+        },
+        "/gnss/fix": {
+          "type": "sensor_msgs/msg/NavSatFix",
+          "message_count": 3019
+        },
+        "/ground_truth/odom": {
+          "type": "nav_msgs/msg/Odometry",
+          "message_count": 15094
+        },
+        "/odom": {
+          "type": "nav_msgs/msg/Odometry",
+          "message_count": 15094
+        },
+        "/odom/unfiltered": {
+          "type": "nav_msgs/msg/Odometry",
+          "message_count": 14685
+        },
+        "/odometry/gps": {
+          "type": "nav_msgs/msg/Odometry",
+          "message_count": 3018
+        }
+      },
+      "data_files": [
+        {
+          "path": "mapping_localization_diagnostic_0.mcap",
+          "size_bytes": 57608905,
+          "sha256": "fb95d12e5d901389631b2dd5719d88c198fb54985ff68412d8a4067879fcc503"
+        }
+      ]
+    }
+  ],
+  "claim_boundary": "Admission audit only. A ready status permits a separate offline SLAM replay attempt; it does not prove replay execution, map quality, or the 20,000 m2 area gate."
+}

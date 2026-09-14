@@ -1,0 +1,104 @@
+{
+  "source_pdf_sha256": "5fa80f74b7a1f36e5d0d63592282a5cc5f26394e562350407497cff27bdccc9e",
+  "items": [
+    {
+      "id": "APP-USE-TRAINING",
+      "dimension": "应用价值",
+      "item": "学习成本低（3天掌握操作）",
+      "max_points": 2,
+      "priority": "P3",
+      "status": "PLANNED_NOT_MEASURED",
+      "claimable": "存在三日课程、结构化验收台账和认证判定工具。",
+      "not_claimable": "没有真实目标用户队列，不能声称新手已在三日内掌握。",
+      "next_evidence": "匿名用户队列、所有安全项、提示次数、关键错误和退出记录。"
+    },
+    {
+      "id": "APP-USE-MAINTENANCE",
+      "dimension": "应用价值",
+      "item": "易损件更换步骤<=3步",
+      "max_points": 5,
+      "priority": "P1",
+      "status": "DESIGN_ONLY_NOT_PHYSICALLY_MEASURED",
+      "claimable": "毛刷和滤网均有冻结的三步机械更换程序、数字校验和物理验收协议。",
+      "not_claimable": "Baseline 刷座和服务舱仍是占位件，不能声称实件无需专业工具且<=3步。",
+      "next_evidence": "非维修岗位实件操作、空工具托盘、步骤计时、防错、锁止和振动测试。"
+    },
+    {
+      "id": "APP-USE-RELIABILITY",
+      "dimension": "应用价值",
+      "item": "日均故障率<1%",
+      "max_points": 3,
+      "priority": "P3",
+      "status": "INSTRUMENTED_NOT_MEASURED",
+      "claimable": "已定义车辆日事件字典和二项单侧95%上界算法。",
+      "not_claimable": "没有长期运行分母，不能声称项目日均故障率低于1%。",
+      "next_evidence": "冻结事件字典后至少299个零主故障车辆日，或按实际故障数达到对应样本量。"
+    },
+    {
+      "id": "APP-VALUE-SOCIAL",
+      "dimension": "应用价值",
+      "item": "显著提升城市、园区清扫质量和效率",
+      "max_points": 5,
+      "priority": "P2",
+      "status": "MODEL_ONLY_NOT_FIELD_MEASURED",
+      "claimable": "有人工工时、监护、返工、能耗和质量分离的可审计模型。",
+      "not_claimable": "没有同区域、同班次、同质量口径的前后对照，不能声称项目已产生社会效益。",
+      "next_evidence": "至少一个现场对照周期，含人员、工时、质量、能耗、返工和投诉。"
+    },
+    {
+      "id": "COMP-HW-SW",
+      "dimension": "方案完成度",
+      "item": "硬件/软件功能完整",
+      "max_points": 6,
+      "priority": "P2",
+      "status": "PARTIAL",
+      "claimable": "整车、传感器、清扫、建图、定位、规划、安全和任务解析均有模块或证据入口。",
+      "not_claimable": "识别、实时建图、动态避障、板端感知和完整清扫任务仍未形成端到端闭环。",
+      "next_evidence": "同一冻结版本下从输入、任务、清扫、安全事件到终态和覆盖的完整链路。"
+    },
+    {
+      "id": "COMP-DEMO",
+      "dimension": "方案完成度",
+      "item": "演示视频清晰流畅",
+      "max_points": 4,
+      "priority": "P1",
+      "status": "KIT_ONLY_VIDEO_NOT_MEASURED",
+      "claimable": "已有完整分镜、操作说明、验收表和媒体校验器；真实GUI局部片段非黑屏。",
+      "not_claimable": "没有5-10分钟完整任务视频，不能把6.333秒局部片段当作正式Demo。",
+      "next_evidence": "连续任务视频、版本叠层、操作说明、任务终态和原始日志。"
+    },
+    {
+      "id": "COMP-DOCUMENT",
+      "dimension": "方案完成度",
+      "item": "报告逻辑清晰、数据详实",
+      "max_points": 5,
+      "priority": "P0",
+      "status": "DELIVERED",
+      "claimable": "正式报告、证据索引、失败留存和独立补充包可通过哈希与命令交叉复核。",
+      "not_claimable": "文档完整不等于技术指标达标。",
+      "next_evidence": "最终提交前重新冻结版本、引用和SHA-256。"
+    },
+    {
+      "id": "BONUS-INDUSTRIALIZATION",
+      "dimension": "加分项",
+      "item": "提供可落地的产业化方案",
+      "max_points": 5,
+      "priority": "P0",
+      "status": "REVIEW_READY_NOT_FIELD_VALIDATED",
+      "claimable": "有客户优先级、H0-H5门槛、影子模式、受限自主、成本公式、风险和IP边界。",
+      "not_claimable": "没有真实订单、报价、客户SLA、ROI或量产验证。",
+      "next_evidence": "一个真实场地的影子试点和双方签署的Go/No-Go。"
+    },
+    {
+      "id": "BONUS-IP-PAPER",
+      "dimension": "加分项",
+      "item": "已申请专利或发表相关论文",
+      "max_points": 5,
+      "priority": "P4",
+      "status": "NOT_ELIGIBLE_NO_FILING_OR_PUBLICATION",
+      "claimable": "仅提供披露模板、检索清单和论文提纲。",
+      "not_claimable": "仓库没有申请号、受理回执、DOI或正式发表证明，不能主张加分。",
+      "next_evidence": "专利受理回执或论文DOI/正式接收证明。"
+    }
+  ]
+}

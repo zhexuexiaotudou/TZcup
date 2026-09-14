@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "day1_full_mission_demo_plan",
+  "fixture_only": false,
+  "title": "TZcup Day-1 full mission demonstration",
+  "target_duration_sec": 480,
+  "minimum_duration_sec": 300,
+  "maximum_duration_sec": 600,
+  "narrative_rules": {
+    "continuous_operation_footage_required": true,
+    "rendered_animation_is_auxiliary_only": true,
+    "real_terminal_state_required": true,
+    "operator_voice_or_captions_required": true,
+    "credentials_must_be_redacted": true
+  },
+  "shots": [
+    {
+      "id": "S01",
+      "start_sec": 0,
+      "end_sec": 20,
+      "title": "版本与任务边界",
+      "screen": "展示源码提交号、仿真版本、任务地图与本次 Demo 的声明边界。",
+      "narration": "本次演示使用同一仿真运行链，展示从任务输入、覆盖清扫、安全处置到返航终态的连续过程；画面中的版本号和证据索引均可复核。",
+      "evidence": [
+        "mission_timeline.json",
+        "hardware_software_manifest.json"
+      ],
+      "acceptance": "画面可辨认版本号；不宣称实车或官方认证。"
+    },
+    {
+      "id": "S02",
+      "start_sec": 20,
+      "end_sec": 60,
+      "title": "系统启动与操作入口",
+      "screen": "从终端启动完整任务，显示 ROS 图、Gazebo/RViz 或只读 Dashboard 的实时状态。",
+      "narration": "操作员从统一入口启动任务。这里可以看到节点、话题和只读状态面板同时在线，后续所有结果都与这一次启动对应。",
+      "evidence": [
+        "launch_order.jsonl",
+        "launch.log"
+      ],
+      "acceptance": "启动链路连续；操作说明与任务入口清楚可见。"
+    },
+    {
+      "id": "S03",
+      "start_sec": 60,
+      "end_sec": 120,
+      "title": "建图与定位",
+      "screen": "展示地图加载或建图过程、定位轨迹、地图边界和 keepout 区域。",
+      "narration": "系统先确认作业地图、定位链和边界约束，再允许任务进入清扫阶段；控制链不使用评测真值。",
+      "evidence": [
+        "occupancy.pgm",
+        "coverage_trajectory.csv",
+        "localization regression"
+      ],
+      "acceptance": "地图、定位和作业区域使用同一 run 的实时画面。"
+    },
+    {
+      "id": "S04",
+      "start_sec": 120,
+      "end_sec": 180,
+      "title": "任务输入与结构化分解",
+      "screen": "展示自然语言或结构化任务请求、任务阶段时间线以及 coverage/return-home 状态机。",
+      "narration": "任务请求被转换为结构化阶段，覆盖率、返航和终态检查分别进入同一时间线。",
+      "evidence": [
+        "mission_timeline.json",
+        "task decomposition receipt"
+      ],
+      "acceptance": "任务分解结果与随后执行阶段一一对应。"
+    },
+    {
+      "id": "S05",
+      "start_sec": 180,
+      "end_sec": 330,
+      "title": "连续覆盖清扫",
+      "screen": "展示车辆持续移动、brush 开启、覆盖轨迹增长、dirt delta 和覆盖率实时变化。",
+      "narration": "车辆保持连续清扫，画面同时给出覆盖轨迹和地面污物差量；效率使用完整任务仿真秒数计算，不使用墙钟时间或短时窗口。",
+      "evidence": [
+        "coverage_report.json",
+        "coverage_trajectory.csv",
+        "cleaning_bridge.json"
+      ],
+      "acceptance": "至少 150 秒连续作业画面；效率和面积必须来自同一 run。"
+    },
+    {
+      "id": "S06",
+      "start_sec": 330,
+      "end_sec": 390,
+      "title": "安全与异常处置",
+      "screen": "展示动态障碍避让、collision monitor、禁行区约束和急停响应实验。",
+      "narration": "系统在动态障碍和急停请求下执行安全链，最终线速度和角速度都回到零，碰撞与禁行区违规保持为零。",
+      "evidence": [
+        "safety_receipt.json",
+        "coverage_report.json"
+      ],
+      "acceptance": "画面出现可核对的急停请求和速度归零；不得切镜伪造。"
+    },
+    {
+      "id": "S07",
+      "start_sec": 390,
+      "end_sec": 450,
+      "title": "返航与终态",
+      "screen": "展示 return-home 阶段、终点位姿、brush/dirt 关闭、运动归零和最终状态快照。",
+      "narration": "任务结束后车辆返航。刷盘和污物系统关闭，底盘停止，任务进入安全的 IDLE 终态。",
+      "evidence": [
+        "return_home_receipt.json",
+        "final_state.json"
+      ],
+      "acceptance": "返航完成、终态安全且与 MCAP 记录一致。"
+    },
+    {
+      "id": "S08",
+      "start_sec": 450,
+      "end_sec": 480,
+      "title": "结果与证据索引",
+      "screen": "展示完整任务时长、sim/wall/RTF、有效面积、效率、覆盖率、视频与 MCAP 对应关系。",
+      "narration": "最后展示同一 run 的效率、覆盖、安全、返航、视频和 MCAP receipt。任何缺失证据都会保持失败关闭，不会手工补成通过。",
+      "evidence": [
+        "full_mission_acceptance_receipt.json",
+        "video_manifest.json",
+        "bag/metadata.yaml"
+      ],
+      "acceptance": "所有数字可回溯到同一 run；缺失项明确显示，不手填 PASS。"
+    }
+  ],
+  "recording_checklist": [
+    {
+      "id": "R01",
+      "item": "视频连续记录完整任务，不用静态幻灯片替代实际操作画面",
+      "evidence": "video_manifest.json contains_operation_footage=true"
+    },
+    {
+      "id": "R02",
+      "item": "视频时长为 5-10 分钟",
+      "evidence": "ffprobe format.duration"
+    },
+    {
+      "id": "R03",
+      "item": "分辨率至少 1280x720，主流浏览器可播放",
+      "evidence": "ffprobe video stream"
+    },
+    {
+      "id": "R04",
+      "item": "视频、MCAP、timeline、receipt 使用同一 mission_id",
+      "evidence": "video_manifest.json + bag/metadata.yaml + receipt"
+    },
+    {
+      "id": "R05",
+      "item": "brush 开启、dirt delta、返航和停车终态均出现在连续画面中",
+      "evidence": "storyboard S05-S07"
+    },
+    {
+      "id": "R06",
+      "item": "所有连接凭据、令牌和私有地址均已遮盖",
+      "evidence": "submission-package scan_credentials.py"
+    },
+    {
+      "id": "R07",
+      "item": "视频文件 SHA-256 与 manifest 一致",
+      "evidence": "full_mission_acceptance_receipt.json"
+    },
+    {
+      "id": "R08",
+      "item": "任何失败镜头保留并说明，不用旧 run 或渲染动画补位",
+      "evidence": "failure notes and raw run directory"
+    }
+  ]
+}

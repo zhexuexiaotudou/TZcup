@@ -1,0 +1,13 @@
+id,category,requirement,evidence,blocking
+DUR-01,media,总时长在300到600秒之间,ffprobe media_info,true
+RES-01,media,分辨率至少1280x720,ffprobe media_info,true
+FPS-01,media,平均帧率至少24fps,ffprobe media_info,true
+CODE-01,media,视频编码为H264或HEVC,ffprobe media_info,true
+AUD-01,media,存在音轨或提供同步字幕,ffprobe streams and captions file,true
+TASK-01,task,完整任务在同一版本下启动到终止,task日志和视频,true
+CLEAN-01,task,清扫执行在视频中可见,刷体状态和清除结果,true
+SAFE-01,task,障碍或急停事件可见且未跳过触发,task事件和视频,true
+RESULT-01,task,任务终态或覆盖结果可复核,日志与视频叠层,true
+VERSION-01,traceability,视频中可见版本和任务ID,画面叠层,true
+TRUTH-01,traceability,未用剪辑把失败伪装成完整成功,人工审核与原始日志,true
+LIMIT-01,statement,结尾明确未测项和测试边界,视频结尾,false

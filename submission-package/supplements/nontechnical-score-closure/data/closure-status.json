@@ -1,0 +1,121 @@
+{
+  "package_version": "1.0.0",
+  "generated_date": "2026-09-14",
+  "timezone": "Asia/Shanghai",
+  "official_pdf_sha256": "5fa80f74b7a1f36e5d0d63592282a5cc5f26394e562350407497cff27bdccc9e",
+  "baselines": {
+    "submission_report": {
+      "branch": "codex/day1-submission-report",
+      "commit": "43f7136",
+      "report_pdf_sha256": "cc98ca940c932dd39128499e28a53cc63b5ce6b5e079d5c7ab83ee3059ca5e3a"
+    },
+    "value_package": {
+      "branch": "codex/day1-value-package",
+      "commit": "2aefb12"
+    }
+  },
+  "scope": {
+    "gazebo_started": false,
+    "s100p_accessed": false,
+    "report_source_modified": false
+  },
+  "items": {
+    "APP-USE-TRAINING": {
+      "status": "PLANNED_NOT_MEASURED",
+      "evidence_class": "CURRICULUM",
+      "official_points_claimed": 0.0,
+      "incremental_ready": true,
+      "supporting_paths": [
+        "operator-usability.md",
+        "data/operator-certification-template.csv",
+        "tools/operator_certification.py"
+      ]
+    },
+    "APP-USE-MAINTENANCE": {
+      "status": "DESIGN_ONLY_NOT_PHYSICALLY_MEASURED",
+      "evidence_class": "DIGITAL_PROCEDURE",
+      "official_points_claimed": 0.0,
+      "incremental_ready": true,
+      "supporting_paths": [
+        "maintenance-three-step.md",
+        "data/maintenance-procedure.json",
+        "tools/validate_maintenance_procedure.py"
+      ]
+    },
+    "APP-USE-RELIABILITY": {
+      "status": "INSTRUMENTED_NOT_MEASURED",
+      "evidence_class": "STATISTICAL_PLAN",
+      "official_points_claimed": 0.0,
+      "incremental_ready": true,
+      "supporting_paths": [
+        "reliability-case.md",
+        "data/reliability-event-dictionary.json",
+        "tools/reliability_qualification.py"
+      ]
+    },
+    "APP-VALUE-SOCIAL": {
+      "status": "MODEL_ONLY_NOT_FIELD_MEASURED",
+      "evidence_class": "PARAMETER_MODEL",
+      "official_points_claimed": 0.0,
+      "incremental_ready": true,
+      "supporting_paths": [
+        "social-benefit.md",
+        "data/social-benefit-scenarios.json",
+        "tools/social_benefit_model.py"
+      ]
+    },
+    "COMP-HW-SW": {
+      "status": "PARTIAL",
+      "evidence_class": "MODULE_MATRIX",
+      "official_points_claimed": 0.0,
+      "incremental_ready": true,
+      "supporting_paths": [
+        "system-completeness.md"
+      ]
+    },
+    "COMP-DEMO": {
+      "status": "KIT_ONLY_VIDEO_NOT_MEASURED",
+      "evidence_class": "PRODUCTION_KIT",
+      "official_points_claimed": 0.0,
+      "incremental_ready": true,
+      "supporting_paths": [
+        "demo-video-production.md",
+        "data/demo-storyboard.csv",
+        "data/demo-acceptance-checklist.csv",
+        "tools/validate_demo_media.py"
+      ]
+    },
+    "COMP-DOCUMENT": {
+      "status": "DELIVERED",
+      "evidence_class": "REVIEWABLE_PACKAGE",
+      "official_points_claimed": 0.0,
+      "incremental_ready": true,
+      "supporting_paths": [
+        "pdf/TZcup-nontechnical-score-closure.pdf",
+        "tools/verify_package.py"
+      ]
+    },
+    "BONUS-INDUSTRIALIZATION": {
+      "status": "REVIEW_READY_NOT_FIELD_VALIDATED",
+      "evidence_class": "DEPLOYMENT_PLAN",
+      "official_points_claimed": 0.0,
+      "incremental_ready": true,
+      "supporting_paths": [
+        "industrialization-readiness.md",
+        "data/industrialization-gates.csv"
+      ]
+    },
+    "BONUS-IP-PAPER": {
+      "status": "NOT_ELIGIBLE_NO_FILING_OR_PUBLICATION",
+      "evidence_class": "TEMPLATE_ONLY",
+      "official_points_claimed": 0.0,
+      "incremental_ready": false,
+      "supporting_paths": [
+        "ip-research-boundary.md",
+        "invention-disclosure-template.md",
+        "paper-outline.md"
+      ]
+    }
+  },
+  "claim_policy": "No official point is claimed by this package without measured or granted evidence."
+}

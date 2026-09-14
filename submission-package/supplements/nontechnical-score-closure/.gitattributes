@@ -1,0 +1,4 @@
+.gitattributes text eol=lf
+*.csv text eol=lf
+*.sha256 text eol=lf
+*.pdf binary

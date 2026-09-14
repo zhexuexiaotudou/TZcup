@@ -1,0 +1,210 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tzcup.local/schemas/day1_full_mission_acceptance_receipt.schema.json",
+  "title": "Day-1 full-mission acceptance receipt",
+  "description": "Fail-closed receipt for packaging one same-run full mission across coverage, cleaning, safety, return-home, video, MCAP and completeness evidence.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "artifact_kind",
+    "generated_at_utc",
+    "fixture_only",
+    "status",
+    "machine_gate_pass",
+    "claim_boundary",
+    "run",
+    "timeline",
+    "efficiency",
+    "coverage",
+    "brush",
+    "dirt_delta",
+    "safety",
+    "return_home",
+    "final_state",
+    "video",
+    "mcap",
+    "hardware_software_completeness",
+    "demo_kit",
+    "gates",
+    "blockers"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "artifact_kind": {
+      "const": "day1_full_mission_acceptance_receipt"
+    },
+    "generated_at_utc": {
+      "type": "string",
+      "minLength": 1
+    },
+    "fixture_only": {
+      "type": "boolean"
+    },
+    "status": {
+      "enum": [
+        "PASS",
+        "FAIL"
+      ]
+    },
+    "machine_gate_pass": {
+      "type": "boolean"
+    },
+    "claim_boundary": {
+      "type": "object",
+      "required": [
+        "fixture_only",
+        "official_recognition_claim",
+        "old_run_reuse_allowed",
+        "note"
+      ],
+      "properties": {
+        "fixture_only": {
+          "type": "boolean"
+        },
+        "official_recognition_claim": {
+          "const": false
+        },
+        "old_run_reuse_allowed": {
+          "const": false
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "run": {
+      "type": "object",
+      "required": [
+        "path",
+        "run_id",
+        "mission_id"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "run_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "mission_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "timeline": {
+      "$ref": "#/$defs/section"
+    },
+    "efficiency": {
+      "$ref": "#/$defs/section"
+    },
+    "coverage": {
+      "$ref": "#/$defs/section"
+    },
+    "brush": {
+      "$ref": "#/$defs/section"
+    },
+    "dirt_delta": {
+      "$ref": "#/$defs/section"
+    },
+    "safety": {
+      "$ref": "#/$defs/section"
+    },
+    "return_home": {
+      "$ref": "#/$defs/section"
+    },
+    "final_state": {
+      "$ref": "#/$defs/section"
+    },
+    "video": {
+      "$ref": "#/$defs/section"
+    },
+    "mcap": {
+      "$ref": "#/$defs/section"
+    },
+    "hardware_software_completeness": {
+      "$ref": "#/$defs/section"
+    },
+    "demo_kit": {
+      "$ref": "#/$defs/section"
+    },
+    "gates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/gate"
+      }
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "$defs": {
+    "status": {
+      "enum": [
+        "PASS",
+        "FAIL"
+      ]
+    },
+    "section": {
+      "type": "object",
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "$ref": "#/$defs/status"
+        }
+      },
+      "additionalProperties": true
+    },
+    "gate": {
+      "type": "object",
+      "required": [
+        "id",
+        "section",
+        "passed",
+        "status",
+        "message",
+        "evidence"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "section": {
+          "type": "string",
+          "minLength": 1
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "status": {
+          "$ref": "#/$defs/status"
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

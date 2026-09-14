@@ -7,7 +7,7 @@ parser=argparse.ArgumentParser()
 parser.add_argument('--intake',type=Path)
 args=parser.parse_args()
 rows=json.loads((P/'metrics/results.json').read_text(encoding='utf-8'))
-canonical_status={'following':'PASS','perception':'FAIL','recognition_accuracy':'NOT_MEASURED','localization_mm':'FAIL'}
+canonical_status={'following':'PASS','perception':'PARTIAL','recognition_accuracy':'NOT_MEASURED','localization_mm':'FAIL'}
 for result_id,status in canonical_status.items():
     matches=[r for r in rows if r['id']==result_id]
     if len(matches)!=1 or matches[0]['status']!=status:
@@ -16,12 +16,14 @@ recognition=next(r for r in rows if r['id']=='recognition_accuracy')
 if '未达到' in recognition['note']:
     raise ValueError('Official recognition status must stay NOT_MEASURED without an unmet-result claim')
 perception=next(r for r in rows if r['id']=='perception')
-if ('0/0/76' in perception['note'] or 'policy 0/8/76' in perception['note']) and not any(
+if ('0/0/76' in perception['note'] or '41/0/35' in perception['note']) and not any(
     marker in perception['note'] for marker in ('撤回','baseline','基线')
 ):
     raise ValueError('Withdrawn perception policy metrics must not be reported as measured')
-if 'competition_perception_pass=false' not in perception['note'] or 'NOT_MEASURED' not in perception['note']:
-    raise ValueError('Perception must keep official status NOT_MEASURED and competition_perception_pass false')
+if 'reviewable_95_candidate=true' not in perception['note'] or 'competition_perception_pass=false' not in perception['note']:
+    raise ValueError('Perception must keep the controlled 95 candidate separate from official acceptance')
+if 'NOT_MEASURED_DEFINITION_UNSPECIFIED' not in recognition['note']:
+    raise ValueError('Official recognition must remain undefined and NOT_MEASURED')
 localization=next(r for r in rows if r['id']=='localization_mm')
 if localization.get('interpretations',{}).get('strict_predeclared_max_le_50mm')!='FAIL':
     raise ValueError('Strict predeclared localization max criterion must remain FAIL')
@@ -37,6 +39,7 @@ allowed_bases={
     'measured_simulation',
     'internal_frozen_regression',
     'offline_replay',
+    'controlled_fixture_replay',
     'offline_raycast_mapping',
     'synthetic_replay',
     'design_calculation',
@@ -130,7 +133,7 @@ for page,(title,paras) in enumerate(sections,1):
         p.drawOn(c,45,y-h); y-=h+24
     # Measurement design diagrams are explicitly labelled; no synthetic outcome plots.
     # The avoidance page has the longest evidence list; keep it clear of the generic diagram.
-    if 3<=page<=2+len(rows) and page!=14:
+    if 3<=page<=2+len(rows) and page!=14 and y>=345:
         c.setFillColorRGB(.93,.96,.98); c.roundRect(45,122,505,205,7,fill=1,stroke=0)
         c.setFillColorRGB(.06,.18,.26); c.setFont('CN',12)
         c.drawString(62,301,'测量设计图（不是运行结果）')

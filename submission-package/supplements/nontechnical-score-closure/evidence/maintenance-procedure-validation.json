@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "input": "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-easy-points-closure/nontechnical-closure-package/data/maintenance-procedure.json",
+  "step_limit": 3,
+  "required_tools": [],
+  "errors": [],
+  "claim_status": "DESIGN_ONLY_NOT_PHYSICALLY_MEASURED"
+}

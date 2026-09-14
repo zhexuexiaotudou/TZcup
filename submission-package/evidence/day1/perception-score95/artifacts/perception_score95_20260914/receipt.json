@@ -1,0 +1,292 @@
+{
+  "schema_version": 1,
+  "receipt_id": "competition-perception-score95-20260914",
+  "status": "CONTROLLED_SIMULATION_95_PASS_OFFICIAL_R01_DEFINITION_UNSPECIFIED",
+  "model": {
+    "path": "stage5a_gray_calibrated_perception.onnx",
+    "sha256": "00f4f96f3eb925e202266506d22892a1df84838d08dbf6541d204c3e1d089c6a",
+    "bytes": 42458
+  },
+  "official_requirement": {
+    "source_pdf": "DG-202604北京地平线信息科技有限公司-面向智慧环卫场景的国产系统无人清扫车关键技术攻关比赛方案.doc.pdf",
+    "source_sha256": "5fa80f74b7a1f36e5d0d63592282a5cc5f26394e562350407497cff27bdccc9e",
+    "technical_requirement": "3. 实现基于视觉的物体识别与定位，垃圾识别准确率≥95%",
+    "scoring_requirement": "物体识别准确率≥95%（10分）",
+    "definition_boundary": "The supplied PDF states the threshold but does not define the object/frame denominator, matching rule, or evaluation set."
+  },
+  "frozen_evaluation_contract": {
+    "classes": [
+      "plastic_bottle",
+      "metal_can",
+      "paper_litter",
+      "leaf_pile",
+      "puddle"
+    ],
+    "matching": "class-aware, greedy confidence-ranked, one-to-one at IoU >= 0.5",
+    "minimum_component_pixels": 24,
+    "sample_domains": {
+      "synthetic_calibration": "seeds 200000..200511, disjoint from training",
+      "synthetic_independent_test": "seeds 300000..300511, not used for training or tuning",
+      "controlled_fixture": "30 correlated Gazebo RGB frames, 76 independently labelled instances; not a population sample"
+    },
+    "thresholds": {
+      "plastic_bottle": 0.8,
+      "metal_can": 0.8,
+      "paper_litter": 0.8,
+      "leaf_pile": 0.8,
+      "puddle": 0.8
+    },
+    "low_confidence_prototype_fallback": true
+  },
+  "results": {
+    "synthetic_calibration": {
+      "classes": {
+        "plastic_bottle": {
+          "tp": 512,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "truth_support": 512
+        },
+        "metal_can": {
+          "tp": 512,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "truth_support": 512
+        },
+        "paper_litter": {
+          "tp": 512,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "truth_support": 512
+        },
+        "leaf_pile": {
+          "tp": 512,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "truth_support": 512
+        },
+        "puddle": {
+          "tp": 512,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "truth_support": 512
+        }
+      },
+      "totals": {
+        "tp": 2560,
+        "fp": 0,
+        "fn": 0
+      },
+      "object_accuracy": 1.0,
+      "macro_precision_conservative": 1.0,
+      "macro_recall_conservative": 1.0,
+      "minimum_class_precision": 1.0,
+      "minimum_class_recall": 1.0,
+      "passes_95": true
+    },
+    "synthetic_independent_test": {
+      "classes": {
+        "plastic_bottle": {
+          "tp": 512,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "truth_support": 512
+        },
+        "metal_can": {
+          "tp": 512,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "truth_support": 512
+        },
+        "paper_litter": {
+          "tp": 512,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "truth_support": 512
+        },
+        "leaf_pile": {
+          "tp": 512,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "truth_support": 512
+        },
+        "puddle": {
+          "tp": 512,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "truth_support": 512
+        }
+      },
+      "totals": {
+        "tp": 2560,
+        "fp": 0,
+        "fn": 0
+      },
+      "object_accuracy": 1.0,
+      "macro_precision_conservative": 1.0,
+      "macro_recall_conservative": 1.0,
+      "minimum_class_precision": 1.0,
+      "minimum_class_recall": 1.0,
+      "passes_95": true
+    },
+    "controlled_fixture_raw_all_frames": {
+      "classes": {
+        "plastic_bottle": {
+          "tp": 15,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "truth_support": 15
+        },
+        "metal_can": {
+          "tp": 15,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "truth_support": 15
+        },
+        "paper_litter": {
+          "tp": 15,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "truth_support": 15
+        },
+        "leaf_pile": {
+          "tp": 15,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "truth_support": 15
+        },
+        "puddle": {
+          "tp": 16,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "truth_support": 16
+        }
+      },
+      "totals": {
+        "tp": 76,
+        "fp": 0,
+        "fn": 0
+      },
+      "object_accuracy": 1.0,
+      "macro_precision_conservative": 1.0,
+      "macro_recall_conservative": 1.0,
+      "minimum_class_precision": 1.0,
+      "minimum_class_recall": 1.0,
+      "passes_95": true
+    },
+    "controlled_fixture_policy_all_frames": {
+      "classes": {
+        "plastic_bottle": {
+          "tp": 15,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "truth_support": 15
+        },
+        "metal_can": {
+          "tp": 15,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "truth_support": 15
+        },
+        "paper_litter": {
+          "tp": 15,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "truth_support": 15
+        },
+        "leaf_pile": {
+          "tp": 15,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "truth_support": 15
+        },
+        "puddle": {
+          "tp": 16,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "truth_support": 16
+        }
+      },
+      "totals": {
+        "tp": 76,
+        "fp": 0,
+        "fn": 0
+      },
+      "object_accuracy": 1.0,
+      "macro_precision_conservative": 1.0,
+      "macro_recall_conservative": 1.0,
+      "minimum_class_precision": 1.0,
+      "minimum_class_recall": 1.0,
+      "passes_95": true
+    }
+  },
+  "decision": {
+    "controlled_domain_95_pass": true,
+    "reviewable_95_candidate": true,
+    "official_competition_R01": "NOT_MEASURED_DEFINITION_UNSPECIFIED",
+    "competition_perception_pass": false,
+    "reason": "All controlled synthetic and controlled-fixture object-level checks pass at >=95%, including the runtime-compatible policy replay on all 30 frames. The official PDF does not define its evaluation population, and real-world/board validation remains unmeasured, so this is not claimed as official R01 acceptance."
+  },
+  "source_results": {
+    "synthetic_calibration": {
+      "path": "artifacts\\perception_score95_20260914\\synthetic-calibration-200000-200511.json",
+      "sha256": "c4d6cf438669c3ed5a3aa3500dbb14ae17384d43ec5d8d7dc32216ce4026221a",
+      "bytes": 311921
+    },
+    "synthetic_independent_test": {
+      "path": "artifacts\\perception_score95_20260914\\synthetic-test-300000-300511.json",
+      "sha256": "2c2c135324197d877a80cea3fd74d97448c66791dfa34912ec905ecdc4c881cf",
+      "bytes": 311914
+    },
+    "controlled_fixture_raw_all_frames": {
+      "path": "artifacts\\perception_score95_20260914\\controlled-fixture-raw-all-frames.json",
+      "sha256": "c708f9af76dd2b84d1abe64f819a1713d844f2cc1faa898c9484ef721405342d",
+      "bytes": 11923
+    },
+    "controlled_fixture_policy_all_frames": {
+      "path": "artifacts\\perception_score95_20260914\\controlled-fixture-policy-all-frames-prototype-fallback.json",
+      "sha256": "1f58fcef1cf95705baa768c5c54c138febc4d20a42b73587ee8c7c293a257fac",
+      "bytes": 14279
+    }
+  }
+}

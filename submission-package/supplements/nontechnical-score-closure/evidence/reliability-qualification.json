@@ -1,0 +1,11 @@
+{
+  "status": "PLAN_ONLY_NOT_MEASURED",
+  "confidence": 0.95,
+  "target_upper_bound": 0.01,
+  "minimum_vehicle_days": {
+    "zero_primary_failures": 299,
+    "one_primary_failure": 473,
+    "two_primary_failures": 628
+  },
+  "claim_policy": "The sample-size table is a qualification gate, not an observed failure rate."
+}

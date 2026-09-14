@@ -356,5 +356,79 @@
       "the 0.25 m pre-run geofence and neutral-speed masks are explicitly excluded from the 20000 m2 SLAM map gate",
       "the timeout receipt does not establish that the 20000 m2 area is unreachable and does not substitute for a sealed map"
     ]
+  },
+  {
+    "local_evidence": "evidence/day1/perception-score95/docs/competition-perception-score95.md",
+    "metrics_evidence": "evidence/day1/perception-score95/artifacts/perception_score95_20260914/receipt.json",
+    "controlled_raw": "evidence/day1/perception-score95/artifacts/perception_score95_20260914/controlled-fixture-raw-all-frames.json",
+    "controlled_policy": "evidence/day1/perception-score95/artifacts/perception_score95_20260914/controlled-fixture-policy-all-frames-prototype-fallback.json",
+    "synthetic_calibration": "evidence/day1/perception-score95/artifacts/perception_score95_20260914/synthetic-calibration-200000-200511.json",
+    "synthetic_independent_test": "evidence/day1/perception-score95/artifacts/perception_score95_20260914/synthetic-test-300000-300511.json",
+    "source_branch": "codex/day1-perception-score95",
+    "source_commit": "3882dc34e756e1c361852027d49e55acac2b2a74",
+    "run_id": "perception-score95-20260914",
+    "accepted_facts": [
+      "all 30 controlled-fixture frames and 76 independently labelled instances were replayed with the frozen class-aware IoU >= 0.5 contract",
+      "raw and runtime-compatible policy both report five-class precision/recall 1.0, macro precision/recall 1.0 and TP/FP/FN 76/0/0",
+      "reviewable_95_candidate=true and controlled_domain_95_pass=true",
+      "historical raw 33/50/43 -> 41/0/35 and policy 0/0/76 -> 33/0/43 remain recorded as diagnostics caused by the legacy 9-frame presence mask"
+    ],
+    "limitations": [
+      "official_competition_R01=NOT_MEASURED_DEFINITION_UNSPECIFIED and competition_perception_pass=false",
+      "the 30 controlled frames are correlated repeated views, not an independent real-world population",
+      "real camera, complex illumination, occlusion, distance variation and S100P board inference remain NOT_MEASURED"
+    ]
+  },
+  {
+    "local_evidence": "supplements/nontechnical-score-closure/README.md",
+    "metrics_evidence": "supplements/nontechnical-score-closure/data/closure-status.json",
+    "pdf": "supplements/nontechnical-score-closure/pdf/TZcup-nontechnical-score-closure.pdf",
+    "manifest": "supplements/nontechnical-score-closure/MANIFEST.sha256",
+    "source_branch": "codex/day1-easy-points-closure",
+    "source_commit": "6b1a7dd81005f11501278599e4a1d5070378bdda",
+    "run_id": "nontechnical-score-closure-20260914",
+    "accepted_facts": [
+      "the 14-page supplement closes reviewable documentation, industrialization, maintenance-procedure, demo-kit, social-benefit and reliability-planning materials",
+      "the package records official_points_claimed=0 and keeps DESIGN_ONLY, PLANNED, MODEL_ONLY and KIT_ONLY states separate from measured results",
+      "the three-step maintenance and operator/reliability tools are reproducible offline and the manifest is byte-addressable"
+    ],
+    "limitations": [
+      "no novice cohort, physical replacement, fleet-day reliability result, field social-benefit measurement or approved customer trial exists",
+      "no valid 5-10 minute mission video exists; the retained 6.333 s partial clip fails the media validator",
+      "no patent filing, paper acceptance or publication is claimed"
+    ]
+  },
+  {
+    "local_evidence": "evidence/day1/tooling/full-mission-demo/docs/day1-full-mission-demo-wrapper.md",
+    "tool": "evidence/day1/tooling/full-mission-demo/scripts/day1_full_mission_acceptance.py",
+    "schema": "evidence/day1/tooling/full-mission-demo/schemas/day1_full_mission_acceptance_receipt.schema.json",
+    "source_branch": "codex/day1-full-mission-demo",
+    "source_commit": "72b132c9d71b89d69b2623a512463f37f16af216",
+    "accepted_facts": [
+      "the wrapper computes efficiency strictly from full-mission simulation seconds rather than the 10 s steady window",
+      "the wrapper requires same-run mission timeline, return-home, final-state, safety, cleaning, MCAP and hardware/software integrity evidence",
+      "the existing coverage-only run is correctly rejected as FAIL because those inputs are absent"
+    ],
+    "limitations": [
+      "the wrapper is tooling and fail-closed validation, not a completed mission result or official score",
+      "the current package still has no accepted full-mission receipt or valid 5-10 minute video"
+    ]
+  },
+  {
+    "local_evidence": "evidence/day1/tooling/live-slam-replay-fail-closed/docs/live-slam-replay-recovery.md",
+    "metrics_evidence": "evidence/day1/tooling/live-slam-replay-fail-closed/reports/mapping/day1_live_slam_replay_preflight_20260914.json",
+    "tool": "evidence/day1/tooling/live-slam-replay-fail-closed/scripts/audit_live_slam_replay_inputs.py",
+    "source_branch": "codex/day1-live-mapping-recovery",
+    "source_commit": "e2a9bc0be602efa72bb4978dfdd852e284c0c1eb",
+    "run_id": "day1-mapping-run-20260914-06",
+    "accepted_facts": [
+      "the two retained run-06 MCAP bags contain clock, odom, GNSS, command, safety and lifecycle topics",
+      "the required /scan, /tf and /tf_static topics are absent",
+      "the audit exits fail-closed with replay_eligible=false and area_gate=NOT_MEASURED"
+    ],
+    "limitations": [
+      "this is an input-admission audit, not a SLAM replay, map-quality result or 20000 m2 live-mapping pass",
+      "a future valid run must be produced by the single Gazebo owner with the missing topics in the same fresh run"
+    ]
   }
 ]

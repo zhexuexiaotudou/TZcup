@@ -1,0 +1,521 @@
+{
+  "status": "MEASURED_NOT_OFFICIAL_ACCEPTANCE",
+  "frame_count": 30,
+  "class_metrics": {
+    "plastic_bottle": {
+      "tp": 15,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "truth_support": 15
+    },
+    "metal_can": {
+      "tp": 15,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "truth_support": 15
+    },
+    "paper_litter": {
+      "tp": 15,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "truth_support": 15
+    },
+    "leaf_pile": {
+      "tp": 15,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "truth_support": 15
+    },
+    "puddle": {
+      "tp": 16,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "truth_support": 16
+    }
+  },
+  "macro_precision_conservative": 1.0,
+  "macro_recall_conservative": 1.0,
+  "false_positive_samples": [],
+  "false_negative_samples": [],
+  "matched_samples": [
+    {
+      "frame_id": "frame_01",
+      "class_id": "plastic_bottle",
+      "object_id": "sample_0",
+      "iou": 0.6938829989440949
+    },
+    {
+      "frame_id": "frame_01",
+      "class_id": "metal_can",
+      "object_id": "sample_1",
+      "iou": 0.6373710096645736
+    },
+    {
+      "frame_id": "frame_01",
+      "class_id": "paper_litter",
+      "object_id": "sample_2",
+      "iou": 0.8973407267649612
+    },
+    {
+      "frame_id": "frame_01",
+      "class_id": "leaf_pile",
+      "object_id": "sample_3",
+      "iou": 0.9748967242032786
+    },
+    {
+      "frame_id": "frame_01",
+      "class_id": "puddle",
+      "object_id": "sample_4",
+      "iou": 0.9822326689689751
+    },
+    {
+      "frame_id": "frame_02",
+      "class_id": "plastic_bottle",
+      "object_id": "sample_0",
+      "iou": 0.6938829989440949
+    },
+    {
+      "frame_id": "frame_02",
+      "class_id": "metal_can",
+      "object_id": "sample_1",
+      "iou": 0.6373710096645736
+    },
+    {
+      "frame_id": "frame_02",
+      "class_id": "paper_litter",
+      "object_id": "sample_2",
+      "iou": 0.8973407267649612
+    },
+    {
+      "frame_id": "frame_02",
+      "class_id": "leaf_pile",
+      "object_id": "sample_3",
+      "iou": 0.9748967242032786
+    },
+    {
+      "frame_id": "frame_02",
+      "class_id": "puddle",
+      "object_id": "sample_4",
+      "iou": 0.9822326689689751
+    },
+    {
+      "frame_id": "frame_03",
+      "class_id": "plastic_bottle",
+      "object_id": "sample_0",
+      "iou": 0.6938829989440949
+    },
+    {
+      "frame_id": "frame_03",
+      "class_id": "metal_can",
+      "object_id": "sample_1",
+      "iou": 0.6373710096645736
+    },
+    {
+      "frame_id": "frame_03",
+      "class_id": "paper_litter",
+      "object_id": "sample_2",
+      "iou": 0.8973407267649612
+    },
+    {
+      "frame_id": "frame_03",
+      "class_id": "leaf_pile",
+      "object_id": "sample_3",
+      "iou": 0.9748967242032786
+    },
+    {
+      "frame_id": "frame_03",
+      "class_id": "puddle",
+      "object_id": "sample_4",
+      "iou": 0.9822326689689751
+    },
+    {
+      "frame_id": "frame_04",
+      "class_id": "plastic_bottle",
+      "object_id": "sample_0",
+      "iou": 0.6938829989440949
+    },
+    {
+      "frame_id": "frame_04",
+      "class_id": "metal_can",
+      "object_id": "sample_1",
+      "iou": 0.6373710096645736
+    },
+    {
+      "frame_id": "frame_04",
+      "class_id": "paper_litter",
+      "object_id": "sample_2",
+      "iou": 0.8973407267649612
+    },
+    {
+      "frame_id": "frame_04",
+      "class_id": "leaf_pile",
+      "object_id": "sample_3",
+      "iou": 0.9748967242032786
+    },
+    {
+      "frame_id": "frame_04",
+      "class_id": "puddle",
+      "object_id": "sample_4",
+      "iou": 0.9822326689689751
+    },
+    {
+      "frame_id": "frame_05",
+      "class_id": "plastic_bottle",
+      "object_id": "sample_0",
+      "iou": 0.6938829989440949
+    },
+    {
+      "frame_id": "frame_05",
+      "class_id": "metal_can",
+      "object_id": "sample_1",
+      "iou": 0.6373710096645736
+    },
+    {
+      "frame_id": "frame_05",
+      "class_id": "paper_litter",
+      "object_id": "sample_2",
+      "iou": 0.8973407267649612
+    },
+    {
+      "frame_id": "frame_05",
+      "class_id": "leaf_pile",
+      "object_id": "sample_3",
+      "iou": 0.9748967242032786
+    },
+    {
+      "frame_id": "frame_05",
+      "class_id": "puddle",
+      "object_id": "sample_4",
+      "iou": 0.9822326689689751
+    },
+    {
+      "frame_id": "frame_06",
+      "class_id": "plastic_bottle",
+      "object_id": "sample_0",
+      "iou": 0.6938829989440949
+    },
+    {
+      "frame_id": "frame_06",
+      "class_id": "metal_can",
+      "object_id": "sample_1",
+      "iou": 0.6373710096645736
+    },
+    {
+      "frame_id": "frame_06",
+      "class_id": "paper_litter",
+      "object_id": "sample_2",
+      "iou": 0.8973407267649612
+    },
+    {
+      "frame_id": "frame_06",
+      "class_id": "leaf_pile",
+      "object_id": "sample_3",
+      "iou": 0.9748967242032786
+    },
+    {
+      "frame_id": "frame_06",
+      "class_id": "puddle",
+      "object_id": "sample_4",
+      "iou": 0.9822326689689751
+    },
+    {
+      "frame_id": "frame_07",
+      "class_id": "plastic_bottle",
+      "object_id": "sample_0",
+      "iou": 0.6938829989440949
+    },
+    {
+      "frame_id": "frame_07",
+      "class_id": "metal_can",
+      "object_id": "sample_1",
+      "iou": 0.6373710096645736
+    },
+    {
+      "frame_id": "frame_07",
+      "class_id": "paper_litter",
+      "object_id": "sample_2",
+      "iou": 0.8973407267649612
+    },
+    {
+      "frame_id": "frame_07",
+      "class_id": "leaf_pile",
+      "object_id": "sample_3",
+      "iou": 0.9748967242032786
+    },
+    {
+      "frame_id": "frame_07",
+      "class_id": "puddle",
+      "object_id": "sample_4",
+      "iou": 0.9822326689689751
+    },
+    {
+      "frame_id": "frame_08",
+      "class_id": "plastic_bottle",
+      "object_id": "sample_0",
+      "iou": 0.6938829989440949
+    },
+    {
+      "frame_id": "frame_08",
+      "class_id": "metal_can",
+      "object_id": "sample_1",
+      "iou": 0.6373710096645736
+    },
+    {
+      "frame_id": "frame_08",
+      "class_id": "paper_litter",
+      "object_id": "sample_2",
+      "iou": 0.8973407267649612
+    },
+    {
+      "frame_id": "frame_08",
+      "class_id": "leaf_pile",
+      "object_id": "sample_3",
+      "iou": 0.9748967242032786
+    },
+    {
+      "frame_id": "frame_08",
+      "class_id": "puddle",
+      "object_id": "sample_4",
+      "iou": 0.9822326689689751
+    },
+    {
+      "frame_id": "frame_09",
+      "class_id": "plastic_bottle",
+      "object_id": "sample_0",
+      "iou": 0.6938829989440949
+    },
+    {
+      "frame_id": "frame_09",
+      "class_id": "metal_can",
+      "object_id": "sample_1",
+      "iou": 0.6373710096645736
+    },
+    {
+      "frame_id": "frame_09",
+      "class_id": "paper_litter",
+      "object_id": "sample_2",
+      "iou": 0.8973407267649612
+    },
+    {
+      "frame_id": "frame_09",
+      "class_id": "leaf_pile",
+      "object_id": "sample_3",
+      "iou": 0.9748967242032786
+    },
+    {
+      "frame_id": "frame_09",
+      "class_id": "puddle",
+      "object_id": "sample_4",
+      "iou": 0.9822326689689751
+    },
+    {
+      "frame_id": "frame_10",
+      "class_id": "plastic_bottle",
+      "object_id": "sample_0",
+      "iou": 0.6938829989440949
+    },
+    {
+      "frame_id": "frame_10",
+      "class_id": "metal_can",
+      "object_id": "sample_1",
+      "iou": 0.6373710096645736
+    },
+    {
+      "frame_id": "frame_10",
+      "class_id": "paper_litter",
+      "object_id": "sample_2",
+      "iou": 0.8973407267649612
+    },
+    {
+      "frame_id": "frame_10",
+      "class_id": "leaf_pile",
+      "object_id": "sample_3",
+      "iou": 0.9748967242032786
+    },
+    {
+      "frame_id": "frame_10",
+      "class_id": "puddle",
+      "object_id": "sample_4",
+      "iou": 0.9822326689689751
+    },
+    {
+      "frame_id": "frame_11",
+      "class_id": "plastic_bottle",
+      "object_id": "sample_0",
+      "iou": 0.6938829989440949
+    },
+    {
+      "frame_id": "frame_11",
+      "class_id": "metal_can",
+      "object_id": "sample_1",
+      "iou": 0.6373710096645736
+    },
+    {
+      "frame_id": "frame_11",
+      "class_id": "paper_litter",
+      "object_id": "sample_2",
+      "iou": 0.8973407267649612
+    },
+    {
+      "frame_id": "frame_11",
+      "class_id": "leaf_pile",
+      "object_id": "sample_3",
+      "iou": 0.9748967242032786
+    },
+    {
+      "frame_id": "frame_11",
+      "class_id": "puddle",
+      "object_id": "sample_4",
+      "iou": 0.9822326689689751
+    },
+    {
+      "frame_id": "frame_12",
+      "class_id": "plastic_bottle",
+      "object_id": "sample_0",
+      "iou": 0.6938829989440949
+    },
+    {
+      "frame_id": "frame_12",
+      "class_id": "metal_can",
+      "object_id": "sample_1",
+      "iou": 0.6373710096645736
+    },
+    {
+      "frame_id": "frame_12",
+      "class_id": "paper_litter",
+      "object_id": "sample_2",
+      "iou": 0.8973407267649612
+    },
+    {
+      "frame_id": "frame_12",
+      "class_id": "leaf_pile",
+      "object_id": "sample_3",
+      "iou": 0.9748967242032786
+    },
+    {
+      "frame_id": "frame_12",
+      "class_id": "puddle",
+      "object_id": "sample_4",
+      "iou": 0.9822326689689751
+    },
+    {
+      "frame_id": "frame_13",
+      "class_id": "plastic_bottle",
+      "object_id": "sample_0",
+      "iou": 0.6938829989440949
+    },
+    {
+      "frame_id": "frame_13",
+      "class_id": "metal_can",
+      "object_id": "sample_1",
+      "iou": 0.6373710096645736
+    },
+    {
+      "frame_id": "frame_13",
+      "class_id": "paper_litter",
+      "object_id": "sample_2",
+      "iou": 0.8973407267649612
+    },
+    {
+      "frame_id": "frame_13",
+      "class_id": "leaf_pile",
+      "object_id": "sample_3",
+      "iou": 0.9748967242032786
+    },
+    {
+      "frame_id": "frame_13",
+      "class_id": "puddle",
+      "object_id": "sample_4",
+      "iou": 0.9822326689689751
+    },
+    {
+      "frame_id": "frame_14",
+      "class_id": "plastic_bottle",
+      "object_id": "sample_0",
+      "iou": 0.6938829989440949
+    },
+    {
+      "frame_id": "frame_14",
+      "class_id": "metal_can",
+      "object_id": "sample_1",
+      "iou": 0.6373710096645736
+    },
+    {
+      "frame_id": "frame_14",
+      "class_id": "paper_litter",
+      "object_id": "sample_2",
+      "iou": 0.8973407267649612
+    },
+    {
+      "frame_id": "frame_14",
+      "class_id": "leaf_pile",
+      "object_id": "sample_3",
+      "iou": 0.9748967242032786
+    },
+    {
+      "frame_id": "frame_14",
+      "class_id": "puddle",
+      "object_id": "sample_4",
+      "iou": 0.9822326689689751
+    },
+    {
+      "frame_id": "frame_15",
+      "class_id": "plastic_bottle",
+      "object_id": "sample_0",
+      "iou": 0.6938829989440949
+    },
+    {
+      "frame_id": "frame_15",
+      "class_id": "metal_can",
+      "object_id": "sample_1",
+      "iou": 0.6373710096645736
+    },
+    {
+      "frame_id": "frame_15",
+      "class_id": "paper_litter",
+      "object_id": "sample_2",
+      "iou": 0.8973407267649612
+    },
+    {
+      "frame_id": "frame_15",
+      "class_id": "leaf_pile",
+      "object_id": "sample_3",
+      "iou": 0.9748967242032786
+    },
+    {
+      "frame_id": "frame_15",
+      "class_id": "puddle",
+      "object_id": "sample_4",
+      "iou": 0.9822326689689751
+    },
+    {
+      "frame_id": "frame_16",
+      "class_id": "puddle",
+      "object_id": "sample_4",
+      "iou": 0.9822326689689751
+    }
+  ],
+  "unmeasured_classes": [],
+  "iou_threshold": 0.5,
+  "competition_perception_pass": false,
+  "model_sha256": "00f4f96f3eb925e202266506d22892a1df84838d08dbf6541d204c3e1d089c6a",
+  "onnx_providers": [
+    "CPUExecutionProvider"
+  ],
+  "replay_status": "OFFLINE_FROZEN_FRAME_REPLAY",
+  "frame_selection": "all-frames",
+  "raw_output_presence_used": false,
+  "policy_replay_status": "NOT_RUN",
+  "policy_metrics": null,
+  "scored_raw_output_frame_count": 16
+}

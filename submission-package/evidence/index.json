@@ -474,5 +474,109 @@
     "source_commit": "c33c75a",
     "code_fix_commit": "ff42430",
     "copied_utc": "2026-09-14"
+  },
+  {
+    "file": "docs/report-baseline.json",
+    "source": "frozen baseline record for git:43f7136:submission-package/docs/技术方案报告.pdf",
+    "source_commit": "43f7136",
+    "sha256": "cc98ca940c932dd39128499e28a53cc63b5ce6b5e079d5c7ab83ee3059ca5e3a",
+    "copied_utc": "2026-09-14"
+  },
+  {
+    "file": "evidence/day1/integration-manifest.json",
+    "source": "integration manifest for perception candidate, nontechnical supplement, full-mission wrapper and live-SLAM fail-closed audit",
+    "source_branch": "codex/day1-evidence-integration",
+    "copied_utc": "2026-09-14"
+  },
+  {
+    "file": "evidence/day1/perception-score95/docs/competition-perception-score95.md",
+    "source": "git:3882dc34e756e1c361852027d49e55acac2b2a74:docs/competition-perception-score95.md",
+    "source_commit": "3882dc34e756e1c361852027d49e55acac2b2a74",
+    "sha256": "d84fb0e0c2ecc30e2d7e95e8bd9d7d725d47b415a91deba3b1010f93fb9c1c0a",
+    "copied_utc": "2026-09-14"
+  },
+  {
+    "file": "evidence/day1/perception-score95/artifacts/perception_score95_20260914/receipt.json",
+    "source": "git:3882dc34e756e1c361852027d49e55acac2b2a74:artifacts/perception_score95_20260914/receipt.json",
+    "source_commit": "3882dc34e756e1c361852027d49e55acac2b2a74",
+    "sha256": "5e924ea21e98a7227831bf3ad27d06d24635487adfc239d193a08f290f8cc47a",
+    "copied_utc": "2026-09-14"
+  },
+  {
+    "file": "evidence/day1/perception-score95/artifacts/perception_score95_20260914/controlled-fixture-raw-all-frames.json",
+    "source": "git:3882dc34e756e1c361852027d49e55acac2b2a74:artifacts/perception_score95_20260914/controlled-fixture-raw-all-frames.json",
+    "source_commit": "3882dc34e756e1c361852027d49e55acac2b2a74",
+    "sha256": "c708f9af76dd2b84d1abe64f819a1713d844f2cc1faa898c9484ef721405342d",
+    "copied_utc": "2026-09-14"
+  },
+  {
+    "file": "evidence/day1/perception-score95/artifacts/perception_score95_20260914/controlled-fixture-policy-all-frames-prototype-fallback.json",
+    "source": "git:3882dc34e756e1c361852027d49e55acac2b2a74:artifacts/perception_score95_20260914/controlled-fixture-policy-all-frames-prototype-fallback.json",
+    "source_commit": "3882dc34e756e1c361852027d49e55acac2b2a74",
+    "sha256": "1f58fcef1cf95705baa768c5c54c138febc4d20a42b73587ee8c7c293a257fac",
+    "copied_utc": "2026-09-14"
+  },
+  {
+    "file": "evidence/day1/perception-score95/artifacts/perception_score95_20260914/synthetic-calibration-200000-200511.json",
+    "source": "git:3882dc34e756e1c361852027d49e55acac2b2a74:artifacts/perception_score95_20260914/synthetic-calibration-200000-200511.json",
+    "source_commit": "3882dc34e756e1c361852027d49e55acac2b2a74",
+    "sha256": "c4d6cf438669c3ed5a3aa3500dbb14ae17384d43ec5d8d7dc32216ce4026221a",
+    "copied_utc": "2026-09-14"
+  },
+  {
+    "file": "evidence/day1/perception-score95/artifacts/perception_score95_20260914/synthetic-test-300000-300511.json",
+    "source": "git:3882dc34e756e1c361852027d49e55acac2b2a74:artifacts/perception_score95_20260914/synthetic-test-300000-300511.json",
+    "source_commit": "3882dc34e756e1c361852027d49e55acac2b2a74",
+    "sha256": "2c2c135324197d877a80cea3fd74d97448c66791dfa34912ec905ecdc4c881cf",
+    "copied_utc": "2026-09-14"
+  },
+  {
+    "file": "supplements/nontechnical-score-closure/pdf/TZcup-nontechnical-score-closure.pdf",
+    "source": "git:6b1a7dd81005f11501278599e4a1d5070378bdda:nontechnical-closure-package/pdf/TZcup-nontechnical-score-closure.pdf",
+    "source_commit": "6b1a7dd81005f11501278599e4a1d5070378bdda",
+    "sha256": "8d4775de720f8aa6eb5d9b596b69288a6634819acdf0b28020ed5b8e8ab28873",
+    "copied_utc": "2026-09-14"
+  },
+  {
+    "file": "supplements/nontechnical-score-closure/MANIFEST.sha256",
+    "source": "git:6b1a7dd81005f11501278599e4a1d5070378bdda:nontechnical-closure-package/MANIFEST.sha256",
+    "source_commit": "6b1a7dd81005f11501278599e4a1d5070378bdda",
+    "sha256": "f5bbbea6de943781d551bb9ba2ed6ff312984cda7d9dc01f9859b1881d61db4f",
+    "copied_utc": "2026-09-14"
+  },
+  {
+    "file": "evidence/day1/tooling/full-mission-demo/docs/day1-full-mission-demo-wrapper.md",
+    "source": "git:72b132c9d71b89d69b2623a512463f37f16af216:docs/day1-full-mission-demo-wrapper.md",
+    "source_commit": "72b132c9d71b89d69b2623a512463f37f16af216",
+    "sha256": "4165238b651b6b59c41d76aeb907f793d350f9ad1ec7aa97f12345915114c251",
+    "copied_utc": "2026-09-14"
+  },
+  {
+    "file": "evidence/day1/tooling/full-mission-demo/scripts/day1_full_mission_acceptance.py",
+    "source": "git:72b132c9d71b89d69b2623a512463f37f16af216:scripts/day1_full_mission_acceptance.py",
+    "source_commit": "72b132c9d71b89d69b2623a512463f37f16af216",
+    "sha256": "ffdc7bb315e0d071bc53258f2e53617567dff84b5d8a36a92e4fca254be13505",
+    "copied_utc": "2026-09-14"
+  },
+  {
+    "file": "evidence/day1/tooling/live-slam-replay-fail-closed/docs/live-slam-replay-recovery.md",
+    "source": "git:e2a9bc0be602efa72bb4978dfdd852e284c0c1eb:docs/live-slam-replay-recovery.md",
+    "source_commit": "e2a9bc0be602efa72bb4978dfdd852e284c0c1eb",
+    "sha256": "0ed3c90c5e9f3ec7e98c588667b63c86d3a50735fc236382963885857ec75e60",
+    "copied_utc": "2026-09-14"
+  },
+  {
+    "file": "evidence/day1/tooling/live-slam-replay-fail-closed/reports/mapping/day1_live_slam_replay_preflight_20260914.json",
+    "source": "git:e2a9bc0be602efa72bb4978dfdd852e284c0c1eb:reports/mapping/day1_live_slam_replay_preflight_20260914.json",
+    "source_commit": "e2a9bc0be602efa72bb4978dfdd852e284c0c1eb",
+    "sha256": "00e551436efbe961bbd18d5e29891f0a612599c99e8c35b5d500697e68e16407",
+    "copied_utc": "2026-09-14"
+  },
+  {
+    "file": "evidence/day1/tooling/live-slam-replay-fail-closed/scripts/audit_live_slam_replay_inputs.py",
+    "source": "git:e2a9bc0be602efa72bb4978dfdd852e284c0c1eb:scripts/audit_live_slam_replay_inputs.py",
+    "source_commit": "e2a9bc0be602efa72bb4978dfdd852e284c0c1eb",
+    "sha256": "61e6435e35fccbf195b2b9b542fc5bf4d5e68ec3b6e46f77a983627f9149fc10",
+    "copied_utc": "2026-09-14"
   }
 ]

@@ -1,0 +1,44 @@
+{
+  "status": "MODEL_ONLY_NOT_FIELD_MEASURED",
+  "quality_claimable": false,
+  "official_points_claimed": 0.0,
+  "scenarios": [
+    {
+      "id": "conservative",
+      "label": "保守演算",
+      "baseline_person_hours": 15.0,
+      "autonomous_person_hours": 8.0,
+      "person_hour_reduction": 7.0,
+      "person_hour_reduction_rate": 0.466667,
+      "energy_delta_kwh": 6.0,
+      "quality_claimable": false,
+      "project_result_claimable": false,
+      "evidence_status": "ILLUSTRATIVE_ASSUMPTION_NOT_PROJECT_RESULT"
+    },
+    {
+      "id": "base",
+      "label": "基准演算",
+      "baseline_person_hours": 23.0,
+      "autonomous_person_hours": 9.0,
+      "person_hour_reduction": 14.0,
+      "person_hour_reduction_rate": 0.608696,
+      "energy_delta_kwh": 6.0,
+      "quality_claimable": false,
+      "project_result_claimable": false,
+      "evidence_status": "ILLUSTRATIVE_ASSUMPTION_NOT_PROJECT_RESULT"
+    },
+    {
+      "id": "upside",
+      "label": "上限演算",
+      "baseline_person_hours": 31.0,
+      "autonomous_person_hours": 10.0,
+      "person_hour_reduction": 21.0,
+      "person_hour_reduction_rate": 0.677419,
+      "energy_delta_kwh": 5.0,
+      "quality_claimable": false,
+      "project_result_claimable": false,
+      "evidence_status": "ILLUSTRATIVE_ASSUMPTION_NOT_PROJECT_RESULT"
+    }
+  ],
+  "claim_policy": "Scenario arithmetic is not an observed project outcome."
+}

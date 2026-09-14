@@ -1,0 +1,36 @@
+{
+  "status": "FAIL",
+  "video": "..\\..\\TZcup-day1-submission-report\\submission-package\\evidence\\day1\\demo\\partial-gazebo-gui-6.333s\\visual_demo.mp4",
+  "captions_present": false,
+  "media": {
+    "duration_s": 6.333333,
+    "width": 1200,
+    "height": 1000,
+    "avg_fps": 15.0,
+    "video_codec": "h264",
+    "has_audio": false
+  },
+  "requirements": {
+    "duration_s": [
+      300.0,
+      600.0
+    ],
+    "minimum_resolution": [
+      1280,
+      720
+    ],
+    "minimum_fps": 24.0,
+    "allowed_video_codecs": [
+      "h264",
+      "hevc"
+    ],
+    "audio_or_captions": true
+  },
+  "errors": [
+    "duration must be 300-600s; got 6.333s",
+    "resolution must be at least 1280x720",
+    "frame rate must be at least 24 fps",
+    "audio stream or sidecar captions are required"
+  ],
+  "claim_policy": "A FAIL or ERROR cannot be reported as a completed official demo."
+}

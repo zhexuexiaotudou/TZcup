@@ -1,0 +1,146 @@
+{
+  "schema_version": 1,
+  "integration_id": "day1-evidence-integration-20260914",
+  "base_commit": "43f7136ef10d000fcc93f91271e203a21f529e9c",
+  "base_report_sha256": "cc98ca940c932dd39128499e28a53cc63b5ce6b5e079d5c7ab83ee3059ca5e3a",
+  "integrated_report": {
+    "package_path": "docs/技术方案报告.pdf",
+    "pages": 23,
+    "bytes": 191313,
+    "sha256": "3cc8158de1d57f6e5b692fae0571e862f6ce4b7c6f06647af1d16447ac37cc8b"
+  },
+  "claim_levels": [
+    "MEASURED_REPOSITORY_EVIDENCE",
+    "CONTROLLED_CANDIDATE",
+    "DESIGN_OR_PLAN_ONLY",
+    "NOT_MEASURED"
+  ],
+  "integrations": [
+    {
+      "id": "perception-score95",
+      "source_branch": "codex/day1-perception-score95",
+      "source_commit": "3882dc34e756e1c361852027d49e55acac2b2a74",
+      "claim_level": "CONTROLLED_CANDIDATE",
+      "official_competition_r01": "NOT_MEASURED_DEFINITION_UNSPECIFIED",
+      "reviewable_95_candidate": true,
+      "official_competition_pass": false,
+      "files": [
+        {
+          "package_path": "evidence/day1/perception-score95/docs/competition-perception-score95.md",
+          "bytes": 5124,
+          "sha256": "d84fb0e0c2ecc30e2d7e95e8bd9d7d725d47b415a91deba3b1010f93fb9c1c0a"
+        },
+        {
+          "package_path": "evidence/day1/perception-score95/artifacts/perception_score95_20260914/receipt.json",
+          "bytes": 8337,
+          "sha256": "5e924ea21e98a7227831bf3ad27d06d24635487adfc239d193a08f290f8cc47a"
+        },
+        {
+          "package_path": "evidence/day1/perception-score95/artifacts/perception_score95_20260914/controlled-fixture-raw-all-frames.json",
+          "bytes": 11923,
+          "sha256": "c708f9af76dd2b84d1abe64f819a1713d844f2cc1faa898c9484ef721405342d"
+        },
+        {
+          "package_path": "evidence/day1/perception-score95/artifacts/perception_score95_20260914/controlled-fixture-policy-all-frames-prototype-fallback.json",
+          "bytes": 14279,
+          "sha256": "1f58fcef1cf95705baa768c5c54c138febc4d20a42b73587ee8c7c293a257fac"
+        },
+        {
+          "package_path": "evidence/day1/perception-score95/artifacts/perception_score95_20260914/synthetic-calibration-200000-200511.json",
+          "bytes": 311921,
+          "sha256": "c4d6cf438669c3ed5a3aa3500dbb14ae17384d43ec5d8d7dc32216ce4026221a"
+        },
+        {
+          "package_path": "evidence/day1/perception-score95/artifacts/perception_score95_20260914/synthetic-test-300000-300511.json",
+          "bytes": 311914,
+          "sha256": "2c2c135324197d877a80cea3fd74d97448c66791dfa34912ec905ecdc4c881cf"
+        }
+      ],
+      "historical_diagnostics_retained": [
+        "raw 33/50/43 -> 41/0/35",
+        "policy 0/0/76 -> 33/0/43",
+        "legacy runtime exposed only 9 frames; those presence-masked metrics are not all-30-frame model capability"
+      ],
+      "unmeasured_boundary": "Official R01 definition, real-camera domain, complex illumination/occlusion/distance and S100P board inference."
+    },
+    {
+      "id": "nontechnical-score-closure",
+      "source_branch": "codex/day1-easy-points-closure",
+      "source_commit": "6b1a7dd81005f11501278599e4a1d5070378bdda",
+      "claim_level": "DESIGN_OR_PLAN_ONLY",
+      "official_points_claimed": 0.0,
+      "files": [
+        {
+          "package_path": "supplements/nontechnical-score-closure/pdf/TZcup-nontechnical-score-closure.pdf",
+          "bytes": 32584,
+          "sha256": "8d4775de720f8aa6eb5d9b596b69288a6634819acdf0b28020ed5b8e8ab28873"
+        },
+        {
+          "package_path": "supplements/nontechnical-score-closure/MANIFEST.sha256",
+          "bytes": 3560,
+          "sha256": "f5bbbea6de943781d551bb9ba2ed6ff312984cda7d9dc01f9859b1881d61db4f"
+        },
+        {
+          "package_path": "supplements/nontechnical-score-closure/data/closure-status.json",
+          "verified": true
+        },
+        {
+          "package_path": "supplements/nontechnical-score-closure/official-score-closure.md",
+          "verified": true
+        }
+      ],
+      "unimplemented_boundary": "No novice cohort, physical three-step change, fleet-day reliability, field social-benefit measurement, approved customer trial, complete 5-10 minute video, patent filing or publication is claimed."
+    },
+    {
+      "id": "full-mission-demo-wrapper",
+      "source_branch": "codex/day1-full-mission-demo",
+      "source_commit": "72b132c9d71b89d69b2623a512463f37f16af216",
+      "claim_level": "TOOLING_AND_FAIL_CLOSED_BOUNDARY",
+      "official_points_claimed": 0.0,
+      "files": [
+        {
+          "package_path": "evidence/day1/tooling/full-mission-demo/docs/day1-full-mission-demo-wrapper.md",
+          "bytes": 6904,
+          "sha256": "4165238b651b6b59c41d76aeb907f793d350f9ad1ec7aa97f12345915114c251"
+        },
+        {
+          "package_path": "evidence/day1/tooling/full-mission-demo/scripts/day1_full_mission_acceptance.py",
+          "bytes": 65144,
+          "sha256": "ffdc7bb315e0d071bc53258f2e53617567dff84b5d8a36a92e4fca254be13505"
+        },
+        {
+          "package_path": "evidence/day1/tooling/full-mission-demo/schemas/day1_full_mission_acceptance_receipt.schema.json",
+          "bytes": 4158,
+          "sha256": "a4bedf5628190c4c2e9a7c5e45f34b86e8d9588113da17b818c4f93dfdb17619"
+        }
+      ],
+      "unmeasured_boundary": "The existing coverage-only run lacks mission_timeline, return-home, complete mission MCAP, video manifest and hardware/software manifest, so the wrapper correctly returns FAIL."
+    },
+    {
+      "id": "live-slam-replay-fail-closed",
+      "source_branch": "codex/day1-live-mapping-recovery",
+      "source_commit": "e2a9bc0be602efa72bb4978dfdd852e284c0c1eb",
+      "claim_level": "NOT_MEASURED",
+      "official_points_claimed": 0.0,
+      "files": [
+        {
+          "package_path": "evidence/day1/tooling/live-slam-replay-fail-closed/docs/live-slam-replay-recovery.md",
+          "bytes": 4118,
+          "sha256": "0ed3c90c5e9f3ec7e98c588667b63c86d3a50735fc236382963885857ec75e60"
+        },
+        {
+          "package_path": "evidence/day1/tooling/live-slam-replay-fail-closed/reports/mapping/day1_live_slam_replay_preflight_20260914.json",
+          "bytes": 8451,
+          "sha256": "00e551436efbe961bbd18d5e29891f0a612599c99e8c35b5d500697e68e16407"
+        },
+        {
+          "package_path": "evidence/day1/tooling/live-slam-replay-fail-closed/scripts/audit_live_slam_replay_inputs.py",
+          "bytes": 10537,
+          "sha256": "61e6435e35fccbf195b2b9b542fc5bf4d5e68ec3b6e46f77a983627f9149fc10"
+        }
+      ],
+      "unmeasured_boundary": "The retained run-06 bags omit /scan, /tf and /tf_static, so offline SLAM replay and the 20,000 m2 live-mapping gate remain NOT_MEASURED."
+    }
+  ],
+  "claim_policy": "Only MEASURED_REPOSITORY_EVIDENCE may support an official-style PASS within its stated domain. CONTROLLED_CANDIDATE, DESIGN_OR_PLAN_ONLY and NOT_MEASURED must not be promoted to competition acceptance."
+}

@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "day1_full_mission_acceptance_receipt",
+  "generated_at_utc": "2026-01-01T00:00:00Z",
+  "fixture_only": true,
+  "status": "PASS",
+  "machine_gate_pass": true,
+  "claim_boundary": {
+    "fixture_only": true,
+    "official_recognition_claim": false,
+    "old_run_reuse_allowed": false,
+    "note": "Synthetic schema example only; this is not a project run or result."
+  },
+  "run": {
+    "path": "tests/fixtures/day1_full_mission_acceptance/run",
+    "run_id": "fixture-run",
+    "mission_id": "fixture-full-mission"
+  },
+  "timeline": {
+    "status": "PASS",
+    "duration_basis": "full_mission_sim_seconds",
+    "sim_duration_sec": 480.0,
+    "wall_duration_sec": 60.0,
+    "rtf": 8.0,
+    "terminal_state": "COMPLETED"
+  },
+  "efficiency": {
+    "status": "PASS",
+    "effective_cleaned_area_union_m2": 500.0,
+    "full_mission_sim_duration_sec": 480.0,
+    "wall_duration_sec": 60.0,
+    "real_time_factor": 8.0,
+    "effective_cleaning_efficiency_m2_h": 3750.0,
+    "threshold_m2_h": 3500.0,
+    "threshold_met": true,
+    "wall_clock_used_for_efficiency": false,
+    "ten_second_steady_window_used": false
+  },
+  "coverage": {
+    "status": "PASS",
+    "coverage_rate": 0.99,
+    "covered_area_m2": 500.0,
+    "trajectory_row_count": 100
+  },
+  "brush": {
+    "status": "PASS",
+    "all_three_ready_sample_count": 10,
+    "maximum_roller_velocity_rad_s": 12.0,
+    "brush_disabled_on_exit": true
+  },
+  "dirt_delta": {
+    "status": "PASS",
+    "cleaned_cell_delta": 100,
+    "cleaned_area_delta_m2": 8.0
+  },
+  "safety": {
+    "status": "PASS",
+    "collision_count": 0,
+    "keepout_violation_count": 0,
+    "emergency_stop": {
+      "exercised": true,
+      "latency_sec": 0.49,
+      "final_linear_mps": 0.0,
+      "final_angular_radps": 0.0
+    }
+  },
+  "return_home": {
+    "status": "PASS",
+    "requested": true,
+    "started": true,
+    "completed": true,
+    "position_error_m": 0.04,
+    "yaw_error_rad": 0.01
+  },
+  "final_state": {
+    "status": "PASS",
+    "terminal_state": "COMPLETED",
+    "mode": "IDLE",
+    "motion_zero": true,
+    "brush_enabled": false,
+    "dirt_system_enabled": false,
+    "emergency_stop_active": false
+  },
+  "video": {
+    "status": "PASS",
+    "path": "fixture/demo.mp4",
+    "duration_sec": 480.0,
+    "width": 1920,
+    "height": 1080,
+    "codec_name": "h264",
+    "contains_operation_footage": true,
+    "stitched": false
+  },
+  "mcap": {
+    "status": "PASS",
+    "bag_path": "bag",
+    "message_count": 1000,
+    "duration_sec": 480.0,
+    "missing_topics": []
+  },
+  "hardware_software_completeness": {
+    "status": "PASS",
+    "software": {
+      "status": "COMPLETE",
+      "revision": "fixture-revision"
+    },
+    "hardware": {
+      "status": "COMPLETE",
+      "platform": "fixture-platform"
+    }
+  },
+  "demo_kit": {
+    "status": "PASS",
+    "target_duration_sec": 480,
+    "shot_count": 8
+  },
+  "gates": [
+    {
+      "id": "fixture_gate",
+      "section": "contract",
+      "passed": true,
+      "status": "PASS",
+      "message": "Synthetic schema fixture gate.",
+      "evidence": {
+        "fixture_only": true
+      }
+    }
+  ],
+  "blockers": []
+}

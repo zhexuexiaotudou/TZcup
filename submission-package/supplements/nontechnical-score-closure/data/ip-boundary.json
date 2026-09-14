@@ -1,0 +1,15 @@
+{
+  "status": "NOT_ELIGIBLE_NO_FILING_OR_PUBLICATION",
+  "patent_application": "NO_PROJECT_EVIDENCE_FOUND",
+  "patent_grant": "NO_PROJECT_EVIDENCE_FOUND",
+  "paper_submission": "NO_PROJECT_EVIDENCE_FOUND",
+  "paper_publication": "NO_PROJECT_EVIDENCE_FOUND",
+  "candidate_topics": [
+    "Tool-free and step-constrained brush/filter replacement mechanism",
+    "Interlock between maintenance mode and remote task control",
+    "Cleaning strategy coupled to water, leaves, and bin-capacity state",
+    "Boundary safety and minimum-risk state transitions for low-speed cleaning vehicles"
+  ],
+  "official_points_claimed": 0.0,
+  "rule": "Templates and candidate topics do not establish filing or publication."
+}

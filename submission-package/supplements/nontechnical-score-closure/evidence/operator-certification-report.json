@@ -1,0 +1,15 @@
+{
+  "status": "NOT_MEASURED",
+  "rows": 0,
+  "operators": 0,
+  "safety_rows": 0,
+  "operation_rows": 0,
+  "safety_failures": [],
+  "operation_ab_rate": 0.0,
+  "criteria": {
+    "safety_all_a_and_no_critical_error": false,
+    "operation_ab_at_least_0_90": false
+  },
+  "errors": [],
+  "claim_policy": "NOT_MEASURED or FAIL cannot be reported as three-day mastery."
+}

@@ -1,0 +1,70 @@
+{
+  "status": "MODEL_ONLY_NOT_FIELD_MEASURED",
+  "evidence_class": "ILLUSTRATIVE_ASSUMPTION_NOT_PROJECT_RESULT",
+  "quality_claimable": false,
+  "assumptions": {
+    "manual_cleaning_hours_per_day": {
+      "source_status": "ASSUMPTION",
+      "source": "model fixture"
+    },
+    "manual_supervision_hours_per_day": {
+      "source_status": "ASSUMPTION",
+      "source": "model fixture"
+    },
+    "manual_rework_hours_per_day": {
+      "source_status": "ASSUMPTION",
+      "source": "model fixture"
+    },
+    "autonomous_supervision_hours_per_day": {
+      "source_status": "ASSUMPTION",
+      "source": "model fixture"
+    },
+    "autonomous_rework_hours_per_day": {
+      "source_status": "ASSUMPTION",
+      "source": "model fixture"
+    },
+    "vehicle_kwh_per_day": {
+      "source_status": "ASSUMPTION",
+      "source": "model fixture"
+    },
+    "manual_equipment_kwh_per_day": {
+      "source_status": "ASSUMPTION",
+      "source": "model fixture"
+    }
+  },
+  "scenarios": [
+    {
+      "id": "conservative",
+      "label": "保守演算",
+      "manual_cleaning_hours_per_day": 10.0,
+      "manual_supervision_hours_per_day": 3.0,
+      "manual_rework_hours_per_day": 2.0,
+      "autonomous_supervision_hours_per_day": 6.0,
+      "autonomous_rework_hours_per_day": 2.0,
+      "vehicle_kwh_per_day": 18.0,
+      "manual_equipment_kwh_per_day": 12.0
+    },
+    {
+      "id": "base",
+      "label": "基准演算",
+      "manual_cleaning_hours_per_day": 16.0,
+      "manual_supervision_hours_per_day": 4.0,
+      "manual_rework_hours_per_day": 3.0,
+      "autonomous_supervision_hours_per_day": 7.0,
+      "autonomous_rework_hours_per_day": 2.0,
+      "vehicle_kwh_per_day": 22.0,
+      "manual_equipment_kwh_per_day": 16.0
+    },
+    {
+      "id": "upside",
+      "label": "上限演算",
+      "manual_cleaning_hours_per_day": 22.0,
+      "manual_supervision_hours_per_day": 5.0,
+      "manual_rework_hours_per_day": 4.0,
+      "autonomous_supervision_hours_per_day": 8.0,
+      "autonomous_rework_hours_per_day": 2.0,
+      "vehicle_kwh_per_day": 25.0,
+      "manual_equipment_kwh_per_day": 20.0
+    }
+  ]
+}
