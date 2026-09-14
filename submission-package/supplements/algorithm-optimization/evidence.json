@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "tzcup_algorithm_optimization_review_brief",
+  "status": "REVIEW_READY_WITH_UNMEASURED_LIVE_GATES",
+  "official_points_claimed": 0.0,
+  "items": {
+    "causal_localization": {
+      "paired_samples": 2711,
+      "before_mm": {"rmse": 39.27120950368673, "p95": 83.77985790742562, "max": 126.32780257795784},
+      "after_mm": {"rmse": 29.19189697400822, "p95": 40.28501437569142, "max": 47.56582158794771},
+      "live_official_state": "NOT_MEASURED"
+    },
+    "avoidance_feedback_fix": {
+      "root_cause": "global_ekf_gnss_pose_feedback_during_recovery",
+      "minimal_fix": "global_gnss_odometry_topic_override",
+      "official_rate_state": "NOT_MEASURED"
+    },
+    "perception_full_frame": {
+      "frames": 30,
+      "instances": 76,
+      "tp": 76,
+      "fp": 0,
+      "fn": 0,
+      "official_r01_state": "NOT_MEASURED_DEFINITION_UNSPECIFIED"
+    },
+    "task_decomposition": {
+      "development_correct": 36,
+      "development_total": 37,
+      "holdout_correct": 32,
+      "holdout_total": 32,
+      "scope": "internal_frozen_regression"
+    }
+  },
+  "claim_boundary": "Review-ready optimization evidence only; no official live hard metric is upgraded."
+}

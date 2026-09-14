@@ -6,8 +6,8 @@
   "integrated_report": {
     "package_path": "docs/技术方案报告.pdf",
     "pages": 24,
-    "bytes": 199746,
-    "sha256": "5d6290bda28737fed08a6cb56fe59fc393fd6a0702319873a9223ec0db76cf3c"
+    "bytes": 200253,
+    "sha256": "08bfa8d2eb5ef60a8c8eeb1464ea3968df77f0a4aa5e3248aae2196b5e2e8592"
   },
   "claim_levels": [
     "MEASURED_REPOSITORY_EVIDENCE",

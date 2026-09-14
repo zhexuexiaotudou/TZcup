@@ -14,11 +14,11 @@
     "base_commit": "8cda98c015d11ecd7628bf3599dcb49b8c361d1a",
     "pdf_path": "docs/技术方案报告.pdf",
     "pages": 24,
-    "bytes": 199746,
-    "sha256": "5d6290bda28737fed08a6cb56fe59fc393fd6a0702319873a9223ec0db76cf3c",
+    "bytes": 200253,
+    "sha256": "08bfa8d2eb5ef60a8c8eeb1464ea3968df77f0a4aa5e3248aae2196b5e2e8592",
     "updated_utc": "2026-09-15"
   },
   "integration_branch": "codex/day1-video-report-sync",
   "previous_integration_branch": "codex/day1-evidence-integration",
-  "rollback_note": "The original 23-page PDF remains retrievable from commit 43f7136ef10d000fcc93f91271e203a21f529e9c. The prior 24-page supplement index remains retrievable from commit 14c80cc with SHA-256 169e3b04f1d3bb37591431422db8a205a714f1fec5e5df1a2897686c89fceb31. The current 24-page report adds controlled water and dirt-condition evidence."
+  "rollback_note": "The original 23-page PDF remains retrievable from commit 43f7136ef10d000fcc93f91271e203a21f529e9c. The prior complex-condition report remains retrievable from commit 32e49d9 with SHA-256 5d6290bda28737fed08a6cb56fe59fc393fd6a0702319873a9223ec0db76cf3c. The current 24-page report also points to the algorithm-optimization review brief."
 }

@@ -485,7 +485,7 @@
     "file": "docs/report-baseline.json",
     "source": "frozen baseline record for git:43f7136:submission-package/docs/技术方案报告.pdf",
     "source_commit": "43f7136",
-    "sha256": "dfe541a353cf3c11a3f55498d6c626e69926af9c0acc519232c0c777ced9dd20",
+    "sha256": "d1c6bdc941d1ef8e205ca0bc9e95758da537c62d5995a336c9e89e2c22f286c9",
     "copied_utc": "2026-09-14"
   },
   {
@@ -665,6 +665,22 @@
     "source_commit": null,
     "bytes": 569,
     "sha256": "c8d421fd6dbf563d0cc4e0801903a89e8457de0ddf4c95d131d7935543bc2614",
+    "copied_utc": "2026-09-15"
+  },
+  {
+    "file": "supplements/algorithm-optimization/README.md",
+    "source": "review-ready algorithm optimization brief",
+    "source_commit": null,
+    "bytes": 2785,
+    "sha256": "54b230c8e26e2a3a176b1f15b2054357f9d2feea32944d6869c3030d9c0b857e",
+    "copied_utc": "2026-09-15"
+  },
+  {
+    "file": "supplements/algorithm-optimization/evidence.json",
+    "source": "machine-readable algorithm optimization metrics and boundaries",
+    "source_commit": null,
+    "bytes": 1216,
+    "sha256": "db1c29931dff5cc8781c7b53c5e27c327951b6de938e21f305330dbc61819b91",
     "copied_utc": "2026-09-15"
   },
   {
