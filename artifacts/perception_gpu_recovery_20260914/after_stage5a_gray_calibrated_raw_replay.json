@@ -1,0 +1,800 @@
+{
+  "status": "MEASURED_NOT_OFFICIAL_ACCEPTANCE",
+  "frame_count": 30,
+  "class_metrics": {
+    "plastic_bottle": {
+      "tp": 8,
+      "fp": 0,
+      "fn": 7,
+      "precision": 1.0,
+      "recall": 0.5333333333333333,
+      "truth_support": 15
+    },
+    "metal_can": {
+      "tp": 8,
+      "fp": 0,
+      "fn": 7,
+      "precision": 1.0,
+      "recall": 0.5333333333333333,
+      "truth_support": 15
+    },
+    "paper_litter": {
+      "tp": 8,
+      "fp": 0,
+      "fn": 7,
+      "precision": 1.0,
+      "recall": 0.5333333333333333,
+      "truth_support": 15
+    },
+    "leaf_pile": {
+      "tp": 8,
+      "fp": 0,
+      "fn": 7,
+      "precision": 1.0,
+      "recall": 0.5333333333333333,
+      "truth_support": 15
+    },
+    "puddle": {
+      "tp": 9,
+      "fp": 0,
+      "fn": 7,
+      "precision": 1.0,
+      "recall": 0.5625,
+      "truth_support": 16
+    }
+  },
+  "macro_precision_conservative": 1.0,
+  "macro_recall_conservative": 0.5391666666666667,
+  "false_positive_samples": [],
+  "false_negative_samples": [
+    {
+      "frame_id": "frame_01",
+      "image_path": "frames/frame_01.png",
+      "truth": {
+        "object_id": "sample_0",
+        "class_id": "plastic_bottle",
+        "xyxy": [
+          133.2125701904297,
+          193.00404357910156,
+          184.0081787109375,
+          218.90182495117188
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_01",
+      "image_path": "frames/frame_01.png",
+      "truth": {
+        "object_id": "sample_1",
+        "class_id": "metal_can",
+        "xyxy": [
+          358.6890563964844,
+          202.48095703125,
+          380.4850158691406,
+          222.85772705078125
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_01",
+      "image_path": "frames/frame_01.png",
+      "truth": {
+        "object_id": "sample_2",
+        "class_id": "paper_litter",
+        "xyxy": [
+          230.65635681152344,
+          99.6272201538086,
+          284.22454833984375,
+          137.1463623046875
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_01",
+      "image_path": "frames/frame_01.png",
+      "truth": {
+        "object_id": "sample_3",
+        "class_id": "leaf_pile",
+        "xyxy": [
+          165.98870849609375,
+          250.54908752441406,
+          347.51910400390625,
+          431.5135498046875
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_01",
+      "image_path": "frames/frame_01.png",
+      "truth": {
+        "object_id": "sample_4",
+        "class_id": "puddle",
+        "xyxy": [
+          424.0,
+          82.41168975830078,
+          741.8251953125,
+          281.05242919921875
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_02",
+      "image_path": "frames/frame_02.png",
+      "truth": {
+        "object_id": "sample_0",
+        "class_id": "plastic_bottle",
+        "xyxy": [
+          133.2125701904297,
+          193.00404357910156,
+          184.0081787109375,
+          218.90182495117188
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_02",
+      "image_path": "frames/frame_02.png",
+      "truth": {
+        "object_id": "sample_1",
+        "class_id": "metal_can",
+        "xyxy": [
+          358.6890563964844,
+          202.48095703125,
+          380.4850158691406,
+          222.85772705078125
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_02",
+      "image_path": "frames/frame_02.png",
+      "truth": {
+        "object_id": "sample_2",
+        "class_id": "paper_litter",
+        "xyxy": [
+          230.65635681152344,
+          99.6272201538086,
+          284.22454833984375,
+          137.1463623046875
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_02",
+      "image_path": "frames/frame_02.png",
+      "truth": {
+        "object_id": "sample_3",
+        "class_id": "leaf_pile",
+        "xyxy": [
+          165.98870849609375,
+          250.54908752441406,
+          347.51910400390625,
+          431.5135498046875
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_02",
+      "image_path": "frames/frame_02.png",
+      "truth": {
+        "object_id": "sample_4",
+        "class_id": "puddle",
+        "xyxy": [
+          424.0,
+          82.41168975830078,
+          741.8251953125,
+          281.05242919921875
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_10",
+      "image_path": "frames/frame_10.png",
+      "truth": {
+        "object_id": "sample_0",
+        "class_id": "plastic_bottle",
+        "xyxy": [
+          133.2125701904297,
+          193.00404357910156,
+          184.0081787109375,
+          218.90182495117188
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_10",
+      "image_path": "frames/frame_10.png",
+      "truth": {
+        "object_id": "sample_1",
+        "class_id": "metal_can",
+        "xyxy": [
+          358.6890563964844,
+          202.48095703125,
+          380.4850158691406,
+          222.85772705078125
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_10",
+      "image_path": "frames/frame_10.png",
+      "truth": {
+        "object_id": "sample_2",
+        "class_id": "paper_litter",
+        "xyxy": [
+          230.65635681152344,
+          99.6272201538086,
+          284.22454833984375,
+          137.1463623046875
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_10",
+      "image_path": "frames/frame_10.png",
+      "truth": {
+        "object_id": "sample_3",
+        "class_id": "leaf_pile",
+        "xyxy": [
+          165.98870849609375,
+          250.54908752441406,
+          347.51910400390625,
+          431.5135498046875
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_10",
+      "image_path": "frames/frame_10.png",
+      "truth": {
+        "object_id": "sample_4",
+        "class_id": "puddle",
+        "xyxy": [
+          424.0,
+          82.41168975830078,
+          741.8251953125,
+          281.05242919921875
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_11",
+      "image_path": "frames/frame_11.png",
+      "truth": {
+        "object_id": "sample_0",
+        "class_id": "plastic_bottle",
+        "xyxy": [
+          133.2125701904297,
+          193.00404357910156,
+          184.0081787109375,
+          218.90182495117188
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_11",
+      "image_path": "frames/frame_11.png",
+      "truth": {
+        "object_id": "sample_1",
+        "class_id": "metal_can",
+        "xyxy": [
+          358.6890563964844,
+          202.48095703125,
+          380.4850158691406,
+          222.85772705078125
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_11",
+      "image_path": "frames/frame_11.png",
+      "truth": {
+        "object_id": "sample_2",
+        "class_id": "paper_litter",
+        "xyxy": [
+          230.65635681152344,
+          99.6272201538086,
+          284.22454833984375,
+          137.1463623046875
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_11",
+      "image_path": "frames/frame_11.png",
+      "truth": {
+        "object_id": "sample_3",
+        "class_id": "leaf_pile",
+        "xyxy": [
+          165.98870849609375,
+          250.54908752441406,
+          347.51910400390625,
+          431.5135498046875
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_11",
+      "image_path": "frames/frame_11.png",
+      "truth": {
+        "object_id": "sample_4",
+        "class_id": "puddle",
+        "xyxy": [
+          424.0,
+          82.41168975830078,
+          741.8251953125,
+          281.05242919921875
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_12",
+      "image_path": "frames/frame_12.png",
+      "truth": {
+        "object_id": "sample_0",
+        "class_id": "plastic_bottle",
+        "xyxy": [
+          133.2125701904297,
+          193.00404357910156,
+          184.0081787109375,
+          218.90182495117188
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_12",
+      "image_path": "frames/frame_12.png",
+      "truth": {
+        "object_id": "sample_1",
+        "class_id": "metal_can",
+        "xyxy": [
+          358.6890563964844,
+          202.48095703125,
+          380.4850158691406,
+          222.85772705078125
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_12",
+      "image_path": "frames/frame_12.png",
+      "truth": {
+        "object_id": "sample_2",
+        "class_id": "paper_litter",
+        "xyxy": [
+          230.65635681152344,
+          99.6272201538086,
+          284.22454833984375,
+          137.1463623046875
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_12",
+      "image_path": "frames/frame_12.png",
+      "truth": {
+        "object_id": "sample_3",
+        "class_id": "leaf_pile",
+        "xyxy": [
+          165.98870849609375,
+          250.54908752441406,
+          347.51910400390625,
+          431.5135498046875
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_12",
+      "image_path": "frames/frame_12.png",
+      "truth": {
+        "object_id": "sample_4",
+        "class_id": "puddle",
+        "xyxy": [
+          424.0,
+          82.41168975830078,
+          741.8251953125,
+          281.05242919921875
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_14",
+      "image_path": "frames/frame_14.png",
+      "truth": {
+        "object_id": "sample_0",
+        "class_id": "plastic_bottle",
+        "xyxy": [
+          133.2125701904297,
+          193.00404357910156,
+          184.0081787109375,
+          218.90182495117188
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_14",
+      "image_path": "frames/frame_14.png",
+      "truth": {
+        "object_id": "sample_1",
+        "class_id": "metal_can",
+        "xyxy": [
+          358.6890563964844,
+          202.48095703125,
+          380.4850158691406,
+          222.85772705078125
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_14",
+      "image_path": "frames/frame_14.png",
+      "truth": {
+        "object_id": "sample_2",
+        "class_id": "paper_litter",
+        "xyxy": [
+          230.65635681152344,
+          99.6272201538086,
+          284.22454833984375,
+          137.1463623046875
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_14",
+      "image_path": "frames/frame_14.png",
+      "truth": {
+        "object_id": "sample_3",
+        "class_id": "leaf_pile",
+        "xyxy": [
+          165.98870849609375,
+          250.54908752441406,
+          347.51910400390625,
+          431.5135498046875
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_14",
+      "image_path": "frames/frame_14.png",
+      "truth": {
+        "object_id": "sample_4",
+        "class_id": "puddle",
+        "xyxy": [
+          424.0,
+          82.41168975830078,
+          741.8251953125,
+          281.05242919921875
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_15",
+      "image_path": "frames/frame_15.png",
+      "truth": {
+        "object_id": "sample_0",
+        "class_id": "plastic_bottle",
+        "xyxy": [
+          133.2125701904297,
+          193.00404357910156,
+          184.0081787109375,
+          218.90182495117188
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_15",
+      "image_path": "frames/frame_15.png",
+      "truth": {
+        "object_id": "sample_1",
+        "class_id": "metal_can",
+        "xyxy": [
+          358.6890563964844,
+          202.48095703125,
+          380.4850158691406,
+          222.85772705078125
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_15",
+      "image_path": "frames/frame_15.png",
+      "truth": {
+        "object_id": "sample_2",
+        "class_id": "paper_litter",
+        "xyxy": [
+          230.65635681152344,
+          99.6272201538086,
+          284.22454833984375,
+          137.1463623046875
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_15",
+      "image_path": "frames/frame_15.png",
+      "truth": {
+        "object_id": "sample_3",
+        "class_id": "leaf_pile",
+        "xyxy": [
+          165.98870849609375,
+          250.54908752441406,
+          347.51910400390625,
+          431.5135498046875
+        ]
+      }
+    },
+    {
+      "frame_id": "frame_15",
+      "image_path": "frames/frame_15.png",
+      "truth": {
+        "object_id": "sample_4",
+        "class_id": "puddle",
+        "xyxy": [
+          424.0,
+          82.41168975830078,
+          741.8251953125,
+          281.05242919921875
+        ]
+      }
+    }
+  ],
+  "matched_samples": [
+    {
+      "frame_id": "frame_03",
+      "class_id": "plastic_bottle",
+      "object_id": "sample_0",
+      "iou": 0.6938829989440949
+    },
+    {
+      "frame_id": "frame_03",
+      "class_id": "metal_can",
+      "object_id": "sample_1",
+      "iou": 0.6373710096645736
+    },
+    {
+      "frame_id": "frame_03",
+      "class_id": "paper_litter",
+      "object_id": "sample_2",
+      "iou": 0.8973407267649612
+    },
+    {
+      "frame_id": "frame_03",
+      "class_id": "leaf_pile",
+      "object_id": "sample_3",
+      "iou": 0.9748967242032786
+    },
+    {
+      "frame_id": "frame_03",
+      "class_id": "puddle",
+      "object_id": "sample_4",
+      "iou": 0.9822326689689751
+    },
+    {
+      "frame_id": "frame_04",
+      "class_id": "plastic_bottle",
+      "object_id": "sample_0",
+      "iou": 0.6938829989440949
+    },
+    {
+      "frame_id": "frame_04",
+      "class_id": "metal_can",
+      "object_id": "sample_1",
+      "iou": 0.6373710096645736
+    },
+    {
+      "frame_id": "frame_04",
+      "class_id": "paper_litter",
+      "object_id": "sample_2",
+      "iou": 0.8973407267649612
+    },
+    {
+      "frame_id": "frame_04",
+      "class_id": "leaf_pile",
+      "object_id": "sample_3",
+      "iou": 0.9748967242032786
+    },
+    {
+      "frame_id": "frame_04",
+      "class_id": "puddle",
+      "object_id": "sample_4",
+      "iou": 0.9822326689689751
+    },
+    {
+      "frame_id": "frame_05",
+      "class_id": "plastic_bottle",
+      "object_id": "sample_0",
+      "iou": 0.6938829989440949
+    },
+    {
+      "frame_id": "frame_05",
+      "class_id": "metal_can",
+      "object_id": "sample_1",
+      "iou": 0.6373710096645736
+    },
+    {
+      "frame_id": "frame_05",
+      "class_id": "paper_litter",
+      "object_id": "sample_2",
+      "iou": 0.8973407267649612
+    },
+    {
+      "frame_id": "frame_05",
+      "class_id": "leaf_pile",
+      "object_id": "sample_3",
+      "iou": 0.9748967242032786
+    },
+    {
+      "frame_id": "frame_05",
+      "class_id": "puddle",
+      "object_id": "sample_4",
+      "iou": 0.9822326689689751
+    },
+    {
+      "frame_id": "frame_06",
+      "class_id": "plastic_bottle",
+      "object_id": "sample_0",
+      "iou": 0.6938829989440949
+    },
+    {
+      "frame_id": "frame_06",
+      "class_id": "metal_can",
+      "object_id": "sample_1",
+      "iou": 0.6373710096645736
+    },
+    {
+      "frame_id": "frame_06",
+      "class_id": "paper_litter",
+      "object_id": "sample_2",
+      "iou": 0.8973407267649612
+    },
+    {
+      "frame_id": "frame_06",
+      "class_id": "leaf_pile",
+      "object_id": "sample_3",
+      "iou": 0.9748967242032786
+    },
+    {
+      "frame_id": "frame_06",
+      "class_id": "puddle",
+      "object_id": "sample_4",
+      "iou": 0.9822326689689751
+    },
+    {
+      "frame_id": "frame_07",
+      "class_id": "plastic_bottle",
+      "object_id": "sample_0",
+      "iou": 0.6938829989440949
+    },
+    {
+      "frame_id": "frame_07",
+      "class_id": "metal_can",
+      "object_id": "sample_1",
+      "iou": 0.6373710096645736
+    },
+    {
+      "frame_id": "frame_07",
+      "class_id": "paper_litter",
+      "object_id": "sample_2",
+      "iou": 0.8973407267649612
+    },
+    {
+      "frame_id": "frame_07",
+      "class_id": "leaf_pile",
+      "object_id": "sample_3",
+      "iou": 0.9748967242032786
+    },
+    {
+      "frame_id": "frame_07",
+      "class_id": "puddle",
+      "object_id": "sample_4",
+      "iou": 0.9822326689689751
+    },
+    {
+      "frame_id": "frame_08",
+      "class_id": "plastic_bottle",
+      "object_id": "sample_0",
+      "iou": 0.6938829989440949
+    },
+    {
+      "frame_id": "frame_08",
+      "class_id": "metal_can",
+      "object_id": "sample_1",
+      "iou": 0.6373710096645736
+    },
+    {
+      "frame_id": "frame_08",
+      "class_id": "paper_litter",
+      "object_id": "sample_2",
+      "iou": 0.8973407267649612
+    },
+    {
+      "frame_id": "frame_08",
+      "class_id": "leaf_pile",
+      "object_id": "sample_3",
+      "iou": 0.9748967242032786
+    },
+    {
+      "frame_id": "frame_08",
+      "class_id": "puddle",
+      "object_id": "sample_4",
+      "iou": 0.9822326689689751
+    },
+    {
+      "frame_id": "frame_09",
+      "class_id": "plastic_bottle",
+      "object_id": "sample_0",
+      "iou": 0.6938829989440949
+    },
+    {
+      "frame_id": "frame_09",
+      "class_id": "metal_can",
+      "object_id": "sample_1",
+      "iou": 0.6373710096645736
+    },
+    {
+      "frame_id": "frame_09",
+      "class_id": "paper_litter",
+      "object_id": "sample_2",
+      "iou": 0.8973407267649612
+    },
+    {
+      "frame_id": "frame_09",
+      "class_id": "leaf_pile",
+      "object_id": "sample_3",
+      "iou": 0.9748967242032786
+    },
+    {
+      "frame_id": "frame_09",
+      "class_id": "puddle",
+      "object_id": "sample_4",
+      "iou": 0.9822326689689751
+    },
+    {
+      "frame_id": "frame_13",
+      "class_id": "plastic_bottle",
+      "object_id": "sample_0",
+      "iou": 0.6938829989440949
+    },
+    {
+      "frame_id": "frame_13",
+      "class_id": "metal_can",
+      "object_id": "sample_1",
+      "iou": 0.6373710096645736
+    },
+    {
+      "frame_id": "frame_13",
+      "class_id": "paper_litter",
+      "object_id": "sample_2",
+      "iou": 0.8973407267649612
+    },
+    {
+      "frame_id": "frame_13",
+      "class_id": "leaf_pile",
+      "object_id": "sample_3",
+      "iou": 0.9748967242032786
+    },
+    {
+      "frame_id": "frame_13",
+      "class_id": "puddle",
+      "object_id": "sample_4",
+      "iou": 0.9822326689689751
+    },
+    {
+      "frame_id": "frame_16",
+      "class_id": "puddle",
+      "object_id": "sample_4",
+      "iou": 0.9822326689689751
+    }
+  ],
+  "unmeasured_classes": [],
+  "iou_threshold": 0.5,
+  "competition_perception_pass": false,
+  "model_sha256": "00f4f96f3eb925e202266506d22892a1df84838d08dbf6541d204c3e1d089c6a",
+  "onnx_providers": [
+    "CPUExecutionProvider"
+  ],
+  "replay_status": "OFFLINE_FROZEN_FRAME_REPLAY",
+  "policy_replay_status": "NOT_RUN",
+  "policy_metrics": null,
+  "scored_raw_output_frame_count": 9
+}

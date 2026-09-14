@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "scope": "GPU perception calibration and offline policy replay failures",
+  "failures": [
+    {
+      "attempt": "baseline-remote-01",
+      "stage": "dependency packaging",
+      "error": "ModuleNotFoundError: No module named 'sanitation_perception.formal_random_scene_evaluator_core'",
+      "resolution": "Transferred the exact project module and reran without changing model inputs."
+    },
+    {
+      "attempt": "baseline-remote-02",
+      "stage": "ONNX Runtime load",
+      "error": "Unsupported model IR version: 10, max supported IR version: 9",
+      "resolution": "Installed onnxruntime-gpu 1.18.1, matching the retained runtime generation."
+    },
+    {
+      "attempt": "calibration-attempt-01",
+      "remote_path": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/.work/gpu-perception-recovery-20260914/results/calibration-attempt-01",
+      "stage": "post-training metrics",
+      "error": "RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cpu and cuda:0",
+      "model_training_completed": true,
+      "artifact_written": false,
+      "resolution": "Allocated the confusion matrix on the truth tensor device and reran the identical training configuration."
+    },
+    {
+      "attempt": "calibration-attempt-01-rerun-fixed-metrics",
+      "remote_path": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/.work/gpu-perception-recovery-20260914/results/calibration-attempt-01-rerun-fixed-metrics",
+      "stage": "post-training validation",
+      "error": "RuntimeError: Input type (unsigned char) and bias type (float) should be the same",
+      "model_training_completed": true,
+      "artifact_written": false,
+      "resolution": "Converted validation images from uint8 to float [0,1] and reran the identical training configuration."
+    },
+    {
+      "attempt": "policy-replay-01",
+      "stage": "MCAP metadata reader",
+      "error": "AnyReader selected rosbag1 for a standalone MCAP file, then rosbags rejected ROS 2 metadata version 9.",
+      "resolution": "Bypassed metadata and registered the MCAP-embedded ROS 2 schemas directly with the low-level reader."
+    },
+    {
+      "attempt": "policy-replay-02",
+      "stage": "mask resizing",
+      "error": "IndexError: boolean index did not match indexed array; a 6x96 mask was built from the class-axis shape.",
+      "resolution": "Used the spatial axes 128x96 for nearest-neighbor mask resizing."
+    },
+    {
+      "attempt": "after-raw-replay-onnx-gpu",
+      "stage": "ONNX Runtime CUDA provider",
+      "error": "Failed to load libonnxruntime_providers_cuda.so: libcudnn.so.8 is missing.",
+      "fallback": "CPUExecutionProvider completed the frozen replay; CUDA PyTorch training remained the measured GPU workload."
+    }
+  ]
+}

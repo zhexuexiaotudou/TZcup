@@ -78,6 +78,13 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--summary", type=Path)
     parser.add_argument("--expected-sha256", default="")
+    parser.add_argument(
+        "--provider",
+        action="append",
+        default=[],
+        choices=["CPUExecutionProvider", "CUDAExecutionProvider"],
+        help="ONNX Runtime provider in priority order; defaults to CPU only",
+    )
     args = parser.parse_args()
     if args.output.exists():
         raise SystemExit("fresh output required")
@@ -86,7 +93,8 @@ def main():
         raise SystemExit("model hash mismatch")
     import onnxruntime as ort
 
-    session = ort.InferenceSession(str(args.model), providers=["CPUExecutionProvider"])
+    providers = args.provider or ["CPUExecutionProvider"]
+    session = ort.InferenceSession(str(args.model), providers=providers)
     source = json.loads(args.frames.read_text(encoding="utf-8"))
     presence = load_raw_output_presence(args.summary) if args.summary else None
     replay = []
@@ -107,6 +115,7 @@ def main():
     result = score(replay)
     result.update({
         "model_sha256": model_sha256,
+        "onnx_providers": session.get_providers(),
         "replay_status": "OFFLINE_FROZEN_FRAME_REPLAY",
         "policy_replay_status": "NOT_RUN",
         "policy_metrics": None,

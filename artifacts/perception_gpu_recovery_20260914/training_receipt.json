@@ -1,0 +1,370 @@
+{
+  "schema_version": 1,
+  "recipe_id": "stage5a_gray_background_calibration_v1",
+  "recipe_sha256": "4a622672c4e3b123942d763e39547e8ea3069036d1c8634090c4e5c135135050",
+  "source_commit": "3ae009a44f86bb2a66a9c095ba4b6db3c3a87d35",
+  "device": "cuda",
+  "gpu_name": "NVIDIA GeForce RTX 3080 Ti",
+  "gpu_driver_samples_percent": {
+    "count": 20,
+    "mean": 66.55,
+    "max": 91
+  },
+  "peak_training_vram_mib": 1821.23876953125,
+  "duration_s": 12.20519373496063,
+  "train_scene_seeds": [
+    100000,
+    104095
+  ],
+  "val_scene_seeds": [
+    200000,
+    200511
+  ],
+  "train_scene_count": 4096,
+  "val_scene_count": 512,
+  "frozen_holdout_used": false,
+  "epochs": 24,
+  "batch_size": 64,
+  "hidden_channels": 32,
+  "learning_rate": 0.003,
+  "class_weights": [
+    0.44999998807907104,
+    4.0,
+    4.0,
+    4.0,
+    4.0,
+    4.0
+  ],
+  "parameter_count": 10342,
+  "curves": [
+    {
+      "epoch": 1,
+      "loss": 0.8043200802057981
+    },
+    {
+      "epoch": 2,
+      "loss": 0.03910810872912407
+    },
+    {
+      "epoch": 3,
+      "loss": 0.03250237926840782
+    },
+    {
+      "epoch": 4,
+      "loss": 0.027246502228081226
+    },
+    {
+      "epoch": 5,
+      "loss": 0.02337111160159111
+    },
+    {
+      "epoch": 6,
+      "loss": 0.0185268372297287
+    },
+    {
+      "epoch": 7,
+      "loss": 0.014386884868144989
+    },
+    {
+      "epoch": 8,
+      "loss": 0.011564821936190128
+    },
+    {
+      "epoch": 9,
+      "loss": 0.00893031433224678
+    },
+    {
+      "epoch": 10,
+      "loss": 0.007318098098039627
+    },
+    {
+      "epoch": 11,
+      "loss": 0.00608101487159729
+    },
+    {
+      "epoch": 12,
+      "loss": 0.004652880132198334
+    },
+    {
+      "epoch": 13,
+      "loss": 0.0038912147283554077
+    },
+    {
+      "epoch": 14,
+      "loss": 0.0032103881239891052
+    },
+    {
+      "epoch": 15,
+      "loss": 0.0026542553678154945
+    },
+    {
+      "epoch": 16,
+      "loss": 0.002275751903653145
+    },
+    {
+      "epoch": 17,
+      "loss": 0.0019302545115351677
+    },
+    {
+      "epoch": 18,
+      "loss": 0.0017683887854218483
+    },
+    {
+      "epoch": 19,
+      "loss": 0.0014819977805018425
+    },
+    {
+      "epoch": 20,
+      "loss": 0.0013237036764621735
+    },
+    {
+      "epoch": 21,
+      "loss": 0.0011341571807861328
+    },
+    {
+      "epoch": 22,
+      "loss": 0.0010769451037049294
+    },
+    {
+      "epoch": 23,
+      "loss": 0.0009303465485572815
+    },
+    {
+      "epoch": 24,
+      "loss": 0.0008296100422739983
+    }
+  ],
+  "synthetic_validation_prototype": {
+    "macro_f1_foreground": 0.7545954290114713,
+    "macro_iou_foreground": 0.6899961509783551,
+    "background_specificity": 0.6253188996928868,
+    "background_leaf_false_positive_rate": 0.1877405141436962,
+    "background_leaf_false_positive_pixels": 1003094,
+    "pixel_count": 5342981,
+    "per_class": {
+      "background": {
+        "precision": 0.9997214241301162,
+        "recall": 0.6253188996928868,
+        "f1": 0.7693897705452137,
+        "iou": 0.6252099585472216,
+        "support": 5342981
+      },
+      "plastic_bottle": {
+        "precision": 0.9906586881052439,
+        "recall": 0.9994009354623166,
+        "f1": 0.995010609623215,
+        "iou": 0.9900707601004337,
+        "support": 86802
+      },
+      "metal_can": {
+        "precision": 0.9721494270592467,
+        "recall": 0.9966548136441459,
+        "f1": 0.9842496130685291,
+        "iou": 0.9689876821429486,
+        "support": 75930
+      },
+      "paper_litter": {
+        "precision": 0.9920382836393048,
+        "recall": 0.9995925158749024,
+        "f1": 0.9958010732000221,
+        "iou": 0.9916372609292494,
+        "support": 117796
+      },
+      "leaf_pile": {
+        "precision": 0.22582133970523768,
+        "recall": 0.9989586854171575,
+        "f1": 0.36837013018487497,
+        "iou": 0.2257681947356197,
+        "support": 292899
+      },
+      "puddle": {
+        "precision": 0.27358295641635,
+        "recall": 0.9991174463002069,
+        "f1": 0.42954571898071486,
+        "iou": 0.273516856983524,
+        "support": 375048
+      }
+    },
+    "confusion_matrix": [
+      [
+        3341067,
+        791,
+        2168,
+        913,
+        1003094,
+        994948
+      ],
+      [
+        52,
+        86750,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        254,
+        0,
+        75676,
+        0,
+        0,
+        0
+      ],
+      [
+        48,
+        0,
+        0,
+        117748,
+        0,
+        0
+      ],
+      [
+        278,
+        27,
+        0,
+        0,
+        292594,
+        0
+      ],
+      [
+        299,
+        0,
+        0,
+        32,
+        0,
+        374717
+      ]
+    ]
+  },
+  "synthetic_validation_calibrated": {
+    "macro_f1_foreground": 0.9999350629587486,
+    "macro_iou_foreground": 0.9998701528848715,
+    "background_specificity": 0.9999947594797736,
+    "background_leaf_false_positive_rate": 1.8716143665867425e-06,
+    "background_leaf_false_positive_pixels": 10,
+    "pixel_count": 5342981,
+    "per_class": {
+      "background": {
+        "precision": 0.9999925135593477,
+        "recall": 0.9999947594797736,
+        "f1": 0.9999936365182995,
+        "iou": 0.9999872731175865,
+        "support": 5342981
+      },
+      "plastic_bottle": {
+        "precision": 0.9999539197050861,
+        "recall": 0.9999884795281214,
+        "f1": 0.9999711993179998,
+        "iou": 0.9999424002949104,
+        "support": 86802
+      },
+      "metal_can": {
+        "precision": 0.9999341247150894,
+        "recall": 0.9995522191492164,
+        "f1": 0.9997431354598204,
+        "iou": 0.999486402844538,
+        "support": 75930
+      },
+      "paper_litter": {
+        "precision": 1.0,
+        "recall": 0.9999915107473938,
+        "f1": 0.99999575535568,
+        "iou": 0.9999915107473938,
+        "support": 117796
+      },
+      "leaf_pile": {
+        "precision": 0.9999658595873107,
+        "recall": 0.9999965858538268,
+        "f1": 0.9999812224845385,
+        "iou": 0.9999624456742537,
+        "support": 292899
+      },
+      "puddle": {
+        "precision": 0.9999760034555024,
+        "recall": 0.999992001023869,
+        "f1": 0.999984002175704,
+        "iou": 0.9999680048632608,
+        "support": 375048
+      }
+    },
+    "confusion_matrix": [
+      [
+        5342953,
+        4,
+        5,
+        0,
+        10,
+        9
+      ],
+      [
+        1,
+        86801,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        34,
+        0,
+        75896,
+        0,
+        0,
+        0
+      ],
+      [
+        1,
+        0,
+        0,
+        117795,
+        0,
+        0
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        292898,
+        0
+      ],
+      [
+        3,
+        0,
+        0,
+        0,
+        0,
+        375045
+      ]
+    ]
+  },
+  "onnx": {
+    "path": "stage5a_gray_calibrated_perception.onnx",
+    "sha256": "00f4f96f3eb925e202266506d22892a1df84838d08dbf6541d204c3e1d089c6a",
+    "bytes": 42458,
+    "input_shape": [
+      1,
+      3,
+      96,
+      128
+    ],
+    "output_shape": [
+      1,
+      6,
+      96,
+      128
+    ],
+    "operators": {
+      "Conv": 3,
+      "Relu": 2
+    }
+  },
+  "environment": {
+    "python": "3.8.10 (default, Jun  4 2021, 15:09:15) \n[GCC 7.5.0]",
+    "platform": "Linux-5.15.0-78-generic-x86_64-with-glibc2.17",
+    "torch": "2.4.1+cu121",
+    "numpy": "1.24.4",
+    "cuda_runtime": "12.1",
+    "cudnn": 90100
+  }
+}

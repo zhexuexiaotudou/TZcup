@@ -1,8 +1,9 @@
 import json
+from pathlib import Path
 
 import pytest
 
-from replay_competition_perception_model import load_raw_output_presence
+from replay_competition_perception_model import ROOT, load_raw_output_presence
 
 
 def test_raw_output_presence_is_loaded_exactly(tmp_path):
@@ -30,3 +31,9 @@ def test_raw_output_presence_rejects_missing_or_non_boolean(tmp_path):
     )
     with pytest.raises(ValueError):
         load_raw_output_presence(summary)
+
+
+def test_replay_script_exposes_cuda_provider_without_changing_cpu_default():
+    text = (ROOT / "scripts/replay_competition_perception_model.py").read_text(encoding="utf-8")
+    assert 'providers = args.provider or ["CPUExecutionProvider"]' in text
+    assert '"CUDAExecutionProvider"' in text

@@ -79,8 +79,29 @@ runner 返回 4：录包进程在首个 10 s 退出等待窗口内未被判定�
 
 Stage5A 在原有输出的 17 帧内恢复了瓶、罐、纸和积水；13 个没有原始输出的帧继续按空预测计分，没有删除或补造输出。黄色叶堆仍失败。原因是 Stage5A 固定背景原型近似黑色，而 controlled fixture 背景为灰色，整幅灰色地面被判为 `leaf_pile`，因此叶堆框的 IoU 不过门。修复没有查看 holdout 后重调背景原型。
 
-策略层没有被实际复放。提交的 `replay_competition_perception_model.py` 只计算 raw RGB 候选，并明确写入 `policy_replay_status=NOT_RUN` 和 `policy_metrics=null`；保留证据中也没有足够的 depth、ROI 与 tracking 状态来离线复算策略层。因此此前表中的 Stage5A 策略三元组不可复现，已撤回，当前 policy 状态为 **NOT_RUN / NOT_MEASURED**，不能据此声称策略层召回、误检保留量或 0.8 阈值效果。完整识别仍为 FAIL。
+策略层没有被实际复放。提交的 `replay_competition_perception_model.py` 只计算 raw RGB 候选，并明确写入 `policy_replay_status=NOT_RUN` 和 `policy_metrics=null`；上轮提交的离线 JSON 中没有足够的 depth、ROI 与 tracking 状态。因此此前表中的 Stage5A 策略三元组不可复现并已撤回。2026-09-14 后续已从原始 MCAP 的嵌入式 schema 与消息中恢复 depth、CameraInfo 和静态 TF，并单独执行策略层离线复放，见下一节。完整识别仍为 FAIL。
 
 下一步需要在独立开发集上预先冻结 Stage5A 阈值及背景拒绝规则，生成单独的策略层 replay 产物并在启动前校验模型与输入哈希，再采集新的独立 holdout；现有 15 个重复正样本和 14 个背景样本只能支持此受控域诊断，不能证明 95%，也不能外推真实域。
 
-未验证边界：没有重跑 Gazebo、ROS、定位或板端；policy 离线复放为 NOT_RUN，`competition_R01` 和完整功能可靠性仍保持 NOT_MEASURED/PARTIAL。机器可读状态与原始文件哈希见 `artifacts/perception_replay_20260914_review/replay_status.json`。
+未验证边界：没有重跑 Gazebo、ROS、定位或板端；上轮 policy 状态为 NOT_RUN，后续 MCAP 离线复放单独记录在下一节；`competition_R01` 和完整功能可靠性仍保持 NOT_MEASURED/PARTIAL。机器可读状态与原始文件哈希见 `artifacts/perception_replay_20260914_review/replay_status.json`。
+
+## 2026-09-14 GPU 有界恢复尝试
+
+本轮只在隔离 worktree `codex/day1-perception-gpu@3ae009a` 工作，使用租用 RTX 3080 Ti 做训练和校准，没有启动 Gazebo、S100P 或其他仿真。冻结输入仍为同一 30 帧、76 个实例、IoU 0.5、五类阈值 0.8、最小区域 24 像素和原 17/30 raw-output presence mask。
+
+现有仓库没有当前可用的五类真实/在线训练图像集。Stage5A 仅保留确定性的合成 smoke 定义：12 train、4 val、4 test scene；因此本轮没有把 holdout 用于训练或选模，而是从同一生成器另行生成 4096 个 train scene 和 512 个 val scene，显式加入灰色背景与受控颜色扰动，只配置一次 24 epoch 的模型尝试。前两次执行均在训练完成后因 harness 的 tensor device/uint8 转换错误而未产出 artifact；修复 harness 后以完全相同的数据、超参、模型和阈值重跑，未更换候选。该训练数据仍属于合成颜色域，不是独立真实域数据。
+
+GPU 训练只在训练循环内计时 `12.205 s`，`nvidia-smi` 每 0.5 s 采样得到平均利用率 `66.55%`、最高 `91%`，峰值训练显存 `1821.24 MiB`；数据生成时间未计入该数值。模型为 `10342` 参数的 CNN，ONNX SHA-256 为 `00f4f96f3eb925e202266506d22892a1df84838d08dbf6541d204c3e1d089c6a`。
+
+| 阶段 | Stage5A 基线 | 灰色背景校准候选 | 边界 |
+|---|---:|---:|---|
+| 合成 validation foreground macro-F1 | 0.754595 | **0.999935** | 同生成器、非独立真实域 |
+| 合成 validation background-to-leaf FP rate | 0.187741 | **0.00000187** | 同生成器、非独立真实域 |
+| 冻结 30 帧 raw TP / FP / FN | 33 / 50 / 43 | **41 / 0 / 35** | 继续保留原 17/30 输出帧 |
+| 冻结 30 帧 raw macro P / R | 0.552941 / 0.432500 | **1.000000 / 0.539167** | 受控重复帧，不证明 95% |
+| 原始 MCAP policy replay TP / FP / FN | 0 / 0 / 76 | **33 / 0 / 43** | offline replay，非官方 R01 |
+| 原始 MCAP policy replay macro P / R | 0.000000 / 0.000000 | **0.800000 / 0.432500** | metal can 全被策略门拒绝 |
+
+策略层使用 `/sensors/front_rgbd/depth/image_rect_raw/{image,depth_image,camera_info}` 与 `/tf_static`，匹配到 129 个图像时刻、30 个深度帧、129 个 CameraInfo 和 2 个静态 TF，无缺失绑定。它仍不是原运行内策略层的位级复现：本轮从 MCAP 原始消息恢复输入并重新应用冻结 ROI/阈值；基线策略三元组由原来的 `0 / 8 / 76` 复算为 `0 / 0 / 76`，因此两者分别标注，不互相冒充。
+
+结论是灰色背景叶堆误分类已在本受控域内被有效抑制，raw precision 提升到 1.0，policy replay 从全漏检变为 `33/0/43`。这不表示识别率达到 95%，也不表示真实域、官方 R01、J6 板端或完整清扫闭环通过。全部中间失败、固定配置、模型、raw/policy replay 与哈希见 `artifacts/perception_gpu_recovery_20260914/`；完整大体积证据保留在远程 `.../.work/gpu-perception-recovery-20260914`。
