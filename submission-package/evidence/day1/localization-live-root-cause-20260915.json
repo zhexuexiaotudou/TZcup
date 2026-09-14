@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "run_id": "day1-localization-stabilizer-final-20260915-04",
+  "status": "FAIL_MAP_ODOM_NOT_PUBLISHED",
+  "run_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-final-20260915-04",
+  "observed_topics": {
+    "/scan": 2336,
+    "/odom": 2920,
+    "/odom/unfiltered": 2840,
+    "/imu/data": 11678,
+    "/gnss/fix": 584,
+    "/amcl_pose": 1,
+    "/odometry/gps": 584,
+    "/localization/fused_odom": 2919,
+    "/localization/raw_map_odom": 0
+  },
+  "observed_tf_edges": {
+    "odom->base_footprint": 2937,
+    "map->odom": 0
+  },
+  "nav2_lifecycle": {
+    "bt_navigator": 2,
+    "planner_server": 2,
+    "controller_server": 3,
+    "interpretation": "bt_navigator and planner_server remained inactive while controller_server was active"
+  },
+  "finding": "The local odometry TF edge was present. The stabilizer stayed in WAITING because global_ekf published no messages on /localization/raw_map_odom, so map->odom was never established.",
+  "claim_boundary": "This is fail-closed live diagnosis only. It is not an official localization PASS and does not establish RMSE, P95 or max accuracy."
+}

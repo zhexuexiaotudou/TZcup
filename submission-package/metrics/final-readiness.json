@@ -32,8 +32,8 @@
     },
     "evidence_index_validation": {
       "status": "PASS",
-      "checked": 142,
-      "hashed": 54
+      "checked": 144,
+      "hashed": 56
     },
     "unified_submission_audit": {
       "status": "PASS",

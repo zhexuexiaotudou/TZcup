@@ -7,7 +7,7 @@
 - 媒体校验、完整解码、字幕和展示禁用语检查：`PASS`
 - 选交源码与算法包，含 README 和 SHA-256：`code/`
 - 离线源码测试：`python3 run_offline_tests.py`，9 项通过
-- 证据索引校验：142 条路径检查、54 个哈希复算、0 错误
+- 证据索引校验：144 条路径检查、56 个哈希复算、0 错误
 - 统一提交审计：`py -3 tools/verify_submission.py`，全部 `PASS`
 - 内部评分估算：`metrics/score-estimate.md`
 

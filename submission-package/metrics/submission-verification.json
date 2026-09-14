@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at_utc": "2026-09-14T18:21:32.940023+00:00",
+  "generated_at_utc": "2026-09-14T18:26:19.002726+00:00",
   "status": "PASS",
   "checks": {
     "report_pdf": {
@@ -32,8 +32,8 @@
     },
     "evidence_index": {
       "status": "PASS",
-      "checked": 142,
-      "hashed": 54,
+      "checked": 144,
+      "hashed": 56,
       "errors": []
     },
     "score_and_readiness": {

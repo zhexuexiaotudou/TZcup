@@ -486,14 +486,14 @@
     "source": "frozen baseline record for git:43f7136:submission-package/docs/技术方案报告.pdf",
     "source_commit": "43f7136",
     "sha256": "71c51e30d5c68c51e18634275c7923d7a6d1fc284a96e2664aa10f415db6d4b8",
-    "copied_utc": "2026-09-14T18:21:31.5483083Z",
+    "copied_utc": "2026-09-14T18:26:17.2693602Z",
     "bytes": 1195
   },
   {
     "file": "evidence/day1/integration-manifest.json",
     "source": "integration manifest for perception candidate, nontechnical supplement, full-mission wrapper and live-SLAM fail-closed audit",
     "source_branch": "codex/day1-evidence-integration",
-    "copied_utc": "2026-09-14T18:21:31.5483083Z",
+    "copied_utc": "2026-09-14T18:26:17.2693602Z",
     "bytes": 9279,
     "sha256": "d6539d8f8ac01c0caa8b6aab84c27953d21ad43b746de0ca0a0854fcf50f2046"
   },
@@ -596,7 +596,7 @@
     "archive_commit": "8cda98c",
     "bytes": 5678,
     "sha256": "aa4b32daf845c3f7120e2f7a9bf5657ae838bb3f3e175c55c0ddbbe3eeac03f1",
-    "copied_utc": "2026-09-14T18:21:31.5483083Z",
+    "copied_utc": "2026-09-14T18:26:17.2693602Z",
     "source_branch": "codex/day1-video-report-sync"
   },
   {
@@ -711,7 +711,7 @@
     "archive_commit": "8cda98c",
     "bytes": 30014611,
     "sha256": "0fd575920130b77ce2ce480600734f0db147b5870dcd9010fb573b728abf1180",
-    "copied_utc": "2026-09-14T18:21:31.5483083Z",
+    "copied_utc": "2026-09-14T18:26:17.2693602Z",
     "source_branch": "codex/day1-video-report-sync"
   },
   {
@@ -722,7 +722,7 @@
     "archive_commit": "8cda98c",
     "bytes": 7201196,
     "sha256": "393f3102154280f6d9041eaa3d9812f34edda6f870ed9a1d8bd4d5a1bdb4a793",
-    "copied_utc": "2026-09-14T18:21:31.5483083Z",
+    "copied_utc": "2026-09-14T18:26:17.2693602Z",
     "source_branch": "codex/day1-video-report-sync"
   },
   {
@@ -733,7 +733,7 @@
     "archive_commit": "8cda98c",
     "bytes": 3462,
     "sha256": "cf2e7f04d1d87c14be2aaefb2287e759dc1ca7d5fdf6548e4ca7a2bf54e2dcfe",
-    "copied_utc": "2026-09-14T18:21:31.5483083Z",
+    "copied_utc": "2026-09-14T18:26:17.2693602Z",
     "source_branch": "codex/day1-video-report-sync"
   },
   {
@@ -744,7 +744,7 @@
     "archive_commit": "8cda98c",
     "bytes": 2146,
     "sha256": "84fbdb7c4843b3c87934c2c0595c0aa5df7ef6857f851f05d3bc09141e189b8b",
-    "copied_utc": "2026-09-14T18:21:31.5483083Z",
+    "copied_utc": "2026-09-14T18:26:17.2693602Z",
     "source_branch": "codex/day1-video-report-sync"
   },
   {
@@ -755,7 +755,7 @@
     "archive_commit": "8cda98c",
     "bytes": 2328,
     "sha256": "4b01e6a7122fb87338d9e1d6b7781e3814ed03707d435aabb392726d084cf013",
-    "copied_utc": "2026-09-14T18:21:31.5483083Z",
+    "copied_utc": "2026-09-14T18:26:17.2693602Z",
     "source_branch": "codex/day1-video-report-sync"
   },
   {
@@ -766,7 +766,7 @@
     "archive_commit": "8cda98c",
     "bytes": 891,
     "sha256": "1a7aa4a4952fe84e977942721eeb8a054ceaddb8265b0c613d139e107df03c60",
-    "copied_utc": "2026-09-14T18:21:31.5483083Z",
+    "copied_utc": "2026-09-14T18:26:17.2693602Z",
     "source_branch": "codex/day1-video-report-sync"
   },
   {
@@ -777,7 +777,7 @@
     "archive_commit": "8cda98c",
     "bytes": 3363,
     "sha256": "ed83b37d5e9db1bc6f161a4a9e1ebf4d057b0f509cc9ae98806393af9c81c330",
-    "copied_utc": "2026-09-14T18:21:31.5483083Z",
+    "copied_utc": "2026-09-14T18:26:17.2693602Z",
     "source_branch": "codex/day1-video-report-sync"
   },
   {
@@ -787,7 +787,7 @@
     "archive_commit": "8cda98c",
     "bytes": 2164,
     "sha256": "5b0d1582a71c3d06456dd2a537e47e83c53de40a68e830ca83150cf702ed7f6a",
-    "copied_utc": "2026-09-14T18:21:31.5483083Z",
+    "copied_utc": "2026-09-14T18:26:17.2693602Z",
     "source_branch": "codex/day1-video-report-sync"
   },
   {
@@ -829,7 +829,7 @@
     "source_branch": "codex/day1-video-report-sync",
     "bytes": 26229581,
     "sha256": "9d8056e472d05fa84e22d0bbe38f792a4ffa9f36bad4aab48b7636a3e98ca744",
-    "copied_utc": "2026-09-14T18:21:31.5483083Z"
+    "copied_utc": "2026-09-14T18:26:17.2693602Z"
   },
   {
     "file": "video/audio/narration-script.md",
@@ -837,7 +837,7 @@
     "source_branch": "codex/day1-video-report-sync",
     "bytes": 3340,
     "sha256": "3529595dfd52f62d3486def45a462e0111e6c52cb1292378941361a5f41e6932",
-    "copied_utc": "2026-09-14T18:21:31.5483083Z"
+    "copied_utc": "2026-09-14T18:26:17.2693602Z"
   },
   {
     "file": "video/modeling/shot-list.json",
@@ -845,7 +845,7 @@
     "source_branch": "codex/day1-video-report-sync",
     "bytes": 1830,
     "sha256": "f6a66c35116c4057cf3045e7488f716baa24d6993e732cbd4105282985d6f9bb",
-    "copied_utc": "2026-09-14T18:21:31.5483083Z"
+    "copied_utc": "2026-09-14T18:26:17.2693602Z"
   },
   {
     "file": "video/functions/cue-sheet.json",
@@ -853,7 +853,7 @@
     "source_branch": "codex/day1-video-report-sync",
     "bytes": 3274,
     "sha256": "2171e32179a4d24a87a8b58f2b4041fc7c09427e02558e4a3b1a605d662979aa",
-    "copied_utc": "2026-09-14T18:21:31.5483083Z"
+    "copied_utc": "2026-09-14T18:26:17.2693602Z"
   },
   {
     "file": "video/final/ffprobe.json",
@@ -861,7 +861,7 @@
     "source_branch": "codex/day1-video-report-sync",
     "bytes": 4892,
     "sha256": "458afbde0a4286d511d35a4815d2b7d1223144d54f029d78730a9073bc2c0d77",
-    "copied_utc": "2026-09-14T18:21:31.5483083Z"
+    "copied_utc": "2026-09-14T18:26:17.2693602Z"
   },
   {
     "file": "docs/技术方案报告.pdf",
@@ -877,7 +877,7 @@
     "source_branch": "codex/day1-video-report-sync",
     "bytes": 3507,
     "sha256": "0526d6925d73a866c6ece91f0042a333f457c5d806e2de7ebe53866e8af2abaf",
-    "copied_utc": "2026-09-14T18:21:31.5483083Z"
+    "copied_utc": "2026-09-14T18:26:17.2693602Z"
   },
   {
     "file": "code/CODE_MANIFEST.sha256",
@@ -885,7 +885,7 @@
     "source_branch": "codex/day1-video-report-sync",
     "bytes": 11089,
     "sha256": "bafc707668531536e27ca07119ee10be06864804f604606ead753866c22e5a6a",
-    "copied_utc": "2026-09-14T18:21:31.5483083Z"
+    "copied_utc": "2026-09-14T18:26:17.2693602Z"
   },
   {
     "file": "metrics/score-estimate.md",
@@ -893,7 +893,7 @@
     "source_branch": "codex/day1-video-report-sync",
     "bytes": 3240,
     "sha256": "5cef48c91a47a3b793031ec5a69a624a4cf4a9b1b49135ea7e850b844b907526",
-    "copied_utc": "2026-09-14T18:21:31.5483083Z"
+    "copied_utc": "2026-09-14T18:26:17.2693602Z"
   },
   {
     "file": "metrics/score-estimate.json",
@@ -901,23 +901,23 @@
     "source_branch": "codex/day1-video-report-sync",
     "bytes": 1020,
     "sha256": "b552088ebf9d70de5fa1c346cf800715e9d5d1adefbb6c0edd485a1bd87f6b37",
-    "copied_utc": "2026-09-14T18:21:31.5483083Z"
+    "copied_utc": "2026-09-14T18:26:17.2693602Z"
   },
   {
     "file": "metrics/final-readiness.md",
     "source": "codex/day1-video-report-sync: final submission readiness checklist",
     "source_branch": "codex/day1-video-report-sync",
     "bytes": 1011,
-    "sha256": "45bdba563a2642e79564722d4bfc8a35a78d9df38523ce42f0c51da7558febbb",
-    "copied_utc": "2026-09-14T18:21:31.5483083Z"
+    "sha256": "5b9e76284466527ac76c9dfde11267e725f0681085c2b8c6b8b08062ce16f13d",
+    "copied_utc": "2026-09-14T18:26:17.2693602Z"
   },
   {
     "file": "metrics/final-readiness.json",
     "source": "codex/day1-video-report-sync: machine-readable final submission readiness",
     "source_branch": "codex/day1-video-report-sync",
     "bytes": 1784,
-    "sha256": "3601440bcb36fb0ad367810a33554006485a514d95b6d7cf629d99f2d7de9285",
-    "copied_utc": "2026-09-14T18:21:31.5483083Z"
+    "sha256": "8a00b2d9c16d16d39aa5f013bb4eb4d33e0909bf63bca363ece019304767c80c",
+    "copied_utc": "2026-09-14T18:26:17.2693602Z"
   },
   {
     "file": "code/run_offline_tests.py",
@@ -925,6 +925,22 @@
     "source_branch": "codex/day1-video-report-sync",
     "bytes": 678,
     "sha256": "4ca3d092c0f66a365c0625c7cb756a1b9061adb355881c21efcb0cc28781ac14",
-    "copied_utc": "2026-09-14T18:21:31.5483083Z"
+    "copied_utc": "2026-09-14T18:26:17.2693602Z"
+  },
+  {
+    "file": "evidence/day1/localization-live-root-cause-20260915.md",
+    "source": "codex/day1-video-report-sync: live localization root-cause note",
+    "source_branch": "codex/day1-video-report-sync",
+    "bytes": 892,
+    "sha256": "d61fc5d9d493d9a2ce3baf98aabad15444b2fad471af638ffb77f74068789aa6",
+    "copied_utc": "2026-09-14T18:26:17.2693602Z"
+  },
+  {
+    "file": "evidence/day1/localization-live-root-cause-20260915.json",
+    "source": "codex/day1-video-report-sync: machine-readable live localization root-cause receipt",
+    "source_branch": "codex/day1-video-report-sync",
+    "bytes": 1166,
+    "sha256": "19aff0b661faa65badd30e212bbcc32e42c92cba28e1c701ca60db7f3fe2202d",
+    "copied_utc": "2026-09-14T18:26:17.2693602Z"
   }
 ]
