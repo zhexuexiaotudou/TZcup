@@ -32,10 +32,6 @@ from validate_formal_dynamic_obstacle_avoidance import (
 )
 
 
-STATIC_INTERACTION_ASSUMED_SPEED_MPS = 0.45
-STATIC_INTERACTION_MAX_SURFACE_GAP_M = 1.1
-
-
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as stream:
@@ -92,15 +88,12 @@ def _route_samples(
 def _materialization_proof(
     *,
     schedule: dict[str, Any],
+    route_manifest: dict[str, Any],
     episode_manifest: Path,
     public_world: Path,
     nominal_leg_m: float,
     fraction_start: float,
     fraction_end: float,
-    trigger_time_s: float,
-    obstacle_radius_m: float,
-    vehicle_envelope_radius_m: float,
-    minimum_surface_clearance_m: float,
 ) -> dict[str, Any]:
     environment = schedule["acceptance_environment"]
     crossing_ids = environment["mission_corridor_crossing_ids"]
@@ -139,23 +132,16 @@ def _materialization_proof(
     mission_x_m = math.cos(start[2]) * (center_xy[0] - start[0]) + math.sin(
         start[2]
     ) * (center_xy[1] - start[1])
-    estimated_arrival_s = mission_x_m / STATIC_INTERACTION_ASSUMED_SPEED_MPS
-    estimated_longitudinal_gap_m = abs(
-        mission_x_m
-        - STATIC_INTERACTION_ASSUMED_SPEED_MPS * trigger_time_s
-    )
-    estimated_surface_gap_m = (
-        estimated_longitudinal_gap_m - obstacle_radius_m - vehicle_envelope_radius_m
-    )
-    interaction_window_met = (
-        estimated_surface_gap_m >= minimum_surface_clearance_m
-        and estimated_surface_gap_m <= STATIC_INTERACTION_MAX_SURFACE_GAP_M
-    )
+    heading_delta_y = float(waypoints[1][2]) - float(waypoints[0][2])
+    route_heading = "positive_y" if heading_delta_y > 0.0 else "negative_y"
+    static_interaction = route_manifest["static_interaction_materialization"]
     return {
         "selected_object_id": crossing_ids[0],
         "crossing_count": len(crossing_ids),
         "route_source_world": waypoints,
         "route_surface_length_m": math.dist(first_xy, second_xy),
+        "route_heading": route_heading,
+        "route_heading_source_world": [0.0, 1.0 if heading_delta_y > 0.0 else -1.0],
         "center_source_world": list(center_xy),
         "center_mission_x_m": mission_x_m,
         "minimum_static_surface_clearance_m": minimum_static_surface_clearance_m,
@@ -165,10 +151,7 @@ def _materialization_proof(
         "corridor_fraction_range": [fraction_start, fraction_end],
         "corridor_centerline_span_m": nominal_leg_m
         * (fraction_end - fraction_start),
-        "estimated_vehicle_arrival_s_at_0.45_mps": estimated_arrival_s,
-        "estimated_longitudinal_gap_at_first_crossing_m": estimated_longitudinal_gap_m,
-        "estimated_surface_gap_at_first_crossing_m": estimated_surface_gap_m,
-        "estimated_interaction_window_met": interaction_window_met,
+        "static_interaction_materialization": static_interaction,
     }
 
 
@@ -213,6 +196,8 @@ def search_route(
 
     attempted = 0
     failures: list[dict[str, Any]] = []
+    candidate_evidence: list[dict[str, Any]] = []
+    selected_result: dict[str, Any] | None = None
     for corridor_id, fraction_start, fraction_end in corridor_ranges:
         capacity = corridor_capacity(
             nominal_leg_m=nominal_leg_m,
@@ -258,39 +243,47 @@ def search_route(
                 )
                 proof = _materialization_proof(
                     schedule=schedule,
+                    route_manifest=route_manifest,
                     episode_manifest=episode_manifest,
                     public_world=public_world,
                     nominal_leg_m=nominal_leg_m,
                     fraction_start=fraction_start,
                     fraction_end=fraction_end,
-                    trigger_time_s=float(
-                        route_manifest["selected_obstacle"][
-                            "trigger_time_from_schedule_start_s"
-                        ]
-                    ),
-                    obstacle_radius_m=float(candidate_protocol["obstacle"]["radius_m"]),
-                    vehicle_envelope_radius_m=float(
-                        candidate_protocol["obstacle"]["minimum_distance"][
-                            "vehicle_envelope_radius_m"
-                        ]
-                    ),
-                    minimum_surface_clearance_m=float(
-                        candidate_protocol["obstacle"]["minimum_distance"]["threshold_m"]
-                    ),
                 )
-                if not proof["estimated_interaction_window_met"]:
+                static_interaction = proof["static_interaction_materialization"]
+                candidate_evidence.append(
+                    {
+                        "seed": seed,
+                        "corridor_id": corridor_id,
+                        "corridor_fraction_range": [
+                            fraction_start,
+                            fraction_end,
+                        ],
+                        "crossing_mission_x_m": proof["center_mission_x_m"],
+                        "route_heading": proof["route_heading"],
+                        "trigger_time_from_schedule_start_s": route_manifest[
+                            "selected_obstacle"
+                        ]["trigger_time_from_schedule_start_s"],
+                        "passed": static_interaction["passed"],
+                        "selected_interaction_sample": static_interaction[
+                            "selected_interaction_sample"
+                        ],
+                    }
+                )
+                if not static_interaction["passed"]:
                     failures.append(
                         {
                             "seed": seed,
                             "corridor_id": corridor_id,
                             "crossing_count": target_crossings,
-                            "error": (
-                                "static estimate is outside the predeclared "
-                                "interaction window"
+                            "error": static_interaction["failure_reason"],
+                            "route_heading": proof["route_heading"],
+                            "crossing_mission_x_m": proof["center_mission_x_m"],
+                            "trigger_time_from_schedule_start_s": (
+                                route_manifest["selected_obstacle"][
+                                    "trigger_time_from_schedule_start_s"
+                                ]
                             ),
-                            "estimated_surface_gap_at_first_crossing_m": proof[
-                                "estimated_surface_gap_at_first_crossing_m"
-                            ],
                         }
                     )
                     continue
@@ -304,38 +297,51 @@ def search_route(
                     }
                 )
                 continue
-            return {
-                "schema_version": 1,
-                "kind": "tzcup_dynamic_avoidance_functional_route_search",
-                "status": "FUNCTIONAL_SMOKE_ROUTE_MATERIALIZED",
-                "mode": FUNCTIONAL_SMOKE_MODE,
-                "protocol_id": candidate_protocol["protocol_id"],
-                "input_protocol_sha256": protocol_sha256,
-                "selected_protocol_sha256": candidate_protocol_sha256,
-                "protocol_sha256": candidate_protocol_sha256,
-                "input_sha256": input_sha256,
-                "nominal_leg_m": nominal_leg_m,
-                "selected_seed": seed,
-                "selected_protocol_schedule": candidate_protocol["schedule"],
-                "selected_corridor_id": corridor_id,
-                "selected_corridor_fraction_range": [
-                    fraction_start,
-                    fraction_end,
-                ],
-                "selected_crossing_count": target_crossings,
-                "route_materialization": proof,
-                "predeclared_route_manifest": route_manifest,
-                "capacity_evidence": capacity_evidence,
-                "attempted_candidate_count": attempted,
-                "retained_failure_count": len(failures),
-                "retained_failure_examples": failures[:20],
-                "claim_boundary": (
-                    "Static route materialization against the frozen public "
-                    "episode, world, and offline source hash. It does not claim "
-                    "Gazebo execution, collision-free runtime behavior, or the "
-                    "official >=95% rate."
-                ),
-            }
+            if selected_result is None:
+                selected_result = {
+                    "schema_version": 1,
+                    "kind": "tzcup_dynamic_avoidance_functional_route_search",
+                    "status": "FUNCTIONAL_SMOKE_ROUTE_MATERIALIZED",
+                    "mode": FUNCTIONAL_SMOKE_MODE,
+                    "protocol_id": candidate_protocol["protocol_id"],
+                    "input_protocol_sha256": protocol_sha256,
+                    "selected_protocol_sha256": candidate_protocol_sha256,
+                    "protocol_sha256": candidate_protocol_sha256,
+                    "input_sha256": input_sha256,
+                    "nominal_leg_m": nominal_leg_m,
+                    "selected_seed": seed,
+                    "selected_protocol_schedule": candidate_protocol["schedule"],
+                    "selected_corridor_id": corridor_id,
+                    "selected_corridor_fraction_range": [
+                        fraction_start,
+                        fraction_end,
+                    ],
+                    "selected_crossing_count": target_crossings,
+                    "selected_route_heading": proof["route_heading"],
+                    "selected_trigger_time_from_schedule_start_s": route_manifest[
+                        "selected_obstacle"
+                    ]["trigger_time_from_schedule_start_s"],
+                    "route_materialization": proof,
+                    "predeclared_route_manifest": route_manifest,
+                    "capacity_evidence": capacity_evidence,
+                    "attempted_candidate_count": attempted,
+                    "candidate_evidence": candidate_evidence,
+                    "retained_failure_count": len(failures),
+                    "retained_failure_examples": failures[:20],
+                    "claim_boundary": (
+                        "Static route materialization against the frozen public "
+                        "episode, world, and offline source hash. It does not claim "
+                        "Gazebo execution, collision-free runtime behavior, or the "
+                        "official >=95% rate."
+                    ),
+                }
+
+    if selected_result is not None:
+        selected_result["attempted_candidate_count"] = attempted
+        selected_result["candidate_evidence"] = candidate_evidence
+        selected_result["retained_failure_count"] = len(failures)
+        selected_result["retained_failure_examples"] = failures[:20]
+        return selected_result
 
     return {
         "schema_version": 1,
@@ -352,6 +358,7 @@ def search_route(
         "selected_crossing_count": target_crossings,
         "capacity_evidence": capacity_evidence,
         "attempted_candidate_count": attempted,
+        "candidate_evidence": candidate_evidence,
         "retained_failure_count": len(failures),
         "retained_failure_examples": failures[:20],
         "claim_boundary": (
@@ -396,9 +403,6 @@ def main() -> int:
         max_seed_candidates=args.maximum_seed_candidates,
         corridor_ranges=[
             ("declared", *corridor_fraction_range(protocol)),
-            ("middle-half", 0.30, 0.70),
-            ("lower-half", 0.20, 0.50),
-            ("upper-half", 0.50, 0.80),
         ],
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)

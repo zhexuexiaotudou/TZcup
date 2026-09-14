@@ -263,6 +263,47 @@ def evaluate_run(
     checks["route_manifest_mode_matches_protocol"] = (
         route_manifest.get("mode", OFFICIAL_MODE) == mode
     )
+    static_interaction = route_manifest.get(
+        "static_interaction_materialization", {}
+    )
+    static_sample = (
+        static_interaction.get("selected_interaction_sample")
+        if isinstance(static_interaction, dict)
+        else None
+    )
+    static_trigger_delta_s = (
+        _finite_number(static_sample.get("interaction_sample_trigger_delta_s"))
+        if isinstance(static_sample, dict)
+        else None
+    )
+    static_surface_gap_m = (
+        _finite_number(static_sample.get("interaction_sample_surface_gap_m"))
+        if isinstance(static_sample, dict)
+        else None
+    )
+    static_status_alignment_s = (
+        _finite_number(static_sample.get("interaction_sample_status_alignment_s"))
+        if isinstance(static_sample, dict)
+        else None
+    )
+    checks["static_interaction_materialization_predeclared"] = (
+        mode != FUNCTIONAL_SMOKE_MODE
+        or (
+            isinstance(static_interaction, dict)
+            and static_interaction.get("status")
+            == "STATIC_OBSTACLE_INTERACTION_SAMPLEABLE"
+            and static_interaction.get("passed") is True
+            and static_trigger_delta_s is not None
+            and static_trigger_delta_s
+            <= float(protocol["obstacle"]["trigger"]["window_s"])
+            and static_surface_gap_m is not None
+            and static_surface_gap_m
+            >= float(protocol["obstacle"]["minimum_distance"]["threshold_m"])
+            and static_status_alignment_s is not None
+            and static_status_alignment_s
+            <= float(protocol["sampling"]["maximum_trigger_alignment_s"])
+        )
+    )
     checks["run_timeline_mode_matches_protocol"] = (
         timeline.get("mode", OFFICIAL_MODE) == mode
     )
@@ -617,6 +658,7 @@ def evaluate_run(
         "protocol_hash_matches_predeclaration",
         "route_manifest_kind_expected",
         "route_manifest_mode_matches_protocol",
+        "static_interaction_materialization_predeclared",
         "run_timeline_mode_matches_protocol",
         "route_predeclared_before_run_start",
         "schedule_hash_matches_predeclaration",

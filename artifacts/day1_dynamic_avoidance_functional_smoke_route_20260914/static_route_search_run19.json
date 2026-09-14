@@ -1,0 +1,733 @@
+{
+  "attempted_candidate_count": 64,
+  "candidate_evidence": [
+    {
+      "corridor_fraction_range": [
+        0.3,
+        0.35
+      ],
+      "corridor_id": "declared",
+      "crossing_mission_x_m": 1.8824999999999932,
+      "passed": true,
+      "route_heading": "positive_y",
+      "seed": 2026091715,
+      "selected_interaction_sample": {
+        "interaction_sample_center_distance_m": 1.817083185857379,
+        "interaction_sample_schedule_elapsed_s": 2.4966,
+        "interaction_sample_sensor_range_limit_m": 3.0,
+        "interaction_sample_status_alignment_s": 0.0034000000000002084,
+        "interaction_sample_surface_gap_m": 1.0285667051439287,
+        "interaction_sample_trigger_delta_s": 2.09,
+        "interaction_sample_vehicle_mission_x_m": 1.12347,
+        "interaction_sample_walker_x_m": 1.8824999999999932,
+        "interaction_sample_walker_y_m": -1.6509587406793704,
+        "predicted_envelope_intervention_distance_m": 0.7385164807134503,
+        "predicted_minimum_center_distance_within_horizon_m": 0.736368906649346
+      },
+      "trigger_time_from_schedule_start_s": 4.5866
+    },
+    {
+      "corridor_fraction_range": [
+        0.3,
+        0.35
+      ],
+      "corridor_id": "declared",
+      "crossing_mission_x_m": 1.9274999999999949,
+      "passed": true,
+      "route_heading": "negative_y",
+      "seed": 2026091718,
+      "selected_interaction_sample": {
+        "interaction_sample_center_distance_m": 1.7083633464519745,
+        "interaction_sample_schedule_elapsed_s": 3.3466,
+        "interaction_sample_sensor_range_limit_m": 3.0,
+        "interaction_sample_status_alignment_s": 0.046599999999999836,
+        "interaction_sample_surface_gap_m": 0.9198468657385241,
+        "interaction_sample_trigger_delta_s": 2.14,
+        "interaction_sample_vehicle_mission_x_m": 1.50597,
+        "interaction_sample_walker_x_m": 1.9274999999999949,
+        "interaction_sample_walker_y_m": 1.6555415375642477,
+        "predicted_envelope_intervention_distance_m": 0.7385164807134503,
+        "predicted_minimum_center_distance_within_horizon_m": 0.7367874125692819
+      },
+      "trigger_time_from_schedule_start_s": 5.4866
+    },
+    {
+      "corridor_fraction_range": [
+        0.3,
+        0.35
+      ],
+      "corridor_id": "declared",
+      "crossing_mission_x_m": 1.8599999999999994,
+      "passed": true,
+      "route_heading": "negative_y",
+      "seed": 2026091723,
+      "selected_interaction_sample": {
+        "interaction_sample_center_distance_m": 1.5190340616022688,
+        "interaction_sample_schedule_elapsed_s": 3.42075,
+        "interaction_sample_sensor_range_limit_m": 3.0,
+        "interaction_sample_status_alignment_s": 0.02074999999999977,
+        "interaction_sample_surface_gap_m": 0.7305175808888185,
+        "interaction_sample_trigger_delta_s": 2.2800000000000002,
+        "interaction_sample_vehicle_mission_x_m": 1.5393375,
+        "interaction_sample_walker_x_m": 1.8599999999999994,
+        "interaction_sample_walker_y_m": 1.4848030311801077,
+        "predicted_envelope_intervention_distance_m": 0.7385164807134503,
+        "predicted_minimum_center_distance_within_horizon_m": 0.7367352747719639
+      },
+      "trigger_time_from_schedule_start_s": 5.70075
+    },
+    {
+      "corridor_fraction_range": [
+        0.3,
+        0.35
+      ],
+      "corridor_id": "declared",
+      "crossing_mission_x_m": 1.9462500000000063,
+      "passed": true,
+      "route_heading": "negative_y",
+      "seed": 2026091725,
+      "selected_interaction_sample": {
+        "interaction_sample_center_distance_m": 1.6261401415015424,
+        "interaction_sample_schedule_elapsed_s": 3.4304000000000006,
+        "interaction_sample_sensor_range_limit_m": 3.0,
+        "interaction_sample_status_alignment_s": 0.03040000000000037,
+        "interaction_sample_surface_gap_m": 0.837623660788092,
+        "interaction_sample_trigger_delta_s": 2.2199999999999998,
+        "interaction_sample_vehicle_mission_x_m": 1.5436800000000004,
+        "interaction_sample_walker_x_m": 1.9462500000000063,
+        "interaction_sample_walker_y_m": 1.5755218674784084,
+        "predicted_envelope_intervention_distance_m": 0.7385164807134503,
+        "predicted_minimum_center_distance_within_horizon_m": 0.7368184699198446
+      },
+      "trigger_time_from_schedule_start_s": 5.6504
+    },
+    {
+      "corridor_fraction_range": [
+        0.3,
+        0.35
+      ],
+      "corridor_id": "declared",
+      "crossing_mission_x_m": 1.9387499999999989,
+      "passed": true,
+      "route_heading": "positive_y",
+      "seed": 2026091728,
+      "selected_interaction_sample": {
+        "interaction_sample_center_distance_m": 1.6842302816040307,
+        "interaction_sample_schedule_elapsed_s": 3.2155499999999995,
+        "interaction_sample_sensor_range_limit_m": 3.0,
+        "interaction_sample_status_alignment_s": 0.015549999999999287,
+        "interaction_sample_surface_gap_m": 0.8957138008905803,
+        "interaction_sample_trigger_delta_s": 2.2,
+        "interaction_sample_vehicle_mission_x_m": 1.4469974999999997,
+        "interaction_sample_walker_x_m": 1.9387499999999989,
+        "interaction_sample_walker_y_m": -1.6108417427592765,
+        "predicted_envelope_intervention_distance_m": 0.7385164807134503,
+        "predicted_minimum_center_distance_within_horizon_m": 0.733788676187378
+      },
+      "trigger_time_from_schedule_start_s": 5.41555
+    },
+    {
+      "corridor_fraction_range": [
+        0.3,
+        0.35
+      ],
+      "corridor_id": "declared",
+      "crossing_mission_x_m": 1.9912499999999937,
+      "passed": true,
+      "route_heading": "negative_y",
+      "seed": 2026091729,
+      "selected_interaction_sample": {
+        "interaction_sample_center_distance_m": 1.4739704927050417,
+        "interaction_sample_schedule_elapsed_s": 3.92685,
+        "interaction_sample_sensor_range_limit_m": 3.0,
+        "interaction_sample_status_alignment_s": 0.026849999999999735,
+        "interaction_sample_surface_gap_m": 0.6854540119915913,
+        "interaction_sample_trigger_delta_s": 2.21,
+        "interaction_sample_vehicle_mission_x_m": 1.7670825000000001,
+        "interaction_sample_walker_x_m": 1.9912499999999937,
+        "interaction_sample_walker_y_m": 1.4568246103456985,
+        "predicted_envelope_intervention_distance_m": 0.7385164807134503,
+        "predicted_minimum_center_distance_within_horizon_m": 0.7369020683530629
+      },
+      "trigger_time_from_schedule_start_s": 6.13685
+    },
+    {
+      "corridor_fraction_range": [
+        0.3,
+        0.35
+      ],
+      "corridor_id": "declared",
+      "crossing_mission_x_m": 2.055000000000007,
+      "passed": true,
+      "route_heading": "positive_y",
+      "seed": 2026091736,
+      "selected_interaction_sample": {
+        "interaction_sample_center_distance_m": 1.6117835364400723,
+        "interaction_sample_schedule_elapsed_s": 3.245,
+        "interaction_sample_sensor_range_limit_m": 3.0,
+        "interaction_sample_status_alignment_s": 0.04499999999999993,
+        "interaction_sample_surface_gap_m": 0.823267055726622,
+        "interaction_sample_trigger_delta_s": 2.34,
+        "interaction_sample_vehicle_mission_x_m": 1.46025,
+        "interaction_sample_walker_x_m": 2.055000000000007,
+        "interaction_sample_walker_y_m": -1.4980382524619515,
+        "predicted_envelope_intervention_distance_m": 0.7385164807134503,
+        "predicted_minimum_center_distance_within_horizon_m": 0.7318642759347722
+      },
+      "trigger_time_from_schedule_start_s": 5.585
+    },
+    {
+      "corridor_fraction_range": [
+        0.3,
+        0.35
+      ],
+      "corridor_id": "declared",
+      "crossing_mission_x_m": 1.9950000000000045,
+      "passed": true,
+      "route_heading": "positive_y",
+      "seed": 2026091738,
+      "selected_interaction_sample": {
+        "interaction_sample_center_distance_m": 1.7143321173045714,
+        "interaction_sample_schedule_elapsed_s": 3.59995,
+        "interaction_sample_sensor_range_limit_m": 3.0,
+        "interaction_sample_status_alignment_s": 4.999999999999449e-05,
+        "interaction_sample_surface_gap_m": 0.925815636591121,
+        "interaction_sample_trigger_delta_s": 2.1,
+        "interaction_sample_vehicle_mission_x_m": 1.6199775,
+        "interaction_sample_walker_x_m": 1.9950000000000045,
+        "interaction_sample_walker_y_m": -1.67280983166519,
+        "predicted_envelope_intervention_distance_m": 0.7385164807134503,
+        "predicted_minimum_center_distance_within_horizon_m": 0.7356559726688976
+      },
+      "trigger_time_from_schedule_start_s": 5.69995
+    },
+    {
+      "corridor_fraction_range": [
+        0.3,
+        0.35
+      ],
+      "corridor_id": "declared",
+      "crossing_mission_x_m": 2.032499999999999,
+      "passed": true,
+      "route_heading": "positive_y",
+      "seed": 2026091752,
+      "selected_interaction_sample": {
+        "interaction_sample_center_distance_m": 1.610514556241277,
+        "interaction_sample_schedule_elapsed_s": 3.8543,
+        "interaction_sample_sensor_range_limit_m": 3.0,
+        "interaction_sample_status_alignment_s": 0.04570000000000038,
+        "interaction_sample_surface_gap_m": 0.8219980755278267,
+        "interaction_sample_trigger_delta_s": 2.14,
+        "interaction_sample_vehicle_mission_x_m": 1.734435,
+        "interaction_sample_walker_x_m": 2.032499999999999,
+        "interaction_sample_walker_y_m": -1.5826921341941516,
+        "predicted_envelope_intervention_distance_m": 0.7385164807134503,
+        "predicted_minimum_center_distance_within_horizon_m": 0.7360959702976344
+      },
+      "trigger_time_from_schedule_start_s": 5.9943
+    },
+    {
+      "corridor_fraction_range": [
+        0.3,
+        0.35
+      ],
+      "corridor_id": "declared",
+      "crossing_mission_x_m": 2.0250000000000057,
+      "passed": true,
+      "route_heading": "positive_y",
+      "seed": 2026091754,
+      "selected_interaction_sample": {
+        "interaction_sample_center_distance_m": 1.8035014852447895,
+        "interaction_sample_schedule_elapsed_s": 3.0085499999999996,
+        "interaction_sample_sensor_range_limit_m": 3.0,
+        "interaction_sample_status_alignment_s": 0.008549999999999447,
+        "interaction_sample_surface_gap_m": 1.014985004531339,
+        "interaction_sample_trigger_delta_s": 2.12,
+        "interaction_sample_vehicle_mission_x_m": 1.3538474999999999,
+        "interaction_sample_walker_x_m": 2.0250000000000057,
+        "interaction_sample_walker_y_m": -1.6739689151904535,
+        "predicted_envelope_intervention_distance_m": 0.7385164807134503,
+        "predicted_minimum_center_distance_within_horizon_m": 0.7381836450107024
+      },
+      "trigger_time_from_schedule_start_s": 5.12855
+    },
+    {
+      "corridor_fraction_range": [
+        0.3,
+        0.35
+      ],
+      "corridor_id": "declared",
+      "crossing_mission_x_m": 2.051249999999996,
+      "passed": true,
+      "route_heading": "negative_y",
+      "seed": 2026091764,
+      "selected_interaction_sample": {
+        "interaction_sample_center_distance_m": 1.779407470659926,
+        "interaction_sample_schedule_elapsed_s": 2.8907999999999996,
+        "interaction_sample_sensor_range_limit_m": 3.0,
+        "interaction_sample_status_alignment_s": 0.009200000000000569,
+        "interaction_sample_surface_gap_m": 0.9908909899464757,
+        "interaction_sample_trigger_delta_s": 2.12,
+        "interaction_sample_vehicle_mission_x_m": 1.30086,
+        "interaction_sample_walker_x_m": 2.051249999999996,
+        "interaction_sample_walker_y_m": 1.6134453181128765,
+        "predicted_envelope_intervention_distance_m": 0.7385164807134503,
+        "predicted_minimum_center_distance_within_horizon_m": 0.7311006217849559
+      },
+      "trigger_time_from_schedule_start_s": 5.0108
+    },
+    {
+      "corridor_fraction_range": [
+        0.3,
+        0.35
+      ],
+      "corridor_id": "declared",
+      "crossing_mission_x_m": 2.0662499999999966,
+      "passed": true,
+      "route_heading": "negative_y",
+      "seed": 2026091767,
+      "selected_interaction_sample": {
+        "interaction_sample_center_distance_m": 1.5882756904641313,
+        "interaction_sample_schedule_elapsed_s": 3.2866500000000003,
+        "interaction_sample_sensor_range_limit_m": 3.0,
+        "interaction_sample_status_alignment_s": 0.01334999999999989,
+        "interaction_sample_surface_gap_m": 0.7997592097506809,
+        "interaction_sample_trigger_delta_s": 2.39,
+        "interaction_sample_vehicle_mission_x_m": 1.4789925000000002,
+        "interaction_sample_walker_x_m": 2.0662499999999966,
+        "interaction_sample_walker_y_m": 1.4757195863757677,
+        "predicted_envelope_intervention_distance_m": 0.7385164807134503,
+        "predicted_minimum_center_distance_within_horizon_m": 0.7362906479254108
+      },
+      "trigger_time_from_schedule_start_s": 5.67665
+    },
+    {
+      "corridor_fraction_range": [
+        0.3,
+        0.35
+      ],
+      "corridor_id": "declared",
+      "crossing_mission_x_m": 2.0587500000000034,
+      "passed": true,
+      "route_heading": "positive_y",
+      "seed": 2026091770,
+      "selected_interaction_sample": {
+        "interaction_sample_center_distance_m": 1.5194720789934246,
+        "interaction_sample_schedule_elapsed_s": 3.9406999999999996,
+        "interaction_sample_sensor_range_limit_m": 3.0,
+        "interaction_sample_status_alignment_s": 0.04069999999999943,
+        "interaction_sample_surface_gap_m": 0.7309555982799743,
+        "interaction_sample_trigger_delta_s": 2.24,
+        "interaction_sample_vehicle_mission_x_m": 1.773315,
+        "interaction_sample_walker_x_m": 2.0587500000000034,
+        "interaction_sample_walker_y_m": -1.4924216092028413,
+        "predicted_envelope_intervention_distance_m": 0.7385164807134503,
+        "predicted_minimum_center_distance_within_horizon_m": 0.7381921517065292
+      },
+      "trigger_time_from_schedule_start_s": 6.1807
+    },
+    {
+      "corridor_fraction_range": [
+        0.3,
+        0.35
+      ],
+      "corridor_id": "declared",
+      "crossing_mission_x_m": 1.8449999999999989,
+      "passed": true,
+      "route_heading": "positive_y",
+      "seed": 2026091773,
+      "selected_interaction_sample": {
+        "interaction_sample_center_distance_m": 1.5035413400758828,
+        "interaction_sample_schedule_elapsed_s": 3.7019499999999996,
+        "interaction_sample_sensor_range_limit_m": 3.0,
+        "interaction_sample_status_alignment_s": 0.0019499999999994244,
+        "interaction_sample_surface_gap_m": 0.7150248593624324,
+        "interaction_sample_trigger_delta_s": 2.1,
+        "interaction_sample_vehicle_mission_x_m": 1.6658775,
+        "interaction_sample_walker_x_m": 1.8449999999999989,
+        "interaction_sample_walker_y_m": -1.4928334439283346,
+        "predicted_envelope_intervention_distance_m": 0.7385164807134503,
+        "predicted_minimum_center_distance_within_horizon_m": 0.7345463844164499
+      },
+      "trigger_time_from_schedule_start_s": 5.80195
+    },
+    {
+      "corridor_fraction_range": [
+        0.3,
+        0.35
+      ],
+      "corridor_id": "declared",
+      "crossing_mission_x_m": 1.8824999999999932,
+      "passed": true,
+      "route_heading": "positive_y",
+      "seed": 2026091776,
+      "selected_interaction_sample": {
+        "interaction_sample_center_distance_m": 1.3771184547116868,
+        "interaction_sample_schedule_elapsed_s": 4.1365,
+        "interaction_sample_sensor_range_limit_m": 3.0,
+        "interaction_sample_status_alignment_s": 0.036499999999999616,
+        "interaction_sample_surface_gap_m": 0.5886019739982364,
+        "interaction_sample_trigger_delta_s": 1.9400000000000004,
+        "interaction_sample_vehicle_mission_x_m": 1.8614249999999999,
+        "interaction_sample_walker_x_m": 1.8824999999999932,
+        "interaction_sample_walker_y_m": -1.3769571825886615,
+        "predicted_envelope_intervention_distance_m": 0.7385164807134503,
+        "predicted_minimum_center_distance_within_horizon_m": 0.7383433170326561
+      },
+      "trigger_time_from_schedule_start_s": 6.0765
+    }
+  ],
+  "capacity_evidence": [
+    {
+      "available_centerline_span_m": 0.29999999999999993,
+      "corridor_id": "declared",
+      "crossing_count": 3,
+      "fraction_range": [
+        0.3,
+        0.35
+      ],
+      "geometrically_feasible": false,
+      "required_center_span_m": 8.0
+    },
+    {
+      "available_centerline_span_m": 0.29999999999999993,
+      "corridor_id": "declared",
+      "crossing_count": 2,
+      "fraction_range": [
+        0.3,
+        0.35
+      ],
+      "geometrically_feasible": false,
+      "required_center_span_m": 4.0
+    },
+    {
+      "available_centerline_span_m": 0.29999999999999993,
+      "corridor_id": "declared",
+      "crossing_count": 1,
+      "fraction_range": [
+        0.3,
+        0.35
+      ],
+      "geometrically_feasible": true,
+      "required_center_span_m": 0.0
+    }
+  ],
+  "claim_boundary": "Static route materialization against the frozen public episode, world, and offline source hash. It does not claim Gazebo execution, collision-free runtime behavior, or the official >=95% rate.",
+  "input_protocol_sha256": "618bcf885f4f3157df79cf80dba9d6ff24882da4bc5eb20408afb0220b9fbf8f",
+  "input_sha256": {
+    "base_schedule": "f1ab956fa08c2a9166fa791aeadba7f0a033fdf7070da626adc61c4011f913bb",
+    "episode_manifest": "a97be33d0ceaf558a6fdf12dc914e7819567e9eaf4af33f473835c1731cfd4dc",
+    "public_world": "f7460fdcc7ad221e613fdda1d1731bedb23c872094f03c6e2664934d18a54471"
+  },
+  "kind": "tzcup_dynamic_avoidance_functional_route_search",
+  "mode": "FUNCTIONAL_SMOKE_NOT_OFFICIAL_95",
+  "nominal_leg_m": 6.0,
+  "predeclared_route_manifest": {
+    "claim_boundary": "This file predeclares the deterministic obstacle route and trigger before the live trial. It is not evidence that the route executed, that avoidance succeeded, or that the >=95% rate was measured.",
+    "declared_epoch_ns": 1,
+    "input_sha256": {
+      "base_schedule": "f1ab956fa08c2a9166fa791aeadba7f0a033fdf7070da626adc61c4011f913bb",
+      "episode_manifest": "a97be33d0ceaf558a6fdf12dc914e7819567e9eaf4af33f473835c1731cfd4dc",
+      "public_world": "f7460fdcc7ad221e613fdda1d1731bedb23c872094f03c6e2664934d18a54471"
+    },
+    "kind": "tzcup_predeclared_dynamic_avoidance_obstacle_route",
+    "mode": "FUNCTIONAL_SMOKE_NOT_OFFICIAL_95",
+    "protocol_id": "tzcup-day1-dynamic-avoidance-functional-smoke-not-official-95-v1",
+    "protocol_sha256": "91b1189b7e376f49b6480a2a266f98e1b49b59793bc9c421ee5d9aa2cdcd953a",
+    "schedule_seed": 2026091715,
+    "schedule_sha256": "d468da2100283fc4d1a92e142a9c90e1f65ca4081624ac750fd0bd2ab4129294",
+    "schema_version": 1,
+    "selected_obstacle": {
+      "object_id": "walker_eb2f451c21ba",
+      "radius_m": 0.25,
+      "route_map": [
+        [
+          0.0,
+          1.8824999999999932,
+          -3.623104
+        ],
+        [
+          9.1732,
+          1.8824999999999932,
+          3.623104
+        ],
+        [
+          18.3464,
+          1.8824999999999932,
+          -3.623104
+        ]
+      ],
+      "route_source_world": [
+        [
+          0.0,
+          -96.1175,
+          -3.623104
+        ],
+        [
+          9.1732,
+          -96.1175,
+          3.623104
+        ],
+        [
+          18.3464,
+          -96.1175,
+          -3.623104
+        ]
+      ],
+      "speed_mps": 0.7899,
+      "trigger_time_from_schedule_start_s": 4.5866,
+      "trigger_type": "first_crossing_of_mission_centerline"
+    },
+    "source_fixed_start_pose": [
+      -98.0,
+      0.0,
+      0.0
+    ],
+    "static_interaction_materialization": {
+      "claim_boundary": "Static geometry and clock-sampling proof only. Live sensor detection, collision-monitor behavior, path execution, and task completion remain runtime measurements.",
+      "collision_monitor_time_before_collision_s": 1.2,
+      "evaluator_status_sample_period_s": 0.1,
+      "maximum_evaluator_status_alignment_s": 0.5,
+      "minimum_surface_clearance_m": 0.12,
+      "passed": true,
+      "route_centerline_crossing_time_s": 4.5866,
+      "route_centerline_crossing_x_m": 1.8824999999999932,
+      "schema_version": 1,
+      "selected_interaction_sample": {
+        "interaction_sample_center_distance_m": 1.817083185857379,
+        "interaction_sample_schedule_elapsed_s": 2.4966,
+        "interaction_sample_sensor_range_limit_m": 3.0,
+        "interaction_sample_status_alignment_s": 0.0034000000000002084,
+        "interaction_sample_surface_gap_m": 1.0285667051439287,
+        "interaction_sample_trigger_delta_s": 2.09,
+        "interaction_sample_vehicle_mission_x_m": 1.12347,
+        "interaction_sample_walker_x_m": 1.8824999999999932,
+        "interaction_sample_walker_y_m": -1.6509587406793704,
+        "predicted_envelope_intervention_distance_m": 0.7385164807134503,
+        "predicted_minimum_center_distance_within_horizon_m": 0.736368906649346
+      },
+      "status": "STATIC_OBSTACLE_INTERACTION_SAMPLEABLE",
+      "trigger_window_s": 3.0,
+      "vehicle_arrival_at_crossing_s": 4.1833333333333185,
+      "vehicle_max_speed_mps": 0.45
+    }
+  },
+  "protocol_id": "tzcup-day1-dynamic-avoidance-functional-smoke-not-official-95-v1",
+  "protocol_sha256": "91b1189b7e376f49b6480a2a266f98e1b49b59793bc9c421ee5d9aa2cdcd953a",
+  "retained_failure_count": 49,
+  "retained_failure_examples": [
+    {
+      "corridor_id": "declared",
+      "crossing_count": 1,
+      "error": "selected obstacle route has no evaluator-sampleable static interaction",
+      "seed": 2026091716
+    },
+    {
+      "corridor_id": "declared",
+      "crossing_count": 1,
+      "error": "selected obstacle route has no evaluator-sampleable static interaction",
+      "seed": 2026091717
+    },
+    {
+      "corridor_id": "declared",
+      "crossing_count": 1,
+      "error": "selected obstacle route has no evaluator-sampleable static interaction",
+      "seed": 2026091719
+    },
+    {
+      "corridor_id": "declared",
+      "crossing_count": 1,
+      "error": "selected obstacle route has no evaluator-sampleable static interaction",
+      "seed": 2026091720
+    },
+    {
+      "corridor_id": "declared",
+      "crossing_count": 1,
+      "error": "selected obstacle route has no evaluator-sampleable static interaction",
+      "seed": 2026091721
+    },
+    {
+      "corridor_id": "declared",
+      "crossing_count": 1,
+      "error": "selected obstacle route has no evaluator-sampleable static interaction",
+      "seed": 2026091722
+    },
+    {
+      "corridor_id": "declared",
+      "crossing_count": 1,
+      "error": "selected obstacle route has no evaluator-sampleable static interaction",
+      "seed": 2026091724
+    },
+    {
+      "corridor_id": "declared",
+      "crossing_count": 1,
+      "error": "selected obstacle route has no evaluator-sampleable static interaction",
+      "seed": 2026091726
+    },
+    {
+      "corridor_id": "declared",
+      "crossing_count": 1,
+      "error": "selected obstacle route has no evaluator-sampleable static interaction",
+      "seed": 2026091727
+    },
+    {
+      "corridor_id": "declared",
+      "crossing_count": 1,
+      "error": "selected obstacle route has no evaluator-sampleable static interaction",
+      "seed": 2026091730
+    },
+    {
+      "corridor_id": "declared",
+      "crossing_count": 1,
+      "error": "selected obstacle route has no evaluator-sampleable static interaction",
+      "seed": 2026091731
+    },
+    {
+      "corridor_id": "declared",
+      "crossing_count": 1,
+      "error": "selected obstacle route has no evaluator-sampleable static interaction",
+      "seed": 2026091732
+    },
+    {
+      "corridor_id": "declared",
+      "crossing_count": 1,
+      "error": "selected obstacle route has no evaluator-sampleable static interaction",
+      "seed": 2026091733
+    },
+    {
+      "corridor_id": "declared",
+      "crossing_count": 1,
+      "error": "selected obstacle route has no evaluator-sampleable static interaction",
+      "seed": 2026091734
+    },
+    {
+      "corridor_id": "declared",
+      "crossing_count": 1,
+      "error": "selected obstacle route has no evaluator-sampleable static interaction",
+      "seed": 2026091735
+    },
+    {
+      "corridor_id": "declared",
+      "crossing_count": 1,
+      "error": "selected obstacle route has no evaluator-sampleable static interaction",
+      "seed": 2026091737
+    },
+    {
+      "corridor_id": "declared",
+      "crossing_count": 1,
+      "error": "selected obstacle route has no evaluator-sampleable static interaction",
+      "seed": 2026091739
+    },
+    {
+      "corridor_id": "declared",
+      "crossing_count": 1,
+      "error": "selected obstacle route has no evaluator-sampleable static interaction",
+      "seed": 2026091740
+    },
+    {
+      "corridor_id": "declared",
+      "crossing_count": 1,
+      "error": "selected obstacle route has no evaluator-sampleable static interaction",
+      "seed": 2026091741
+    },
+    {
+      "corridor_id": "declared",
+      "crossing_count": 1,
+      "error": "selected obstacle route has no evaluator-sampleable static interaction",
+      "seed": 2026091742
+    }
+  ],
+  "route_materialization": {
+    "center_mission_x_m": 1.8824999999999932,
+    "center_source_world": [
+      -96.1175,
+      0.0
+    ],
+    "complete_schedule_peer_gate_passed": true,
+    "corridor_centerline_span_m": 0.29999999999999993,
+    "corridor_fraction_range": [
+      0.3,
+      0.35
+    ],
+    "crossing_count": 1,
+    "inside_public_geofence": true,
+    "minimum_static_surface_clearance_m": 5.449480563932717,
+    "required_static_surface_clearance_m": 0.75,
+    "route_heading": "positive_y",
+    "route_heading_source_world": [
+      0.0,
+      1.0
+    ],
+    "route_source_world": [
+      [
+        0.0,
+        -96.1175,
+        -3.623104
+      ],
+      [
+        9.1732,
+        -96.1175,
+        3.623104
+      ],
+      [
+        18.3464,
+        -96.1175,
+        -3.623104
+      ]
+    ],
+    "route_surface_length_m": 7.246208,
+    "selected_object_id": "walker_eb2f451c21ba",
+    "static_interaction_materialization": {
+      "claim_boundary": "Static geometry and clock-sampling proof only. Live sensor detection, collision-monitor behavior, path execution, and task completion remain runtime measurements.",
+      "collision_monitor_time_before_collision_s": 1.2,
+      "evaluator_status_sample_period_s": 0.1,
+      "maximum_evaluator_status_alignment_s": 0.5,
+      "minimum_surface_clearance_m": 0.12,
+      "passed": true,
+      "route_centerline_crossing_time_s": 4.5866,
+      "route_centerline_crossing_x_m": 1.8824999999999932,
+      "schema_version": 1,
+      "selected_interaction_sample": {
+        "interaction_sample_center_distance_m": 1.817083185857379,
+        "interaction_sample_schedule_elapsed_s": 2.4966,
+        "interaction_sample_sensor_range_limit_m": 3.0,
+        "interaction_sample_status_alignment_s": 0.0034000000000002084,
+        "interaction_sample_surface_gap_m": 1.0285667051439287,
+        "interaction_sample_trigger_delta_s": 2.09,
+        "interaction_sample_vehicle_mission_x_m": 1.12347,
+        "interaction_sample_walker_x_m": 1.8824999999999932,
+        "interaction_sample_walker_y_m": -1.6509587406793704,
+        "predicted_envelope_intervention_distance_m": 0.7385164807134503,
+        "predicted_minimum_center_distance_within_horizon_m": 0.736368906649346
+      },
+      "status": "STATIC_OBSTACLE_INTERACTION_SAMPLEABLE",
+      "trigger_window_s": 3.0,
+      "vehicle_arrival_at_crossing_s": 4.1833333333333185,
+      "vehicle_max_speed_mps": 0.45
+    }
+  },
+  "schema_version": 1,
+  "selected_corridor_fraction_range": [
+    0.3,
+    0.35
+  ],
+  "selected_corridor_id": "declared",
+  "selected_crossing_count": 1,
+  "selected_protocol_schedule": {
+    "corridor_fraction_range": [
+      0.3,
+      0.35
+    ],
+    "mission_corridor_crossing_count": 1,
+    "nominal_leg_m": 6.0,
+    "route_declaration_required_before_run_start": true,
+    "route_frame": "source_world",
+    "route_selection": "first_acceptance_environment_mission_corridor_crossing",
+    "seed": 2026091715
+  },
+  "selected_protocol_sha256": "91b1189b7e376f49b6480a2a266f98e1b49b59793bc9c421ee5d9aa2cdcd953a",
+  "selected_route_heading": "positive_y",
+  "selected_seed": 2026091715,
+  "selected_trigger_time_from_schedule_start_s": 4.5866,
+  "status": "FUNCTIONAL_SMOKE_ROUTE_MATERIALIZED"
+}

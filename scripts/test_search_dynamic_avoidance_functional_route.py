@@ -57,3 +57,10 @@ def test_search_materializes_single_crossing_smoke_route(tmp_path: Path) -> None
         result["predeclared_route_manifest"]["selected_obstacle"]["object_id"]
         == "walker_0"
     )
+    proof = result["route_materialization"]["static_interaction_materialization"]
+    sample = proof["selected_interaction_sample"]
+    assert proof["status"] == "STATIC_OBSTACLE_INTERACTION_SAMPLEABLE"
+    assert proof["passed"] is True
+    assert sample["interaction_sample_trigger_delta_s"] <= proof["trigger_window_s"]
+    assert sample["interaction_sample_surface_gap_m"] >= 0.12
+    assert sample["interaction_sample_status_alignment_s"] <= 0.5

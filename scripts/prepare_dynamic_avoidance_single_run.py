@@ -24,6 +24,13 @@ FUNCTIONAL_SMOKE_MODE = "FUNCTIONAL_SMOKE_NOT_OFFICIAL_95"
 SUPPORTED_MODES = (OFFICIAL_MODE, FUNCTIONAL_SMOKE_MODE)
 OFFICIAL_CROSSING_COUNT = 3
 FUNCTIONAL_SMOKE_CROSSING_COUNT = 1
+STATIC_VEHICLE_MAX_SPEED_MPS = 0.45
+STATIC_SENSOR_INTERACTION_RANGE_M = 3.0
+STATIC_COLLISION_MONITOR_TIME_BEFORE_COLLISION_S = 1.2
+STATIC_EVALUATOR_STATUS_SAMPLE_PERIOD_S = 0.1
+STATIC_MAXIMUM_STATUS_ALIGNMENT_S = 0.5
+STATIC_PREDICTED_ENVELOPE_MARGIN_M = 0.05
+STATIC_PROOF_TIME_STEP_S = 0.01
 
 
 def protocol_mode(protocol: dict[str, Any]) -> str:
@@ -209,19 +216,203 @@ def _route_waypoints(row: dict[str, Any]) -> list[list[float]]:
     return waypoints
 
 
-def first_centerline_crossing_time(route_map: list[list[float]]) -> float:
-    """Return the first time a mission-local route reaches y=0."""
+def _first_centerline_crossing(
+    route_map: list[list[float]],
+) -> tuple[float, float]:
+    """Return the first mission-local centerline crossing time and x."""
 
     for first, second in zip(route_map, route_map[1:]):
         first_y, second_y = float(first[2]), float(second[2])
         if first_y == 0.0:
-            return float(first[0])
+            return float(first[0]), float(first[1])
         if second_y == 0.0:
-            return float(second[0])
+            return float(second[0]), float(second[1])
         if first_y * second_y < 0.0:
             ratio = -first_y / (second_y - first_y)
-            return float(first[0]) + ratio * (float(second[0]) - float(first[0]))
+            return (
+                float(first[0]) + ratio * (float(second[0]) - float(first[0])),
+                float(first[1]) + ratio * (float(second[1]) - float(first[1])),
+            )
     raise ValueError("selected obstacle route never crosses the mission centerline")
+
+
+def first_centerline_crossing_time(route_map: list[list[float]]) -> float:
+    """Return the first time a mission-local route reaches y=0."""
+
+    return _first_centerline_crossing(route_map)[0]
+
+
+def _interpolate_route_point(
+    route_map: list[list[float]], elapsed_s: float
+) -> tuple[float, float]:
+    period_s = float(route_map[-1][0])
+    if period_s <= 0.0:
+        raise ValueError("route period must be positive")
+    phase = elapsed_s % period_s
+    for first, second in zip(route_map, route_map[1:]):
+        if phase <= float(second[0]):
+            duration = float(second[0]) - float(first[0])
+            if duration <= 0.0:
+                raise ValueError("route times must increase")
+            ratio = (phase - float(first[0])) / duration
+            return (
+                float(first[1]) + ratio * (float(second[1]) - float(first[1])),
+                float(first[2]) + ratio * (float(second[2]) - float(first[2])),
+            )
+    raise AssertionError("validated route interpolation fell through")
+
+
+def static_interaction_materialization(
+    *,
+    route_map: list[list[float]],
+    walker_radius_m: float,
+    walker_speed_mps: float,
+    vehicle_envelope_radius_m: float,
+    minimum_surface_clearance_m: float,
+    trigger_window_s: float,
+) -> dict[str, Any]:
+    """Prove an evaluator-sampleable interaction against the frozen route.
+
+    The proof uses the maximum commanded speed, the configured approach
+    lookahead, and the evaluator status period. It is intentionally
+    conservative about route geometry: the selected interaction sample may be
+    earlier than the centerline crossing, but it must already have positive
+    surface clearance and a predicted envelope encounter inside the monitor's
+    approach horizon.
+    """
+
+    if walker_radius_m <= 0.0 or vehicle_envelope_radius_m <= 0.0:
+        raise ValueError("static interaction radii must be positive")
+    if walker_speed_mps <= 0.0:
+        raise ValueError("static interaction walker speed must be positive")
+    if minimum_surface_clearance_m <= 0.0 or trigger_window_s <= 0.0:
+        raise ValueError("static interaction thresholds must be positive")
+    period_s = float(route_map[-1][0])
+    if period_s <= 0.0:
+        raise ValueError("static interaction route period must be positive")
+
+    trigger_time_s, crossing_x_m = _first_centerline_crossing(route_map)
+    collision_distance_m = walker_radius_m + vehicle_envelope_radius_m
+    required_predicted_distance_m = (
+        collision_distance_m - STATIC_PREDICTED_ENVELOPE_MARGIN_M
+    )
+    start_s = max(0.0, trigger_time_s - trigger_window_s)
+    end_s = min(period_s, trigger_time_s + trigger_window_s)
+    sample_count = max(
+        1,
+        int(math.floor((end_s - start_s) / STATIC_PROOF_TIME_STEP_S + 1.0e-9)),
+    )
+    selected: dict[str, Any] | None = None
+    for index in range(sample_count + 1):
+        candidate_s = min(end_s, start_s + index * STATIC_PROOF_TIME_STEP_S)
+        walker_x_m, walker_y_m = _interpolate_route_point(route_map, candidate_s)
+        vehicle_x_m = STATIC_VEHICLE_MAX_SPEED_MPS * candidate_s
+        center_distance_m = math.hypot(
+            walker_x_m - vehicle_x_m, walker_y_m
+        )
+        surface_gap_m = (
+            center_distance_m - walker_radius_m - vehicle_envelope_radius_m
+        )
+        if center_distance_m > STATIC_SENSOR_INTERACTION_RANGE_M:
+            continue
+        if surface_gap_m < minimum_surface_clearance_m:
+            continue
+        horizon_sample_count = int(
+            math.ceil(
+                STATIC_COLLISION_MONITOR_TIME_BEFORE_COLLISION_S
+                / STATIC_PROOF_TIME_STEP_S
+            )
+        )
+        predicted_minimum_center_distance_m = min(
+            math.hypot(
+                _interpolate_route_point(
+                    route_map,
+                    candidate_s + step * STATIC_PROOF_TIME_STEP_S,
+                )[0]
+                - STATIC_VEHICLE_MAX_SPEED_MPS
+                * (candidate_s + step * STATIC_PROOF_TIME_STEP_S),
+                _interpolate_route_point(
+                    route_map,
+                    candidate_s + step * STATIC_PROOF_TIME_STEP_S,
+                )[1],
+            )
+            for step in range(horizon_sample_count + 1)
+        )
+        if (
+            predicted_minimum_center_distance_m
+            > required_predicted_distance_m
+        ):
+            continue
+        phase_s = candidate_s % STATIC_EVALUATOR_STATUS_SAMPLE_PERIOD_S
+        status_alignment_s = min(
+            phase_s,
+            STATIC_EVALUATOR_STATUS_SAMPLE_PERIOD_S - phase_s,
+        )
+        if status_alignment_s > STATIC_MAXIMUM_STATUS_ALIGNMENT_S:
+            continue
+        selected = {
+            "interaction_sample_schedule_elapsed_s": candidate_s,
+            "interaction_sample_trigger_delta_s": abs(
+                candidate_s - trigger_time_s
+            ),
+            "interaction_sample_vehicle_mission_x_m": vehicle_x_m,
+            "interaction_sample_walker_x_m": walker_x_m,
+            "interaction_sample_walker_y_m": walker_y_m,
+            "interaction_sample_center_distance_m": center_distance_m,
+            "interaction_sample_surface_gap_m": surface_gap_m,
+            "interaction_sample_sensor_range_limit_m": (
+                STATIC_SENSOR_INTERACTION_RANGE_M
+            ),
+            "interaction_sample_status_alignment_s": status_alignment_s,
+            "predicted_minimum_center_distance_within_horizon_m": (
+                predicted_minimum_center_distance_m
+            ),
+            "predicted_envelope_intervention_distance_m": (
+                required_predicted_distance_m
+            ),
+        }
+        break
+
+    passed = selected is not None
+    proof = {
+        "schema_version": 1,
+        "status": (
+            "STATIC_OBSTACLE_INTERACTION_SAMPLEABLE"
+            if passed
+            else "STATIC_OBSTACLE_INTERACTION_NOT_SAMPLEABLE"
+        ),
+        "passed": passed,
+        "route_centerline_crossing_time_s": trigger_time_s,
+        "route_centerline_crossing_x_m": crossing_x_m,
+        "trigger_window_s": trigger_window_s,
+        "vehicle_max_speed_mps": STATIC_VEHICLE_MAX_SPEED_MPS,
+        "vehicle_arrival_at_crossing_s": (
+            crossing_x_m / STATIC_VEHICLE_MAX_SPEED_MPS
+        ),
+        "collision_monitor_time_before_collision_s": (
+            STATIC_COLLISION_MONITOR_TIME_BEFORE_COLLISION_S
+        ),
+        "evaluator_status_sample_period_s": (
+            STATIC_EVALUATOR_STATUS_SAMPLE_PERIOD_S
+        ),
+        "maximum_evaluator_status_alignment_s": (
+            STATIC_MAXIMUM_STATUS_ALIGNMENT_S
+        ),
+        "minimum_surface_clearance_m": minimum_surface_clearance_m,
+        "selected_interaction_sample": selected,
+        "claim_boundary": (
+            "Static geometry and clock-sampling proof only. Live sensor "
+            "detection, collision-monitor behavior, path execution, and task "
+            "completion remain runtime measurements."
+        ),
+    }
+    if not passed:
+        proof["failure_reason"] = (
+            "no sample inside the trigger window simultaneously had positive "
+            "surface clearance, sensor-range observability, a collision-monitor "
+            "approach horizon, and evaluator status alignment"
+        )
+    return proof
 
 
 def freeze_route_from_schedule(
@@ -292,6 +483,26 @@ def freeze_route_from_schedule(
         for waypoint in route_source
     ]
     trigger_time_s = first_centerline_crossing_time(route_map)
+    static_interaction = static_interaction_materialization(
+        route_map=route_map,
+        walker_radius_m=float(radius),
+        walker_speed_mps=float(selected["speed_mps"]),
+        vehicle_envelope_radius_m=float(
+            protocol["obstacle"]["minimum_distance"][
+                "vehicle_envelope_radius_m"
+            ]
+        ),
+        minimum_surface_clearance_m=float(
+            protocol["obstacle"]["minimum_distance"]["threshold_m"]
+        ),
+        trigger_window_s=float(protocol["obstacle"]["trigger"]["window_s"]),
+    )
+    if protocol_mode(protocol) == FUNCTIONAL_SMOKE_MODE and not static_interaction[
+        "passed"
+    ]:
+        raise ValueError(
+            "selected obstacle route has no evaluator-sampleable static interaction"
+        )
     declared_ns = time.time_ns() if declared_epoch_ns is None else int(
         declared_epoch_ns
     )
@@ -308,6 +519,7 @@ def freeze_route_from_schedule(
         "schedule_sha256": schedule_sha256,
         "input_sha256": input_sha256,
         "source_fixed_start_pose": list(source_start),
+        "static_interaction_materialization": static_interaction,
         "selected_obstacle": {
             "object_id": selected_id,
             "radius_m": float(radius),

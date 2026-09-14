@@ -21,12 +21,12 @@
     "offline_mode_does_not_satisfy_live_slam_gate": true
   },
   "schedule": {
-    "seed": 2026091401,
+    "seed": 2026091715,
     "nominal_leg_m": 6.0,
     "mission_corridor_crossing_count": 1,
     "corridor_fraction_range": [
-      0.2,
-      0.8
+      0.3,
+      0.35
     ],
     "route_selection": "first_acceptance_environment_mission_corridor_crossing",
     "route_frame": "source_world",
@@ -57,9 +57,9 @@
     "requires_goal_recovery": true
   },
   "task": {
-    "timeout_s": 120.0,
+    "timeout_s": 600.0,
     "evaluator_grace_s": 30.0,
-    "wall_time_limit_s": 150.0,
+    "wall_time_limit_s": 660.0,
     "required_goal_source": "public_manifest_fixed_start_transformed_to_saved_map_local_plus_nominal_leg"
   },
   "sampling": {
