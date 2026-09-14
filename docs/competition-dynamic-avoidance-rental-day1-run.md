@@ -212,7 +212,7 @@ Post-attempt sampling recorded CPU `10.32%`, GPU `0%`, GPU memory `1 MiB` of
 resources released. The evidence archive SHA-256 is
 `0a32f88cfde66384ddf2295ab8dd12b740e0ba09b8e6cc108be951911e5e1909`.
 
-## Run 17: static 6 m route materialization
+## Run 17b: static 6 m route materialization and smoke attempt
 
 The run-16 failure was reproduced offline against the exact public episode
 manifest, world, and base schedule. The three-crossing layout is impossible for
@@ -244,3 +244,25 @@ The selected frozen search evidence is
 It records the full source-world and mission-local route, the predeclared route
 manifest, the geometric exclusion proof, and the static-input hashes. Gazebo was
 not started during this static materialization step.
+
+The fresh remote preparation used a copied source tree, `28` overlay files,
+`53` focused tests, a fresh runtime closure, and a RUNNING non-official session.
+The remote static search independently selected the same seed, walker, crossing
+count, and timing, with evidence SHA-256
+`92d6b431ad287ae9358cffda7ada2fe566805e741a0daec290e3dc8360d47c3c`.
+
+The one authorized smoke attempt then froze
+`predeclared_obstacle_route.json` before `STARTED`, but stopped before Gazebo in
+`formal_runtime_configure` because ROS domain `103` is outside the repository's
+bounded DDS policy (`0..101` or `215..231`). The evaluator retained a single-run
+denominator of `1`, numerator `0`, and status `SINGLE_RUN_EVIDENCE_INVALID`.
+Because the wrapper had recorded `STARTED`, no retry was launched.
+
+Gazebo and both collectors did not start. There is no command-chain, contact,
+clearance, reroute, wait, or goal-recovery evidence from this run. Post-attempt
+sampling found no Gazebo/ROS process or formal-lock holder, GPU utilization `0%`,
+and `1 MiB` GPU memory in use. The compact evidence is
+`artifacts/day1_dynamic_avoidance_functional_smoke_20260914/remote/run17b-evidence.tar.gz`
+with SHA-256
+`4a8f95d029d19138566d7ccb5402197ba76ac9d5ed30420821596c4874f6e790`.
+Official `>=95%` remains `NOT_MEASURED`.

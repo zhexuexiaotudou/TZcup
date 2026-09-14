@@ -1,0 +1,12 @@
+{
+  "attempt_id": "day1-dynamic-avoidance-functional-smoke-20260914-17a-preparation",
+  "claim_boundary": "This preparation attempt stopped before Gazebo because the first uploaded patch omitted the new focused search test. Its source copy is retained and was not reused for run 17b.",
+  "failure": "ERROR: file or directory not found: scripts/test_search_dynamic_avoidance_functional_route.py",
+  "gazebo_started": false,
+  "logical_phase": "fresh_source_focused_tests",
+  "overlay_commit": "9ed1e7e",
+  "remote_source": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/source/TZcup-day1-avoidance-route-9ed1e7e-dynamic",
+  "schema_version": 1,
+  "source_overlay_freeze_sha256": "1d06286bb65c45d2537324364abaa6b8e76ca1da65ddad1e09bc3ffab642181a",
+  "status": "PREPARATION_FAILED_BEFORE_ROUTE_OR_GAZEBO"
+}

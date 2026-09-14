@@ -1,0 +1,63 @@
+{
+  "attempt_id": "day1-dynamic-avoidance-functional-smoke-20260914-17b",
+  "claim_boundary": "This is one retained non-official functional-smoke attempt. The route was frozen before STARTED, but the wrapper stopped before Gazebo because ROS domain 103 is outside the bounded DDS policy. No command-chain, contact, clearance, reroute, wait, goal-recovery, or official >=95% result exists. No retry was launched.",
+  "closure_manifest_sha256": "80e30bee264d93eab2f4eac743f84d83f7bf3dc146687607ef23f0e797bbb5fd",
+  "closure_sha256": "465557fcfa93848d1924496be1e925ecbd0047ede3f08b02d44a07fe0bea4b7c",
+  "closure_verification_sha256": "73d04a1eaa9caaa9b0a2e085e96b2d04029f36f100c9e6d69fddead226301274",
+  "collectors_started": false,
+  "dispatch_exit_code": 3,
+  "evidence_archive": "run17b-evidence.tar.gz",
+  "evidence_archive_sha256": "4a8f95d029d19138566d7ccb5402197ba76ac9d5ed30420821596c4874f6e790",
+  "failure": {
+    "exception": "formal ROS domain 103 intersects Linux ephemeral ports or exceeds the bounded DDS port range; use 0..101 or 215..231",
+    "phase": "formal_runtime_configure",
+    "root_cause": "The run-17b domain assignment was outside the repository's bounded DDS domain set."
+  },
+  "gazebo_started": false,
+  "mode": "FUNCTIONAL_SMOKE_NOT_OFFICIAL_95",
+  "official_metric": {
+    "measured_value": null,
+    "metric_id": "dynamic_avoidance_success_rate",
+    "status": "NOT_MEASURED",
+    "threshold": 0.95
+  },
+  "predeclared_route": {
+    "declared_epoch_ns": 1789383518817228691,
+    "file_sha256": "630694bd9855d82f8316b4caf56a2bb05b237c019daba2cd64a8580d7a5107db",
+    "object_id": "walker_eb2f451c21ba",
+    "seed": 2026091401,
+    "trigger_time_from_schedule_start_s": 5.16295
+  },
+  "preserved_evidence": {
+    "clearance_evidence": false,
+    "command_chain_evidence": false,
+    "contact_evidence": false,
+    "goal_recovery_evidence": false,
+    "predeclared_route": true,
+    "reroute_evidence": false,
+    "static_route_search": true
+  },
+  "requested_code_commit": "9ed1e7e",
+  "resource_release": {
+    "formal_gazebo_lock_available": true,
+    "gpu_memory_total_mib": 12288,
+    "gpu_memory_used_mib": 1,
+    "gpu_utilization_percent": 0,
+    "note": "Post-attempt sampling found no Gazebo/ROS process or formal-lock holder; the earlier process list contained only the sampling command's own partition string.",
+    "runtime_processes_remaining": []
+  },
+  "ros_domain_id": 103,
+  "run_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-smoke-20260914-17b/run-17b",
+  "schema_version": 1,
+  "single_run": {
+    "denominator": 1,
+    "functional_success": false,
+    "numerator": 0,
+    "observed_fraction": 0.0,
+    "started": true
+  },
+  "source_base_commit": "1a211400ca2dc4d6007e4fd838e1f2835cfd1dc8",
+  "source_overlay_freeze_sha256": "8f80ff446207d3912c93e7044a333a6934e969b7f712c39a2ccec4e27be86684",
+  "status": "BLOCKED_BEFORE_GAZEBO_DDS_DOMAIN",
+  "tracked_static_route_search_sha256": "bfb4274cb6530bd36db365a8d665d85af8da042823ba2e0896cced331c97482d"
+}

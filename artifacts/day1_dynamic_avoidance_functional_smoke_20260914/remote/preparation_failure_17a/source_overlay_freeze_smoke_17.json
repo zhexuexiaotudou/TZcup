@@ -1,0 +1,167 @@
+{
+  "base_head": "1a211400ca2dc4d6007e4fd838e1f2835cfd1dc8",
+  "base_tree": "e11be0f1032076bd949afac874c41793b4149037",
+  "claim_boundary": "This freeze binds the functional-smoke overlay applied over base commit 1a211400. It is a route-materialization source binding, not Gazebo execution or official >=95% evidence.",
+  "overlay_commit": "9ed1e7e",
+  "overlay_files": [
+    {
+      "path": "scripts/collect_formal_dynamic_environment_runtime.py",
+      "sha256": "4eec9ffe4de087675f1fb4b16ec8f522d1b86829190f098d25fd70f9b682201e",
+      "size_bytes": 24053,
+      "status": " M"
+    },
+    {
+      "path": "scripts/collect_formal_dynamic_obstacle_avoidance_runtime.py",
+      "sha256": "d33e34fcdc8efbe898693c409faaddaa87f8040ec4d3d368d68ede7f0341bb10",
+      "size_bytes": 22955,
+      "status": " M"
+    },
+    {
+      "path": "scripts/generate_formal_dynamic_runtime_build_manifest.py",
+      "sha256": "d30020ef145bfd048dd40ee1e424ecbd5389024f399aa444e9c2b2909bbc69ec",
+      "size_bytes": 10129,
+      "status": " M"
+    },
+    {
+      "path": "scripts/prepare_formal_dynamic_obstacle_schedule.py",
+      "sha256": "2a38850d7c74c2ad2f7dc36610eaf2df281b8549d0ad7804eb77669956ff2a70",
+      "size_bytes": 13815,
+      "status": " M"
+    },
+    {
+      "path": "scripts/run_formal_dynamic_obstacle_avoidance.sh",
+      "sha256": "fe68184a36ef926c9398c8a50a60fe3a5d14d0e1bf3d0525a4fc1d1ea852ff6b",
+      "size_bytes": 16975,
+      "status": " M"
+    },
+    {
+      "path": "scripts/run_r065_public_modeling_session.sh",
+      "sha256": "c9109117ef3a00eb6e46998f97485445e9aab5c5ccc3423bc310bc357fc667f6",
+      "size_bytes": 6803,
+      "status": " M"
+    },
+    {
+      "path": "scripts/test_validate_formal_dynamic_obstacle_avoidance.py",
+      "sha256": "37702537617e201ae47a4f79df4ebc8264acf41788677adae40497178e2de28d",
+      "size_bytes": 27290,
+      "status": " M"
+    },
+    {
+      "path": "scripts/validate_formal_dynamic_obstacle_avoidance.py",
+      "sha256": "43a7bae02a0592581a81c8fa0bbc676d8ab217b7e053191c0604a00d140bed24",
+      "size_bytes": 40739,
+      "status": " M"
+    },
+    {
+      "path": "starter_ws/src/sanitation_formal_campus_integration/launch/formal_campus_map_lifecycle.launch.py",
+      "sha256": "fbd48eedf95daa4c7a6fbc6e4221026b14e417a4cb386990544b7abbc53c67ac",
+      "size_bytes": 27681,
+      "status": " M"
+    },
+    {
+      "path": "starter_ws/src/sanitation_formal_campus_integration/test/test_map_lifecycle_ros_contract.py",
+      "sha256": "7aef78a58f72aee7222c79bfbc6802070e91a48187ba18383a81bb1f493d24dd",
+      "size_bytes": 13860,
+      "status": " M"
+    },
+    {
+      "path": "artifacts/day1_dynamic_avoidance_offline_map_20260914/offline_map_source/SOURCE_PROVENANCE.json",
+      "sha256": "cf9da451d2b9068cea218ae4350ea1710807c679fc83875aef7ab758d04d904c",
+      "size_bytes": 1014,
+      "status": "??"
+    },
+    {
+      "path": "artifacts/day1_dynamic_avoidance_offline_map_20260914/offline_map_source/map_area_verification.json",
+      "sha256": "19429d4a612c4ef5f0d9c227b6ac8ea5ce7264a0b27f28f00ce70b2affdaeb48",
+      "size_bytes": 1284,
+      "status": "??"
+    },
+    {
+      "path": "artifacts/day1_dynamic_avoidance_offline_map_20260914/offline_map_source/occupancy.pgm",
+      "sha256": "8b74f3688d279007e80a198935b983c09b9ecc2202d1e9636522453344586a63",
+      "size_bytes": 9240017,
+      "status": "??"
+    },
+    {
+      "path": "artifacts/day1_dynamic_avoidance_offline_map_20260914/offline_map_source/occupancy.yaml",
+      "sha256": "e5de82523b5e37fdde84845535955bb9af41b009fa91d0029eb4d36b920f3673",
+      "size_bytes": 133,
+      "status": "??"
+    },
+    {
+      "path": "artifacts/day1_dynamic_avoidance_offline_map_20260914/offline_map_source/offline_raycast_manifest.json",
+      "sha256": "69718c19572f1bc5f2a0713f91149a11272d572c71a425d061f4cbca26d262c0",
+      "size_bytes": 18649,
+      "status": "??"
+    },
+    {
+      "path": "artifacts/day1_dynamic_avoidance_offline_map_20260914/offline_map_source/offline_raycast_seal.json",
+      "sha256": "b2669d31090feec4dd0abd6b1b5e989cfc344ddf574a9d4a1c08632e14de72b6",
+      "size_bytes": 508,
+      "status": "??"
+    },
+    {
+      "path": "config/dynamic_avoidance_functional_smoke_protocol.json",
+      "sha256": "4ad7d32ae7d31b2d3b87765087ce448af67a6192409f5a50fcaea1159deeeca4",
+      "size_bytes": 3544,
+      "status": "??"
+    },
+    {
+      "path": "config/dynamic_avoidance_single_run_protocol.json",
+      "sha256": "71fea162db94a2d71cf03fa0dec1cb5e4dceebe12b215cd7a0210245c8553225",
+      "size_bytes": 3455,
+      "status": "??"
+    },
+    {
+      "path": "scripts/evaluate_dynamic_avoidance_single_run.py",
+      "sha256": "91c7d50472a81f4940b5f6ff0f530ddf73c0d4a7f8312164cde61f0bd000c898",
+      "size_bytes": 30228,
+      "status": "??"
+    },
+    {
+      "path": "scripts/prepare_dynamic_avoidance_single_run.py",
+      "sha256": "349dec0086076250a550577c07c850a1702e0b8fd9d3a21c80eb36027ba7171e",
+      "size_bytes": 15848,
+      "status": "??"
+    },
+    {
+      "path": "scripts/prepare_offline_raycast_map_runtime.py",
+      "sha256": "e8db8885589e35895e2cdab18bce5f88fa3cef286518dd3345dc97e2e8e9a07c",
+      "size_bytes": 7116,
+      "status": "??"
+    },
+    {
+      "path": "scripts/run_dynamic_avoidance_single_trial.sh",
+      "sha256": "795ce3c6c763fba64344cc9e9d3ec35991712df3bdc2ed5fb669460852558c55",
+      "size_bytes": 7974,
+      "status": "??"
+    },
+    {
+      "path": "scripts/search_dynamic_avoidance_functional_route.py",
+      "sha256": "06ccfc03fe699aae3402334cf7d0ff165394f15dff8634b43f2c75a1acb1a458",
+      "size_bytes": 16582,
+      "status": "??"
+    },
+    {
+      "path": "scripts/test_dynamic_avoidance_single_run.py",
+      "sha256": "c7b5fb7ab66fbae0ae82647ffbc581fb5803352f7668b1c6da0cef8ef432046d",
+      "size_bytes": 19016,
+      "status": "??"
+    },
+    {
+      "path": "scripts/test_prepare_offline_raycast_map_runtime.py",
+      "sha256": "dc2517ad589a983840b4b4d2e594c8abf3605b00bb8066b34b8526fc5da99079",
+      "size_bytes": 5011,
+      "status": "??"
+    },
+    {
+      "path": "starter_ws/src/sanitation_formal_campus_integration/sanitation_formal_campus_integration/offline_map_source.py",
+      "sha256": "1393d22e102f4759db52d15d732658af320fbee4fc4f4a82e27150c347e7444b",
+      "size_bytes": 17812,
+      "status": "??"
+    }
+  ],
+  "overlay_patch_sha256": "3442d0ffbde2487d07479d6bcd5bf88d5f5f31dce4cfd0d55161f31c6462056e",
+  "overlay_patch_size_bytes": 35327,
+  "schema_version": 1
+}

@@ -1,5 +1,20 @@
 # 项目推进记录
 
+## 2026-09-14: 6 m functional-smoke route materialized; bounded run blocked pre-Gazebo
+
+- The 6.0 m smoke route is now explicitly one mission-corridor crossing while
+  the official 30.0 m protocol remains three. The three-crossing layout is
+  geometrically impossible in the declared 3.6 m central corridor.
+- Static route evidence is
+  `artifacts/day1_dynamic_avoidance_functional_smoke_route_20260914/static_route_search.json`.
+  It selects seed `2026091401`, walker `walker_eb2f451c21ba`, mission-local
+  `x=3.63 m`, trigger `5.16295 s`, estimated surface gap `0.518156 m`, and
+  minimum static clearance `3.732629 m`.
+- The single authorized run-17b attempt froze the route but stopped before
+  Gazebo because ROS domain `103` is outside the repository's bounded DDS
+  policy. No command, contact, clearance, reroute, or goal-recovery evidence
+  exists; official `>=95%` remains `NOT_MEASURED`. The run was not retried.
+
 ## 2026-09-10：A19 canonical 两小时长稳/18 故障生产器（源码与 fixture 完成，真实长跑待独占窗口）
 
 - A19 不再是永久 BLOCKED 的占位校验器：v3 合同固定 7200 秒真实 monotonic 时长、1 Hz 原始时序、四个 profile、六段完整产品组件、18 个带参数故障及 STOPPED→RECOVERED 安全顺序；producer 自己记录接收时间、命令、argv、PID/PGID、退出码、清理信号和 `/proc` survivor，adapter 摘要不能代替原始证据。
