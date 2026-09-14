@@ -738,5 +738,29 @@
     "bytes": 863564,
     "sha256": "6df22aea6e45bf4584c7ee40b9d54847f72899327efaedbf420b4ee65ec42527",
     "copied_utc": "2026-09-15"
+  },
+  {
+    "file": "evidence/day1/avoidance-recovery/day1-avoidance-recovery-root-cause.md",
+    "source": "codex/day1-avoidance-recovery:docs/day1-avoidance-recovery-root-cause.md",
+    "source_commit": "99ee7f0d01544d65443b68f189edb28fc21d0459",
+    "bytes": 7106,
+    "sha256": "52f8f1b5ede75da10df9c0db47a5bf7833eff0dc1d5166ae1a11f6822d5cee6b",
+    "copied_utc": "2026-09-15"
+  },
+  {
+    "file": "evidence/day1/avoidance-recovery/failure_receipt.json",
+    "source": "codex/day1-avoidance-recovery:artifacts/day1_dynamic_avoidance_recovery_20260914/failure_receipt.json",
+    "source_commit": "99ee7f0d01544d65443b68f189edb28fc21d0459",
+    "bytes": 4337,
+    "sha256": "7b6d81e6f1e126b3787a62a9f85abf367979302748adf2bea797496d4efa6e37",
+    "copied_utc": "2026-09-15"
+  },
+  {
+    "file": "evidence/day1/avoidance-recovery/check_day1_avoidance_recovery_evidence.py",
+    "source": "codex/day1-avoidance-recovery:scripts/check_day1_avoidance_recovery_evidence.py",
+    "source_commit": "99ee7f0d01544d65443b68f189edb28fc21d0459",
+    "bytes": 7870,
+    "sha256": "c9ac90dc8283e0ea7cad89974eb4c233a5e21ddef801057da8f44eed8b32dfb0",
+    "copied_utc": "2026-09-15"
   }
 ]

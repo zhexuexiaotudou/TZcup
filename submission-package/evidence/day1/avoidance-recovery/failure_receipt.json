@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "status": "ROOT_CAUSE_CLASSIFIED_READY_FOR_ONE_BOUNDED_RUN",
+  "claim_boundary": "CPU/log/source diagnosis only. This is not a Gazebo run, not a functional pass, and not an official >=95% measurement.",
+  "official_metric": {
+    "metric_id": "dynamic_avoidance_success_rate",
+    "status": "NOT_MEASURED",
+    "threshold": 0.95,
+    "measured_value": null
+  },
+  "runs": {
+    "run-19b": {
+      "dynamic_interaction_candidate_count": 1,
+      "collision_monitor_intervention_count": 1,
+      "physical_collision_count": 0,
+      "nav2_goal_succeeded": false,
+      "blocker": "global fusion already inconsistent"
+    },
+    "run-20": {
+      "dynamic_interaction_candidate_count": 0,
+      "collision_monitor_intervention_count": 0,
+      "physical_collision_count": 0,
+      "nav2_goal_status": 6,
+      "nav2_goal_succeeded": false,
+      "blocker": "safety permit disabled before movement"
+    },
+    "run-21": {
+      "dynamic_interaction_candidate_count": 2,
+      "collision_monitor_intervention_count": 4,
+      "physical_collision_count": 0,
+      "physical_travel_distance_m": 4.098751132566382,
+      "amcl_last_pose_map": [
+        3.05497882355994,
+        0.0672697643447367
+      ],
+      "planner_failed_start_map": [
+        -0.29,
+        49.56
+      ],
+      "completion_reason": "timeout",
+      "nav2_goal_succeeded": false
+    },
+    "run-22": {
+      "dynamic_interaction_candidate_count": 3,
+      "collision_monitor_intervention_count": 8,
+      "physical_collision_count": 0,
+      "physical_travel_distance_m": 2.403829143816184,
+      "amcl_last_pose_map": [
+        2.27675084328256,
+        0.0289346342558214
+      ],
+      "planner_failed_start_map_examples": [
+        [
+          0.78,
+          -33.72
+        ],
+        [
+          -71.67,
+          -153.66
+        ]
+      ],
+      "completion_reason": "action_result",
+      "nav2_goal_status": 6,
+      "nav2_goal_succeeded": false
+    }
+  },
+  "root_cause": {
+    "primary": "global_ekf_gnss_pose_frame_feedback_during_recovery",
+    "mechanism": [
+      "Nav2 recovery spin changes global EKF heading.",
+      "navsat_transform derives map-frame GNSS odometry from /localization/fused_odom.",
+      "global_ekf consumes that map-frame GNSS odometry as its own feedback measurement.",
+      "The resulting map->odom translation diverges while AMCL and local odometry remain plausible.",
+      "global costmap and planner start poses move outside the saved map."
+    ],
+    "certainty": "mechanism supported by retained localization replay and run-19b/21/22 logs; exact GNSS/IMU covariance contribution during spin remains provisional",
+    "ruled_out": [
+      "collision monitor threshold",
+      "operator heartbeat",
+      "product/evaluator simulation clock mismatch",
+      "physical collision",
+      "scan timeout alone"
+    ]
+  },
+  "minimal_fix": {
+    "implementation": "global_ekf_gnss_odometry_topic_override",
+    "production_default": "/odometry/gps",
+    "bounded_recovery_value": "/odometry/gps_disabled",
+    "disabled_topic_has_publisher": false,
+    "amcl_remains_enabled": true,
+    "local_ekf_remains_enabled": true,
+    "navsat_remains_enabled": true,
+    "official_threshold_changed": false,
+    "safety_threshold_changed": false
+  },
+  "next_run": {
+    "mode": "FUNCTIONAL_SMOKE_NOT_OFFICIAL_95",
+    "single_run_only": true,
+    "expected_pass_label": "FUNCTIONAL_PASS_1_OF_1_NOT_OFFICIAL_95",
+    "required_receipt": "day1_avoidance_recovery_receipt.json",
+    "reject_on": [
+      "goal_not_succeeded",
+      "physical_travel_below_5m",
+      "no_dynamic_interaction",
+      "no_collision_monitor_intervention",
+      "physical_collision",
+      "global_costmap_out_of_bounds",
+      "planner_start_outside_bounds",
+      "official_metric_marked_measured"
+    ]
+  },
+  "evidence_archive": "artifacts/day1_dynamic_avoidance_functional_smoke_20260914/remote/run22-evidence.tar.gz",
+  "source_runs": [
+    "artifacts/day1_dynamic_avoidance_functional_smoke_20260914/remote/run20-evidence.tar.gz",
+    "artifacts/day1_dynamic_avoidance_functional_smoke_20260914/remote/run21-evidence.tar.gz",
+    "artifacts/day1_dynamic_avoidance_functional_smoke_20260914/remote/run22-evidence.tar.gz",
+    "artifacts/day1_dynamic_avoidance_functional_smoke_20260914/remote/run19b-final-evidence.tar.gz"
+  ]
+}

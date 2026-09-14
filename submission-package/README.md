@@ -21,6 +21,7 @@
 - `evidence/day1/demo/heartbeat-hardened-verify-failure/attempt.json`：`339b549`最终验证失败及Demo路线永久停止的compact记录。
 - `evidence/day1/competition-localization-rental-day1-final-run.md`、`localization-rental-final/`：`47e3cb3`最终定位run的compact doc与JSON；strict max≤50mm为`FAIL`，RMSE替代口径为`PASS_PARTIAL`，未复制129.9MiB MCAP。
 - `evidence/day1/dynamic-avoidance-rental-day1/`：`c9a27ab`/`b9e1c71` Gazebo前失败，以及`ff42430`修复后`c33c75a` run-09的compact receipt/metrics；run-09 `goal_accepted=true`、`nav2_goal_succeeded=false`、单次0/1，官方≥95%仍为`NOT_MEASURED`。部分运动不是collision-free完整试验。
+- `evidence/day1/avoidance-recovery/`：`99ee7f0`定位的全局EKF GNSS反馈闭环根因、最小topic覆盖修复、单次恢复验收器和失败回执；官方避障率仍未测。
 - `接入说明.md`：补入结果后刷新报告。不要把当前旧main源码当最新运行代码提交。
 - `docs/report-baseline.json`、`evidence/day1/integration-manifest.json`：冻结旧23页PDF SHA，并记录本次增量来源提交、包内路径、SHA和声明边界，含新增`DELIVERED_MODULAR_DEMO`视频项。
 
