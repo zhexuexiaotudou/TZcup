@@ -1,0 +1,19 @@
+{
+  "configured_output": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/run-01",
+  "driver": "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/source/scripts/competition_localization_route.py",
+  "failure_line": "mkdir: cannot create directory ... No such file or directory",
+  "gazebo_started": false,
+  "host": "autodl-container-ca410red1k-e4e33c0c",
+  "invocation_log_sha256": "4411f4448b7e08e18ed6e4428713179e6f81ebe75f7a405500924d7cd3939024",
+  "invocation_rc": 1,
+  "live_candidate_receipt_present": false,
+  "live_candidate_status": "NOT_WRITTEN",
+  "preflight_receipt_present": true,
+  "recorded_unix_s": 1789405107.361846,
+  "required_guest_output": "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/run-01",
+  "retry_policy": "NO_RETRY_AFTER_SINGLE_HARNESS_INVOCATION",
+  "ros_runtime_started": false,
+  "schema_version": 1,
+  "source_revision": "45cb96babc204ad2dad9afb83bb9d98f113fa8d8",
+  "status": "FAIL_PRECONDITION_OUTPUT_PATH_NOT_GUEST_VISIBLE"
+}

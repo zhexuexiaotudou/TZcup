@@ -1,0 +1,12 @@
+{
+  "admitted": true,
+  "driver": "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/source/scripts/competition_localization_route.py",
+  "formal_gazebo_lock_available": true,
+  "gazebo_or_launch_processes": [],
+  "host": "autodl-container-ca410red1k-e4e33c0c",
+  "overlay": "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/overlay",
+  "recorded_unix_s": 1789405081.887308,
+  "runtime": "/workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f",
+  "schema_version": 1,
+  "source_root": "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/source"
+}

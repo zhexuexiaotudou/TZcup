@@ -1,0 +1,12 @@
+{
+  "formal_gazebo_lock_available": true,
+  "gazebo_partition": "tzcup_localization_stabilizer_20260915_01",
+  "gazebo_process_remaining": false,
+  "partition_survivor_count": 0,
+  "partition_survivors": [],
+  "recorded_unix_s": 1789405107.3631845,
+  "ros_domain_id": 83,
+  "ros_runtime_process_remaining": false,
+  "schema_version": 1,
+  "status": "RELEASED"
+}

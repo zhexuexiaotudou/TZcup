@@ -1,10 +1,17 @@
 # 定位稳定器实时接线与有界重跑
 
-状态：`READY_FOR_ONE_BOUNDED_LIVE_REPLAY`
+状态：`FAILED_PRECONDITION_NO_GAZEBO_ONLY_ATTEMPT_USED`
 
 本版本没有启动 Gazebo。当前唯一 Gazebo 先由 coverage run-12 使用，之后由
 Copernicus 执行 avoidance。下面的 harness 通过正式 `flock` 获取单 Gazebo
 所有权；两个前序任务未释放锁或进程时，它会在启动前返回 `75`。
+
+2026-09-15 的唯一一次 live 调用在 harness 的 `mkdir "$OUTPUT"` 处退出。
+原因是执行层把 host 路径
+`/root/autodl-tmp/.../run-01` 作为 `OUTPUT` 传入 PRoot guest；guest 只能
+看到对应的 `/workspace/...` 路径。Gazebo、ROS 和 driver 均未启动，正式
+锁保持可用，失败后没有重跑。结构化回执位于
+`artifacts/day1_localization_stabilizer_live_20260915/`。
 
 ## 实时运行链路
 
@@ -73,7 +80,7 @@ export RUNTIME=/workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws
 export OUTPUT=/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/run-01
 export EPISODE=/workspace/tzcup-competition-sim-only-20260912/evidence/motion-cleaning-continuous-fixture-01/episode
 export MAP_SOURCE=/workspace/tzcup-competition-sim-only-20260912/evidence/competition-integrated-20260913-01
-export DRIVER=/workspace/tzcup-competition-sim-only-20260912/source/TZcup-<revision>/scripts/run_competition_localization_driver.py
+export DRIVER=/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/source/scripts/competition_localization_route.py
 export CANDIDATE_REVISION="$(git -C "$SOURCE" rev-parse HEAD)"
 export COMPETITION_RUNTIME_OVERLAY=/workspace/tzcup-competition-sim-only-20260912/overlays/day1-localization-stabilizer
 export LOCALIZATION_COLLECTOR_OVERLAY=/workspace/tzcup-competition-sim-only-20260912/overlays/day1-localization-stabilizer
@@ -82,6 +89,24 @@ export PROBE_PARTITION=tzcup_localization_stabilizer_20260915_01
 
 bash "$SOURCE/scripts/run_day1_localization_stabilizer_live.sh"
 ```
+
+`SOURCE`、`RUNTIME`、`OUTPUT`、`EPISODE`、`MAP_SOURCE`、`DRIVER` 以及两个
+overlay 路径都必须使用 guest `/workspace/...` 路径。host
+`/root/autodl-tmp/...` 路径只能用于 PRoot 外的文件读取、上传、哈希和
+归档，不能传给 harness 内的 Bash/Python 命令。
+
+## 首轮 live 调用失败记录
+
+- `invocation_rc`: `1`
+- `status`: `FAIL_PRECONDITION_OUTPUT_PATH_NOT_GUEST_VISIBLE`
+- `gazebo_started`: `false`
+- `ros_runtime_started`: `false`
+- `live_candidate_receipt.json`: `NOT_WRITTEN`
+- `formal_gazebo_lock_available`: `true`
+- `partition_survivor_count`: `0`
+- 重跑策略：`NO_RETRY_AFTER_SINGLE_HARNESS_INVOCATION`
+
+本轮没有获得新的 live RMSE/P95/max，也没有把此前离线候选升级为 live PASS。
 
 ## 验收门
 
