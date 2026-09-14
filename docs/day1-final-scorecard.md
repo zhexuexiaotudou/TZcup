@@ -44,7 +44,7 @@
 | 建图 >=20000 m2 | 5 | `OFFLINE_ALGORITHM_PARTIAL` | fresh run 同时记录 SLAM 必需话题，再做 live 或离线 replay | `submission-package/evidence/day1/competition-mapping-offline-raycast.md` |
 | 避障 >=95% | 5 | `ROOT_CAUSE_FIXED`；率 `NOT_MEASURED` | 先做单次 functional，再做独立重复矩阵 | `F:/Project/TZcup/.workspace/worktrees/TZcup-day1-video-report-sync/submission-package/evidence/day1/avoidance-recovery/day1-avoidance-recovery-root-cause.md` |
 | 识别 >=95% | 10 | `CONTROLLED_CANDIDATE`；官方 `NOT_MEASURED` | 冻结官方定义，再做真实域和 S100P 板端 | `submission-package/evidence/day1/perception-score95/artifacts/perception_score95_20260914/receipt.json` |
-| 复杂工况 | 5 | `DESIGN_OR_CONTROLLED_ONLY` | 浅积水和落叶各做一次受控复现 | `submission-package/supplements/nontechnical-score-closure/system-completeness.md` |
+| 复杂工况 | 5 | `CONTROLLED_SIMULATION_CLIP` | 浅积水清洁与落叶/颗粒物清扫各完成受控45s画面 | `F:/Project/TZcup/.workspace/worktrees/TZcup-day1-video-report-sync/submission-package/video/evidence/complex-conditions-90s/complex_conditions_demo_90s.mp4` |
 | 硬件/软件完整 | 6 | `PARTIAL` | 同一任务串起输入、清扫、安全、coverage、返航和终态 | `submission-package/evidence/day1/tooling/full-mission-demo/docs/day1-full-mission-demo-wrapper.md` |
 
 ## 未测或暂不可得分

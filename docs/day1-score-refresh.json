@@ -273,7 +273,8 @@
       "next_action": "run one reproducible controlled water and leaf scenario each",
       "evidence_paths": [
         "submission-package/supplements/nontechnical-score-closure/system-completeness.md",
-        "docs/competition-mapping-day1-run-06.md"
+        "docs/competition-mapping-day1-run-06.md",
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-video-report-sync/submission-package/video/evidence/complex-conditions-90s/complex_conditions_demo_90s.mp4"
       ],
       "not_claimable": ["real illumination", "real road surface", "long-term generalization"]
     },
