@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "official_item": {
+    "id": "COMP-DEMO",
+    "item": "演示视频清晰流畅",
+    "max_points": 4,
+    "status": "DELIVERED_MODULAR_DEMO",
+    "recommended_points_range": [
+      2,
+      3
+    ],
+    "review_discretion_max_points": 4,
+    "official_points_claimed": 0.0
+  },
+  "media_contract": {
+    "path": "video/final/TZcup_5min_video.mp4",
+    "bytes": 26137698,
+    "sha256": "631c2cfbf0e459bbcf74d7c3f9ddb6c1fc5a6519dbb6794bd4a6ea148d94e097",
+    "duration_s": 300.0,
+    "width": 1920,
+    "height": 1080,
+    "frame_rate": "30/1",
+    "average_frame_rate": "30/1",
+    "frame_count": 9000,
+    "video_codec": "h264",
+    "audio_codec": "aac",
+    "subtitle_codec": "mov_text",
+    "subtitle_cues": 35
+  },
+  "source": {
+    "branch": "codex/day1-video-final",
+    "assembly_commit": "e6caf27",
+    "repair_and_package_commit": "b663ca9",
+    "archive_commit": "8cda98c"
+  },
+  "demonstrated_content": [
+    "vehicle modeling and module breakdown",
+    "basic motion and path following",
+    "robotic-arm approach, grasp and lift",
+    "sensor-driven target approach, grasp and onboard-bin placement",
+    "water-stain cleaning",
+    "mapping and localization views",
+    "continuous cleaning brush and coverage"
+  ],
+  "claim_boundary": "Modular composite demonstration only. The reel combines successful module footage and is not one continuous mission; it does not establish official full-mission PASS, live SLAM, avoidance rate, board perception or vehicle validation.",
+  "recommended_review_note": "Prepare review material at 2-3 of 4 points. The official score remains for the judges; if they accept a modular composite and chaptered operation explanation, the review ceiling is 4 of 4."
+}

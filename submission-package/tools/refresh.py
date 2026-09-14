@@ -162,7 +162,7 @@ for page,(title,paras) in enumerate(sections,1):
             if k<3: c.line(x+118,167,x+128,167)
     c.setStrokeColorRGB(.7,.8,.85); c.line(43,63,551,63)
     c.setFillColorRGB(.25,.35,.4); c.setFont('CN',9)
-    c.drawString(43,43,'本材料不等于完整Demo通过；指标以唯一验收矩阵为准')
+    c.drawString(43,43,'本材料含模块化综合演示；不等同同一连续任务闭环，指标以唯一验收矩阵为准')
     c.drawRightString(550,43,f'{page} / {total_pages}'); c.showPage()
 c.save()
 (P/'docs/技术方案报告.md').write_text('\n\n'.join('# '+t+'\n\n'+'\n\n'.join(ps) for t,ps in sections),encoding='utf-8')

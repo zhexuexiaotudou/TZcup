@@ -9,6 +9,16 @@
     "sha256": "cc98ca940c932dd39128499e28a53cc63b5ce6b5e079d5c7ab83ee3059ca5e3a",
     "frozen_utc": "2026-09-14T13:21:29.3706010+08:00"
   },
-  "integration_branch": "codex/day1-evidence-integration",
-  "rollback_note": "The original 23-page PDF remains retrievable from commit 43f7136ef10d000fcc93f91271e203a21f529e9c; this integration only updates the report and evidence package on its own branch."
+  "current_report": {
+    "branch": "codex/day1-video-report-sync",
+    "base_commit": "8cda98c015d11ecd7628bf3599dcb49b8c361d1a",
+    "pdf_path": "docs/技术方案报告.pdf",
+    "pages": 23,
+    "bytes": 195978,
+    "sha256": "2e0030f733c78e405776cbf414d729866cc4556b6a6685d7b1dd1dd32e085cbb",
+    "updated_utc": "2026-09-15"
+  },
+  "integration_branch": "codex/day1-video-report-sync",
+  "previous_integration_branch": "codex/day1-evidence-integration",
+  "rollback_note": "The original 23-page PDF remains retrievable from commit 43f7136ef10d000fcc93f91271e203a21f529e9c. The previous integrated PDF remains retrievable from baseline commit 8cda98c015d11ecd7628bf3599dcb49b8c361d1a with SHA-256 3cc8158de1d57f6e5b692fae0571e862f6ce4b7c6f06647af1d16447ac37cc8b; this branch only synchronizes the delivered modular video into the report and evidence indexes."
 }
