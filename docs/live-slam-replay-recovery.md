@@ -167,11 +167,11 @@ produced a PGM/YAML map with no queue-full message drop:
 - known area: `2.92 m2`
 - occupied area: `0.055 m2`
 - free area: `2.865 m2`
-- unknown fraction: `0.9830707913966839`
+- unknown fraction: `0.983070500927644`
 
 The map is real, but the 20,000 m2 area gate is false. The project quality gate
 also fails because the vertical span is `19.6 m` and the known area is below
-`150 m2`. A `1.0x` comparison produced `2.79 m2`, `98.3865%` unknown, and one
+`150 m2`. A `1.0x` comparison produced `2.79 m2`, `98.3865371%` unknown, and one
 queue-full drop, so the `0.5x` map is retained as the better replay result.
 
 The complete machine-readable result is
