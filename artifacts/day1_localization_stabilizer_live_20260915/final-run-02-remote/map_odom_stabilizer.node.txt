@@ -1,0 +1,23 @@
+/map_odom_stabilizer
+  Subscribers:
+    /clock: rosgraph_msgs/msg/Clock
+    /localization/raw_map_odom: tf2_msgs/msg/TFMessage
+  Publishers:
+    /localization/map_odom_stabilizer/status: std_msgs/msg/String
+    /parameter_events: rcl_interfaces/msg/ParameterEvent
+    /rosout: rcl_interfaces/msg/Log
+    /tf: tf2_msgs/msg/TFMessage
+  Service Servers:
+    /map_odom_stabilizer/describe_parameters: rcl_interfaces/srv/DescribeParameters
+    /map_odom_stabilizer/get_parameter_types: rcl_interfaces/srv/GetParameterTypes
+    /map_odom_stabilizer/get_parameters: rcl_interfaces/srv/GetParameters
+    /map_odom_stabilizer/get_type_description: type_description_interfaces/srv/GetTypeDescription
+    /map_odom_stabilizer/list_parameters: rcl_interfaces/srv/ListParameters
+    /map_odom_stabilizer/set_parameters: rcl_interfaces/srv/SetParameters
+    /map_odom_stabilizer/set_parameters_atomically: rcl_interfaces/srv/SetParametersAtomically
+  Service Clients:
+
+  Action Servers:
+
+  Action Clients:
+

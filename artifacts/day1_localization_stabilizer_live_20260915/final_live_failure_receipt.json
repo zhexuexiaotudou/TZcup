@@ -1,0 +1,40 @@
+{
+  "bag_info_present": true,
+  "bag_present": true,
+  "driver_nav_results": [],
+  "driver_rc_present": false,
+  "driver_route_passed": false,
+  "effective_parameters_all_expected": true,
+  "effective_parameters_present": true,
+  "focus_scorer_failure": [
+    "ModuleNotFoundError: No module named 'mcap'"
+  ],
+  "focus_scorer_status": "FAIL",
+  "formal_gazebo_lock_available": true,
+  "gazebo_started": true,
+  "goal_rejection": "bt_navigator action server inactive",
+  "hashes": {
+    "bag/bag_0.mcap": "2c067bb15fb4ccf0dd2bc9345abd55d6017ad1a8881ce5b1234692352e64fc23",
+    "bag_info.txt": "ad3b82adb0074a9cfb90111e77da6057f79413f73ace095f6bae6ac3039470f6",
+    "driver.log": "b761fca672551a0ef0179e2b4361f9522ccd94d7b60bf60b13a7fddc6deb54d4",
+    "effective_parameters.json": "ee9845b56f7392ae4a52a30c2545b4e802cf83b42207faaa89209a689fc9896d",
+    "localization_focus.json": "dd4f455cef90f23ee8515fb8db100c4c0ea51658a7112c42c2cfdfdb07e97566",
+    "map_odom_stabilizer.status.yaml": "9dc0fe6b64e339af6f5061f0bce315ffafcdac170b209741cd51d8140f0f83f4",
+    "resource_release.json": "ea853c0ed9ce425fcae5919f64af247e48ea4a11e306cd50fd117d50780988ce",
+    "route.json": "87125271d7f32bba0e24b533b0e3640bc6bfab3ad509a6d82c92438e2c32b5b9",
+    "tf_authority.json": "44cf83ad44e7b6ba85ea3dff97b45dd88037053d7cd53518adf3c516bb5380ad"
+  },
+  "host": "autodl-container-ca410red1k-e4e33c0c",
+  "live_candidate_receipt_present": false,
+  "live_candidate_receipt_required": "LIVE_CANDIDATE_PASS",
+  "live_candidate_status": "FAIL",
+  "outer_invocation_rc": 2,
+  "partition_survivor_count": 0,
+  "recorded_unix_s": 1789405930.7585015,
+  "resource_release_status": "RELEASED",
+  "retry_policy": "STOP_ROUTE_NO_RETRY_AFTER_FINAL_HARNESS_INVOCATION",
+  "schema_version": 1,
+  "sole_tf_owner_receipt_present": true,
+  "stabilizer_status_raw": "data: '{\"accepted_updates\":0,\"blocked_reason\":null,\"duplicate_updates\":0,\"ignored_transform_count\":0,\"input_tf_topic\":\"/localization/raw_map_odom\",\"last_output_stamp_sec\":null,\"last_source_stamp_sec\":null,\"max_filter_dt_sec\":0.1,\"max_gap_sec\":0.5,\"max_observed_gap_sec\":0.0,\"published_tf_messages\":0,\"rejected_updates\":0,\"schema_version\":1,\"status\":\"WAITING\",\"tau_sec\":1.5,\"uses_future\":false,\"uses_ground_truth\":false}'\n---\n",
+  "status": "FAIL_LIVE_GOAL_REJECTED_AND_FOCUS_SCORER_MCAP_DEPENDENCY_MISSING"
+}

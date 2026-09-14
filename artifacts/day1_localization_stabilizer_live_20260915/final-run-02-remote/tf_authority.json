@@ -1,0 +1,2002 @@
+{
+  "collector_contract": {
+    "subscribed_topics": [
+      "/tf",
+      "/tf_static",
+      "/odom",
+      "/odom/unfiltered",
+      "/imu/data",
+      "/amcl_pose",
+      "/gnss/fix",
+      "/odometry/gps",
+      "/localization/fused_odom",
+      "/localization/raw_map_odom"
+    ],
+    "world_truth_used": false
+  },
+  "duration_seconds": 16.55163087,
+  "endpoint_registry": {
+    "01100510fa6e242915c4ce1500002304": {
+      "gid": "01100510fa6e242915c4ce1500002304",
+      "node": "/collision_monitor",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "01100510fa6e242915c4ce1500002404": {
+      "gid": "01100510fa6e242915c4ce1500002404",
+      "node": "/collision_monitor",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "01101331e539fb26dd6e291200004504": {
+      "gid": "01101331e539fb26dd6e291200004504",
+      "node": "/transform_listener_impl_5000001f95f0",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "01101331e539fb26dd6e291200004604": {
+      "gid": "01101331e539fb26dd6e291200004604",
+      "node": "/transform_listener_impl_5000001f95f0",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "01101331e539fb26dd6e291200006f04": {
+      "gid": "01101331e539fb26dd6e291200006f04",
+      "node": "/controller_server",
+      "topic_type": "nav_msgs/msg/Odometry"
+    },
+    "01101c8aee075057579395c400001f04": {
+      "gid": "01101c8aee075057579395c400001f04",
+      "node": "/moveit_planning_scene_bootstrap",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "01101c8aee075057579395c400002004": {
+      "gid": "01101c8aee075057579395c400002004",
+      "node": "/moveit_planning_scene_bootstrap",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "011037961c267691b5c65d9900001d04": {
+      "gid": "011037961c267691b5c65d9900001d04",
+      "node": "/transform_listener_impl_50000012e8c0",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "011037961c267691b5c65d9900001e04": {
+      "gid": "011037961c267691b5c65d9900001e04",
+      "node": "/transform_listener_impl_50000012e8c0",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "011037961c267691b5c65d9900002003": {
+      "gid": "011037961c267691b5c65d9900002003",
+      "node": "/local_ekf",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "011037961c267691b5c65d9900002a04": {
+      "gid": "011037961c267691b5c65d9900002a04",
+      "node": "/local_ekf",
+      "topic_type": "nav_msgs/msg/Odometry"
+    },
+    "011037961c267691b5c65d9900002b04": {
+      "gid": "011037961c267691b5c65d9900002b04",
+      "node": "/local_ekf",
+      "topic_type": "sensor_msgs/msg/Imu"
+    },
+    "011037961c267691b5c65d9900002c03": {
+      "gid": "011037961c267691b5c65d9900002c03",
+      "node": "/local_ekf",
+      "topic_type": "nav_msgs/msg/Odometry"
+    },
+    "01103903d1bafa46c8e7fdb900001c04": {
+      "gid": "01103903d1bafa46c8e7fdb900001c04",
+      "node": "/charge_interface_manager",
+      "topic_type": "nav_msgs/msg/Odometry"
+    },
+    "011041bf1919672db007e78100002304": {
+      "gid": "011041bf1919672db007e78100002304",
+      "node": "/route_server",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "011041bf1919672db007e78100002404": {
+      "gid": "011041bf1919672db007e78100002404",
+      "node": "/route_server",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "011047c836d98fdfa5d5d13a00002304": {
+      "gid": "011047c836d98fdfa5d5d13a00002304",
+      "node": "/amcl",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "011047c836d98fdfa5d5d13a00002404": {
+      "gid": "011047c836d98fdfa5d5d13a00002404",
+      "node": "/amcl",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "011047c836d98fdfa5d5d13a00002503": {
+      "gid": "011047c836d98fdfa5d5d13a00002503",
+      "node": "/amcl",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "011047c836d98fdfa5d5d13a00002803": {
+      "gid": "011047c836d98fdfa5d5d13a00002803",
+      "node": "/amcl",
+      "topic_type": "geometry_msgs/msg/PoseWithCovarianceStamped"
+    },
+    "01104ce4168fa9ec45251bcb00001803": {
+      "gid": "01104ce4168fa9ec45251bcb00001803",
+      "node": "/robot_state_publisher",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "01104ce4168fa9ec45251bcb00001903": {
+      "gid": "01104ce4168fa9ec45251bcb00001903",
+      "node": "/robot_state_publisher",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "0110509b717df664067858a700002304": {
+      "gid": "0110509b717df664067858a700002304",
+      "node": "/smoother_server",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "0110509b717df664067858a700002404": {
+      "gid": "0110509b717df664067858a700002404",
+      "node": "/smoother_server",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "01106ca2f7ba3d50d9742dc500001b03": {
+      "gid": "01106ca2f7ba3d50d9742dc500001b03",
+      "node": "/a300_drivetrain_bridge",
+      "topic_type": "nav_msgs/msg/Odometry"
+    },
+    "01106ca9c7a78600912359f800004504": {
+      "gid": "01106ca9c7a78600912359f800004504",
+      "node": "/transform_listener_impl_50000012ee50",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "01106ca9c7a78600912359f800004604": {
+      "gid": "01106ca9c7a78600912359f800004604",
+      "node": "/transform_listener_impl_50000012ee50",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "01107b5ecf8ec377b8a0bcec00001903": {
+      "gid": "01107b5ecf8ec377b8a0bcec00001903",
+      "node": "/formal_legacy_topic_adapter",
+      "topic_type": "sensor_msgs/msg/Imu"
+    },
+    "01107b5ecf8ec377b8a0bcec00001b03": {
+      "gid": "01107b5ecf8ec377b8a0bcec00001b03",
+      "node": "/formal_legacy_topic_adapter",
+      "topic_type": "sensor_msgs/msg/NavSatFix"
+    },
+    "01107cdbc7a427105674e86100001803": {
+      "gid": "01107cdbc7a427105674e86100001803",
+      "node": "/navsat_transform",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "01107cdbc7a427105674e86100001e04": {
+      "gid": "01107cdbc7a427105674e86100001e04",
+      "node": "/transform_listener_impl_500000124790",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "01107cdbc7a427105674e86100001f04": {
+      "gid": "01107cdbc7a427105674e86100001f04",
+      "node": "/transform_listener_impl_500000124790",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "01107cdbc7a427105674e86100002a04": {
+      "gid": "01107cdbc7a427105674e86100002a04",
+      "node": "/navsat_transform",
+      "topic_type": "nav_msgs/msg/Odometry"
+    },
+    "01107cdbc7a427105674e86100002b04": {
+      "gid": "01107cdbc7a427105674e86100002b04",
+      "node": "/navsat_transform",
+      "topic_type": "sensor_msgs/msg/NavSatFix"
+    },
+    "01107cdbc7a427105674e86100002c04": {
+      "gid": "01107cdbc7a427105674e86100002c04",
+      "node": "/navsat_transform",
+      "topic_type": "sensor_msgs/msg/Imu"
+    },
+    "01107cdbc7a427105674e86100002d03": {
+      "gid": "01107cdbc7a427105674e86100002d03",
+      "node": "/navsat_transform",
+      "topic_type": "nav_msgs/msg/Odometry"
+    },
+    "01108ddfda3564bf435f2c0600002004": {
+      "gid": "01108ddfda3564bf435f2c0600002004",
+      "node": "/formal_physical_grasp_executor",
+      "topic_type": "nav_msgs/msg/Odometry"
+    },
+    "01108ddfda3564bf435f2c0600004e04": {
+      "gid": "01108ddfda3564bf435f2c0600004e04",
+      "node": "/formal_physical_grasp_executor",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "01108ddfda3564bf435f2c0600004f04": {
+      "gid": "01108ddfda3564bf435f2c0600004f04",
+      "node": "/formal_physical_grasp_executor",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "011091fc2c950495f95c637900005304": {
+      "gid": "011091fc2c950495f95c637900005304",
+      "node": "/transform_listener_impl_5000002ba730",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "011091fc2c950495f95c637900005404": {
+      "gid": "011091fc2c950495f95c637900005404",
+      "node": "/transform_listener_impl_5000002ba730",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "011091fc2c950495f95c637900005604": {
+      "gid": "011091fc2c950495f95c637900005604",
+      "node": "/move_group_private_87960934119184",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "011091fc2c950495f95c637900005704": {
+      "gid": "011091fc2c950495f95c637900005704",
+      "node": "/move_group_private_87960934119184",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "0110b6889ec2ce253f6a9bd900002904": {
+      "gid": "0110b6889ec2ce253f6a9bd900002904",
+      "node": "/rosbag2_recorder",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "0110b6889ec2ce253f6a9bd900002c04": {
+      "gid": "0110b6889ec2ce253f6a9bd900002c04",
+      "node": "/rosbag2_recorder",
+      "topic_type": "sensor_msgs/msg/Imu"
+    },
+    "0110b6889ec2ce253f6a9bd900002d04": {
+      "gid": "0110b6889ec2ce253f6a9bd900002d04",
+      "node": "/rosbag2_recorder",
+      "topic_type": "sensor_msgs/msg/NavSatFix"
+    },
+    "0110b6889ec2ce253f6a9bd900003204": {
+      "gid": "0110b6889ec2ce253f6a9bd900003204",
+      "node": "/rosbag2_recorder",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "0110b6889ec2ce253f6a9bd900003504": {
+      "gid": "0110b6889ec2ce253f6a9bd900003504",
+      "node": "/rosbag2_recorder",
+      "topic_type": "nav_msgs/msg/Odometry"
+    },
+    "0110b6889ec2ce253f6a9bd900003804": {
+      "gid": "0110b6889ec2ce253f6a9bd900003804",
+      "node": "/rosbag2_recorder",
+      "topic_type": "nav_msgs/msg/Odometry"
+    },
+    "0110b6889ec2ce253f6a9bd900003a04": {
+      "gid": "0110b6889ec2ce253f6a9bd900003a04",
+      "node": "/rosbag2_recorder",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "0110b6889ec2ce253f6a9bd900003c04": {
+      "gid": "0110b6889ec2ce253f6a9bd900003c04",
+      "node": "/rosbag2_recorder",
+      "topic_type": "nav_msgs/msg/Odometry"
+    },
+    "0110b6889ec2ce253f6a9bd900003d04": {
+      "gid": "0110b6889ec2ce253f6a9bd900003d04",
+      "node": "/rosbag2_recorder",
+      "topic_type": "nav_msgs/msg/Odometry"
+    },
+    "0110b6889ec2ce253f6a9bd900003e04": {
+      "gid": "0110b6889ec2ce253f6a9bd900003e04",
+      "node": "/rosbag2_recorder",
+      "topic_type": "geometry_msgs/msg/PoseWithCovarianceStamped"
+    },
+    "0110c7b386634046e84fa61800001703": {
+      "gid": "0110c7b386634046e84fa61800001703",
+      "node": "/map_odom_stabilizer",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "0110c7b386634046e84fa61800001904": {
+      "gid": "0110c7b386634046e84fa61800001904",
+      "node": "/map_odom_stabilizer",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "0110cca9aa5b69c92485ecf600002304": {
+      "gid": "0110cca9aa5b69c92485ecf600002304",
+      "node": "/behavior_server",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "0110cca9aa5b69c92485ecf600002404": {
+      "gid": "0110cca9aa5b69c92485ecf600002404",
+      "node": "/behavior_server",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "0110d140967c552829812a1600001d04": {
+      "gid": "0110d140967c552829812a1600001d04",
+      "node": "/transform_listener_impl_500000128a10",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "0110d140967c552829812a1600001e04": {
+      "gid": "0110d140967c552829812a1600001e04",
+      "node": "/transform_listener_impl_500000128a10",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "0110d140967c552829812a1600002003": {
+      "gid": "0110d140967c552829812a1600002003",
+      "node": "/global_ekf",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "0110d140967c552829812a1600002a04": {
+      "gid": "0110d140967c552829812a1600002a04",
+      "node": "/global_ekf",
+      "topic_type": "nav_msgs/msg/Odometry"
+    },
+    "0110d140967c552829812a1600002b04": {
+      "gid": "0110d140967c552829812a1600002b04",
+      "node": "/global_ekf",
+      "topic_type": "nav_msgs/msg/Odometry"
+    },
+    "0110d140967c552829812a1600002c04": {
+      "gid": "0110d140967c552829812a1600002c04",
+      "node": "/global_ekf",
+      "topic_type": "geometry_msgs/msg/PoseWithCovarianceStamped"
+    },
+    "0110d140967c552829812a1600002d03": {
+      "gid": "0110d140967c552829812a1600002d03",
+      "node": "/global_ekf",
+      "topic_type": "nav_msgs/msg/Odometry"
+    },
+    "0110e9c4e9853c9dd6bfea1b00002304": {
+      "gid": "0110e9c4e9853c9dd6bfea1b00002304",
+      "node": "/bt_navigator",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "0110e9c4e9853c9dd6bfea1b00002404": {
+      "gid": "0110e9c4e9853c9dd6bfea1b00002404",
+      "node": "/bt_navigator",
+      "topic_type": "tf2_msgs/msg/TFMessage"
+    },
+    "0110e9c4e9853c9dd6bfea1b00002504": {
+      "gid": "0110e9c4e9853c9dd6bfea1b00002504",
+      "node": "/bt_navigator",
+      "topic_type": "nav_msgs/msg/Odometry"
+    }
+  },
+  "graph_nodes": [
+    "/_ros2cli_100984",
+    "/_ros2cli_daemon_83_2b11d6f954294fc8a260f986f0c79b84",
+    "/a300_bms_simulator",
+    "/a300_drivetrain_bridge",
+    "/a300_drivetrain_command_adapter",
+    "/amcl",
+    "/arm_controller",
+    "/behavior_server",
+    "/brush_controller",
+    "/bt_navigator",
+    "/bt_navigator_navigate_through_poses_rclcpp_node",
+    "/bt_navigator_navigate_to_pose_rclcpp_node",
+    "/charge_interface_manager",
+    "/charge_receptacle_contact_bridge",
+    "/cleaning_actuator_command_mirror",
+    "/cleaning_actuator_motor_bridge",
+    "/cleaning_actuator_scalar_bridge",
+    "/cleaning_controller",
+    "/collision_monitor",
+    "/competition_localization_route",
+    "/controller_manager",
+    "/controller_server",
+    "/docking_server",
+    "/filter_lifecycle_manager",
+    "/formal_auxiliary_bridge",
+    "/formal_campus_set_pose_bridge",
+    "/formal_dynamic_footprint_manager",
+    "/formal_encoder_feedback_publisher",
+    "/formal_legacy_topic_adapter",
+    "/formal_localization_runtime_collector",
+    "/formal_model_ground_truth_adapter",
+    "/formal_model_odometry_evaluation_bridge",
+    "/formal_physical_grasp_executor",
+    "/formal_robot_description_publisher",
+    "/formal_scan_self_filter",
+    "/formal_vehicle_product_bridge",
+    "/front_bumper_contact_bridge",
+    "/global_costmap/global_costmap",
+    "/global_ekf",
+    "/gripper_controller",
+    "/gz_ros_control",
+    "/joint_state_broadcaster",
+    "/keepout_costmap_filter_info_server",
+    "/keepout_filter_mask_server",
+    "/lifecycle_manager_localization",
+    "/lifecycle_manager_navigation",
+    "/local_costmap/local_costmap",
+    "/local_ekf",
+    "/manipulation_sim_bridge",
+    "/map_odom_stabilizer",
+    "/map_server",
+    "/move_group",
+    "/move_group/move_group",
+    "/move_group_private_87960934119184",
+    "/moveit_planning_scene_bootstrap",
+    "/navsat_transform",
+    "/planner_server",
+    "/rear_bumper_contact_bridge",
+    "/recovery_controller",
+    "/robot_state_publisher",
+    "/ros_gz_bridge",
+    "/rosbag2_recorder",
+    "/route_server",
+    "/service_controller",
+    "/simulation_safety_inputs",
+    "/smoother_server",
+    "/speed_costmap_filter_info_server",
+    "/speed_filter_mask_server",
+    "/storage_controller",
+    "/transform_listener_impl_500000124790",
+    "/transform_listener_impl_500000128a10",
+    "/transform_listener_impl_50000012e8c0",
+    "/transform_listener_impl_50000012ee50",
+    "/transform_listener_impl_5000001f95f0",
+    "/transform_listener_impl_5000002ba730",
+    "/velocity_smoother",
+    "/wastewater_drain_contact_bridge",
+    "/waypoint_follower",
+    "/whole_vehicle_safety_manager"
+  ],
+  "mode": "cleaning",
+  "schema_version": 1,
+  "tf_edges": {
+    "a300_left_battery_pack_link->a300_left_battery_bms_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "a300_right_battery_pack_link->a300_right_battery_bms_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "arm_mount_link->ur5e_base_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "base_footprint->base_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "base_link->a300_left_battery_pack_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "base_link->a300_right_battery_pack_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "base_link->bodywork_brush_guards_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "base_link->bodywork_compute_service_door_hinge_bracket_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "base_link->bodywork_front_cowl_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "base_link->bodywork_lighting_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "base_link->bodywork_lower_tub_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "base_link->bodywork_power_service_door_hinge_bracket_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "base_link->bodywork_rear_dry_service_door_hinge_bracket_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "base_link->bodywork_rear_shell_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "base_link->bodywork_trim_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "base_link->bodywork_wet_service_door_hinge_bracket_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "base_link->charge_interface_datum_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "base_link->charge_port_housing_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "base_link->cleaning_mechanism_mount_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "base_link->emergency_stop_datum_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "base_link->emergency_stop_housing_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "base_link->front_contact_safety_datum_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "base_link->front_rgbd_mount_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "base_link->imu_mount_tray_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "base_link->left_suspension_beam_spacer_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "base_link->main_power_contactor_housing_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "base_link->main_power_isolator_housing_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "base_link->payload_deck_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "base_link->rear_contact_safety_datum_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "base_link->rear_left_fisheye_mount_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "base_link->rear_right_fisheye_mount_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "base_link->right_suspension_beam_spacer_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "base_link->warning_and_work_lighting_datum_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "base_link->wastewater_drain_datum_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "central_roller_drive_gearbox_link->central_roller_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "central_roller_motor_stator_link->central_roller_drive_gearbox_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "central_roller_motor_stator_link->central_roller_encoder_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "charge_port_housing_link->charge_port_door_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "charge_port_housing_link->charge_receptacle_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "charge_receptacle_link->charge_connector_lock_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "cleaning_lift_actuator_rod_link->cleaning_lift_actuator_clevis_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "cleaning_lift_carriage_link->central_roller_guard_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "cleaning_lift_carriage_link->central_roller_left_bearing_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "cleaning_lift_carriage_link->central_roller_motor_stator_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "cleaning_lift_carriage_link->cleaning_left_lift_slider_plate_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "cleaning_lift_carriage_link->cleaning_lift_actuator_rod_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "cleaning_lift_carriage_link->cleaning_right_lift_slider_plate_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "cleaning_lift_carriage_link->left_side_brush_motor_stator_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "cleaning_lift_carriage_link->right_side_brush_motor_stator_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "cleaning_lift_carriage_link->squeegee_float_carrier_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "cleaning_mechanism_mount_link->cleaning_front_left_guide_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "cleaning_mechanism_mount_link->cleaning_front_right_guide_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "cleaning_mechanism_mount_link->cleaning_lift_actuator_body_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "cleaning_mechanism_mount_link->cleaning_lift_carriage_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "cleaning_mechanism_mount_link->cleaning_rear_left_guide_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "cleaning_mechanism_mount_link->cleaning_rear_right_guide_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "cleaning_mechanism_mount_link->recovery_hose_lower_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "cleaning_mechanism_mount_link->recovery_hose_middle_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "cleaning_mechanism_mount_link->recovery_hose_upper_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "cleaning_mechanism_mount_link->recovery_pump_motor_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "cleaning_mechanism_mount_link->recovery_strainer_filter_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "dry_bin_latch_base_link->dry_bin_latch_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "dry_bin_lid_link->dry_bin_latch_keeper_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "dry_bin_lid_link->dry_deposit_hopper_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "dry_bin_link->dry_bin_front_panel_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "dry_bin_link->dry_bin_latch_base_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "dry_bin_link->dry_bin_left_panel_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "dry_bin_link->dry_bin_level_sensor_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "dry_bin_link->dry_bin_lid_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "dry_bin_link->dry_bin_payload_reserve_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "dry_bin_link->dry_bin_rear_panel_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "dry_bin_link->dry_bin_right_panel_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "dry_deposit_gate_link->dry_deposit_gate_actuator_horn_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "dry_deposit_hopper_link->dry_deposit_chute_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "dry_deposit_hopper_link->dry_deposit_gate_actuator_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "dry_deposit_hopper_link->dry_deposit_gate_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "dry_deposit_hopper_link->dry_deposit_presence_sensor_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "emergency_stop_housing_link->emergency_stop_plunger_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "flange->tool0": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "front_left_motor_link->front_left_encoder_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "front_left_motor_link->front_left_wheel_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "front_rgbd_link->front_rgbd_depth_optical_frame": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "front_rgbd_link->front_rgbd_infra1_optical_frame": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "front_rgbd_link->front_rgbd_infra2_optical_frame": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "front_rgbd_mount_link->front_rgbd_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "front_right_motor_link->front_right_encoder_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "front_right_motor_link->front_right_wheel_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "gnss_mount_link->gnss_antenna_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "imu_mount_tray_link->imu_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "left_side_brush_disk_link->left_side_brush_bristle_sectors_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "left_side_brush_gearbox_link->left_side_brush_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "left_side_brush_link->left_side_brush_disk_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "left_side_brush_motor_stator_link->left_side_brush_encoder_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "left_side_brush_motor_stator_link->left_side_brush_gearbox_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "left_suspension_beam_link->front_left_motor_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "left_suspension_beam_link->rear_left_motor_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "left_suspension_beam_spacer_link->left_suspension_beam_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "lidar_2d_mount_link->lidar_2d_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "lidar_3d_mount_link->lidar_3d_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "main_power_contactor_housing_link->main_power_contactor_armature_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "main_power_isolator_housing_link->main_power_isolator_handle_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "odom->base_footprint": {
+      "message_count": 116,
+      "messages_by_gid": {
+        "ca05b1c4b29048430000000000000000": 116
+      }
+    },
+    "payload_deck_link->arm_mount_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "payload_deck_link->isolated_dc_dc_module_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "payload_deck_link->power_distribution_box_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "payload_deck_link->safety_relay_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "payload_deck_link->sensor_mast_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "payload_deck_link->storage_system_mount_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "payload_deck_link->ur5e_control_box_isolation_base_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "rear_left_fisheye_link->rear_left_fisheye_optical_frame": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "rear_left_fisheye_mount_link->rear_left_fisheye_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "rear_left_motor_link->rear_left_encoder_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "rear_left_motor_link->rear_left_wheel_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "rear_right_fisheye_link->rear_right_fisheye_optical_frame": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "rear_right_fisheye_mount_link->rear_right_fisheye_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "rear_right_motor_link->rear_right_encoder_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "rear_right_motor_link->rear_right_wheel_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "recovery_pump_head_link->recovery_pump_rotor_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "recovery_pump_head_link->wastewater_delivery_coupling_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "recovery_pump_motor_link->recovery_pump_head_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "recovery_pump_motor_link->recovery_pump_isolator_mount_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "right_side_brush_disk_link->right_side_brush_bristle_sectors_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "right_side_brush_gearbox_link->right_side_brush_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "right_side_brush_link->right_side_brush_disk_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "right_side_brush_motor_stator_link->right_side_brush_encoder_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "right_side_brush_motor_stator_link->right_side_brush_gearbox_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "right_suspension_beam_link->front_right_motor_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "right_suspension_beam_link->rear_right_motor_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "right_suspension_beam_spacer_link->right_suspension_beam_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "robotiq_85_base_link->robotiq_85_left_inner_knuckle_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "robotiq_85_base_link->robotiq_85_left_knuckle_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "robotiq_85_base_link->robotiq_85_right_inner_knuckle_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "robotiq_85_base_link->robotiq_85_right_knuckle_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "robotiq_85_left_finger_link->robotiq_85_left_finger_tip_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "robotiq_85_left_knuckle_link->robotiq_85_left_finger_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "robotiq_85_right_finger_link->robotiq_85_right_finger_tip_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "robotiq_85_right_knuckle_link->robotiq_85_right_finger_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "s100_cabinet_roof_mount_link->s100_compute_enclosure_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "s100_compute_enclosure_link->s100_board_reference_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "sensor_mast_link->gnss_mount_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "sensor_mast_link->lidar_2d_mount_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "sensor_mast_link->lidar_3d_mount_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "sensor_mast_link->zed_f9p_receiver_enclosure_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "squeegee_float_carrier_link->squeegee_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "squeegee_float_carrier_link->squeegee_spring_pack_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "squeegee_link->suction_nozzle_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "storage_system_mount_link->dry_bin_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "storage_system_mount_link->dry_wet_storage_partition_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "storage_system_mount_link->wastewater_tank_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "tool0->ur_to_robotiq_adapter_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "tool0->wrist_rgbd_mount_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "ur5e_base_link->ur5e_base_link_inertia": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "ur5e_base_link_inertia->ur5e_shoulder_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "ur5e_control_box_isolation_base_link->ur5e_control_box_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "ur5e_control_box_link->s100_cabinet_roof_mount_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "ur5e_forearm_link->ur5e_wrist_1_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "ur5e_shoulder_link->ur5e_upper_arm_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "ur5e_upper_arm_link->ur5e_forearm_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "ur5e_wrist_1_link->ur5e_wrist_2_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "ur5e_wrist_2_link->ur5e_wrist_3_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "ur5e_wrist_3_link->flange": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "ur_to_robotiq_adapter_link->robotiq_85_base_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "wastewater_delivery_coupling_link->recovery_flow_sensor_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "wastewater_drain_pipe_link->wastewater_drain_valve_body_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "wastewater_drain_valve_body_link->wastewater_drain_coupling_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "wastewater_drain_valve_body_link->wastewater_drain_service_cap_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "wastewater_drain_valve_body_link->wastewater_drain_valve_actuator_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "wastewater_drain_valve_body_link->wastewater_drain_valve_ball_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "wastewater_lid_latch_base_link->wastewater_lid_latch_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "wastewater_lid_link->wastewater_lid_latch_keeper_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "wastewater_tank_link->wastewater_baffle_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "wastewater_tank_link->wastewater_drain_pipe_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "wastewater_tank_link->wastewater_front_panel_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "wastewater_tank_link->wastewater_high_level_sensor_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "wastewater_tank_link->wastewater_inlet_coupling_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "wastewater_tank_link->wastewater_left_panel_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "wastewater_tank_link->wastewater_lid_latch_base_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "wastewater_tank_link->wastewater_lid_link": {
+      "message_count": 44,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44
+      }
+    },
+    "wastewater_tank_link->wastewater_low_level_sensor_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "wastewater_tank_link->wastewater_payload_reserve_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "wastewater_tank_link->wastewater_rear_panel_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "wastewater_tank_link->wastewater_right_panel_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "wastewater_tank_link->wastewater_vent_filter_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "wrist_rgbd_link->wrist_rgbd_depth_optical_frame": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "wrist_rgbd_link->wrist_rgbd_infra1_optical_frame": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "wrist_rgbd_link->wrist_rgbd_infra2_optical_frame": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "wrist_rgbd_mount_link->wrist_rgbd_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    },
+    "zed_f9p_receiver_enclosure_link->zed_f9p_module_reference_link": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      }
+    }
+  },
+  "topics": {
+    "/amcl_pose": {
+      "message_count": 0,
+      "messages_by_gid": {},
+      "publishers": [
+        {
+          "gid": "011047c836d98fdfa5d5d13a00002803",
+          "node": "/amcl",
+          "topic_type": "geometry_msgs/msg/PoseWithCovarianceStamped"
+        }
+      ],
+      "subscriptions": [
+        {
+          "gid": "0110b6889ec2ce253f6a9bd900003e04",
+          "node": "/rosbag2_recorder",
+          "topic_type": "geometry_msgs/msg/PoseWithCovarianceStamped"
+        },
+        {
+          "gid": "0110d140967c552829812a1600002c04",
+          "node": "/global_ekf",
+          "topic_type": "geometry_msgs/msg/PoseWithCovarianceStamped"
+        }
+      ]
+    },
+    "/gnss/fix": {
+      "message_count": 23,
+      "messages_by_gid": {
+        "635d0daff4a1f95b0000000000000000": 23
+      },
+      "publishers": [
+        {
+          "gid": "01107b5ecf8ec377b8a0bcec00001b03",
+          "node": "/formal_legacy_topic_adapter",
+          "topic_type": "sensor_msgs/msg/NavSatFix"
+        }
+      ],
+      "subscriptions": [
+        {
+          "gid": "01107cdbc7a427105674e86100002b04",
+          "node": "/navsat_transform",
+          "topic_type": "sensor_msgs/msg/NavSatFix"
+        },
+        {
+          "gid": "0110b6889ec2ce253f6a9bd900002d04",
+          "node": "/rosbag2_recorder",
+          "topic_type": "sensor_msgs/msg/NavSatFix"
+        }
+      ]
+    },
+    "/imu/data": {
+      "message_count": 464,
+      "messages_by_gid": {
+        "4f0efe85e85003850000000000000000": 464
+      },
+      "publishers": [
+        {
+          "gid": "01107b5ecf8ec377b8a0bcec00001903",
+          "node": "/formal_legacy_topic_adapter",
+          "topic_type": "sensor_msgs/msg/Imu"
+        }
+      ],
+      "subscriptions": [
+        {
+          "gid": "011037961c267691b5c65d9900002b04",
+          "node": "/local_ekf",
+          "topic_type": "sensor_msgs/msg/Imu"
+        },
+        {
+          "gid": "01107cdbc7a427105674e86100002c04",
+          "node": "/navsat_transform",
+          "topic_type": "sensor_msgs/msg/Imu"
+        },
+        {
+          "gid": "0110b6889ec2ce253f6a9bd900002c04",
+          "node": "/rosbag2_recorder",
+          "topic_type": "sensor_msgs/msg/Imu"
+        }
+      ]
+    },
+    "/localization/fused_odom": {
+      "message_count": 116,
+      "messages_by_gid": {
+        "034c434f747167230000000000000000": 116
+      },
+      "publishers": [
+        {
+          "gid": "0110d140967c552829812a1600002d03",
+          "node": "/global_ekf",
+          "topic_type": "nav_msgs/msg/Odometry"
+        }
+      ],
+      "subscriptions": [
+        {
+          "gid": "01107cdbc7a427105674e86100002a04",
+          "node": "/navsat_transform",
+          "topic_type": "nav_msgs/msg/Odometry"
+        },
+        {
+          "gid": "0110b6889ec2ce253f6a9bd900003504",
+          "node": "/rosbag2_recorder",
+          "topic_type": "nav_msgs/msg/Odometry"
+        }
+      ]
+    },
+    "/localization/raw_map_odom": {
+      "message_count": 0,
+      "messages_by_gid": {},
+      "publishers": [
+        {
+          "gid": "0110d140967c552829812a1600002003",
+          "node": "/global_ekf",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        }
+      ],
+      "subscriptions": [
+        {
+          "gid": "0110b6889ec2ce253f6a9bd900003a04",
+          "node": "/rosbag2_recorder",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "0110c7b386634046e84fa61800001904",
+          "node": "/map_odom_stabilizer",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "0110d140967c552829812a1600001d04",
+          "node": "/transform_listener_impl_500000128a10",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        }
+      ]
+    },
+    "/odom": {
+      "message_count": 116,
+      "messages_by_gid": {
+        "3d367966dd75b98c0000000000000000": 116
+      },
+      "publishers": [
+        {
+          "gid": "011037961c267691b5c65d9900002c03",
+          "node": "/local_ekf",
+          "topic_type": "nav_msgs/msg/Odometry"
+        }
+      ],
+      "subscriptions": [
+        {
+          "gid": "01101331e539fb26dd6e291200006f04",
+          "node": "/controller_server",
+          "topic_type": "nav_msgs/msg/Odometry"
+        },
+        {
+          "gid": "01103903d1bafa46c8e7fdb900001c04",
+          "node": "/charge_interface_manager",
+          "topic_type": "nav_msgs/msg/Odometry"
+        },
+        {
+          "gid": "01108ddfda3564bf435f2c0600002004",
+          "node": "/formal_physical_grasp_executor",
+          "topic_type": "nav_msgs/msg/Odometry"
+        },
+        {
+          "gid": "0110b6889ec2ce253f6a9bd900003804",
+          "node": "/rosbag2_recorder",
+          "topic_type": "nav_msgs/msg/Odometry"
+        },
+        {
+          "gid": "0110d140967c552829812a1600002a04",
+          "node": "/global_ekf",
+          "topic_type": "nav_msgs/msg/Odometry"
+        },
+        {
+          "gid": "0110e9c4e9853c9dd6bfea1b00002504",
+          "node": "/bt_navigator",
+          "topic_type": "nav_msgs/msg/Odometry"
+        }
+      ]
+    },
+    "/odom/unfiltered": {
+      "message_count": 111,
+      "messages_by_gid": {
+        "e37ad54b3e3379f60000000000000000": 111
+      },
+      "publishers": [
+        {
+          "gid": "01106ca2f7ba3d50d9742dc500001b03",
+          "node": "/a300_drivetrain_bridge",
+          "topic_type": "nav_msgs/msg/Odometry"
+        }
+      ],
+      "subscriptions": [
+        {
+          "gid": "011037961c267691b5c65d9900002a04",
+          "node": "/local_ekf",
+          "topic_type": "nav_msgs/msg/Odometry"
+        },
+        {
+          "gid": "0110b6889ec2ce253f6a9bd900003c04",
+          "node": "/rosbag2_recorder",
+          "topic_type": "nav_msgs/msg/Odometry"
+        }
+      ]
+    },
+    "/odometry/gps": {
+      "message_count": 23,
+      "messages_by_gid": {
+        "d3d6b3fe38f49d540000000000000000": 23
+      },
+      "publishers": [
+        {
+          "gid": "01107cdbc7a427105674e86100002d03",
+          "node": "/navsat_transform",
+          "topic_type": "nav_msgs/msg/Odometry"
+        }
+      ],
+      "subscriptions": [
+        {
+          "gid": "0110b6889ec2ce253f6a9bd900003d04",
+          "node": "/rosbag2_recorder",
+          "topic_type": "nav_msgs/msg/Odometry"
+        },
+        {
+          "gid": "0110d140967c552829812a1600002b04",
+          "node": "/global_ekf",
+          "topic_type": "nav_msgs/msg/Odometry"
+        }
+      ]
+    },
+    "/tf": {
+      "message_count": 160,
+      "messages_by_gid": {
+        "ae4d2c0a2f113e780000000000000000": 44,
+        "ca05b1c4b29048430000000000000000": 116
+      },
+      "publishers": [
+        {
+          "gid": "011037961c267691b5c65d9900002003",
+          "node": "/local_ekf",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "011047c836d98fdfa5d5d13a00002503",
+          "node": "/amcl",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "01104ce4168fa9ec45251bcb00001803",
+          "node": "/robot_state_publisher",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "0110c7b386634046e84fa61800001703",
+          "node": "/map_odom_stabilizer",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        }
+      ],
+      "subscriptions": [
+        {
+          "gid": "01100510fa6e242915c4ce1500002304",
+          "node": "/collision_monitor",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "01101331e539fb26dd6e291200004504",
+          "node": "/transform_listener_impl_5000001f95f0",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "01101c8aee075057579395c400001f04",
+          "node": "/moveit_planning_scene_bootstrap",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "011037961c267691b5c65d9900001d04",
+          "node": "/transform_listener_impl_50000012e8c0",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "011041bf1919672db007e78100002304",
+          "node": "/route_server",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "011047c836d98fdfa5d5d13a00002304",
+          "node": "/amcl",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "0110509b717df664067858a700002304",
+          "node": "/smoother_server",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "01106ca9c7a78600912359f800004504",
+          "node": "/transform_listener_impl_50000012ee50",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "01107cdbc7a427105674e86100001e04",
+          "node": "/transform_listener_impl_500000124790",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "01108ddfda3564bf435f2c0600004e04",
+          "node": "/formal_physical_grasp_executor",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "011091fc2c950495f95c637900005304",
+          "node": "/transform_listener_impl_5000002ba730",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "011091fc2c950495f95c637900005604",
+          "node": "/move_group_private_87960934119184",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "0110b6889ec2ce253f6a9bd900003204",
+          "node": "/rosbag2_recorder",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "0110cca9aa5b69c92485ecf600002304",
+          "node": "/behavior_server",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "0110e9c4e9853c9dd6bfea1b00002304",
+          "node": "/bt_navigator",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        }
+      ]
+    },
+    "/tf_static": {
+      "message_count": 1,
+      "messages_by_gid": {
+        "762feac7b6bab0150000000000000000": 1
+      },
+      "publishers": [
+        {
+          "gid": "01104ce4168fa9ec45251bcb00001903",
+          "node": "/robot_state_publisher",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "01107cdbc7a427105674e86100001803",
+          "node": "/navsat_transform",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        }
+      ],
+      "subscriptions": [
+        {
+          "gid": "01100510fa6e242915c4ce1500002404",
+          "node": "/collision_monitor",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "01101331e539fb26dd6e291200004604",
+          "node": "/transform_listener_impl_5000001f95f0",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "01101c8aee075057579395c400002004",
+          "node": "/moveit_planning_scene_bootstrap",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "011037961c267691b5c65d9900001e04",
+          "node": "/transform_listener_impl_50000012e8c0",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "011041bf1919672db007e78100002404",
+          "node": "/route_server",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "011047c836d98fdfa5d5d13a00002404",
+          "node": "/amcl",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "0110509b717df664067858a700002404",
+          "node": "/smoother_server",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "01106ca9c7a78600912359f800004604",
+          "node": "/transform_listener_impl_50000012ee50",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "01107cdbc7a427105674e86100001f04",
+          "node": "/transform_listener_impl_500000124790",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "01108ddfda3564bf435f2c0600004f04",
+          "node": "/formal_physical_grasp_executor",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "011091fc2c950495f95c637900005404",
+          "node": "/transform_listener_impl_5000002ba730",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "011091fc2c950495f95c637900005704",
+          "node": "/move_group_private_87960934119184",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "0110b6889ec2ce253f6a9bd900002904",
+          "node": "/rosbag2_recorder",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "0110cca9aa5b69c92485ecf600002404",
+          "node": "/behavior_server",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "0110d140967c552829812a1600001e04",
+          "node": "/transform_listener_impl_500000128a10",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        },
+        {
+          "gid": "0110e9c4e9853c9dd6bfea1b00002404",
+          "node": "/bt_navigator",
+          "topic_type": "tf2_msgs/msg/TFMessage"
+        }
+      ]
+    }
+  }
+}

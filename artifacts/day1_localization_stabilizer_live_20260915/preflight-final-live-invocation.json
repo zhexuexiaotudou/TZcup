@@ -1,0 +1,11 @@
+{
+  "admitted": true,
+  "formal_gazebo_lock_available": true,
+  "gazebo_or_launch_processes": [],
+  "host": "autodl-container-ca410red1k-e4e33c0c",
+  "mode": "FINAL_GUEST_PATH_LIVE_RUN",
+  "recorded_unix_s": 1789405639.8841984,
+  "schema_version": 1,
+  "task_partition": "tzcup_localization_stabilizer_20260915_01",
+  "task_partition_residue": []
+}

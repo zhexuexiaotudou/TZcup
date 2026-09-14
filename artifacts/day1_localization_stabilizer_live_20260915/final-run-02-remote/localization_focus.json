@@ -1,0 +1,42 @@
+{
+  "status": "FAIL",
+  "failures": [
+    "ModuleNotFoundError: No module named 'mcap'"
+  ],
+  "revision": "f04db3d21b91d5b72e85371e57c0b64a8ed46272",
+  "run_id": "run-02",
+  "files": {
+    "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/run-02/bag/bag_0.mcap": "2c067bb15fb4ccf0dd2bc9345abd55d6017ad1a8881ce5b1234692352e64fc23",
+    "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/run-02/tf_authority.json": "44cf83ad44e7b6ba85ea3dff97b45dd88037053d7cd53518adf3c516bb5380ad",
+    "/workspace/tzcup-competition-sim-only-20260912/evidence/motion-cleaning-continuous-fixture-01/episode/public/episode_manifest.json": "6df919e8835807ca6a7c4e335fedc66f6e66503887d66b85622ccf6e8ac3fc58",
+    "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/source/starter_ws/src/sanitation_localization/config/formal_fusion.yaml": "234810b031f6fc467d9cac000d0a02d139ebb7865c46d2306e48c9ae7d82f06e",
+    "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/source/starter_ws/src/sanitation_localization/launch/formal_localization_fusion.launch.py": "cd501a9a55737264b3cc98f13d89e7bf827092b5e106c1864986f8a359e8e1f4",
+    "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/source/scripts/run_day1_localization_stabilizer_live.sh": "f9d0f1213cdf546e2c95e39e8f3c520843ab5b231150028ab998906f2a773384",
+    "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/source/scripts/capture_competition_localization_parameters.py": "843b4fc1bc4623f62581af82c293c6cd3946c857a9d556f626449b438894f1e0",
+    "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/source/starter_ws/src/sanitation_formal_campus_integration/launch/formal_campus_map_lifecycle.launch.py": "acbec11dd241544fce847398b0b9e4aefd76f10ff736b1e3827a883b6d0748de",
+    "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/run-02/effective_parameters.json": "ee9845b56f7392ae4a52a30c2545b4e802cf83b42207faaa89209a689fc9896d"
+  },
+  "authority_contract": {
+    "owner": "/map_odom_stabilizer",
+    "checks": {
+      "local_ekf_publishes_odom_tf": true,
+      "global_ekf_publishes_map_tf": true,
+      "navsat_publishes_no_tf": true,
+      "probe_amcl_tf_default_false": true,
+      "probe_amcl_tf_is_explicit": true,
+      "lifecycle_amcl_tf_false": true,
+      "effective_parameters_expected": true,
+      "stabilizer_harness_contract": true,
+      "stabilizer_runtime_parameters": true,
+      "stabilizer_launch_contract": true
+    },
+    "source_files": [
+      "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/source/starter_ws/src/sanitation_localization/config/formal_fusion.yaml",
+      "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/source/starter_ws/src/sanitation_localization/launch/formal_localization_fusion.launch.py",
+      "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/source/scripts/run_day1_localization_stabilizer_live.sh",
+      "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/source/scripts/capture_competition_localization_parameters.py",
+      "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/source/starter_ws/src/sanitation_formal_campus_integration/launch/formal_campus_map_lifecycle.launch.py",
+      "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/run-02/effective_parameters.json"
+    ]
+  }
+}

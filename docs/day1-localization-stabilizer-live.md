@@ -1,6 +1,6 @@
 # 定位稳定器实时接线与有界重跑
 
-状态：`FAILED_PRECONDITION_NESTED_STABILIZER_INHERITANCE_FIX_IMPLEMENTED`
+状态：`STOPPED_AFTER_FINAL_LIVE_FAILURE`
 
 本版本没有启动 Gazebo。当前唯一 Gazebo 先由 coverage run-12 使用，之后由
 Copernicus 执行 avoidance。下面的 harness 通过正式 `flock` 获取单 Gazebo
@@ -25,6 +25,24 @@ map_odom_stabilizer requires start_global_fusion:=true
 `map_odom_stabilizer:=false`，因此继承了 campus launch 的
 `map_odom_stabilizer:=true`。该缺陷已在本分支修复并添加回归测试；由于
 第二轮调用已经消耗，未再次启动 live，现有没有新的 live RMSE/P95/max。
+
+经用户额外授权，`f04db3d` 补丁被最小应用到远端 source，只重建
+`sanitation_vehicle_description`，并通过 offline launch signature。
+最终 `run-02` 启动了 Gazebo、Nav2、AMCL 和 stabilizer，但未产生 live pass：
+
+- Nav2 lifecycle 尚未 active 时 driver 发出首个 goal，`bt_navigator` 返回
+  `Action server is inactive. Rejecting the goal.`；
+- driver route 结果为 `passed=false`、`nav_results=[]`；
+- stabilizer 状态停在 `WAITING`，`accepted_updates=0`、
+  `rejected_updates=0`、`published_tf_messages=0`，`/localization/raw_map_odom`
+  在 bag 中为 `0` 条；
+- focus scorer 因所选 Python 环境缺少 `mcap` 模块退出，未计算 RMSE、P95
+  或 max；
+- harness 在 focus scorer 失败后退出，`driver.rc` 与
+  `live_candidate_receipt.json` 未写出；
+- Gazebo、ROS runtime 已释放，正式锁可用，task partition 无残留。
+
+该路线到此停止，不再重试。
 
 ## 实时运行链路
 
@@ -128,6 +146,23 @@ overlay 路径都必须使用 guest `/workspace/...` 路径。host
 - 重跑策略：`NO_RETRY_AFTER_SECOND_AND_FINAL_HARNESS_INVOCATION`
 
 本轮没有获得新的 live RMSE/P95/max，也没有把此前离线候选升级为 live PASS。
+
+## 最终 live 调用记录
+
+- run：`run-02`
+- `outer_invocation_rc`: `2`
+- `status`: `FAIL_LIVE_GOAL_REJECTED_AND_FOCUS_SCORER_MCAP_DEPENDENCY_MISSING`
+- Gazebo 已启动并按 cleanup 释放
+- `effective_parameters.json`: 已生成，`all_expected=true`
+- `tf_authority.json`: 已生成，作为 sole TF owner 证据保留
+- `bag/bag_0.mcap`: 已生成，3.8 MiB、4459 messages
+- `bag_info.txt`: 已生成
+- `localization_focus.json`: `FAIL`，原因是缺少 Python `mcap`
+- `driver.rc`: 未生成
+- `live_candidate_receipt.json`: 未生成
+- `resource_release.json`: `RELEASED`
+- 最终回执：
+  `final_live_failure_receipt.json`
 
 ## 验收门
 
