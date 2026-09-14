@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-14
 
-**Latest attempt revision:** `be499a9174dd013a756e6bafd382da40772ccb55`
+**Latest attempt revision:** `9b8dc41b3de1cc9c069d69076d4847babc37da20`
 
 **Status:** `BLOCKED`
 
@@ -149,10 +149,9 @@ so the coverage probe never started.
 
 The post-run correction restores a single bounded lift request after the
 controller subscription exists and preserves permit-ever evidence in the final
-bridge report. That correction has not been executed because the one authorized
-corrected run is spent. Coverage report, path, dirt-clearance delta, and
-efficiency remain `NOT_MEASURED`; final cleaning state is zero cells cleared,
-brush disabled, and dirt system disabled.
+bridge report. It was executed in Run 04. Coverage report, path,
+dirt-clearance delta, and efficiency remain `NOT_MEASURED`; final cleaning
+state is zero cells cleared, brush disabled, and dirt system disabled.
 
 ```powershell
 & 'F:\Project\TZcup\.workspace\tools\Invoke-TZcupRemoteLatest.ps1' -Command @'
@@ -168,3 +167,46 @@ The structured receipt is
 `artifacts/day1_bounded_coverage_20260914/failure_receipt_run03.json`, and the
 archive SHA-256 is
 `9fd4e17c313352f17bbe0d4394861df238145470a01b46c6e6ecf6b92849140e`.
+
+## Corrected run 04
+
+Commit `9b8dc41b3de1cc9c069d69076d4847babc37da20` was uploaded unchanged and
+verified on the rented card. Run 04 used:
+
+* run root: `day1-bounded-coverage-20260914-04`
+* ROS domain: `91`
+* Gazebo partition: `tzcup_day1_bounded_coverage_20260914_04`
+* XDG runtime: `/tmp/tzcup_day1_bounded_coverage_20260914_04_xdg`
+
+The one-shot correction worked exactly as intended: the bridge received 506
+GroundDirt status samples, observed the permit true at simulated second
+`3.059`, and issued exactly one lift request at simulated second `3.062`.
+
+The run then exposed a distinct, remaining blocker without changing the
+protected 180-second readiness criterion. In the available window only
+`24.04 s` of simulated time elapsed after the lift request. The measured lift
+reached `0.067097409 m`, below the required `0.095 m`, and terminal clearances
+were `0.032902588 / 0.032902586 / 0.032902587 m`, above the `0.015 m` contact
+band. No brush velocity or ready sample was observed and the coverage probe
+never started.
+
+Resolving this would require changing the readiness duration or actuator speed
+semantics, both outside this task. The run was therefore retained and stopped
+without another Gazebo launch. Coverage report, path, dirt, brush, and
+final-state metrics remain `NOT_MEASURED`; cleaned cells and area delta are
+zero and both brush and dirt commands were disabled on exit.
+
+```powershell
+& 'F:\Project\TZcup\.workspace\tools\Invoke-TZcupRemoteLatest.ps1' -Command @'
+TZCUP_DAY1_COVERAGE_RUN_ID=day1-bounded-coverage-20260914-04 \
+TZCUP_DAY1_COVERAGE_DOMAIN_ID=91 \
+TZCUP_DAY1_COVERAGE_PARTITION=tzcup_day1_bounded_coverage_20260914_04 \
+TZCUP_DAY1_COVERAGE_XDG_RUNTIME=/tmp/tzcup_day1_bounded_coverage_20260914_04_xdg \
+bash /root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-bounded-coverage-20260914-04/ops/run_day1_bounded_coverage_remote_dispatch.sh
+'@
+```
+
+The structured receipt is
+`artifacts/day1_bounded_coverage_20260914/failure_receipt_run04.json`, and the
+archive SHA-256 is
+`12f540d9a39c13edb1187cebba1bdccbcc058c7def03bf5ea42280b1b68ab66c`.
