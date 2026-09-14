@@ -239,7 +239,8 @@
       "status": "PARTIAL",
       "next_action": "show the same-run causal filter comparison, safety gate and task DSL without claiming field generalization",
       "evidence_paths": [
-        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-localization-50mm-recovery/artifacts/day1_localization_50mm_recovery_20260914/recovery_receipt.json"
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-localization-50mm-recovery/artifacts/day1_localization_50mm_recovery_20260914/recovery_receipt.json",
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-video-report-sync/submission-package/video/evidence/localization-causal-filter-60s/localization_tracking_success_1080p.mp4"
       ],
       "not_claimable": ["complete mission", "external public validation"]
     },
