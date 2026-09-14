@@ -1,0 +1,61 @@
+{
+  "claim_boundary": "This file predeclares the deterministic obstacle route and trigger before the live trial. It is not evidence that the route executed, that avoidance succeeded, or that the >=95% rate was measured.",
+  "declared_epoch_ns": 1789352162742887373,
+  "input_sha256": {
+    "base_schedule": "33287797152db0704635d10af734e03d841148aac2bfbd5a61b5c80dbedec6fa",
+    "episode_manifest": "6df919e8835807ca6a7c4e335fedc66f6e66503887d66b85622ccf6e8ac3fc58",
+    "public_world": "67f2eb0cb3a26722c9358f16f5433a4b77613521e56680c7589bd00256edf2fd"
+  },
+  "kind": "tzcup_predeclared_dynamic_avoidance_obstacle_route",
+  "protocol_id": "tzcup-day1-dynamic-avoidance-single-run-v1",
+  "protocol_sha256": "8f00d2a6fc5a121a1fa07bef783b7c7eef5ae5373db028a9685a6be655562180",
+  "schedule_seed": 2026091401,
+  "schedule_sha256": "ff7e924c32241a8a69e6710d3134b9cf6c1fd681f1ad1cb18004b8b6fc136829",
+  "schema_version": 1,
+  "selected_obstacle": {
+    "object_id": "walker_eb2f451c21ba",
+    "radius_m": 0.25,
+    "route_map": [
+      [
+        0.0,
+        18.150000000000006,
+        3.906812
+      ],
+      [
+        12.8316,
+        18.150000000000006,
+        -3.906812
+      ],
+      [
+        25.6631,
+        18.150000000000006,
+        3.906812
+      ]
+    ],
+    "route_source_world": [
+      [
+        0.0,
+        -79.85,
+        3.906812
+      ],
+      [
+        12.8316,
+        -79.85,
+        -3.906812
+      ],
+      [
+        25.6631,
+        -79.85,
+        3.906812
+      ]
+    ],
+    "speed_mps": 0.6089,
+    "trigger_time_from_schedule_start_s": 6.4158,
+    "trigger_type": "first_crossing_of_mission_centerline"
+  },
+  "source_fixed_start_pose": [
+    -98.0,
+    0.0,
+    0.0
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "attempt_id": "day1-dynamic-avoidance-single-run-20260914-01",
+  "requested_commit": "31f74a0883e87939356a7ebad34274f8716c532d",
+  "status": "BLOCKED_BEFORE_GAZEBO",
+  "single_run": {
+    "started": true,
+    "numerator": 0,
+    "denominator": 1,
+    "observed_fraction": 0.0,
+    "post_launch_exclusions": 0
+  },
+  "official_metric": {
+    "metric_id": "dynamic_avoidance_success_rate",
+    "threshold": 0.95,
+    "measured_value": null,
+    "status": "NOT_MEASURED"
+  },
+  "blocker": "FORMAL_ROS2_EXECUTABLE was not present in the trial environment; the fresh runtime-closure verifier aborted before Gazebo launch.",
+  "host": {
+    "name": "autodl-container-ca410red1k-e4e33c0c",
+    "gpu": "NVIDIA GeForce RTX 3080 Ti",
+    "runtime_ws": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f",
+    "ros_domain_id": 89,
+    "gazebo_partition": "tzcup_dynamic_avoidance_single_run_20260914_01",
+    "xdg_runtime_dir": "/tmp/tzcup_dynamic_avoidance_single_run_20260914_01_xdg",
+    "run_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/run-01"
+  },
+  "resource_utilization": {
+    "cpu_busy_percent_sample": 27.095492363094497,
+    "gpu_utilization_percent": 0,
+    "gpu_memory_used_mib": 1,
+    "gpu_memory_total_mib": 12288,
+    "gpu_compute_processes": []
+  },
+  "resource_release": {
+    "formal_gazebo_lock_available": true,
+    "runtime_processes_remaining": [],
+    "resource_released": true
+  },
+  "claim_boundary": "One started trial entered the fixed denominator on an infrastructure failure. It did not measure and cannot establish the official >=95% dynamic-avoidance rate."
+}

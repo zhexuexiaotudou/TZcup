@@ -1,0 +1,295 @@
+{
+  "current_source_build_completed": true,
+  "repository_root": "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/source",
+  "required_plugin_libraries": {
+    "libA300DrivetrainPlantSystem.so": true,
+    "libCleaningActuatorMotorSystem.so": true,
+    "libDryBinMonitorSystem.so": true,
+    "libDynamicPayloadSystem.so": true,
+    "libFormalAuxiliaryVisualSystem.so": true,
+    "libGripperContactGateSystem.so": true,
+    "libGripperMimicEffortSystem.so": true,
+    "libGroundDirtCleaningSystem.so": true,
+    "libSanitationMissionControl.so": true,
+    "libServiceDoorSystem.so": true,
+    "libSqueegeeComplianceSystem.so": true,
+    "libWaterRecoverySystem.so": true
+  },
+  "runtime_install_root": "/workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install",
+  "schema_version": 1,
+  "source_install_bindings": [
+    {
+      "installed_relative": "share/sanitation_formal_campus_integration/launch/formal_campus_map_lifecycle.launch.py",
+      "installed_sha256": "c33efe4305a76608da63514702a92e36b7c0d6ad7a647db877301314cf67d04c",
+      "matches": true,
+      "source": "starter_ws/src/sanitation_formal_campus_integration/launch/formal_campus_map_lifecycle.launch.py",
+      "source_sha256": "c33efe4305a76608da63514702a92e36b7c0d6ad7a647db877301314cf67d04c"
+    },
+    {
+      "installed_relative": "lib/python3.12/site-packages/sanitation_formal_campus_integration/map_lifecycle_core.py",
+      "installed_sha256": "7586fbf19e134f11509842b7ed9cc32c8051c953055a92a8fc3600690d710e21",
+      "matches": true,
+      "source": "starter_ws/src/sanitation_formal_campus_integration/sanitation_formal_campus_integration/map_lifecycle_core.py",
+      "source_sha256": "7586fbf19e134f11509842b7ed9cc32c8051c953055a92a8fc3600690d710e21"
+    },
+    {
+      "installed_relative": "share/sanitation_formal_campus_integration/config/formal_utm30lx_self_filter.yaml",
+      "installed_sha256": "a849a41e066f321a837d51a21de59868210854dcfbccb281c53e0ce36a10d9ca",
+      "matches": true,
+      "source": "starter_ws/src/sanitation_formal_campus_integration/config/formal_utm30lx_self_filter.yaml",
+      "source_sha256": "a849a41e066f321a837d51a21de59868210854dcfbccb281c53e0ce36a10d9ca"
+    },
+    {
+      "installed_relative": "lib/python3.12/site-packages/sanitation_formal_campus_integration/formal_scan_self_filter.py",
+      "installed_sha256": "ee9518d97766cdf352c3edb6df082a22a65278b644d539d8a0997da68d3c0fe0",
+      "matches": true,
+      "source": "starter_ws/src/sanitation_formal_campus_integration/sanitation_formal_campus_integration/formal_scan_self_filter.py",
+      "source_sha256": "ee9518d97766cdf352c3edb6df082a22a65278b644d539d8a0997da68d3c0fe0"
+    },
+    {
+      "installed_relative": "lib/python3.12/site-packages/sanitation_formal_campus_integration/scan_self_filter_core.py",
+      "installed_sha256": "bbc00c0b84a0e25c9d07b1d17995fe158e517ed73a9cfd0986b714e707fc68e2",
+      "matches": true,
+      "source": "starter_ws/src/sanitation_formal_campus_integration/sanitation_formal_campus_integration/scan_self_filter_core.py",
+      "source_sha256": "bbc00c0b84a0e25c9d07b1d17995fe158e517ed73a9cfd0986b714e707fc68e2"
+    },
+    {
+      "installed_relative": "share/sanitation_navigation/config/nav2.yaml",
+      "installed_sha256": "d06110ade22952cd840bb40c6774097aaef075e7186ee13e962efb632697cc30",
+      "matches": true,
+      "source": "starter_ws/src/sanitation_navigation/config/nav2.yaml",
+      "source_sha256": "d06110ade22952cd840bb40c6774097aaef075e7186ee13e962efb632697cc30"
+    },
+    {
+      "installed_relative": "share/sanitation_navigation/launch/navigation.launch.py",
+      "installed_sha256": "fb08bec6d405f5b7c66b39da85f42326cd29fad2c082839a81c968a2870df113",
+      "matches": true,
+      "source": "starter_ws/src/sanitation_navigation/launch/navigation.launch.py",
+      "source_sha256": "fb08bec6d405f5b7c66b39da85f42326cd29fad2c082839a81c968a2870df113"
+    },
+    {
+      "installed_relative": "share/sanitation_formal_campus_integration/launch/formal_campus.launch.py",
+      "installed_sha256": "9cce4d975f8b28bfb4c60a8084aac129cf9238c21964db40ed987b503f50db2c",
+      "matches": true,
+      "source": "starter_ws/src/sanitation_formal_campus_integration/launch/formal_campus.launch.py",
+      "source_sha256": "9cce4d975f8b28bfb4c60a8084aac129cf9238c21964db40ed987b503f50db2c"
+    },
+    {
+      "installed_relative": "lib/python3.12/site-packages/sanitation_formal_campus_integration/topic_adapter.py",
+      "installed_sha256": "64330820ac062535fd854bb71cf11aa0ff488ecd50a060f482fa500c9cd0b240",
+      "matches": true,
+      "source": "starter_ws/src/sanitation_formal_campus_integration/sanitation_formal_campus_integration/topic_adapter.py",
+      "source_sha256": "64330820ac062535fd854bb71cf11aa0ff488ecd50a060f482fa500c9cd0b240"
+    },
+    {
+      "installed_relative": "share/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
+      "installed_sha256": "96deee3d4c0f3a6d860057887e72debd0b707318100f6d7da18158e2f6b3da3e",
+      "matches": true,
+      "source": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
+      "source_sha256": "96deee3d4c0f3a6d860057887e72debd0b707318100f6d7da18158e2f6b3da3e"
+    },
+    {
+      "installed_relative": "share/sanitation_vehicle_description/config/formal_vehicle_controllers.yaml",
+      "installed_sha256": "56e1cfb4fde33c11f4966a783442d805698f2dc966e98cf3e39c4f16bf8c0f8a",
+      "matches": true,
+      "source": "starter_ws/src/sanitation_vehicle_description/config/formal_vehicle_controllers.yaml",
+      "source_sha256": "56e1cfb4fde33c11f4966a783442d805698f2dc966e98cf3e39c4f16bf8c0f8a"
+    },
+    {
+      "installed_relative": "share/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro",
+      "installed_sha256": "2454fdbd962062eee9574654e081c467b4651db5a2c8fc03393f2aa78a2c5016",
+      "matches": true,
+      "source": "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro",
+      "source_sha256": "2454fdbd962062eee9574654e081c467b4651db5a2c8fc03393f2aa78a2c5016"
+    },
+    {
+      "installed_relative": "share/sanitation_vehicle_description/urdf/high_fidelity/control_interfaces.xacro",
+      "installed_sha256": "5c8b4309530c2486d074591163dc8e2b7d48cbff1081bf0adc2f0882fdc57ee7",
+      "matches": true,
+      "source": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/control_interfaces.xacro",
+      "source_sha256": "5c8b4309530c2486d074591163dc8e2b7d48cbff1081bf0adc2f0882fdc57ee7"
+    },
+    {
+      "installed_relative": "share/sanitation_vehicle_description/urdf/high_fidelity/manipulator_stack.xacro",
+      "installed_sha256": "6aae26411da455ed5b187c81cf7d06242c9c39036d97b349b05703d212691fd8",
+      "matches": true,
+      "source": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/manipulator_stack.xacro",
+      "source_sha256": "6aae26411da455ed5b187c81cf7d06242c9c39036d97b349b05703d212691fd8"
+    },
+    {
+      "installed_relative": "share/sanitation_localization/launch/formal_localization_fusion.launch.py",
+      "installed_sha256": "a259ec90366c7b873134e68ae2931ef0da5bc31aba0ae21f9ea184d774665d80",
+      "matches": true,
+      "source": "starter_ws/src/sanitation_localization/launch/formal_localization_fusion.launch.py",
+      "source_sha256": "a259ec90366c7b873134e68ae2931ef0da5bc31aba0ae21f9ea184d774665d80"
+    },
+    {
+      "installed_relative": "share/sanitation_localization/config/formal_fusion.yaml",
+      "installed_sha256": "520ece15f328ae7251a3b9e7c42610253fcc474dc6ee8045e3b956884fe7979b",
+      "matches": true,
+      "source": "starter_ws/src/sanitation_localization/config/formal_fusion.yaml",
+      "source_sha256": "520ece15f328ae7251a3b9e7c42610253fcc474dc6ee8045e3b956884fe7979b"
+    },
+    {
+      "installed_relative": "lib/python3.12/site-packages/sanitation_safety/whole_vehicle_safety_manager.py",
+      "installed_sha256": "26366eb57f3e50e5b5e5a22399499b4e7cb4499efd3e6a1fde95d60c8821595b",
+      "matches": true,
+      "source": "starter_ws/src/sanitation_safety/sanitation_safety/whole_vehicle_safety_manager.py",
+      "source_sha256": "26366eb57f3e50e5b5e5a22399499b4e7cb4499efd3e6a1fde95d60c8821595b"
+    },
+    {
+      "installed_relative": "lib/python3.12/site-packages/sanitation_safety/whole_vehicle_safety_core.py",
+      "installed_sha256": "2a239ad0548852482fbdd977be901f87f9dffe1c3aa3dbfda4b3a19298d57bd2",
+      "matches": true,
+      "source": "starter_ws/src/sanitation_safety/sanitation_safety/whole_vehicle_safety_core.py",
+      "source_sha256": "2a239ad0548852482fbdd977be901f87f9dffe1c3aa3dbfda4b3a19298d57bd2"
+    },
+    {
+      "installed_relative": "lib/python3.12/site-packages/sanitation_safety/simulation_safety_inputs.py",
+      "installed_sha256": "fb9727d378102a7bf538e89e32136e28c9b390bd1ca90ccacebfd161d8acfd11",
+      "matches": true,
+      "source": "starter_ws/src/sanitation_safety/sanitation_safety/simulation_safety_inputs.py",
+      "source_sha256": "fb9727d378102a7bf538e89e32136e28c9b390bd1ca90ccacebfd161d8acfd11"
+    },
+    {
+      "installed_relative": "lib/python3.12/site-packages/sanitation_safety/service_drain_core.py",
+      "installed_sha256": "ae76cd89bb8bc4ad8c56298eae30e43fb14410683b4074b49143f1a197c20cb2",
+      "matches": true,
+      "source": "starter_ws/src/sanitation_safety/sanitation_safety/service_drain_core.py",
+      "source_sha256": "ae76cd89bb8bc4ad8c56298eae30e43fb14410683b4074b49143f1a197c20cb2"
+    },
+    {
+      "installed_relative": "lib/python3.12/site-packages/sanitation_safety/service_drain_manager.py",
+      "installed_sha256": "aa227fcc119520ec807818a98ddef814dbe262eb2e05ed76e293b3341fb781c9",
+      "matches": true,
+      "source": "starter_ws/src/sanitation_safety/sanitation_safety/service_drain_manager.py",
+      "source_sha256": "aa227fcc119520ec807818a98ddef814dbe262eb2e05ed76e293b3341fb781c9"
+    },
+    {
+      "installed_relative": "lib/python3.12/site-packages/sanitation_power_system/a300_bms_core.py",
+      "installed_sha256": "a0304b9bd2c66175f9f24eb3ff3d6a9f6a66c4269f903426108f33b7d6d6c550",
+      "matches": true,
+      "source": "starter_ws/src/sanitation_power_system/sanitation_power_system/a300_bms_core.py",
+      "source_sha256": "a0304b9bd2c66175f9f24eb3ff3d6a9f6a66c4269f903426108f33b7d6d6c550"
+    },
+    {
+      "installed_relative": "lib/python3.12/site-packages/sanitation_power_system/a300_bms_node.py",
+      "installed_sha256": "3fab8fd0a65a72093dbe126c0b251b024eab580481bc45bd52bd96315f7a4341",
+      "matches": true,
+      "source": "starter_ws/src/sanitation_power_system/sanitation_power_system/a300_bms_node.py",
+      "source_sha256": "3fab8fd0a65a72093dbe126c0b251b024eab580481bc45bd52bd96315f7a4341"
+    },
+    {
+      "installed_relative": "share/sanitation_power_system/config/a300_40ah_bms.yaml",
+      "installed_sha256": "37a4407665ad9d3208ea7ecaaaef92814090ed5bfdf19365dae225bed5ffd709",
+      "matches": true,
+      "source": "starter_ws/src/sanitation_power_system/config/a300_40ah_bms.yaml",
+      "source_sha256": "37a4407665ad9d3208ea7ecaaaef92814090ed5bfdf19365dae225bed5ffd709"
+    },
+    {
+      "installed_relative": "lib/python3.12/site-packages/sanitation_campus_scenario/pedestrian_driver.py",
+      "installed_sha256": "0497f65d23a6998c578bc2c7e73e84c16e72ca3dc7af6fa222458fa7c5373c78",
+      "matches": true,
+      "source": "starter_ws/src/sanitation_campus_scenario/sanitation_campus_scenario/pedestrian_driver.py",
+      "source_sha256": "0497f65d23a6998c578bc2c7e73e84c16e72ca3dc7af6fa222458fa7c5373c78"
+    }
+  ],
+  "source_only_runtime_files": [
+    {
+      "source": "starter_ws/src/sanitation_formal_campus_integration/setup.py",
+      "source_sha256": "e395d5cd68e9132e38cc2a804d019b3ccb999c70abc166f13ca8500b6579a193"
+    },
+    {
+      "source": "scripts/collect_formal_map_lifecycle_runtime.py",
+      "source_sha256": "e5e6767d86a1a414f367ec91d992dfc8bd80bfe7476967f26a058fe1cfc66284"
+    },
+    {
+      "source": "scripts/run_formal_dynamic_obstacle_avoidance.sh",
+      "source_sha256": "9994c9ab65cb13fddbe1bb3cdfe5d69483867a6e322e5bc588fa53148197a342"
+    },
+    {
+      "source": "scripts/collect_formal_dynamic_obstacle_avoidance_runtime.py",
+      "source_sha256": "563134a8cf0a1661ba975ac08abc1aeef8e4bcb56c6f7fee53d6af77e4b0f271"
+    },
+    {
+      "source": "scripts/collect_formal_dynamic_environment_runtime.py",
+      "source_sha256": "abb5d8210ce5c0c0fd6c69747b6a3b1a2b038b4ec36b21a3e6cb71c5e36b45f4"
+    },
+    {
+      "source": "scripts/validate_formal_dynamic_obstacle_avoidance.py",
+      "source_sha256": "e35096900408a81b5634a2a276ceefb8a3c34e4609e247f1028cae502dc47346"
+    },
+    {
+      "source": "scripts/generate_formal_dynamic_runtime_build_manifest.py",
+      "source_sha256": "dd2d2a30cc1f8215293a1fe837598450b9c53334cebf26fa8c3f9b978d495586"
+    },
+    {
+      "source": "scripts/prepare_formal_dynamic_obstacle_schedule.py",
+      "source_sha256": "2202b32bf2a638aef9d0ada128492676d66cfb0a8dfc32b7421864b1cc4926c5"
+    },
+    {
+      "source": "scripts/prepare_formal_dynamic_runtime_world.py",
+      "source_sha256": "19bc7b4fb42b54852ecf33dd86a5d55ffed10e61fbe4e28325d11545a48c9f65"
+    },
+    {
+      "source": "scripts/run_formal_runtime_isolation.sh",
+      "source_sha256": "82f8d63abc52fb3335b14fe0fe1f3cad76d73bc18afd11556f1d2752751dffdc"
+    },
+    {
+      "source": "scripts/formal_source_bound_preflight.sh",
+      "source_sha256": "2ed9c62e1dbbf3972a1c0fc7a186095f04952c69f1e2af3f9e1db6524be05265"
+    },
+    {
+      "source": "scripts/run_r065_public_modeling_session.sh",
+      "source_sha256": "68c16ca9e1f59411b2ea2f7c0470653d277b0706271c8bd6fc3736c6126a5d73"
+    },
+    {
+      "source": "scripts/publish_r065_public_modeling_receipt.py",
+      "source_sha256": "12ceeac01a09b3997928aa0a5e4b4849346d3a40590a09bd33388d39929b7e02"
+    },
+    {
+      "source": "scripts/run_r065_w1_dynamic_footprint_live.sh",
+      "source_sha256": "0f59ed19f5c338df1298614ab2e86e020bc9fe70eb384795aa8a349c348ac1d5"
+    },
+    {
+      "source": "scripts/run_r065_w2_moveit_ground_live.sh",
+      "source_sha256": "7be6b793b29218ed63de3aea6bbc83155d566d4b434a68313e74515a7ab75fe5"
+    },
+    {
+      "source": "scripts/collect_r065_w2_live_grasp_request.py",
+      "source_sha256": "14018a16a8ee5002343c4052d89c6dbe3951359b3ca2cd4fb5c237605ebc6f49"
+    },
+    {
+      "source": "starter_ws/src/sanitation_gazebo_control/include/sanitation_gazebo_control/A300DrivetrainPlantCore.hh",
+      "source_sha256": "8bf671275fcbcd5605701f2f29523c190bb6dda316198a8f5c1a204c2446f427"
+    },
+    {
+      "source": "starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainPlantCore.cc",
+      "source_sha256": "3ef08ecd54e6dd5ead4567af2f1b576c176034a2dd37785594f9c65c3137a148"
+    },
+    {
+      "source": "starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainPlantSystem.cc",
+      "source_sha256": "055abaa1072b3a84d4e727f39debde89f5f3088e454e30f253d3cb6fd290675c"
+    },
+    {
+      "source": "starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainCommandAdapter.cc",
+      "source_sha256": "36044192ad4399b6414a28a1e7988ed0a796f58071304e4e3c9f27facee828ca"
+    },
+    {
+      "source": "starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainNativeBridge.cc",
+      "source_sha256": "f88bac23674ddc1f6fb1292db8d0f9cd17d1b0b128f79504764bafdfc1ad4faf"
+    },
+    {
+      "source": "starter_ws/src/sanitation_gazebo_control/src/WaterRecoverySystem.cc",
+      "source_sha256": "c21e9b7579384cfde0d17f6af4b2fd5634cb2fb2e730e6f1165311effc598fe3"
+    },
+    {
+      "source": "starter_ws/src/sanitation_safety/setup.py",
+      "source_sha256": "84010b45bcc9a94c9ec4535f75102294ab6e0fc657456cd81dba4a8ee9a6ece2"
+    },
+    {
+      "source": "starter_ws/src/sanitation_power_system/setup.py",
+      "source_sha256": "a17685468318153d919fb6cb74f91836b47f1baa96477e11988a116b8a7f7471"
+    }
+  ]
+}

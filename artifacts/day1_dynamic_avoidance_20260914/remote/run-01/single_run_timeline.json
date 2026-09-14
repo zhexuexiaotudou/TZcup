@@ -1,0 +1,11 @@
+{
+  "evaluator_exit_code": null,
+  "repository_revision": "1a211400ca2dc4d6007e4fd838e1f2835cfd1dc8",
+  "run_end_epoch_ns": 1789352173448385900,
+  "run_id": "run-01",
+  "run_start_epoch_ns": 1789352163138429063,
+  "runner_exit_code": 1,
+  "schedule_seed": 2026091401,
+  "schema_version": 1,
+  "status": "RUNNER_FINISHED"
+}
