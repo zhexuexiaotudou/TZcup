@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "attempt_id": "day1-dynamic-avoidance-single-run-20260914-05",
+  "requested_commit": "b9e1c714fc7deb9848fd1f00359f58af0135260c",
+  "status": "BLOCKED_BEFORE_GAZEBO",
+  "single_run": {
+    "started": true,
+    "numerator": 0,
+    "denominator": 1,
+    "observed_fraction": 0.0,
+    "post_launch_exclusions": 0
+  },
+  "official_metric": {
+    "metric_id": "dynamic_avoidance_success_rate",
+    "threshold": 0.95,
+    "measured_value": null,
+    "status": "NOT_MEASURED"
+  },
+  "blocker": "another formal Gazebo acceptance owns /tmp/tzcup_formal_gazebo.lock; run the matrix serially",
+  "closure": {
+    "status": "FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED",
+    "passed": true,
+    "manifest_sha256": "e21c7546341d5bb20aba8e9cba4efe2ea37838a962129071c1d4f322aa281aec",
+    "closure_sha256": "6a53522b0a094f7986eb3e9b5399804103f29fa9941e2b86e8ce6f4735bca94f",
+    "source_tree_sha256": "7cdfd0b5957dff87e7ebcb2ce6e4cb93e20dc86e2fd84144bee24903ce9a5b5b",
+    "source_unchanged_after_verify": true
+  },
+  "host": {
+    "name": "autodl-container-ca410red1k-e4e33c0c",
+    "gpu": "NVIDIA GeForce RTX 3080 Ti",
+    "runtime_ws": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f",
+    "ros_domain_id": 93,
+    "gazebo_partition": "tzcup_dynamic_avoidance_single_run_20260914_05",
+    "xdg_runtime_dir": "/tmp/tzcup_dynamic_avoidance_single_run_20260914_05_xdg",
+    "run_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/run-05"
+  },
+  "resource_utilization": {
+    "cpu_busy_percent_sample": 21.831520364280287,
+    "gpu_utilization_percent": 0,
+    "gpu_memory_used_mib": 334,
+    "gpu_memory_total_mib": 12288,
+    "gpu_compute_processes": []
+  },
+  "resource_release": {
+    "formal_gazebo_lock_held_at_attempt": true,
+    "formal_gazebo_lock_available_after_attempt": true,
+    "runtime_processes_remaining": [],
+    "resource_released": true
+  },
+  "functional_evidence": {
+    "gazebo_launched": false,
+    "mcap_files": [],
+    "contact_samples": null,
+    "minimum_surface_gap_m": null,
+    "collision_monitor_intervention_count": null,
+    "maximum_cross_track_detour_m": null,
+    "task_recovery": false
+  },
+  "claim_boundary": "The run entered the fixed denominator but blocked before Gazebo on an existing formal lock. It did not measure and cannot establish the official >=95% rate."
+}

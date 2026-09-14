@@ -1,0 +1,18 @@
+{
+  "cpu_busy_percent_sample": 21.831520364280287,
+  "formal_gazebo_lock_available": true,
+  "formal_gazebo_lock_available_after_attempt": true,
+  "formal_gazebo_lock_held_at_attempt": true,
+  "formal_gazebo_lock_holders_text": "bash: line 5: lsof: command not found\n",
+  "formal_gazebo_lock_probe_rc": 0,
+  "gpu_compute_processes": [],
+  "gpu_memory_total_mib": 12288,
+  "gpu_memory_used_mib": 334,
+  "gpu_utilization_percent": 0,
+  "measurement_window_s": 1.0,
+  "note": "run-05 could not acquire /tmp/tzcup_formal_gazebo.lock during the attempt. The lock was not cleared; it was available again in the post-attempt read-only sample.",
+  "resource_released": true,
+  "run_id": "run-05",
+  "runtime_processes_remaining": [],
+  "schema_version": 1
+}

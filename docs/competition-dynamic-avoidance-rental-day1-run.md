@@ -80,3 +80,39 @@ No MCAP, contact, clearance, reroute, wait, or goal-recovery evidence exists
 because Gazebo did not launch. Immediate post-attempt sampling recorded CPU
 `27.56%`, GPU `0%`, GPU memory `1 MiB`, no runtime processes, an available
 formal Gazebo lock, and resources released.
+
+## Frozen-source reclosured run
+
+The current wrapper/source tree was fingerprinted before reclosuring:
+
+* source tree SHA-256:
+  `7cdfd0b5957dff87e7ebcb2ce6e4cb93e20dc86e2fd84144bee24903ce9a5b5b`;
+* wrapper SHA-256:
+  `c44e91b42e310a8966865fab62a5adc02c5be57317fc6ab3483400cc0701491d`;
+* test SHA-256:
+  `a5c1f539091f499c41aef236c43027c0dd4c96078386cc1a38ed9a06249814cb`.
+
+The established closure tooling recorded
+`final_runtime_closure_manifest_run05.json` and then verified it with
+`verify-recorded`. Verification passed with:
+
+* status: `FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED`;
+* manifest SHA-256:
+  `e21c7546341d5bb20aba8e9cba4efe2ea37838a962129071c1d4f322aa281aec`;
+* closure SHA-256:
+  `6a53522b0a094f7986eb3e9b5399804103f29fa9941e2b86e8ce6f4735bca94f`;
+* 20 runtime packages, 1,551 source files, and 1,805 install files;
+* the source tree hash was unchanged after verification.
+
+The run-05 wrapper then recorded `STARTED`, but the formal runner could not
+acquire `/tmp/tzcup_formal_gazebo.lock`; another formal Gazebo acceptance
+owned it. This is a distinct pre-Gazebo blocker. Per the run contract, the
+attempt was retained and no further trial was started.
+
+`run-05` has numerator `0`, denominator `1`, evaluator status
+`SINGLE_RUN_EVIDENCE_INVALID`, and official `>=95%` status `NOT_MEASURED`.
+Gazebo did not launch, so there are no MCAP, contact, clearance, reroute, wait,
+or goal-recovery samples. The post-attempt sample recorded CPU `21.83%`, GPU
+`0%`, GPU memory `334 MiB`, no GPU compute processes, no runtime processes,
+the formal lock available again, and resources released. The lock was not
+cleared by this work.

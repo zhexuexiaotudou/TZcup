@@ -1,0 +1,199 @@
+{
+  "blockers": [
+    "all_required_evidence_files_present",
+    "schedule_hash_matches_predeclaration",
+    "schedule_seed_matches_protocol",
+    "predeclared_obstacle_is_selected_crossing",
+    "live_schedule_uses_predeclared_route",
+    "live_schedule_route_map_matches",
+    "trigger_time_matches_predeclaration",
+    "formal_dynamic_gate_passed",
+    "environment_truth_is_evaluator_only",
+    "environment_schedule_hash_matches",
+    "eight_pedestrians_active",
+    "environment_sampling_integrity",
+    "product_command_chain_observed",
+    "collision_monitor_is_single_command_gate",
+    "product_topic_sampling_sufficient",
+    "predeclared_obstacle_interaction_observed",
+    "trigger_window_observed",
+    "minimum_distance_satisfied",
+    "physical_contact_collision_free",
+    "collision_monitor_intervened",
+    "reroute_or_wait_observed",
+    "task_recovered_after_obstacle",
+    "zero_geofence_violations",
+    "mission_progress_recorded",
+    "no_structural_evidence_errors"
+  ],
+  "checks": {
+    "all_required_evidence_files_present": false,
+    "collision_monitor_intervened": false,
+    "collision_monitor_is_single_command_gate": false,
+    "eight_pedestrians_active": false,
+    "environment_sampling_integrity": false,
+    "environment_schedule_hash_matches": false,
+    "environment_truth_is_evaluator_only": false,
+    "formal_dynamic_gate_passed": false,
+    "live_schedule_route_map_matches": false,
+    "live_schedule_uses_predeclared_route": false,
+    "minimum_distance_satisfied": false,
+    "mission_progress_recorded": false,
+    "no_structural_evidence_errors": false,
+    "physical_contact_collision_free": false,
+    "predeclared_obstacle_interaction_observed": false,
+    "predeclared_obstacle_is_selected_crossing": false,
+    "product_command_chain_observed": false,
+    "product_topic_sampling_sufficient": false,
+    "protocol_hash_matches_predeclaration": true,
+    "reroute_or_wait_observed": false,
+    "route_manifest_kind_expected": true,
+    "route_predeclared_before_run_start": true,
+    "run_timeline_started": true,
+    "schedule_hash_matches_predeclaration": false,
+    "schedule_seed_matches_protocol": false,
+    "task_recovered_after_obstacle": false,
+    "trigger_time_matches_predeclaration": false,
+    "trigger_window_observed": false,
+    "vehicle_envelope_collision_free": true,
+    "wall_time_within_protocol_limit": true,
+    "zero_geofence_violations": false
+  },
+  "claim_boundary": "A PASS proves only that this one predeclared trial satisfied the functional checks and retained the required raw evidence. It does not measure the official >=95% dynamic-avoidance success rate, establish statistical confidence, validate real-vehicle braking, or justify changing the official metric from NOT_MEASURED.",
+  "event": {
+    "collision_monitor_intervention_count": null,
+    "maximum_cross_track_detour_m": null,
+    "minimum_surface_gap_m": null,
+    "minimum_surface_gap_threshold_m": 0.12,
+    "minimum_trigger_alignment_s": null,
+    "obstacle_object_id": "walker_eb2f451c21ba",
+    "physical_collision_count": null,
+    "selected_interaction_candidate_count": 0,
+    "task_completion_reason": null,
+    "trigger_time_from_schedule_start_s": 6.4158,
+    "trigger_window_s": 3.0,
+    "vehicle_envelope_overlap_count": 0,
+    "wall_time_s": 0.427420841
+  },
+  "evidence_files": [
+    {
+      "exists": false,
+      "path": "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/run-05/dynamic_obstacle_acceptance.json",
+      "relative_path": "dynamic_obstacle_acceptance.json",
+      "role": "formal_report",
+      "sha256": null,
+      "size_bytes": null
+    },
+    {
+      "exists": false,
+      "path": "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/run-05/dynamic.runtime_binding.json",
+      "relative_path": "dynamic.runtime_binding.json",
+      "role": "runtime_binding",
+      "sha256": null,
+      "size_bytes": null
+    },
+    {
+      "exists": false,
+      "path": "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/run-05/runtime/runtime_telemetry.json",
+      "relative_path": "runtime/runtime_telemetry.json",
+      "role": "product_telemetry",
+      "sha256": null,
+      "size_bytes": null
+    },
+    {
+      "exists": false,
+      "path": "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/run-05/runtime/environment_truth_telemetry.json",
+      "relative_path": "runtime/environment_truth_telemetry.json",
+      "role": "environment_telemetry",
+      "sha256": null,
+      "size_bytes": null
+    },
+    {
+      "exists": false,
+      "path": "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/run-05/runtime/pedestrian_schedule.seed.2026091401.json",
+      "relative_path": "runtime/pedestrian_schedule.seed.2026091401.json",
+      "role": "pedestrian_schedule",
+      "sha256": null,
+      "size_bytes": null
+    },
+    {
+      "exists": false,
+      "path": "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/run-05/runtime/dynamic.launch.log",
+      "relative_path": "runtime/dynamic.launch.log",
+      "role": "dynamic_launch_log",
+      "sha256": null,
+      "size_bytes": null
+    },
+    {
+      "exists": false,
+      "path": "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/run-05/runtime/collector.log",
+      "relative_path": "runtime/collector.log",
+      "role": "collector_log",
+      "sha256": null,
+      "size_bytes": null
+    },
+    {
+      "exists": false,
+      "path": "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/run-05/runtime/environment_collector.log",
+      "relative_path": "runtime/environment_collector.log",
+      "role": "environment_collector_log",
+      "sha256": null,
+      "size_bytes": null
+    },
+    {
+      "exists": true,
+      "path": "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/run-05/predeclared_obstacle_route.json",
+      "relative_path": "predeclared_obstacle_route.json",
+      "role": "predeclared_obstacle_route",
+      "sha256": "cb610a315bf9caa4b9940b724fee8580023affc18ea6650f3bc0e2f023c57c18",
+      "size_bytes": 1700
+    },
+    {
+      "exists": true,
+      "path": "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/run-05/single_run_timeline.json",
+      "relative_path": "single_run_timeline.json",
+      "role": "run_timeline",
+      "sha256": "692e0d0b7eb7bd95ec35689b4b8228295aa29a8d47f9f61bcd04d180c8d05803",
+      "size_bytes": 324
+    },
+    {
+      "exists": true,
+      "path": "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/source/config/dynamic_avoidance_single_run_protocol.json",
+      "relative_path": "dynamic_avoidance_single_run_protocol.json",
+      "role": "protocol",
+      "sha256": "8f00d2a6fc5a121a1fa07bef783b7c7eef5ae5373db028a9685a6be655562180",
+      "size_bytes": 2911
+    }
+  ],
+  "official_metric": {
+    "formula": "N_noncollision_and_task_complete / N_total_trials",
+    "independent_run_count": 1,
+    "measured_value": null,
+    "metric_id": "dynamic_avoidance_success_rate",
+    "minimum_runs_per_scenario": 20,
+    "reason": "One started trial yields a single-run numerator and denominator only. It cannot measure or establish the >=95% campaign rate.",
+    "recommended_total_runs": 100,
+    "status": "NOT_MEASURED",
+    "threshold": 0.95
+  },
+  "passed": false,
+  "protocol_id": "tzcup-day1-dynamic-avoidance-single-run-v1",
+  "report_id": "tzcup_dynamic_avoidance_single_run_evaluation_v1",
+  "run_id": "run-05",
+  "schema_version": 1,
+  "single_run": {
+    "denominator": 1,
+    "functional_success": false,
+    "numerator": 0,
+    "observed_fraction": 0.0,
+    "post_launch_exclusions": 0,
+    "started": true
+  },
+  "status": "SINGLE_RUN_EVIDENCE_INVALID",
+  "structural_errors": [
+    "formal report must be a regular file: /workspace/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/run-05/dynamic_obstacle_acceptance.json",
+    "product telemetry must be a regular file: /workspace/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/run-05/runtime/runtime_telemetry.json",
+    "environment telemetry must be a regular file: /workspace/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/run-05/runtime/environment_truth_telemetry.json",
+    "pedestrian schedule must be a regular file: /workspace/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/run-05/runtime/pedestrian_schedule.seed.2026091401.json"
+  ]
+}

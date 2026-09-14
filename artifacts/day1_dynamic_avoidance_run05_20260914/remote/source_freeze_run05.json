@@ -1,0 +1,10 @@
+{
+  "file_count": 3227,
+  "frozen_epoch_ns": 1789354102867272984,
+  "protocol_sha256": "8f00d2a6fc5a121a1fa07bef783b7c7eef5ae5373db028a9685a6be655562180",
+  "repository_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/source",
+  "schema_version": 1,
+  "source_tree_sha256": "7cdfd0b5957dff87e7ebcb2ce6e4cb93e20dc86e2fd84144bee24903ce9a5b5b",
+  "test_sha256": "a5c1f539091f499c41aef236c43027c0dd4c96078386cc1a38ed9a06249814cb",
+  "wrapper_sha256": "c44e91b42e310a8966865fab62a5adc02c5be57317fc6ab3483400cc0701491d"
+}
