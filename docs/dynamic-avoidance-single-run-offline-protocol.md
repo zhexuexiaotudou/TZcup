@@ -91,6 +91,30 @@ sum(single_run_numerator) / count(eligible_started_runs)
 The 20-run per-scenario minimum and 100-run recommended total are retained in
 the protocol. They are not satisfied by this single-run preparation.
 
+## Functional-smoke mode
+
+The official 30.0 m protocol remains unchanged. A separate
+[`config/dynamic_avoidance_functional_smoke_protocol.json`](../config/dynamic_avoidance_functional_smoke_protocol.json)
+declares mode `FUNCTIONAL_SMOKE_NOT_OFFICIAL_95` and a nominal 6.0 m leg. It
+reuses the same deterministic obstacle-route pattern, offline raycast map
+source, safety settings, runner, and evaluator. Its reports explicitly carry
+the smoke mode and retain:
+
+```text
+official_metric.measured_value = null
+official_metric.status = NOT_MEASURED
+```
+
+To select it, set:
+
+```bash
+export FORMAL_DYNAMIC_SINGLE_RUN_PROTOCOL=/absolute/path/to/config/dynamic_avoidance_functional_smoke_protocol.json
+```
+
+The runtime writes the evaluator-compatible schedule filename
+`pedestrian_schedule.seed.<seed>.json`. A smoke pass never substitutes for the
+official 30.0 m protocol or the `>=95%` campaign.
+
 ## Future command
 
 The command below is for one later Gazebo trial and is deliberately **not**

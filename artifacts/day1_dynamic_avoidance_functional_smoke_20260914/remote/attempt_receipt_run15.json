@@ -1,0 +1,96 @@
+{
+  "attempt_id": "day1-dynamic-avoidance-functional-smoke-20260914-15",
+  "claim_boundary": "This is one retained non-official functional-smoke attempt. It stopped before Gazebo at offline-map provenance validation, so no short-mission, collision, clearance, reroute, wait, goal-recovery, or >=95% result exists. No retry was launched.",
+  "closure_manifest_sha256": "ce258fd882e0891e3429412150ad6689d61e64853dc64f9b4e038db723f62976",
+  "collectors_started": false,
+  "dispatch_exit_code": 1,
+  "evidence_sha256": {
+    "closure_verification_smoke_15.json": "81e74e1848e01576ea94616c7b90d15b7b9d23c4de810868cb37db19de56bf8a",
+    "final_runtime_closure_manifest_smoke_15.json": "ce258fd882e0891e3429412150ad6689d61e64853dc64f9b4e038db723f62976",
+    "formal_acceptance_session_smoke_15.json": "9a4eaedce700ad159fc795e8a73411f7dfb69730c7e72fa10a3fd67e8f677e94",
+    "resource_release_run15.json": "14c12aba85c22fb5d8c8b597981115eed4288baec9c9be9c6e453cdc07c244c7",
+    "run-15.dispatch.log": "2f9372fec9c1e86a0c400b66a02ea65dae337219bbe11e2031581261c675a57a",
+    "run-15.dispatch.rc": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+    "run-15.environment.json": "7bc947fd633c5db156709dd03f425dbca6e7bc5c97ff397e607cdf5fb59a13ce",
+    "source_overlay_freeze_smoke_15.json": "2f7554f1b4162fde509da7fbef96d9f1752a624987c6d1ad43488827c27db2d5"
+  },
+  "failure": {
+    "binary_hash_match": {
+      "occupancy.pgm": "8b74f3688d279007e80a198935b983c09b9ecc2202d1e9636522453344586a63"
+    },
+    "dispatch_log": "run-15.dispatch.log",
+    "exception": "OfflineMapSourceError: offline map source commit provenance is invalid",
+    "expected_source_commit": "4ab39bb839e92fe50e22b1efe3891c5915f39bf0",
+    "observed_source_commit": "4ab39bb839e92fe50e22b1efe3891c5915f39bf0",
+    "phase": "prepare_offline_raycast_map_runtime",
+    "root_cause": "The Windows-generated git archive converted text artifacts to CRLF, changing JSON/YAML hashes while the binary PGM retained its original bytes.",
+    "text_hash_mismatches": {
+      "map_area_verification.json": {
+        "expected": "c739ef43f4c3fabc5d01b6dca90821bdd2c6ab60c21a0fe06953ab76c1318cac",
+        "observed": "19429d4a612c4ef5f0d9c227b6ac8ea5ce7264a0b27f28f00ce70b2affdaeb48"
+      },
+      "occupancy.yaml": {
+        "expected": "78f39b80c0ea79f339c0aeac94573454eb49849e47cdbf8c05f903b518e89538",
+        "observed": "e5de82523b5e37fdde84845535955bb9af41b009fa91d0029eb4d36b920f3673"
+      },
+      "offline_raycast_manifest.json": {
+        "expected": "ed4e52fe688e3ca41ab0cdc8eda51cad0b60691809085318b31d739c53f3cc49",
+        "observed": "69718c19572f1bc5f2a0713f91149a11272d572c71a425d061f4cbca26d262c0"
+      }
+    }
+  },
+  "gazebo_started": false,
+  "gz_partition": "tzcup_dynamic_avoidance_smoke_20260914_15",
+  "mode": "FUNCTIONAL_SMOKE_NOT_OFFICIAL_95",
+  "official_metric": {
+    "measured_value": null,
+    "metric_id": "dynamic_avoidance_success_rate",
+    "reason": "The single non-official smoke attempt failed before route declaration or Gazebo launch; the official campaign remains unmeasured.",
+    "status": "NOT_MEASURED",
+    "threshold": 0.95
+  },
+  "preserved_evidence": {
+    "clearance_evidence": false,
+    "contact_evidence": false,
+    "goal_recovery_evidence": false,
+    "mcap": false,
+    "product_timing_telemetry": false,
+    "reroute_evidence": false
+  },
+  "requested_code_commit": "ed3a802b298fbfbe697eb22c8efedf8289a1b664",
+  "resource_release": {
+    "cpu_busy_percent_sample": 9.55,
+    "dispatch_exit_code": 1,
+    "formal_gazebo_lock_available": true,
+    "formal_gazebo_lock_holders": [],
+    "gpu_memory_total_mib": 12288,
+    "gpu_memory_used_mib": 1,
+    "gpu_utilization_percent": 0,
+    "mode": "FUNCTIONAL_SMOKE_NOT_OFFICIAL_95",
+    "note": "The single smoke attempt stopped before Gazebo at offline-map provenance validation; no retry was launched.",
+    "run_id": "run-15",
+    "run_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-smoke-20260914-15/run-15",
+    "runtime_processes_remaining": [],
+    "schema_version": 1
+  },
+  "ros_domain_id": 100,
+  "run_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-smoke-20260914-15/run-15",
+  "runtime_closure_sha256": "2d42ced598411ec0cb91e5c6845bcae65809ac1d69c2292e91dcf9396f396c76",
+  "schema_version": 1,
+  "session_manifest_sha256": "9a4eaedce700ad159fc795e8a73411f7dfb69730c7e72fa10a3fd67e8f677e94",
+  "session_started_epoch_ns": 1789365115146585125,
+  "single_run": {
+    "denominator": 0,
+    "functional_success": false,
+    "numerator": 0,
+    "observed_fraction": null,
+    "started": false
+  },
+  "source_base_commit": "1a211400ca2dc4d6007e4fd838e1f2835cfd1dc8",
+  "source_base_tree": "e11be0f1032076bd949afac874c41793b4149037",
+  "source_overlay_archive_sha256": "d957d1f99cbab8c3f690aa6486118623133f06db3500d605548a74e52775910c",
+  "source_overlay_commit": "ed3a802b298fbfbe697eb22c8efedf8289a1b664",
+  "source_overlay_freeze_sha256": "2f7554f1b4162fde509da7fbef96d9f1752a624987c6d1ad43488827c27db2d5",
+  "status": "BLOCKED_BEFORE_GAZEBO_OFFLINE_MAP_PROVENANCE",
+  "xdg_runtime_dir": "/tmp/tzcup_dynamic_avoidance_smoke_20260914_15_xdg"
+}

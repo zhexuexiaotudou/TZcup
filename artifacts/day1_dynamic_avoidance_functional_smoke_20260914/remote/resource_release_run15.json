@@ -1,0 +1,15 @@
+{
+  "cpu_busy_percent_sample": 9.55,
+  "dispatch_exit_code": 1,
+  "formal_gazebo_lock_available": true,
+  "formal_gazebo_lock_holders": [],
+  "gpu_memory_total_mib": 12288,
+  "gpu_memory_used_mib": 1,
+  "gpu_utilization_percent": 0,
+  "mode": "FUNCTIONAL_SMOKE_NOT_OFFICIAL_95",
+  "note": "The single smoke attempt stopped before Gazebo at offline-map provenance validation; no retry was launched.",
+  "run_id": "run-15",
+  "run_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-smoke-20260914-15/run-15",
+  "runtime_processes_remaining": [],
+  "schema_version": 1
+}

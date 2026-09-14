@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "/workspace/tzcup-competition-sim-only-20260912/source/TZcup-day1-avoidance-run-ed3a802-dynamic/scripts/prepare_offline_raycast_map_runtime.py", line 158, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/workspace/tzcup-competition-sim-only-20260912/source/TZcup-day1-avoidance-run-ed3a802-dynamic/scripts/prepare_offline_raycast_map_runtime.py", line 147, in main
+    materialize_map(
+  File "/workspace/tzcup-competition-sim-only-20260912/source/TZcup-day1-avoidance-run-ed3a802-dynamic/scripts/prepare_offline_raycast_map_runtime.py", line 78, in materialize_map
+    evidence = validate_frozen_offline_raycast_map_source(source_root)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/tzcup-competition-sim-only-20260912/source/TZcup-day1-avoidance-run-ed3a802-dynamic/starter_ws/src/sanitation_formal_campus_integration/sanitation_formal_campus_integration/offline_map_source.py", line 211, in validate_frozen_offline_raycast_map_source
+    raise OfflineMapSourceError("offline map source commit provenance is invalid")
+sanitation_formal_campus_integration.offline_map_source.OfflineMapSourceError: offline map source commit provenance is invalid

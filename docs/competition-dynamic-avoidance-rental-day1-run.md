@@ -137,3 +137,45 @@ Gazebo did not launch, so no MCAP, contact, clearance, reroute, wait, or
 goal-recovery evidence exists. The post-attempt sample recorded CPU `10.03%`,
 GPU `0%`, GPU memory `1 MiB`, no runtime processes, the formal lock available,
 and resources released.
+
+## Run 15: non-official functional smoke
+
+The run-09 naming contract was fixed so the runner now writes
+`pedestrian_schedule.seed.<seed>.json`, matching the evaluator. A separate
+protocol with mode `FUNCTIONAL_SMOKE_NOT_OFFICIAL_95` and nominal leg `6.0 m`
+was added at
+`config/dynamic_avoidance_functional_smoke_protocol.json`. Its official metric
+remains `NOT_MEASURED`.
+
+One bounded smoke attempt was executed from code commit
+`ed3a802b298fbfbe697eb22c8efedf8289a1b664` using the existing runtime closure
+revision, ROS domain `100`, partition
+`tzcup_dynamic_avoidance_smoke_20260914_15`, fresh XDG runtime state, and run
+root
+`/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-smoke-20260914-15/run-15`.
+The fresh closure and RUNNING binding session passed, and the focused smoke
+contract tests passed `16/16`.
+
+The attempt stopped before Gazebo while materializing the offline raycast map
+source. The Windows-generated overlay archive converted JSON/YAML text files
+to CRLF. Their hashes therefore differed from the LF provenance manifest even
+though the source commit and binary PGM matched:
+
+| Artifact | Expected SHA-256 | Observed SHA-256 |
+|---|---|---|
+| `offline_raycast_manifest.json` | `ed4e52fe...f3cc49` | `69718c19...d262c0` |
+| `occupancy.yaml` | `78f39b80...e89538` | `e5de8252...0f3673` |
+| `map_area_verification.json` | `c739ef43...318cac` | `19429d4a...daeb48` |
+| `occupancy.pgm` | `8b74f368...4586a3` | matched |
+
+The wrapper exited `1`; Gazebo and both collectors did not start. Therefore
+there is no MCAP, contact, clearance, reroute, wait, goal-recovery, or
+short-mission success result. The single-run result is not a valid functional
+smoke pass, and official `>=95%` remains `NOT_MEASURED`. No retry was launched.
+
+Post-attempt sampling recorded CPU `9.55%`, GPU `0%`, GPU memory `1 MiB` of
+`12288 MiB`, no remaining runtime processes, no formal-Gazebo lock holder, and
+resources released. Compact evidence is retained at
+`artifacts/day1_dynamic_avoidance_functional_smoke_20260914/remote/`; the
+archive SHA-256 is
+`fc056f063421ac239d2b838908a4d03baa57f89d59fbd54ae3276a10514ad844`.
