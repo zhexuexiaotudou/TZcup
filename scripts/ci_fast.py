@@ -670,6 +670,7 @@ def run_ros_independent_tests() -> None:
         ROOT / "scripts" / "test_formal_acceptance_session.py",
         ROOT / "scripts" / "test_validate_formal_map_lifecycle_runtime.py",
         ROOT / "scripts" / "test_verify_map_area.py",
+        ROOT / "scripts" / "test_audit_live_slam_replay_inputs.py",
         ROOT / "scripts" / "test_formal_final_runtime_closure.py",
         ROOT / "scripts" / "test_formal_memory_watchdog.py",
         ROOT / "scripts" / "test_formal_windows_memory_probe.py",
