@@ -12,7 +12,7 @@
 - `evidence/day1/raw-evidence-sources.json`：宽度、定位、感知原始运行根目录、精确路径和哈希定位表；不声称复制原始 MCAP/timeline。
 - `evidence/day1/competition-perception-gpu-recovery.json`、`competition-perception-gpu-parity.json`：`4ed19d2`候选与`906ea4f`回执的compact metrics；仅复制JSON，不复制ONNX。
 - `evidence/day1/perception-score95/`：`3882dc34`的受控候选文档、receipt、合成校准/独立测试以及30帧raw/policy复算JSON；`33/50/43→41/0/35`、`0/0/76→33/0/43`保留为旧运行时9帧presence mask历史诊断，不是全帧能力。
-- `supplements/nontechnical-score-closure/`：`6b1a7dd`的14页非技术补充PDF、状态矩阵、产业化/维护/Demo/社会效益材料和原始SHA清单；全部按设计、计划或模板阶段披露，正式主张分值为0。
+- `supplements/nontechnical-score-closure/`：14页非技术补充PDF、状态矩阵、产业化/维护/社会效益材料和原始SHA清单；除已交付的视频包外，其余仍按设计、计划或模板阶段披露，正式主张分值为0。
 - `evidence/day1/tooling/full-mission-demo/`、`live-slam-replay-fail-closed/`：完整任务效率/Demo验收wrapper及live-SLAM输入未闭合的fail-closed回执，仅作工具和失败边界，不宣称得分。
 - `evidence/day1/competition-mapping-offline-raycast.md`、`offline-raycast-mapping/`：`4ab39bb`离线射线映射的compact方法、面积、manifest和hash seal；已知22399.99m²但明确不是Gazebo live SLAM，不复制PGM。
 - `evidence/day1/competition-mapping-day1-run-06.md`、`mapping-day1-run-06/`：`ab6252d`记录run-06在3600s超时且无最终地图，live SLAM面积与质量仍为`NOT_MEASURED`。

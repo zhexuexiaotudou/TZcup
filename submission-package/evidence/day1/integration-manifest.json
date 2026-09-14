@@ -7,7 +7,7 @@
     "package_path": "docs/技术方案报告.pdf",
     "pages": 23,
     "bytes": 195978,
-    "sha256": "2e0030f733c78e405776cbf414d729866cc4556b6a6685d7b1dd1dd32e085cbb"
+    "sha256": "3fcb75d0fa9536422e957b166c80e5f9ae5b62f5132cfc7cb69911d9e50a332e"
   },
   "claim_levels": [
     "MEASURED_REPOSITORY_EVIDENCE",
@@ -67,18 +67,18 @@
       "id": "nontechnical-score-closure",
       "source_branch": "codex/day1-easy-points-closure",
       "source_commit": "6b1a7dd81005f11501278599e4a1d5070378bdda",
-      "claim_level": "DESIGN_OR_PLAN_ONLY",
+      "claim_level": "DELIVERED_MODULAR_DEMO_PLUS_DESIGN_PACKAGE",
       "official_points_claimed": 0.0,
       "files": [
         {
           "package_path": "supplements/nontechnical-score-closure/pdf/TZcup-nontechnical-score-closure.pdf",
-          "bytes": 32584,
-          "sha256": "8d4775de720f8aa6eb5d9b596b69288a6634819acdf0b28020ed5b8e8ab28873"
+          "bytes": 32767,
+          "sha256": "84c12a50766acb5dcd7c1a019b11aeee947b6f1e858231333511cc52090d45ff"
         },
         {
           "package_path": "supplements/nontechnical-score-closure/MANIFEST.sha256",
-          "bytes": 3523,
-          "sha256": "1170a346fe5ceb50b6d6375c741f9b160dc47ed7dbf231b497493d72c7a8bea7"
+          "bytes": 3560,
+          "sha256": "eca4e1e32ca6deecffc645e9cf9eab9a7300874a46f386e52ff0fc125ddc6a80"
         },
         {
           "package_path": "supplements/nontechnical-score-closure/data/closure-status.json",

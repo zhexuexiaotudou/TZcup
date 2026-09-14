@@ -28,7 +28,7 @@
 | 日均故障率 <1% | 3 | 事件字典、分母和 95% 置信资格算法已定义 | `INSTRUMENTED_NOT_MEASURED` |
 | 社会效益 | 5 | 可审计的社会效益参数模型已定义 | `MODEL_ONLY_NOT_FIELD_MEASURED` |
 | 硬件/软件功能完整 | 6 | 模块-证据-缺口矩阵已建立 | `PARTIAL` |
-| 演示视频 | 4 | 5-10 分钟分镜、验收表和媒体校验器已建立 | `KIT_ONLY_VIDEO_NOT_MEASURED` |
+| 演示视频 | 4 | 300 秒模块化综合演示、中文旁白、字幕、章节和媒体校验器已交付 | `DELIVERED_MODULAR_DEMO` |
 | 文档质量 | 5 | 正式报告、证据索引和独立补充 PDF 可交叉复核 | `DELIVERED` |
 | 可落地产业化方案 | 5 | 客户、试点、成本公式、Go/No-Go 和 IP 边界已整理成评审包 | `REVIEW_READY_NOT_FIELD_VALIDATED` |
 | 已申请专利或发表论文 | 5 | 只提供发明披露和论文提纲模板 | `NOT_ELIGIBLE_NO_FILING_OR_PUBLICATION` |
@@ -48,13 +48,13 @@ py -3 tools\social_benefit_model.py --scenario data\social-benefit-scenarios.jso
 py -3 tools\build_supplement_pdf.py
 ```
 
-已有 6.333 秒局部视频可以执行：
+正式 5 分钟成片及视频包位于提交包的 `video/` 目录。可在提交包根目录复核：
 
 ```powershell
-py -3 tools\validate_demo_media.py ..\..\TZcup-day1-submission-report\submission-package\evidence\day1\demo\partial-gazebo-gui-6.333s\visual_demo.mp4 --write
+py -3 video\tools\validate_video_package.py --write
 ```
 
-该命令预期返回非零，原因是时长不足 5 分钟；这正是保留 `KIT_ONLY_VIDEO_NOT_MEASURED` 的证据，不应修改阈值使它通过。
+视频项建议按 `2-3 / 4` 分准备评审说明，评委接受模块化综合演示和章节化操作说明时最高可裁量 `4/4`；它不表示所有镜头来自同一次连续任务。历史 6.333 秒局部片段仍保留在 `evidence/day1/demo/`，只作为早期录屏链路证据。
 
 ## 目录
 
@@ -81,6 +81,6 @@ py -3 tools\validate_demo_media.py ..\..\TZcup-day1-submission-report\submission
 - 不把数字维护程序写成实物三步拆卸结果。
 - 不把故障率计算工具写成长期运行结果。
 - 不把社会效益参数算例写成园区实测效益。
-- 不把已有 6.333 秒 GUI 片段写成 5-10 分钟完整任务视频。
+- 不把已交付的模块化综合演示写成同一连续任务；旧的 6.333 秒 GUI 片段只作历史局部证据。
 - 不把产业化路线写成订单、报价、ROI 或量产验证。
 - 不把披露模板写成已申请专利或已发表论文。

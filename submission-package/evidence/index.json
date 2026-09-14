@@ -485,7 +485,7 @@
     "file": "docs/report-baseline.json",
     "source": "frozen baseline record for git:43f7136:submission-package/docs/技术方案报告.pdf",
     "source_commit": "43f7136",
-    "sha256": "cc98ca940c932dd39128499e28a53cc63b5ce6b5e079d5c7ab83ee3059ca5e3a",
+    "sha256": "fb45f4b3a38bd72400b87434d4aa0139a70da7eca39ed6eabc65bd73fe62d4c2",
     "copied_utc": "2026-09-14"
   },
   {
@@ -538,17 +538,17 @@
   },
   {
     "file": "supplements/nontechnical-score-closure/pdf/TZcup-nontechnical-score-closure.pdf",
-    "source": "git:6b1a7dd81005f11501278599e4a1d5070378bdda:nontechnical-closure-package/pdf/TZcup-nontechnical-score-closure.pdf",
-    "source_commit": "6b1a7dd81005f11501278599e4a1d5070378bdda",
-    "sha256": "8d4775de720f8aa6eb5d9b596b69288a6634819acdf0b28020ed5b8e8ab28873",
-    "copied_utc": "2026-09-14"
+    "source": "codex/day1-video-report-sync:submission-package/supplements/nontechnical-score-closure/pdf/TZcup-nontechnical-score-closure.pdf",
+    "source_commit": null,
+    "sha256": "84c12a50766acb5dcd7c1a019b11aeee947b6f1e858231333511cc52090d45ff",
+    "copied_utc": "2026-09-15"
   },
   {
     "file": "supplements/nontechnical-score-closure/MANIFEST.sha256",
-    "source": "git:6b1a7dd81005f11501278599e4a1d5070378bdda:nontechnical-closure-package/MANIFEST.sha256",
-    "source_commit": "6b1a7dd81005f11501278599e4a1d5070378bdda",
-    "sha256": "f5bbbea6de943781d551bb9ba2ed6ff312984cda7d9dc01f9859b1881d61db4f",
-    "copied_utc": "2026-09-14"
+    "source": "codex/day1-video-report-sync:submission-package/supplements/nontechnical-score-closure/MANIFEST.sha256",
+    "source_commit": null,
+    "sha256": "eca4e1e32ca6deecffc645e9cf9eab9a7300874a46f386e52ff0fc125ddc6a80",
+    "copied_utc": "2026-09-15"
   },
   {
     "file": "evidence/day1/tooling/full-mission-demo/docs/day1-full-mission-demo-wrapper.md",

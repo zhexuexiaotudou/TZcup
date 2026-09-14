@@ -1,6 +1,6 @@
 {
-  "package_version": "1.0.0",
-  "generated_date": "2026-09-14",
+  "package_version": "1.1.0",
+  "generated_date": "2026-09-15",
   "timezone": "Asia/Shanghai",
   "official_pdf_sha256": "5fa80f74b7a1f36e5d0d63592282a5cc5f26394e562350407497cff27bdccc9e",
   "baselines": {
@@ -74,11 +74,14 @@
       ]
     },
     "COMP-DEMO": {
-      "status": "KIT_ONLY_VIDEO_NOT_MEASURED",
-      "evidence_class": "PRODUCTION_KIT",
+      "status": "DELIVERED_MODULAR_DEMO",
+      "evidence_class": "DELIVERED_VIDEO_PACKAGE",
       "official_points_claimed": 0.0,
       "incremental_ready": true,
       "supporting_paths": [
+        "../../video/final/TZcup_5min_video.mp4",
+        "../../video/video-index.json",
+        "../../video/validation/video-package-validation.json",
         "demo-video-production.md",
         "data/demo-storyboard.csv",
         "data/demo-acceptance-checklist.csv",

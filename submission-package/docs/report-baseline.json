@@ -15,7 +15,7 @@
     "pdf_path": "docs/技术方案报告.pdf",
     "pages": 23,
     "bytes": 195978,
-    "sha256": "2e0030f733c78e405776cbf414d729866cc4556b6a6685d7b1dd1dd32e085cbb",
+    "sha256": "3fcb75d0fa9536422e957b166c80e5f9ae5b62f5132cfc7cb69911d9e50a332e",
     "updated_utc": "2026-09-15"
   },
   "integration_branch": "codex/day1-video-report-sync",

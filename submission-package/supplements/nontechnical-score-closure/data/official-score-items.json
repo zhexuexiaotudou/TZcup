@@ -62,10 +62,10 @@
       "item": "演示视频清晰流畅",
       "max_points": 4,
       "priority": "P1",
-      "status": "KIT_ONLY_VIDEO_NOT_MEASURED",
-      "claimable": "已有完整分镜、操作说明、验收表和媒体校验器；真实GUI局部片段非黑屏。",
-      "not_claimable": "没有5-10分钟完整任务视频，不能把6.333秒局部片段当作正式Demo。",
-      "next_evidence": "连续任务视频、版本叠层、操作说明、任务终态和原始日志。"
+      "status": "DELIVERED_MODULAR_DEMO",
+      "claimable": "已交付300.000秒、1920x1080、恒定30fps、9000帧的H.264/AAC模块化综合演示，包含中文旁白、35条字幕、章节和完整解码回执；建议按2-3/4准备说明。",
+      "not_claimable": "所有镜头不属于同一次连续任务，不能写成official full-mission PASS；最高4/4由评委裁量。",
+      "next_evidence": "若需主张连续完整任务，补录同一冻结版本下的任务视频、任务终态和原始MCAP。"
     },
     {
       "id": "COMP-DOCUMENT",

@@ -32,6 +32,10 @@ class VerifyPackageTests(unittest.TestCase):
             EXPECTED_STATUSES["BONUS-IP-PAPER"],
             "NOT_ELIGIBLE_NO_FILING_OR_PUBLICATION",
         )
+        self.assertEqual(
+            EXPECTED_STATUSES["COMP-DEMO"],
+            "DELIVERED_MODULAR_DEMO",
+        )
 
 
 if __name__ == "__main__":
