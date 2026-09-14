@@ -63,6 +63,16 @@
       "background_leaf_false_positive_rate": 1.8716143665867425e-06
     }
   },
+  "gpu_inference_parity": {
+    "model_sha256": "00f4f96f3eb925e202266506d22892a1df84838d08dbf6541d204c3e1d089c6a",
+    "iterations": 5000,
+    "elapsed_s": 0.9065148530062288,
+    "inferences_per_s": 5515.629427823224,
+    "peak_vram_mib": 3.603515625,
+    "onnx_cpu_vs_torch_gpu_max_abs_diff": 1.239776611328125e-05,
+    "argmax_agreement": 1.0,
+    "nvidia_smi_after": "28 %, 328 MiB, 115.87 W"
+  },
   "raw_replay": {
     "baseline_model_sha256": "f7a10487a2577dc6675abb6784769308a0c21bfb11c0c9eb42af6aa2a5152e73",
     "baseline_tp_fp_fn": [

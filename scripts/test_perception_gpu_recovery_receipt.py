@@ -16,6 +16,9 @@ def test_gpu_recovery_receipt_binds_model_and_frozen_metrics():
     assert receipt["policy_replay"]["baseline_tp_fp_fn"] == [0, 0, 76]
     assert receipt["policy_replay"]["after_tp_fp_fn"] == [33, 0, 43]
     assert receipt["dataset_audit"]["training_or_validation_use_of_holdout"] is False
+    assert receipt["gpu_inference_parity"]["model_sha256"] == receipt["model"]["sha256"]
+    assert receipt["gpu_inference_parity"]["argmax_agreement"] == 1.0
+    assert receipt["gpu_inference_parity"]["onnx_cpu_vs_torch_gpu_max_abs_diff"] <= 1e-4
     assert receipt["claim_boundary"]["official_competition_R01"] == "NOT_MEASURED"
     assert receipt["claim_boundary"]["ninety_five_percent_claim_supported"] is False
 
