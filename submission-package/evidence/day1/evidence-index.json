@@ -430,5 +430,35 @@
       "this is an input-admission audit, not a SLAM replay, map-quality result or 20000 m2 live-mapping pass",
       "a future valid run must be produced by the single Gazebo owner with the missing topics in the same fresh run"
     ]
+  },
+  {
+    "local_evidence": "video/video-index.json",
+    "human_index": "video/视频索引.md",
+    "score_boundary": "video/一页说明.md",
+    "media": "video/final/TZcup_5min_video.mp4",
+    "subtitles": "video/subtitles/zh-CN.srt",
+    "chapters": "video/chapters/chapters.json",
+    "narration": "video/audio/narration.mp3",
+    "build_manifest": "video/final/manifest.json",
+    "validation_report": "video/validation/video-package-validation.json",
+    "source_branch": "codex/day1-video-final",
+    "source_commit": "e6caf27",
+    "run_id": "tzcup-day1-modular-demo-video",
+    "status": "DELIVERED_MODULAR_DEMO",
+    "recommended_points_range": [
+      2,
+      3
+    ],
+    "official_points_claimed": 0.0,
+    "accepted_facts": [
+      "the final media is 300.000 seconds, 1920x1080, H.264 with AAC audio and embedded Chinese subtitles",
+      "the repaired master is constant 30 fps with 9000 decoded frames",
+      "the reel combines successful modeling and functional module footage with chaptered Chinese narration"
+    ],
+    "limitations": [
+      "the reel is a modular composite and does not show one continuous mission",
+      "it does not establish official full-mission, live-SLAM, avoidance-rate, board-perception or vehicle acceptance",
+      "official points are not self-awarded; the bounded review band is 2-3 of 4"
+    ]
   }
 ]

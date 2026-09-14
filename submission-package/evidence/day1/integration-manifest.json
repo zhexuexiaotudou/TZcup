@@ -117,6 +117,54 @@
       "unmeasured_boundary": "The existing coverage-only run lacks mission_timeline, return-home, complete mission MCAP, video manifest and hardware/software manifest, so the wrapper correctly returns FAIL."
     },
     {
+      "id": "day1-modular-demo-video",
+      "source_branch": "codex/day1-video-final",
+      "source_commit": "e6caf27",
+      "claim_level": "DELIVERED_MODULAR_DEMO",
+      "official_points_claimed": 0.0,
+      "recommended_points_range": [
+        2,
+        3
+      ],
+      "files": [
+        {
+          "package_path": "video/final/TZcup_5min_video.mp4",
+          "bytes": 26137698,
+          "sha256": "631c2cfbf0e459bbcf74d7c3f9ddb6c1fc5a6519dbb6794bd4a6ea148d94e097"
+        },
+        {
+          "package_path": "video/audio/narration.mp3",
+          "bytes": 7201196,
+          "sha256": "6a1cadd8f497f789e87e5e671be002ccd8b4e2d9717bfff431589007ec823468"
+        },
+        {
+          "package_path": "video/subtitles/zh-CN.srt",
+          "bytes": 3546,
+          "sha256": "0424580e1a623bd41fa00dde57a036dbb66baa9071fea5ec7f87e4094d1973a0"
+        },
+        {
+          "package_path": "video/chapters/chapters.json",
+          "bytes": 1916,
+          "sha256": "60e42bb4ea0fbf1145f41a312fca3d5dabdc4447d04201b3c74dd57d8aeb14eb"
+        },
+        {
+          "package_path": "video/video-index.json",
+          "verified": true
+        },
+        {
+          "package_path": "video/MANIFEST.sha256",
+          "bytes": 1169,
+          "sha256": "48502e10c415e2fd9c736c970a64736b60393dfcf8acba4769b552e501eb510c"
+        },
+        {
+          "package_path": "video/validation/video-package-validation.json",
+          "bytes": 925,
+          "sha256": "a74b28f89bb2d4a609c13d357ba5828323f36d3ecf711d945831c3d4d582a976"
+        }
+      ],
+      "unmeasured_boundary": "The 300 second reel is a modular composite of successful module footage, not one continuous mission. It does not establish official full-mission PASS, live SLAM, avoidance rate, board perception, or vehicle validation."
+    },
+    {
       "id": "live-slam-replay-fail-closed",
       "source_branch": "codex/day1-live-mapping-recovery",
       "source_commit": "e2a9bc0be602efa72bb4978dfdd852e284c0c1eb",

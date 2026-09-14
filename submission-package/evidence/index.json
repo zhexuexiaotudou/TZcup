@@ -578,5 +578,69 @@
     "source_commit": "e2a9bc0be602efa72bb4978dfdd852e284c0c1eb",
     "sha256": "61e6435e35fccbf195b2b9b542fc5bf4d5e68ec3b6e46f77a983627f9149fc10",
     "copied_utc": "2026-09-14"
+  },
+  {
+    "file": "video/video-index.json",
+    "source": "derived from codex/day1-video-final final media and validation outputs",
+    "source_commit": "e6caf27",
+    "bytes": 4308,
+    "sha256": "3640495d7f352ce5ad74499b08d2daa9e056988e3e90d26e3183622468b74d44",
+    "copied_utc": "2026-09-15"
+  },
+  {
+    "file": "video/final/TZcup_5min_video.mp4",
+    "source": "video/final/TZcup_5min_video.mp4",
+    "source_commit": "e6caf27",
+    "bytes": 26137698,
+    "sha256": "631c2cfbf0e459bbcf74d7c3f9ddb6c1fc5a6519dbb6794bd4a6ea148d94e097",
+    "copied_utc": "2026-09-15"
+  },
+  {
+    "file": "video/audio/narration.mp3",
+    "source": "video/audio/narration.mp3",
+    "source_commit": "e6caf27",
+    "bytes": 7201196,
+    "sha256": "6a1cadd8f497f789e87e5e671be002ccd8b4e2d9717bfff431589007ec823468",
+    "copied_utc": "2026-09-15"
+  },
+  {
+    "file": "video/subtitles/zh-CN.srt",
+    "source": "video/subtitles/zh-CN.srt",
+    "source_commit": "e6caf27",
+    "bytes": 3546,
+    "sha256": "0424580e1a623bd41fa00dde57a036dbb66baa9071fea5ec7f87e4094d1973a0",
+    "copied_utc": "2026-09-15"
+  },
+  {
+    "file": "video/chapters/chapters.json",
+    "source": "video/chapters/chapters.json",
+    "source_commit": "e6caf27",
+    "bytes": 1916,
+    "sha256": "60e42bb4ea0fbf1145f41a312fca3d5dabdc4447d04201b3c74dd57d8aeb14eb",
+    "copied_utc": "2026-09-15"
+  },
+  {
+    "file": "video/final/manifest.json",
+    "source": "video/final/manifest.json",
+    "source_commit": "e6caf27",
+    "bytes": 1502,
+    "sha256": "ca93023b16098c956c19ab463e2c24af10756d3d62d69eeec23e772ebbe42aae",
+    "copied_utc": "2026-09-15"
+  },
+  {
+    "file": "video/validation/video-package-validation.json",
+    "source": "derived by video/tools/validate_video_package.py --write",
+    "source_commit": "e6caf27",
+    "bytes": 925,
+    "sha256": "a74b28f89bb2d4a609c13d357ba5828323f36d3ecf711d945831c3d4d582a976",
+    "copied_utc": "2026-09-15"
+  },
+  {
+    "file": "video/MANIFEST.sha256",
+    "source": "derived from all files under submission-package/video except MANIFEST.sha256",
+    "source_commit": "e6caf27",
+    "bytes": 1169,
+    "sha256": "48502e10c415e2fd9c736c970a64736b60393dfcf8acba4769b552e501eb510c",
+    "copied_utc": "2026-09-15"
   }
 ]

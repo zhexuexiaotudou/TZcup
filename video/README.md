@@ -15,7 +15,7 @@
 
 ## 交付
 
-- `video/final/TZcup_5min_video.mp4`：1920x1080、30 fps、H.264、AAC、内嵌中文字幕轨、300.000 s。
+- `video/final/TZcup_5min_video.mp4`：1920x1080、恒定 30 fps（9000 帧）、H.264、AAC、内嵌中文字幕轨、300.000 s。
 - `video/final/TZcup_5min_video_silent.mp4`：无音轨母版。
 - `video/audio/narration.mp3`：中文旁白。
 - `video/subtitles/zh-CN.srt`：逐句中文字幕。

@@ -6,6 +6,7 @@
   "width": 1920,
   "height": 1080,
   "frame_rate": "30/1",
+  "frame_count": 9000,
   "video_codec": "h264",
   "audio_codec": "aac",
   "subtitle_codec": "mov_text",
@@ -38,13 +39,13 @@
     },
     {
       "path": "video/final/TZcup_5min_video_silent.mp4",
-      "bytes": 21898136,
-      "sha256": "c2c950b9fdb244977650c62eaa1a8b4571cbf120adea587db6bfed9710982443"
+      "bytes": 21731939,
+      "sha256": "8122f1f30e7f65670ac01f934d9aa8f83818f8e50972f1295ce04098a043c686"
     },
     {
       "path": "video/final/TZcup_5min_video.mp4",
-      "bytes": 17415711,
-      "sha256": "4142f54b16897273bdb7c367190329815ee5546256f8fcfc73371183eec91c21"
+      "bytes": 26137698,
+      "sha256": "631c2cfbf0e459bbcf74d7c3f9ddb6c1fc5a6519dbb6794bd4a6ea148d94e097"
     }
   ]
 }

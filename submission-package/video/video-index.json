@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "artifact_id": "tzcup-day1-modular-demo-video",
+  "status": "DELIVERED_MODULAR_DEMO",
+  "official_full_mission_pass": false,
+  "modular_composite_demo": true,
+  "same_continuous_mission": false,
+  "official_item": {
+    "id": "COMP-DEMO",
+    "item": "演示视频清晰流畅",
+    "max_points": 4,
+    "status": "DELIVERED_MODULAR_DEMO",
+    "recommended_points_range": [
+      2,
+      3
+    ],
+    "official_points_claimed": 0.0,
+    "rationale": "The package satisfies the 5-10 minute media-format and narration/subtitle requirements, but the reel combines successful module clips rather than one continuous mission capture."
+  },
+  "media_contract": {
+    "duration_s": 300.0,
+    "width": 1920,
+    "height": 1080,
+    "frame_rate": "30/1",
+    "average_frame_rate": "30/1",
+    "frame_count": 9000,
+    "video_codec": "h264",
+    "audio_codec": "aac",
+    "subtitle_codec": "mov_text",
+    "sidecar_subtitle_cues": 35,
+    "narration_language": "zh-CN",
+    "subtitle_language": "zh-CN"
+  },
+  "source": {
+    "branch": "codex/day1-video-final",
+    "base_video_commit": "e6caf27",
+    "assembly_script": "../../scripts/assemble_day1_video_final.ps1",
+    "media_repair": "Explicit concat filter and constant-frame-rate encode replace mixed-timebase stream copy; the final master is 9000 frames at 30 fps."
+  },
+  "files": [
+    {
+      "path": "final/TZcup_5min_video.mp4",
+      "role": "final_master_with_narration_and_embedded_subtitles",
+      "bytes": 26137698,
+      "sha256": "631c2cfbf0e459bbcf74d7c3f9ddb6c1fc5a6519dbb6794bd4a6ea148d94e097"
+    },
+    {
+      "path": "final/TZcup_5min_video_silent.mp4",
+      "role": "silent_video_master",
+      "bytes": 21731939,
+      "sha256": "8122f1f30e7f65670ac01f934d9aa8f83818f8e50972f1295ce04098a043c686"
+    },
+    {
+      "path": "audio/narration.mp3",
+      "role": "chinese_narration",
+      "bytes": 7201196,
+      "sha256": "6a1cadd8f497f789e87e5e671be002ccd8b4e2d9717bfff431589007ec823468"
+    },
+    {
+      "path": "audio/narration-script.md",
+      "role": "narration_and_shot_script",
+      "bytes": 9401,
+      "sha256": "3a10cc72de3cc22e9b0f4440d96142a953a876ffdbecf93b8f4c300e7255d070"
+    },
+    {
+      "path": "subtitles/zh-CN.srt",
+      "role": "sidecar_chinese_subtitles",
+      "bytes": 3546,
+      "sha256": "0424580e1a623bd41fa00dde57a036dbb66baa9071fea5ec7f87e4094d1973a0"
+    },
+    {
+      "path": "chapters/chapters.json",
+      "role": "chapter_timeline",
+      "bytes": 1916,
+      "sha256": "60e42bb4ea0fbf1145f41a312fca3d5dabdc4447d04201b3c74dd57d8aeb14eb"
+    },
+    {
+      "path": "final/manifest.json",
+      "role": "build_manifest",
+      "bytes": 1502,
+      "sha256": "ca93023b16098c956c19ab463e2c24af10756d3d62d69eeec23e772ebbe42aae"
+    },
+    {
+      "path": "final/ffprobe.json",
+      "role": "media_probe",
+      "bytes": 5833,
+      "sha256": "dd45f90158f04db300dbb48f52ddca7f7a61925036790c65e4cb0fa74d355dd5"
+    },
+    {
+      "path": "视频索引.md",
+      "role": "human_readable_index",
+      "bytes": 2238,
+      "sha256": "bbf93df364c86e0f7f0cefc0e1a5d29ee183ce08b18d6f160a285e1eb4c69ae2"
+    },
+    {
+      "path": "一页说明.md",
+      "role": "score_boundary_brief",
+      "bytes": 2013,
+      "sha256": "5c2fe42bb49ad5e2114d7f4cd573699b778a39350138ae2ea9488e7e4561e422"
+    },
+    {
+      "path": "tools/validate_video_package.py",
+      "role": "verification_tool",
+      "bytes": 11980,
+      "sha256": "3c74271ca5d57b20ac9e0e00836760d5c79fc52bc5e690c7edcc6271f84f8826"
+    }
+  ],
+  "verification": {
+    "command": "py -3 tools\\validate_video_package.py --write",
+    "report": "validation/video-package-validation.json",
+    "checks": [
+      "paths_sizes_hashes",
+      "json_parse",
+      "srt_and_embedded_subtitles",
+      "ffprobe_media_contract",
+      "full_decode",
+      "presentation_forbidden_terms"
+    ]
+  },
+  "claim_boundary": "Modular composite demonstration only; it is not a single continuous mission and does not establish official full-mission, live-SLAM, avoidance-rate, board-perception or vehicle acceptance.",
+  "cannot_claim": [
+    "official full-mission PASS",
+    "all footage belongs to one continuous run",
+    "official 20000 m2 live SLAM",
+    "official avoidance >=95 percent",
+    "physical vehicle validation"
+  ]
+}

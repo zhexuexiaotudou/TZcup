@@ -1,2 +1,5 @@
 # Preserve copied evidence bytes, including original line endings and trailing spaces.
 evidence/** -text
+
+# Preserve packaged video deliverables byte-for-byte, including sidecar text assets.
+video/** -text
