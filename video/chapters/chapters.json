@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "duration_sec": 300,
+  "chapters": [
+    {
+      "number": "00",
+      "start_sec": 0,
+      "end_sec": 12,
+      "title": "国产系统无人清扫车",
+      "subtitle": "感知 · 机械臂 · 清扫一体化",
+      "source_kind": "标题卡"
+    },
+    {
+      "number": "01",
+      "start_sec": 12,
+      "end_sec": 60,
+      "title": "整车建模",
+      "subtitle": "结构集成 · 模块协同",
+      "source_kind": "模块特写"
+    },
+    {
+      "number": "02",
+      "start_sec": 60,
+      "end_sec": 95,
+      "title": "基础运动",
+      "subtitle": "四轮驱动 · 路径跟踪",
+      "source_kind": "成果演示"
+    },
+    {
+      "number": "03",
+      "start_sec": 95,
+      "end_sec": 130,
+      "title": "机械臂抓取",
+      "subtitle": "对准 · 夹持 · 入箱",
+      "source_kind": "模块特写"
+    },
+    {
+      "number": "04",
+      "start_sec": 130,
+      "end_sec": 180,
+      "title": "感知联动",
+      "subtitle": "识别 · 接近 · 抓取 · 收纳",
+      "source_kind": "成果演示"
+    },
+    {
+      "number": "05",
+      "start_sec": 180,
+      "end_sec": 220,
+      "title": "水渍清洁",
+      "subtitle": "干湿协同 · 地面恢复",
+      "source_kind": "成果演示"
+    },
+    {
+      "number": "06",
+      "start_sec": 220,
+      "end_sec": 260,
+      "title": "环境建图",
+      "subtitle": "约2.24万平方米 · 0.05米分辨率",
+      "source_kind": "成果画面"
+    },
+    {
+      "number": "07",
+      "start_sec": 260,
+      "end_sec": 290,
+      "title": "连续清扫",
+      "subtitle": "600毫米清除带 · 0.489秒仿真急停",
+      "source_kind": "成果演示"
+    },
+    {
+      "number": "08",
+      "start_sec": 290,
+      "end_sec": 300,
+      "title": "全系统作业",
+      "subtitle": "建模 · 感知 · 抓取 · 清扫一体化",
+      "source_kind": "标题卡"
+    }
+  ]
+}

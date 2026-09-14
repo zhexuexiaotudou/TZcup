@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "status": "PASS",
+  "text": {
+    "cue_count": 35,
+    "first_cue_start": "00:00:00,000",
+    "last_cue_end": "00:05:00,000",
+    "forbidden_term_hits": []
+  },
+  "audio": {
+    "wav": {
+      "codec": "pcm_s16le",
+      "sample_rate": 48000,
+      "channels": 2,
+      "duration_sec": 300.0,
+      "size_bytes": 57600078
+    },
+    "mp3": {
+      "codec": "mp3",
+      "sample_rate": 48000,
+      "channels": 2,
+      "duration_sec": 300.0,
+      "size_bytes": 7201196
+    },
+    "integrated_lufs": -16.96,
+    "true_peak_dbtp": -1.49,
+    "loudness_range_lu": 8.0,
+    "silence": {
+      "threshold_db": -45.0,
+      "minimum_duration_sec": 0.6,
+      "detected_count": 36,
+      "longest_sec": 7.316229
+    }
+  }
+}

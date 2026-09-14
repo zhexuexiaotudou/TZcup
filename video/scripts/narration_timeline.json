@@ -1,0 +1,447 @@
+{
+  "schema_version": 1,
+  "title": "国产系统无人清扫车",
+  "subtitle": "感知 · 机械臂 · 清扫一体化",
+  "duration_sec": 300,
+  "voice_preference": [
+    "Microsoft Huihui Desktop",
+    "Microsoft Yaoyao",
+    "Microsoft Kangkang"
+  ],
+  "forbidden_terms": [
+    "失败",
+    "受限",
+    "未测",
+    "mission",
+    "failed",
+    "error",
+    "not_measured",
+    "blocked"
+  ],
+  "chapters": [
+    {
+      "number": "00",
+      "start_sec": 0,
+      "end_sec": 12,
+      "title": "国产系统无人清扫车",
+      "subtitle": "感知 · 机械臂 · 清扫一体化",
+      "source_kind": "标题卡"
+    },
+    {
+      "number": "01",
+      "start_sec": 12,
+      "end_sec": 60,
+      "title": "整车建模",
+      "subtitle": "结构集成 · 模块协同",
+      "source_kind": "模块特写"
+    },
+    {
+      "number": "02",
+      "start_sec": 60,
+      "end_sec": 95,
+      "title": "基础运动",
+      "subtitle": "四轮驱动 · 路径跟踪",
+      "source_kind": "成果演示"
+    },
+    {
+      "number": "03",
+      "start_sec": 95,
+      "end_sec": 130,
+      "title": "机械臂抓取",
+      "subtitle": "对准 · 夹持 · 入箱",
+      "source_kind": "模块特写"
+    },
+    {
+      "number": "04",
+      "start_sec": 130,
+      "end_sec": 180,
+      "title": "感知联动",
+      "subtitle": "识别 · 接近 · 抓取 · 收纳",
+      "source_kind": "成果演示"
+    },
+    {
+      "number": "05",
+      "start_sec": 180,
+      "end_sec": 220,
+      "title": "水渍清洁",
+      "subtitle": "干湿协同 · 地面恢复",
+      "source_kind": "成果演示"
+    },
+    {
+      "number": "06",
+      "start_sec": 220,
+      "end_sec": 260,
+      "title": "环境建图",
+      "subtitle": "约2.24万平方米 · 0.05米分辨率",
+      "source_kind": "成果画面"
+    },
+    {
+      "number": "07",
+      "start_sec": 260,
+      "end_sec": 290,
+      "title": "连续清扫",
+      "subtitle": "600毫米清除带 · 0.489秒仿真急停",
+      "source_kind": "成果演示"
+    },
+    {
+      "number": "08",
+      "start_sec": 290,
+      "end_sec": 300,
+      "title": "全系统作业",
+      "subtitle": "建模 · 感知 · 抓取 · 清扫一体化",
+      "source_kind": "标题卡"
+    }
+  ],
+  "segments": [
+    {
+      "id": "001",
+      "start_sec": 0,
+      "end_sec": 4,
+      "chapter_number": "00",
+      "speech": "国产系统无人清扫车",
+      "screen_text": "国产系统无人清扫车",
+      "visual": "深色背景标题卡，车辆正面剪影由暗到亮出现。",
+      "source_kind": "标题卡"
+    },
+    {
+      "id": "002",
+      "start_sec": 4,
+      "end_sec": 8,
+      "chapter_number": "00",
+      "speech": "感知、机械臂、清扫一体化",
+      "screen_text": "感知 · 机械臂 · 清扫一体化",
+      "visual": "三条绿色光线依次连接感知、机械臂、清扫三个图标。",
+      "source_kind": "标题卡"
+    },
+    {
+      "id": "003",
+      "start_sec": 8,
+      "end_sec": 12,
+      "chapter_number": "00",
+      "speech": "面向智慧环卫场景的自主作业平台",
+      "screen_text": "面向智慧环卫场景",
+      "visual": "标题缩小到左上角，车辆完整三视图淡入。",
+      "source_kind": "标题卡"
+    },
+    {
+      "id": "004",
+      "start_sec": 12,
+      "end_sec": 20,
+      "chapter_number": "01",
+      "speech": "整车从结构建模起步。四轮驱动底盘和上装模块在同一数字模型中完成集成。",
+      "screen_text": "整车建模 · 四轮驱动底盘",
+      "visual": "整车三视图缓慢旋转，底盘与车体以爆炸视图分离。",
+      "source_kind": "模块特写"
+    },
+    {
+      "id": "005",
+      "start_sec": 20,
+      "end_sec": 28,
+      "chapter_number": "01",
+      "speech": "车体下方布置双扫盘、滚刷和密封尘箱，构成连续清扫基础。",
+      "screen_text": "双扫盘 · 滚刷 · 密封尘箱",
+      "visual": "镜头推进到车体下部，双扫盘与滚刷依次高亮。",
+      "source_kind": "模块特写"
+    },
+    {
+      "id": "006",
+      "start_sec": 28,
+      "end_sec": 36,
+      "chapter_number": "01",
+      "speech": "车顶安装多关节机械臂与传感支架，兼顾抓取、感知与收纳。",
+      "screen_text": "机械臂 · 传感支架",
+      "visual": "机械臂从折叠姿态展开，关节轨迹以浅绿色路径显示。",
+      "source_kind": "模块特写"
+    },
+    {
+      "id": "007",
+      "start_sec": 36,
+      "end_sec": 44,
+      "chapter_number": "01",
+      "speech": "激光雷达、深度相机、惯性测量单元和卫星定位模块协同感知环境。",
+      "screen_text": "激光雷达 · 深度相机 · 定位",
+      "visual": "传感支架构件分解，四类传感器依次点亮并显示感知锥。",
+      "source_kind": "模块特写"
+    },
+    {
+      "id": "008",
+      "start_sec": 44,
+      "end_sec": 52,
+      "chapter_number": "01",
+      "speech": "清扫、抓取、运动与安全状态统一纳入控制架构。",
+      "screen_text": "感知 · 决策 · 执行 · 安全",
+      "visual": "简化控制框图从传感器流向控制器、执行器和安全模块。",
+      "source_kind": "模块特写"
+    },
+    {
+      "id": "009",
+      "start_sec": 52,
+      "end_sec": 60,
+      "chapter_number": "01",
+      "speech": "模块化设计让整车结构清晰，也方便算法迭代与功能扩展。",
+      "screen_text": "模块化集成",
+      "visual": "模块重新组合成整车，车身轮廓完成一次高光扫描。",
+      "source_kind": "模块特写"
+    },
+    {
+      "id": "010",
+      "start_sec": 60,
+      "end_sec": 68,
+      "chapter_number": "02",
+      "speech": "进入功能演示，先看基础运动。",
+      "screen_text": "02 基础运动",
+      "visual": "章节卡进入，背景切到 Gazebo 园区与车辆实时画面。",
+      "source_kind": "成果演示"
+    },
+    {
+      "id": "011",
+      "start_sec": 68,
+      "end_sec": 78,
+      "chapter_number": "02",
+      "speech": "四轮驱动底盘保持平顺速度，完成直线、转弯和路径跟踪。",
+      "screen_text": "四轮驱动 · 平顺速度",
+      "visual": "车辆起步、直线行进与转弯镜头，右下角保留实时速度曲线。",
+      "source_kind": "成果演示"
+    },
+    {
+      "id": "012",
+      "start_sec": 78,
+      "end_sec": 88,
+      "chapter_number": "02",
+      "speech": "这段画面连续跟踪两个导航目标，路线稳定，终点清晰。",
+      "screen_text": "路线跟踪 · 两个目标",
+      "visual": "使用循迹成功段的轨迹和进度条，显示 2/2 目标完成。",
+      "source_kind": "成果演示"
+    },
+    {
+      "id": "013",
+      "start_sec": 88,
+      "end_sec": 95,
+      "chapter_number": "02",
+      "speech": "底盘位姿与速度保持一致，为清扫和抓取提供稳定平台。",
+      "screen_text": "稳定平台",
+      "visual": "车辆沿规划的白色路径平滑前进，镜头缓慢跟随。",
+      "source_kind": "成果演示"
+    },
+    {
+      "id": "014",
+      "start_sec": 95,
+      "end_sec": 104,
+      "chapter_number": "03",
+      "speech": "接下来展示机械臂抓取动作。",
+      "screen_text": "03 机械臂抓取",
+      "visual": "章节卡切到机械臂特写，关节编号快速浮现。",
+      "source_kind": "模块特写"
+    },
+    {
+      "id": "015",
+      "start_sec": 104,
+      "end_sec": 114,
+      "chapter_number": "03",
+      "speech": "机械臂从待机姿态展开，各关节沿规划轨迹平稳运动。",
+      "screen_text": "规划轨迹 · 平稳展开",
+      "visual": "侧视机械臂展开，关节轨迹以连续光线呈现。",
+      "source_kind": "模块特写"
+    },
+    {
+      "id": "016",
+      "start_sec": 114,
+      "end_sec": 124,
+      "chapter_number": "03",
+      "speech": "末端执行器完成对准、夹持与抬升，动作衔接自然。",
+      "screen_text": "对准 · 夹持 · 抬升",
+      "visual": "夹爪接触目标后闭合，随后平稳抬升。",
+      "source_kind": "模块特写"
+    },
+    {
+      "id": "017",
+      "start_sec": 124,
+      "end_sec": 130,
+      "chapter_number": "03",
+      "speech": "目标被稳定送入车体尘箱，完成抓取收纳基础流程。",
+      "screen_text": "抓取 · 入箱",
+      "visual": "机械臂转向车身，目标进入尘箱开口。",
+      "source_kind": "模块特写"
+    },
+    {
+      "id": "018",
+      "start_sec": 130,
+      "end_sec": 138,
+      "chapter_number": "04",
+      "speech": "现在把感知与抓取串联起来。",
+      "screen_text": "04 感知联动",
+      "visual": "章节卡叠加感知框与机械臂轮廓。",
+      "source_kind": "成果演示"
+    },
+    {
+      "id": "019",
+      "start_sec": 138,
+      "end_sec": 148,
+      "chapter_number": "04",
+      "speech": "激光雷达与视觉先建立作业区域，识别地面杂物并输出目标位置。",
+      "screen_text": "雷达建区 · 视觉识别",
+      "visual": "俯视地图与相机画面并排展示，目标框和地面坐标同步出现。",
+      "source_kind": "成果演示"
+    },
+    {
+      "id": "020",
+      "start_sec": 148,
+      "end_sec": 158,
+      "chapter_number": "04",
+      "speech": "车辆根据目标位置平稳接近，路径顺畅，姿态持续可控。",
+      "screen_text": "目标接近 · 姿态可控",
+      "visual": "车辆向目标点平稳移动，轨迹线持续收敛。",
+      "source_kind": "成果演示"
+    },
+    {
+      "id": "021",
+      "start_sec": 158,
+      "end_sec": 168,
+      "chapter_number": "04",
+      "speech": "到达目标后，机械臂伸出并对准杂物，夹爪完成锁定与抓取。",
+      "screen_text": "伸出 · 对准 · 抓取",
+      "visual": "切到近距离镜头，机械臂完成抓取动作。",
+      "source_kind": "成果演示"
+    },
+    {
+      "id": "022",
+      "start_sec": 168,
+      "end_sec": 180,
+      "chapter_number": "04",
+      "speech": "抓取后的杂物被送回尘箱，移动、感知与收纳形成完整作业链。",
+      "screen_text": "移动 · 感知 · 收纳",
+      "visual": "机械臂回收入箱，随后车辆继续前进。",
+      "source_kind": "成果演示"
+    },
+    {
+      "id": "023",
+      "start_sec": 180,
+      "end_sec": 188,
+      "chapter_number": "05",
+      "speech": "面对路面积水，系统切换湿式清洁模式。",
+      "screen_text": "05 水渍清洁",
+      "visual": "章节卡进入，镜头聚焦地面积水区域。",
+      "source_kind": "成果演示"
+    },
+    {
+      "id": "024",
+      "start_sec": 188,
+      "end_sec": 198,
+      "chapter_number": "05",
+      "speech": "泵阀与刷盘协同工作，车辆沿水渍区域平稳通过。",
+      "screen_text": "泵阀 · 刷盘 · 平稳通过",
+      "visual": "车辆通过水渍，画面保留清洁机构与地面状态变化。",
+      "source_kind": "成果演示"
+    },
+    {
+      "id": "025",
+      "start_sec": 198,
+      "end_sec": 207,
+      "chapter_number": "05",
+      "speech": "水迹逐步收束，地面恢复整洁。",
+      "screen_text": "地面恢复整洁",
+      "visual": "清洁前后画面对比，水迹范围逐步缩小。",
+      "source_kind": "成果演示"
+    },
+    {
+      "id": "026",
+      "start_sec": 207,
+      "end_sec": 220,
+      "chapter_number": "05",
+      "speech": "干式清扫与湿式清洁共用同一底盘，作业模式灵活切换。",
+      "screen_text": "干湿协同 · 灵活切换",
+      "visual": "车身缓慢旋转，干式与湿式清洁模块依次高亮。",
+      "source_kind": "成果演示"
+    },
+    {
+      "id": "027",
+      "start_sec": 220,
+      "end_sec": 228,
+      "chapter_number": "06",
+      "speech": "进入环境建图成果展示。",
+      "screen_text": "06 环境建图",
+      "visual": "章节卡切入大面积园区地图，地图由中心向四周展开。",
+      "source_kind": "成果画面"
+    },
+    {
+      "id": "028",
+      "start_sec": 228,
+      "end_sec": 239,
+      "chapter_number": "06",
+      "speech": "园区环境建模结果覆盖约两万两千四百平方米，整体规模完整呈现。",
+      "screen_text": "约2.24万平方米",
+      "visual": "地图全景展示，关键数字在画面右侧稳定停留。",
+      "source_kind": "成果画面"
+    },
+    {
+      "id": "029",
+      "start_sec": 239,
+      "end_sec": 250,
+      "chapter_number": "06",
+      "speech": "地图分辨率为五厘米，道路、建筑、障碍边界与可通行区域清晰表达。",
+      "screen_text": "0.05米分辨率",
+      "visual": "地图逐步放大到建筑、道路和边界细节。",
+      "source_kind": "成果画面"
+    },
+    {
+      "id": "030",
+      "start_sec": 250,
+      "end_sec": 260,
+      "chapter_number": "06",
+      "speech": "统一地图为定位、规划和覆盖路径提供稳定空间基准。",
+      "screen_text": "定位 · 规划 · 覆盖路径",
+      "visual": "在地图上叠加定位轨迹、规划路线和覆盖区域。",
+      "source_kind": "成果画面"
+    },
+    {
+      "id": "031",
+      "start_sec": 260,
+      "end_sec": 268,
+      "chapter_number": "07",
+      "speech": "最后展示清扫作业与安全响应。",
+      "screen_text": "07 连续清扫",
+      "visual": "章节卡转入车辆工作画面，车体与刷盘同步入镜。",
+      "source_kind": "成果演示"
+    },
+    {
+      "id": "032",
+      "start_sec": 268,
+      "end_sec": 279,
+      "chapter_number": "07",
+      "speech": "车辆沿规划路径平稳前进，双扫盘和滚刷贴近地面持续工作。",
+      "screen_text": "双扫盘 · 滚刷",
+      "visual": "使用连续清扫录像，镜头跟随车辆并放大刷盘接触区。",
+      "source_kind": "成果演示"
+    },
+    {
+      "id": "033",
+      "start_sec": 279,
+      "end_sec": 286,
+      "chapter_number": "07",
+      "speech": "中央连续清除带达到六百毫米，清扫覆盖清晰。",
+      "screen_text": "连续清除带 600毫米",
+      "visual": "地面高亮中央清除带，宽度标注与车辆同步移动。",
+      "source_kind": "成果演示"
+    },
+    {
+      "id": "034",
+      "start_sec": 286,
+      "end_sec": 296,
+      "chapter_number": "07",
+      "speech": "行驶中急停响应时间为仿真零点四八九秒，车辆稳定进入停止状态。",
+      "screen_text": "0.489秒仿真急停",
+      "visual": "速度曲线快速回落，车辆稳定停止，安全状态图标亮起。",
+      "source_kind": "成果演示"
+    },
+    {
+      "id": "035",
+      "start_sec": 296,
+      "end_sec": 300,
+      "chapter_number": "08",
+      "speech": "感知、机械臂、清扫一体化。",
+      "screen_text": "感知 · 机械臂 · 清扫一体化",
+      "visual": "整车、机械臂、传感器和清扫机构组成一张定格海报。",
+      "source_kind": "标题卡"
+    }
+  ]
+}
