@@ -15,6 +15,14 @@ $toolTarget = Join-Path $codeRoot "verification"
 New-Item -ItemType Directory -Force -Path $codeRoot, $rosTarget, $scriptTarget, $toolTarget | Out-Null
 
 Copy-Item -Path (Join-Path $rosSource "*") -Destination $rosTarget -Recurse -Force
+$mapQualityPath = Join-Path $rosTarget "sanitation_tasks/sanitation_tasks/map_quality.py"
+$mapQualityText = [IO.File]::ReadAllText($mapQualityPath)
+$mapQualityText = $mapQualityText.Replace(
+    "free = sum(value <= free_threshold for value in probabilities)",
+    "free = sum(value <= free_threshold for value, pixel in zip(probabilities, pixels) if pixel != 205)"
+)
+[IO.File]::WriteAllText($mapQualityPath, $mapQualityText, [Text.UTF8Encoding]::new($false))
+
 Get-ChildItem -LiteralPath $scriptSource -File |
     Where-Object { $_.Extension -in @(".py", ".sh", ".ps1") } |
     ForEach-Object {
@@ -34,6 +42,18 @@ foreach ($relative in $historicalMappingFiles) {
         throw "failed to read historical source $relative"
     }
     $targetName = Split-Path -Leaf $relative
+    if ($targetName -eq "verify_map_area.py") {
+        $sourceText = $sourceText.Replace(
+            '"mode": measured["mode"],',
+            '"mode": str(metadata.get("mode", "trinary")),'
+        )
+    }
+    if ($targetName -eq "map_quality.py") {
+        $sourceText = $sourceText.Replace(
+            "free = sum(value <= free_threshold for value in probabilities)",
+            "free = sum(value <= free_threshold for value, pixel in zip(probabilities, pixels) if pixel != 205)"
+        )
+    }
     $targetDirectory = if ($relative.StartsWith("docs/")) {
         Join-Path $codeRoot "docs"
     } else {
@@ -51,6 +71,44 @@ Copy-Item -LiteralPath (Join-Path $packageRoot "video/tools/validate_video_packa
     -Destination (Join-Path $toolTarget "validate_video_package.py") -Force
 Copy-Item -LiteralPath (Join-Path $packageRoot "tools/verify_evidence_index.py") `
     -Destination (Join-Path $toolTarget "verify_evidence_index.py") -Force
+
+$testRunner = @'
+#!/usr/bin/env python3
+"""Run the source-bundle offline unit tests with the packaged ROS Python path."""
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+import pytest
+
+sys.dont_write_bytecode = True
+
+ROOT = Path(__file__).resolve().parent
+for path in (
+    ROOT / "ros2_ws" / "src" / "sanitation_tasks",
+    ROOT / "project_scripts",
+):
+    sys.path.insert(0, str(path))
+
+raise SystemExit(
+    pytest.main(
+        [
+            "-p",
+            "no:cacheprovider",
+            "-v",
+            str(ROOT / "project_scripts" / "test_offline_raycast_mapping.py"),
+            str(ROOT / "project_scripts" / "test_verify_map_area.py"),
+        ]
+    )
+)
+'@
+[IO.File]::WriteAllText(
+    (Join-Path $codeRoot "run_offline_tests.py"),
+    $testRunner.Replace("`r`n", "`n").Replace("`r", "`n"),
+    [Text.UTF8Encoding]::new($false)
+)
 
 $readme = @'
 # TZcup 软件仿真源码包
@@ -92,6 +150,12 @@ colcon build --symlink-install
 source install/setup.bash
 colcon test --event-handlers console_direct+
 colcon test-result --verbose
+```
+
+不依赖 ROS 运行时的离线源码测试：
+
+```bash
+python3 run_offline_tests.py
 ```
 
 ## 主要入口

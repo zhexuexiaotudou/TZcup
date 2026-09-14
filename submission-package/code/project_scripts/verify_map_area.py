@@ -104,7 +104,7 @@ def assess_map(
         "map_image": _path_label(image_path, root),
         "map_yaml_sha256": _sha256(yaml_path),
         "map_image_sha256": _sha256(image_path),
-        "mode": measured["mode"],
+        "mode": str(metadata.get("mode", "trinary")),
         "negate": int(metadata.get("negate", 0)),
         "resolution_m": measured["resolution_m"],
         "occupied_thresh": float(metadata.get("occupied_thresh", 0.65)),

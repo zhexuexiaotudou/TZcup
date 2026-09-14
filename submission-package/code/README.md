@@ -39,6 +39,12 @@ colcon test --event-handlers console_direct+
 colcon test-result --verbose
 ```
 
+不依赖 ROS 运行时的离线源码测试：
+
+```bash
+python3 run_offline_tests.py
+```
+
 ## 主要入口
 
 ```bash
