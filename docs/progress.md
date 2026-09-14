@@ -1,5 +1,25 @@
 # 项目推进记录
 
+## 2026-09-14: runtime binding repaired; one live smoke trial reached Gazebo
+
+- Run 17c failed at the runtime gate because the RUNNING session lacked
+  `runtime_closure_binding.runtime_install_root`; `verify-recorded` produced the
+  verified closure without that field while the gate added it before strict
+  dictionary comparison. Commit `ff7375b` now records the canonical install
+  root directly in `verify_recorded_manifest()`, with a focused regression.
+- Fresh source/closure/session preparation and the preflight runtime gate
+  passed. The one `FUNCTIONAL_SMOKE_NOT_OFFICIAL_95` trial `run-18b` used ROS
+  domain `215` and a fresh partition/XDG/run root.
+- Gazebo started and ran to timeout. The retained evaluator result is numerator
+  `0`, denominator `1`, `SINGLE_RUN_EVIDENCE_INVALID`, with zero physical
+  collisions but no selected obstacle interaction, no minimum-clearance
+  observation, no qualifying reroute, no collision-monitor intervention, and
+  no completed goal/recovery. Official `>=95%` remains `NOT_MEASURED`.
+- The final compact archive is
+  `artifacts/day1_dynamic_avoidance_functional_smoke_20260914/remote/run18b-evidence-final.tar.gz`
+  with SHA-256
+  `36ffcaf9ad97bee15db0534e0e3b97d019045722d57ad3358a56bb5c4be5ab1a`.
+
 ## 2026-09-14: 6 m functional-smoke route materialized; bounded run blocked pre-Gazebo
 
 - The 6.0 m smoke route is now explicitly one mission-corridor crossing while

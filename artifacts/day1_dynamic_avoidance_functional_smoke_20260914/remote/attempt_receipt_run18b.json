@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "attempt_id": "day1-dynamic-avoidance-functional-smoke-20260914-18b",
+  "mode": "FUNCTIONAL_SMOKE_NOT_OFFICIAL_95",
+  "requested_code_commit": "ff7375b",
+  "source_base_commit": "1a211400ca2dc4d6007e4fd838e1f2835cfd1dc8",
+  "source_overlay_freeze_sha256": "286601b9e0a83e65e807048cc79a1d3abcffe0e9021f03cf7893608f3c7893e8",
+  "closure_manifest_sha256": "9224b66a38f8098a0d5d3b9c9444606c53334929a1ca9baf5060819ace3a5270",
+  "closure_sha256": "1783c53d352464642d14144b9ea1065e032a535f91aa0d4a3a56d67545426052",
+  "runtime_install_root": "/workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install",
+  "acceptance_session_manifest_sha256": "6f4ab2d0fabfed0afc44f453ebc2762ec2d666cd295caa7aa8e6d0f1175da1c8",
+  "preflight_binding_sha256": "f77bc10d94d0496186ba193f0bfb98cd73581618b4b38dd8b4eb5e662f0d43a9",
+  "ros_domain_id": 215,
+  "gz_partition": "tzcup_dynamic_avoidance_smoke_20260914_18b",
+  "xdg_runtime_dir": "/tmp/tzcup_dynamic_avoidance_smoke_20260914_18b_xdg",
+  "run_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-smoke-20260914-18b/run-18b",
+  "gazebo_started": true,
+  "dispatch_exit_code": 2,
+  "evaluator": {
+    "execution": "manual_offline_after_runner_timeout",
+    "exit_code": 3,
+    "status": "SINGLE_RUN_EVIDENCE_INVALID",
+    "single_run_evaluation_sha256": "2216ba6ad7fc394fdc0d42508eaa00ec85ceb3a654bee8f9d9aa84de684d3bfb",
+    "single_run_numerator": 0,
+    "single_run_denominator": 1,
+    "observed_fraction": 0.0,
+    "functional_success": false
+  },
+  "official_metric": {
+    "metric_id": "dynamic_avoidance_success_rate",
+    "measured_value": null,
+    "status": "NOT_MEASURED",
+    "threshold": 0.95
+  },
+  "preserved_evidence": {
+    "command_chain": {
+      "present": true,
+      "chain": [
+        "/cmd_vel_nav",
+        "/cmd_vel_smoothed",
+        "/cmd_vel_gate",
+        "/base_controller/cmd_vel"
+      ],
+      "sample_counts": {
+        "/cmd_vel_nav": 249,
+        "/cmd_vel_smoothed": 1485,
+        "/cmd_vel_gate": 284,
+        "/base_controller/cmd_vel": 2220
+      }
+    },
+    "contacts": {
+      "present": true,
+      "front_bumper_samples": 2215,
+      "rear_bumper_samples": 2215,
+      "physical_collision_count": 0
+    },
+    "clearance": {
+      "present": true,
+      "selected_interaction_candidate_count": 0,
+      "minimum_surface_gap_m": null,
+      "minimum_surface_gap_threshold_m": 0.12,
+      "minimum_distance_satisfied": false
+    },
+    "reroute": {
+      "present": true,
+      "maximum_cross_track_detour_m": 0.056369390804425275,
+      "required_minimum_detour_m": 0.5,
+      "collision_monitor_intervention_count": 0,
+      "reroute_or_wait_observed": false
+    },
+    "goal_recovery": {
+      "present": true,
+      "goal_accepted": true,
+      "nav2_goal_succeeded": false,
+      "nav2_goal_status": null,
+      "completion_reason": "timeout",
+      "maximum_recovery_count": 0,
+      "task_recovered_after_obstacle": false
+    },
+    "motion": {
+      "physical_travel_distance_m": 2.0425036993526775,
+      "map_pose_sample_count": 91,
+      "odom_pose_sample_count": 80,
+      "zero_geofence_violations": true
+    }
+  },
+  "resource_release": {
+    "gpu_utilization_percent": 0,
+    "gpu_memory_used_mib": 1,
+    "gpu_memory_total_mib": 12288,
+    "formal_gazebo_lock_holders": [],
+    "runtime_processes_remaining_excluding_sampler": 0
+  },
+  "evidence_archive": "run18b-evidence-final.tar.gz",
+  "evidence_archive_sha256": "36ffcaf9ad97bee15db0534e0e3b97d019045722d57ad3358a56bb5c4be5ab1a",
+  "evidence_archive_size_bytes": 764965,
+  "claim_boundary": "This one started smoke run proves only that runtime binding was repaired and that Gazebo executed until timeout. It is not a functional pass, does not preserve a completed goal/recovery, and does not measure the official >=95% rate."
+}

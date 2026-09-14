@@ -266,3 +266,41 @@ and `1 MiB` GPU memory in use. The compact evidence is
 with SHA-256
 `4a8f95d029d19138566d7ccb5402197ba76ac9d5ed30420821596c4874f6e790`.
 Official `>=95%` remains `NOT_MEASURED`.
+
+## Run 18b: binding repair and live smoke outcome
+
+Run 17c reached `formal_runtime_gate_binding.py:94` and failed because the
+RUNNING session copied `verify-recorded` output without
+`runtime_closure_binding.runtime_install_root`, while the gate added that
+canonical field before strict comparison. Commit `ff7375b` now makes
+`verify_recorded_manifest()` return the canonical install root itself, so the
+CLI verification result, session generation, and gate all consume the same
+complete closure object. The focused regression is
+`scripts/test_formal_final_runtime_closure.py::test_recorded_verifier_binds_the_canonical_runtime_install_root`.
+
+The repaired source was prepared as `ff7375b-r2`, with fresh snapshot,
+closure, canonical RUNNING session, and a preflight binding. The preflight
+returned `FORMAL_RUNTIME_GATE_BOUND`, and the session and preflight closure
+bindings matched exactly. The one authorized smoke trial used ROS domain `215`,
+partition `tzcup_dynamic_avoidance_smoke_20260914_18b`, fresh XDG state, and
+run root
+`/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-smoke-20260914-18b/run-18b`.
+
+Gazebo started and the run reached the 120-second task timeout. The retained
+product telemetry contains the full command chain with nonzero samples, front
+and rear contact samples, `91` map-pose samples, and `2.0425 m` of physical
+travel. There were zero physical collisions and zero geofence violations.
+However, no predeclared obstacle interaction candidate was selected, the
+minimum surface gap remained unmeasured, the maximum cross-track detour was
+only `0.0564 m`, collision-monitor interventions were `0`, and Nav2 did not
+reach a terminal success status. The offline evaluator therefore reports
+`SINGLE_RUN_EVIDENCE_INVALID`, numerator `0`, denominator `1`, and observed
+fraction `0.0`.
+
+The final archive is
+`artifacts/day1_dynamic_avoidance_functional_smoke_20260914/remote/run18b-evidence-final.tar.gz`
+with SHA-256
+`36ffcaf9ad97bee15db0534e0e3b97d019045722d57ad3358a56bb5c4be5ab1a`.
+Post-attempt sampling recorded GPU utilization `0%`, GPU memory `1 MiB` of
+`12288 MiB`, no formal-lock holders, and no remaining runtime process.
+Official `>=95%` remains `NOT_MEASURED`.

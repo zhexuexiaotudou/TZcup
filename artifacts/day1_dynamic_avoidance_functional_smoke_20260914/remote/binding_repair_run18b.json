@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "status": "BINDING_REPAIRED_AND_PREFLIGHT_PASSED",
+  "requested_code_commit": "ff7375b",
+  "source_base_commit": "1a211400ca2dc4d6007e4fd838e1f2835cfd1dc8",
+  "binding_fix_patch_sha256": "3a242c28115e61a471a186aee1595d63097ed0eed2ded7dda1630b21ac13cf7f",
+  "stale_field": "runtime_closure_binding.runtime_install_root",
+  "stale_value": null,
+  "required_value": "/workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f/install",
+  "root_cause": "verify-recorded emitted the verified closure without runtime_install_root; a manual session generator copied that object, while formal_runtime_gate_binding added the canonical install root before strict full-dictionary comparison.",
+  "fix": "formal_final_runtime_closure.verify_recorded_manifest now records the canonical runtime_install_root in its verified result, so the CLI verification output, acceptance session, and runtime gate consume the same closure binding.",
+  "focused_tests": {
+    "command": "py -3 -m pytest -q scripts/test_formal_final_runtime_closure.py scripts/test_formal_acceptance_session.py scripts/test_formal_runtime_gate_binding.py",
+    "result": "62 passed, 1 skipped"
+  },
+  "remote_preflight": {
+    "acceptance_session_manifest_sha256": "6f4ab2d0fabfed0afc44f453ebc2762ec2d666cd295caa7aa8e6d0f1175da1c8",
+    "closure_manifest_sha256": "9224b66a38f8098a0d5d3b9c9444606c53334929a1ca9baf5060819ace3a5270",
+    "closure_verification_sha256": "e4173567e878984c134fd931389aeeb11ee466b734f0f87b69cbd3bfe94e5f24",
+    "preflight_binding_sha256": "f77bc10d94d0496186ba193f0bfb98cd73581618b4b38dd8b4eb5e662f0d43a9",
+    "runtime_gate_status": "FORMAL_RUNTIME_GATE_BOUND",
+    "session_closure_equals_preflight_closure": true
+  },
+  "claim_boundary": "This repairs and verifies runtime session/closure binding only. It does not alter route selection, collision definitions, minimum clearance, collision-monitor intervention, reroute, or goal-recovery requirements."
+}
