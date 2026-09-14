@@ -9,6 +9,16 @@
     "status": "NOT_MEASURED",
     "single_run_can_prove_threshold": false
   },
+  "map_source": {
+    "default_mode": "LIVE_SLAM",
+    "offline_mode": "OFFLINE_RAYCAST_MAPPING",
+    "offline_result_label": "OFFLINE_MAP_SOURCE",
+    "offline_source_commit": "4ab39bb839e92fe50e22b1efe3891c5915f39bf0",
+    "offline_source_known_area_m2": 22399.990000000005,
+    "offline_source_resolution_m": 0.05,
+    "offline_source_unknown_fraction": 0.030303463203463204,
+    "offline_mode_does_not_satisfy_live_slam_gate": true
+  },
   "schedule": {
     "seed": 2026091401,
     "nominal_leg_m": 30.0,

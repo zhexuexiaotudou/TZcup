@@ -39,6 +39,9 @@ def _telemetry() -> dict:
                     "scripts/collect_formal_dynamic_environment_runtime.py",
                     "scripts/validate_formal_dynamic_obstacle_avoidance.py",
                     "scripts/generate_formal_dynamic_runtime_build_manifest.py",
+                    "scripts/prepare_offline_raycast_map_runtime.py",
+                    "scripts/evaluate_dynamic_avoidance_single_run.py",
+                    "scripts/run_dynamic_avoidance_single_trial.sh",
                     "scripts/prepare_formal_dynamic_obstacle_schedule.py",
                     "scripts/prepare_formal_dynamic_runtime_world.py",
                     "scripts/run_formal_runtime_isolation.sh",
@@ -162,6 +165,42 @@ def test_missing_saved_map_or_dynamic_interaction_fails_closed() -> None:
     assert report["passed"] is False
     assert "saved_map_lifecycle_artifact_valid" in report["blockers"]
     assert "dynamic_interaction_observed" in report["blockers"]
+
+
+def test_offline_map_source_has_a_separate_labeled_gate() -> None:
+    evidence = {
+        "map_source_mode": "OFFLINE_RAYCAST_MAPPING",
+        "label": "OFFLINE_MAP_SOURCE",
+        "live_slam_claimed": False,
+        "runtime_aligned_to_episode_start": True,
+    }
+    report = evaluate(
+        _telemetry(),
+        saved_map_valid=True,
+        map_source_mode="OFFLINE_RAYCAST_MAPPING",
+        map_source_evidence=evidence,
+    )
+    assert report["status"] == PASSED_STATUS
+    assert report["map_source"]["label"] == "OFFLINE_MAP_SOURCE"
+    assert report["map_source"]["live_slam"] is False
+    assert "saved_map_lifecycle_artifact_valid" not in report["checks"]
+    assert report["checks"]["offline_map_source_labeled_not_live_slam"] is True
+
+
+def test_offline_map_source_requires_explicit_offline_label() -> None:
+    report = evaluate(
+        _telemetry(),
+        saved_map_valid=True,
+        map_source_mode="OFFLINE_RAYCAST_MAPPING",
+        map_source_evidence={
+            "map_source_mode": "OFFLINE_RAYCAST_MAPPING",
+            "label": "LIVE_SLAM",
+            "live_slam_claimed": True,
+            "runtime_aligned_to_episode_start": True,
+        },
+    )
+    assert report["passed"] is False
+    assert "offline_map_source_labeled_not_live_slam" in report["blockers"]
 
 
 def test_missing_frozen_session_fails_closed() -> None:

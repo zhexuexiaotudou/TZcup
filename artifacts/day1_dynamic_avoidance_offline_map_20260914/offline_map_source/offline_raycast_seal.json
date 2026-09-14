@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "mapping_kind": "OFFLINE_RAYCAST_MAPPING",
+  "status": "OFFLINE_RAYCAST_MAPPING_PASS_LIVE_SLAM_NOT_CLAIMED",
+  "manifest_sha256": "ed4e52fe688e3ca41ab0cdc8eda51cad0b60691809085318b31d739c53f3cc49",
+  "occupancy_yaml_sha256": "78f39b80c0ea79f339c0aeac94573454eb49849e47cdbf8c05f903b518e89538",
+  "occupancy_pgm_sha256": "8b74f3688d279007e80a198935b983c09b9ecc2202d1e9636522453344586a63",
+  "source_world_sha256": "8eb1d75f0b610067a0634f7bc86cea3624aec982cc9b803f6888c0da9a999c4a"
+}

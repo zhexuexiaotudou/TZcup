@@ -27,6 +27,11 @@ from sanitation_formal_campus_integration.map_lifecycle_core import (
 from sanitation_formal_campus_integration.nav2_mode_config import (
     configure_collision_monitor_sources,
 )
+from sanitation_formal_campus_integration.offline_map_source import (
+    LIVE_SLAM_MAP_SOURCE,
+    OFFLINE_RAYCAST_MAPPING,
+    validate_offline_raycast_map_source,
+)
 from sanitation_formal_campus_integration.saved_map_coverage_core import (
     DRY_CLEANING_SPEED_PROFILE,
     FORMAL_CLEANING_LANE_SPACING_M,
@@ -43,6 +48,18 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
     mode = context.perform_substitution(LaunchConfiguration("mission_mode"))
     if mode not in {"mapping", "cleaning"}:
         raise RuntimeError("mission_mode must be mapping or cleaning")
+    map_source_mode = context.perform_substitution(
+        LaunchConfiguration("map_source_mode")
+    )
+    if map_source_mode not in {
+        LIVE_SLAM_MAP_SOURCE,
+        OFFLINE_RAYCAST_MAPPING,
+    }:
+        raise RuntimeError(
+            "map_source_mode must be LIVE_SLAM or OFFLINE_RAYCAST_MAPPING"
+        )
+    if mode == "mapping" and map_source_mode != LIVE_SLAM_MAP_SOURCE:
+        raise RuntimeError("mapping mode requires LIVE_SLAM map source")
     candidate_flag = context.perform_substitution(LaunchConfiguration("competition_29m_candidate"))
     if candidate_flag not in {"true", "false"}:
         raise RuntimeError("competition_29m_candidate must be true or false")
@@ -71,10 +88,15 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
     ).resolve()
     contract = load_campus_map_contract(manifest_path)
     if mode == "cleaning":
-        # This launch-time gate prevents AMCL/Nav2 from even starting with an
-        # unqualified, wrong-map or tampered artifact.
-        validate_saved_map_artifact(artifact_root, contract)
-        validate_saved_map_cleaning_consumer_bundle(artifact_root, contract)
+        if map_source_mode == LIVE_SLAM_MAP_SOURCE:
+            # Live cleaning retains the complete first-map lifecycle gate.
+            validate_saved_map_artifact(artifact_root, contract)
+            validate_saved_map_cleaning_consumer_bundle(artifact_root, contract)
+        else:
+            # The offline source is a separately admitted map, never a
+            # substitute for the live-SLAM lifecycle evidence.
+            validate_offline_raycast_map_source(artifact_root, contract)
+            prepare_public_lifecycle_artifacts(contract, artifact_root)
         support = {
             "keepout_map": artifact_root / "geofence_keepout.yaml",
             "speed_map": artifact_root / "neutral_speed.yaml",
@@ -378,6 +400,17 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                     package="sanitation_formal_campus_integration",
                     executable="formal-map-lifecycle-manager",
                     name="formal_map_lifecycle_manager",
+                    condition=IfCondition(
+                        PythonExpression(
+                            [
+                                "'",
+                                LaunchConfiguration("map_source_mode"),
+                                "' == '",
+                                LIVE_SLAM_MAP_SOURCE,
+                                "'",
+                            ]
+                        )
+                    ),
                     parameters=[{
                         "use_sim_time": True,
                         "mode": mode,
@@ -469,6 +502,14 @@ def generate_launch_description() -> LaunchDescription:
     return LaunchDescription([
         DeclareLaunchArgument("mission_mode", default_value="mapping"),
         DeclareLaunchArgument("competition_29m_candidate", default_value="false"),
+        DeclareLaunchArgument(
+            "map_source_mode",
+            default_value=LIVE_SLAM_MAP_SOURCE,
+            description=(
+                "LIVE_SLAM retains the saved-map lifecycle gate; "
+                "OFFLINE_RAYCAST_MAPPING admits only a sealed frozen offline map."
+            ),
+        ),
         DeclareLaunchArgument(
             "mapping_high_bandwidth_sensor_runtime", default_value="false",
             description="Mapping defaults to scan-only; public mobile calibration opts in explicitly.",

@@ -16,6 +16,10 @@ from formal_runtime_gate_binding import load_binding
 
 PASSED_STATUS = "FORMAL_DYNAMIC_OBSTACLE_AVOIDANCE_ACCEPTANCE_PASSED"
 BLOCKED_STATUS = "FORMAL_DYNAMIC_OBSTACLE_AVOIDANCE_ACCEPTANCE_BLOCKED"
+LIVE_SLAM_MAP_SOURCE = "LIVE_SLAM"
+OFFLINE_RAYCAST_MAPPING = "OFFLINE_RAYCAST_MAPPING"
+OFFLINE_MAP_SOURCE_LABEL = "OFFLINE_MAP_SOURCE"
+MAP_SOURCE_MODES = (LIVE_SLAM_MAP_SOURCE, OFFLINE_RAYCAST_MAPPING)
 CONTROL_PROHIBITED_TRUTH_TOPICS = (
     "/scenario/environment/pedestrian_driver/status",
 )
@@ -476,6 +480,43 @@ def saved_map_preflight(
     return True, None, evidence
 
 
+def offline_map_source_preflight(
+    episode_manifest: Path,
+    offline_map_source_dir: Path,
+) -> tuple[bool, str | None, dict[str, Any] | None]:
+    """Validate the separately labeled frozen offline map admission path."""
+
+    try:
+        from sanitation_formal_campus_integration.map_lifecycle_core import (
+            load_campus_map_contract,
+        )
+        from sanitation_formal_campus_integration.offline_map_source import (
+            validate_offline_raycast_map_source,
+        )
+
+        contract = load_campus_map_contract(episode_manifest)
+        evidence = validate_offline_raycast_map_source(
+            offline_map_source_dir, contract
+        )
+    except Exception as exc:  # exact package/runtime errors belong in evidence
+        return False, str(exc), None
+    return True, None, evidence
+
+
+def map_source_preflight(
+    map_source_mode: str,
+    episode_manifest: Path,
+    artifact_directory: Path,
+) -> tuple[bool, str | None, dict[str, Any] | None]:
+    """Select one explicit map admission path without weakening the other."""
+
+    if map_source_mode == LIVE_SLAM_MAP_SOURCE:
+        return saved_map_preflight(episode_manifest, artifact_directory)
+    if map_source_mode == OFFLINE_RAYCAST_MAPPING:
+        return offline_map_source_preflight(episode_manifest, artifact_directory)
+    return False, f"unsupported map_source_mode: {map_source_mode}", None
+
+
 def evaluate(
     telemetry: dict[str, Any],
     *,
@@ -483,7 +524,11 @@ def evaluate(
     saved_map_error: str | None = None,
     frozen_session_valid: bool = True,
     runtime_closure_valid: bool = True,
+    map_source_mode: str = LIVE_SLAM_MAP_SOURCE,
+    map_source_evidence: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    if map_source_mode not in MAP_SOURCE_MODES:
+        raise ValueError(f"unsupported map_source_mode: {map_source_mode}")
     topic_samples = telemetry.get("topic_sample_counts", {})
     command_publishers = telemetry.get("command_topic_publishers", {})
     dynamic_environment = telemetry.get("dynamic_environment_contract", {})
@@ -508,7 +553,6 @@ def evaluate(
     checks = {
         "frozen_snapshot_session_valid": frozen_session_valid,
         "unified_non_symlink_runtime_closure_valid": runtime_closure_valid,
-        "saved_map_lifecycle_artifact_valid": saved_map_valid,
         "runtime_bound_to_current_checkout": isinstance(runtime_build, dict)
         and runtime_build.get("current_source_build_completed") is True
         and len(runtime_build.get("source_install_bindings", [])) >= 11
@@ -525,6 +569,9 @@ def evaluate(
             "scripts/collect_formal_dynamic_environment_runtime.py",
             "scripts/validate_formal_dynamic_obstacle_avoidance.py",
             "scripts/generate_formal_dynamic_runtime_build_manifest.py",
+            "scripts/prepare_offline_raycast_map_runtime.py",
+            "scripts/evaluate_dynamic_avoidance_single_run.py",
+            "scripts/run_dynamic_avoidance_single_trial.sh",
             "scripts/prepare_formal_dynamic_obstacle_schedule.py",
             "scripts/prepare_formal_dynamic_runtime_world.py",
             "scripts/run_formal_runtime_isolation.sh",
@@ -718,10 +765,27 @@ def evaluate(
         )
         >= 5,
     }
+    source_evidence = (
+        map_source_evidence if isinstance(map_source_evidence, dict) else {}
+    )
+    if map_source_mode == LIVE_SLAM_MAP_SOURCE:
+        checks["saved_map_lifecycle_artifact_valid"] = saved_map_valid
+        map_source_label = LIVE_SLAM_MAP_SOURCE
+        map_source_live = True
+    else:
+        checks["offline_raycast_map_source_valid"] = saved_map_valid
+        checks["offline_map_source_labeled_not_live_slam"] = (
+            source_evidence.get("map_source_mode") == OFFLINE_RAYCAST_MAPPING
+            and source_evidence.get("label") == OFFLINE_MAP_SOURCE_LABEL
+            and source_evidence.get("live_slam_claimed") is False
+            and source_evidence.get("runtime_aligned_to_episode_start") is True
+        )
+        map_source_label = OFFLINE_MAP_SOURCE_LABEL
+        map_source_live = False
     passed = all(checks.values())
     blockers = [name for name, value in checks.items() if not value]
     if saved_map_error:
-        blockers.insert(0, f"saved_map_preflight: {saved_map_error}")
+        blockers.insert(0, f"map_source_preflight: {saved_map_error}")
     return {
         "report_id": "tzcup_formal_dynamic_obstacle_avoidance_acceptance_v1",
         "status": PASSED_STATUS if passed else BLOCKED_STATUS,
@@ -729,6 +793,12 @@ def evaluate(
         "checks": checks,
         "blockers": blockers,
         "metrics": telemetry,
+        "map_source": {
+            "mode": map_source_mode,
+            "label": map_source_label,
+            "live_slam": map_source_live,
+            "evidence": source_evidence or None,
+        },
         "claim_boundary": (
             "This gate requires the formal transport-stowed vehicle to execute a "
             "saved-map Nav2 goal in Gazebo with eight moving pedestrians. Product "
@@ -750,10 +820,16 @@ def main() -> int:
     parser.add_argument("--snapshot-manifest", type=Path, required=True)
     parser.add_argument("--session-status", type=Path, required=True)
     parser.add_argument("--runtime-binding", type=Path, required=True)
+    parser.add_argument(
+        "--map-source-mode",
+        choices=MAP_SOURCE_MODES,
+        default=LIVE_SLAM_MAP_SOURCE,
+    )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--preflight-only", action="store_true")
     args = parser.parse_args()
-    valid, error, saved_map_evidence = saved_map_preflight(
+    valid, error, map_source_evidence = map_source_preflight(
+        args.map_source_mode,
         args.episode_manifest,
         args.saved_map_artifact_dir,
     )
@@ -821,6 +897,8 @@ def main() -> int:
         saved_map_error=error,
         frozen_session_valid=session_valid,
         runtime_closure_valid=closure_valid,
+        map_source_mode=args.map_source_mode,
+        map_source_evidence=map_source_evidence,
     )
     if session_error:
         report["blockers"].insert(0, f"frozen_session_preflight: {session_error}")
@@ -828,7 +906,16 @@ def main() -> int:
     report["runtime_gate_binding"] = runtime_binding
     if closure_error:
         report["blockers"].insert(0, f"runtime_closure_preflight: {closure_error}")
-    report["saved_map_lifecycle_evidence"] = saved_map_evidence
+    report["saved_map_lifecycle_evidence"] = (
+        map_source_evidence
+        if args.map_source_mode == LIVE_SLAM_MAP_SOURCE
+        else None
+    )
+    report["offline_map_source_evidence"] = (
+        map_source_evidence
+        if args.map_source_mode == OFFLINE_RAYCAST_MAPPING
+        else None
+    )
     _atomic_write_json(args.output, report)
     print(args.output)
     return 0 if report["passed"] else 2

@@ -18,6 +18,14 @@ formal_runtime_register_evidence_paths "${output}" "${telemetry}" "${environment
 snapshot_manifest="${FORMAL_VEHICLE_SNAPSHOT_MANIFEST:-${repo_root}/reports/engineering/formal_vehicle_snapshot_manifest.json}"
 session_status="${FORMAL_ACCEPTANCE_SESSION_STATUS:-${repo_root}/artifacts/formal_final_acceptance_session.json}"
 domain="${ROS_DOMAIN_ID:-73}"
+map_source_mode="${FORMAL_DYNAMIC_MAP_SOURCE_MODE:-LIVE_SLAM}"
+case "${map_source_mode}" in
+  LIVE_SLAM|OFFLINE_RAYCAST_MAPPING) ;;
+  *)
+    echo "unsupported FORMAL_DYNAMIC_MAP_SOURCE_MODE: ${map_source_mode}" >&2
+    exit 2
+    ;;
+esac
 dynamic_seed="${FORMAL_DYNAMIC_SEED:-$(date +%s%N)}"
 operation_speed_profile="${FORMAL_DYNAMIC_OPERATION_SPEED_PROFILE:-mapping_safe}"
 safety_max_linear_velocity="${FORMAL_DYNAMIC_SAFETY_MAX_LINEAR_VELOCITY:-0.45}"
@@ -97,12 +105,13 @@ set +e
   --snapshot-manifest "${snapshot_manifest}" \
   --session-status "${session_status}" \
   --runtime-binding "${runtime_binding}" \
+  --map-source-mode "${map_source_mode}" \
   --preflight-only \
   --output "${output}"
 status=$?
 set -e
 if (( status != 0 )); then
-  echo "dynamic avoidance blocked before launch: no qualified saved-map lifecycle artifact; report=${output}" >&2
+  echo "dynamic avoidance blocked before launch: map-source admission failed; report=${output}" >&2
   exit "${status}"
 fi
 # A valid saved map is only admission to the runtime, not acceptance. Write a
@@ -114,6 +123,7 @@ fi
   --snapshot-manifest "${snapshot_manifest}" \
   --session-status "${session_status}" \
   --runtime-binding "${runtime_binding}" \
+  --map-source-mode "${map_source_mode}" \
   --output "${output}" >/dev/null 2>&1 || true
 
 set +u
@@ -181,6 +191,7 @@ runtime_world_manifest="${runtime_root}/cleaning_world_manifest.json"
   world:="${runtime_world}" \
   episode_manifest:="${episode_root}/public/episode_manifest.json" \
   map_artifact_dir:="${saved_map_root}" \
+  map_source_mode:="${map_source_mode}" \
   pedestrian_schedule:="${runtime_schedule}" \
   start_pedestrians:=true start_coverage:=false operation_speed_profile:="${operation_speed_profile}" \
   max_linear_velocity:="${safety_max_linear_velocity}" \
@@ -293,6 +304,7 @@ set +e
   --snapshot-manifest "${snapshot_manifest}" \
   --session-status "${session_status}" \
   --runtime-binding "${runtime_binding}" \
+  --map-source-mode "${map_source_mode}" \
   --output "${output}"
 status=$?
 set -e

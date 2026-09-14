@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "map_source_mode": "OFFLINE_RAYCAST_MAPPING",
+  "label": "OFFLINE_MAP_SOURCE",
+  "live_slam_claimed": false,
+  "source_branch": "codex/day1-offline-mapping",
+  "source_commit": "4ab39bb839e92fe50e22b1efe3891c5915f39bf0",
+  "source_commit_status": "OFFLINE_RAYCAST_MAPPING_PASS_LIVE_SLAM_NOT_CLAIMED",
+  "source_manifest_sha256": "ed4e52fe688e3ca41ab0cdc8eda51cad0b60691809085318b31d739c53f3cc49",
+  "occupancy_yaml_sha256": "78f39b80c0ea79f339c0aeac94573454eb49849e47cdbf8c05f903b518e89538",
+  "occupancy_pgm_sha256": "8b74f3688d279007e80a198935b983c09b9ecc2202d1e9636522453344586a63",
+  "area_verification_sha256": "c739ef43f4c3fabc5d01b6dca90821bdd2c6ab60c21a0fe06953ab76c1318cac",
+  "resolution_m": 0.05,
+  "known_area_m2": 22399.990000000005,
+  "unknown_fraction": 0.030303463203463204,
+  "claim_boundary": "This is a frozen offline raycast reconstruction. It is not live Gazebo SLAM, and admitting it for a dynamic trial does not satisfy or replace the live-SLAM lifecycle gate."
+}

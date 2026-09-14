@@ -24,6 +24,10 @@ SINGLE_RUN_FAIL = "SINGLE_RUN_FUNCTIONAL_FAIL"
 SINGLE_RUN_INVALID = "SINGLE_RUN_EVIDENCE_INVALID"
 FORMAL_REPORT_ID = "tzcup_formal_dynamic_obstacle_avoidance_acceptance_v1"
 FORMAL_PASS_STATUS = "FORMAL_DYNAMIC_OBSTACLE_AVOIDANCE_ACCEPTANCE_PASSED"
+LIVE_SLAM_MAP_SOURCE = "LIVE_SLAM"
+OFFLINE_RAYCAST_MAPPING = "OFFLINE_RAYCAST_MAPPING"
+OFFLINE_MAP_SOURCE_LABEL = "OFFLINE_MAP_SOURCE"
+MAP_SOURCE_MODES = (LIVE_SLAM_MAP_SOURCE, OFFLINE_RAYCAST_MAPPING)
 
 
 def _read_object(path: Path, label: str) -> dict[str, Any]:
@@ -164,10 +168,13 @@ def evaluate_run(
     run_root: Path,
     route_manifest_path: Path,
     run_timeline_path: Path,
+    map_source_mode: str = LIVE_SLAM_MAP_SOURCE,
 ) -> dict[str, Any]:
     """Evaluate one started trial and never infer a campaign success rate."""
 
     validate_protocol(protocol)
+    if map_source_mode not in MAP_SOURCE_MODES:
+        raise ValueError(f"unsupported map_source_mode: {map_source_mode}")
     root = run_root.resolve()
     runtime_root = root / "runtime"
     schedule_relative = (
@@ -351,6 +358,18 @@ def evaluate_run(
         formal_report.get("report_id") == FORMAL_REPORT_ID
         and formal_report.get("status") == FORMAL_PASS_STATUS
         and formal_report.get("passed") is True
+    )
+    expected_map_source_label = (
+        LIVE_SLAM_MAP_SOURCE
+        if map_source_mode == LIVE_SLAM_MAP_SOURCE
+        else OFFLINE_MAP_SOURCE_LABEL
+    )
+    checks["formal_report_map_source_label_matches"] = (
+        formal_report.get("map_source", {}).get("mode") == map_source_mode
+        and formal_report.get("map_source", {}).get("label")
+        == expected_map_source_label
+        and formal_report.get("map_source", {}).get("live_slam")
+        is (map_source_mode == LIVE_SLAM_MAP_SOURCE)
     )
 
     environment_collector = (
@@ -608,6 +627,11 @@ def evaluate_run(
         "passed": functional_pass,
         "run_id": timeline.get("run_id"),
         "protocol_id": protocol["protocol_id"],
+        "map_source": {
+            "mode": map_source_mode,
+            "label": expected_map_source_label,
+            "live_slam": map_source_mode == LIVE_SLAM_MAP_SOURCE,
+        },
         "single_run": {
             "started": started,
             "numerator": numerator,
@@ -674,6 +698,11 @@ def main() -> int:
     parser.add_argument("--run-root", type=Path, required=True)
     parser.add_argument("--route-manifest", type=Path, required=True)
     parser.add_argument("--run-timeline", type=Path, required=True)
+    parser.add_argument(
+        "--map-source-mode",
+        choices=MAP_SOURCE_MODES,
+        default=LIVE_SLAM_MAP_SOURCE,
+    )
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if args.output.exists():
@@ -687,6 +716,7 @@ def main() -> int:
         run_root=args.run_root,
         route_manifest_path=args.route_manifest,
         run_timeline_path=args.run_timeline,
+        map_source_mode=args.map_source_mode,
     )
     _atomic_write_json(args.output, report)
     print(args.output)

@@ -7,7 +7,21 @@ run_root="${FORMAL_DYNAMIC_SINGLE_RUN_ROOT:?set a fresh FORMAL_DYNAMIC_SINGLE_RU
 runtime_ws="${FORMAL_DYNAMIC_SINGLE_RUN_RUNTIME_WS:?set FORMAL_DYNAMIC_SINGLE_RUN_RUNTIME_WS}"
 closure="${FORMAL_DYNAMIC_SINGLE_RUN_CLOSURE_MANIFEST:?set FORMAL_DYNAMIC_SINGLE_RUN_CLOSURE_MANIFEST}"
 episode_root="${FORMAL_DYNAMIC_SINGLE_RUN_EPISODE_ROOT:?set FORMAL_DYNAMIC_SINGLE_RUN_EPISODE_ROOT}"
-saved_map_root="${FORMAL_DYNAMIC_SINGLE_RUN_SAVED_MAP_ROOT:?set FORMAL_DYNAMIC_SINGLE_RUN_SAVED_MAP_ROOT}"
+map_source_mode="${FORMAL_DYNAMIC_MAP_SOURCE_MODE:-LIVE_SLAM}"
+case "${map_source_mode}" in
+  LIVE_SLAM)
+    saved_map_root="${FORMAL_DYNAMIC_SINGLE_RUN_SAVED_MAP_ROOT:?set FORMAL_DYNAMIC_SINGLE_RUN_SAVED_MAP_ROOT}"
+    offline_map_source_root=""
+    ;;
+  OFFLINE_RAYCAST_MAPPING)
+    saved_map_root=""
+    offline_map_source_root="${FORMAL_DYNAMIC_OFFLINE_MAP_SOURCE_ROOT:?set FORMAL_DYNAMIC_OFFLINE_MAP_SOURCE_ROOT}"
+    ;;
+  *)
+    echo "unsupported FORMAL_DYNAMIC_MAP_SOURCE_MODE: ${map_source_mode}" >&2
+    exit 2
+    ;;
+esac
 protocol="${FORMAL_DYNAMIC_SINGLE_RUN_PROTOCOL:-${repo_root}/config/dynamic_avoidance_single_run_protocol.json}"
 runtime_install="${runtime_ws}/install"
 episode_manifest="${episode_root}/public/episode_manifest.json"
@@ -34,10 +48,17 @@ for required in \
     exit 2
   }
 done
-[[ -d "${saved_map_root}" && ! -L "${saved_map_root}" ]] || {
-  echo "single dynamic trial saved map root is missing: ${saved_map_root}" >&2
-  exit 2
-}
+if [[ "${map_source_mode}" == "LIVE_SLAM" ]]; then
+  [[ -d "${saved_map_root}" && ! -L "${saved_map_root}" ]] || {
+    echo "single dynamic trial saved map root is missing: ${saved_map_root}" >&2
+    exit 2
+  }
+else
+  [[ -d "${offline_map_source_root}" && ! -L "${offline_map_source_root}" ]] || {
+    echo "single dynamic trial offline map source is missing: ${offline_map_source_root}" >&2
+    exit 2
+  }
+fi
 if [[ -e "${run_root}" ]]; then
   echo "refusing stale single dynamic trial root: ${run_root}" >&2
   exit 2
@@ -57,6 +78,15 @@ fi
 export FORMAL_ROS2_EXECUTABLE="${ros2_executable}"
 
 export PYTHONPATH="${repo_root}/scripts${PYTHONPATH:+:${PYTHONPATH}}"
+if [[ "${map_source_mode}" == "OFFLINE_RAYCAST_MAPPING" ]]; then
+  repository_revision="$(git -C "${repo_root}" rev-parse HEAD)"
+  saved_map_root="${run_root}/offline_map_source"
+  python3 "${repo_root}/scripts/prepare_offline_raycast_map_runtime.py" \
+    --source-root "${offline_map_source_root}" \
+    --episode-manifest "${episode_manifest}" \
+    --output-root "${saved_map_root}" \
+    --source-revision "${repository_revision}"
+fi
 python3 "${repo_root}/scripts/prepare_dynamic_avoidance_single_run.py" \
   --protocol "${protocol}" \
   --episode-manifest "${episode_manifest}" \
@@ -70,7 +100,7 @@ task_timeout_s="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1],
 repository_revision="$(git -C "${repo_root}" rev-parse HEAD)"
 run_start_epoch_ns="$(python3 -c 'import time; print(time.time_ns())')"
 python3 - "${timeline}" "${run_root}" "${run_start_epoch_ns}" "${seed}" \
-  "${repository_revision}" <<'PY'
+  "${repository_revision}" "${map_source_mode}" <<'PY'
 import json
 import pathlib
 import sys
@@ -84,6 +114,7 @@ value = {
     "run_end_epoch_ns": None,
     "schedule_seed": int(sys.argv[4]),
     "repository_revision": sys.argv[5],
+    "map_source_mode": sys.argv[6],
     "runner_exit_code": None,
     "evaluator_exit_code": None,
 }
@@ -94,6 +125,7 @@ export FORMAL_VEHICLE_RUNTIME_WS="${runtime_ws}"
 export FORMAL_FINAL_RUNTIME_CLOSURE_MANIFEST="${closure}"
 export FORMAL_DYNAMIC_EPISODE_ROOT="${episode_root}"
 export FORMAL_DYNAMIC_SAVED_MAP_ROOT="${saved_map_root}"
+export FORMAL_DYNAMIC_MAP_SOURCE_MODE="${map_source_mode}"
 export FORMAL_DYNAMIC_OUTPUT="${formal_report}"
 export FORMAL_DYNAMIC_TELEMETRY="${product_telemetry}"
 export FORMAL_DYNAMIC_RUNTIME_BINDING="${runtime_binding}"
@@ -130,6 +162,7 @@ python3 "${repo_root}/scripts/evaluate_dynamic_avoidance_single_run.py" \
   --run-root "${run_root}" \
   --route-manifest "${route_manifest}" \
   --run-timeline "${timeline}" \
+  --map-source-mode "${map_source_mode}" \
   --output "${single_run_report}"
 evaluator_exit_code=$?
 set -e

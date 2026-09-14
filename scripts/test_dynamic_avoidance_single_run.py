@@ -241,6 +241,11 @@ def _fixture(tmp_path: Path) -> dict[str, Path]:
             "report_id": "tzcup_formal_dynamic_obstacle_avoidance_acceptance_v1",
             "status": "FORMAL_DYNAMIC_OBSTACLE_AVOIDANCE_ACCEPTANCE_PASSED",
             "passed": True,
+            "map_source": {
+                "mode": "LIVE_SLAM",
+                "label": "LIVE_SLAM",
+                "live_slam": True,
+            },
         },
     )
     _write_json(run_root / "dynamic.runtime_binding.json", {"bound": True})
@@ -303,6 +308,32 @@ def test_valid_single_run_fixture_passes_without_a_rate_claim(
     assert report["official_metric"]["status"] == "NOT_MEASURED"
     assert report["official_metric"]["measured_value"] is None
     assert report["event"]["minimum_surface_gap_m"] >= 0.12
+
+
+def test_offline_map_source_is_labeled_and_never_called_live_slam(
+    tmp_path: Path,
+) -> None:
+    fixture = _fixture(tmp_path)
+    report_path = fixture["run_root"] / "dynamic_obstacle_acceptance.json"
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    report["map_source"] = {
+        "mode": "OFFLINE_RAYCAST_MAPPING",
+        "label": "OFFLINE_MAP_SOURCE",
+        "live_slam": False,
+    }
+    _write_json(report_path, report)
+    evaluated = evaluate_run(
+        protocol=json.loads(PROTOCOL_PATH.read_text(encoding="utf-8")),
+        protocol_path=PROTOCOL_PATH,
+        run_root=fixture["run_root"],
+        route_manifest_path=fixture["route"],
+        run_timeline_path=fixture["timeline"],
+        map_source_mode="OFFLINE_RAYCAST_MAPPING",
+    )
+    assert evaluated["status"] == SINGLE_RUN_PASS
+    assert evaluated["map_source"]["label"] == "OFFLINE_MAP_SOURCE"
+    assert evaluated["map_source"]["live_slam"] is False
+    assert evaluated["official_metric"]["status"] == "NOT_MEASURED"
 
 
 def test_collision_is_a_failed_started_trial_not_an_exclusion(

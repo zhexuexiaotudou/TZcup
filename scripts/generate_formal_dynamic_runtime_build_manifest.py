@@ -21,6 +21,11 @@ SOURCE_INSTALL_BINDINGS = {
     ):
         "lib/python*/site-packages/sanitation_formal_campus_integration/map_lifecycle_core.py",
     (
+        "starter_ws/src/sanitation_formal_campus_integration/"
+        "sanitation_formal_campus_integration/offline_map_source.py"
+    ):
+        "lib/python*/site-packages/sanitation_formal_campus_integration/offline_map_source.py",
+    (
         "starter_ws/src/sanitation_formal_campus_integration/config/"
         "formal_utm30lx_self_filter.yaml"
     ):
@@ -97,6 +102,9 @@ SOURCE_ONLY_RUNTIME_FILES = (
     "scripts/collect_formal_dynamic_environment_runtime.py",
     "scripts/validate_formal_dynamic_obstacle_avoidance.py",
     "scripts/generate_formal_dynamic_runtime_build_manifest.py",
+    "scripts/prepare_offline_raycast_map_runtime.py",
+    "scripts/evaluate_dynamic_avoidance_single_run.py",
+    "scripts/run_dynamic_avoidance_single_trial.sh",
     "scripts/prepare_formal_dynamic_obstacle_schedule.py",
     "scripts/prepare_formal_dynamic_runtime_world.py",
     "scripts/run_formal_runtime_isolation.sh",

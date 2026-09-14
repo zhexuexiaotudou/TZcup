@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "status": "BLOCKED_STATIC_CI_BEFORE_REMOTE_LAUNCH",
+  "blocker": "scripts/ci_fast.py aborts in validate_repository_hygiene because README.md has 181 lines and the hard limit is 180",
+  "command": "py -3 scripts/ci_fast.py",
+  "focused_static_tests": {
+    "scripts/test_prepare_offline_raycast_map_runtime.py scripts/test_validate_formal_dynamic_obstacle_avoidance.py scripts/test_dynamic_avoidance_single_run.py": "37 passed",
+    "starter_ws/src/sanitation_formal_campus_integration/test/test_map_lifecycle_ros_contract.py starter_ws/src/sanitation_formal_campus_integration/test/test_map_lifecycle_core.py": "67 passed",
+    "bash -n scripts/run_dynamic_avoidance_single_trial.sh scripts/run_formal_dynamic_obstacle_avoidance.sh scripts/run_formal_runtime_isolation.sh": "passed"
+  },
+  "remote_trial_started": false,
+  "gazebo_started": false,
+  "official_metric": {
+    "measured_value": null,
+    "status": "NOT_MEASURED"
+  },
+  "claim_boundary": "No dynamic-avoidance numerator or denominator was created. The rental card was not used for this attempt."
+}

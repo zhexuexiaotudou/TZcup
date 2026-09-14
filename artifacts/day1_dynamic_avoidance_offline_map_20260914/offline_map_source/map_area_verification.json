@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "scan_root": ".",
+  "minimum_known_area_m2": 20000.0,
+  "map_count": 1,
+  "pass_count": 1,
+  "pass": true,
+  "largest_known_area_map_yaml": "occupancy.yaml",
+  "largest_known_area_m2": 22399.990000000005,
+  "maps": [
+    {
+      "map_yaml": "occupancy.yaml",
+      "map_image": "occupancy.pgm",
+      "map_yaml_sha256": "78f39b80c0ea79f339c0aeac94573454eb49849e47cdbf8c05f903b518e89538",
+      "map_image_sha256": "8b74f3688d279007e80a198935b983c09b9ecc2202d1e9636522453344586a63",
+      "mode": "trinary",
+      "negate": 0,
+      "resolution_m": 0.05,
+      "occupied_thresh": 0.65,
+      "free_thresh": 0.25,
+      "width_cells": 4200,
+      "height_cells": 2200,
+      "span_x_m": 210.0,
+      "span_y_m": 110.0,
+      "occupied_cells": 5582,
+      "free_cells": 8954414,
+      "unknown_cells": 280004,
+      "known_cells": 8959996,
+      "occupied_area_m2": 13.955000000000002,
+      "free_area_m2": 22386.035000000003,
+      "known_area_m2": 22399.990000000005,
+      "unknown_area_m2": 700.0100000000001,
+      "known_fraction": 0.9696965367965368,
+      "minimum_known_area_m2": 20000.0,
+      "area_gate": true,
+      "deficit_m2": 0.0,
+      "required_isotropic_linear_scale": 0.9449113934408132
+    }
+  ],
+  "excluded_maps": [],
+  "errors": []
+}
