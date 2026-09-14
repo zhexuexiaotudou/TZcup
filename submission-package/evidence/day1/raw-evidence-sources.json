@@ -337,6 +337,83 @@
           "role": "final bounded localization run record"
         }
       ]
+    },
+    {
+      "id": "localization-day1-final-20260914-02",
+      "run_id": "localization-day1-final-20260914-02",
+      "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-localization-run",
+      "evidence_commit": "47e3cb3",
+      "candidate_revision": "a2ffa243040a7b6ed7bf720c53df2d73c7f978f6",
+      "run_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/localization-day1-final-20260914-02",
+      "outcome": "STRICT_MAX_FAIL_RMSE_PARTIAL_OFFICIAL_AMBIGUOUS",
+      "package_copy": {
+        "final_run_doc": "evidence/day1/competition-localization-rental-day1-final-run.md",
+        "metrics": "evidence/day1/localization-rental-final/rental-run-02-final_result.json"
+      },
+      "files": [
+        {
+          "file": "bag\\bag_0.mcap",
+          "bytes": 136214580,
+          "sha256": "8e64c0b7dd6a29247ad0d2f61ac719ba7f8c4f6b1957edf8bffc88aa38308047",
+          "role": "sealed 194064-message MCAP, not copied"
+        },
+        {
+          "file": "localization_focus.json",
+          "sha256": "ca147bdc54824263b7c05c9bb16f4be542b59f2bbb1d81258b13659fd96ac939",
+          "role": "paired localization metrics"
+        }
+      ]
+    },
+    {
+      "id": "perception-gpu-recovery-20260914",
+      "run_id": "perception-gpu-recovery-20260914",
+      "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-perception-gpu",
+      "model_commit": "4ed19d2",
+      "receipt_commit": "906ea4f",
+      "run_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/.work/gpu-perception-recovery-20260914",
+      "outcome": "OFFLINE_CANDIDATE_MEASURED_NOT_OFFICIAL_ACCEPTANCE",
+      "package_copy": {
+        "receipt": "evidence/day1/competition-perception-gpu-recovery.json",
+        "gpu_parity": "evidence/day1/competition-perception-gpu-parity.json"
+      },
+      "files": [
+        {
+          "file": "stage5a_gray_calibrated_perception.onnx",
+          "bytes": 42458,
+          "sha256": "00f4f96f3eb925e202266506d22892a1df84838d08dbf6541d204c3e1d089c6a",
+          "role": "candidate ONNX model, not copied"
+        },
+        {
+          "file": "gpu_inference_parity.json",
+          "sha256": "878ca4f207256b0603011852c7ae60ffe38faba73f9e08d90484d1c3fb428901",
+          "role": "GPU/CPU parity receipt"
+        }
+      ]
+    },
+    {
+      "id": "day1-dynamic-avoidance-single-run-20260914",
+      "run_id": "day1-dynamic-avoidance-single-run-20260914-04",
+      "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-avoidance-run",
+      "initial_attempt_commit": "c9a27ab",
+      "retry_commit": "b9e1c71",
+      "run_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/run-04",
+      "outcome": "BLOCKED_BEFORE_GAZEBO_CLOSURE_DRIFT",
+      "package_copy": {
+        "initial_result": "evidence/day1/dynamic-avoidance-rental-day1/rental-result-initial.json",
+        "retry_result": "evidence/day1/dynamic-avoidance-rental-day1/rental-result-retry.json",
+        "attempt_receipt": "evidence/day1/dynamic-avoidance-rental-day1/attempt-receipt-run04.json"
+      },
+      "files": [
+        {
+          "file": "run-04\\single_run_evaluation.json",
+          "role": "single started trial with denominator 1, numerator 0, and official metric NOT_MEASURED"
+        },
+        {
+          "file": "attempt_receipt_run04.json",
+          "sha256": "ff488710601fd3e83c18e187034ea5a1ef29a564aab1cf49dcfe4ea376bc8ff2",
+          "role": "compact closure-drift failure receipt"
+        }
+      ]
     }
   ]
 }

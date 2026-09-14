@@ -235,5 +235,66 @@
       "the run stopped permanently without an authorized retry",
       "the earlier run-01 localization FAIL remains authoritative for the existing metric row"
     ]
+  },
+  {
+    "local_evidence": "evidence/day1/competition-localization-rental-day1-final-run.md",
+    "metrics_evidence": "evidence/day1/localization-rental-final/rental-run-02-final_result.json",
+    "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-localization-run",
+    "source_commit": "47e3cb3",
+    "run_id": "localization-day1-final-20260914-02",
+    "accepted_facts": [
+      "MCAP contains 194064 messages",
+      "2711 dynamic reference samples and 2711 strict paired samples with coverage 1.0",
+      "displacement 5.915688628 m and Nav2 route results [4, 4]",
+      "RMSE 39.2712095037 mm, P95 83.7798579074 mm, and maximum 126.327802578 mm",
+      "local and global inflation radii are 0.56 m and 20 of 20 effective parameters matched"
+    ],
+    "limitations": [
+      "strict predeclared maximum <=50 mm is FAIL",
+      "RMSE <=50 mm is PASS_PARTIAL only",
+      "the official brief does not define whether RMSE, P95, or maximum selects the scalar gate",
+      "the 129.9 MiB MCAP remains in the remote raw root and is not copied"
+    ]
+  },
+  {
+    "local_evidence": "evidence/day1/competition-perception-gpu-recovery.json",
+    "parity_evidence": "evidence/day1/competition-perception-gpu-parity.json",
+    "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-perception-gpu",
+    "source_commit": "906ea4f",
+    "model_commit": "4ed19d2",
+    "run_id": "perception-gpu-recovery-20260914",
+    "accepted_facts": [
+      "controlled raw replay improved from 33/50/43 to 41/0/35",
+      "offline policy replay improved from 0/0/76 to 33/0/43",
+      "policy macro precision is 0.8 and macro recall is 0.4325",
+      "metal_can policy recall is 0",
+      "GPU inference parity retained argmax agreement 1.0 over 5000 iterations"
+    ],
+    "limitations": [
+      "controlled correlated 30-frame fixture only; no independent real-domain validation",
+      "offline MCAP replay is not official competition R01",
+      "official >=95 percent remains NOT_MEASURED and competition_perception_pass is false",
+      "the ONNX model and large raw evidence are not copied"
+    ]
+  },
+  {
+    "local_evidence": "evidence/day1/dynamic-avoidance-rental-day1/rental-result-initial.json",
+    "retry_evidence": "evidence/day1/dynamic-avoidance-rental-day1/rental-result-retry.json",
+    "attempt_receipt": "evidence/day1/dynamic-avoidance-rental-day1/attempt-receipt-run04.json",
+    "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-avoidance-run",
+    "source_commit": "b9e1c71",
+    "initial_attempt_commit": "c9a27ab",
+    "run_id": "day1-dynamic-avoidance-single-run-20260914-04",
+    "accepted_facts": [
+      "one bounded functional trial started with denominator 1 and numerator 0",
+      "the initial attempt blocked before Gazebo because FORMAL_ROS2_EXECUTABLE was absent",
+      "the corrected retry verified /opt/ros/jazzy/bin/ros2 but blocked before Gazebo on source inventory closure drift",
+      "Gazebo did not launch and no MCAP, contact, clearance, detour, or task-recovery sample exists"
+    ],
+    "limitations": [
+      "the trial is invalid for functional acceptance rather than a measured collision failure",
+      "official dynamic-avoidance >=95 percent remains NOT_MEASURED",
+      "no substitute simulation or inference is promoted to acceptance"
+    ]
   }
 ]

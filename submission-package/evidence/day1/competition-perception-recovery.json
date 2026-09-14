@@ -3,6 +3,8 @@
   "evidence_id": "day1-perception-recovery",
   "status": "FAIL",
   "source_commit": "3ae009a44f86bb2a66a9c095ba4b6db3c3a87d35",
+  "gpu_candidate_commit": "4ed19d2",
+  "gpu_receipt_commit": "906ea4f",
   "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-perception-recovery",
   "source_evidence": [
     "docs/competition-perception-score.md",
@@ -26,20 +28,34 @@
       "output_frames_preserved": "17/30"
     },
     "offline_policy_replay": {
-      "status": "NOT_RUN",
-      "metrics": null,
-      "withdrawn_claim": "Stage5A policy 0/0/76 is not reproducible because depth, ROI, and tracking context were not retained."
+      "status": "MEASURED_OFFLINE_MCAP_NOT_OFFICIAL_ACCEPTANCE",
+      "baseline_tp_fp_fn": [
+        0,
+        0,
+        76
+      ],
+      "candidate_tp_fp_fn": [
+        33,
+        0,
+        43
+      ],
+      "candidate_macro_precision": 0.8,
+      "candidate_macro_recall": 0.4325,
+      "metal_can_policy_recall": 0.0,
+      "withdrawn_claim": "Stage5A policy 0/0/76 remains withdrawn; the retained baseline policy replay is separately recomputed as 0/0/76."
     }
   },
   "decision": {
     "recognition_quality": "FAIL",
     "official_recognition_accuracy_95_percent": "NOT_MEASURED",
-    "reason": "The measured controlled-domain raw diagnostics retain Stage5B 0/654/76 and Stage5A 33/50/43; yellow leaf piles still fail. Offline policy replay is NOT_RUN/NOT_MEASURED and the prior Stage5A policy 0/0/76 claim has been withdrawn as unsupported. Engineering recognition remains FAIL only for the actually measured raw evidence; the official >=95 percent definition/result was not measured."
+    "competition_perception_pass": false,
+    "reason": "The GPU candidate improves controlled raw replay from 33/50/43 to 41/0/35 and offline policy replay from 0/0/76 to 33/0/43, with macro P/R 0.8/0.4325 and zero metal-can policy recall. It remains an offline controlled-domain candidate, not official R01. Engineering recognition remains FAIL and the official >=95 percent definition/result remains NOT_MEASURED."
   },
   "limitations": [
     "Offline replay of the same frozen MCAP only; Gazebo, ROS, localization, and board were not rerun.",
     "Highly correlated static fixture, not an independent scene population or public blind set.",
-    "Do not tune the policy threshold on this holdout; policy replay must retain depth, ROI, and tracking context before any measured claim.",
-    "Engineering recognition quality remains FAIL for measured raw evidence; the official >=95 percent result remains NOT_MEASURED."
+    "Do not tune the policy threshold on this holdout; the retained context replay is diagnostic only.",
+    "The candidate does not support a 95 percent claim and competition_perception_pass remains false.",
+    "Engineering recognition quality remains FAIL; the official >=95 percent result remains NOT_MEASURED."
   ]
 }

@@ -18,46 +18,37 @@
   {
     "id": "following",
     "item": "循迹",
-    "status": "FAIL",
+    "status": "PASS",
     "value": null,
     "basis": "measured_simulation",
     "evidence": [
-      "evidence/day1/competition-localization-50mm.md",
-      "evidence/day1/competition-localization-replay.md",
-      "evidence/day1/competition-localization-diagnosis.json",
-      "evidence/day1/competition-localization-day1-final-run.md",
-      "evidence/day1/localization-run-02/run-02-failure_receipt.json"
+      "evidence/day1/competition-localization-rental-day1-final-run.md",
+      "evidence/day1/localization-rental-final/rental-run-02-final_result.json"
     ],
-    "note": "动态路线run-01在仿真时间12.953s因Nav2中止而未达到2m位移与返回段，循迹仍为FAIL。后续有界run-02由06b99b6生成0.56m局部/全局costmap膨胀半径并成功启动Gazebo，但在bagging和动态数据前因/amcl global_frame_id参数捕获10s超时停止；证据提交2a7d201。run-02无route样本、无MCAP，无新增循迹或任务成功声明。",
+    "note": "47e3cb3单次封存动态路线完成两个Nav2目标，results为[4,4]且route.passed=true，位移5.915688628m。PASS仅限该次仿真路线，不代表长期、多场景或完整比赛任务成功率。",
     "minimum_measurement": "一次任务的路线点、实际轨迹、终态与中止事件；区分定位失败、规划失败和车辆控制失败。",
-    "run_id": "localization-50mm-20260913-01/run-01",
-    "source_commit": "c229c6464f8f7954caed6fc85f506a8c67c56eb6",
-    "rollback_commit": "a9691b41ff2e038b4bf072f814d4ce58c1615b32",
-    "diagnostic_run_id": "localization-50mm-20260914-run-02",
-    "diagnostic_source_commit": "06b99b6cb64e91ec470ac5623ded4c6db22df321",
-    "diagnostic_evidence_commit": "2a7d201304c40987ae15356c6f9066d69e9803a1",
-    "as_of_utc": "2026-09-14T03:20:41+08:00"
+    "run_id": "localization-day1-final-20260914-02",
+    "source_commit": "47e3cb3",
+    "as_of_utc": "2026-09-14"
   },
   {
     "id": "perception",
     "item": "垃圾识别与定位",
     "status": "FAIL",
     "value": null,
-    "basis": "measured_simulation",
+    "basis": "offline_replay",
     "evidence": [
-      "evidence/day1/competition-perception-score.md",
       "evidence/day1/competition-perception-recovery.json",
-      "evidence/day1/competition-perception-replay-status.json",
-      "evidence/board/development-liveness.json",
-      "evidence/board/perception-rejected.log"
+      "evidence/day1/competition-perception-gpu-recovery.json",
+      "evidence/day1/competition-perception-gpu-parity.json"
     ],
-    "note": "只保留可复现的受控域raw诊断：Stage5B raw 0/654/76，Stage5A raw 33/50/43，黄色叶堆仍未通过；离线policy replay为NOT_RUN/NOT_MEASURED，原先Stage5A policy 0/0/76因缺少depth/ROI/tracking上下文不可复现且已撤回。工程识别质量仅就可能测到的raw证据判FAIL；官方≥95%保持NOT_MEASURED。",
-    "minimum_measurement": "同帧图像、检测类别框、深度/标定/TF、预测地图坐标及独立标签对照；raw与policy分栏报告。policy复跑必须保留可复算的depth/ROI/tracking上下文和版本哈希。",
-    "run_id": "perception-score-20260913-01",
-    "source_commit": "c09e030",
-    "diagnostic_source_commit": "106f1189a5aacf856412d1c1bc1f76919c26962c",
+    "note": "906ea4f/4ed19d2受控离线候选：raw baseline 33/50/43提升为41/0/35，offline policy baseline 0/0/76提升为33/0/43，macro P/R为0.8/0.4325，metal_can策略召回0。工程识别质量仍FAIL；官方≥95%保持NOT_MEASURED，competition_perception_pass=false。",
+    "minimum_measurement": "冻结官方类别、独立真实域样本、匹配规则和统计分母，再以可复算的raw与policy replay分别报告每类及宏平均P/R；离线受控候选不得替代官方R01。",
+    "run_id": "perception-gpu-recovery-20260914",
+    "source_commit": "4ed19d2",
+    "receipt_commit": "906ea4f",
     "rollback_commit": "210c4dd39af5d39a354e41e0b39316b517e96d33",
-    "as_of_utc": "2026-09-14T00:49:23+08:00"
+    "as_of_utc": "2026-09-14"
   },
   {
     "id": "recognition_accuracy",
@@ -66,40 +57,44 @@
     "value": null,
     "basis": "not_measured",
     "evidence": [
-      "evidence/day1/competition-perception-score.md",
       "evidence/day1/competition-perception-recovery.json",
-      "evidence/day1/competition-perception-replay-status.json",
+      "evidence/day1/competition-perception-gpu-recovery.json",
+      "evidence/day1/competition-perception-gpu-parity.json",
       "evidence/reference/contest-brief.txt"
     ],
-    "note": "题面未给出“识别准确率”的精确定义；受控域仅有可复现raw诊断（Stage5B 0/654/76、Stage5A 33/50/43），policy replay为NOT_RUN/NOT_MEASURED，旧Stage5A policy 0/0/76已撤回。工程识别质量仅按已测量raw证据判FAIL；官方≥95%定义/结果未测得，保持NOT_MEASURED。",
-    "minimum_measurement": "先冻结官方类别、样本域、匹配规则和统计分母，再分别完成可复算的raw与policy replay，并用独立标注集报告每类与宏平均P/R及总体正确率。",
-    "run_id": null,
-    "source_commit": "106f1189a5aacf856412d1c1bc1f76919c26962c",
+    "note": "官方≥95%的定义、独立样本域、匹配规则与统计分母仍未冻结，因此保持NOT_MEASURED，不对是否达标作结论。906ea4f/4ed19d2仅提供受控离线候选macro P/R=0.8/0.4325，competition_perception_pass=false。",
+    "minimum_measurement": "先冻结官方类别、样本域、匹配规则与统计分母，再用独立样本报告每类和宏平均P/R及总体正确率；受控重复帧和offline replay只能作为诊断。",
+    "run_id": "perception-gpu-recovery-20260914",
+    "source_commit": "906ea4f",
+    "model_commit": "4ed19d2",
     "rollback_commit": null,
-    "as_of_utc": "2026-09-14T00:49:23+08:00"
+    "as_of_utc": "2026-09-14"
   },
   {
     "id": "localization_mm",
     "item": "定位≤50mm",
     "status": "FAIL",
-    "value": 12152.933,
+    "value": 126.327802578,
     "basis": "measured_simulation",
     "evidence": [
-      "evidence/day1/competition-localization-50mm.md",
-      "evidence/day1/competition-localization-replay.md",
-      "evidence/day1/competition-localization-diagnosis.json",
-      "evidence/day1/competition-localization-day1-final-run.md",
-      "evidence/day1/localization-run-02/run-02-failure_receipt.json"
+      "evidence/day1/competition-localization-rental-day1-final-run.md",
+      "evidence/day1/localization-rental-final/rental-run-02-final_result.json"
     ],
-    "note": "run-01仍为FAIL：仅4/359个严格配对、覆盖率1.1142%，配对RMSE 12.152933m、P95 12.514197m、最大12.538851m，所以本行状态保持FAIL。有界run-02由06b99b6生成0.56m局部/全局costmap膨胀半径并启动Gazebo，但在动态窗口前因/amcl global_frame_id捕获10s超时停止，证据提交2a7d201；MCAP=0、paired=0，RMSE/P95/max均为null，run-02的50mm判据为NOT_MEASURED。",
-    "minimum_measurement": "同坐标系、同仿真时间配对估计与真值；先满足覆盖率和位移条件，再报告RMSE/P95/max，阈值采用max≤50mm。",
-    "run_id": "localization-50mm-20260913-01/run-01",
-    "source_commit": "c229c6464f8f7954caed6fc85f506a8c67c56eb6",
-    "rollback_commit": "a9691b41ff2e038b4bf072f814d4ce58c1615b32",
-    "diagnostic_run_id": "localization-50mm-20260914-run-02",
-    "diagnostic_source_commit": "06b99b6cb64e91ec470ac5623ded4c6db22df321",
-    "diagnostic_evidence_commit": "2a7d201304c40987ae15356c6f9066d69e9803a1",
-    "as_of_utc": "2026-09-14T03:20:41+08:00"
+    "note": "47e3cb3最终run：MCAP 194064条、动态参考2711、严格配对2711、覆盖率1.0、位移5.915688628m、RMSE 39.2712095037mm、P95 83.7798579074mm、max 126.327802578mm、Nav2[4,4]、局部/全局膨胀0.56m、20/20参数匹配。严格预声明max≤50mm为FAIL；另一解释RMSE≤50mm仅为PASS_PARTIAL，因官方未定义采用RMSE、P95或max，故不宣称官方PASS。",
+    "minimum_measurement": "官方已要求报告RMSE/P95/max，但未明确哪个统计量决定≤50mm；在官方口径澄清前，同时列示严格max判据FAIL与RMSE替代判据PASS_PARTIAL，并保留全部三项误差。",
+    "interpretations": {
+      "strict_predeclared_max_le_50mm": "FAIL",
+      "alternative_rmse_le_50mm": "PASS_PARTIAL",
+      "official": "NOT_JUDGED_SPECIFICATION_AMBIGUOUS"
+    },
+    "metrics_mm": {
+      "rmse": 39.2712095037,
+      "p95": 83.7798579074,
+      "max": 126.327802578
+    },
+    "run_id": "localization-day1-final-20260914-02",
+    "source_commit": "47e3cb3",
+    "as_of_utc": "2026-09-14"
   },
   {
     "id": "mapped_area_m2",
@@ -204,15 +199,18 @@
     "value": null,
     "basis": "not_measured",
     "evidence": [
-      "evidence/reference/execution-status-snapshot.md",
+      "evidence/day1/dynamic-avoidance-rental-day1/rental-result-initial.json",
+      "evidence/day1/dynamic-avoidance-rental-day1/rental-result-retry.json",
+      "evidence/day1/dynamic-avoidance-rental-day1/attempt-receipt-run04.json",
       "evidence/reference/contest-brief.txt"
     ],
-    "note": "本轮定位、感知、清扫与建图探针均没有执行可判定的整任务动态障碍场景；历史分模块避障不能外推。",
+    "note": "20260914单次试验：c9a27ab首次因缺少FORMAL_ROS2_EXECUTABLE阻塞；b9e1c71修正/run-04已STARTED，但Gazebo启动前因source_inventory闭包漂移判为无效，无MCAP、接触、间距或恢复样本。官方≥95%仍为NOT_MEASURED。",
     "minimum_measurement": "任务中插入一次动态障碍；记录无碰撞、绕行或等待及恢复任务，并报告成功率、最小间距或失败原因。",
-    "run_id": null,
-    "source_commit": null,
+    "run_id": "day1-dynamic-avoidance-single-run-20260914-04",
+    "source_commit": "b9e1c71",
+    "initial_attempt_commit": "c9a27ab",
     "rollback_commit": null,
-    "as_of_utc": "2026-09-13T08:47:13+00:00"
+    "as_of_utc": "2026-09-14"
   },
   {
     "id": "task_decomposition",

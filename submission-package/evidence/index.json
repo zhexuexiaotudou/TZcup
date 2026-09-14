@@ -374,5 +374,48 @@
     "source": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-localization-run\\artifacts\\day1_localization_20260914\\run-02-failure_receipt.json",
     "source_commit": "2a7d201",
     "copied_utc": "2026-09-14T03:23:13+08:00"
+  },
+  {
+    "file": "evidence/day1/competition-localization-rental-day1-final-run.md",
+    "source": "git:47e3cb3:docs/competition-localization-rental-day1-final-run.md",
+    "source_commit": "47e3cb3",
+    "copied_utc": "2026-09-14"
+  },
+  {
+    "file": "evidence/day1/localization-rental-final/rental-run-02-final_result.json",
+    "source": "git:47e3cb3:artifacts/day1_localization_20260914/rental-run-02-final_result.json",
+    "source_commit": "47e3cb3",
+    "copied_utc": "2026-09-14"
+  },
+  {
+    "file": "evidence/day1/competition-perception-gpu-recovery.json",
+    "source": "git:4ed19d2:artifacts/perception_gpu_recovery_20260914/receipt.json",
+    "source_commit": "4ed19d2",
+    "receipt_commit": "906ea4f",
+    "copied_utc": "2026-09-14"
+  },
+  {
+    "file": "evidence/day1/competition-perception-gpu-parity.json",
+    "source": "git:906ea4f:artifacts/perception_gpu_recovery_20260914/gpu_inference_parity.json",
+    "source_commit": "906ea4f",
+    "copied_utc": "2026-09-14"
+  },
+  {
+    "file": "evidence/day1/dynamic-avoidance-rental-day1/rental-result-initial.json",
+    "source": "git:c9a27ab:artifacts/day1_dynamic_avoidance_20260914/rental-result.json",
+    "source_commit": "c9a27ab",
+    "copied_utc": "2026-09-14"
+  },
+  {
+    "file": "evidence/day1/dynamic-avoidance-rental-day1/rental-result-retry.json",
+    "source": "git:b9e1c71:artifacts/day1_dynamic_avoidance_retry_20260914/rental-result.json",
+    "source_commit": "b9e1c71",
+    "copied_utc": "2026-09-14"
+  },
+  {
+    "file": "evidence/day1/dynamic-avoidance-rental-day1/attempt-receipt-run04.json",
+    "source": "git:b9e1c71:artifacts/day1_dynamic_avoidance_retry_20260914/remote/attempt_receipt_run04.json",
+    "source_commit": "b9e1c71",
+    "copied_utc": "2026-09-14"
   }
 ]

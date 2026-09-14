@@ -7,7 +7,7 @@ parser=argparse.ArgumentParser()
 parser.add_argument('--intake',type=Path)
 args=parser.parse_args()
 rows=json.loads((P/'metrics/results.json').read_text(encoding='utf-8'))
-canonical_status={'perception':'FAIL','recognition_accuracy':'NOT_MEASURED'}
+canonical_status={'following':'PASS','perception':'FAIL','recognition_accuracy':'NOT_MEASURED','localization_mm':'FAIL'}
 for result_id,status in canonical_status.items():
     matches=[r for r in rows if r['id']==result_id]
     if len(matches)!=1 or matches[0]['status']!=status:
@@ -16,10 +16,19 @@ recognition=next(r for r in rows if r['id']=='recognition_accuracy')
 if '未达到' in recognition['note']:
     raise ValueError('Official recognition status must stay NOT_MEASURED without an unmet-result claim')
 perception=next(r for r in rows if r['id']=='perception')
-if ('0/0/76' in perception['note'] or 'policy 0/8/76' in perception['note']) and '撤回' not in perception['note']:
+if ('0/0/76' in perception['note'] or 'policy 0/8/76' in perception['note']) and not any(
+    marker in perception['note'] for marker in ('撤回','baseline','基线')
+):
     raise ValueError('Withdrawn perception policy metrics must not be reported as measured')
-if 'NOT_RUN' not in perception['note'] or 'NOT_MEASURED' not in perception['note']:
-    raise ValueError('Perception policy must remain explicitly NOT_RUN/NOT_MEASURED')
+if 'competition_perception_pass=false' not in perception['note'] or 'NOT_MEASURED' not in perception['note']:
+    raise ValueError('Perception must keep official status NOT_MEASURED and competition_perception_pass false')
+localization=next(r for r in rows if r['id']=='localization_mm')
+if localization.get('interpretations',{}).get('strict_predeclared_max_le_50mm')!='FAIL':
+    raise ValueError('Strict predeclared localization max criterion must remain FAIL')
+if localization.get('interpretations',{}).get('alternative_rmse_le_50mm')!='PASS_PARTIAL':
+    raise ValueError('Localization RMSE alternative must remain PASS_PARTIAL')
+if localization.get('interpretations',{}).get('official')!='NOT_JUDGED_SPECIFICATION_AMBIGUOUS':
+    raise ValueError('Localization official interpretation must remain unjudged')
 braking=next(r for r in rows if r['id']=='braking_s')
 if '1.0s' not in braking['note'] or '1.5s' not in braking['note']:
     raise ValueError('Braking result must distinguish the predeclared 1.0 s hold from the observed 1.5 s hold')

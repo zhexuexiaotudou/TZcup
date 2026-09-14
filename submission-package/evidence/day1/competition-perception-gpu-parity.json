@@ -1,0 +1,13 @@
+{
+  "status": "GPU_INFERENCE_PARITY_MEASURED",
+  "model_sha256": "00f4f96f3eb925e202266506d22892a1df84838d08dbf6541d204c3e1d089c6a",
+  "gpu_name": "NVIDIA GeForce RTX 3080 Ti",
+  "frame_count": 30,
+  "iterations": 5000,
+  "elapsed_s": 0.9065148530062288,
+  "inferences_per_s": 5515.629427823224,
+  "peak_vram_mib": 3.603515625,
+  "onnx_cpu_vs_torch_gpu_max_abs_diff": 1.239776611328125e-05,
+  "argmax_agreement": 1.0,
+  "nvidia_smi_after": "28 %, 328 MiB, 115.87 W"
+}
