@@ -70,3 +70,45 @@ Focused tests passed (`4 passed`), Python compilation passed, both new shell
 entry points passed `bash -n`, and `git diff --check` passed. Repository-wide
 `scripts/ci_fast.py` was blocked before test execution by the worktree's
 existing `README.md must remain a concise project front door` hygiene check.
+
+## Corrected run 02
+
+One corrected run was authorized after commit
+`8eb01907516194443866cc3a2c93bf83d0df116e`. It used:
+
+* run root: `day1-bounded-coverage-20260914-02`
+* ROS domain: `93`
+* Gazebo partition: `tzcup_day1_bounded_coverage_20260914_02`
+* XDG runtime: `/tmp/tzcup_day1_bounded_coverage_20260914_02_xdg`
+
+The regression test confirmed that the bridge no longer assigns the reserved
+`rclpy.Node.publishers` attribute. The corrected bridge process started and
+remained alive. It did not reach actuator-ready within the 180-second readiness
+window, and the runner exited fail-closed with:
+
+```text
+cleaning actuators never became ready
+```
+
+During cleanup, `BoundedCoverageCleaningBridge._tick` raised
+`KeyboardInterrupt` from the timer callback while `finalize()` called
+`rclpy.spin_once`. That masked the bridge's structured status JSON. The
+coverage probe was not started. Coverage, path, dirt, brush, and final-state
+metrics remain `NOT_MEASURED`.
+
+```powershell
+& 'F:\Project\TZcup\.workspace\tools\Invoke-TZcupRemoteLatest.ps1' -Command @'
+TZCUP_DAY1_COVERAGE_RUN_ID=day1-bounded-coverage-20260914-02 \
+TZCUP_DAY1_COVERAGE_DOMAIN_ID=93 \
+TZCUP_DAY1_COVERAGE_PARTITION=tzcup_day1_bounded_coverage_20260914_02 \
+TZCUP_DAY1_COVERAGE_XDG_RUNTIME=/tmp/tzcup_day1_bounded_coverage_20260914_02_xdg \
+bash /root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-bounded-coverage-20260914-02/ops/run_day1_bounded_coverage_remote_dispatch.sh
+'@
+```
+
+The corrected run released its resources: primary rc `4`, Gazebo lock
+available, zero task-partition survivors, and `sim_resource_released=true`.
+No second corrected run was launched. The structured receipt is
+`artifacts/day1_bounded_coverage_20260914/failure_receipt_run02.json`, and the
+archive SHA-256 is
+`185f052094695a7efb699c3c736e559a7a691531c34de008f49635a3f6592bc9`.

@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "day1_bounded_saved_map_coverage_failure_receipt",
+  "status": "BLOCKED",
+  "decision": "STOPPED_AFTER_CORRECTED_RUN_NO_RETRY",
+  "branch": "codex/day1-coverage-run",
+  "base_revision": "8eb01907516194443866cc3a2c93bf83d0df116e",
+  "remote": {
+    "host": "autodl-container-ca410red1k-e4e33c0c",
+    "gpu": "NVIDIA GeForce RTX 3080 Ti",
+    "runtime": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f",
+    "source_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/localization-day1-final-20260914-02/source",
+    "overlay": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/localization-day1-20260914-01/overlay",
+    "map_source": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/competition-integrated-20260913-01",
+    "episode": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/motion-cleaning-continuous-fixture-01/episode",
+    "run_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-bounded-coverage-20260914-02",
+    "ros_domain_id": 93,
+    "gazebo_partition": "tzcup_day1_bounded_coverage_20260914_02",
+    "xdg_runtime_dir": "/tmp/tzcup_day1_bounded_coverage_20260914_02_xdg"
+  },
+  "attempted_script_sha256": {
+    "day1_bounded_coverage_cleaning_bridge.py": "ce7478b3adf97f7db99cb87ebd78c3bc7a4359c1619401e2c7e5de93e2930c22",
+    "summarize_day1_bounded_coverage_run.py": "d3fcf4c6c794bd70a0db8fe185efdf5d116dbce10f8ccb124d961b29a7ca0421",
+    "run_day1_bounded_coverage_runner.sh": "19a31a934914c1cce4a776f6b662b5388a0161f1554232f3f6e4bfa3d744536d",
+    "run_day1_bounded_coverage_remote_dispatch.sh": "9a6bde52e181a7fa0bb1ce5bed9d464a37c25b2e4d848e96c963b700ba100ac6",
+    "day1_bounded_coverage_mission.yaml": "bcf5c65f246898a6839f6a00fff4ed3bad3c9b50cf6d5321cb166a869d0ed076"
+  },
+  "corrected_bridge_start_verification": {
+    "reserved_publishers_regression_test": "passed",
+    "bridge_process_observed_alive": true,
+    "bridge_hash_matched_remote_upload": true
+  },
+  "blocker": {
+    "stage": "cleaning_actuator_readiness_before_coverage_probe",
+    "primary_type": "cleaning_actuators_never_became_ready",
+    "primary_exact_message": "cleaning actuators never became ready",
+    "readiness_timeout_seconds": 180,
+    "secondary_finalization_type": "keyboard_interrupt_raised_from_timer_during_finalize",
+    "secondary_finalization_exact_error": "KeyboardInterrupt in BoundedCoverageCleaningBridge._tick during rclpy.spin_once(self, timeout_sec=0.05)",
+    "cleaning_bridge_json_created": false,
+    "coverage_probe_started": false,
+    "coverage_report_created": false,
+    "coverage_trajectory_created": false,
+    "dirt_cleared_cells": null,
+    "coverage_percent": null,
+    "coverage_area_m2": null,
+    "actual_path_length_m": null,
+    "average_speed_mps": null,
+    "net_efficiency_m2_h": null
+  },
+  "metrics_boundary": {
+    "valid_bounded_mission": false,
+    "metrics_status": "NOT_MEASURED",
+    "full_20000_m2_mapping_claim": false,
+    "official_recognition_claim": false,
+    "official_competition_efficiency_claim": false
+  },
+  "resource_release": {
+    "primary_rc": 4,
+    "formal_gazebo_lock_available": true,
+    "partition_survivor_count": 0,
+    "sim_resource_released": true
+  },
+  "video_evidence": {
+    "produced": false,
+    "reason": "run stopped before coverage probe"
+  },
+  "local_verification": {
+    "focused_pytest": "4 passed",
+    "python_compile": "passed",
+    "bash_syntax": "passed",
+    "remote_static_checks": "passed",
+    "git_diff_check": "passed"
+  },
+  "remote_evidence_archive": "artifacts/day1_bounded_coverage_20260914/remote-day1-bounded-coverage-20260914-02.tar.gz",
+  "remote_evidence_archive_sha256": "185f052094695a7efb699c3c736e559a7a691531c34de008f49635a3f6592bc9"
+}

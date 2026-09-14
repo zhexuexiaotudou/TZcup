@@ -4,8 +4,9 @@ set -eo pipefail
 
 host_root=/root/autodl-tmp/tzcup-competition-sim-only-20260912
 guest_root=/workspace/tzcup-competition-sim-only-20260912
-run_host="$host_root/evidence/day1-bounded-coverage-20260914-01"
-run_guest="$guest_root/evidence/day1-bounded-coverage-20260914-01"
+run_id="${TZCUP_DAY1_COVERAGE_RUN_ID:-day1-bounded-coverage-20260914-01}"
+run_host="$host_root/evidence/$run_id"
+run_guest="$guest_root/evidence/$run_id"
 runtime="$guest_root/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f"
 source_root="$guest_root/evidence/localization-day1-final-20260914-02/source"
 overlay="$guest_root/evidence/localization-day1-20260914-01/overlay"
@@ -16,9 +17,9 @@ source_root_host="$host_root/evidence/localization-day1-final-20260914-02/source
 overlay_host="$host_root/evidence/localization-day1-20260914-01/overlay"
 map_source_host="$host_root/evidence/competition-integrated-20260913-01"
 episode_host="$host_root/evidence/motion-cleaning-continuous-fixture-01/episode"
-xdg_runtime=/tmp/tzcup_day1_bounded_coverage_20260914_01_xdg
-domain=94
-partition=tzcup_day1_bounded_coverage_20260914_01
+domain="${TZCUP_DAY1_COVERAGE_DOMAIN_ID:-94}"
+partition="${TZCUP_DAY1_COVERAGE_PARTITION:-tzcup_day1_bounded_coverage_20260914_01}"
+xdg_runtime="${TZCUP_DAY1_COVERAGE_XDG_RUNTIME:-/tmp/${partition}_xdg}"
 wall_deadline_seconds=1200
 
 if [[ -e "$run_host/run-01" || -e "$run_host/run-01.primary.rc" ]]; then

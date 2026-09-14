@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import importlib.util
 import json
 from pathlib import Path
@@ -79,7 +80,25 @@ def test_bounded_config_is_fixed_and_truth_safe() -> None:
 
 def test_bridge_has_no_motion_or_truth_interfaces() -> None:
     source = BRIDGE_PATH.read_text(encoding="utf-8")
-    assert "self.publishers =" not in source
+    tree = ast.parse(source)
+    reserved_node_assignments = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign):
+            targets = node.targets
+        elif isinstance(node, ast.AnnAssign):
+            targets = [node.target]
+        else:
+            continue
+        for target in targets:
+            if (
+                isinstance(target, ast.Attribute)
+                and isinstance(target.value, ast.Name)
+                and target.value.id == "self"
+                and target.attr == "publishers"
+            ):
+                reserved_node_assignments.append(node)
+    assert reserved_node_assignments == []
+    assert "self.pub = {" in source
     for forbidden in (
         "cmd_vel",
         '"/ground_truth',
