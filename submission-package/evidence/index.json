@@ -591,8 +591,48 @@
     "source_commit": "b663ca9",
     "assembly_commit": "e6caf27",
     "archive_commit": "8cda98c",
-    "bytes": 4308,
-    "sha256": "3640495d7f352ce5ad74499b08d2daa9e056988e3e90d26e3183622468b74d44",
+    "bytes": 4787,
+    "sha256": "090bee64fcb64dbe1ad05c48fe4d3793f13c0cac4a78253c765ddfa14962db66",
+    "copied_utc": "2026-09-15"
+  },
+  {
+    "file": "video/evidence/continuous-cleaning-safety-450s/gazebo-cleaning-raw.mp4",
+    "source": "gazebo-video-20260913-01/run-01/gazebo-cleaning-raw.mp4",
+    "source_commit": "4c3c95930245155186ebed53eb822d314b1717c9",
+    "bytes": 24958846,
+    "sha256": "c6877d723c82e16d5a0b123d98a76c6fc106dc63c452cf935f6311a3fa74fa01",
+    "copied_utc": "2026-09-15"
+  },
+  {
+    "file": "video/evidence/continuous-cleaning-safety-450s/original-manifest.json",
+    "source": "gazebo-video-20260913-01/run-01/original-manifest.json",
+    "source_commit": "4c3c95930245155186ebed53eb822d314b1717c9",
+    "bytes": 3628,
+    "sha256": "d040296fea33083eacb0676e38b5bd5d542f8ed57a9eadc3649f85f6363375e5",
+    "copied_utc": "2026-09-15"
+  },
+  {
+    "file": "video/evidence/continuous-cleaning-safety-450s/video_verification.json",
+    "source": "gazebo-video-20260913-01/run-01/video_verification.json",
+    "source_commit": "4c3c95930245155186ebed53eb822d314b1717c9",
+    "bytes": 309,
+    "sha256": "a0cc753dcb892bec73ae4d0ae38896153e56c9bc2c846d9ca82943755032c8b4",
+    "copied_utc": "2026-09-15"
+  },
+  {
+    "file": "video/evidence/continuous-cleaning-safety-450s/recording.json",
+    "source": "gazebo-video-20260913-01/run-01/recording.json",
+    "source_commit": "4c3c95930245155186ebed53eb822d314b1717c9",
+    "bytes": 1160,
+    "sha256": "9a03b52004f538333619cac909e6d15b32e8f04b0ea0a335e6e647d0f7303c60",
+    "copied_utc": "2026-09-15"
+  },
+  {
+    "file": "video/evidence/continuous-cleaning-safety-450s/ffprobe.json",
+    "source": "gazebo-video-20260913-01/run-01/ffprobe.json",
+    "source_commit": "4c3c95930245155186ebed53eb822d314b1717c9",
+    "bytes": 390,
+    "sha256": "3879f180e4a0cdf937230017804668602069d4f49c51652d8b80170c67fe6054",
     "copied_utc": "2026-09-15"
   },
   {
@@ -661,8 +701,8 @@
     "source_commit": "b663ca9",
     "assembly_commit": "e6caf27",
     "archive_commit": "8cda98c",
-    "bytes": 1169,
-    "sha256": "48502e10c415e2fd9c736c970a64736b60393dfcf8acba4769b552e501eb510c",
+    "bytes": 1920,
+    "sha256": "4e30c6d2e0ecc15b19c0c8d20d595a3ba264e2dab07be70d8210bfe3b97b1b6b",
     "copied_utc": "2026-09-15"
   },
   {

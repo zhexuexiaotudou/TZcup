@@ -1,0 +1,123 @@
+{
+  "run_id": "gazebo-video-20260913-01/run-01",
+  "candidate_commit": "4c3c95930245155186ebed53eb822d314b1717c9",
+  "file": "gazebo-cleaning-raw.mp4",
+  "sha256": "c6877d723c82e16d5a0b123d98a76c6fc106dc63c452cf935f6311a3fa74fa01",
+  "duration_s": 450,
+  "codec": "h264",
+  "resolution": [
+    1280,
+    720
+  ],
+  "fps": 10,
+  "frames": 4500,
+  "direct_live_gazebo_gui_capture": true,
+  "edited": false,
+  "segments_approximate_video_seconds": [
+    {
+      "range": [
+        0,
+        33
+      ],
+      "scene": "near-view stationary rotating/lowered brushes"
+    },
+    {
+      "range": [
+        33,
+        303
+      ],
+      "scene": "operator-commanded real driving and brush rotation; dirt reduction logged but not visible"
+    },
+    {
+      "range": [
+        303,
+        363
+      ],
+      "scene": "orange obstacle injected from public odometry; actual collision-monitor slowing/stopping"
+    },
+    {
+      "range": [
+        363,
+        403
+      ],
+      "scene": "obstacle removed; driving resumes"
+    },
+    {
+      "range": [
+        403,
+        450
+      ],
+      "scene": "emergency stop requested while driving; held stopped"
+    }
+  ],
+  "segment_clock_note": "Action trigger 3s after encoder process start; boundaries approximate, use frame content and timeline for final cuts",
+  "obstacle_min_abs_odom_vx": 0.0025363819904936843,
+  "pre_estop_vx_samples": [
+    0.3516383974614861,
+    0.35148163773907354
+  ],
+  "post_estop_max_abs_vx": 0.00039143683160055843,
+  "last_logged_cleaned_area_m2": 8.06,
+  "missing_shots": [
+    "MISSING_VISIBLE_DIRT_REDUCTION: Brown tiles remained visible despite genuine plugin cleaned_area growth; never present original as visually proving dirt removal"
+  ],
+  "not_claimed": [
+    "autonomous navigation acceptance",
+    "new width/efficiency/estop acceptance",
+    "all three brush contact interfaces independently visible from every camera angle"
+  ],
+  "verification": {
+    "encode_rc": 0,
+    "ffprobe_rc": 0,
+    "sampled_decode_rc": 0,
+    "sampled_frame_count": 15,
+    "unique_sampled_frames": 15,
+    "non_static_sampled_frames": true,
+    "sha256": "c6877d723c82e16d5a0b123d98a76c6fc106dc63c452cf935f6311a3fa74fa01",
+    "record_elapsed_wall_s": 461.4078779220581,
+    "bytes": 24958846
+  },
+  "logs": "timeline.jsonl, launch.log, navigation.log, gui.log, gui-close.log, encode.log",
+  "source_recording": {
+    "argv": [
+      "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/gazebo-video-20260913-01/source/noble-video-exec",
+      "env",
+      "-u",
+      "LD_PRELOAD",
+      "LD_LIBRARY_PATH=/workspace/tzcup-competition-sim-only-20260912/evidence/gazebo-video-20260913-01/tools/usr/lib/x86_64-linux-gnu",
+      "/workspace/tzcup-competition-sim-only-20260912/evidence/gazebo-video-20260913-01/tools/usr/bin/ffmpeg",
+      "-n",
+      "-f",
+      "x11grab",
+      "-draw_mouse",
+      "0",
+      "-framerate",
+      "10",
+      "-video_size",
+      "1280x720",
+      "-i",
+      ":92.0",
+      "-t",
+      "450",
+      "-c:v",
+      "libx264",
+      "-threads",
+      "2",
+      "-preset",
+      "ultrafast",
+      "-crf",
+      "20",
+      "-pix_fmt",
+      "yuv420p",
+      "-movflags",
+      "+faststart",
+      "/workspace/tzcup-competition-sim-only-20260912/evidence/gazebo-video-20260913-01/run-01/gazebo-cleaning-raw.mp4"
+    ],
+    "pid": 874301,
+    "start_epoch": 1789291697.2736416,
+    "run_id": "gazebo-video-20260913-01/run-01",
+    "duration_requested_s": 450,
+    "content": "Only live Gazebo GUI screen, no 2D map or RViz; no cuts or speed changes",
+    "candidate": "4c3c95930245155186ebed53eb822d314b1717c9"
+  }
+}

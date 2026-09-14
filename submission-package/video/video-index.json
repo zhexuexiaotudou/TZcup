@@ -37,6 +37,13 @@
     "assembly_script": "../../scripts/assemble_day1_video_final.ps1",
     "media_repair": "Explicit concat filter and constant-frame-rate encode replace mixed-timebase stream copy; the final master is 9000 frames at 30 fps."
   },
+  "continuous_evidence": {
+    "path": "evidence/continuous-cleaning-safety-450s/gazebo-cleaning-raw.mp4",
+    "role": "unedited_live_gazebo_motion_and_safety_supplement",
+    "duration_s": 450.0,
+    "sha256": "c6877d723c82e16d5a0b123d98a76c6fc106dc63c452cf935f6311a3fa74fa01",
+    "claim_boundary": "Same continuous capture for motion, obstacle response, recovery and in-motion emergency stop; not a complete coverage mission or official efficiency/avoidance acceptance."
+  },
   "files": [
     {
       "path": "final/TZcup_5min_video.mp4",
@@ -89,8 +96,8 @@
     {
       "path": "视频索引.md",
       "role": "human_readable_index",
-      "bytes": 2238,
-      "sha256": "bbf93df364c86e0f7f0cefc0e1a5d29ee183ce08b18d6f160a285e1eb4c69ae2"
+      "bytes": 2737,
+      "sha256": "c486c328ccac378f22d89e0a900ba666d5c1ab31aee40b124564d248e7516e4d"
     },
     {
       "path": "一页说明.md",

@@ -1,0 +1,11 @@
+{
+  "encode_rc": 0,
+  "ffprobe_rc": 0,
+  "sampled_decode_rc": 0,
+  "sampled_frame_count": 15,
+  "unique_sampled_frames": 15,
+  "non_static_sampled_frames": true,
+  "sha256": "c6877d723c82e16d5a0b123d98a76c6fc106dc63c452cf935f6311a3fa74fa01",
+  "record_elapsed_wall_s": 461.4078779220581,
+  "bytes": 24958846
+}
