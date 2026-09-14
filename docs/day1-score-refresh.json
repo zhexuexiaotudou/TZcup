@@ -120,6 +120,13 @@
         "subtitle_codec": "mov_text",
         "sidecar_subtitle_cues": 35,
         "embedded_subtitle_cues": 36,
+        "continuous_supplement": {
+          "duration_s": 450.0,
+          "sha256": "c6877d723c82e16d5a0b123d98a76c6fc106dc63c452cf935f6311a3fa74fa01",
+          "content": "unedited live Gazebo motion, obstacle slowdown/stop, recovery and in-motion emergency stop",
+          "same_continuous_mission": true,
+          "complete_cleaning_mission": false
+        },
         "recommended_points_range": [2, 3],
         "evaluator_maximum_points": 4,
         "same_continuous_mission": false
@@ -186,11 +193,12 @@
       "status": "DELIVERED_MODULAR_DEMO",
       "recommended_points_range": [2, 3],
       "evaluator_maximum_points": 4,
-      "next_action": "freeze the 300 s master, narration/subtitles, chapters and hashes; prepare a 2-3/4 claim and leave 4/4 to evaluator discretion",
+      "next_action": "freeze the 300 s master plus 450 s continuous motion/safety supplement, narration/subtitles, chapters and hashes; prepare a 2-3/4 claim and leave 4/4 to evaluator discretion",
       "evidence_paths": [
-        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-video-final/submission-package/video/final/TZcup_5min_video.mp4",
-        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-video-final/submission-package/video/video-index.json",
-        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-video-final/submission-package/video/validation/video-package-validation.json"
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-video-report-sync/submission-package/video/final/TZcup_5min_video.mp4",
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-video-report-sync/submission-package/video/evidence/continuous-cleaning-safety-450s/gazebo-cleaning-raw.mp4",
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-video-report-sync/submission-package/video/video-index.json",
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-video-report-sync/submission-package/video/validation/video-package-validation.json"
       ],
       "not_claimable": [
         "one continuous mission",
