@@ -95,6 +95,8 @@ $mediaFiles = [ordered]@{
     "video/validation/video-package-validation.json" = "validation report"
     "video/MANIFEST.sha256" = "video manifest"
     "metrics/video-score-status.json" = "video score status"
+    "code/README.md" = "submission code README"
+    "code/CODE_MANIFEST.sha256" = "submission code manifest"
 }
 
 $evidenceIndex = @(Read-Json $evidenceIndexPath)

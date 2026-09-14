@@ -6,8 +6,8 @@
   "integrated_report": {
     "package_path": "docs/技术方案报告.pdf",
     "pages": 24,
-    "bytes": 199920,
-    "sha256": "5ff9b291b65922c29003190207a37942f096cb732fcb6f56c0735aba2b06c9c0"
+    "bytes": 200119,
+    "sha256": "27615b5d3a1361d09007854fdfe326bb6fb448d5d290b4ddbfad1a17725e2190"
   },
   "claim_levels": [
     "MEASURED_REPOSITORY_EVIDENCE",
@@ -162,7 +162,7 @@
         {
           "package_path": "video/validation/video-package-validation.json",
           "bytes": 891,
-          "sha256": "448c03f41c84facbfabebc326edb5a9a2ad0b046b46644c0e61cbc6574e9441a"
+          "sha256": "1a7aa4a4952fe84e977942721eeb8a054ceaddb8265b0c613d139e107df03c60"
         },
         {
           "package_path": "metrics/video-score-status.json",

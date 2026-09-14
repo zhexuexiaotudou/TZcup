@@ -2,6 +2,8 @@
 
 当前整体仍未达到完整提交条件，但已正式归档 5 分钟模块化综合展示视频；技术报告、板端证据与结果接入工具已成稿。47e3cb3单次封存路线、3882dc34受控感知候选、6b1a7dd非技术补充包，以及ff42430/c33c75a动态避障run-09部分功能证据均已入包。受控夹具30帧/76实例的raw与policy五类P/R=1.0只属`reviewable_95_candidate`，真实域、S100P板端和官方R01仍为`NOT_MEASURED_DEFINITION_UNSPECIFIED`。run-09接受目标并产生部分运动，但Nav2未成功、单次0/1，不能升级官方避障状态。5 分钟视频是不同运行的成功分项剪辑，不表示所有镜头属于同一连续任务，也不升级完整任务、MCAP或未测技术状态。
 
+选交源码与算法材料位于 `code/`：包含 ROS 2 源码包、离线建图脚本、关键验收/渲染脚本、视频与证据校验器、README 和 SHA-256 清单。它只证明代码可审阅，不改变任何未测状态。
+
 - `docs/技术方案报告.pdf`：24页中文报告，第24页为补充技术证据索引；页数由最终构建读取。
 - `metrics/验收矩阵.md` / `results.json`：唯一结果矩阵，明确区分measured_simulation、internal_frozen_regression、offline_replay、offline_raycast_mapping、synthetic_replay、design_calculation与not_measured。
 - `metrics/video-score-status.json` / `演示视频评分状态.md`：视频项`DELIVERED_MODULAR_DEMO`、建议`2-3/4`、评委裁量上限`4/4`与不可升级边界。

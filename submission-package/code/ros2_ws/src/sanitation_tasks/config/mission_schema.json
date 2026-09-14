@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SanitationMission",
+  "type": "object",
+  "required": [
+    "mission_id",
+    "mode"
+  ],
+  "properties": {
+    "mission_id": {
+      "type": "string"
+    },
+    "mode": {
+      "enum": [
+        "coverage",
+        "waypoint",
+        "spot_clean",
+        "inspect",
+        "return_home"
+      ]
+    },
+    "schedule": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "frame_id": {
+      "type": "string",
+      "default": "map"
+    },
+    "polygon": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "prefixItems": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "minItems": 2,
+        "maxItems": 2
+      }
+    },
+    "targets": {
+      "type": "array"
+    },
+    "constraints": {
+      "type": "object",
+      "properties": {
+        "max_speed_mps": {
+          "type": "number"
+        },
+        "avoid_puddles": {
+          "type": "boolean"
+        },
+        "brush_enabled": {
+          "type": "boolean"
+        },
+        "return_when_bin_full": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

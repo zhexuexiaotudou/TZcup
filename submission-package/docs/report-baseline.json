@@ -14,8 +14,8 @@
     "base_commit": "8cda98c015d11ecd7628bf3599dcb49b8c361d1a",
     "pdf_path": "docs/技术方案报告.pdf",
     "pages": 24,
-    "bytes": 199920,
-    "sha256": "5ff9b291b65922c29003190207a37942f096cb732fcb6f56c0735aba2b06c9c0",
+    "bytes": 200119,
+    "sha256": "27615b5d3a1361d09007854fdfe326bb6fb448d5d290b4ddbfad1a17725e2190",
     "updated_utc": "2026-09-15"
   },
   "integration_branch": "codex/day1-video-report-sync",

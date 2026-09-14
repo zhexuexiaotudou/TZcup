@@ -3,3 +3,6 @@ evidence/** -text
 
 # Preserve packaged video deliverables byte-for-byte, including sidecar text assets.
 video/** -text
+
+# Preserve the submitted source bundle byte-for-byte so CODE_MANIFEST.sha256 stays valid.
+code/** -text
