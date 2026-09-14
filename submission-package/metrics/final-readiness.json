@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "competition_submission_readiness",
+  "technical_material_status": "READY_FOR_REVIEW",
+  "ready_for_external_submission": false,
+  "checks": {
+    "report_pdf_20_to_50_pages": {
+      "status": "PASS",
+      "pages": 24,
+      "path": "docs/技术方案报告.pdf"
+    },
+    "video_5_to_10_minutes_with_operation_guide": {
+      "status": "PASS",
+      "duration_s": 300,
+      "operation_guide_seconds": "280-300",
+      "path": "video/final/TZcup_5min_video.mp4"
+    },
+    "optional_code_package_with_readme": {
+      "status": "PASS",
+      "files": 96,
+      "manifest_path": "code/CODE_MANIFEST.sha256",
+      "readme_path": "code/README.md"
+    },
+    "video_package_validation": {
+      "status": "PASS",
+      "report": "video/validation/video-package-validation.json"
+    },
+    "evidence_index_validation": {
+      "status": "PASS",
+      "checked": 141,
+      "hashed": 53
+    }
+  },
+  "external_blockers": [
+    "approved registration form not present",
+    "applicant legal name, organization and contact phone not provided",
+    "final archive filename cannot be frozen without the applicant naming fields",
+    "official technical minimum definitions and acceptance scope remain organizer-owned"
+  ],
+  "technical_claim_boundary": "The package is review-ready but does not claim official full-mission PASS, live SLAM, avoidance rate, official >=95 percent perception, physical dust-bin volume or vehicle acceptance."
+}

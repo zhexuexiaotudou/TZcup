@@ -99,6 +99,8 @@ $mediaFiles = [ordered]@{
     "code/CODE_MANIFEST.sha256" = "submission code manifest"
     "metrics/score-estimate.md" = "internal official score estimate"
     "metrics/score-estimate.json" = "machine-readable internal official score estimate"
+    "metrics/final-readiness.md" = "final submission readiness checklist"
+    "metrics/final-readiness.json" = "machine-readable final submission readiness"
 }
 
 $evidenceIndex = @(Read-Json $evidenceIndexPath)
