@@ -54,3 +54,29 @@ domain-89 runtime process. The local compact archive is
 `artifacts/day1_dynamic_avoidance_20260914/remote-day1-dynamic-avoidance-run-20260914-01-compact.tar.gz`.
 The full remote evidence and sealed runtime closure remain under the remote run
 root above.
+
+## Corrected retry
+
+The authorized retry fixed the missing executable environment:
+
+* verified `/opt/ros/jazzy/bin/ros2` as a Python executable;
+* verified `file`, `ros2 --help`, and SHA-256
+  `3308327fcefeaefe5601f72e0b473a5f9f9638434f5773d2f40b124f7c9aa04d`;
+* added and committed wrapper export logic plus a focused contract test;
+* wrapper/test commit: `ab6989b79f46a99819a77a77cd5cbaa5250ffbd6`;
+* focused tests: `13 passed`.
+
+The corrected trial ran as `run-04` on ROS domain `92`, Gazebo partition
+`tzcup_dynamic_avoidance_single_run_20260914_04`, and XDG
+`/tmp/tzcup_dynamic_avoidance_single_run_20260914_04_xdg`. It recorded
+`STARTED` and retained denominator `1`, but stopped before Gazebo because the
+runtime closure drifted in `source_inventory` and
+`source_inventory_sha256` after the wrapper and test files changed. This is a
+distinct pre-Gazebo blocker; no further trial was run.
+
+`run-04` therefore has numerator `0`, evaluator status
+`SINGLE_RUN_EVIDENCE_INVALID`, and official `>=95%` status `NOT_MEASURED`.
+No MCAP, contact, clearance, reroute, wait, or goal-recovery evidence exists
+because Gazebo did not launch. Immediate post-attempt sampling recorded CPU
+`27.56%`, GPU `0%`, GPU memory `1 MiB`, no runtime processes, an available
+formal Gazebo lock, and resources released.

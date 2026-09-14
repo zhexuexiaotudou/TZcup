@@ -1,0 +1,14 @@
+{
+  "cpu_busy_percent_sample": 27.5627550389514,
+  "formal_gazebo_lock_available": true,
+  "gpu_compute_processes": [],
+  "gpu_memory_total_mib": 12288,
+  "gpu_memory_used_mib": 1,
+  "gpu_utilization_percent": 0,
+  "measurement_window_s": 1.0,
+  "note": "run-04 stopped before Gazebo launch; utilization is an immediate post-attempt sample.",
+  "resource_released": true,
+  "run_id": "run-04",
+  "runtime_processes_remaining": [],
+  "schema_version": 1
+}

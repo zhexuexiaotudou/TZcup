@@ -1,0 +1,50 @@
+{
+  "attempt_id": "day1-dynamic-avoidance-single-run-20260914-04",
+  "blocker": "final runtime closure drifted in sections: source_inventory, source_inventory_sha256",
+  "cause": "The wrapper and focused contract test changed after the closure manifest was recorded; the formal gate rejected the source-inventory drift before Gazebo launch.",
+  "claim_boundary": "The corrected retry entered the fixed denominator and blocked on a distinct pre-Gazebo runtime-closure drift. It did not measure and cannot establish the official >=95% rate.",
+  "closure_manifest_sha256": "16b6cb57fd93ec1ffc2578d331b772ea93850b2783a82745b4784b81a9ab7f4c",
+  "evaluator_exit_code": 3,
+  "gazebo_partition": "tzcup_dynamic_avoidance_single_run_20260914_04",
+  "official_metric_measured_value": null,
+  "official_metric_status": "NOT_MEASURED",
+  "requested_commit": "ab6989b79f46a99819a77a77cd5cbaa5250ffbd6",
+  "resource_release": {
+    "cpu_busy_percent_sample": 27.5627550389514,
+    "formal_gazebo_lock_available": true,
+    "gpu_compute_processes": [],
+    "gpu_memory_total_mib": 12288,
+    "gpu_memory_used_mib": 1,
+    "gpu_utilization_percent": 0,
+    "measurement_window_s": 1.0,
+    "note": "run-04 stopped before Gazebo launch; utilization is an immediate post-attempt sample.",
+    "resource_released": true,
+    "run_id": "run-04",
+    "runtime_processes_remaining": [],
+    "schema_version": 1
+  },
+  "ros2_executable": {
+    "file_output": "/opt/ros/jazzy/bin/ros2: Python script, ASCII text executable",
+    "help_exit_code": 0,
+    "help_first_line": "usage: ros2 [-h] [--use-python-default-buffering]",
+    "path": "/opt/ros/jazzy/bin/ros2",
+    "realpath": "/opt/ros/jazzy/bin/ros2",
+    "schema_version": 1,
+    "sha256": "3308327fcefeaefe5601f72e0b473a5f9f9638434f5773d2f40b124f7c9aa04d"
+  },
+  "ros_domain_id": 92,
+  "run_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/run-04",
+  "runner_exit_code": 1,
+  "runtime_ws": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f",
+  "schema_version": 1,
+  "single_run": {
+    "denominator": 1,
+    "functional_success": false,
+    "numerator": 0,
+    "observed_fraction": 0.0,
+    "post_launch_exclusions": 0,
+    "started": true
+  },
+  "status": "BLOCKED_BEFORE_GAZEBO",
+  "xdg_runtime_dir": "/tmp/tzcup_dynamic_avoidance_single_run_20260914_04_xdg"
+}

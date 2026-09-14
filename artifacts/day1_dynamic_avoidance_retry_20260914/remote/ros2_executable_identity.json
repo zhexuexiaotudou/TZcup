@@ -1,0 +1,9 @@
+{
+  "file_output": "/opt/ros/jazzy/bin/ros2: Python script, ASCII text executable",
+  "help_exit_code": 0,
+  "help_first_line": "usage: ros2 [-h] [--use-python-default-buffering]",
+  "path": "/opt/ros/jazzy/bin/ros2",
+  "realpath": "/opt/ros/jazzy/bin/ros2",
+  "schema_version": 1,
+  "sha256": "3308327fcefeaefe5601f72e0b473a5f9f9638434f5773d2f40b124f7c9aa04d"
+}

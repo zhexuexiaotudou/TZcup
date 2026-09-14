@@ -1,0 +1,19 @@
+/workspace/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/run-04/predeclared_obstacle_route.json
+Traceback (most recent call last):
+  File "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/source/scripts/formal_runtime_gate_binding.py", line 176, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/source/scripts/formal_runtime_gate_binding.py", line 163, in main
+    binding = build_binding(
+              ^^^^^^^^^^^^^^
+  File "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/source/scripts/formal_runtime_gate_binding.py", line 89, in build_binding
+    closure_binding = verify_recorded_manifest(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/source/scripts/formal_final_runtime_closure.py", line 1757, in verify_recorded_manifest
+    return verify_manifest(
+           ^^^^^^^^^^^^^^^^
+  File "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/source/scripts/formal_final_runtime_closure.py", line 1629, in verify_manifest
+    raise ClosureError(
+formal_final_runtime_closure.ClosureError: final runtime closure drifted in sections: source_inventory, source_inventory_sha256
+/workspace/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/run-04/single_run_evaluation.json
+single dynamic trial complete: report=/workspace/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/run-04/single_run_evaluation.json

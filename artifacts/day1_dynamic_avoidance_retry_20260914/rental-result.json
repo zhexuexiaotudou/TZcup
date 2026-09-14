@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "attempt_id": "day1-dynamic-avoidance-single-run-20260914-04",
+  "requested_commit": "ab6989b79f46a99819a77a77cd5cbaa5250ffbd6",
+  "status": "BLOCKED_BEFORE_GAZEBO_CLOSURE_DRIFT",
+  "single_run": {
+    "started": true,
+    "numerator": 0,
+    "denominator": 1,
+    "observed_fraction": 0.0,
+    "post_launch_exclusions": 0
+  },
+  "official_metric": {
+    "metric_id": "dynamic_avoidance_success_rate",
+    "threshold": 0.95,
+    "measured_value": null,
+    "status": "NOT_MEASURED"
+  },
+  "blocker": "final runtime closure drifted in sections: source_inventory, source_inventory_sha256",
+  "cause": "The wrapper and focused contract test changed after the closure manifest was recorded; the formal gate rejected the source-inventory drift before Gazebo launch.",
+  "ros2_executable": {
+    "path": "/opt/ros/jazzy/bin/ros2",
+    "file_output": "/opt/ros/jazzy/bin/ros2: Python script, ASCII text executable",
+    "help_exit_code": 0,
+    "sha256": "3308327fcefeaefe5601f72e0b473a5f9f9638434f5773d2f40b124f7c9aa04d"
+  },
+  "host": {
+    "name": "autodl-container-ca410red1k-e4e33c0c",
+    "gpu": "NVIDIA GeForce RTX 3080 Ti",
+    "runtime_ws": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f",
+    "ros_domain_id": 92,
+    "gazebo_partition": "tzcup_dynamic_avoidance_single_run_20260914_04",
+    "xdg_runtime_dir": "/tmp/tzcup_dynamic_avoidance_single_run_20260914_04_xdg",
+    "run_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/run-04"
+  },
+  "resource_utilization": {
+    "cpu_busy_percent_sample": 27.5627550389514,
+    "gpu_utilization_percent": 0,
+    "gpu_memory_used_mib": 1,
+    "gpu_memory_total_mib": 12288,
+    "gpu_compute_processes": []
+  },
+  "resource_release": {
+    "formal_gazebo_lock_available": true,
+    "runtime_processes_remaining": [],
+    "resource_released": true
+  },
+  "functional_evidence": {
+    "gazebo_launched": false,
+    "mcap_files": [],
+    "contact_samples": null,
+    "minimum_surface_gap_m": null,
+    "collision_monitor_intervention_count": null,
+    "maximum_cross_track_detour_m": null,
+    "task_recovery": false
+  },
+  "claim_boundary": "The corrected retry entered the fixed denominator and blocked on a distinct pre-Gazebo runtime-closure drift. It did not measure and cannot establish the official >=95% rate."
+}
