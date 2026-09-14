@@ -1,0 +1,42 @@
+{
+  "attempt_id": "day1-dynamic-avoidance-single-run-20260914-06",
+  "blocker": "saved-map lifecycle manifest is missing or invalid",
+  "claim_boundary": "The run entered the fixed denominator but blocked before Gazebo on an absent saved-map lifecycle artifact. It did not measure and cannot establish the official >=95% rate.",
+  "closure_manifest_sha256": "e21c7546341d5bb20aba8e9cba4efe2ea37838a962129071c1d4f322aa281aec",
+  "closure_manifest_verified": true,
+  "evaluator_exit_code": 3,
+  "formal_status": "FORMAL_DYNAMIC_OBSTACLE_AVOIDANCE_ACCEPTANCE_BLOCKED",
+  "gazebo_partition": "tzcup_dynamic_avoidance_single_run_20260914_06",
+  "official_metric_measured_value": null,
+  "official_metric_status": "NOT_MEASURED",
+  "requested_commit": "204dbb8efc480ff82c168689f7fffe7dd917bcc4",
+  "resource_release": {
+    "cpu_busy_percent_sample": 10.024999999999995,
+    "formal_gazebo_lock_available": true,
+    "gpu_compute_processes": [],
+    "gpu_memory_total_mib": 12288,
+    "gpu_memory_used_mib": 1,
+    "gpu_utilization_percent": 0,
+    "measurement_window_s": 1.0,
+    "note": "run-06 stopped before Gazebo launch on the missing saved-map lifecycle artifact.",
+    "resource_released": true,
+    "run_id": "run-06",
+    "runtime_processes_remaining": [],
+    "schema_version": 1
+  },
+  "ros_domain_id": 94,
+  "run_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/run-06",
+  "runner_exit_code": 2,
+  "runtime_ws": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f",
+  "schema_version": 1,
+  "single_run": {
+    "denominator": 1,
+    "functional_success": false,
+    "numerator": 0,
+    "observed_fraction": 0.0,
+    "post_launch_exclusions": 0,
+    "started": true
+  },
+  "status": "BLOCKED_BEFORE_GAZEBO",
+  "xdg_runtime_dir": "/tmp/tzcup_dynamic_avoidance_single_run_20260914_06_xdg"
+}

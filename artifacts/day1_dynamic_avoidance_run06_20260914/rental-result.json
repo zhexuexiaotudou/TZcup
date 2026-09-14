@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "attempt_id": "day1-dynamic-avoidance-single-run-20260914-06",
+  "requested_commit": "204dbb8efc480ff82c168689f7fffe7dd917bcc4",
+  "status": "BLOCKED_BEFORE_GAZEBO",
+  "single_run": {
+    "started": true,
+    "numerator": 0,
+    "denominator": 1,
+    "observed_fraction": 0.0,
+    "post_launch_exclusions": 0
+  },
+  "official_metric": {
+    "metric_id": "dynamic_avoidance_success_rate",
+    "threshold": 0.95,
+    "measured_value": null,
+    "status": "NOT_MEASURED"
+  },
+  "blocker": "saved-map lifecycle manifest is missing or invalid",
+  "formal_status": "FORMAL_DYNAMIC_OBSTACLE_AVOIDANCE_ACCEPTANCE_BLOCKED",
+  "closure": {
+    "status": "FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED",
+    "passed": true,
+    "manifest_sha256": "e21c7546341d5bb20aba8e9cba4efe2ea37838a962129071c1d4f322aa281aec",
+    "closure_sha256": "6a53522b0a094f7986eb3e9b5399804103f29fa9941e2b86e8ce6f4735bca94f"
+  },
+  "host": {
+    "name": "autodl-container-ca410red1k-e4e33c0c",
+    "gpu": "NVIDIA GeForce RTX 3080 Ti",
+    "runtime_ws": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f",
+    "ros_domain_id": 94,
+    "gazebo_partition": "tzcup_dynamic_avoidance_single_run_20260914_06",
+    "xdg_runtime_dir": "/tmp/tzcup_dynamic_avoidance_single_run_20260914_06_xdg",
+    "run_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/run-06"
+  },
+  "resource_utilization": {
+    "cpu_busy_percent_sample": 10.024999999999995,
+    "gpu_utilization_percent": 0,
+    "gpu_memory_used_mib": 1,
+    "gpu_memory_total_mib": 12288,
+    "gpu_compute_processes": []
+  },
+  "resource_release": {
+    "formal_gazebo_lock_available": true,
+    "runtime_processes_remaining": [],
+    "resource_released": true
+  },
+  "functional_evidence": {
+    "gazebo_launched": false,
+    "mcap_files": [],
+    "contact_samples": null,
+    "minimum_surface_gap_m": null,
+    "collision_monitor_intervention_count": null,
+    "maximum_cross_track_detour_m": null,
+    "task_recovery": false
+  },
+  "claim_boundary": "The run entered the fixed denominator but blocked before Gazebo on an absent saved-map lifecycle artifact. It did not measure and cannot establish the official >=95% rate."
+}

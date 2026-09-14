@@ -116,3 +116,24 @@ or goal-recovery samples. The post-attempt sample recorded CPU `21.83%`, GPU
 `0%`, GPU memory `334 MiB`, no GPU compute processes, no runtime processes,
 the formal lock available again, and resources released. The lock was not
 cleared by this work.
+
+## Run 06
+
+The rental card was idle, the formal lock was absent, and the verified
+`final_runtime_closure_manifest_run05.json` was reused unchanged. Run 06 used
+ROS domain `94`, Gazebo partition
+`tzcup_dynamic_avoidance_single_run_20260914_06`, and XDG
+`/tmp/tzcup_dynamic_avoidance_single_run_20260914_06_xdg`.
+
+The wrapper froze the obstacle route and the formal runtime gate bound the
+verified closure successfully. The run then stopped before Gazebo because no
+qualified `map_lifecycle_manifest.json` saved-map lifecycle artifact exists on
+the rental card. This is the new distinct pre-Gazebo blocker; no further trial
+was run.
+
+Run 06 has numerator `0`, denominator `1`, evaluator status
+`SINGLE_RUN_EVIDENCE_INVALID`, and official `>=95%` status `NOT_MEASURED`.
+Gazebo did not launch, so no MCAP, contact, clearance, reroute, wait, or
+goal-recovery evidence exists. The post-attempt sample recorded CPU `10.03%`,
+GPU `0%`, GPU memory `1 MiB`, no runtime processes, the formal lock available,
+and resources released.

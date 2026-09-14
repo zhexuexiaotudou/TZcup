@@ -1,0 +1,14 @@
+{
+  "cpu_busy_percent_sample": 10.024999999999995,
+  "formal_gazebo_lock_available": true,
+  "gpu_compute_processes": [],
+  "gpu_memory_total_mib": 12288,
+  "gpu_memory_used_mib": 1,
+  "gpu_utilization_percent": 0,
+  "measurement_window_s": 1.0,
+  "note": "run-06 stopped before Gazebo launch on the missing saved-map lifecycle artifact.",
+  "resource_released": true,
+  "run_id": "run-06",
+  "runtime_processes_remaining": [],
+  "schema_version": 1
+}

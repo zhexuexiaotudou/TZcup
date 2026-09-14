@@ -1,0 +1,17 @@
+{
+  "closure_sha256": "6a53522b0a094f7986eb3e9b5399804103f29fa9941e2b86e8ce6f4735bca94f",
+  "frozen_source_inventory_sha256": "b4ecb9d565fed55443690f692a8a604f8b3b9c6ec1a424456794fddf1d127ef3",
+  "install_file_count": 1805,
+  "manifest": "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-run-20260914-01/final_runtime_closure_manifest_run05.json",
+  "manifest_sha256": "e21c7546341d5bb20aba8e9cba4efe2ea37838a962129071c1d4f322aa281aec",
+  "passed": true,
+  "ros2_executable": {
+    "path": "/opt/ros/jazzy/bin/ros2",
+    "sha256": "3308327fcefeaefe5601f72e0b473a5f9f9638434f5773d2f40b124f7c9aa04d"
+  },
+  "runtime_package_count": 20,
+  "schema_version": 1,
+  "source_file_count": 1551,
+  "source_install_binding_count": 501,
+  "status": "FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED"
+}
