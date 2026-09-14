@@ -1,0 +1,400 @@
+{
+  "schema_version": 1,
+  "document_type": "tzcup_day1_score_refresh",
+  "as_of": "2026-09-14",
+  "baseline_commit": "05481fc55e6ef89b9396070381797f760c6b72c4",
+  "previous_score_estimate_commit": "9501d1c8d6f6b4f4ec95c1eea31fb3a4ad351391",
+  "previous_score_estimate": {
+    "conservative": [42, 52],
+    "reasonable": [52, 62],
+    "optimistic": [62, 70]
+  },
+  "updated_score_estimate": {
+    "conservative": [42, 50],
+    "reasonable": [52, 62],
+    "optimistic": [64, 72],
+    "hard_cap_without_live_closure": 72,
+    "claim_guard": "Do not claim official PASS from controlled, offline, design-only or unfinished runs."
+  },
+  "state_changes": {
+    "perception": {
+      "old": {
+        "raw": "41/0/35",
+        "policy": "33/0/43",
+        "interpretation": "legacy presence-mask runtime diagnostic"
+      },
+      "current": {
+        "controlled_fixture_frames": 30,
+        "controlled_fixture_instances": 76,
+        "raw": "76/0/0",
+        "policy": "76/0/0",
+        "class_precision_recall": 1.0,
+        "reviewable_controlled_domain_candidate": true
+      },
+      "official_state": "NOT_MEASURED_DEFINITION_UNSPECIFIED",
+      "competition_perception_pass": false
+    },
+    "localization": {
+      "old_live_run": {
+        "rmse_mm": 39.27120950368673,
+        "p95_mm": 83.77985790742562,
+        "max_mm": 126.32780257795784,
+        "strict_max_le_50mm": "FAIL"
+      },
+      "offline_causal_candidate": {
+        "tau_sec": 1.5,
+        "rmse_mm": 29.19189697400822,
+        "p95_mm": 40.28501437569142,
+        "max_mm": 47.56582158794771,
+        "strict_max_le_50mm": true,
+        "same_paired_samples": 2711,
+        "uses_future": false,
+        "uses_ground_truth_for_filter": false
+      },
+      "official_state": "NOT_MEASURED",
+      "next_gate": "live Gazebo rerun with the equivalent causal filter in the realtime TF chain"
+    },
+    "avoidance": {
+      "root_cause": "global_ekf_gnss_pose_frame_feedback_during_recovery",
+      "minimal_fix": "global_ekf_gnss_odometry_topic_override",
+      "production_default": "/odometry/gps",
+      "bounded_recovery_value": "/odometry/gps_disabled",
+      "official_metric": {
+        "threshold": 0.95,
+        "status": "NOT_MEASURED",
+        "measured_value": null
+      },
+      "next_run_max_label": "FUNCTIONAL_PASS_1_OF_1_NOT_OFFICIAL_95"
+    },
+    "coverage": {
+      "run10": {
+        "headland_width_m": 0.75,
+        "status": "REJECTED_CLEARANCE",
+        "claimable": false
+      },
+      "run11": {
+        "headland_width_m": 1.35,
+        "clearance": "PASS",
+        "planner_default_headland_width_m": 0.0,
+        "out_of_bounds_swaths": 11,
+        "status": "BLOCKED_PLANNER_PARAMETER",
+        "claimable": false
+      },
+      "run12": {
+        "status": "NOT_STARTED",
+        "claimable": false
+      }
+    },
+    "full_mission_wrapper": {
+      "official_points_claimed": 0.0,
+      "status": "TOOLING_AND_FAIL_CLOSED_BOUNDARY"
+    },
+    "live_slam_fail_closed": {
+      "official_points_claimed": 0.0,
+      "status": "NOT_MEASURED",
+      "missing_inputs": ["/scan", "/tf", "/tf_static"]
+    }
+  },
+  "priority_order": [
+    {
+      "rank": 1,
+      "id": "braking_s",
+      "official_item": "紧急制动响应 <=1 s",
+      "points": 5,
+      "status": "PASS_MEASURED",
+      "next_action": "freeze the measured 0.489 s simulation response and the separate 4.809955 s wall-clock boundary",
+      "evidence_paths": ["submission-package/evidence/day1/competition-width-efficiency-estop.md"],
+      "not_claimable": ["real-vehicle regulatory validation"]
+    },
+    {
+      "rank": 2,
+      "id": "width_mm",
+      "official_item": "清扫宽度 >=600 mm",
+      "points": 5,
+      "status": "PASS_MEASURED",
+      "next_action": "freeze the 600 mm continuous cleared band and 100 mm grid evidence",
+      "evidence_paths": ["submission-package/evidence/day1/competition-width-efficiency-estop.md"],
+      "not_claimable": ["1400 mm continuous brush width"]
+    },
+    {
+      "rank": 3,
+      "id": "task_decomposition",
+      "official_item": "任务分解正确率 >=90%",
+      "points": 5,
+      "status": "PASS_INTERNAL_FROZEN_REGRESSION",
+      "next_action": "optionally add external blind test, otherwise freeze 36/37 development and 32/32 internal holdout",
+      "evidence_paths": ["submission-package/evidence/day1/competition-task-decomposition.json"],
+      "not_claimable": ["public blind test", "speech recognition pass", "task execution pass"]
+    },
+    {
+      "rank": 4,
+      "id": "documentation",
+      "official_item": "报告逻辑清晰、数据详实",
+      "points": 5,
+      "status": "DELIVERED",
+      "next_action": "freeze the 23-page report, supplement and hashes",
+      "evidence_paths": [
+        "submission-package/docs/技术方案报告.pdf",
+        "submission-package/supplements/nontechnical-score-closure/pdf/TZcup-nontechnical-score-closure.pdf"
+      ],
+      "not_claimable": ["technical PASS by documentation alone"]
+    },
+    {
+      "rank": 5,
+      "id": "dust_bin_volume",
+      "official_item": "尘箱承载 >=40 L",
+      "points": 5,
+      "status": "PARTIAL_DESIGN_STAGE",
+      "next_action": "preserve the design calculation; physical fill still requires manufactured or frozen hardware",
+      "evidence_paths": ["submission-package/evidence/day1/application-value-dust-bin-design.json"],
+      "not_claimable": ["physical volume", "production validation"]
+    },
+    {
+      "rank": 6,
+      "id": "interdisciplinary",
+      "official_item": "跨学科融合",
+      "points": 5,
+      "status": "PARTIAL_SUBJECTIVE",
+      "next_action": "map ROS, control, perception, embedded, simulation, sanitation and material modules to evidence",
+      "evidence_paths": [
+        "submission-package/evidence/day1/integration-manifest.json",
+        "submission-package/docs/技术方案报告.pdf"
+      ],
+      "not_claimable": ["end-to-end closure from module inventory alone"]
+    },
+    {
+      "rank": 7,
+      "id": "algorithm_optimization",
+      "official_item": "算法优化",
+      "points": 10,
+      "status": "PARTIAL",
+      "next_action": "show the same-run causal filter comparison, safety gate and task DSL without claiming field generalization",
+      "evidence_paths": [
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-localization-50mm-recovery/artifacts/day1_localization_50mm_recovery_20260914/recovery_receipt.json"
+      ],
+      "not_claimable": ["complete mission", "external public validation"]
+    },
+    {
+      "rank": 8,
+      "id": "industrialization_bonus",
+      "official_item": "可落地产业化方案",
+      "points": 5,
+      "status": "REVIEW_READY_NOT_FIELD_VALIDATED",
+      "next_action": "submit H0-H5 gates, cost model, risks and IP boundary",
+      "evidence_paths": [
+        "submission-package/supplements/nontechnical-score-closure/industrialization-readiness.md",
+        "submission-package/supplements/nontechnical-score-closure/official-score-closure.md"
+      ],
+      "not_claimable": ["orders", "quotations", "customer SLA", "field ROI"]
+    },
+    {
+      "rank": 9,
+      "id": "complex_conditions",
+      "official_item": "复杂工况适配创新",
+      "points": 5,
+      "status": "DESIGN_OR_CONTROLLED_ONLY",
+      "next_action": "run one reproducible controlled water and leaf scenario each",
+      "evidence_paths": [
+        "submission-package/supplements/nontechnical-score-closure/system-completeness.md",
+        "docs/competition-mapping-day1-run-06.md"
+      ],
+      "not_claimable": ["real illumination", "real road surface", "long-term generalization"]
+    },
+    {
+      "rank": 10,
+      "id": "maintenance_three_step",
+      "official_item": "易损件更换 <=3 步",
+      "points": 5,
+      "status": "DESIGN_ONLY_NOT_PHYSICALLY_MEASURED",
+      "next_action": "test the frozen procedure with a non-maintenance operator and an empty tool tray",
+      "evidence_paths": [
+        "submission-package/supplements/nontechnical-score-closure/data/maintenance-procedure.json",
+        "submission-package/supplements/nontechnical-score-closure/maintenance-three-step.md"
+      ],
+      "not_claimable": ["physical tool-free replacement pass"]
+    },
+    {
+      "rank": 11,
+      "id": "operator_training",
+      "official_item": "3 天掌握操作",
+      "points": 2,
+      "status": "PLANNED_NOT_MEASURED",
+      "next_action": "run a real novice cohort with safety, prompts and failure records",
+      "evidence_paths": [
+        "submission-package/supplements/nontechnical-score-closure/data/operator-certification-template.csv",
+        "submission-package/supplements/nontechnical-score-closure/operator-usability.md"
+      ],
+      "not_claimable": ["actual novice mastery"]
+    },
+    {
+      "rank": 12,
+      "id": "social_benefit",
+      "official_item": "提升城市/园区清扫质量和效率",
+      "points": 5,
+      "status": "MODEL_ONLY_NOT_FIELD_MEASURED",
+      "next_action": "run a same-area, same-shift, same-quality before/after comparison",
+      "evidence_paths": [
+        "submission-package/supplements/nontechnical-score-closure/social-benefit.md",
+        "submission-package/supplements/nontechnical-score-closure/evidence/social-benefit-model.json"
+      ],
+      "not_claimable": ["realized field benefit"]
+    },
+    {
+      "rank": 13,
+      "id": "hardware_software_complete",
+      "official_item": "硬件/软件功能完整",
+      "points": 6,
+      "status": "PARTIAL",
+      "next_action": "complete one mission with task, map, cleaning, safety, return-home, final state and MCAP",
+      "evidence_paths": [
+        "submission-package/evidence/day1/tooling/full-mission-demo/docs/day1-full-mission-demo-wrapper.md"
+      ],
+      "not_claimable": ["module replay as complete mission"]
+    },
+    {
+      "rank": 14,
+      "id": "cleaning_m2_h",
+      "official_item": "清扫效率 >=3500 m2/h",
+      "points": 5,
+      "status": "PARTIAL_MEASURED",
+      "next_action": "divide effective cleared-area union by complete mission simulation time",
+      "evidence_paths": [
+        "submission-package/evidence/day1/competition-width-efficiency-estop.md",
+        "submission-package/evidence/day1/tooling/full-mission-demo/scripts/day1_full_mission_acceptance.py"
+      ],
+      "not_claimable": ["4320 m2/h short-window result as full mission efficiency"]
+    },
+    {
+      "rank": 15,
+      "id": "mapped_area_m2",
+      "official_item": "建图面积 >=20000 m2",
+      "points": 5,
+      "status": "OFFLINE_ALGORITHM_PARTIAL",
+      "next_action": "record /scan, /tf, /tf_static, /clock and /odom in one fresh run, then perform live SLAM or offline replay",
+      "evidence_paths": [
+        "submission-package/evidence/day1/competition-mapping-offline-raycast.md",
+        "submission-package/evidence/day1/tooling/live-slam-replay-fail-closed/reports/mapping/day1_live_slam_replay_preflight_20260914.json"
+      ],
+      "not_claimable": ["22399.99 m2 offline raycast as live SLAM"]
+    },
+    {
+      "rank": 16,
+      "id": "recognition_accuracy",
+      "official_item": "物体识别准确率 >=95%",
+      "points": 10,
+      "status": "CONTROLLED_CANDIDATE",
+      "next_action": "freeze official classes, domain and matching rule; rerun on real camera domain and S100P",
+      "evidence_paths": [
+        "submission-package/evidence/day1/perception-score95/docs/competition-perception-score95.md",
+        "submission-package/evidence/day1/perception-score95/artifacts/perception_score95_20260914/receipt.json"
+      ],
+      "not_claimable": ["official competition R01", "real-domain 95%", "board 95%"]
+    },
+    {
+      "rank": 17,
+      "id": "localization_mm",
+      "official_item": "定位精度 <=50 mm",
+      "points": 5,
+      "status": "OFFLINE_CANDIDATE_PASS",
+      "next_action": "insert an equivalent causal filter into the realtime TF chain and run one formal Gazebo acceptance",
+      "evidence_paths": [
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-localization-50mm-recovery/docs/day1-localization-50mm-recovery.md",
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-localization-50mm-recovery/artifacts/day1_localization_50mm_recovery_20260914/recovery_receipt.json"
+      ],
+      "not_claimable": ["live PASS", "official PASS", "generalization beyond the sealed run"]
+    },
+    {
+      "rank": 18,
+      "id": "avoidance",
+      "official_item": "避障成功率 >=95%",
+      "points": 5,
+      "status": "ROOT_CAUSE_FIXED",
+      "next_action": "run one bounded functional trial, then collect an independent repeat matrix",
+      "evidence_paths": [
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-avoidance-recovery/docs/day1-avoidance-recovery-root-cause.md",
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-avoidance-recovery/artifacts/day1_dynamic_avoidance_recovery_20260914/failure_receipt.json"
+      ],
+      "not_claimable": ["95% rate", "successful one-trial as official rate", "history rewrite"]
+    },
+    {
+      "rank": 19,
+      "id": "demo_video",
+      "official_item": "演示视频清晰流畅",
+      "points": 4,
+      "status": "KIT_ONLY_VIDEO_NOT_MEASURED",
+      "next_action": "complete a full mission, then record 5-10 continuous minutes with version overlay",
+      "evidence_paths": [
+        "submission-package/video/视频索引.md",
+        "submission-package/supplements/nontechnical-score-closure/demo-video-production.md"
+      ],
+      "not_claimable": ["6.333 s GUI clip as full demo"]
+    },
+    {
+      "rank": 20,
+      "id": "reliability",
+      "official_item": "日均故障率 <1%",
+      "points": 3,
+      "status": "INSTRUMENTED_NOT_MEASURED",
+      "next_action": "accumulate vehicle-day events; zero primary failures require at least 299 vehicle-days",
+      "evidence_paths": [
+        "submission-package/supplements/nontechnical-score-closure/reliability-case.md",
+        "submission-package/supplements/nontechnical-score-closure/data/reliability-event-dictionary.json"
+      ],
+      "not_claimable": ["short simulation as daily reliability"]
+    },
+    {
+      "rank": 21,
+      "id": "patent_or_paper_bonus",
+      "official_item": "已申请专利或发表相关论文",
+      "points": 5,
+      "status": "NOT_ELIGIBLE_NO_FILING_OR_PUBLICATION",
+      "next_action": "obtain an application receipt, acceptance number, DOI or publication proof",
+      "evidence_paths": [
+        "submission-package/supplements/nontechnical-score-closure/ip-research-boundary.md",
+        "submission-package/supplements/nontechnical-score-closure/invention-disclosure-template.md"
+      ],
+      "not_claimable": ["templates or outlines as bonus evidence"]
+    }
+  ],
+  "coverage_evidence": {
+    "run10_archive": {
+      "path": "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-coverage-run/artifacts/day1_bounded_coverage_20260914/day1-coverage-run10-d115c89-evidence.tar.gz",
+      "commit": "31e9e3ac24ad18976604e11b97dba65c28077766",
+      "bytes": 39355,
+      "status": "REJECTED_CLEARANCE",
+      "claimable": false
+    },
+    "run11_ops": {
+      "path": "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-coverage-run/.work/day1-coverage-run11-d2335f3/run11-d2335f3-ops.tar.gz",
+      "config_commit": "d2335f3061146fedef8b9f731eb54760b0f82386",
+      "sha256": "6723e75d59d79a38d35474ae7fccd7d1432706e923a9819d97be24c67ad5c2ed",
+      "headland_width_m": 1.35,
+      "planner_default_headland_width_m": 0.0,
+      "out_of_bounds_swaths": 11,
+      "status": "BLOCKED_PLANNER_PARAMETER",
+      "claimable": false
+    },
+    "run12": {
+      "status": "NOT_STARTED",
+      "claimable": false
+    }
+  },
+  "hard_boundaries": [
+    "The official recognition R01 definition, domain, denominator and matching rule are not frozen.",
+    "No live localization or live SLAM pass exists.",
+    "No official dynamic-avoidance rate exists.",
+    "No complete cleaning mission, coverage run, return-home event or valid 5-10 minute demo exists.",
+    "No physical 40 L, maintenance, training, reliability or field social-benefit measurement exists.",
+    "No patent filing or publication evidence exists."
+  ],
+  "rollback": {
+    "score_docs_previous_commit": "9501d1c8d6f6b4f4ec95c1eea31fb3a4ad351391",
+    "refresh_parent_commit": "05481fc55e6ef89b9396070381797f760c6b72c4",
+    "localization_candidate_commit": "a7841c9e024175901065d2c583f32a4a2d89f50f",
+    "localization_rollback_commit": "47e3cb3a7ecc01edd82aa23a3b54cbeaffc418bc",
+    "avoidance_fix_commit": "99ee7f0d01544d65443b68f189edb28fc21d0459",
+    "avoidance_rollback_commit": "b74c702777b9974932f959800076071663255752",
+    "perception_candidate_commit": "3882dc34e756e1c361852027d49e55acac2b2a74",
+    "perception_rollback_commit": "906ea4f"
+  }
+}
