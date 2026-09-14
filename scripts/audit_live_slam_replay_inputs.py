@@ -75,7 +75,7 @@ def _metadata_topics(info: dict[str, Any]) -> dict[str, tuple[str, int]]:
             or serialization != "cdr"
             or isinstance(count, bool)
             or not isinstance(count, int)
-            or count <= 0
+            or count < 0
         ):
             raise ReplayInputError("rosbag topic contract is malformed")
         if topic in topics:
@@ -213,6 +213,14 @@ def audit_replay_inputs(
                     "topic": topic,
                     "expected_type": expected_type,
                     "reason": f"type is {row['type']}",
+                }
+            )
+        elif row["message_count"] <= 0:
+            missing.append(
+                {
+                    "topic": topic,
+                    "expected_type": expected_type,
+                    "reason": "topic has zero messages",
                 }
             )
     eligible = not errors and not missing

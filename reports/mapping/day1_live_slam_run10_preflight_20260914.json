@@ -1,0 +1,284 @@
+{
+  "schema_version": 1,
+  "report_id": "tzcup_live_slam_replay_input_audit_v1",
+  "generated_utc": "2026-09-14T15:01:21Z",
+  "run_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-bounded-coverage-20260914-10",
+  "source_revision": "a2ffa243040a7b6ed7bf720c53df2d73c7f978f6",
+  "auditor_sha256": "3edc1e2e086a5c0809e16557426d13c0943197536aed831c42d571b927cb8642",
+  "status": "LIVE_SLAM_REPLAY_INPUT_BLOCKED",
+  "replay_eligible": false,
+  "slam_replay_claimed": false,
+  "area_gate": "NOT_MEASURED",
+  "required_topics": {
+    "/scan": "sensor_msgs/msg/LaserScan",
+    "/tf": "tf2_msgs/msg/TFMessage",
+    "/tf_static": "tf2_msgs/msg/TFMessage",
+    "/clock": "rosgraph_msgs/msg/Clock",
+    "/odom": "nav_msgs/msg/Odometry"
+  },
+  "observed_topics": {
+    "/amcl_pose": {
+      "type": "geometry_msgs/msg/PoseWithCovarianceStamped",
+      "message_count": 1,
+      "bags": [
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-live-slam-run10/.work/run10-offline/bag"
+      ]
+    },
+    "/base_controller/cmd_vel": {
+      "type": "geometry_msgs/msg/TwistStamped",
+      "message_count": 147,
+      "bags": [
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-live-slam-run10/.work/run10-offline/bag"
+      ]
+    },
+    "/brush_controller/commands": {
+      "type": "std_msgs/msg/Float64MultiArray",
+      "message_count": 147,
+      "bags": [
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-live-slam-run10/.work/run10-offline/bag"
+      ]
+    },
+    "/brush_enabled": {
+      "type": "std_msgs/msg/Bool",
+      "message_count": 1,
+      "bags": [
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-live-slam-run10/.work/run10-offline/bag"
+      ]
+    },
+    "/cleaning_controller/joint_trajectory": {
+      "type": "trajectory_msgs/msg/JointTrajectory",
+      "message_count": 0,
+      "bags": [
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-live-slam-run10/.work/run10-offline/bag"
+      ]
+    },
+    "/clock": {
+      "type": "rosgraph_msgs/msg/Clock",
+      "message_count": 664,
+      "bags": [
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-live-slam-run10/.work/run10-offline/bag"
+      ]
+    },
+    "/cmd_vel_gate": {
+      "type": "geometry_msgs/msg/Twist",
+      "message_count": 0,
+      "bags": [
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-live-slam-run10/.work/run10-offline/bag"
+      ]
+    },
+    "/cmd_vel_nav": {
+      "type": "geometry_msgs/msg/Twist",
+      "message_count": 0,
+      "bags": [
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-live-slam-run10/.work/run10-offline/bag"
+      ]
+    },
+    "/cmd_vel_smoothed": {
+      "type": "geometry_msgs/msg/Twist",
+      "message_count": 0,
+      "bags": [
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-live-slam-run10/.work/run10-offline/bag"
+      ]
+    },
+    "/coverage/component_state": {
+      "type": "std_msgs/msg/String",
+      "message_count": 0,
+      "bags": [
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-live-slam-run10/.work/run10-offline/bag"
+      ]
+    },
+    "/coverage/current_path": {
+      "type": "nav_msgs/msg/Path",
+      "message_count": 0,
+      "bags": [
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-live-slam-run10/.work/run10-offline/bag"
+      ]
+    },
+    "/coverage/state": {
+      "type": "std_msgs/msg/String",
+      "message_count": 0,
+      "bags": [
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-live-slam-run10/.work/run10-offline/bag"
+      ]
+    },
+    "/ground_truth/odom": {
+      "type": "nav_msgs/msg/Odometry",
+      "message_count": 34,
+      "bags": [
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-live-slam-run10/.work/run10-offline/bag"
+      ]
+    },
+    "/joint_states": {
+      "type": "sensor_msgs/msg/JointState",
+      "message_count": 167,
+      "bags": [
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-live-slam-run10/.work/run10-offline/bag"
+      ]
+    },
+    "/localization/fused_pose": {
+      "type": "geometry_msgs/msg/PoseWithCovarianceStamped",
+      "message_count": 30,
+      "bags": [
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-live-slam-run10/.work/run10-offline/bag"
+      ]
+    },
+    "/model/tzcup_formal_sanitation_vehicle/ground_dirt/status_json": {
+      "type": "std_msgs/msg/String",
+      "message_count": 14,
+      "bags": [
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-live-slam-run10/.work/run10-offline/bag"
+      ]
+    },
+    "/odom": {
+      "type": "nav_msgs/msg/Odometry",
+      "message_count": 33,
+      "bags": [
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-live-slam-run10/.work/run10-offline/bag"
+      ]
+    },
+    "/safety/command/brush": {
+      "type": "std_msgs/msg/Float64MultiArray",
+      "message_count": 140,
+      "bags": [
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-live-slam-run10/.work/run10-offline/bag"
+      ]
+    },
+    "/safety/status": {
+      "type": "diagnostic_msgs/msg/DiagnosticArray",
+      "message_count": 146,
+      "bags": [
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-live-slam-run10/.work/run10-offline/bag"
+      ]
+    },
+    "/scan": {
+      "type": "sensor_msgs/msg/LaserScan",
+      "message_count": 28,
+      "bags": [
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-live-slam-run10/.work/run10-offline/bag"
+      ]
+    },
+    "/scan/navigation": {
+      "type": "sensor_msgs/msg/LaserScan",
+      "message_count": 28,
+      "bags": [
+        "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-live-slam-run10/.work/run10-offline/bag"
+      ]
+    }
+  },
+  "missing_requirements": [
+    {
+      "topic": "/tf",
+      "expected_type": "tf2_msgs/msg/TFMessage",
+      "reason": "topic absent"
+    },
+    {
+      "topic": "/tf_static",
+      "expected_type": "tf2_msgs/msg/TFMessage",
+      "reason": "topic absent"
+    }
+  ],
+  "errors": [],
+  "bags": [
+    {
+      "bag_dir": "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-live-slam-run10/.work/run10-offline/bag",
+      "metadata_path": "F:/Project/TZcup/.workspace/worktrees/TZcup-day1-live-slam-run10/.work/run10-offline/bag/metadata.yaml",
+      "metadata_sha256": "f38728c13009722250267accc188618af8ba84e6e14f4edb436f889a37230685",
+      "message_count": 1580,
+      "duration_ns": 7280473990,
+      "topics": {
+        "/amcl_pose": {
+          "type": "geometry_msgs/msg/PoseWithCovarianceStamped",
+          "message_count": 1
+        },
+        "/base_controller/cmd_vel": {
+          "type": "geometry_msgs/msg/TwistStamped",
+          "message_count": 147
+        },
+        "/brush_controller/commands": {
+          "type": "std_msgs/msg/Float64MultiArray",
+          "message_count": 147
+        },
+        "/brush_enabled": {
+          "type": "std_msgs/msg/Bool",
+          "message_count": 1
+        },
+        "/cleaning_controller/joint_trajectory": {
+          "type": "trajectory_msgs/msg/JointTrajectory",
+          "message_count": 0
+        },
+        "/clock": {
+          "type": "rosgraph_msgs/msg/Clock",
+          "message_count": 664
+        },
+        "/cmd_vel_gate": {
+          "type": "geometry_msgs/msg/Twist",
+          "message_count": 0
+        },
+        "/cmd_vel_nav": {
+          "type": "geometry_msgs/msg/Twist",
+          "message_count": 0
+        },
+        "/cmd_vel_smoothed": {
+          "type": "geometry_msgs/msg/Twist",
+          "message_count": 0
+        },
+        "/coverage/component_state": {
+          "type": "std_msgs/msg/String",
+          "message_count": 0
+        },
+        "/coverage/current_path": {
+          "type": "nav_msgs/msg/Path",
+          "message_count": 0
+        },
+        "/coverage/state": {
+          "type": "std_msgs/msg/String",
+          "message_count": 0
+        },
+        "/ground_truth/odom": {
+          "type": "nav_msgs/msg/Odometry",
+          "message_count": 34
+        },
+        "/joint_states": {
+          "type": "sensor_msgs/msg/JointState",
+          "message_count": 167
+        },
+        "/localization/fused_pose": {
+          "type": "geometry_msgs/msg/PoseWithCovarianceStamped",
+          "message_count": 30
+        },
+        "/model/tzcup_formal_sanitation_vehicle/ground_dirt/status_json": {
+          "type": "std_msgs/msg/String",
+          "message_count": 14
+        },
+        "/odom": {
+          "type": "nav_msgs/msg/Odometry",
+          "message_count": 33
+        },
+        "/safety/command/brush": {
+          "type": "std_msgs/msg/Float64MultiArray",
+          "message_count": 140
+        },
+        "/safety/status": {
+          "type": "diagnostic_msgs/msg/DiagnosticArray",
+          "message_count": 146
+        },
+        "/scan": {
+          "type": "sensor_msgs/msg/LaserScan",
+          "message_count": 28
+        },
+        "/scan/navigation": {
+          "type": "sensor_msgs/msg/LaserScan",
+          "message_count": 28
+        }
+      },
+      "data_files": [
+        {
+          "path": "bag_0.mcap",
+          "size_bytes": 1370812,
+          "sha256": "4e871c6377c294f1b0ba991529b8200bede60730359b6af30c879da15e67b5dd"
+        }
+      ]
+    }
+  ],
+  "claim_boundary": "Admission audit only. A ready status permits a separate offline SLAM replay attempt; it does not prove replay execution, map quality, or the 20,000 m2 area gate."
+}

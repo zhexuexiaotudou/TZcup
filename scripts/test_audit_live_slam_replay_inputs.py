@@ -84,6 +84,57 @@ def test_run06_shape_is_fail_closed(tmp_path: Path):
     }
 
 
+def test_run10_shape_is_fail_closed_with_precise_missing_topics(tmp_path: Path):
+    bag = _write_bag(
+        tmp_path,
+        "run10",
+        {
+            "/scan": ("sensor_msgs/msg/LaserScan", 28),
+            "/clock": ("rosgraph_msgs/msg/Clock", 664),
+            "/odom": ("nav_msgs/msg/Odometry", 33),
+            "/coverage/state": ("std_msgs/msg/String", 0),
+        },
+    )
+
+    report = audit_replay_inputs([bag])
+
+    assert report["status"] == "LIVE_SLAM_REPLAY_INPUT_BLOCKED"
+    assert report["replay_eligible"] is False
+    assert report["errors"] == []
+    assert report["observed_topics"]["/scan"]["message_count"] == 28
+    assert report["observed_topics"]["/clock"]["message_count"] == 664
+    assert report["observed_topics"]["/odom"]["message_count"] == 33
+    assert {row["topic"] for row in report["missing_requirements"]} == {
+        "/tf",
+        "/tf_static",
+    }
+
+
+def test_required_topic_with_zero_messages_is_missing(tmp_path: Path):
+    bag = _write_bag(
+        tmp_path,
+        "zero-required",
+        {
+            "/scan": ("sensor_msgs/msg/LaserScan", 1),
+            "/tf": ("tf2_msgs/msg/TFMessage", 0),
+            "/tf_static": ("tf2_msgs/msg/TFMessage", 1),
+            "/clock": ("rosgraph_msgs/msg/Clock", 1),
+            "/odom": ("nav_msgs/msg/Odometry", 1),
+        },
+    )
+
+    report = audit_replay_inputs([bag])
+
+    assert report["replay_eligible"] is False
+    assert report["missing_requirements"] == [
+        {
+            "topic": "/tf",
+            "expected_type": "tf2_msgs/msg/TFMessage",
+            "reason": "topic has zero messages",
+        }
+    ]
+
+
 def test_complete_replay_contract_is_eligible(tmp_path: Path):
     bag = _write_bag(
         tmp_path,

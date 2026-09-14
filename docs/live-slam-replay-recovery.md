@@ -98,3 +98,41 @@ resulting `occupancy.pgm`/`occupancy.yaml` pair may be passed to
 `scripts/verify_map_area.py` for the 20,000 m2 area gate. A new live run must
 wait for exclusive Gazebo ownership and must not be started by this recovery
 worker.
+
+## Run-10 admission recheck
+
+**Status:** `FAIL_CLOSED / NOT_REPLAYABLE`
+
+Run-10 closed normally with a 7.280473990-second MCAP, but it still cannot
+enter offline SLAM replay. The copied input retained:
+
+| Topic | Type | Messages |
+|---|---|---:|
+| `/scan` | `sensor_msgs/msg/LaserScan` | 28 |
+| `/clock` | `rosgraph_msgs/msg/Clock` | 664 |
+| `/odom` | `nav_msgs/msg/Odometry` | 33 |
+
+Both required transform streams were absent:
+
+| Required topic | Expected type | Result |
+|---|---|---|
+| `/tf` | `tf2_msgs/msg/TFMessage` | absent |
+| `/tf_static` | `tf2_msgs/msg/TFMessage` | absent |
+
+The source bag was copied to an independent offline directory before audit.
+The copy preserved both source hashes:
+
+- MCAP: `4e871c6377c294f1b0ba991529b8200bede60730359b6af30c879da15e67b5dd`
+- metadata: `f38728c13009722250267accc188618af8ba84e6e14f4edb436f889a37230685`
+
+The fail-closed receipt is
+`reports/mapping/day1_live_slam_run10_preflight_20260914.json` with SHA-256
+`2cb5cc58ef16d1d79fe05f6460c34761dc26edf546d5fe9de24c5ac45f440cc4`.
+The audit exits `2`, reports zero input errors, and identifies exactly
+`/tf` and `/tf_static` as missing. No ROS node, Gazebo process, or
+`slam_toolbox` process was started.
+
+The audit now permits zero-message topic declarations in valid rosbag2
+metadata while still requiring at least one message on every admitted replay
+topic. Run-10 remains immutable evidence only; replay admission has moved to
+run-11, which must record both transform topics in a normally closed bag.
