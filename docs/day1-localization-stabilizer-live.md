@@ -1,17 +1,30 @@
 # 定位稳定器实时接线与有界重跑
 
-状态：`FAILED_PRECONDITION_NO_GAZEBO_ONLY_ATTEMPT_USED`
+状态：`FAILED_PRECONDITION_NESTED_STABILIZER_INHERITANCE_FIX_IMPLEMENTED`
 
 本版本没有启动 Gazebo。当前唯一 Gazebo 先由 coverage run-12 使用，之后由
 Copernicus 执行 avoidance。下面的 harness 通过正式 `flock` 获取单 Gazebo
 所有权；两个前序任务未释放锁或进程时，它会在启动前返回 `75`。
 
-2026-09-15 的唯一一次 live 调用在 harness 的 `mkdir "$OUTPUT"` 处退出。
+2026-09-15 的第一次 live 调用在 harness 的 `mkdir "$OUTPUT"` 处退出。
 原因是执行层把 host 路径
 `/root/autodl-tmp/.../run-01` 作为 `OUTPUT` 传入 PRoot guest；guest 只能
 看到对应的 `/workspace/...` 路径。Gazebo、ROS 和 driver 均未启动，正式
 锁保持可用，失败后没有重跑。结构化回执位于
 `artifacts/day1_localization_stabilizer_live_20260915/`。
+
+修正 guest 路径后，第二次也是最后一轮正式调用启动了 vehicle/Nav2 图，但
+Gazebo launch 在参数校验阶段退出：
+
+```text
+map_odom_stabilizer requires start_global_fusion:=true
+```
+
+根因是 `formal_vehicle_sim.launch.py` 的 local-only 定位 include 固定
+`start_global_fusion:=false`，却没有显式传递
+`map_odom_stabilizer:=false`，因此继承了 campus launch 的
+`map_odom_stabilizer:=true`。该缺陷已在本分支修复并添加回归测试；由于
+第二轮调用已经消耗，未再次启动 live，现有没有新的 live RMSE/P95/max。
 
 ## 实时运行链路
 
@@ -95,16 +108,24 @@ overlay 路径都必须使用 guest `/workspace/...` 路径。host
 `/root/autodl-tmp/...` 路径只能用于 PRoot 外的文件读取、上传、哈希和
 归档，不能传给 harness 内的 Bash/Python 命令。
 
-## 首轮 live 调用失败记录
+## live 调用失败记录
 
-- `invocation_rc`: `1`
-- `status`: `FAIL_PRECONDITION_OUTPUT_PATH_NOT_GUEST_VISIBLE`
-- `gazebo_started`: `false`
-- `ros_runtime_started`: `false`
-- `live_candidate_receipt.json`: `NOT_WRITTEN`
-- `formal_gazebo_lock_available`: `true`
-- `partition_survivor_count`: `0`
-- 重跑策略：`NO_RETRY_AFTER_SINGLE_HARNESS_INVOCATION`
+- 第一轮：`FAIL_PRECONDITION_OUTPUT_PATH_NOT_GUEST_VISIBLE`
+  - `invocation_rc=1`
+  - Gazebo/ROS/driver 均未启动
+- 第二轮：`FAIL_PRECONDITION_NESTED_STABILIZER_INHERITANCE`
+  - `invocation_rc=1`
+  - Gazebo 未启动；vehicle/Nav2 图随 cleanup 释放
+- 两轮共同结果：
+  - `live_candidate_receipt.json`: `NOT_WRITTEN`
+  - `effective_parameters.json`: 未生成
+  - `tf_authority.json`: 未生成
+  - `bag_info.txt`: 未生成
+  - `localization_focus.json`: 未生成
+  - `driver.rc`: 未生成
+  - `formal_gazebo_lock_available`: `true`
+  - `partition_survivor_count`: `0`
+- 重跑策略：`NO_RETRY_AFTER_SECOND_AND_FINAL_HARNESS_INVOCATION`
 
 本轮没有获得新的 live RMSE/P95/max，也没有把此前离线候选升级为 live PASS。
 

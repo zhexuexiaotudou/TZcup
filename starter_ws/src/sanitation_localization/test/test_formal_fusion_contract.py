@@ -81,6 +81,17 @@ def test_optional_stabilizer_remaps_only_global_ekf_raw_tf():
     assert '"max_gap_sec"' in launch
 
 
+def test_local_only_vehicle_launch_never_inherits_parent_stabilizer_flag():
+    vehicle_launch = (
+        ROOT.parent
+        / "sanitation_vehicle_description"
+        / "launch"
+        / "formal_vehicle_sim.launch.py"
+    ).read_text()
+    assert '"start_global_fusion": "false"' in vehicle_launch
+    assert '"map_odom_stabilizer": "false"' in vehicle_launch
+
+
 def test_runtime_tools_are_installed_and_do_not_use_truth_inputs():
     setup = (ROOT / "setup.py").read_text()
     assert "validate_formal_localization_runtime" in setup

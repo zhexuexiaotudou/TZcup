@@ -1,0 +1,12 @@
+{
+  "admitted": true,
+  "formal_gazebo_lock_available": true,
+  "gazebo_or_launch_processes": [],
+  "guest_root": "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01",
+  "host": "autodl-container-ca410red1k-e4e33c0c",
+  "mode": "CORRECTED_GUEST_PATH_INVOCATION",
+  "recorded_unix_s": 1789405193.0994272,
+  "schema_version": 1,
+  "task_partition": "tzcup_localization_stabilizer_20260915_01",
+  "task_partition_residue": []
+}

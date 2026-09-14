@@ -909,6 +909,7 @@ def generate_launch_description() -> LaunchDescription:
                     "use_sim_time": use_sim_time,
                     "start_local_fusion": "true",
                     "start_global_fusion": "false",
+                    "map_odom_stabilizer": "false",
                     "navsat_odometry_input": navsat_odometry_input,
                 }.items(),
             ),

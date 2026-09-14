@@ -1,0 +1,4 @@
+[INFO] [launch]: All log files can be found below /root/.ros/log/2026-09-14-17-00-06-590499-autodl-container-ca410red1k-e4e33c0c-97257
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [launch.user]: Formal campus integration uses canonical skid-steer profile /workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/source/config/high_fidelity_vehicle/formal_motion_cleaning_profile.yaml; operation speed profile: dry_cleaning_competition_candidate; generated Nav2 params: /tmp/tzcup_formal_campus_nav2_97257.yaml; public-only maps and mission geometry: /workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/run-01
+[ERROR] [launch]: Caught exception in launch (see debug for traceback): map_odom_stabilizer requires start_global_fusion:=true

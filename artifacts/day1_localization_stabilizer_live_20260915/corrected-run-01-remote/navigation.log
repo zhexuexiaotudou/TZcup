@@ -1,0 +1,442 @@
+[INFO] [launch]: All log files can be found below /root/.ros/log/2026-09-14-17-00-06-323615-autodl-container-ca410red1k-e4e33c0c-97260
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [map_server-1]: process started with pid [97292]
+[INFO] [amcl-2]: process started with pid [97293]
+[INFO] [lifecycle_manager-3]: process started with pid [97296]
+[INFO] [controller_server-4]: process started with pid [97297]
+[INFO] [smoother_server-5]: process started with pid [97324]
+[INFO] [planner_server-6]: process started with pid [97328]
+[INFO] [route_server-7]: process started with pid [97337]
+[INFO] [behavior_server-8]: process started with pid [97379]
+[INFO] [bt_navigator-9]: process started with pid [97394]
+[INFO] [waypoint_follower-10]: process started with pid [97398]
+[INFO] [velocity_smoother-11]: process started with pid [97422]
+[INFO] [collision_monitor-12]: process started with pid [97451]
+[INFO] [opennav_docking-13]: process started with pid [97465]
+[INFO] [lifecycle_manager-14]: process started with pid [97467]
+[INFO] [map_server-15]: process started with pid [97468]
+[INFO] [costmap_filter_info_server-16]: process started with pid [97486]
+[INFO] [map_server-17]: process started with pid [97489]
+[INFO] [costmap_filter_info_server-18]: process started with pid [97510]
+[INFO] [lifecycle_manager-19]: process started with pid [97550]
+[map_server-1] [INFO] [1789405207.862278928] [map_server]: 
+[map_server-1] 	map_server lifecycle node launched. 
+[map_server-1] 	Waiting on external lifecycle transitions to activate
+[map_server-1] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[map_server-1] [INFO] [1789405207.863980262] [map_server]: Creating
+[map_server-1] [INFO] [1789405207.864446155] [map_server]: Configuring
+[map_server-1] [INFO] [1789405207.864508288] [map_io]: Loading yaml file: /workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/run-01/occupancy.yaml
+[map_server-1] [INFO] [1789405207.869372120] [map_io]: resolution: 0.05
+[map_server-1] [INFO] [1789405207.869387100] [map_io]: origin[0]: -9.941
+[map_server-1] [INFO] [1789405207.869395094] [map_io]: origin[1]: -12.314
+[map_server-1] [INFO] [1789405207.869400140] [map_io]: origin[2]: 0
+[map_server-1] [INFO] [1789405207.869405459] [map_io]: free_thresh: 0.196
+[map_server-1] [INFO] [1789405207.869410391] [map_io]: occupied_thresh: 0.65
+[map_server-1] [INFO] [1789405207.869417842] [map_io]: mode: trinary
+[map_server-1] [INFO] [1789405207.869423525] [map_io]: negate: 0
+[map_server-1] [INFO] [1789405207.870167648] [map_io]: Loading image_file: /workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/run-01/occupancy.pgm
+[map_server-1] [INFO] [1789405207.885346945] [map_io]: Read map /workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/run-01/occupancy.pgm: 477 X 486 map @ 0.05 m/cell
+[map_server-1] [INFO] [1789405208.252475296] [map_server]: Activating
+[map_server-1] [INFO] [1789405208.254743184] [map_server]: Creating bond (map_server) to lifecycle manager.
+[amcl-2] [INFO] [1789405207.087256335] [amcl]: 
+[amcl-2] 	amcl lifecycle node launched. 
+[amcl-2] 	Waiting on external lifecycle transitions to activate
+[amcl-2] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[amcl-2] [INFO] [1789405207.097427887] [amcl]: Creating
+[amcl-2] [INFO] [1789405207.988733642] [amcl]: Configuring
+[amcl-2] [INFO] [1789405207.988840910] [amcl]: initTransforms
+[amcl-2] [INFO] [1789405208.102261472] [amcl]: initPubSub
+[amcl-2] [INFO] [1789405208.144005272] [amcl]: Subscribed to map topic.
+[amcl-2] [INFO] [1789405208.255306933] [amcl]: Received a 477 X 486 map @ 0.050 m/pix
+[amcl-2] [INFO] [1789405208.384977782] [amcl]: Activating
+[amcl-2] [INFO] [1789405208.385047252] [amcl]: initialPoseReceived
+[amcl-2] [INFO] [1789405208.385244659] [amcl]: Setting pose (0.000000): 0.000 0.000 0.000
+[amcl-2] [INFO] [1789405208.390965952] [amcl]: Creating bond (amcl) to lifecycle manager.
+[lifecycle_manager-3] [INFO] [1789405207.089473317] [lifecycle_manager_localization]: Creating
+[lifecycle_manager-3] [INFO] [1789405207.105649046] [lifecycle_manager_localization]: [34m[1mCreating and initializing lifecycle service clients[0m[0m
+[lifecycle_manager-3] [INFO] [1789405207.861695282] [lifecycle_manager_localization]: [34m[1mStarting managed nodes bringup...[0m[0m
+[lifecycle_manager-3] [INFO] [1789405207.861775369] [lifecycle_manager_localization]: [34m[1mConfiguring map_server[0m[0m
+[lifecycle_manager-3] [INFO] [1789405207.988495996] [lifecycle_manager_localization]: [34m[1mConfiguring amcl[0m[0m
+[lifecycle_manager-3] [INFO] [1789405208.252194319] [lifecycle_manager_localization]: [34m[1mActivating map_server[0m[0m
+[lifecycle_manager-3] [INFO] [1789405208.384564226] [lifecycle_manager_localization]: Server map_server connected with bond.
+[lifecycle_manager-3] [INFO] [1789405208.384629257] [lifecycle_manager_localization]: [34m[1mActivating amcl[0m[0m
+[lifecycle_manager-3] [INFO] [1789405208.565984299] [lifecycle_manager_localization]: Server amcl connected with bond.
+[lifecycle_manager-3] [INFO] [1789405208.566053106] [lifecycle_manager_localization]: [34m[1mManaged nodes are active[0m[0m
+[lifecycle_manager-3] [INFO] [1789405208.566090146] [lifecycle_manager_localization]: [34m[1mCreating bond timer...[0m[0m
+[controller_server-4] [INFO] [1789405207.426178626] [controller_server]: 
+[controller_server-4] 	controller_server lifecycle node launched. 
+[controller_server-4] 	Waiting on external lifecycle transitions to activate
+[controller_server-4] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[controller_server-4] [INFO] [1789405207.554588326] [controller_server]: Creating controller server
+[controller_server-4] [INFO] [1789405207.566602303] [local_costmap.local_costmap]: 
+[controller_server-4] 	local_costmap lifecycle node launched. 
+[controller_server-4] 	Waiting on external lifecycle transitions to activate
+[controller_server-4] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[controller_server-4] [INFO] [1789405207.573231933] [local_costmap.local_costmap]: Creating Costmap
+[controller_server-4] [INFO] [1789405208.751415254] [controller_server]: Configuring controller interface
+[controller_server-4] [INFO] [1789405208.751464370] [controller_server]: getting progress checker plugins..
+[controller_server-4] [INFO] [1789405208.751684705] [controller_server]: getting goal checker plugins..
+[controller_server-4] [INFO] [1789405208.751875983] [controller_server]: Controller frequency set to 15.0000Hz
+[controller_server-4] [INFO] [1789405208.751942993] [local_costmap.local_costmap]: Configuring
+[controller_server-4] [INFO] [1789405208.769758487] [local_costmap.local_costmap]: Using plugin "obstacle_layer"
+[controller_server-4] [INFO] [1789405208.787420990] [local_costmap.local_costmap]: Subscribed to Topics: scan
+[controller_server-4] [INFO] [1789405208.793772990] [local_costmap.local_costmap]: Initialized plugin "obstacle_layer"
+[controller_server-4] [INFO] [1789405208.793815165] [local_costmap.local_costmap]: Using plugin "inflation_layer"
+[controller_server-4] [INFO] [1789405208.794706709] [local_costmap.local_costmap]: Initialized plugin "inflation_layer"
+[smoother_server-5] [INFO] [1789405207.457548568] [smoother_server]: 
+[smoother_server-5] 	smoother_server lifecycle node launched. 
+[smoother_server-5] 	Waiting on external lifecycle transitions to activate
+[smoother_server-5] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[smoother_server-5] [INFO] [1789405207.502780333] [smoother_server]: Creating smoother server
+[planner_server-6] [INFO] [1789405207.356685295] [planner_server]: 
+[planner_server-6] 	planner_server lifecycle node launched. 
+[planner_server-6] 	Waiting on external lifecycle transitions to activate
+[planner_server-6] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[planner_server-6] [INFO] [1789405207.378219428] [planner_server]: Creating
+[planner_server-6] [INFO] [1789405207.382622184] [global_costmap.global_costmap]: 
+[planner_server-6] 	global_costmap lifecycle node launched. 
+[planner_server-6] 	Waiting on external lifecycle transitions to activate
+[planner_server-6] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[planner_server-6] [INFO] [1789405207.385713767] [global_costmap.global_costmap]: Creating Costmap
+[route_server-7] [INFO] [1789405207.498464277] [route_server]: 
+[route_server-7] 	route_server lifecycle node launched. 
+[route_server-7] 	Waiting on external lifecycle transitions to activate
+[route_server-7] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[behavior_server-8] [INFO] [1789405207.761066321] [behavior_server]: 
+[behavior_server-8] 	behavior_server lifecycle node launched. 
+[behavior_server-8] 	Waiting on external lifecycle transitions to activate
+[behavior_server-8] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[bt_navigator-9] [INFO] [1789405207.888589053] [bt_navigator]: 
+[bt_navigator-9] 	bt_navigator lifecycle node launched. 
+[bt_navigator-9] 	Waiting on external lifecycle transitions to activate
+[bt_navigator-9] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[bt_navigator-9] [INFO] [1789405207.974988028] [bt_navigator]: Creating
+[waypoint_follower-10] [INFO] [1789405207.869949696] [waypoint_follower]: 
+[waypoint_follower-10] 	waypoint_follower lifecycle node launched. 
+[waypoint_follower-10] 	Waiting on external lifecycle transitions to activate
+[waypoint_follower-10] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[waypoint_follower-10] [INFO] [1789405207.874228272] [waypoint_follower]: Creating
+[velocity_smoother-11] [INFO] [1789405208.004434968] [velocity_smoother]: 
+[velocity_smoother-11] 	velocity_smoother lifecycle node launched. 
+[velocity_smoother-11] 	Waiting on external lifecycle transitions to activate
+[velocity_smoother-11] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[collision_monitor-12] [INFO] [1789405208.750582428] [collision_monitor]: 
+[collision_monitor-12] 	collision_monitor lifecycle node launched. 
+[collision_monitor-12] 	Waiting on external lifecycle transitions to activate
+[collision_monitor-12] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[opennav_docking-13] [INFO] [1789405208.542347766] [docking_server]: 
+[opennav_docking-13] 	docking_server lifecycle node launched. 
+[opennav_docking-13] 	Waiting on external lifecycle transitions to activate
+[opennav_docking-13] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[opennav_docking-13] [INFO] [1789405208.542591342] [docking_server]: Creating docking_server
+[lifecycle_manager-14] [INFO] [1789405208.231147286] [lifecycle_manager_navigation]: Creating
+[lifecycle_manager-14] [INFO] [1789405208.245041856] [lifecycle_manager_navigation]: [34m[1mCreating and initializing lifecycle service clients[0m[0m
+[lifecycle_manager-14] [INFO] [1789405208.751019335] [lifecycle_manager_navigation]: [34m[1mStarting managed nodes bringup...[0m[0m
+[lifecycle_manager-14] [INFO] [1789405208.751143224] [lifecycle_manager_navigation]: [34m[1mConfiguring controller_server[0m[0m
+[map_server-15] [INFO] [1789405208.745238520] [keepout_filter_mask_server]: 
+[map_server-15] 	keepout_filter_mask_server lifecycle node launched. 
+[map_server-15] 	Waiting on external lifecycle transitions to activate
+[map_server-15] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[map_server-15] [INFO] [1789405208.745494146] [keepout_filter_mask_server]: Creating
+[costmap_filter_info_server-16] [INFO] [1789405208.543495735] [costmap_filter_info_server]: This is costmap filter info publisher
+[costmap_filter_info_server-16] [INFO] [1789405208.604869010] [keepout_costmap_filter_info_server]: 
+[costmap_filter_info_server-16] 	keepout_costmap_filter_info_server lifecycle node launched. 
+[costmap_filter_info_server-16] 	Waiting on external lifecycle transitions to activate
+[costmap_filter_info_server-16] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[map_server-17] [INFO] [1789405208.576397503] [speed_filter_mask_server]: 
+[map_server-17] 	speed_filter_mask_server lifecycle node launched. 
+[map_server-17] 	Waiting on external lifecycle transitions to activate
+[map_server-17] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[map_server-17] [INFO] [1789405208.576570540] [speed_filter_mask_server]: Creating
+[controller_server-4] [INFO] [1789405208.835972849] [controller_server]: Created progress_checker : progress_checker of type nav2_controller::PoseProgressChecker
+[controller_server-4] [INFO] [1789405208.836557448] [controller_server]: Controller Server has progress_checker  progress checkers available.
+[controller_server-4] [INFO] [1789405208.839021613] [controller_server]: Created goal checker : goal_checker of type nav2_controller::SimpleGoalChecker
+[controller_server-4] [INFO] [1789405208.839612140] [controller_server]: Controller Server has goal_checker  goal checkers available.
+[controller_server-4] [INFO] [1789405208.845607655] [controller_server]: Created controller : FollowPath of type nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController
+[controller_server-4] [INFO] [1789405208.851927403] [controller_server]: Created controller : CleanPath of type nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController
+[controller_server-4] [INFO] [1789405208.857898658] [controller_server]: Created controller : RepairPath of type nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController
+[controller_server-4] [INFO] [1789405208.863337604] [controller_server]: Controller Server has FollowPath CleanPath RepairPath  controllers available.
+[costmap_filter_info_server-18] [INFO] [1789405208.871143609] [costmap_filter_info_server]: This is costmap filter info publisher
+[lifecycle_manager-14] [INFO] [1789405208.872869911] [lifecycle_manager_navigation]: [34m[1mConfiguring smoother_server[0m[0m
+[smoother_server-5] [INFO] [1789405208.873113429] [smoother_server]: Configuring smoother server
+[lifecycle_manager-19] [INFO] [1789405208.886235957] [filter_lifecycle_manager]: Creating
+[lifecycle_manager-19] [INFO] [1789405208.900781168] [filter_lifecycle_manager]: [34m[1mCreating and initializing lifecycle service clients[0m[0m
+[smoother_server-5] [INFO] [1789405208.905085840] [smoother_server]: Created smoother : simple_smoother of type nav2_smoother::SimpleSmoother
+[smoother_server-5] [INFO] [1789405208.905630162] [smoother_server]: Smoother Server has simple_smoother  smoothers available.
+[lifecycle_manager-14] [INFO] [1789405208.910081567] [lifecycle_manager_navigation]: [34m[1mConfiguring planner_server[0m[0m
+[planner_server-6] [INFO] [1789405208.910321278] [planner_server]: Configuring
+[planner_server-6] [INFO] [1789405208.910363748] [global_costmap.global_costmap]: Configuring
+[lifecycle_manager-19] [INFO] [1789405208.913543307] [filter_lifecycle_manager]: [34m[1mStarting managed nodes bringup...[0m[0m
+[lifecycle_manager-19] [INFO] [1789405208.913616165] [filter_lifecycle_manager]: [34m[1mConfiguring keepout_filter_mask_server[0m[0m
+[map_server-15] [INFO] [1789405208.913903546] [keepout_filter_mask_server]: Configuring
+[map_server-15] [INFO] [1789405208.913977077] [map_io]: Loading yaml file: /workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/run-01/geofence_keepout.yaml
+[map_server-15] [INFO] [1789405208.914439390] [map_io]: resolution: 0.25
+[map_server-15] [INFO] [1789405208.914454095] [map_io]: origin[0]: -4
+[costmap_filter_info_server-18] [INFO] [1789405208.914432290] [speed_costmap_filter_info_server]: 
+[costmap_filter_info_server-18] 	speed_costmap_filter_info_server lifecycle node launched. 
+[costmap_filter_info_server-18] 	Waiting on external lifecycle transitions to activate
+[costmap_filter_info_server-18] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[map_server-15] [INFO] [1789405208.914459634] [map_io]: origin[1]: -52
+[map_server-15] [INFO] [1789405208.914462642] [map_io]: origin[2]: 0
+[map_server-15] [INFO] [1789405208.914465606] [map_io]: free_thresh: 0.25
+[map_server-15] [INFO] [1789405208.914468585] [map_io]: occupied_thresh: 0.65
+[map_server-15] [INFO] [1789405208.914473682] [map_io]: mode: trinary
+[map_server-15] [INFO] [1789405208.914477408] [map_io]: negate: 0
+[map_server-15] [INFO] [1789405208.914873828] [map_io]: Loading image_file: /workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/run-01/geofence_keepout.pgm
+[planner_server-6] [INFO] [1789405208.920700041] [global_costmap.global_costmap]: Using plugin "static_layer"
+[map_server-15] [INFO] [1789405208.921567890] [map_io]: Read map /workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/run-01/geofence_keepout.pgm: 816 X 416 map @ 0.25 m/cell
+[planner_server-6] [INFO] [1789405208.933956979] [global_costmap.global_costmap]: Subscribing to the map topic (/map) with transient local durability
+[lifecycle_manager-19] [INFO] [1789405208.934400704] [filter_lifecycle_manager]: [34m[1mConfiguring keepout_costmap_filter_info_server[0m[0m
+[costmap_filter_info_server-16] [INFO] [1789405208.934595188] [keepout_costmap_filter_info_server]: Configuring
+[planner_server-6] [INFO] [1789405208.936039232] [global_costmap.global_costmap]: Initialized plugin "static_layer"
+[planner_server-6] [INFO] [1789405208.936059081] [global_costmap.global_costmap]: Using plugin "obstacle_layer"
+[planner_server-6] [INFO] [1789405208.936399744] [global_costmap.global_costmap]: Subscribed to Topics: scan
+[planner_server-6] [INFO] [1789405208.940062986] [global_costmap.global_costmap]: Initialized plugin "obstacle_layer"
+[planner_server-6] [INFO] [1789405208.940084684] [global_costmap.global_costmap]: Using plugin "keepout_filter"
+[planner_server-6] [INFO] [1789405208.946217527] [global_costmap.global_costmap]: Initialized plugin "keepout_filter"
+[planner_server-6] [INFO] [1789405208.946236005] [global_costmap.global_costmap]: Using plugin "speed_filter"
+[planner_server-6] [INFO] [1789405208.946609607] [global_costmap.global_costmap]: Initialized plugin "speed_filter"
+[planner_server-6] [INFO] [1789405208.946623831] [global_costmap.global_costmap]: Using plugin "inflation_layer"
+[planner_server-6] [INFO] [1789405208.946984615] [global_costmap.global_costmap]: Initialized plugin "inflation_layer"
+[lifecycle_manager-19] [INFO] [1789405208.950225971] [filter_lifecycle_manager]: [34m[1mConfiguring speed_filter_mask_server[0m[0m
+[map_server-17] [INFO] [1789405208.950490476] [speed_filter_mask_server]: Configuring
+[map_server-17] [INFO] [1789405208.950571438] [map_io]: Loading yaml file: /workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/run-01/neutral_speed.yaml
+[map_server-17] [INFO] [1789405208.951049282] [map_io]: resolution: 0.25
+[map_server-17] [INFO] [1789405208.951061160] [map_io]: origin[0]: -4
+[map_server-17] [INFO] [1789405208.951066670] [map_io]: origin[1]: -52
+[map_server-17] [INFO] [1789405208.951069390] [map_io]: origin[2]: 0
+[map_server-17] [INFO] [1789405208.951072822] [map_io]: free_thresh: 0.25
+[map_server-17] [INFO] [1789405208.951076036] [map_io]: occupied_thresh: 0.65
+[map_server-17] [INFO] [1789405208.951081345] [map_io]: mode: trinary
+[map_server-17] [INFO] [1789405208.951086403] [map_io]: negate: 0
+[map_server-17] [INFO] [1789405208.951559494] [map_io]: Loading image_file: /workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/run-01/neutral_speed.pgm
+[map_server-17] [INFO] [1789405208.958971827] [map_io]: Read map /workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/run-01/neutral_speed.pgm: 816 X 416 map @ 0.25 m/cell
+[planner_server-6] [INFO] [1789405208.959552714] [global_costmap.global_costmap]: StaticLayer: Resizing costmap to 477 X 486 at 0.050000 m/pix
+[planner_server-6] [INFO] [1789405208.959893969] [planner_server]: Created global planner plugin GridBased of type nav2_navfn_planner::NavfnPlanner
+[planner_server-6] [INFO] [1789405208.959922942] [planner_server]: Configuring plugin GridBased of type NavfnPlanner
+[planner_server-6] [INFO] [1789405208.960668915] [planner_server]: Planner Server has GridBased  planners available.
+[lifecycle_manager-14] [INFO] [1789405208.966848380] [lifecycle_manager_navigation]: [34m[1mConfiguring route_server[0m[0m
+[route_server-7] [INFO] [1789405208.967179884] [route_server]: Configuring
+[lifecycle_manager-19] [INFO] [1789405208.978218709] [filter_lifecycle_manager]: [34m[1mConfiguring speed_costmap_filter_info_server[0m[0m
+[costmap_filter_info_server-18] [INFO] [1789405208.978568553] [speed_costmap_filter_info_server]: Configuring
+[lifecycle_manager-19] [INFO] [1789405208.994933981] [filter_lifecycle_manager]: [34m[1mActivating keepout_filter_mask_server[0m[0m
+[map_server-15] [INFO] [1789405208.995259633] [keepout_filter_mask_server]: Activating
+[map_server-15] [INFO] [1789405208.996339841] [keepout_filter_mask_server]: Creating bond (keepout_filter_mask_server) to lifecycle manager.
+[route_server-7] [INFO] [1789405209.000849162] [route_server]: Created GraphFileLoader GeoJsonGraphFileLoader of type nav2_route::GeoJsonGraphFileLoader
+[route_server-7] [INFO] [1789405209.000879378] [route_server]: Configuring geojson graph file loader
+[route_server-7] [INFO] [1789405209.000888469] [route_server]: No graph file provided to load yet.
+[route_server-7] [INFO] [1789405209.007629527] [route_server]: Created edge cost function plugin DistanceScorer of type nav2_route::DistanceScorer
+[route_server-7] [INFO] [1789405209.007654908] [route_server]: Configuring distance scorer.
+[route_server-7] [INFO] [1789405209.007816692] [route_server]: Created edge cost function plugin DynamicEdgesScorer of type nav2_route::DynamicEdgesScorer
+[route_server-7] [INFO] [1789405209.007831685] [route_server]: Configuring adjust edges scorer.
+[route_server-7] [INFO] [1789405209.014179338] [route_server]: Created route operation AdjustSpeedLimit of type nav2_route::AdjustSpeedLimit
+[route_server-7] [INFO] [1789405209.014202784] [route_server]: Configuring Adjust speed limit operation.
+[route_server-7] [INFO] [1789405209.014563822] [route_server]: Created route operation ReroutingService of type nav2_route::ReroutingService
+[route_server-7] [INFO] [1789405209.014580046] [route_server]: Configuring Rerouting service operation.
+[lifecycle_manager-14] [INFO] [1789405209.017211770] [lifecycle_manager_navigation]: [34m[1mConfiguring behavior_server[0m[0m
+[behavior_server-8] [INFO] [1789405209.017505190] [behavior_server]: Configuring
+[behavior_server-8] [INFO] [1789405209.027264846] [behavior_server]: Creating behavior plugin spin of type nav2_behaviors::Spin
+[behavior_server-8] [INFO] [1789405209.030366646] [behavior_server]: Creating behavior plugin backup of type nav2_behaviors::BackUp
+[behavior_server-8] [INFO] [1789405209.033410754] [behavior_server]: Creating behavior plugin drive_on_heading of type nav2_behaviors::DriveOnHeading
+[behavior_server-8] [INFO] [1789405209.036262854] [behavior_server]: Creating behavior plugin wait of type nav2_behaviors::Wait
+[behavior_server-8] [INFO] [1789405209.053994502] [behavior_server]: Configuring spin
+[behavior_server-8] [INFO] [1789405209.060846222] [behavior_server]: Configuring backup
+[behavior_server-8] [INFO] [1789405209.064057747] [behavior_server]: Configuring drive_on_heading
+[behavior_server-8] [INFO] [1789405209.067371234] [behavior_server]: Configuring wait
+[lifecycle_manager-14] [INFO] [1789405209.071185642] [lifecycle_manager_navigation]: [34m[1mConfiguring velocity_smoother[0m[0m
+[velocity_smoother-11] [INFO] [1789405209.071537289] [velocity_smoother]: Configuring velocity smoother
+[lifecycle_manager-14] [INFO] [1789405209.076572814] [lifecycle_manager_navigation]: [34m[1mConfiguring collision_monitor[0m[0m
+[collision_monitor-12] [INFO] [1789405209.076958974] [collision_monitor]: Configuring
+[collision_monitor-12] [INFO] [1789405209.089656367] [collision_monitor]: [scan]: Creating Scan
+[collision_monitor-12] [INFO] [1789405209.094345637] [collision_monitor]: [FootprintApproach]: Creating Polygon
+[collision_monitor-12] [INFO] [1789405209.094669603] [collision_monitor]: [FootprintApproach]: Polygon points are not defined. Using dynamic subscription instead.
+[collision_monitor-12] [INFO] [1789405209.095827766] [collision_monitor]: [FootprintApproach]: Making footprint subscriber on /local_costmap/published_footprint topic
+[lifecycle_manager-19] [INFO] [1789405209.104138659] [filter_lifecycle_manager]: Server keepout_filter_mask_server connected with bond.
+[lifecycle_manager-19] [INFO] [1789405209.104210954] [filter_lifecycle_manager]: [34m[1mActivating keepout_costmap_filter_info_server[0m[0m
+[costmap_filter_info_server-16] [INFO] [1789405209.104611396] [keepout_costmap_filter_info_server]: Activating
+[costmap_filter_info_server-16] [INFO] [1789405209.104673706] [keepout_costmap_filter_info_server]: Creating bond (keepout_costmap_filter_info_server) to lifecycle manager.
+[lifecycle_manager-14] [INFO] [1789405209.119772029] [lifecycle_manager_navigation]: [34m[1mConfiguring bt_navigator[0m[0m
+[bt_navigator-9] [INFO] [1789405209.120108685] [bt_navigator]: Configuring
+[bt_navigator-9] [INFO] [1789405209.134677512] [bt_navigator]: Creating navigator id navigate_to_pose of type nav2_bt_navigator::NavigateToPoseNavigator
+[bt_navigator-9] [WARN] [1789405209.156463452] [bt_navigator]: Error_code parameters were not set. Using default values of: follow_path_error_code compute_path_error_code
+[bt_navigator-9] Make sure these match your BT and there are not other sources of error codes youreported to your application
+[lifecycle_manager-19] [INFO] [1789405209.209495513] [filter_lifecycle_manager]: Server keepout_costmap_filter_info_server connected with bond.
+[lifecycle_manager-19] [INFO] [1789405209.209565664] [filter_lifecycle_manager]: [34m[1mActivating speed_filter_mask_server[0m[0m
+[map_server-17] [INFO] [1789405209.209984642] [speed_filter_mask_server]: Activating
+[map_server-17] [INFO] [1789405209.211119299] [speed_filter_mask_server]: Creating bond (speed_filter_mask_server) to lifecycle manager.
+[lifecycle_manager-19] [INFO] [1789405209.317637868] [filter_lifecycle_manager]: Server speed_filter_mask_server connected with bond.
+[lifecycle_manager-19] [INFO] [1789405209.317697878] [filter_lifecycle_manager]: [34m[1mActivating speed_costmap_filter_info_server[0m[0m
+[costmap_filter_info_server-18] [INFO] [1789405209.318115077] [speed_costmap_filter_info_server]: Activating
+[costmap_filter_info_server-18] [INFO] [1789405209.318206920] [speed_costmap_filter_info_server]: Creating bond (speed_costmap_filter_info_server) to lifecycle manager.
+[bt_navigator-9] [INFO] [1789405209.412501824] [bt_navigator]: Creating navigator id navigate_through_poses of type nav2_bt_navigator::NavigateThroughPosesNavigator
+[lifecycle_manager-19] [INFO] [1789405209.424382792] [filter_lifecycle_manager]: Server speed_costmap_filter_info_server connected with bond.
+[lifecycle_manager-19] [INFO] [1789405209.424454011] [filter_lifecycle_manager]: [34m[1mManaged nodes are active[0m[0m
+[lifecycle_manager-19] [INFO] [1789405209.424486073] [filter_lifecycle_manager]: [34m[1mCreating bond timer...[0m[0m
+[lifecycle_manager-14] [INFO] [1789405209.440261302] [lifecycle_manager_navigation]: [34m[1mConfiguring waypoint_follower[0m[0m
+[waypoint_follower-10] [INFO] [1789405209.440666827] [waypoint_follower]: Configuring
+[waypoint_follower-10] [INFO] [1789405209.484474720] [waypoint_follower]: Created waypoint_task_executor : wait_at_waypoint of type nav2_waypoint_follower::WaitAtWaypoint
+[waypoint_follower-10] [INFO] [1789405209.484862828] [waypoint_follower]: Waypoint pause duration is set to zero, disabling task executor plugin.
+[lifecycle_manager-14] [INFO] [1789405209.485584426] [lifecycle_manager_navigation]: [34m[1mConfiguring docking_server[0m[0m
+[opennav_docking-13] [INFO] [1789405209.485943611] [docking_server]: Configuring docking_server
+[opennav_docking-13] [INFO] [1789405209.486011452] [docking_server]: Controller frequency set to 20.0000Hz
+[opennav_docking-13] [INFO] [1789405209.520789935] [docking_server]: Created charging dock plugin simple_charging_dock of type opennav_docking::SimpleChargingDock
+[opennav_docking-13] [WARN] [1789405209.523236702] [docking_server]: Dock database filepath nor dock parameters set. Docking actions can only be executed specifying the dock pose via the action request. Or update the dock database via the reload_database service.
+[opennav_docking-13] [INFO] [1789405209.523269100] [docking_server]: Docking Server has 1 dock types and 0 dock instances available.
+[lifecycle_manager-14] [INFO] [1789405209.524165269] [lifecycle_manager_navigation]: [34m[1mActivating controller_server[0m[0m
+[controller_server-4] [INFO] [1789405209.524516513] [controller_server]: Activating
+[controller_server-4] [INFO] [1789405209.524596088] [local_costmap.local_costmap]: Activating
+[controller_server-4] [INFO] [1789405209.524622127] [local_costmap.local_costmap]: Checking transform
+[controller_server-4] [INFO] [1789405209.524697654] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405210.024771511] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405210.524752494] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405211.024749423] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405211.524751820] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405212.024756825] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405212.524758854] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405213.024752060] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405213.524750411] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405214.024753805] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405214.524740298] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405215.024757976] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405215.524751249] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405216.024750193] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405216.524751172] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405217.024751659] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405217.524752227] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405218.024747642] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405218.524748940] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405219.024746668] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405219.524746410] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405220.024748858] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405220.524757178] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405221.024750213] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405221.524752266] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405222.024757794] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405222.524748434] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405223.024748039] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405223.524753125] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405224.024756300] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405224.524751704] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405225.024750824] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405225.524747813] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405226.024753799] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405226.524753651] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405227.024751477] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405227.524758351] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405228.024734940] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405228.524751196] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405229.024751855] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405229.524753366] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405230.024752099] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405230.524755614] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405231.024761006] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405231.524756530] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405232.024751981] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405232.524750418] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405233.024776172] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405233.524749189] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405234.024748347] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405234.524743195] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405235.024739649] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405235.524734066] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405236.024738359] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405236.524736259] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405237.024749417] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405237.524752148] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405238.024832469] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405238.524843059] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405239.024754645] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405239.524785631] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405240.024783986] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405240.524785238] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405241.024752434] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405241.524754377] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405242.024755704] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405242.524747478] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405243.024751123] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405243.524812048] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405244.024775380] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405244.524753744] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405245.024754740] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405245.524754736] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405246.024757908] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405246.524756257] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405247.024752886] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405247.524750708] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405248.024738084] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405248.524748718] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405249.024761099] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405249.524755567] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405250.024759822] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405250.524772110] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405251.024760549] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405251.524755060] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405252.024763334] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405252.524755619] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405253.024755702] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405253.524751466] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405254.024756849] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405254.524755619] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405255.024763766] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405255.524755830] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405256.024756326] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405256.524752843] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405257.024754613] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405257.524794545] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405258.024752086] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405258.524781094] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405259.024738135] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405259.524755186] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405260.024816601] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405260.524758478] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405261.024754295] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405261.524754131] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405262.024753888] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405262.524760906] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405263.024756427] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405263.524755766] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405264.024756413] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405264.524755954] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405265.024773556] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405265.524755890] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405266.024754707] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405266.524754565] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405267.024757602] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405267.524757859] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405268.024761897] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405268.524757457] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405269.024772509] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405269.524755557] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405270.024782682] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405270.524754388] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405271.024759423] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405271.524778012] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405272.024752496] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405272.524891058] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405273.024751320] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405273.524769250] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405274.024756748] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405274.524752912] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405275.024756743] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405275.524744963] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405276.024754512] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405276.524776409] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405277.024757058] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405277.524785570] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405278.024752599] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405278.524753527] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405279.024754928] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405279.524793930] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405280.024754425] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405280.524761191] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405281.024756578] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405281.524750619] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405282.024755006] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405282.524752678] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405283.024752731] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405283.524754851] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405284.024755792] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405284.524768290] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405285.024754454] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405285.524770597] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-4] [INFO] [1789405286.024754597] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
