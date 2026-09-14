@@ -2,11 +2,11 @@
 
 **Date:** 2026-09-14
 
-**Revision:** `47e3cb3a7ecc01edd82aa23a3b54cbeaffc418bc`
+**Latest attempt revision:** `be499a9174dd013a756e6bafd382da40772ccb55`
 
 **Status:** `BLOCKED`
 
-**Decision:** stop before coverage; no second run
+**Decision:** retain the corrected-run blocker; no further Gazebo run
 
 ## Scope
 
@@ -112,3 +112,59 @@ No second corrected run was launched. The structured receipt is
 `artifacts/day1_bounded_coverage_20260914/failure_receipt_run02.json`, and the
 archive SHA-256 is
 `185f052094695a7efb699c3c736e559a7a691531c34de008f49635a3f6592bc9`.
+
+The exact Run-02 root cause is a circular readiness condition. The bridge
+required `left_ready`, `right_ready`, and `roller_ready` before writing
+`cleaning_bridge_ready.json`. Those flags require nonzero brush velocity, but
+the bridge intentionally sends zero brush commands until `/brush_enabled` is
+true. `/brush_enabled` is published only by the coverage probe, which the
+runner refuses to start until the readiness file exists.
+
+## Corrected run 03
+
+Commit `be499a9174dd013a756e6bafd382da40772ccb55` removed that circular
+condition. Pre-coverage readiness now requires a live GroundDirt status/ledger,
+the safety permit, the `0.095 m` work-pose lift, and valid left/right/roller
+contact clearances with brushes off. The full rotating-tool ready flags remain
+mandatory in the post-coverage summary. The cleanup-time timer
+`KeyboardInterrupt` was also removed so the final bridge report survives.
+
+Run 03 used:
+
+* run root: `day1-bounded-coverage-20260914-03`
+* ROS domain: `92`
+* Gazebo partition: `tzcup_day1_bounded_coverage_20260914_03`
+* XDG runtime: `/tmp/tzcup_day1_bounded_coverage_20260914_03_xdg`
+
+The circular blocker is confirmed resolved: the bridge received 503 GroundDirt
+status samples and observed a true safety permit at simulated second `3.338`.
+The remaining timeout is a separate motion-cadence defect. The repaired bridge
+reissued the `20.9 s` lift trajectory on a `0.5 s` wall timer, but simulation
+advanced roughly seven times slower than wall time. The controller therefore
+received 349 overlapping requests and never completed interpolation. At
+simulated second `27.201`, lift was `0.035695123 m` instead of the required
+`0.095 m`; clearances remained `0.0643 m` and all three brush velocities were
+zero. The 180-second wall readiness window expired before work pose was reached,
+so the coverage probe never started.
+
+The post-run correction restores a single bounded lift request after the
+controller subscription exists and preserves permit-ever evidence in the final
+bridge report. That correction has not been executed because the one authorized
+corrected run is spent. Coverage report, path, dirt-clearance delta, and
+efficiency remain `NOT_MEASURED`; final cleaning state is zero cells cleared,
+brush disabled, and dirt system disabled.
+
+```powershell
+& 'F:\Project\TZcup\.workspace\tools\Invoke-TZcupRemoteLatest.ps1' -Command @'
+TZCUP_DAY1_COVERAGE_RUN_ID=day1-bounded-coverage-20260914-03 \
+TZCUP_DAY1_COVERAGE_DOMAIN_ID=92 \
+TZCUP_DAY1_COVERAGE_PARTITION=tzcup_day1_bounded_coverage_20260914_03 \
+TZCUP_DAY1_COVERAGE_XDG_RUNTIME=/tmp/tzcup_day1_bounded_coverage_20260914_03_xdg \
+bash /root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-bounded-coverage-20260914-03/ops/run_day1_bounded_coverage_remote_dispatch.sh
+'@
+```
+
+The structured receipt is
+`artifacts/day1_bounded_coverage_20260914/failure_receipt_run03.json`, and the
+archive SHA-256 is
+`9fd4e17c313352f17bbe0d4394861df238145470a01b46c6e6ecf6b92849140e`.

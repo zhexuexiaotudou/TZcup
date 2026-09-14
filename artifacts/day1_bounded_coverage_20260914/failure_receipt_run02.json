@@ -48,6 +48,12 @@
     "average_speed_mps": null,
     "net_efficiency_m2_h": null
   },
+  "root_cause": {
+    "type": "precoverage_readiness_circular_dependency",
+    "summary": "The bridge required all three GroundDirtCleaningSystem *_ready flags before writing cleaning_bridge_ready.json, but those flags require nonzero brush-joint velocity. The bridge deliberately keeps brush commands at zero until /brush_enabled is true, and /brush_enabled is published only by the coverage probe, which the runner refuses to start until cleaning_bridge_ready.json exists.",
+    "secondary_evidence_loss": "BoundedCoverageCleaningBridge._tick raised KeyboardInterrupt from its timer during finalize(), masking cleaning_bridge.json on cleanup.",
+    "corrective_commit": "be499a9174dd013a756e6bafd382da40772ccb55"
+  },
   "metrics_boundary": {
     "valid_bounded_mission": false,
     "metrics_status": "NOT_MEASURED",

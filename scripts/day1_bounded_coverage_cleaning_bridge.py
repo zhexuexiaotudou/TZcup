@@ -26,10 +26,7 @@ from rclpy.qos import qos_profile_sensor_data
 from std_msgs.msg import Bool, Empty, Float64MultiArray, String
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
-from day1_bounded_coverage_readiness import (
-    PRECOVERAGE_LIFT_POSITION_M,
-    precoverage_actuator_readiness,
-)
+from day1_bounded_coverage_readiness import precoverage_actuator_readiness
 
 
 DIRT_STATUS_TOPIC = (
@@ -111,10 +108,10 @@ class BoundedCoverageCleaningBridge(Node):
         self.started_wall = time.monotonic()
         self.sim_time_s: float | None = None
         self.permitted = False
+        self.permit_observed_ever = False
         self.brush_enabled = False
         self.brush_command_enabled = False
         self.lift_requested = False
-        self.last_lift_request_wall: float | None = None
         self.stop_requested = False
         self.fused_pose_messages = 0
         self.status_samples: list[dict[str, object]] = []
@@ -182,6 +179,8 @@ class BoundedCoverageCleaningBridge(Node):
         if bool(message.data) != self.permitted:
             self._event("permit", bool(message.data))
         self.permitted = bool(message.data)
+        if self.permitted:
+            self.permit_observed_ever = True
 
     def _on_brush(self, message: Bool) -> None:
         enabled = bool(message.data)
@@ -274,18 +273,7 @@ class BoundedCoverageCleaningBridge(Node):
         trajectory.points = [point]
         self.pub["lift"].publish(trajectory)
         self.lift_requested = True
-        self.last_lift_request_wall = time.monotonic()
         self._event("cleaning_lift_requested", 0.10)
-
-    def _lift_at_work_pose(self) -> bool:
-        if not self.status_samples:
-            return False
-        return bool(
-            _finite_number(
-                self.status_samples[-1].get("lift_position_m")
-            )
-            >= PRECOVERAGE_LIFT_POSITION_M
-        )
 
     def _tick(self) -> None:
         if self.stop_file.exists():
@@ -307,12 +295,8 @@ class BoundedCoverageCleaningBridge(Node):
         )
         if (
             self.permitted
-            and not self._lift_at_work_pose()
+            and not self.lift_requested
             and self.pub["lift"].get_subscription_count() > 0
-            and (
-                self.last_lift_request_wall is None
-                or now - self.last_lift_request_wall >= 0.5
-            )
         ):
             self._publish_lift_request()
 
@@ -335,7 +319,8 @@ class BoundedCoverageCleaningBridge(Node):
             "fused_pose_adapter_messages": self.fused_pose_messages,
             "brush_command_on": [8.0, -8.0, 12.0],
             "brush_command_off": [0.0, 0.0, 0.0],
-            "permit_observed": self.permitted,
+            "permit_observed": self.permit_observed_ever,
+            "permit_terminal": self.permitted,
             "lift_requested": self.lift_requested,
             "brush_disabled_on_exit": True,
             "dirt_system_disabled_on_exit": True,

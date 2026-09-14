@@ -83,6 +83,8 @@ def test_bridge_has_no_motion_or_truth_interfaces() -> None:
     source = BRIDGE_PATH.read_text(encoding="utf-8")
     assert "precoverage_actuator_readiness" in source
     assert "raise KeyboardInterrupt" not in source
+    assert "and not self.lift_requested" in source
+    assert "last_lift_request_wall" not in source
     tree = ast.parse(source)
     reserved_node_assignments = []
     for node in ast.walk(tree):
