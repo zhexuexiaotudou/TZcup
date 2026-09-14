@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "host": "autodl-container-ca410red1k-e4e33c0c",
+  "gpu": "NVIDIA GeForce RTX 3080 Ti",
+  "candidate_revision": "7410988b29868c04ccab4d51fc9d8a8825623b6c",
+  "post_run_code_fix": "a2ffa243040a7b6ed7bf720c53df2d73c7f978f6",
+  "status": "NOT_MEASURED",
+  "decision": "STOPPED_BEFORE_DYNAMIC_DATA_NO_RETRY",
+  "canonical_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912",
+  "runtime": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f",
+  "run_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/localization-day1-20260914-01",
+  "output": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/localization-day1-20260914-01/run-01",
+  "ros_domain_id": 97,
+  "gazebo_partition": "tzcup_localization_day1_20260914_rental_01",
+  "xdg_runtime_dir": "/tmp/tzcup_localization_day1_20260914_rental_01_xdg",
+  "generated_costmap_radii": {
+    "local_inflation_radius_m": 0.56,
+    "global_inflation_radius_m": 0.56,
+    "required_strict_boundary_m": 0.55
+  },
+  "parameter_capture": {
+    "all_expected": false,
+    "matched_parameters": 0,
+    "failed_parameters": 20,
+    "attempts_per_parameter": 3,
+    "root_error": "ros2 param get: error: argument --timeout: invalid int value: '5.0'",
+    "amcl_global_frame_id_error": "ros2 param get: error: argument --timeout: invalid int value: '5.0'",
+    "effective_parameters_sha256": "672a47ea7361f9db4a3c257a7c483053bcb39df5d606b3649a05b97eeb4ce65d"
+  },
+  "sample_counts": {
+    "mcap_files": 0,
+    "dynamic_reference_samples": 0,
+    "paired_samples": 0,
+    "route_samples": 0,
+    "tf_authority_reports": 0
+  },
+  "error_statistics": {
+    "rmse_m": null,
+    "p95_m": null,
+    "max_m": null,
+    "displacement_m": null,
+    "pair_coverage": null
+  },
+  "gpu_utilization": {
+    "samples": 123,
+    "average_utilization_percent": 0.984,
+    "minimum_utilization_percent": 0,
+    "maximum_utilization_percent": 4,
+    "maximum_memory_used_mib": 334,
+    "final_utilization_percent": 0,
+    "final_memory_used_mib": 1
+  },
+  "evidence_hashes": {
+    "remote_evidence_tar_gz": "a7394a5f42ef726f8083d538d105d62d143ba44c05d4dc808aedfc584b2c4016",
+    "effective_parameters_json": "672a47ea7361f9db4a3c257a7c483053bcb39df5d606b3649a05b97eeb4ce65d",
+    "generated_nav2_yaml": "194630ddb49f27a6403c3bfd7608fb6a220280784ce128de361f05dc01f21a46",
+    "launch_log": "5eca6c3086738f874aeaa9064a43881d9869448f61418137aee0d472038b5843",
+    "navigation_log": "785873943e6e87dead9b9bc7f35d057ed987af2e6a86c0a5927bece889e9e991",
+    "gpu_utilization_csv": "2602a8a4509ff31abbb921d9faf9b809a4b0729f42f3c87f58ecb21756ee3a64",
+    "overlay_build_log": "b332a00c9d9e27fac80673683b62a29d93bfe4bfcbe74d666ece9aff01baf1b6"
+  },
+  "orphan_bridge": {
+    "pid": 829511,
+    "ros_domain_id": 99,
+    "gz_partition": "tzcup_competition_dirt_99",
+    "action": "inspected_read_only_left_untouched"
+  },
+  "resource_release": {
+    "remote_lock_available": true,
+    "local_lock_available": true,
+    "gazebo_process_remaining_after_run": false,
+    "ros_runtime_process_remaining_after_run": false,
+    "sim_resource_released": true
+  },
+  "raw_evidence_remote": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/localization-day1-20260914-01",
+  "raw_evidence_local": ".work/day1-localization-run/evidence/remote-day1-20260914-01.tar.gz"
+}
