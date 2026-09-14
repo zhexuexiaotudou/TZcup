@@ -591,8 +591,8 @@
     "source_commit": "b663ca9",
     "assembly_commit": "e6caf27",
     "archive_commit": "8cda98c",
-    "bytes": 4787,
-    "sha256": "090bee64fcb64dbe1ad05c48fe4d3793f13c0cac4a78253c765ddfa14962db66",
+    "bytes": 5301,
+    "sha256": "0eb5e8b47027a38211ee1a1b59cb973df181f7240b9eb1630542c7ccf3be80f8",
     "copied_utc": "2026-09-15"
   },
   {
@@ -633,6 +633,22 @@
     "source_commit": "4c3c95930245155186ebed53eb822d314b1717c9",
     "bytes": 390,
     "sha256": "3879f180e4a0cdf937230017804668602069d4f49c51652d8b80170c67fe6054",
+    "copied_utc": "2026-09-15"
+  },
+  {
+    "file": "video/evidence/localization-causal-filter-60s/localization_tracking_success_1080p.mp4",
+    "source": "codex/day1-localization-50mm-recovery:artifacts/day1_localization_video_20260914/rendered_final/localization_tracking_success_1080p.mp4",
+    "source_commit": "45cb96babc204ad2dad9afb83bb9d98f113fa8d8",
+    "bytes": 1043916,
+    "sha256": "eafe3f5f79ec6b86ad134ff34e3ea905d3d9e4551ca5dbdfd7ace3163235c29f",
+    "copied_utc": "2026-09-15"
+  },
+  {
+    "file": "video/evidence/localization-causal-filter-60s/recovery_receipt.json",
+    "source": "codex/day1-localization-50mm-recovery:artifacts/day1_localization_50mm_recovery_20260914/recovery_receipt.json",
+    "source_commit": "a7841c9e024175901065d2c583f32a4a2d89f50f",
+    "bytes": 6343,
+    "sha256": "63994a2d46a9138ca39cd58cf2bc2f2e4f5167c3a46a5991da55b3a5a9ed81d8",
     "copied_utc": "2026-09-15"
   },
   {
@@ -701,8 +717,8 @@
     "source_commit": "b663ca9",
     "assembly_commit": "e6caf27",
     "archive_commit": "8cda98c",
-    "bytes": 1920,
-    "sha256": "4e30c6d2e0ecc15b19c0c8d20d595a3ba264e2dab07be70d8210bfe3b97b1b6b",
+    "bytes": 2849,
+    "sha256": "99f2177c775cc4396dc87a9e7005b4f5d8319ca5b46870f5fbd4ffc57510d0d1",
     "copied_utc": "2026-09-15"
   },
   {

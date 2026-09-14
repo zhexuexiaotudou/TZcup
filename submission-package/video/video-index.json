@@ -44,6 +44,18 @@
     "sha256": "c6877d723c82e16d5a0b123d98a76c6fc106dc63c452cf935f6311a3fa74fa01",
     "claim_boundary": "Same continuous capture for motion, obstacle response, recovery and in-motion emergency stop; not a complete coverage mission or official efficiency/avoidance acceptance."
   },
+  "localization_evidence": {
+    "path": "evidence/localization-causal-filter-60s/localization_tracking_success_1080p.mp4",
+    "role": "offline_causal_filter_visualization",
+    "duration_s": 60.0,
+    "sha256": "eafe3f5f79ec6b86ad134ff34e3ea905d3d9e4551ca5dbdfd7ace3163235c29f",
+    "metrics_mm": {
+      "rmse": 29.19189697400822,
+      "p95": 40.28501437569142,
+      "max": 47.56582158794771
+    },
+    "claim_boundary": "Offline same-session causal replay only; not live or official localization PASS."
+  },
   "files": [
     {
       "path": "final/TZcup_5min_video.mp4",
@@ -96,8 +108,8 @@
     {
       "path": "视频索引.md",
       "role": "human_readable_index",
-      "bytes": 2737,
-      "sha256": "c486c328ccac378f22d89e0a900ba666d5c1ab31aee40b124564d248e7516e4d"
+      "bytes": 3166,
+      "sha256": "be9700d276a07eb4ecf98b3e615da7bfd8bc8b197c10eb6a60512ba5aef40cdb"
     },
     {
       "path": "一页说明.md",

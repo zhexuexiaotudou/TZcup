@@ -7,7 +7,7 @@
 - `metrics/video-score-status.json` / `演示视频评分状态.md`：视频项`DELIVERED_MODULAR_DEMO`、建议`2-3/4`、评委裁量上限`4/4`与不可升级边界。
 - `metrics/板端证明.md`：独立于仿真的板端证据。
 - `提交清单.md`：必交格式、三张短表、缺件和命名。
-- `video/`：300.000 s、1920x1080、恒定30 fps、H.264/AAC、中文旁白和内嵌字幕的模块化综合演示；`video/evidence/continuous-cleaning-safety-450s/` 另存 450 秒未剪辑连续 Gazebo 画面，补充运动、障碍减速停车、恢复和行驶急停证据。`video/video-index.json` 记录 `DELIVERED_MODULAR_DEMO`、建议分值区间和不可主张边界。
+- `video/`：300.000 s、1920x1080、恒定30 fps、H.264/AAC、中文旁白和内嵌字幕的模块化综合演示；`video/evidence/continuous-cleaning-safety-450s/` 另存 450 秒未剪辑连续 Gazebo 画面，`video/evidence/localization-causal-filter-60s/` 保存 60 秒离线定位因果滤波可视化。`video/video-index.json` 记录 `DELIVERED_MODULAR_DEMO`、补充证据、建议分值区间和不可主张边界。
 - `evidence/index.json`：原件来源与复制时间；相对路径内证据可随包搬运。
 - `evidence/day1/raw-evidence-sources.json`：宽度、定位、感知原始运行根目录、精确路径和哈希定位表；不声称复制原始 MCAP/timeline。
 - `evidence/day1/competition-perception-gpu-recovery.json`、`competition-perception-gpu-parity.json`：`4ed19d2`候选与`906ea4f`回执的compact metrics；仅复制JSON，不复制ONNX。
