@@ -1,7 +1,8 @@
 {
   "schema_version": 1,
   "status": "BLOCKED_STATIC_CI_BEFORE_REMOTE_LAUNCH",
-  "blocker": "scripts/ci_fast.py aborts in validate_repository_hygiene because README.md has 181 lines and the hard limit is 180",
+  "resolved_blocker": "README.md hygiene is fixed at 180 lines",
+  "blocker": "scripts/ci_fast.py passes repository hygiene, then aborts in validate_formal_static_engineering_preflight_report because the stored formal vehicle static engineering report is stale; regenerating it yields STATIC_PREFLIGHT_INVALID because formal_mechanical_interface_datums expects reports/engineering/formal_competition_vehicle.urdf SHA-256 52bd3978a53073a8126a87a16f065eeb781bbbb088b127a73bba58dcc90410a8, while the current file and snapshot manifest are 75cbf47b456f138f45b7fc9d04310e11e19a4b684f8fec4f9c969fac40704c1f",
   "command": "py -3 scripts/ci_fast.py",
   "focused_static_tests": {
     "scripts/test_prepare_offline_raycast_map_runtime.py scripts/test_validate_formal_dynamic_obstacle_avoidance.py scripts/test_dynamic_avoidance_single_run.py": "37 passed",
