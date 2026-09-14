@@ -1,0 +1,2 @@
+data: '{"accepted_updates":0,"blocked_reason":null,"duplicate_updates":0,"ignored_transform_count":0,"input_tf_topic":"/localization/raw_map_odom","last_output_stamp_sec":null,"last_source_stamp_sec":null,"max_filter_dt_sec":0.1,"max_gap_sec":0.5,"max_observed_gap_sec":0.0,"published_tf_messages":0,"rejected_updates":0,"schema_version":1,"status":"WAITING","tau_sec":1.5,"uses_future":false,"uses_ground_truth":false}'
+---

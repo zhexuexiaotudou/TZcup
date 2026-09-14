@@ -1,10 +1,9 @@
 # 定位稳定器实时接线与有界重跑
 
-状态：`STOPPED_AFTER_FINAL_LIVE_FAILURE`
+状态：`PERMANENTLY_STOPPED_FINAL_NAV2_LIFECYCLE_TIMEOUT`
 
-本版本没有启动 Gazebo。当前唯一 Gazebo 先由 coverage run-12 使用，之后由
-Copernicus 执行 avoidance。下面的 harness 通过正式 `flock` 获取单 Gazebo
-所有权；两个前序任务未释放锁或进程时，它会在启动前返回 `75`。
+下面的 harness 通过正式 `flock` 获取单 Gazebo 所有权；其他 Gazebo
+所有者未释放锁或进程时，它会在启动前返回 `75`。
 
 2026-09-15 的第一次 live 调用在 harness 的 `mkdir "$OUTPUT"` 处退出。
 原因是执行层把 host 路径
@@ -43,6 +42,32 @@ map_odom_stabilizer requires start_global_fusion:=true
 - Gazebo、ROS runtime 已释放，正式锁可用，task partition 无残留。
 
 该路线到此停止，不再重试。
+
+### 最终 bounded run-04
+
+在用户显式授权下，driver 增加了 Nav2 lifecycle readiness gate，并要求
+`bt_navigator`、`controller_server`、`planner_server` 全部 ACTIVE、
+action server ready 且 actuator permit 为真后才允许发送 goal。同时把
+`mcap`、`mcap_ros2`、`zstandard`、`lz4` 安装到 `--target` 依赖目录，
+并对已封存的 run-02 bag 成功执行 scorer 冒烟。
+
+最终 `run-04` 使用 fresh domain `82`、partition
+`tzcup_localization_stabilizer_final_20260915_04` 和新 run root，执行了默认
+`120 s + 420 s`。结果：
+
+- driver 未发送 goal；
+- `readiness_reached=false`；
+- `readiness_error=nav2_lifecycle_action_or_permit_timeout`；
+- lifecycle 最终状态：`bt_navigator=2`、`controller_server=3`、
+  `planner_server=2`；
+- `action_server_ready=true`、`permit=true`；
+- stabilizer 仍为 `WAITING`，raw/accepted/rejected/published 均为 `0`；
+- focus scorer 已能解析 MCAP，但因无运动样本和 TF 缺失输出 `FAIL`；
+- live receipt 已生成，状态 `FAIL`；
+- `driver.rc=1`、`focus.rc=2`、`validator.rc=2`；
+- Gazebo、ROS runtime 已释放，正式锁可用，partition 无残留。
+
+该 live 路线到此永久停止，不再重试。
 
 ## 实时运行链路
 
@@ -147,7 +172,7 @@ overlay 路径都必须使用 guest `/workspace/...` 路径。host
 
 本轮没有获得新的 live RMSE/P95/max，也没有把此前离线候选升级为 live PASS。
 
-## 最终 live 调用记录
+## run-02 live 调用记录
 
 - run：`run-02`
 - `outer_invocation_rc`: `2`
@@ -163,6 +188,21 @@ overlay 路径都必须使用 guest `/workspace/...` 路径。host
 - `resource_release.json`: `RELEASED`
 - 最终回执：
   `final_live_failure_receipt.json`
+
+## run-04 最终 live 调用记录
+
+- run root：
+  `/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-final-20260915-04`
+- `outer_invocation_rc`: `1`
+- `status`: `FAIL_NAV2_LIFECYCLE_NOT_ACTIVE_BEFORE_PREPARE_TIMEOUT`
+- `driver_rc`: `1`
+- `focus.rc`: `2`
+- `validator.rc`: `2`
+- `live_candidate_receipt.json`: 已生成，状态 `FAIL`
+- `effective_parameters.json`: 已生成，`all_expected=true`
+- `tf_authority.json`: 已生成，`sole_tf_owner` 仍不能判定为通过
+- `bag/bag_0.mcap`: 已生成，约 `107.3 MiB`、`132648` messages
+- `resource_release.json`: `RELEASED`
 
 ## 验收门
 

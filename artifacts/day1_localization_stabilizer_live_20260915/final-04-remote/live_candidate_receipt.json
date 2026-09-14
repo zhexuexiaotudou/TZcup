@@ -1,0 +1,188 @@
+{
+  "schema_version": 1,
+  "status": "FAIL",
+  "passed": false,
+  "scope": "one bounded same-session live replay with causal map->odom stabilizer",
+  "official_boundary": "The stabilizer result is live runtime evidence for the strict max<=50 mm interpretation. Official text remains ambiguous about which reported statistic controls acceptance.",
+  "gates": {
+    "parameters": {
+      "passed": true,
+      "expected": {
+        "tau_sec": 1.5,
+        "max_filter_dt_sec": 0.1,
+        "max_gap_sec": 0.5,
+        "input_tf_topic": "/localization/raw_map_odom"
+      },
+      "matches": {
+        "tau_sec": true,
+        "max_filter_dt_sec": true,
+        "max_gap_sec": true,
+        "input_tf_topic": true
+      }
+    },
+    "authority": {
+      "passed": false,
+      "owner": "/map_odom_stabilizer",
+      "tf_gid_count": 0,
+      "tf_nodes": [],
+      "tf_message_count": 0,
+      "raw_map_odom_publishers": [
+        "/global_ekf"
+      ],
+      "raw_map_odom_subscribers": [
+        "/map_odom_stabilizer",
+        "/rosbag2_recorder",
+        "/transform_listener_impl_500000127810"
+      ],
+      "raw_map_odom_message_count": 0,
+      "graph_nodes": [
+        "/_ros2cli_104542",
+        "/_ros2cli_daemon_82_9931e141fa9e454b8262046a9738046b",
+        "/a300_bms_simulator",
+        "/a300_drivetrain_bridge",
+        "/a300_drivetrain_command_adapter",
+        "/amcl",
+        "/arm_controller",
+        "/behavior_server",
+        "/brush_controller",
+        "/bt_navigator",
+        "/bt_navigator_navigate_through_poses_rclcpp_node",
+        "/bt_navigator_navigate_to_pose_rclcpp_node",
+        "/charge_interface_manager",
+        "/charge_receptacle_contact_bridge",
+        "/cleaning_actuator_command_mirror",
+        "/cleaning_actuator_motor_bridge",
+        "/cleaning_actuator_scalar_bridge",
+        "/cleaning_controller",
+        "/collision_monitor",
+        "/competition_localization_route",
+        "/controller_manager",
+        "/controller_server",
+        "/docking_server",
+        "/filter_lifecycle_manager",
+        "/formal_auxiliary_bridge",
+        "/formal_campus_set_pose_bridge",
+        "/formal_dynamic_footprint_manager",
+        "/formal_encoder_feedback_publisher",
+        "/formal_legacy_topic_adapter",
+        "/formal_localization_runtime_collector",
+        "/formal_model_ground_truth_adapter",
+        "/formal_model_odometry_evaluation_bridge",
+        "/formal_physical_grasp_executor",
+        "/formal_robot_description_publisher",
+        "/formal_scan_self_filter",
+        "/formal_vehicle_product_bridge",
+        "/front_bumper_contact_bridge",
+        "/global_costmap/global_costmap",
+        "/global_ekf",
+        "/gripper_controller",
+        "/gz_ros_control",
+        "/joint_state_broadcaster",
+        "/keepout_costmap_filter_info_server",
+        "/keepout_filter_mask_server",
+        "/lifecycle_manager_localization",
+        "/lifecycle_manager_navigation",
+        "/local_costmap/local_costmap",
+        "/local_ekf",
+        "/manipulation_sim_bridge",
+        "/map_odom_stabilizer",
+        "/map_server",
+        "/move_group",
+        "/move_group/move_group",
+        "/move_group_private_87960934122816",
+        "/moveit_planning_scene_bootstrap",
+        "/navsat_transform",
+        "/planner_server",
+        "/rear_bumper_contact_bridge",
+        "/recovery_controller",
+        "/robot_state_publisher",
+        "/ros_gz_bridge",
+        "/rosbag2_recorder",
+        "/route_server",
+        "/service_controller",
+        "/simulation_safety_inputs",
+        "/smoother_server",
+        "/speed_costmap_filter_info_server",
+        "/speed_filter_mask_server",
+        "/storage_controller",
+        "/transform_listener_impl_50000011dea0",
+        "/transform_listener_impl_500000127810",
+        "/transform_listener_impl_500000130890",
+        "/transform_listener_impl_5000001d6de0",
+        "/transform_listener_impl_5000001fa7d0",
+        "/transform_listener_impl_5000017211d0",
+        "/velocity_smoother",
+        "/wastewater_drain_contact_bridge",
+        "/waypoint_follower",
+        "/whole_vehicle_safety_manager"
+      ]
+    },
+    "focus": {
+      "passed": false,
+      "samples": 0,
+      "metrics": {
+        "rmse_m": null,
+        "p95_m": null,
+        "max_m": null
+      }
+    },
+    "runtime_status": {
+      "passed": false,
+      "status": {
+        "accepted_updates": 0,
+        "blocked_reason": null,
+        "duplicate_updates": 0,
+        "ignored_transform_count": 0,
+        "input_tf_topic": "/localization/raw_map_odom",
+        "last_output_stamp_sec": null,
+        "last_source_stamp_sec": null,
+        "max_filter_dt_sec": 0.1,
+        "max_gap_sec": 0.5,
+        "max_observed_gap_sec": 0.0,
+        "published_tf_messages": 0,
+        "rejected_updates": 0,
+        "schema_version": 1,
+        "status": "WAITING",
+        "tau_sec": 1.5,
+        "uses_future": false,
+        "uses_ground_truth": false
+      }
+    },
+    "truth_isolation": {
+      "passed": true,
+      "forbidden_tokens": []
+    },
+    "resource_release": {
+      "passed": true,
+      "resource": {
+        "schema_version": 1,
+        "status": "RELEASED",
+        "cleanup_status": 0,
+        "gazebo_process_remaining": false,
+        "remaining_pids": [],
+        "ros_runtime_process_remaining": false,
+        "formal_lock_available": true,
+        "ros_domain_id": 82,
+        "gazebo_partition": "tzcup_localization_stabilizer_final_20260915_04"
+      }
+    },
+    "driver": {
+      "passed": false,
+      "returncode": 1
+    }
+  },
+  "evidence_hashes": {
+    "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-final-20260915-04/run-01/effective_parameters.json": "ee9845b56f7392ae4a52a30c2545b4e802cf83b42207faaa89209a689fc9896d",
+    "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-final-20260915-04/run-01/tf_authority.json": "5dd28fcb7804fa3f2393546c5741f61f0dd8c3242f0a47ec4bd104a159c24e77",
+    "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-final-20260915-04/run-01/localization_focus.json": "c7535bc5a7d4cb9b328382300c0acd473b4a9638c1a6971732e3805325dde5b3",
+    "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-final-20260915-04/run-01/map_odom_stabilizer.status.yaml": "9dc0fe6b64e339af6f5061f0bce315ffafcdac170b209741cd51d8140f0f83f4",
+    "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-final-20260915-04/run-01/map_odom_stabilizer.node.txt": "fd649d20e926c090eb6275a58909bd891d10bdbccae27f754d15f1f41cb77aa1",
+    "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-final-20260915-04/run-01/resource_release.json": "f4c39e881e5582bf4c948bf8e8a03e432b0aa90f28879edf5b36f2406e3776f7",
+    "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-final-20260915-04/run-01/driver.rc": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+  },
+  "control_truth_boundary": "no ground-truth subscription in stabilizer or control path",
+  "rollback": {
+    "launch_default": "map_odom_stabilizer:=false",
+    "commit": "47e3cb3a7ecc01edd82aa23a3b54cbeaffc418bc"
+  }
+}

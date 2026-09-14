@@ -1,0 +1,65 @@
+{
+  "status": "FAIL",
+  "failures": [
+    "map_to_odom_authority_not_expected_unique",
+    "missing_tf"
+  ],
+  "authority": {
+    "gids": [],
+    "nodes": [],
+    "count": 0,
+    "basis": "unproven",
+    "configured_owner": "/map_odom_stabilizer",
+    "runtime_global_ekf": true,
+    "runtime_stabilizer": false,
+    "fused_publishers": [
+      "/global_ekf"
+    ],
+    "gps_subscribers": [
+      "/global_ekf",
+      "/rosbag2_recorder"
+    ]
+  },
+  "accuracy": {
+    "samples": 0,
+    "rmse_m": null,
+    "p95_m": null,
+    "max_m": null
+  },
+  "revision": "8d47a08cf62a94a92195f0e9555988c8d0b0d99b",
+  "run_id": "run-01",
+  "files": {
+    "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-final-20260915-04/run-01/bag/bag_0.mcap": "d3913579611ce3e5cfbf7b7e5b4f2746c0dbb1c6d3cc9c36083cd29900fb4298",
+    "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-final-20260915-04/run-01/tf_authority.json": "5dd28fcb7804fa3f2393546c5741f61f0dd8c3242f0a47ec4bd104a159c24e77",
+    "/workspace/tzcup-competition-sim-only-20260912/evidence/motion-cleaning-continuous-fixture-01/episode/public/episode_manifest.json": "6df919e8835807ca6a7c4e335fedc66f6e66503887d66b85622ccf6e8ac3fc58",
+    "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/source/starter_ws/src/sanitation_localization/config/formal_fusion.yaml": "234810b031f6fc467d9cac000d0a02d139ebb7865c46d2306e48c9ae7d82f06e",
+    "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/source/starter_ws/src/sanitation_localization/launch/formal_localization_fusion.launch.py": "cd501a9a55737264b3cc98f13d89e7bf827092b5e106c1864986f8a359e8e1f4",
+    "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/source/scripts/run_day1_localization_stabilizer_live.sh": "b365b43ee1571fbaca0574c535b32254af9ab0a866a6bf1db40a2469f72dd39d",
+    "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/source/scripts/capture_competition_localization_parameters.py": "843b4fc1bc4623f62581af82c293c6cd3946c857a9d556f626449b438894f1e0",
+    "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/source/starter_ws/src/sanitation_formal_campus_integration/launch/formal_campus_map_lifecycle.launch.py": "acbec11dd241544fce847398b0b9e4aefd76f10ff736b1e3827a883b6d0748de",
+    "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-final-20260915-04/run-01/effective_parameters.json": "ee9845b56f7392ae4a52a30c2545b4e802cf83b42207faaa89209a689fc9896d"
+  },
+  "authority_contract": {
+    "owner": "/map_odom_stabilizer",
+    "checks": {
+      "local_ekf_publishes_odom_tf": true,
+      "global_ekf_publishes_map_tf": true,
+      "navsat_publishes_no_tf": true,
+      "probe_amcl_tf_default_false": true,
+      "probe_amcl_tf_is_explicit": true,
+      "lifecycle_amcl_tf_false": true,
+      "effective_parameters_expected": true,
+      "stabilizer_harness_contract": true,
+      "stabilizer_runtime_parameters": true,
+      "stabilizer_launch_contract": true
+    },
+    "source_files": [
+      "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/source/starter_ws/src/sanitation_localization/config/formal_fusion.yaml",
+      "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/source/starter_ws/src/sanitation_localization/launch/formal_localization_fusion.launch.py",
+      "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/source/scripts/run_day1_localization_stabilizer_live.sh",
+      "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/source/scripts/capture_competition_localization_parameters.py",
+      "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-20260915-01/source/starter_ws/src/sanitation_formal_campus_integration/launch/formal_campus_map_lifecycle.launch.py",
+      "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-localization-stabilizer-final-20260915-04/run-01/effective_parameters.json"
+    ]
+  }
+}

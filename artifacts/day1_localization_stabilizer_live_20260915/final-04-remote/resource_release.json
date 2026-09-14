@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "status": "RELEASED",
+  "cleanup_status": 0,
+  "gazebo_process_remaining": false,
+  "remaining_pids": [],
+  "ros_runtime_process_remaining": false,
+  "formal_lock_available": true,
+  "ros_domain_id": 82,
+  "gazebo_partition": "tzcup_localization_stabilizer_final_20260915_04"
+}

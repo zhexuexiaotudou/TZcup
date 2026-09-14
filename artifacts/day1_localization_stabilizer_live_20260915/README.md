@@ -28,7 +28,15 @@ passed. The final `run-02` then started Gazebo but failed before a live pass:
 - `driver.rc` and `live_candidate_receipt.json` were not written;
 - cleanup released Gazebo/ROS and the formal lock.
 
-The route is stopped. No further live retry was performed.
+After the final explicit authorization, the driver was made fail-closed on
+Nav2 lifecycle readiness and the scorer dependencies were installed into the
+PRoot Python target. The scorer successfully parsed the sealed run-02 bag.
+The final fresh `run-04` then waited the full 420 s, but
+`bt_navigator` and `planner_server` remained lifecycle state 2 while
+`controller_server` reached state 3. No goal was sent. The generated live
+receipt is `FAIL`; `driver.rc=1`, `focus.rc=2`, and `validator.rc=2`.
+
+The live route is permanently stopped. No further retry was performed.
 
 ## Sealed files
 
@@ -60,10 +68,21 @@ The route is stopped. No further live retry was performed.
 | `final-run-02-remote/localization_focus.json` | `DD4F455CEF90F23EE8515FB8DB100C4C0EA51658A7112C42C2CFDFDB07E97566` |
 | `final-run-02-remote/bag_info.txt` | `AD3B82ADB0074A9CFB90111E77DA6057F79413F73ACE095F6BAE6AC3039470F6` |
 | remote `run-02/bag/bag_0.mcap` | `2C067BB15FB4CCF0DD2BC9345ABD55D6017AD1A8881CE5B1234692352E64FC23` |
+| `preflight-final-live-20260915-04b.json` | `83BB68D49C4E037C5AE52D96691196B9776FBDB65681BF78EB092A2B2053A388` |
+| `final_failure_receipt.json` | `B9FD45C49F8F7BD421393C280104237D0802750C5941C7F31EAFA0E28613DA39` |
+| `live-invocation-final-04.log` | `E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855` |
+| `live-invocation-final-04.rc` | `4355A46B19D348DC2F57C046F8EF63D4538EBB936000F3C9EE954A27460DD865` |
+| `final-04-remote/live_candidate_receipt.json` | `0B05FF6C454D1339A8839C6BA400E0E5987CBA4E7F18D6F2A4DB2B463EDC2577` |
+| `final-04-remote/localization_focus.json` | `C7535BC5A7D4CB9B328382300C0ACD473B4A9638C1A6971732E3805325DDE5B3` |
+| `final-04-remote/effective_parameters.json` | `EE9845B56F7392AE4A52A30C2545B4E802CF83B42207FAAA89209A689FC9896D` |
+| `final-04-remote/tf_authority.json` | `5DD28FCB7804FA3F2393546C5741F61F0DD8C3242F0A47EC4BD104A159C24E77` |
+| `final-04-remote/route.json` | `4F950460B3F9041364A20569BB10E1647A9011204EF8A6147BEF010043EA4482` |
+| `final-04-remote/resource_release.json` | `F4C39E881E5582BF4C948BF8E8A03E432B0AA90F28879EDF5B36F2406E3776F7` |
+| remote `run-04/bag/bag_0.mcap` | `D3913579611CE3E5CFBF7B7E5B4F2746C0DBB1C6D3CC9C36083CD29900FB4298` |
 
 ## Boundary
 
-These are precondition failure receipts, not localization results. They prove
-both bounded invocations ended before Gazebo and that resources were released;
-they do not provide a live RMSE, P95, maximum error, TF authority receipt,
-MCAP, driver rc, focus scorer, or `LIVE_CANDIDATE_PASS`.
+These are failure receipts, not localization passes. The final run does have
+Gazebo, MCAP, effective parameters, focus scorer output, driver rc, and a live
+receipt, but the receipt is `FAIL`; it does not provide a live RMSE, P95,
+maximum error, or `LIVE_CANDIDATE_PASS`.

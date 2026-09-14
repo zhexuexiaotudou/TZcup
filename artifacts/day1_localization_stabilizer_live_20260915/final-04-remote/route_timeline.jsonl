@@ -1,0 +1,1 @@
+{"wall_s": 1576817.052745288, "sim_s": 76.301, "kind": "readiness_timeout", "data": {"permit": true, "action_server_ready": true, "lifecycle_states": {"bt_navigator": 2, "controller_server": 3, "planner_server": 2}}}

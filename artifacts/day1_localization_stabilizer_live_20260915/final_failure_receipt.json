@@ -1,0 +1,45 @@
+{
+  "action_server_ready": true,
+  "driver_rc": 1,
+  "effective_parameters_all_expected": true,
+  "focus_failures": [
+    "map_to_odom_authority_not_expected_unique",
+    "missing_tf"
+  ],
+  "focus_rc": 2,
+  "focus_status": "FAIL",
+  "formal_gazebo_lock_available": true,
+  "gazebo_started": true,
+  "goal_sent": false,
+  "hashes": {
+    "bag/bag_0.mcap": "d3913579611ce3e5cfbf7b7e5b4f2746c0dbb1c6d3cc9c36083cd29900fb4298",
+    "bag_info.txt": "c47c615094ac1d2b60b5008f59f3b31a424a52733739d930ce37539f5935160c",
+    "driver.rc": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+    "effective_parameters.json": "ee9845b56f7392ae4a52a30c2545b4e802cf83b42207faaa89209a689fc9896d",
+    "focus.rc": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3",
+    "live_candidate_receipt.json": "0b05ff6c454d1339a8839c6ba400e0e5987cba4e7f18d6f2a4db2b463edc2577",
+    "localization_focus.json": "c7535bc5a7d4cb9b328382300c0acd473b4a9638c1a6971732e3805325dde5b3",
+    "resource_release.json": "f4c39e881e5582bf4c948bf8e8a03e432b0aa90f28879edf5b36f2406e3776f7",
+    "route.json": "4f950460b3f9041364a20569bb10e1647a9011204ef8a6147bef010043ea4482",
+    "tf_authority.json": "5dd28fcb7804fa3f2393546c5741f61f0dd8c3242f0a47ec4bd104a159c24e77",
+    "validator.rc": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+  },
+  "host": "autodl-container-ca410red1k-e4e33c0c",
+  "lifecycle_states": {
+    "bt_navigator": 2,
+    "controller_server": 3,
+    "planner_server": 2
+  },
+  "live_candidate_receipt_present": true,
+  "live_candidate_status": "FAIL",
+  "partition_survivor_count": 0,
+  "permit": true,
+  "readiness_error": "nav2_lifecycle_action_or_permit_timeout",
+  "readiness_reached": false,
+  "recorded_unix_s": 1789407082.0021052,
+  "resource_release_status": "RELEASED",
+  "retry_policy": "PERMANENT_STOP_NO_FURTHER_LIVE_RETRY",
+  "schema_version": 1,
+  "status": "FAIL_NAV2_LIFECYCLE_NOT_ACTIVE_BEFORE_PREPARE_TIMEOUT",
+  "validator_rc": 2
+}

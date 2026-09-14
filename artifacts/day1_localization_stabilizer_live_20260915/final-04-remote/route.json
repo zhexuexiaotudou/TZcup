@@ -1,0 +1,20 @@
+{
+  "nav_results": [],
+  "passed": false,
+  "first_sim_s": null,
+  "last_sim_s": 76.309,
+  "wall_duration_s": 420.06429798412137,
+  "ground_truth_used_for_control": false,
+  "stopped_by_signal": false,
+  "readiness_reached": false,
+  "readiness_wall_s": null,
+  "readiness_timeout_s": 420.0,
+  "readiness_error": "nav2_lifecycle_action_or_permit_timeout",
+  "lifecycle_states": {
+    "bt_navigator": 2,
+    "controller_server": 3,
+    "planner_server": 2
+  },
+  "action_server_ready": true,
+  "permit": true
+}
