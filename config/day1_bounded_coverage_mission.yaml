@@ -1,0 +1,55 @@
+frame_id: map
+mission_id: day1_bounded_saved_map_coverage_001
+mode: coverage
+route_mode: AREA_FILL
+coverage_planner_profile: SKID_STEER_OPTIMIZED
+
+outer_polygon:
+  - [0.0, -3.0]
+  - [8.0, -3.0]
+  - [8.0, 3.0]
+  - [0.0, 3.0]
+exclusion_polygons: []
+keepout_polygons: []
+
+robot_width_m: 1.32
+operation_width_m: 0.62
+planning_swath_spacing_m: 0.55
+brush_forward_offset_m: 0.55
+execution_lateral_scale: 1.0
+execution_lateral_offset_m: 0.0
+execution_calibration_source: bounded_saved_map_no_fit
+min_turning_radius_m: 0.40
+route_type: BOUSTROPHEDON
+path_type: DUBIN
+allow_overlap: true
+
+headland:
+  enabled: true
+  width_m: 0.75
+safety_margin_m: 0.10
+staging_offset_m: 0.75
+optimized_staging_offset_m: 0.75
+robot_footprint:
+  - [0.62, 0.695]
+  - [0.62, -0.695]
+  - [-0.54, -0.695]
+  - [-0.54, 0.695]
+
+empirical_coverage_threshold: 0.98
+empirical_repeat_rate_threshold: 1.0
+empirical_swath_lateral_p95_threshold_m: 0.08
+coverage_repair_max_passes: 1
+coverage_repair_max_fraction_of_primary: 0.10
+blocked_swath_max_retries: 2
+blocked_swath_minimum_retry_delay_sec: 10.0
+
+evaluation_brush_dropout:
+  enabled: false
+
+claim_boundary:
+  bounded_pre_mapped_mission_only: true
+  full_20000_m2_mapping_claim: false
+  official_recognition_claim: false
+  official_competition_efficiency_claim: false
+  ground_truth_used_for_control: false

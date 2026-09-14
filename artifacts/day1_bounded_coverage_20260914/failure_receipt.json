@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "day1_bounded_saved_map_coverage_failure_receipt",
+  "status": "BLOCKED",
+  "decision": "STOPPED_BEFORE_COVERAGE_NO_RETRY",
+  "branch": "codex/day1-coverage-run",
+  "base_revision": "47e3cb3a7ecc01edd82aa23a3b54cbeaffc418bc",
+  "remote": {
+    "host": "autodl-container-ca410red1k-e4e33c0c",
+    "gpu": "NVIDIA GeForce RTX 3080 Ti",
+    "runtime": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f",
+    "source_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/localization-day1-final-20260914-02/source",
+    "overlay": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/localization-day1-20260914-01/overlay",
+    "map_source": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/competition-integrated-20260913-01",
+    "episode": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/motion-cleaning-continuous-fixture-01/episode",
+    "run_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-bounded-coverage-20260914-01",
+    "ros_domain_id": 94,
+    "gazebo_partition": "tzcup_day1_bounded_coverage_20260914_01"
+  },
+  "bounded_mission": {
+    "map_frame_polygon_m": [
+      [0.0, -3.0],
+      [8.0, -3.0],
+      [8.0, 3.0],
+      [0.0, 3.0]
+    ],
+    "nominal_area_m2": 48.0,
+    "fixed_start_pose_map": {
+      "x_m": 0.0,
+      "y_m": 0.0,
+      "yaw_rad": 0.0
+    },
+    "coverage_planner_profile": "SKID_STEER_OPTIMIZED",
+    "planning_swath_spacing_m": 0.55,
+    "wall_deadline_seconds": 1200
+  },
+  "attempted_script_sha256": {
+    "day1_bounded_coverage_cleaning_bridge.py": "b49f2f3a0f8d59c6780ad1fe61eceec7d30d48661bfdb474ed34ed6b12526536",
+    "summarize_day1_bounded_coverage_run.py": "d3fcf4c6c794bd70a0db8fe185efdf5d116dbce10f8ccb124d961b29a7ca0421",
+    "run_day1_bounded_coverage_runner.sh": "19a31a934914c1cce4a776f6b662b5388a0161f1554232f3f6e4bfa3d744536d",
+    "run_day1_bounded_coverage_remote_dispatch_v2.sh": "9dfb23e855e5a91d92c0f452b87b49b01306527b6b58f930a34eff8b4c702474",
+    "day1_bounded_coverage_mission.yaml": "bcf5c65f246898a6839f6a00fff4ed3bad3c9b50cf6d5321cb166a869d0ed076"
+  },
+  "blocker": {
+    "stage": "cleaning_actuator_readiness_before_coverage_probe",
+    "type": "cleaning_bridge_node_attribute_collision",
+    "process": "day1_bounded_coverage_cleaning_bridge",
+    "exact_error": "AttributeError: property 'publishers' of 'BoundedCoverageCleaningBridge' object has no setter",
+    "line": 116,
+    "formal_launch_started": true,
+    "navigation_started": true,
+    "coverage_server_started": true,
+    "coverage_probe_started": false,
+    "coverage_report_created": false,
+    "coverage_trajectory_created": false,
+    "cleaning_bridge_ready_file_created": false,
+    "dirt_cleared_cells": null,
+    "coverage_percent": null,
+    "coverage_area_m2": null,
+    "actual_path_length_m": null,
+    "average_speed_mps": null,
+    "net_efficiency_m2_h": null
+  },
+  "metrics_boundary": {
+    "valid_bounded_mission": false,
+    "metrics_status": "NOT_MEASURED",
+    "full_20000_m2_mapping_claim": false,
+    "official_recognition_claim": false,
+    "official_competition_efficiency_claim": false
+  },
+  "post_failure_local_code_correction": {
+    "applied": true,
+    "change": "renamed the node's publisher dictionary from the rclpy-reserved publishers attribute to pub",
+    "corrected_script_sha256": "ce7478b3adf97f7db99cb87ebd78c3bc7a4359c1619401e2c7e5de93e2930c22",
+    "runtime_retest_performed": false,
+    "verification_status": "UNEXECUTED_AFTER_CODE_CORRECTION"
+  },
+  "resource_release": {
+    "primary_rc": 4,
+    "formal_gazebo_lock_available": true,
+    "partition_survivor_count": 0,
+    "sim_resource_released": true
+  },
+  "video_evidence": {
+    "produced": false,
+    "reason": "run stopped before coverage probe and the headless rental host has no configured capture path"
+  },
+  "local_verification": {
+    "focused_pytest": "4 passed",
+    "python_compile": "passed",
+    "bash_syntax": "passed",
+    "git_diff_check": "passed",
+    "repository_ci_fast": "blocked_pre_existing_readme_size_hygiene"
+  },
+  "remote_evidence_archive": "artifacts/day1_bounded_coverage_20260914/remote-day1-bounded-coverage-20260914-01.tar.gz",
+  "remote_evidence_archive_sha256": "516d890d28260757932eed02c90a44284f8277b1b7261268f8348362418da15f"
+}
