@@ -637,6 +637,7 @@ def run_ros_independent_tests() -> None:
         ROOT / "scripts" / "test_validate_formal_dynamic_obstacle_avoidance.py",
         ROOT / "scripts" / "test_prepare_offline_raycast_map_runtime.py",
         ROOT / "scripts" / "test_prepare_formal_dynamic_obstacle_schedule.py",
+        ROOT / "scripts" / "test_search_dynamic_avoidance_functional_route.py",
         ROOT / "scripts" / "test_formal_dynamic_peer_gate.py",
         ROOT / "scripts" / "test_prepare_formal_dynamic_runtime_world.py",
         ROOT / "scripts" / "test_publish_r065_public_modeling_receipt.py",

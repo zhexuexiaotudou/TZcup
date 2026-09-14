@@ -526,9 +526,16 @@ def evaluate(
     runtime_closure_valid: bool = True,
     map_source_mode: str = LIVE_SLAM_MAP_SOURCE,
     map_source_evidence: dict[str, Any] | None = None,
+    minimum_mission_corridor_crossings: int = 3,
 ) -> dict[str, Any]:
     if map_source_mode not in MAP_SOURCE_MODES:
         raise ValueError(f"unsupported map_source_mode: {map_source_mode}")
+    if (
+        isinstance(minimum_mission_corridor_crossings, bool)
+        or not isinstance(minimum_mission_corridor_crossings, int)
+        or not 1 <= minimum_mission_corridor_crossings <= 8
+    ):
+        raise ValueError("minimum corridor crossing count must be an integer in 1..8")
     topic_samples = telemetry.get("topic_sample_counts", {})
     command_publishers = telemetry.get("command_topic_publishers", {})
     dynamic_environment = telemetry.get("dynamic_environment_contract", {})
@@ -609,7 +616,8 @@ def evaluate(
         )
         and isinstance(dynamic_environment.get("seed"), int)
         and dynamic_environment.get("randomized_each_run_unless_seed_pinned") is True
-        and int(dynamic_environment.get("mission_corridor_crossing_count", 0)) >= 3
+        and int(dynamic_environment.get("mission_corridor_crossing_count", 0))
+        >= minimum_mission_corridor_crossings
         and dynamic_environment.get("pedestrian_model_ids")
         == runtime_world.get("pedestrian_model_ids")
         and dynamic_environment.get("product_control_access_prohibited") is True,
@@ -825,6 +833,11 @@ def main() -> int:
         choices=MAP_SOURCE_MODES,
         default=LIVE_SLAM_MAP_SOURCE,
     )
+    parser.add_argument(
+        "--minimum-mission-corridor-crossings",
+        type=int,
+        default=3,
+    )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--preflight-only", action="store_true")
     args = parser.parse_args()
@@ -899,6 +912,7 @@ def main() -> int:
         runtime_closure_valid=closure_valid,
         map_source_mode=args.map_source_mode,
         map_source_evidence=map_source_evidence,
+        minimum_mission_corridor_crossings=args.minimum_mission_corridor_crossings,
     )
     if session_error:
         report["blockers"].insert(0, f"frozen_session_preflight: {session_error}")
@@ -916,6 +930,10 @@ def main() -> int:
         if args.map_source_mode == OFFLINE_RAYCAST_MAPPING
         else None
     )
+    report["dynamic_acceptance_requirement"] = {
+        "minimum_mission_corridor_crossings": args.minimum_mission_corridor_crossings,
+        "minimum_pedestrians": 8,
+    }
     _atomic_write_json(args.output, report)
     print(args.output)
     return 0 if report["passed"] else 2

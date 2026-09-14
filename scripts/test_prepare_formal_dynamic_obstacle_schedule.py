@@ -153,6 +153,26 @@ def test_different_seed_changes_environment_routes(tmp_path: Path) -> None:
     assert first["pedestrians"][:3] != second["pedestrians"][:3]
 
 
+def test_short_mission_can_materialize_one_crossing_in_declared_corridor(
+    tmp_path: Path,
+) -> None:
+    manifest, world, base = _write_inputs(tmp_path)
+    schedule = materialize_schedule(
+        episode_manifest=manifest,
+        public_world=world,
+        base_schedule=base,
+        seed=1,
+        nominal_leg_m=6.0,
+        crossing_count=1,
+        corridor_fraction_start=0.20,
+        corridor_fraction_end=0.80,
+    )
+    assert schedule["acceptance_environment"]["mission_corridor_crossing_count"] == 1
+    assert schedule["acceptance_environment"]["mission_corridor_crossing_ids"] == [
+        "walker_0"
+    ]
+
+
 def _pedestrian_row(
     object_id: str, points: list[tuple[float, float]], *, radius: float = 0.25
 ) -> dict:
@@ -238,7 +258,7 @@ def test_runtime_build_manifest_binds_install_to_source_bytes(tmp_path: Path) ->
         path.write_text("runtime-source\n", encoding="utf-8")
     report = generate_manifest(repository, install)
     assert report["current_source_build_completed"] is True
-    assert len(report["source_install_bindings"]) == 25
+    assert len(report["source_install_bindings"]) == 26
     assert len(report["source_only_runtime_files"]) == len(SOURCE_ONLY_RUNTIME_FILES)
     assert {
         item["source"] for item in report["source_only_runtime_files"]

@@ -18,6 +18,7 @@ from prepare_dynamic_avoidance_single_run import (
     _source_to_map,
     first_centerline_crossing_time,
     protocol_mode,
+    scheduled_crossing_count,
     validate_protocol,
 )
 
@@ -291,6 +292,11 @@ def evaluate_run(
     )
     selected = route_manifest.get("selected_obstacle", {})
     selected_id = selected.get("object_id") if isinstance(selected, dict) else None
+    checks["schedule_crossing_count_matches_protocol"] = (
+        isinstance(environment_contract, dict)
+        and environment_contract.get("mission_corridor_crossing_count")
+        == scheduled_crossing_count(protocol)
+    )
     checks["predeclared_obstacle_is_selected_crossing"] = (
         isinstance(crossing_ids, list)
         and bool(crossing_ids)
@@ -615,6 +621,7 @@ def evaluate_run(
         "route_predeclared_before_run_start",
         "schedule_hash_matches_predeclaration",
         "schedule_seed_matches_protocol",
+        "schedule_crossing_count_matches_protocol",
         "predeclared_obstacle_is_selected_crossing",
         "live_schedule_uses_predeclared_route",
         "live_schedule_route_map_matches",

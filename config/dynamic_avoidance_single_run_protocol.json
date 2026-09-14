@@ -22,6 +22,11 @@
   "schedule": {
     "seed": 2026091401,
     "nominal_leg_m": 30.0,
+    "mission_corridor_crossing_count": 3,
+    "corridor_fraction_range": [
+      0.2,
+      0.8
+    ],
     "route_selection": "first_acceptance_environment_mission_corridor_crossing",
     "route_frame": "source_world",
     "route_declaration_required_before_run_start": true

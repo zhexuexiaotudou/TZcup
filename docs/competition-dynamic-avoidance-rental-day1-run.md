@@ -211,3 +211,36 @@ Post-attempt sampling recorded CPU `10.32%`, GPU `0%`, GPU memory `1 MiB` of
 `12288 MiB`, no remaining runtime processes, no formal-Gazebo lock holder, and
 resources released. The evidence archive SHA-256 is
 `0a32f88cfde66384ddf2295ab8dd12b740e0ba09b8e6cc108be951911e5e1909`.
+
+## Run 17: static 6 m route materialization
+
+The run-16 failure was reproduced offline against the exact public episode
+manifest, world, and base schedule. The three-crossing layout is impossible for
+the central 60% of a 6.0 m mission: three centers separated by at least 4.0 m
+require an 8.0 m span, but only 3.6 m is available. Two crossings are likewise
+impossible in that corridor. This is a geometry constraint, not a seed failure.
+
+The smoke protocol now declares one mission-corridor crossing and both schedule
+materializations receive the same crossing count and corridor range. Official
+30.0 m protocol behavior remains three crossings. The obstacle radius, 0.12 m
+surface-clearance threshold, collision definitions, collision-monitor
+intervention, reroute, and goal-recovery requirements are unchanged.
+
+The static search selected:
+
+| Field | Value |
+|---|---|
+| Seed | `2026091401` |
+| Corridor | declared `0.20..0.80` |
+| Crossing count | `1` |
+| Walker | `walker_eb2f451c21ba` |
+| Mission-local crossing center | `x = 3.63 m` |
+| First centerline-crossing time | `5.16295 s` |
+| Estimated nominal surface gap at first crossing | `0.518156 m` |
+| Minimum static surface clearance | `3.732629 m` |
+
+The selected frozen search evidence is
+`artifacts/day1_dynamic_avoidance_functional_smoke_route_20260914/static_route_search.json`.
+It records the full source-world and mission-local route, the predeclared route
+manifest, the geometric exclusion proof, and the static-input hashes. Gazebo was
+not started during this static materialization step.

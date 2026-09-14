@@ -24,6 +24,9 @@ from validate_formal_dynamic_obstacle_avoidance import (
 from sanitation_campus_scenario.generator import Pedestrian, pedestrian_paths_clear
 
 
+MIN_CROSSING_CENTER_SEPARATION_M = 4.0
+
+
 def _read_object(path: Path) -> dict[str, Any]:
     value = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(value, dict):
@@ -157,6 +160,8 @@ def materialize_schedule(
     seed: int,
     nominal_leg_m: float,
     crossing_count: int = 3,
+    corridor_fraction_start: float = 0.20,
+    corridor_fraction_end: float = 0.80,
 ) -> dict[str, Any]:
     mission = load_public_mission_contract(
         episode_manifest, nominal_leg_m=nominal_leg_m
@@ -177,6 +182,12 @@ def materialize_schedule(
         )
     if crossing_count < 1 or crossing_count > len(pedestrians):
         raise ValueError("crossing_count is outside the pedestrian count")
+    if (
+        not math.isfinite(corridor_fraction_start)
+        or not math.isfinite(corridor_fraction_end)
+        or not 0.0 <= corridor_fraction_start < corridor_fraction_end <= 1.0
+    ):
+        raise ValueError("corridor fraction range must satisfy 0 <= start < end <= 1")
 
     rng = random.Random(seed)
     # Pedestrian SetEntityPose commands use Gazebo/source-world coordinates,
@@ -194,7 +205,11 @@ def materialize_schedule(
 
     # Random candidates stay within the central 60% of the fixed public leg.
     # Selecting them never reads the base pedestrian routes.
-    fractions = [0.20 + 0.60 * index / 80.0 for index in range(81)]
+    fractions = [
+        corridor_fraction_start
+        + (corridor_fraction_end - corridor_fraction_start) * index / 80.0
+        for index in range(81)
+    ]
     rng.shuffle(fractions)
     selected: list[tuple[float, float, float]] = []
     selected_pedestrians: list[Pedestrian] = []
@@ -225,7 +240,8 @@ def materialize_schedule(
         ):
             continue
         if any(
-            math.hypot(center[0] - x, center[1] - y) < 4.0
+            math.hypot(center[0] - x, center[1] - y)
+            < MIN_CROSSING_CENTER_SEPARATION_M
             for x, y, _ in selected
         ):
             continue
@@ -308,6 +324,9 @@ def main() -> int:
     parser.add_argument("--base-schedule", type=Path, required=True)
     parser.add_argument("--seed", type=int, required=True)
     parser.add_argument("--nominal-leg", type=float, default=30.0)
+    parser.add_argument("--crossing-count", type=int, default=3)
+    parser.add_argument("--corridor-fraction-start", type=float, default=0.20)
+    parser.add_argument("--corridor-fraction-end", type=float, default=0.80)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     value = materialize_schedule(
@@ -316,6 +335,9 @@ def main() -> int:
         base_schedule=args.base_schedule,
         seed=args.seed,
         nominal_leg_m=args.nominal_leg,
+        crossing_count=args.crossing_count,
+        corridor_fraction_start=args.corridor_fraction_start,
+        corridor_fraction_end=args.corridor_fraction_end,
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(

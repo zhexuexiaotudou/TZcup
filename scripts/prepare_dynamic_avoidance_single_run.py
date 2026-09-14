@@ -22,10 +22,53 @@ ROUTE_SELECTION = "first_acceptance_environment_mission_corridor_crossing"
 OFFICIAL_MODE = "OFFICIAL_SINGLE_RUN"
 FUNCTIONAL_SMOKE_MODE = "FUNCTIONAL_SMOKE_NOT_OFFICIAL_95"
 SUPPORTED_MODES = (OFFICIAL_MODE, FUNCTIONAL_SMOKE_MODE)
+OFFICIAL_CROSSING_COUNT = 3
+FUNCTIONAL_SMOKE_CROSSING_COUNT = 1
 
 
 def protocol_mode(protocol: dict[str, Any]) -> str:
     return str(protocol.get("mode", OFFICIAL_MODE))
+
+
+def scheduled_crossing_count(protocol: dict[str, Any]) -> int:
+    schedule = protocol.get("schedule")
+    value = (
+        schedule.get("mission_corridor_crossing_count")
+        if isinstance(schedule, dict)
+        else None
+    )
+    expected = (
+        FUNCTIONAL_SMOKE_CROSSING_COUNT
+        if protocol_mode(protocol) == FUNCTIONAL_SMOKE_MODE
+        else OFFICIAL_CROSSING_COUNT
+    )
+    if isinstance(value, bool) or not isinstance(value, int) or value != expected:
+        raise ValueError(
+            f"{protocol_mode(protocol)} requires {expected} mission-corridor crossings"
+        )
+    return value
+
+
+def corridor_fraction_range(protocol: dict[str, Any]) -> tuple[float, float]:
+    schedule = protocol.get("schedule")
+    raw = (
+        schedule.get("corridor_fraction_range")
+        if isinstance(schedule, dict)
+        else None
+    )
+    if (
+        not isinstance(raw, list)
+        or len(raw) != 2
+        or any(isinstance(value, bool) for value in raw)
+        or not all(isinstance(value, (int, float)) for value in raw)
+    ):
+        raise ValueError("schedule.corridor_fraction_range must contain two numbers")
+    start, end = (float(raw[0]), float(raw[1]))
+    if not math.isfinite(start) or not math.isfinite(end):
+        raise ValueError("corridor fraction range must be finite")
+    if not 0.0 <= start < end <= 1.0:
+        raise ValueError("corridor fraction range must satisfy 0 <= start < end <= 1")
+    return start, end
 
 
 def _read_object(path: Path, label: str) -> dict[str, Any]:
@@ -91,6 +134,8 @@ def validate_protocol(protocol: dict[str, Any]) -> None:
         raise ValueError(
             "functional-smoke nominal_leg_m must equal the declared 6.0 m"
         )
+    scheduled_crossing_count(protocol)
+    corridor_fraction_range(protocol)
     if schedule.get("route_selection") != ROUTE_SELECTION:
         raise ValueError("unsupported obstacle route selection")
     if schedule.get("route_declaration_required_before_run_start") is not True:
@@ -201,12 +246,17 @@ def freeze_route_from_schedule(
     if environment.get("seed") != seed:
         raise ValueError("schedule seed differs from the protocol seed")
     crossing_ids = environment.get("mission_corridor_crossing_ids")
+    expected_crossing_count = scheduled_crossing_count(protocol)
     if (
         not isinstance(crossing_ids, list)
-        or not crossing_ids
+        or len(crossing_ids) != expected_crossing_count
         or not all(isinstance(value, str) and value for value in crossing_ids)
     ):
-        raise ValueError("schedule has no mission-corridor crossing IDs")
+        raise ValueError(
+            "schedule mission-corridor crossing IDs differ from the protocol"
+        )
+    if environment.get("mission_corridor_crossing_count") != expected_crossing_count:
+        raise ValueError("schedule mission-corridor crossing count differs from protocol")
     selected_id = crossing_ids[0]
     pedestrians = schedule.get("pedestrians")
     if not isinstance(pedestrians, list) or len(pedestrians) != 8:
@@ -290,6 +340,9 @@ def materialize_frozen_schedule(
         base_schedule=base_schedule,
         seed=int(protocol["schedule"]["seed"]),
         nominal_leg_m=float(protocol["schedule"]["nominal_leg_m"]),
+        crossing_count=scheduled_crossing_count(protocol),
+        corridor_fraction_start=corridor_fraction_range(protocol)[0],
+        corridor_fraction_end=corridor_fraction_range(protocol)[1],
     )
 
 

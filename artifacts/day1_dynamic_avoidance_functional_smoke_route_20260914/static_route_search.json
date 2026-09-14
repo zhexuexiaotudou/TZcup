@@ -1,0 +1,275 @@
+{
+  "attempted_candidate_count": 1,
+  "capacity_evidence": [
+    {
+      "available_centerline_span_m": 3.6000000000000005,
+      "corridor_id": "declared",
+      "crossing_count": 3,
+      "fraction_range": [
+        0.2,
+        0.8
+      ],
+      "geometrically_feasible": false,
+      "required_center_span_m": 8.0
+    },
+    {
+      "available_centerline_span_m": 2.4,
+      "corridor_id": "middle-half",
+      "crossing_count": 3,
+      "fraction_range": [
+        0.3,
+        0.7
+      ],
+      "geometrically_feasible": false,
+      "required_center_span_m": 8.0
+    },
+    {
+      "available_centerline_span_m": 1.7999999999999998,
+      "corridor_id": "lower-half",
+      "crossing_count": 3,
+      "fraction_range": [
+        0.2,
+        0.5
+      ],
+      "geometrically_feasible": false,
+      "required_center_span_m": 8.0
+    },
+    {
+      "available_centerline_span_m": 1.8000000000000003,
+      "corridor_id": "upper-half",
+      "crossing_count": 3,
+      "fraction_range": [
+        0.5,
+        0.8
+      ],
+      "geometrically_feasible": false,
+      "required_center_span_m": 8.0
+    },
+    {
+      "available_centerline_span_m": 3.6000000000000005,
+      "corridor_id": "declared",
+      "crossing_count": 2,
+      "fraction_range": [
+        0.2,
+        0.8
+      ],
+      "geometrically_feasible": false,
+      "required_center_span_m": 4.0
+    },
+    {
+      "available_centerline_span_m": 2.4,
+      "corridor_id": "middle-half",
+      "crossing_count": 2,
+      "fraction_range": [
+        0.3,
+        0.7
+      ],
+      "geometrically_feasible": false,
+      "required_center_span_m": 4.0
+    },
+    {
+      "available_centerline_span_m": 1.7999999999999998,
+      "corridor_id": "lower-half",
+      "crossing_count": 2,
+      "fraction_range": [
+        0.2,
+        0.5
+      ],
+      "geometrically_feasible": false,
+      "required_center_span_m": 4.0
+    },
+    {
+      "available_centerline_span_m": 1.8000000000000003,
+      "corridor_id": "upper-half",
+      "crossing_count": 2,
+      "fraction_range": [
+        0.5,
+        0.8
+      ],
+      "geometrically_feasible": false,
+      "required_center_span_m": 4.0
+    },
+    {
+      "available_centerline_span_m": 3.6000000000000005,
+      "corridor_id": "declared",
+      "crossing_count": 1,
+      "fraction_range": [
+        0.2,
+        0.8
+      ],
+      "geometrically_feasible": true,
+      "required_center_span_m": 0.0
+    },
+    {
+      "available_centerline_span_m": 2.4,
+      "corridor_id": "middle-half",
+      "crossing_count": 1,
+      "fraction_range": [
+        0.3,
+        0.7
+      ],
+      "geometrically_feasible": true,
+      "required_center_span_m": 0.0
+    },
+    {
+      "available_centerline_span_m": 1.7999999999999998,
+      "corridor_id": "lower-half",
+      "crossing_count": 1,
+      "fraction_range": [
+        0.2,
+        0.5
+      ],
+      "geometrically_feasible": true,
+      "required_center_span_m": 0.0
+    },
+    {
+      "available_centerline_span_m": 1.8000000000000003,
+      "corridor_id": "upper-half",
+      "crossing_count": 1,
+      "fraction_range": [
+        0.5,
+        0.8
+      ],
+      "geometrically_feasible": true,
+      "required_center_span_m": 0.0
+    }
+  ],
+  "claim_boundary": "Static route materialization against the frozen public episode, world, and offline source hash. It does not claim Gazebo execution, collision-free runtime behavior, or the official >=95% rate.",
+  "input_protocol_sha256": "4ad7d32ae7d31b2d3b87765087ce448af67a6192409f5a50fcaea1159deeeca4",
+  "input_sha256": {
+    "base_schedule": "f1ab956fa08c2a9166fa791aeadba7f0a033fdf7070da626adc61c4011f913bb",
+    "episode_manifest": "a97be33d0ceaf558a6fdf12dc914e7819567e9eaf4af33f473835c1731cfd4dc",
+    "public_world": "f7460fdcc7ad221e613fdda1d1731bedb23c872094f03c6e2664934d18a54471"
+  },
+  "kind": "tzcup_dynamic_avoidance_functional_route_search",
+  "mode": "FUNCTIONAL_SMOKE_NOT_OFFICIAL_95",
+  "nominal_leg_m": 6.0,
+  "predeclared_route_manifest": {
+    "claim_boundary": "This file predeclares the deterministic obstacle route and trigger before the live trial. It is not evidence that the route executed, that avoidance succeeded, or that the >=95% rate was measured.",
+    "declared_epoch_ns": 1,
+    "input_sha256": {
+      "base_schedule": "f1ab956fa08c2a9166fa791aeadba7f0a033fdf7070da626adc61c4011f913bb",
+      "episode_manifest": "a97be33d0ceaf558a6fdf12dc914e7819567e9eaf4af33f473835c1731cfd4dc",
+      "public_world": "f7460fdcc7ad221e613fdda1d1731bedb23c872094f03c6e2664934d18a54471"
+    },
+    "kind": "tzcup_predeclared_dynamic_avoidance_obstacle_route",
+    "mode": "FUNCTIONAL_SMOKE_NOT_OFFICIAL_95",
+    "protocol_id": "tzcup-day1-dynamic-avoidance-functional-smoke-not-official-95-v1",
+    "protocol_sha256": "94247b5963aa1e316775445a21d0aef3ded1ff11e33a0de016831846c538d0e4",
+    "schedule_seed": 2026091401,
+    "schedule_sha256": "a4146cebbdec5c0049c1ace512940456bcb753e1a67c5e5b92e78711aed66fdb",
+    "schema_version": 1,
+    "selected_obstacle": {
+      "object_id": "walker_eb2f451c21ba",
+      "radius_m": 0.25,
+      "route_map": [
+        [
+          0.0,
+          3.6299999999999955,
+          3.906812
+        ],
+        [
+          10.3259,
+          3.6299999999999955,
+          -3.906812
+        ],
+        [
+          20.6518,
+          3.6299999999999955,
+          3.906812
+        ]
+      ],
+      "route_source_world": [
+        [
+          0.0,
+          -94.37,
+          3.906812
+        ],
+        [
+          10.3259,
+          -94.37,
+          -3.906812
+        ],
+        [
+          20.6518,
+          -94.37,
+          3.906812
+        ]
+      ],
+      "speed_mps": 0.7567,
+      "trigger_time_from_schedule_start_s": 5.16295,
+      "trigger_type": "first_crossing_of_mission_centerline"
+    },
+    "source_fixed_start_pose": [
+      -98.0,
+      0.0,
+      0.0
+    ]
+  },
+  "protocol_id": "tzcup-day1-dynamic-avoidance-functional-smoke-not-official-95-v1",
+  "protocol_sha256": "94247b5963aa1e316775445a21d0aef3ded1ff11e33a0de016831846c538d0e4",
+  "retained_failure_count": 0,
+  "retained_failure_examples": [],
+  "route_materialization": {
+    "center_mission_x_m": 3.6299999999999955,
+    "center_source_world": [
+      -94.37,
+      0.0
+    ],
+    "complete_schedule_peer_gate_passed": true,
+    "corridor_centerline_span_m": 3.6000000000000005,
+    "corridor_fraction_range": [
+      0.2,
+      0.8
+    ],
+    "crossing_count": 1,
+    "estimated_interaction_window_met": true,
+    "estimated_longitudinal_gap_at_first_crossing_m": 1.306672499999995,
+    "estimated_surface_gap_at_first_crossing_m": 0.5181560192865446,
+    "estimated_vehicle_arrival_s_at_0.45_mps": 8.066666666666656,
+    "inside_public_geofence": true,
+    "minimum_static_surface_clearance_m": 3.732629009382012,
+    "required_static_surface_clearance_m": 0.75,
+    "route_source_world": [
+      [
+        0.0,
+        -94.37,
+        3.906812
+      ],
+      [
+        10.3259,
+        -94.37,
+        -3.906812
+      ],
+      [
+        20.6518,
+        -94.37,
+        3.906812
+      ]
+    ],
+    "route_surface_length_m": 7.813624,
+    "selected_object_id": "walker_eb2f451c21ba"
+  },
+  "schema_version": 1,
+  "selected_corridor_fraction_range": [
+    0.2,
+    0.8
+  ],
+  "selected_corridor_id": "declared",
+  "selected_crossing_count": 1,
+  "selected_protocol_schedule": {
+    "corridor_fraction_range": [
+      0.2,
+      0.8
+    ],
+    "mission_corridor_crossing_count": 1,
+    "nominal_leg_m": 6.0,
+    "route_declaration_required_before_run_start": true,
+    "route_frame": "source_world",
+    "route_selection": "first_acceptance_environment_mission_corridor_crossing",
+    "seed": 2026091401
+  },
+  "selected_protocol_sha256": "94247b5963aa1e316775445a21d0aef3ded1ff11e33a0de016831846c538d0e4",
+  "selected_seed": 2026091401,
+  "status": "FUNCTIONAL_SMOKE_ROUTE_MATERIALIZED"
+}

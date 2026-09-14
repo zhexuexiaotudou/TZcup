@@ -203,6 +203,20 @@ def test_offline_map_source_requires_explicit_offline_label() -> None:
     assert "offline_map_source_labeled_not_live_slam" in report["blockers"]
 
 
+def test_smoke_minimum_corridor_count_must_be_explicitly_configured() -> None:
+    telemetry = _telemetry()
+    telemetry["dynamic_environment_contract"]["mission_corridor_crossing_count"] = 1
+    official = evaluate(telemetry, saved_map_valid=True)
+    assert official["passed"] is False
+    assert "runtime_randomized_pedestrian_environment_recorded" in official["blockers"]
+    smoke = evaluate(
+        telemetry,
+        saved_map_valid=True,
+        minimum_mission_corridor_crossings=1,
+    )
+    assert smoke["passed"] is True
+
+
 def test_missing_frozen_session_fails_closed() -> None:
     report = evaluate(
         _telemetry(),

@@ -308,6 +308,8 @@ def test_short_functional_smoke_is_separate_and_non_official() -> None:
     validate_protocol(protocol)
     assert protocol_mode(protocol) == FUNCTIONAL_SMOKE_MODE
     assert protocol["schedule"]["nominal_leg_m"] == 6.0
+    assert protocol["schedule"]["mission_corridor_crossing_count"] == 1
+    assert protocol["schedule"]["corridor_fraction_range"] == [0.2, 0.8]
     assert protocol["official_metric"]["threshold"] == 0.95
     assert protocol["official_metric"]["status"] == "NOT_MEASURED"
     assert protocol["official_metric"]["single_run_can_prove_threshold"] is False

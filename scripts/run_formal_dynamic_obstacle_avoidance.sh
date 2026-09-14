@@ -27,6 +27,15 @@ case "${map_source_mode}" in
     ;;
 esac
 dynamic_seed="${FORMAL_DYNAMIC_SEED:-$(date +%s%N)}"
+mission_crossing_count="${FORMAL_DYNAMIC_MISSION_CORRIDOR_CROSSINGS:-3}"
+minimum_mission_crossing_count="${FORMAL_DYNAMIC_MIN_MISSION_CORRIDOR_CROSSINGS:-3}"
+corridor_fraction_start="${FORMAL_DYNAMIC_CORRIDOR_FRACTION_START:-0.20}"
+corridor_fraction_end="${FORMAL_DYNAMIC_CORRIDOR_FRACTION_END:-0.80}"
+if [[ ! "${mission_crossing_count}" =~ ^[1-8]$ ]] \
+    || [[ ! "${minimum_mission_crossing_count}" =~ ^[1-8]$ ]]; then
+  echo "dynamic mission crossing counts must be integers in 1..8" >&2
+  exit 2
+fi
 operation_speed_profile="${FORMAL_DYNAMIC_OPERATION_SPEED_PROFILE:-mapping_safe}"
 safety_max_linear_velocity="${FORMAL_DYNAMIC_SAFETY_MAX_LINEAR_VELOCITY:-0.45}"
 if [[ "${FORMAL_DRY_SPEED_REQUALIFICATION:-}" == "1" ]]; then
@@ -106,6 +115,7 @@ set +e
   --session-status "${session_status}" \
   --runtime-binding "${runtime_binding}" \
   --map-source-mode "${map_source_mode}" \
+  --minimum-mission-corridor-crossings "${minimum_mission_crossing_count}" \
   --preflight-only \
   --output "${output}"
 status=$?
@@ -124,6 +134,7 @@ fi
   --session-status "${session_status}" \
   --runtime-binding "${runtime_binding}" \
   --map-source-mode "${map_source_mode}" \
+  --minimum-mission-corridor-crossings "${minimum_mission_crossing_count}" \
   --output "${output}" >/dev/null 2>&1 || true
 
 set +u
@@ -178,6 +189,9 @@ runtime_schedule="${runtime_root}/pedestrian_schedule.seed.${dynamic_seed}.json"
   --base-schedule "${episode_root}/environment/pedestrian_schedule.json" \
   --seed "${dynamic_seed}" \
   --nominal-leg "${FORMAL_DYNAMIC_NOMINAL_LEG_M:-30.0}" \
+  --crossing-count "${mission_crossing_count}" \
+  --corridor-fraction-start "${corridor_fraction_start}" \
+  --corridor-fraction-end "${corridor_fraction_end}" \
   --output "${runtime_schedule}"
 runtime_world="${runtime_root}/cleaning_world.with_contact_system.sdf"
 runtime_world_manifest="${runtime_root}/cleaning_world_manifest.json"
@@ -321,6 +335,7 @@ set +e
   --session-status "${session_status}" \
   --runtime-binding "${runtime_binding}" \
   --map-source-mode "${map_source_mode}" \
+  --minimum-mission-corridor-crossings "${minimum_mission_crossing_count}" \
   --output "${output}"
 status=$?
 set -e

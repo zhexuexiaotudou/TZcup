@@ -105,6 +105,21 @@ official_metric.measured_value = null
 official_metric.status = NOT_MEASURED
 ```
 
+The official 30.0 m schedule retains three mission-corridor crossings. The
+smoke protocol declares exactly one crossing because the materializer enforces
+at least 4.0 m between crossing centers, while the 6.0 m mission's central 60%
+corridor spans only 3.6 m. This count change is confined to the non-official
+smoke mode; the obstacle radius, 0.12 m minimum surface clearance, collision
+definition, collision-monitor intervention, reroute, and goal-recovery gates
+are unchanged.
+
+The offline permutation search is
+`scripts/search_dynamic_avoidance_functional_route.py`; its selected static
+evidence is
+`artifacts/day1_dynamic_avoidance_functional_smoke_route_20260914/static_route_search.json`.
+The selected declared-seed route crosses the mission centerline once and
+materializes a valid predeclared route manifest before launch.
+
 To select it, set:
 
 ```bash
