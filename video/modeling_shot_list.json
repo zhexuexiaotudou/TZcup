@@ -1,0 +1,182 @@
+{
+  "segment_id": "01_modeling",
+  "title": "整车建模成果展示",
+  "exact_duration_seconds": 60.0,
+  "frame_rate": 30,
+  "resolution": {
+    "width": 1920,
+    "height": 1080
+  },
+  "video_codec": "H.264",
+  "pixel_format": "yuv420p",
+  "language": "zh-CN",
+  "source_assets": [
+    {
+      "path": "video/assets/formal_vehicle_product_preview.png",
+      "sha256": "27ccef924d71f9f608e8b84e393b2831a36b9cc2f972a11359c125f6ac39394e",
+      "role": "整车多角度与最终重组"
+    },
+    {
+      "path": "video/assets/formal_front_left.png",
+      "sha256": "445d91ee430f39dc465595f8081f863504f7b81690f547a1ad6a8659e76f4e93",
+      "role": "前左三视角、底盘与清扫模块"
+    },
+    {
+      "path": "video/assets/formal_rear_right.png",
+      "sha256": "7660dae6d7c2c1aa2519d3c2cb513db13313b82137136c55acd560c496b2d049",
+      "role": "后右三视角、机械臂与回收舱"
+    },
+    {
+      "path": "video/assets/formal_sensor_tower.png",
+      "sha256": "8620992e919a56bf10113990e31dbdb41d2f1e1969126b52ba369b439b1f67b3",
+      "role": "传感塔局部建模"
+    },
+    {
+      "path": "video/assets/formal_top_cleaning.png",
+      "sha256": "9bd9b184f27b616e516fafd53f5aa9a3e9e9100b70d519e6500abcbdda03d4eb",
+      "role": "顶视图、清扫模块与干湿收纳"
+    }
+  ],
+  "shots": [
+    {
+      "index": 1,
+      "start_seconds": 0.0,
+      "end_seconds": 6.0,
+      "name": "整车建模开场",
+      "labels": [
+        "TZcup 智能环卫无人清扫车",
+        "国产系统 · 模块化平台 · 多传感协同",
+        "整车建模成果"
+      ],
+      "sources": [
+        "formal_vehicle_product_preview.png"
+      ]
+    },
+    {
+      "index": 2,
+      "start_seconds": 6.0,
+      "end_seconds": 12.0,
+      "name": "整车多角度校核",
+      "labels": [
+        "整车多角度建模",
+        "前左 3/4 视图",
+        "后右 3/4 视图"
+      ],
+      "sources": [
+        "formal_front_left.png",
+        "formal_rear_right.png"
+      ]
+    },
+    {
+      "index": 3,
+      "start_seconds": 12.0,
+      "end_seconds": 18.0,
+      "name": "底盘与车身",
+      "labels": [
+        "六轮全向底盘",
+        "独立驱动与悬挂",
+        "承载式车身与模块化舱体"
+      ],
+      "sources": [
+        "formal_front_left.png"
+      ]
+    },
+    {
+      "index": 4,
+      "start_seconds": 18.0,
+      "end_seconds": 24.0,
+      "name": "清扫刷盘与吸口",
+      "labels": [
+        "双 150 mm 侧刷盘",
+        "中央滚刷",
+        "吸口与随动贴合",
+        "600 mm 连续清扫覆盖"
+      ],
+      "sources": [
+        "formal_top_cleaning.png"
+      ]
+    },
+    {
+      "index": 5,
+      "start_seconds": 24.0,
+      "end_seconds": 31.5,
+      "name": "机械臂单元",
+      "labels": [
+        "UR5e 六轴机械臂",
+        "Robotiq 2F-85 自适应夹爪",
+        "车载抓取与投放单元"
+      ],
+      "sources": [
+        "formal_rear_right.png"
+      ]
+    },
+    {
+      "index": 6,
+      "start_seconds": 31.5,
+      "end_seconds": 38.0,
+      "name": "感知塔",
+      "labels": [
+        "3D LiDAR 360° 扫描",
+        "RGB-D 深度视觉",
+        "RTK / IMU 融合定位"
+      ],
+      "sources": [
+        "formal_sensor_tower.png",
+        "formal_front_left.png"
+      ]
+    },
+    {
+      "index": 7,
+      "start_seconds": 38.0,
+      "end_seconds": 45.0,
+      "name": "干湿收纳模块",
+      "labels": [
+        "40 L 干尘箱",
+        "8.3 L 独立污水箱",
+        "干湿分区收纳"
+      ],
+      "sources": [
+        "formal_top_cleaning.png",
+        "formal_rear_right.png"
+      ]
+    },
+    {
+      "index": 8,
+      "start_seconds": 45.0,
+      "end_seconds": 53.5,
+      "name": "分件模块示意",
+      "labels": [
+        "模块分解示意",
+        "基于整车布局渲染",
+        "底盘与车身",
+        "清扫系统",
+        "机械臂",
+        "感知与收纳"
+      ],
+      "sources": [
+        "formal_front_left.png",
+        "formal_top_cleaning.png",
+        "formal_rear_right.png",
+        "formal_sensor_tower.png"
+      ],
+      "integrity_note": "本镜头为基于真实整车布局渲染的模块分解示意，不声明存在新的 CAD 爆炸图。"
+    },
+    {
+      "index": 9,
+      "start_seconds": 53.5,
+      "end_seconds": 60.0,
+      "name": "重新组合与关键参数",
+      "labels": [
+        "模块集成 · 整车协同",
+        "600 mm 连续清扫覆盖",
+        "40 L 干尘箱 + 8.3 L 污水箱",
+        "UR5e + Robotiq 2F-85",
+        "3D LiDAR · RGB-D · RTK / IMU"
+      ],
+      "sources": [
+        "formal_vehicle_product_preview.png",
+        "formal_front_left.png"
+      ]
+    }
+  ]
+}

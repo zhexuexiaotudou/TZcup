@@ -1,0 +1,98 @@
+{
+  "status": "PASS",
+  "segment": "01_modeling",
+  "duration_seconds": 60.0,
+  "frame_rate": 30,
+  "resolution": "1920x1080",
+  "codec": "H.264",
+  "font": "C:\\Windows\\Fonts\\simhei.ttf",
+  "font_sha256": "9b1959db3b3abeb7efdaec26edf7dfe871a6039de8d614af7248575207be629e",
+  "source_head": "fcd1a3f943a9068e332094c47648f2a60d528610",
+  "stream_validation": {
+    "checks": {
+      "codec_h264": true,
+      "width_1920": true,
+      "height_1080": true,
+      "pixel_format_yuv420p": true,
+      "fps_30": true,
+      "duration_exact": true,
+      "frame_count_exact": true,
+      "no_audio": true
+    },
+    "duration_seconds": 60.0,
+    "frame_count": 1800,
+    "size_bytes": 10083095,
+    "bit_rate": 1344412
+  },
+  "full_decode": "PASS",
+  "keyframes": [
+    {
+      "timestamp_seconds": 0.5,
+      "path": "video/evidence/keyframes/keyframe_01_00.5s.jpg",
+      "sha256": "cfa233093ad53cc57d7fc58e27c7b47f82970eba2615c478abe4f17e5d3be88e",
+      "mean_stddev": 97.81680844887721
+    },
+    {
+      "timestamp_seconds": 5.5,
+      "path": "video/evidence/keyframes/keyframe_02_05.5s.jpg",
+      "sha256": "4b5c644d9e279ad55342b5a3478c226e2e679060ecea25ee0102e4f160615567",
+      "mean_stddev": 97.63448422207024
+    },
+    {
+      "timestamp_seconds": 9.0,
+      "path": "video/evidence/keyframes/keyframe_03_09.0s.jpg",
+      "sha256": "dafe1d399176a79023baa88970cb3008d9f80dc88b23b7facf7c3c133942e616",
+      "mean_stddev": 72.20918475962567
+    },
+    {
+      "timestamp_seconds": 15.0,
+      "path": "video/evidence/keyframes/keyframe_04_15.0s.jpg",
+      "sha256": "b9bc51e474f02f5f91227d003671434d0735ca5656c2995a74f9b8b3fbe4f6fe",
+      "mean_stddev": 69.60736070849009
+    },
+    {
+      "timestamp_seconds": 21.0,
+      "path": "video/evidence/keyframes/keyframe_05_21.0s.jpg",
+      "sha256": "6fe04745f6fe1fb4d09259756b99e5785f456606d25f5dc8d313fee2c37a4c86",
+      "mean_stddev": 90.35093281074312
+    },
+    {
+      "timestamp_seconds": 27.5,
+      "path": "video/evidence/keyframes/keyframe_06_27.5s.jpg",
+      "sha256": "cdd63cfaa58a122d718f4f81e2bdfd31c01aadf5364bc4d859e7bd17564b45a6",
+      "mean_stddev": 76.69183714630755
+    },
+    {
+      "timestamp_seconds": 34.5,
+      "path": "video/evidence/keyframes/keyframe_07_34.5s.jpg",
+      "sha256": "f5760fd439951c77e48eaad0d67436c9e3c24c14fc158bf212fb771d10a7c9a1",
+      "mean_stddev": 82.85932985910648
+    },
+    {
+      "timestamp_seconds": 41.5,
+      "path": "video/evidence/keyframes/keyframe_08_41.5s.jpg",
+      "sha256": "bd4cb409417b0f55f97097c401583a7db31cfec421f7492c1b322ca9974adad1",
+      "mean_stddev": 73.9701549196423
+    },
+    {
+      "timestamp_seconds": 49.0,
+      "path": "video/evidence/keyframes/keyframe_09_49.0s.jpg",
+      "sha256": "08311a7028bbec4a74e62201ba91a41240a5c68fe0096b2b6274e2093dc4f37b",
+      "mean_stddev": 75.93228594445337
+    },
+    {
+      "timestamp_seconds": 56.5,
+      "path": "video/evidence/keyframes/keyframe_10_56.5s.jpg",
+      "sha256": "f10f283981b62abf9113d4493c8607f6a535adfa671ad58fc691ebbf265e44f3",
+      "mean_stddev": 89.01693371510255
+    },
+    {
+      "timestamp_seconds": 59.5,
+      "path": "video/evidence/keyframes/keyframe_11_59.5s.jpg",
+      "sha256": "a33dde299d27487198131b6e6284e63e1b56df88003ac51ddb6ca82baa0d2d36",
+      "mean_stddev": 86.64261251037601
+    }
+  ],
+  "video_sha256": "96422abe349b88aaef801b135d8cf9fe7bd142b83300e0337e2da57fde60070b",
+  "shot_list_sha256": "24c7eb1b05ae48a3c2760f46968e354d6a2b2fefc173d73d2e99378f9dd4dffd"
+}
