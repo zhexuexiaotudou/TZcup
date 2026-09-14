@@ -49,6 +49,23 @@ def sha256_file(path: str | Path) -> str:
     return sha256_bytes(Path(path).read_bytes())
 
 
+def _legacy_text_provenance_sha256(snapshot: bytes) -> str:
+    if b"\r" in snapshot:
+        return sha256_bytes(snapshot)
+    return sha256_bytes(snapshot.replace(b"\n", b"\r\n"))
+
+
+def _matches_text_provenance_sha256(snapshot: bytes, expected: Any) -> bool:
+    """Accept the frozen CRLF digest while the working artifact is LF."""
+
+    if not isinstance(expected, str):
+        return False
+    return expected in {
+        sha256_bytes(snapshot),
+        _legacy_text_provenance_sha256(snapshot),
+    }
+
+
 def _read_regular(path: Path, label: str) -> bytes:
     if path.is_symlink() or not path.is_file():
         raise OfflineMapSourceError(f"{label} must be a regular file: {path}")
@@ -194,19 +211,25 @@ def validate_frozen_offline_raycast_map_source(
         or source_provenance.get("label") != OFFLINE_MAP_SOURCE_LABEL
         or source_provenance.get("live_slam_claimed") is not False
         or source_provenance.get("source_commit") != OFFLINE_MAP_SOURCE_COMMIT
-        or source_provenance.get("source_manifest_sha256")
-        != sha256_bytes(snapshots["offline_raycast_manifest.json"])
+        or not _matches_text_provenance_sha256(
+            snapshots["offline_raycast_manifest.json"],
+            source_provenance.get("source_manifest_sha256"),
+        )
         or source_provenance.get("occupancy_yaml_sha256")
         != map_metadata.get("occupancy_yaml_sha256")
         or (
             not allow_episode_aligned_yaml
-            and source_provenance.get("occupancy_yaml_sha256")
-            != sha256_bytes(snapshots["occupancy.yaml"])
+            and not _matches_text_provenance_sha256(
+                snapshots["occupancy.yaml"],
+                source_provenance.get("occupancy_yaml_sha256"),
+            )
         )
         or source_provenance.get("occupancy_pgm_sha256")
         != sha256_bytes(snapshots["occupancy.pgm"])
-        or source_provenance.get("area_verification_sha256")
-        != sha256_bytes(snapshots["map_area_verification.json"])
+        or not _matches_text_provenance_sha256(
+            snapshots["map_area_verification.json"],
+            source_provenance.get("area_verification_sha256"),
+        )
     ):
         raise OfflineMapSourceError("offline map source commit provenance is invalid")
 
@@ -232,20 +255,27 @@ def validate_frozen_offline_raycast_map_source(
     occupancy_yaml_sha256 = sha256_bytes(snapshots["occupancy.yaml"])
     if (
         not allow_episode_aligned_yaml
-        and map_metadata.get("occupancy_yaml_sha256") != occupancy_yaml_sha256
+        and not _matches_text_provenance_sha256(
+            snapshots["occupancy.yaml"],
+            map_metadata.get("occupancy_yaml_sha256"),
+        )
     ):
         raise OfflineMapSourceError("offline raycast YAML hash differs from provenance")
     if (
         seal.get("mapping_kind") != OFFLINE_RAYCAST_MAPPING
         or seal.get("status") != OFFLINE_MAP_SOURCE_STATUS
-        or seal.get("manifest_sha256")
-        != sha256_bytes(snapshots["offline_raycast_manifest.json"])
+        or not _matches_text_provenance_sha256(
+            snapshots["offline_raycast_manifest.json"],
+            seal.get("manifest_sha256"),
+        )
         or seal.get("occupancy_yaml_sha256")
         != map_metadata.get("occupancy_yaml_sha256")
         or (
             not allow_episode_aligned_yaml
-            and seal.get("occupancy_yaml_sha256")
-            != sha256_bytes(snapshots["occupancy.yaml"])
+            and not _matches_text_provenance_sha256(
+                snapshots["occupancy.yaml"],
+                seal.get("occupancy_yaml_sha256"),
+            )
         )
         or seal.get("occupancy_pgm_sha256")
         != sha256_bytes(snapshots["occupancy.pgm"])
@@ -259,8 +289,10 @@ def validate_frozen_offline_raycast_map_source(
         raise OfflineMapSourceError("offline raycast area verification did not pass")
     if (
         area_metadata.get("report_path") != "map_area_verification.json"
-        or area_metadata.get("report_sha256")
-        != sha256_bytes(snapshots["map_area_verification.json"])
+        or not _matches_text_provenance_sha256(
+            snapshots["map_area_verification.json"],
+            area_metadata.get("report_sha256"),
+        )
         or area_metadata.get("area_gate") is not True
     ):
         raise OfflineMapSourceError("offline raycast area report is not provenance-bound")
@@ -327,7 +359,7 @@ def validate_frozen_offline_raycast_map_source(
         "live_slam_claimed": False,
         "status": OFFLINE_MAP_SOURCE_STATUS,
         "claim_boundary": manifest["claim_boundary"],
-        "source_manifest_sha256": sha256_bytes(
+        "source_manifest_sha256": _legacy_text_provenance_sha256(
             snapshots["offline_raycast_manifest.json"]
         ),
         "source_seal_sha256": sha256_bytes(snapshots["offline_raycast_seal.json"]),

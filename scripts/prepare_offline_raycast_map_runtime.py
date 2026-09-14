@@ -17,6 +17,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE_ROOT = ROOT / "starter_ws/src/sanitation_formal_campus_integration"
+LF_TEXT_SUFFIXES = frozenset({".json", ".jsonl", ".yaml", ".yml"})
 sys.path.insert(0, str(PACKAGE_ROOT))
 
 from sanitation_formal_campus_integration.offline_map_source import (  # noqa: E402
@@ -68,6 +69,34 @@ def _write_json(path: Path, value: dict) -> None:
     pending.replace(path)
 
 
+def normalize_offline_map_text_artifacts(source_root: Path) -> tuple[Path, ...]:
+    """Normalize only text artifact line endings before provenance hashing."""
+
+    if source_root.is_symlink() or not source_root.is_dir():
+        raise ValueError(f"offline map source must be a real directory: {source_root}")
+    root = source_root.resolve()
+    normalized: list[Path] = []
+    for path in sorted(root.rglob("*")):
+        if path.is_symlink() or not path.is_file():
+            continue
+        if path.suffix.lower() not in LF_TEXT_SUFFIXES:
+            continue
+        original = path.read_bytes()
+        lf_bytes = original.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+        if lf_bytes == original:
+            continue
+        pending = path.with_name(f".{path.name}.lf.pending.{os.getpid()}")
+        try:
+            pending.write_bytes(lf_bytes)
+            pending.chmod(path.stat().st_mode)
+            pending.replace(path)
+        finally:
+            if pending.exists():
+                pending.unlink()
+        normalized.append(path)
+    return tuple(normalized)
+
+
 def materialize_map(
     *,
     source_root: Path,
@@ -75,6 +104,7 @@ def materialize_map(
     output_root: Path,
     source_revision: str,
 ) -> dict:
+    normalize_offline_map_text_artifacts(source_root)
     evidence = validate_frozen_offline_raycast_map_source(source_root)
     start_x, start_y, start_yaw = _fixed_start(episode_manifest)
     if not math.isclose(start_yaw, 0.0, rel_tol=0.0, abs_tol=1e-12):
