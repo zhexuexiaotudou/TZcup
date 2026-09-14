@@ -36,13 +36,16 @@ def test_plugin_uses_real_joint_state_world_pose_and_only_dirt_visual_cells():
         assert token in source
     for forbidden in (
         "requestRemoveEntity",
-        "RequestRemoveEntity",
         "removeEntity",
         "EntityCreator",
         '"object_',
         '"material_cube',
     ):
         assert forbidden not in source
+    # The visualization-only exception may retire the discovered dirt visual,
+    # never recursively remove a parent model or physical litter.
+    assert source.count("RequestRemoveEntity(") == 1
+    assert "RequestRemoveEntity(_cell.visual, false)" in source
 
 
 def test_plugin_wiring_and_product_ros_truth_isolation():
@@ -161,3 +164,18 @@ def test_prepared_random_episode_has_one_square_metre_cellized_patch_and_20_litt
         for prefix in ("leaf_", "dust_mottle_", "puddle_lobe_")
     ) == 100
     assert all(f'<model name="{name}">' in world for name in setup["rigid_litter_ids"])
+
+def test_ground_dirt_side_clearance_matches_rotor_collision_bottom():
+    import re
+    import xml.etree.ElementTree as ET
+    import pytest
+    tree=ET.parse(ROOT/'starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/cleaning_mechanism.xacro')
+    link=next(x for x in tree.iter('link') if x.get('name')=='${side}_side_brush_link')
+    collision=link.find('collision')
+    z=float(collision.find('origin').get('xyz').split()[2])
+    height=float(collision.find('geometry/cylinder').get('length'))
+    bottom=-z+height/2
+    configured=float(ET.parse(XACRO).find('.//side_brush_link_to_ground_m').text)
+    default=float(re.search(r'sideBrushLinkToGroundM\{([\d.]+)\}',PLUGIN.read_text()).group(1))
+    assert configured==pytest.approx(bottom)
+    assert default==pytest.approx(bottom)

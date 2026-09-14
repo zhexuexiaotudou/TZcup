@@ -1,7 +1,7 @@
 # Product localization ownership:
 #   local_ekf: odom -> base_footprint and /odom
 #   AMCL: lidar-map pose measurement only (tf_broadcast=false in Nav2 config)
-#   navsat_transform: GNSS -> map-referenced odometry measurement
+#   navsat_transform: GNSS -> odometry in the launch-selected ownership frame
 #   global_ekf: map -> odom and /localization/fused_odom
 # Mapping mode does not start global_ekf because slam_toolbox owns map -> odom.
 local_ekf:
@@ -20,12 +20,12 @@ local_ekf:
     base_link_frame: base_footprint
     world_frame: odom
     odom0: /odom/unfiltered
-    # Wheel odometry supplies planar forward velocity and yaw rate.  Pose is
-    # deliberately not fused, preventing its integrated drift being counted
-    # twice by the EKF.
+    # Wheel odometry supplies forward velocity, the nonholonomic zero-lateral-
+    # velocity constraint, and yaw rate.  Pose is deliberately not fused,
+    # preventing its integrated drift being counted twice by the EKF.
     odom0_config: [false, false, false,
                    false, false, false,
-                   true,  false, false,
+                   true,  true,  false,
                    false, false, true,
                    false, false, false]
     odom0_queue_size: 20
@@ -61,7 +61,7 @@ navsat_transform:
 global_ekf:
   ros__parameters:
     use_sim_time: true
-    frequency: 30.0
+    frequency: 50.0
     sensor_timeout: 0.35
     two_d_mode: true
     # The global filter owns a continuously queryable map -> odom edge.  Its
@@ -70,7 +70,7 @@ global_ekf:
     # time instead of repeatedly re-stamping the last measurement epoch.
     predict_to_current_time: true
     transform_time_offset: 0.0
-    transform_timeout: 0.10
+    transform_timeout: 0.0
     print_diagnostics: true
     publish_tf: true
     publish_acceleration: false
@@ -99,7 +99,8 @@ global_ekf:
     pose0_differential: false
     pose0_relative: false
     odom1: /odometry/gps
-    # NavSatFix is converted to metric map-frame x/y by navsat_transform.
+    # NavSatFix becomes metric x/y in the launch-selected NavSat frame:
+    # odom during mapping, map during global-EKF cleaning.
     odom1_config: [true,  true,  false,
                    false, false, false,
                    false, false, false,

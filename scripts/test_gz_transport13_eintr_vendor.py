@@ -292,6 +292,8 @@ def test_vendor_builder_pins_system_protobuf_without_include_order_fallback() ->
     assert 'system_protobuf_version="3.21.12"' in source
     assert 'system_protobuf_header_version="3021012"' in source
     assert 'system_protobuf_protoc="/usr/bin/protoc"' in source
+    assert '[[ -f "${system_protobuf_protoc}" && ! -L "${system_protobuf_protoc}" ]]' in source
+    assert '[[ -x "${system_protobuf_protoc}" ]]' not in source
     assert '-DCMAKE_IGNORE_PREFIX_PATH="${ortools_vendor_prefix}"' in source
     assert '-DProtobuf_DIR:PATH=Protobuf_DIR-NOTFOUND' in source
     assert '-DProtobuf_INCLUDE_DIR:PATH="${system_protobuf_include}"' in source

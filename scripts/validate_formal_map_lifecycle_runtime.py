@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import datetime
 import hashlib
 import json
 import math
@@ -33,10 +34,17 @@ from sanitation_formal_campus_integration.saved_map_coverage_core import (
     SavedMapCoverageError,
     load_formal_operation_speed_profile,
 )
+from sanitation_formal_campus_integration.map_lifecycle_core import (
+    REQUIRED_SAVED_MAP_SUPPORT_FILES,
+    MapLifecycleError,
+    load_campus_map_contract,
+    validate_saved_map_artifact,
+)
 from sanitation_formal_campus_integration.runtime_evidence_core import (
     COMMAND_CHAIN_RECEIPT_REORDER_TOLERANCE_S,
     EXPECTED_COMMAND_TOPIC_PUBLISHER,
 )
+from sanitation_formal_campus_integration.map_lifecycle_core import hard_restart_record_valid
 
 
 def _json(path: Path) -> dict:
@@ -57,6 +65,45 @@ def _atomic_write_json(path: Path, value: dict) -> None:
     finally:
         if pending.exists():
             pending.unlink()
+
+
+def validate_mapping_runtime_binding(map_root: Path, current_binding_path: Path) -> None:
+    """Require the sealed mapping evidence and cleaning to share one frozen session."""
+    mapping_path = map_root / "runtime_gate_binding.json"
+    handoff_path = map_root / "mapping_handoff_record.json"
+    for path in (mapping_path, handoff_path, current_binding_path):
+        if path.is_symlink() or not path.is_file():
+            raise RuntimeGateError("map handoff requires regular runtime binding evidence")
+    handoff = _json(handoff_path)
+    expected = handoff.get("mapping_runtime_gate_binding_sha256")
+    if expected != hashlib.sha256(mapping_path.read_bytes()).hexdigest():
+        raise RuntimeGateError("mapping runtime binding hash differs from handoff")
+    mapping = load_binding(mapping_path)
+    current = load_binding(current_binding_path)
+    # Gate verification time necessarily changes across the separate process
+    # starts. Every other field, including paths and source inventories, is identity.
+    mapping_identity = {key: value for key, value in mapping.items() if key != "verified_epoch_ns"}
+    current_identity = {key: value for key, value in current.items() if key != "verified_epoch_ns"}
+    if mapping_identity != current_identity:
+        raise RuntimeGateError("mapping and cleaning session/source/runtime closure differ")
+    mapped_at, cleaned_at = mapping.get("verified_epoch_ns"), current.get("verified_epoch_ns")
+    started_at = mapping["acceptance_session_binding"].get("session_started_epoch_ns")
+    if (
+        any(type(value) is not int or value <= 0 for value in (started_at, mapped_at, cleaned_at))
+        or not started_at <= mapped_at <= cleaned_at
+    ):
+        raise RuntimeGateError("mapping/cleaning runtime binding chronology is invalid")
+    try:
+        completed, stopped = [datetime.datetime.fromisoformat(handoff[key]) for key in (
+            "mapping_completion_wall_time", "mapping_cleanup_wall_time",
+        )]
+        if completed.utcoffset() is None or stopped.utcoffset() is None:
+            raise ValueError("missing timezone")
+        completed_ns, stopped_ns = (int(value.timestamp() * 1_000_000_000) for value in (completed, stopped))
+    except (KeyError, TypeError, ValueError, OverflowError) as exc:
+        raise RuntimeGateError("mapping handoff timestamps are invalid") from exc
+    if not mapped_at <= completed_ns <= stopped_ns <= cleaned_at:
+        raise RuntimeGateError("mapping cleanup is outside the bound process chronology")
 
 
 def _embed_runtime_binding(report: dict, runtime_binding_path: Path) -> dict:
@@ -99,12 +146,7 @@ def _hashes_valid(root: Path, manifest: dict) -> bool:
     required = {
         occupancy_name,
         image_name,
-        "mission_geometry.yaml",
-        "materialization_contract.yaml",
-        "geofence_keepout.yaml",
-        "geofence_keepout.pgm",
-        "neutral_speed.yaml",
-        "neutral_speed.pgm",
+        *REQUIRED_SAVED_MAP_SUPPORT_FILES,
     }
     hashes = manifest.get("sha256")
     if not isinstance(hashes, dict) or set(hashes) != required:
@@ -122,6 +164,17 @@ def _hashes_valid(root: Path, manifest: dict) -> bool:
         and hashlib.sha256((root / name).read_bytes()).hexdigest() == expected
         for name, expected in hashes.items()
     )
+
+
+def _saved_pgm_quality_valid(map_root: Path, episode_manifest: Path | None) -> bool:
+    """Do not let the aggregate report trust a self-reported map percentage."""
+    if episode_manifest is None:
+        return False
+    try:
+        validate_saved_map_artifact(map_root, load_campus_map_contract(episode_manifest))
+    except (MapLifecycleError, OSError, TypeError, ValueError):
+        return False
+    return True
 
 
 def _report_matches_speed_profile(report: object, expected_profile: object) -> bool:
@@ -146,10 +199,27 @@ def validate(
     cleaning_runtime: Path,
     *,
     speed_profiles_path: Path = FORMAL_SPEED_PROFILES,
+    runtime_binding_path: Path | None = None,
+    episode_manifest: Path | None = None,
 ) -> dict:
     manifest = _json(map_root / "map_lifecycle_manifest.json")
     mapping = _json(mapping_runtime)
     cleaning = _json(cleaning_runtime)
+    try:
+        validate_mapping_runtime_binding(
+            map_root, runtime_binding_path or cleaning_runtime.parent / "runtime_gate_binding.json"
+        )
+        binding_valid = True
+    except (OSError, RuntimeGateError, TypeError, ValueError, KeyError):
+        binding_valid = False
+    restart_valid = hard_restart_record_valid(cleaning.get("hard_restart_record", {}), map_root)
+    try:
+        mapping_bytes_match = (
+            hashlib.sha256(mapping_runtime.read_bytes()).hexdigest()
+            == _json(map_root / "mapping_handoff_record.json").get("mapping_runtime_sha256")
+        )
+    except OSError:
+        mapping_bytes_match = False
     try:
         mapping_speed_profile = load_formal_operation_speed_profile(
             speed_profiles_path, MAPPING_SAFE_SPEED_PROFILE
@@ -166,9 +236,16 @@ def validate(
     except (TypeError, ValueError):
         observed_fraction = quality_threshold = math.nan
         stable_samples = 0
+    odom_sample = manifest.get("gnss_odometry_odom_sample")
+    gps_sample = manifest.get("gnss_odometry_gps_sample")
     checks = {
+        "mapping_cleaning_runtime_binding_verified": binding_valid,
+        "hard_restart_record_reverified": restart_valid and mapping_bytes_match,
+        "saved_pgm_observation_reverified": _saved_pgm_quality_valid(
+            map_root, episode_manifest
+        ),
         "quality_gated_map_manifest": (
-            manifest.get("schema_version") == 1
+            manifest.get("schema_version") == 2
             and manifest.get("status") == "ready_for_localization_cleaning"
             and math.isfinite(observed_fraction)
             and math.isfinite(quality_threshold)
@@ -177,6 +254,32 @@ def validate(
             and stable_samples >= 3
             and manifest.get("fixed_start_verified") is True
             and manifest.get("gnss_mapping_reference_observed") is True
+            and manifest.get("gnss_odometry_pairing_status") == "time_aligned"
+            and isinstance(odom_sample, dict)
+            and odom_sample.get("source_topic") == "/odom"
+            and odom_sample.get("frame_id") == "odom"
+            and odom_sample.get("child_frame_id") == "base_footprint"
+            and isinstance(gps_sample, dict)
+            and gps_sample.get("source_topic") == "/odometry/gps"
+            and gps_sample.get("frame_id") == "odom"
+            and gps_sample.get("child_frame_id") == ""
+            and all(
+                isinstance(manifest.get(name), (int, float))
+                and not isinstance(manifest.get(name), bool)
+                and math.isfinite(float(manifest[name]))
+                for name in (
+                    "gnss_odometry_disagreement_m",
+                    "gnss_odometry_tolerance_m",
+                    "gnss_odometry_pair_max_skew_sec",
+                    "gnss_odometry_stamp_delta_sec",
+                )
+            )
+            and 0.0 < float(manifest["gnss_odometry_tolerance_m"]) <= 2.0
+            and 0.0 < float(manifest["gnss_odometry_pair_max_skew_sec"]) <= 0.10
+            and 0.0 <= float(manifest["gnss_odometry_stamp_delta_sec"])
+            <= float(manifest["gnss_odometry_pair_max_skew_sec"])
+            and 0.0 <= float(manifest["gnss_odometry_disagreement_m"])
+            <= float(manifest["gnss_odometry_tolerance_m"])
             and manifest.get("mapping_pose_source")
             == "wheel_imu_ekf_lidar_scan_matching_gnss_consistency"
             and manifest.get("world_truth_used_for_control") is False
@@ -245,6 +348,18 @@ def validate(
             ) is False
             and cleaning.get("coverage_execution_report", {}).get(
                 "operation_width_m"
+            ) == 0.60
+            and cleaning.get("coverage_execution_report", {}).get(
+                "planning_lane_spacing_m"
+            ) == 0.60
+            and cleaning.get("coverage_execution_report", {}).get(
+                "continuous_cleaning_band_width_m"
+            ) == 0.620
+            and cleaning.get("coverage_execution_report", {}).get(
+                "continuous_cleaning_lane_overlap_m"
+            ) == 0.020
+            and cleaning.get("coverage_execution_report", {}).get(
+                "declared_effective_cleaning_width_m"
             ) == 1.32
             and dry_cleaning_speed_profile is not None
             and _report_matches_speed_profile(
@@ -258,6 +373,18 @@ def validate(
             ) == cleaning.get("coverage_execution_report", {}).get(
                 "planned_swath_count"
             )
+            and cleaning.get("coverage_execution_report", {}).get(
+                "planned_coverage_metric_basis"
+            ) == "planning_route_coverage_proxy_not_actual_cleaned_area"
+            and isinstance(cleaning.get("coverage_execution_report", {}).get(
+                "planned_coverage_fraction"
+            ), (int, float))
+            and not isinstance(cleaning.get("coverage_execution_report", {}).get(
+                "planned_coverage_fraction"
+            ), bool)
+            and float(cleaning.get("coverage_execution_report", {}).get(
+                "planned_coverage_fraction", 0.0
+            )) >= 0.95
             and float(cleaning.get("trajectory_total_distance_m", 0.0)) > 0.0
             and float(cleaning.get("brush_enabled_distance_m", 0.0)) > 0.0
             and int(cleaning.get("brush_state_sample_count", 0)) >= 2
@@ -265,7 +392,6 @@ def validate(
             and cleaning.get("brush_state_source")
             == "/brush_enabled_product_runtime"
             and cleaning.get("brush_disabled_on_exit") is True
-            and float(cleaning.get("estimated_coverage_fraction", 0.0)) >= 0.95
         ),
     }
     passed = all(checks.values())
@@ -305,11 +431,18 @@ def main() -> int:
     parser.add_argument("--map-root", required=True, type=Path)
     parser.add_argument("--mapping-runtime", required=True, type=Path)
     parser.add_argument("--cleaning-runtime", required=True, type=Path)
+    parser.add_argument("--episode-manifest", required=True, type=Path)
     parser.add_argument("--runtime-binding", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
     try:
-        report = validate(args.map_root, args.mapping_runtime, args.cleaning_runtime)
+        report = validate(
+            args.map_root,
+            args.mapping_runtime,
+            args.cleaning_runtime,
+            runtime_binding_path=args.runtime_binding,
+            episode_manifest=args.episode_manifest,
+        )
         write_bound_report(args.output, report, args.runtime_binding)
     except (OSError, RuntimeGateError, TypeError, ValueError, KeyError) as exc:
         print(f"FORMAL_MAP_LIFECYCLE_RUNTIME_BINDING_BLOCKED: {exc}", file=sys.stderr)

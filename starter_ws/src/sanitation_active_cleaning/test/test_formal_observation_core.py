@@ -1,11 +1,14 @@
 from pathlib import Path
 
 import yaml
+import pytest
 
 from sanitation_active_cleaning.formal_observation_core import (
     FormalObservationBridgeCore,
     ProductTargetObservation,
     PublicPlanningMap,
+    FormalObservationError,
+    observation_stamp_reason,
 )
 
 
@@ -132,3 +135,103 @@ def test_tentative_or_lost_targets_never_enter_the_planner_queue(tmp_path):
     )
     assert accepted == ()
     assert core.belief_snapshot().known_targets == ()
+
+
+def test_duplicate_uuid_cannot_substitute_a_rejected_target(tmp_path):
+    core = FormalObservationBridgeCore(_public_map(tmp_path), min_target_confidence=0.5)
+    good = ProductTargetObservation("same", 0.5, 0.5, 0.9, "dosod_edgesam",
+                                    "CONFIRMED", False)
+    bad = ProductTargetObservation("same", 1.5, 0.5, 0.9, "ground_truth",
+                                   "CONFIRMED", False)
+    assert core.replace_targets([good, bad]) == ()
+    assert core.replace_targets([bad, good]) == ()
+    assert core.belief_snapshot().known_targets == ()
+
+
+def test_cleaned_product_track_is_not_queued_for_cleaning_again(tmp_path):
+    core = FormalObservationBridgeCore(_public_map(tmp_path), min_target_confidence=0.5)
+    core.replace_targets([ProductTargetObservation(
+        "done", 0.5, 0.5, 0.9, "dosod_edgesam", "CLEANED", False)])
+    assert core.belief_snapshot().known_targets[0].cleared
+
+
+@pytest.mark.parametrize("stamp,now,previous,reason", [
+    (0, 10_000_000_000, None, "invalid_source_stamp"),
+    (11_000_000_000, 10_000_000_000, None, "future_source_stamp"),
+    (8_000_000_000, 10_000_000_000, None, "stale_source_stamp"),
+    (9_000_000_000, 10_000_000_000, 9_000_000_000, "replayed_source_stamp"),
+    (9_000_000_000, 10_000_000_000, 9_100_000_000, "replayed_source_stamp"),
+    (9_000_000_000, 10_000_000_000, 8_900_000_000, "accepted"),
+])
+def test_source_time_not_receive_time_controls_readiness(stamp, now, previous, reason):
+    assert observation_stamp_reason(stamp, now, 1.5, previous) == reason
+
+
+def test_unknown_occupancy_is_not_traversable(tmp_path):
+    _public_map(tmp_path)
+    (tmp_path / "occupancy.pgm").write_bytes(b"P5\n2 2\n255\n" + bytes([0, 128, 255, 255]))
+    result = PublicPlanningMap.load(tmp_path / "occupancy.yaml",
+                                    tmp_path / "mission_geometry.yaml",
+                                    tmp_path / "materialization_contract.yaml")
+    assert result.traversable == (True, True, False, False)
+
+
+def test_rotated_map_cannot_silently_change_target_coordinates(tmp_path):
+    _public_map(tmp_path)
+    path = tmp_path / "occupancy.yaml"
+    metadata = yaml.safe_load(path.read_text(encoding="utf-8"))
+    metadata["origin"][2] = 0.5
+    path.write_text(yaml.safe_dump(metadata), encoding="utf-8")
+    with pytest.raises(FormalObservationError, match="rotated"):
+        PublicPlanningMap.load(path, tmp_path / "mission_geometry.yaml",
+                               tmp_path / "materialization_contract.yaml")
+
+
+def test_callback_wiring_rejects_stale_frame_and_duplicate_targets(tmp_path):
+    # Exercise the actual callback bodies with bounded message doubles. This
+    # verifies wiring without claiming ROS message/schema or middleware coverage.
+    import ast
+    import time
+    from types import SimpleNamespace as NS
+    import sanitation_active_cleaning.formal_observation_bridge as bridge
+
+    module = ast.parse(Path(bridge.__file__).read_text(encoding="utf-8"))
+    node_class = next(node for node in ast.walk(module)
+                      if isinstance(node, ast.ClassDef)
+                      and node.name == "FormalObservationBridge")
+    namespace = dict(Node=object, Image=object, GarbageTargetArray=NS,
+                     ProductTargetObservation=ProductTargetObservation,
+                     observation_stamp_reason=observation_stamp_reason, time=time)
+    exec(compile(ast.Module(body=[node_class], type_ignores=[]),
+                 bridge.__file__, "exec"), namespace)
+    node = namespace["FormalObservationBridge"].__new__(namespace["FormalObservationBridge"])
+    node._core = FormalObservationBridgeCore(_public_map(tmp_path), min_target_confidence=0.5)
+    node._max_age = 1.5
+    node._last_mask_stamp = node._last_targets_stamp = None
+    node._last_mask_time = node._last_targets_time = 123.0
+    node.get_clock = lambda: NS(now=lambda: NS(nanoseconds=10_000_000_000))
+    node._publish_status = lambda: None
+    published = []
+    node._targets_publisher = NS(publish=published.append)
+    header = lambda sec, frame="map": NS(frame_id=frame, stamp=NS(sec=sec, nanosec=0))
+    node._on_mask(NS(header=header(1)))
+    assert node._last_mask_time is None
+    assert node._last_mask_reason == "stale_source_stamp"
+    node._on_targets(NS(header=header(10, "camera"), targets=[]))
+    assert node._last_targets_time is None
+    assert node._last_targets_reason == "frame_mismatch"
+
+    def target(backend):
+        return NS(header=header(10), uuid="duplicate", confidence=0.9,
+                  source_backend=backend, track_state="CONFIRMED", in_keepout=False,
+                  source_stamp=header(10).stamp, last_seen=header(10).stamp,
+                  map_pose=NS(pose=NS(position=NS(x=0.5, y=0.5))))
+
+    node._on_targets(NS(header=header(10), registry_sha256="digest",
+                        targets=[target("dosod_edgesam"), target("ground_truth")]))
+    assert len(published) == 1
+    assert published[0].targets == []
+    assert node._core.belief_snapshot().known_targets == ()
+    node._on_targets(NS(header=header(10), targets=[]))
+    assert node._last_targets_time is None
+    assert node._last_targets_reason == "replayed_source_stamp"

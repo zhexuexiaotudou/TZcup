@@ -60,6 +60,10 @@ drive:
     minimum_turning_radius_status: pending_skid_steer_tracking_validation
 
 nav2_footprint_padding_m: 0.01
+# Strict Nav2 inflation boundary for every navigation-enabled footprint.
+# Materialization writes this value into both costmaps so a stale underlay
+# configuration cannot silently reduce the verified 0.56 m boundary to 0.55 m.
+nav2_inflation_radius_m: 0.56
 
 motion_footprints:
   transport_stowed:

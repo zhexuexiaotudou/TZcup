@@ -656,6 +656,25 @@ evidence_gates:
       - nav2_dynamic_pedestrians_and_cleaning_actuator_per_site
       - per_site_frozen_runtime_session_and_snapshot_binding
       - evaluator_truth_isolated_from_product_control
+  a19_two_hour_reliability_fault:
+    path: artifacts/formal_a19_reliability_fault_acceptance.json
+    report_id: tzcup_formal_a19_reliability_fault_validation_v3
+    success_statuses: [FORMAL_A19_TWO_HOUR_RELIABILITY_FAULT_PASSED]
+    session_bound: true
+    required_values:
+      passed: true
+      errors: []
+      metrics.fault_count: 18
+      metrics.passed_fault_count: 18
+      runtime_gate_binding.status: FORMAL_RUNTIME_GATE_BOUND
+      runtime_gate_binding.acceptance_session_binding.session_status_at_gate: FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING
+      runtime_gate_binding.acceptance_session_binding.snapshot_current_source_verified: true
+      runtime_gate_binding.runtime_closure_binding.status: FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED
+    runtime_binding:
+      report_field: runtime_gate_binding
+      sidecar_suffix: .runtime_binding.json
+    snapshot_urdf_hash_field: runtime_gate_binding.acceptance_session_binding.snapshot.expanded_urdf_sha256
+    snapshot_source_hash_field: runtime_gate_binding.acceptance_session_binding.snapshot.source_inventory_sha256
   s100_live_runtime:
     path: artifacts/formal_s100_live_acceptance.json
     report_id: tzcup_formal_rdk_s100_live_product_runtime_v1
@@ -752,5 +771,6 @@ mission_level_gates:
   - rl_cross_map_policy
   - end_to_end_cleaning_mission
   - multi_site_product_generalization
+  - a19_two_hour_reliability_fault
   - service_interface_acceptance
   - s100_live_runtime

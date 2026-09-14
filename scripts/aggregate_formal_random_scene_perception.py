@@ -6,12 +6,20 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
 import re
 from pathlib import Path
 import sys
 
 from formal_runtime_gate_binding import RuntimeGateError, load_binding
+
+# Reuse the ROS-independent evaluator contract rather than duplicate its gates.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "starter_ws/src/sanitation_perception"))
+from sanitation_perception.formal_random_scene_evaluator_core import (  # noqa: E402
+    DEFAULT_THRESHOLDS,
+    finalize_acceptance,
+)
 
 
 FORMAL_MINIMUM_EPISODE_COUNT = 30
@@ -96,6 +104,59 @@ def _episode_identity(episode_id: object) -> dict | None:
     }
 
 
+def _validate_episode(report: object) -> None:
+    if not isinstance(report, dict):
+        raise ValueError("episode report must be an object")
+    if report.get("schema_version") != 1:
+        raise ValueError("unsupported episode schema_version")
+    thresholds = report.get("thresholds")
+    if not isinstance(thresholds, dict) or any(
+        thresholds.get(name) != value for name, value in DEFAULT_THRESHOLDS.items()
+    ):
+        raise ValueError("episode thresholds differ from the frozen formal contract")
+    for name in ("litter_cube_detection", "ground_dirt_segmentation", "map_projection", "sensor_runtime", "truth_isolation", "metric_checks", "blocked_checks"):
+        if not isinstance(report.get(name), dict):
+            raise ValueError(f"missing or invalid episode {name}")
+    def check_numbers(value):
+        if isinstance(value, dict):
+            for item in value.values():
+                check_numbers(item)
+        elif isinstance(value, list):
+            for item in value:
+                check_numbers(item)
+        elif isinstance(value, (int, float)) and not isinstance(value, bool):
+            if not math.isfinite(value):
+                raise ValueError("episode contains non-finite metrics")
+    for name in ("litter_cube_detection", "ground_dirt_segmentation", "map_projection", "sensor_runtime"):
+        check_numbers(report[name])
+    # Sensor evidence includes signed map/world poses; only scoring scalars
+    # have a non-negative domain.
+    scoring_fields = {
+        "litter_cube_detection": ("true_positive_count", "false_positive_count", "visible_unique_truth_count", "matched_unique_truth_count", "evaluated_frame_count", "precision", "recall", "f1", "false_positives_per_evaluated_frame"),
+        "ground_dirt_segmentation": ("intersection_cell_count", "union_cell_count", "predicted_cell_count", "truth_cell_count", "iou", "precision", "recall"),
+        "map_projection": ("sample_count", "rmse_m", "p95_m", "max_m", "false_product_track_count"),
+        "sensor_runtime": ("real_camera_message_count", "rgb_topic_count", "depth_topic_count", "camera_info_topic_count", "depth_rgb_skew_max_s", "tf_success_ratio", "tf_age_max_s", "product_detection_message_count", "product_mask_message_count", "product_target_message_count"),
+    }
+    for section, fields in scoring_fields.items():
+        for field in fields:
+            value = report[section].get(field)
+            if value is not None and (isinstance(value, bool) or not isinstance(value, (int, float)) or value < 0):
+                raise ValueError(f"invalid non-negative scoring scalar: {section}.{field}")
+    recomputed = finalize_acceptance(
+        episode_id=str(report.get("episode_id")),
+        detection=report["litter_cube_detection"],
+        segmentation=report["ground_dirt_segmentation"],
+        projection=report["map_projection"],
+        freshness=report["sensor_runtime"],
+    )
+    for name in ("status", "metric_checks", "blocked_checks"):
+        if report.get(name) != recomputed[name]:
+            raise ValueError(f"episode {name} disagrees with recomputed gates")
+    for name in ("precision", "recall", "f1", "false_positives_per_evaluated_frame"):
+        if report["litter_cube_detection"].get(name) != recomputed["litter_cube_detection"][name]:
+            raise ValueError(f"episode cube {name} disagrees with counts")
+
+
 def aggregate(report_paths: list[Path], minimum_episode_count: int) -> dict:
     # This program produces the formal matrix report.  Callers cannot lower the
     # evidence scale to turn the retained three-episode smoke into a product
@@ -109,6 +170,11 @@ def aggregate(report_paths: list[Path], minimum_episode_count: int) -> dict:
         try:
             report = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as exc:
+            errors.append({"path": str(path), "error": str(exc)})
+            continue
+        try:
+            _validate_episode(report)
+        except (TypeError, ValueError, KeyError, OverflowError) as exc:
             errors.append({"path": str(path), "error": str(exc)})
             continue
         if report.get("report_id") != "tzcup_formal_random_scene_perception_episode_v1":
@@ -148,6 +214,7 @@ def aggregate(report_paths: list[Path], minimum_episode_count: int) -> dict:
     per_episode_pass = all(report.get("status") == "PASSED" for _, report in reports)
     truth_isolation_pass = all(
         report.get("truth_isolation", {}).get("truth_published_to_ros") is False
+        and report.get("truth_isolation", {}).get("truth_used_by_product_perception") is False
         and report.get("truth_isolation", {}).get("truth_used_by_product_control") is False
         and report.get("truth_isolation", {}).get("synthetic_offline_image_used") is False
         for _, report in reports
@@ -244,6 +311,7 @@ def aggregate(report_paths: list[Path], minimum_episode_count: int) -> dict:
         "truth_isolation": {
             "truth_reader": "per_episode_evaluator_process_only",
             "truth_published_to_ros": False,
+            "truth_used_by_product_perception": False,
             "truth_used_by_product_control": False,
             "synthetic_offline_image_used": False,
         },

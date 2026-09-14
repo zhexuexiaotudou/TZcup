@@ -33,12 +33,25 @@ def test_frontier_goals_use_current_map_frame_pose_and_tangent_yaw():
     assert "goal.pose.pose.orientation.w = 1.0" not in source
 
 
+def test_frontier_goals_require_a_fresh_map_frame_global_costmap_window():
+    source = (
+        PACKAGE
+        / "sanitation_formal_campus_integration"
+        / "frontier_explorer.py"
+    ).read_text(encoding="utf-8")
+    assert '"/global_costmap/costmap"' in source
+    assert "waiting_for_fresh_global_costmap" in source
+    assert "waiting_for_global_costmap_map_frame" in source
+    assert "planning_window=planning_window" in source
+
+
 def test_formal_launch_separates_mapping_and_saved_map_cleaning():
     source = (
         PACKAGE / "launch" / "formal_campus_map_lifecycle.launch.py"
     ).read_text(encoding="utf-8")
     assert '"localization_backend": "external" if mode == "mapping" else "amcl"' in source
     assert 'validate_saved_map_artifact(artifact_root, contract)' in source
+    assert 'validate_saved_map_cleaning_consumer_bundle(artifact_root, contract)' in source
     assert '"map_file": str(artifact_root / "occupancy.yaml")' in source
     assert 'executable="formal-frontier-explorer"' in source
     assert '"start_navigation": "false"' in source
@@ -150,7 +163,8 @@ def test_saved_map_coverage_is_real_product_action_execution_with_fixed_envelope
     ).read_text(encoding="utf-8")
     assert "<exec_depend>action_msgs</exec_depend>" in package_manifest
     assert 'coverage_parameters["operation_width"] = cleaning_width' in launch
-    assert "formal saved-map cleaning width must be exactly 1.32 m" in launch
+    assert "formal saved-map declared cleaning envelope must be exactly 1.32 m" in launch
+    assert "formal saved-map planning lane spacing must be exactly 0.600 m" in launch
     assert "formal saved-map maximum linear speed disagrees with profile" in launch
     assert "default_value=DRY_CLEANING_SPEED_PROFILE" in launch
     assert 'executable="formal-saved-map-coverage-executor"' in launch
@@ -177,7 +191,7 @@ def test_saved_map_executor_fields_match_pinned_jazzy_action_contracts():
         / "saved_map_coverage_executor.py"
     ).read_text(encoding="utf-8")
     for assignment in (
-        "goal.generate_headland = True",
+            "goal.generate_headland = False",
         "goal.generate_route = True",
         "goal.generate_path = True",
         'goal.frame_id = "map"',
@@ -187,7 +201,8 @@ def test_saved_map_executor_fields_match_pinned_jazzy_action_contracts():
         'goal.route_mode.mode = "BOUSTROPHEDON"',
         'goal.path_mode.mode = "DUBIN"',
         'goal.path_mode.continuity_mode = "DISCONTINUOUS"',
-        "goal.polygons = [coordinates]",
+            "goal.polygons.append(coordinates)",
+            "geometry.planning_outer_polygon, *geometry.planning_hole_polygons",
         "transit.pose = self._pose(",
         "follow.path = path",
         'follow.controller_id = "CleanPath"',
@@ -265,5 +280,7 @@ def test_mapping_manager_uses_slam_save_service_and_stable_quality_gate():
     assert '"gnss_mapping_reference_observed": True' in source
     assert '"gps_odometry_topic", "/odometry/gps"' in source
     assert 'self.declare_parameter("gnss_odometry_consistency_tolerance_m", 2.0)' in source
+    assert 'self.declare_parameter("gnss_odometry_max_pair_skew_sec", 0.10)' in source
     assert '"waiting_for_gnss_mapping_reference"' in source
+    assert '"waiting_for_time_aligned_gnss_odometry"' in source
     assert '"gnss_odometry_consistency_gate_failed"' in source

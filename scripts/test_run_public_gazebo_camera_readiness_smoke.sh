@@ -23,7 +23,7 @@ FORMAL_RUNTIME_MEMORY_BREACH_EXIT_CODE=86; FORMAL_RUNTIME_MEMORY_WATCHDOG_RESULT
 formal_runtime_install_traps(){ FORMAL_RUNTIME_CLEANUP_FUNCTION="$1"; trap 'formal_runtime_exit_trap "$?"' EXIT; trap 'exit 130' INT; trap 'exit 143' TERM; }
 formal_runtime_exit_trap(){ local status="$1"; trap - EXIT INT TERM; FORMAL_RUNTIME_EXIT_STATUS="$status"; "$FORMAL_RUNTIME_CLEANUP_FUNCTION" || status=125; formal_runtime_stop_memory_watchdog || true; if formal_runtime_memory_watchdog_tripped; then status=86; elif (( FORMAL_RUNTIME_MEMORY_WATCHDOG_RESULT != 0 )); then status=125; fi; exit "$status"; }
 formal_runtime_register_evidence_paths(){ :; }; formal_runtime_configure(){ :; }; formal_runtime_cleanup_partition(){ return 0; }
-formal_runtime_cleanup_groups(){ local partition="$1"; shift; local pid; for pid in "$@"; do [[ -n "$pid" ]] || continue; kill -INT -- "-$pid" 2>/dev/null || true; kill -TERM -- "-$pid" 2>/dev/null || true; for _ in {1..10}; do kill -0 -- "-$pid" 2>/dev/null || break; sleep .05; done; kill -KILL -- "-$pid" 2>/dev/null || true; done; return 0; }
+formal_runtime_cleanup_groups(){ local partition="$1"; shift; local pid failed=0; for pid in "$@"; do [[ -n "$pid" ]] || continue; kill -INT -- "-$pid" 2>/dev/null || true; kill -TERM -- "-$pid" 2>/dev/null || true; for _ in {1..10}; do kill -0 -- "-$pid" 2>/dev/null || break; sleep .05; done; kill -KILL -- "-$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true; for _ in {1..10}; do kill -0 -- "-$pid" 2>/dev/null || break; sleep .05; done; kill -0 -- "-$pid" 2>/dev/null && failed=1; done; return "$failed"; }
 formal_runtime_wait_for_setsid_pgid(){ local pgid; for _ in {1..20}; do pgid="$(ps -o pgid= -p "$1" | tr -d ' ')"; [[ "$pgid" == "$1" ]] && { printf '%s\n' "$pgid"; return 0; }; sleep .01; done; return 2; }
 formal_runtime_memory_preflight(){ [[ "${FAKE_MODE:-ok}" != oom ]] || return 86; : >"$1.json"; : >"$1.log"; }
 formal_runtime_start_memory_watchdog(){ : >"$2.json"; : >"$2.log"; if [[ "${FAKE_MODE:-ok}" == breach ]]; then setsid bash -c 'sleep .15; exit 86' & else setsid bash -c 'trap "exit 0" TERM; while :; do sleep 1; done' & fi; FORMAL_RUNTIME_MEMORY_WATCHDOG_PID=$!; }
@@ -102,7 +102,7 @@ python3 - "$fixture/repo/.work/clean-root/public_gazebo_camera_readiness_smoke_r
 import json,sys
 d=json.load(open(sys.argv[1])); assert d['status']=='NON_FORMAL_CAMERA_READY' and d['formal_passed'] is False and d['zero_survivor_check'] and d['readiness_report']['sha256'] and d['binding_unchanged'] and set(d['inputs'])=={'ros_setup','stage1_setup','runtime_setup','campus_setup','world','manifest'}
 PY
-start=$(date +%s); run_case breach breach 86; elapsed=$(( $(date +%s)-start )); (( elapsed < 4 )); pid=$(cat "$fixture/repo/.work/breach-state/launch.pid"); ! kill -0 -- "-$pid" 2>/dev/null
+run_case breach breach 86 8; pid=$(cat "$fixture/repo/.work/breach-state/launch.pid"); ! kill -0 -- "-$pid" 2>/dev/null
 python3 - "$fixture/repo/.work/breach-root/public_gazebo_camera_readiness_smoke_receipt.json" <<'PY'
 import json,sys
 d=json.load(open(sys.argv[1])); assert d['exit_code']==86

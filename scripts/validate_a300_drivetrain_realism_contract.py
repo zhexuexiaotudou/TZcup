@@ -134,6 +134,19 @@ def validate(contract_path: Path = DEFAULT_CONTRACT, root: Path = ROOT) -> dict:
     engineering = plant.get("engineering_parameters_not_official", {})
     if not engineering or any(not isinstance(value, (int, float)) for value in engineering.values()):
         errors.append("unpublished motor/brake parameters must be explicit engineering values")
+    simulation_radius = plant.get("rigid_simulation_wheel_radius", {})
+    expected_simulation_radius = {
+        "physical_rolling_radius_m": 0.1651,
+        "upstream_control_configuration_radius_m": 0.1625,
+        "command_conversion_radius_m": 0.1651,
+        "maximum_wheel_speed_radius_m": 0.1651,
+        "odometry_integration_radius_m": 0.1651,
+    }
+    for key, expected in expected_simulation_radius.items():
+        if not _close(simulation_radius.get(key), expected):
+            errors.append(f"rigid simulation wheel-radius boundary changed: {key}")
+    if simulation_radius.get("rationale") != "rigid_collision_wheel_has_no_tire_deflection_model":
+        errors.append("rigid simulation wheel-radius rationale is missing")
     boundary = plant.get("integration_boundary", {})
     if boundary.get("active_in_cmake") is not True:
         errors.append("validated drivetrain candidate must be wired into its package build")
@@ -173,6 +186,14 @@ def validate(contract_path: Path = DEFAULT_CONTRACT, root: Path = ROOT) -> dict:
     fusion = yaml.safe_load(
         (localization / "config" / "formal_fusion.yaml").read_text(encoding="utf-8")
     )
+    plant_core = (root / plant["core_source"]).read_text(encoding="utf-8")
+    plant_system = (root / plant["gazebo_candidate_source"]).read_text(encoding="utf-8")
+    if "parameters_.maximum_vehicle_speed_mps / parameters_.physical_wheel_radius_m" not in plant_core:
+        errors.append("plant wheel-speed ceiling must use the rigid physical rolling radius")
+    if plant_system.count("this->plant.Parameters().physical_wheel_radius_m") != 2:
+        errors.append("plant command conversion and odometry must both use the rigid physical rolling radius")
+    if "this->plant.Parameters().control_wheel_radius_m" in plant_system:
+        errors.append("runtime plant must not use the upstream controller radius as a rigid rolling radius")
 
     if runtime_xacro.count("libA300DrivetrainPlantSystem.so") != 1:
         errors.append("A300 drivetrain plant must be loaded exactly once by the formal vehicle")
@@ -261,6 +282,7 @@ def validate(contract_path: Path = DEFAULT_CONTRACT, root: Path = ROOT) -> dict:
         "mesh_count": len(mesh_roles),
         "published_mass_kg": published["robot_mass_kg"],
         "allocated_mass_kg": calculated_mass,
+        "rigid_simulation_wheel_radius": simulation_radius,
         "runtime_integrated": True,
         "runtime_revalidation_pending": True,
         "truth_boundary": "unpublished internal motor and fixed-link parameters remain engineering allocations",

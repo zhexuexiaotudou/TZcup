@@ -100,10 +100,12 @@ class FormalRuntimePolicyCore:
         self.policy.epsilon = 0.0
         self._attempts: dict[str, int] = {}
         self._cleared: set[str] = set()
+        self._known_targets: dict[str, KnownTarget] = {}
 
     def reset(self, *, episode_seed: int) -> None:
         self._attempts.clear()
         self._cleared.clear()
+        self._known_targets.clear()
         self.policy.reset(episode_seed=episode_seed)
 
     def mark_grasp_result(self, target_id: str, *, verified_in_bin: bool) -> None:
@@ -178,15 +180,19 @@ class FormalRuntimePolicyCore:
             )
             coarse_dirt.append(maximum_dirt / 100.0 if maximum_dirt > 0 else 0.0)
 
+        # Perception arrays are current observations, not a deletion ledger.
+        # Losing sight of a confirmed target must not make the task complete.
+        for item in targets:
+            self._known_targets[item.target_id] = item
         known_targets = tuple(
             KnownTarget(
                 target_id=item.target_id,
                 x=item.x,
                 y=item.y,
-                cleared=item.cleared or item.target_id in self._cleared,
+                cleared=item.target_id in self._cleared,
                 attempts=max(item.attempts, self._attempts.get(item.target_id, 0)),
             )
-            for item in targets
+            for item in self._known_targets.values()
         )
         snapshot = BeliefSnapshot(
             width=self.grid.width,
@@ -264,9 +270,7 @@ class FormalRuntimePolicyCore:
 
     def return_home(self, observation: AgentObservation) -> RuntimePolicyDecision:
         home = (self.config.start.x, self.config.start.y)
-        if distance((observation.pose.x, observation.pose.y), home) <= max(
-            0.25, self.config.grid_resolution * 0.5
-        ):
+        if distance((observation.pose.x, observation.pose.y), home) <= 0.25:
             return RuntimePolicyDecision(
                 kind="home_reached",
                 reason="fixed_start_pose_reached_after_task",

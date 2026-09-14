@@ -117,9 +117,13 @@
     <gazebo reference="charge_receptacle_link">
       <preserveFixedJoint>true</preserveFixedJoint>
       <sensor name="charge_receptacle_contact_sensor" type="contact">
-        <topic>/formal_vehicle/gazebo/charge_receptacle/contact</topic>
         <update_rate>50</update_rate><always_on>true</always_on>
-        <contact><collision>charge_receptacle_contact_collision</collision></contact>
+        <!-- sdformat folds this fixed service link into base_footprint and
+             renames the collision in the expanded formal SDF. -->
+        <contact>
+          <topic>/formal_vehicle/gazebo/charge_receptacle/contact</topic>
+          <collision>base_footprint_fixed_joint_lump__charge_receptacle_contact_collision_collision_49</collision>
+        </contact>
       </sensor>
     </gazebo>
     <link name="charge_port_door_link">
@@ -236,9 +240,13 @@
     <gazebo reference="wastewater_drain_coupling_link">
       <preserveFixedJoint>true</preserveFixedJoint>
       <sensor name="wastewater_drain_coupling_contact_sensor" type="contact">
-        <topic>/formal_vehicle/gazebo/wastewater_drain_coupling/contact</topic>
         <update_rate>50</update_rate><always_on>true</always_on>
-        <contact><collision>wastewater_drain_coupling_contact_collision</collision></contact>
+        <!-- sdformat folds this fixed service link into base_footprint and
+             renames the collision in the expanded formal SDF. -->
+        <contact>
+          <topic>/formal_vehicle/gazebo/wastewater_drain_coupling/contact</topic>
+          <collision>base_footprint_fixed_joint_lump__wastewater_drain_coupling_contact_collision_collision_120</collision>
+        </contact>
       </sensor>
     </gazebo>
 
@@ -258,7 +266,7 @@
                 name="gz::sim::systems::JointPositionController">
           <joint_name>charge_connector_lock_joint</joint_name>
           <topic>/formal_vehicle/evaluation/service/charge_lock_position_m</topic>
-          <p_gain>350.0</p_gain><i_gain>0.0</i_gain><d_gain>12.0</d_gain>
+          <p_gain>700.0</p_gain><i_gain>0.0</i_gain><d_gain>12.0</d_gain>
           <cmd_max>8.0</cmd_max><cmd_min>-8.0</cmd_min>
           <initial_position>0.0</initial_position>
         </plugin>
@@ -266,7 +274,7 @@
                 name="gz::sim::systems::JointPositionController">
           <joint_name>wastewater_drain_service_cap_joint</joint_name>
           <topic>/formal_vehicle/evaluation/service/drain_cap_position_rad</topic>
-          <p_gain>5.0</p_gain><i_gain>0.0</i_gain><d_gain>0.5</d_gain>
+          <p_gain>10.0</p_gain><i_gain>0.0</i_gain><d_gain>0.5</d_gain>
           <cmd_max>4.0</cmd_max><cmd_min>-4.0</cmd_min>
           <initial_position>0.0</initial_position>
         </plugin>

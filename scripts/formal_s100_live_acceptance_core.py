@@ -137,9 +137,21 @@ def snapshot_identity(path: Path) -> dict[str, str]:
     source_hash = payload.get("source_inventory_sha256")
     if not isinstance(source_hash, str) or not SHA256_RE.fullmatch(source_hash.lower()):
         raise ValueError("snapshot manifest has no valid source_inventory_sha256")
+    outputs = payload.get("outputs")
+    urdf = (
+        outputs.get("reports/engineering/formal_competition_vehicle.urdf")
+        if isinstance(outputs, dict)
+        else None
+    )
+    expanded_urdf_hash = urdf.get("sha256") if isinstance(urdf, dict) else None
+    if not isinstance(expanded_urdf_hash, str) or not SHA256_RE.fullmatch(
+        expanded_urdf_hash.lower()
+    ):
+        raise ValueError("snapshot manifest has no valid expanded URDF SHA-256")
     return {
         "snapshot_manifest_sha256": sha256_path(path),
         "source_inventory_sha256": source_hash.lower(),
+        "expanded_urdf_sha256": expanded_urdf_hash.lower(),
     }
 
 

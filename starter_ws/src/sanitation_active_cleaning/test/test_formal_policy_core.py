@@ -190,3 +190,37 @@ def test_canonical_skid_steer_reference_wrapper_retains_path_only_contract():
     assert math.dist((path[0].x, path[0].y), (0.0, 0.0)) < 1.0e-9
     assert path[0].yaw == pytest.approx(0.0)
     assert math.dist((path[-1].x, path[-1].y), (2.0, 1.0)) < 1.0e-9
+
+
+def test_lost_target_remains_pending_until_verified_grasp(tmp_path):
+    core = _core(tmp_path)
+    kwargs = dict(belief_values=[0] * 240, pose=core.config.start,
+                  step_index=1, task_distance=0.0)
+    core.observation(targets=(KnownTarget("seen", 2.0, 2.0, False, 0),), **kwargs)
+    lost = core.observation(targets=(), **kwargs)
+    assert len(lost.belief.known_targets) == 1
+    assert not lost.belief.known_targets[0].cleared
+    core.mark_grasp_result("seen", verified_in_bin=False)
+    core.mark_grasp_result("seen", verified_in_bin=False)
+    exhausted = core.observation(targets=(), **kwargs).belief.known_targets[0]
+    assert exhausted.attempts == 2 and not exhausted.cleared
+    core.mark_grasp_result("seen", verified_in_bin=True)
+    assert core.observation(targets=(), **kwargs).belief.known_targets[0].cleared
+    core.reset(episode_seed=8)
+    assert core.observation(targets=(), **kwargs).belief.known_targets == ()
+
+
+def test_perception_cannot_clear_target_without_executor_verification(tmp_path):
+    core = _core(tmp_path)
+    obs = core.observation(belief_values=[0] * 240, pose=core.config.start,
+        targets=(KnownTarget("claimed-cleared", 2.0, 2.0, True, 0),),
+        step_index=1, task_distance=0.0)
+    assert not obs.belief.known_targets[0].cleared
+
+
+def test_docking_tolerance_does_not_grow_with_planning_grid(tmp_path):
+    core = _core(tmp_path)
+    obs = core.observation(belief_values=[0] * 240,
+        pose=Pose2D(core.config.start.x + 0.4, core.config.start.y, 0.0),
+        targets=(), step_index=1, task_distance=0.0)
+    assert core.return_home(obs).kind != "home_reached"

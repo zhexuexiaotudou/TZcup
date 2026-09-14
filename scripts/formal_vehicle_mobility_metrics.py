@@ -14,7 +14,10 @@ WHEEL_JOINTS = (
     "rear_left_wheel_joint",
     "rear_right_wheel_joint",
 )
-WHEEL_RADIUS_M = 0.1625
+# The simulated wheel is rigid, so joint rotation covers distance at the
+# collision rolling radius.  The upstream 0.1625 m controller value remains
+# provenance and is not the physical distance scale in this world.
+WHEEL_RADIUS_M = 0.1651
 
 
 @dataclass(frozen=True)

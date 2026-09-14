@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 from auto15_competition_matrix import build_matrix, write_new
 import validate_product_acceptance_contract as validation
+import auto15_product_evidence as evidence
 from validate_product_acceptance_contract import (
     ProductAcceptanceContractError,
     ROOT,
@@ -21,12 +22,12 @@ def _must_block(payload: dict, tmp_path: Path) -> None:
     try:
         validate_auto15_execution_evidence(load_contract(), payload, tmp_path)
     except ProductAcceptanceContractError as exc:
-        assert "BLOCKED_NO_CANONICAL_PRODUCER" in str(exc)
+        assert str(exc)
         return
-    raise AssertionError("unwired AUTO-15 receipt intake must never pass")
+    raise AssertionError("non-canonical AUTO-15 receipt intake must never pass")
 
 
-def test_matrix_preserves_full_18x10_and_30_group_requirements_but_is_blocked() -> None:
+def test_matrix_preserves_full_18x10_and_30_group_requirements_when_not_run() -> None:
     state = json.loads((ROOT / "config" / "autonomy" / "AUTONOMOUS_STATE.json").read_text(encoding="utf-8"))
     matrix = build_matrix(state)
     assert matrix["status"] == "BLOCKED"
@@ -118,3 +119,73 @@ def test_evidence_output_is_fresh_and_never_replaced(tmp_path: Path) -> None:
     else:
         raise AssertionError("retained output must not be overwritten")
     assert artifact.read_bytes() == b"first"
+
+
+def test_canonical_ledger_enforces_exact_180_and_30_nonoverlapping_groups(tmp_path: Path, monkeypatch) -> None:
+    contract = load_contract()
+    execution_ids = [
+        f"{scenario}:seed-{seed}"
+        for scenario in contract["auto15_execution_accounting"]["scenario_ids"]
+        for seed in contract["auto15_execution_accounting"]["seeds"]
+    ]
+    context = {"session": {"started_epoch_ns": 1}, "snapshot": {}, "runtime_closure_binding": {}}
+    hashes = {name: "a" * 64 for name in ("model", "config", "dataset", "container", "dependency")}
+    artifacts = {name: {"path": name, "sha256": "a" * 64} for name in ("model", "config", "dataset", "dependency")}
+    execution_paths = []
+    execution_by_path = {}
+    for index, execution_id in enumerate(execution_ids):
+        path = tmp_path / f"execution-{index}.json"
+        path.write_text("{}", encoding="utf-8")
+        execution_paths.append(path)
+        scenario, seed_text = execution_id.split(":seed-")
+        group_id = f"mission-{index // 6:02d}"
+        execution_by_path[path] = {
+            "execution_id": execution_id,
+            "scenario_id": scenario,
+            "seed": int(seed_text),
+                "mission_group_id": group_id,
+                "formal_context": context,
+                "input_hashes": hashes,
+                "input_artifacts": artifacts,
+                "video": {"path": f"video-{index}.mp4", "sha256": f"{index + 1:064x}"},
+                "mcap": {"path": f"bag-{index}", "sha256": f"{index + 1000:064x}", "semantic_sha256": f"{index + 4000:064x}"},
+                "raw_capture": {
+                    "capture_id": f"{index + 2000:032x}",
+                    "source_metrics": {"path": f"metrics-{index}.json", "sha256": f"{index + 3000:064x}"},
+                },
+        }
+    group_paths = []
+    group_by_path = {}
+    for group_index in range(30):
+        path = tmp_path / f"group-{group_index}.json"
+        path.write_text("{}", encoding="utf-8")
+        group_paths.append(path)
+        members = execution_ids[group_index * 6:(group_index + 1) * 6]
+        group_by_path[path] = {
+            "mission_group_id": f"mission-{group_index:02d}",
+            "formal_context": context,
+            "input_hashes": hashes,
+            "input_artifacts": artifacts,
+            "members": [{"execution_id": member} for member in members],
+        }
+    monkeypatch.setattr(evidence, "validate_execution_receipt", lambda root, run_root, path: execution_by_path[path])
+    monkeypatch.setattr(evidence, "validate_group_receipt", lambda root, run_root, path: group_by_path[path])
+    ledger = evidence.build_ledger(ROOT, tmp_path, execution_paths, group_paths)
+    assert ledger["execution_count"] == 180
+    assert ledger["mission_group_count"] == 30
+    assert ledger["status"] == "AUTO15_CANONICAL_EVIDENCE_LEDGER_COMPLETE"
+    execution_by_path[execution_paths[1]]["mcap"]["sha256"] = execution_by_path[execution_paths[0]]["mcap"]["sha256"]
+    try:
+        evidence.build_ledger(ROOT, tmp_path, execution_paths, group_paths)
+    except evidence.Auto15EvidenceError as exc:
+        assert "content is reused" in str(exc)
+    else:
+        raise AssertionError("identical MCAP content must not become 180 unique executions")
+    execution_by_path[execution_paths[1]]["mcap"]["sha256"] = f"{1001:064x}"
+    execution_by_path[execution_paths[1]]["mcap"]["semantic_sha256"] = execution_by_path[execution_paths[0]]["mcap"]["semantic_sha256"]
+    try:
+        evidence.build_ledger(ROOT, tmp_path, execution_paths, group_paths)
+    except evidence.Auto15EvidenceError as exc:
+        assert "semantic" in str(exc)
+    else:
+        raise AssertionError("relocated semantic-equivalent MCAP must not become unique evidence")

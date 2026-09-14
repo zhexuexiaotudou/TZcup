@@ -43,7 +43,7 @@ A300DrivetrainPlantCore::A300DrivetrainPlantCore(
   A300DrivetrainPlantParameters parameters)
 : parameters_(parameters)
 {
-  const std::array<double, 17> finite_parameters{
+  const std::array<double, 19> finite_parameters{
     parameters_.physical_wheel_radius_m,
     parameters_.control_wheel_radius_m,
     parameters_.maximum_vehicle_speed_mps,
@@ -55,6 +55,8 @@ A300DrivetrainPlantCore::A300DrivetrainPlantCore(
     parameters_.wheel_side_torque_constant_nm_per_a,
     parameters_.low_speed_torque_limit_nm,
     parameters_.speed_error_gain_nm_per_rad_s,
+    parameters_.speed_integral_gain_nm_per_rad,
+    parameters_.integral_torque_limit_nm,
     parameters_.torque_slew_rate_nm_per_s,
     parameters_.service_brake_torque_limit_nm,
     parameters_.brake_response_delay_s,
@@ -75,6 +77,8 @@ A300DrivetrainPlantCore::A300DrivetrainPlantCore(
     !(parameters_.wheel_side_torque_constant_nm_per_a > 0.0) ||
     !(parameters_.low_speed_torque_limit_nm > 0.0) ||
     !(parameters_.speed_error_gain_nm_per_rad_s > 0.0) ||
+    !(parameters_.speed_integral_gain_nm_per_rad > 0.0) ||
+    !(parameters_.integral_torque_limit_nm > 0.0) ||
     !(parameters_.torque_slew_rate_nm_per_s > 0.0) ||
     !(parameters_.service_brake_torque_limit_nm > 0.0) ||
     parameters_.brake_response_delay_s < 0.0 ||
@@ -95,6 +99,7 @@ const A300DrivetrainPlantParameters & A300DrivetrainPlantCore::Parameters() cons
 void A300DrivetrainPlantCore::Reset()
 {
   applied_torque_nm_.fill(0.0);
+  integral_torque_nm_.fill(0.0);
   stopped_elapsed_s_ = 0.0;
 }
 
@@ -127,10 +132,12 @@ A300DrivetrainPlantOutput A300DrivetrainPlantCore::Step(
 
   const double step_s = valid ? input.step_s : 0.01;
   std::array<double, kA300WheelCount> target_torque{};
+  std::array<double, kA300WheelCount> integral_before_update_nm{};
+  std::array<double, kA300WheelCount> integral_increment_nm{};
   if (output.drive_permitted) {
     stopped_elapsed_s_ = 0.0;
     const double maximum_speed_rad_s =
-      parameters_.maximum_vehicle_speed_mps / parameters_.control_wheel_radius_m;
+      parameters_.maximum_vehicle_speed_mps / parameters_.physical_wheel_radius_m;
     const double per_motor_power_w =
       parameters_.total_motor_output_power_w / static_cast<double>(kA300WheelCount);
     const double current_torque_limit_nm =
@@ -139,17 +146,45 @@ A300DrivetrainPlantOutput A300DrivetrainPlantCore::Step(
     for (std::size_t index = 0; index < kA300WheelCount; ++index) {
       output.limited_command_rad_s[index] = ClampMagnitude(
         input.commanded_speed_rad_s[index], maximum_speed_rad_s);
+      const bool neutral_speed_command =
+        std::abs(output.limited_command_rad_s[index]) <= parameters_.stopped_speed_rad_s;
+      if (neutral_speed_command)
+      {
+        // A neutral speed request must not retain propulsion bias after the
+        // wheel reaches rest; P still supplies opposing torque while moving.
+        integral_torque_nm_[index] = 0.0;
+      }
       const double speed_error =
         output.limited_command_rad_s[index] - input.measured_speed_rad_s[index];
       const double absolute_speed = std::max(
         std::abs(input.measured_speed_rad_s[index]), 0.25);
       const double power_torque_limit_nm = per_motor_power_w / absolute_speed;
-      const double raw_torque_nm =
+      const double proportional_torque_nm =
         parameters_.speed_error_gain_nm_per_rad_s * speed_error;
       const double torque_limit_nm = std::min(
         {parameters_.low_speed_torque_limit_nm, current_torque_limit_nm,
           power_torque_limit_nm});
-      target_torque[index] = ClampMagnitude(raw_torque_nm, torque_limit_nm);
+      const double integral_limit_nm = std::min(
+        parameters_.integral_torque_limit_nm, parameters_.low_speed_torque_limit_nm);
+      const double previous_integral_nm = integral_torque_nm_[index];
+      integral_before_update_nm[index] = previous_integral_nm;
+      const double requested_integral_nm = neutral_speed_command ? 0.0 :
+        ClampMagnitude(
+        integral_torque_nm_[index] +
+        parameters_.speed_integral_gain_nm_per_rad * speed_error * step_s,
+        integral_limit_nm);
+      const double raw_torque_nm = proportional_torque_nm + requested_integral_nm;
+      // Do not wind the I term farther into a per-wheel limit. A reversal or
+      // an error that reduces I is still admitted, so saturation can unwind.
+      const bool locally_saturated = std::abs(raw_torque_nm) > torque_limit_nm;
+      const bool integral_worsens_saturation = locally_saturated &&
+        std::abs(requested_integral_nm) > std::abs(integral_torque_nm_[index]) &&
+        requested_integral_nm * raw_torque_nm > 0.0;
+      integral_torque_nm_[index] = integral_worsens_saturation ?
+        integral_torque_nm_[index] : requested_integral_nm;
+      integral_increment_nm[index] = integral_torque_nm_[index] - previous_integral_nm;
+      target_torque[index] = ClampMagnitude(
+        proportional_torque_nm + integral_torque_nm_[index], torque_limit_nm);
       output.current_limited = output.current_limited ||
         (std::abs(raw_torque_nm) > current_torque_limit_nm &&
         current_torque_limit_nm <= parameters_.low_speed_torque_limit_nm &&
@@ -160,6 +195,9 @@ A300DrivetrainPlantOutput A300DrivetrainPlantCore::Step(
         power_torque_limit_nm <= current_torque_limit_nm);
     }
   } else {
+    // Any non-permitted cycle is a propulsion discontinuity: an old integral
+    // must not create a restart impulse after estop, timeout, fault or reset.
+    integral_torque_nm_.fill(0.0);
     stopped_elapsed_s_ += step_s;
     if (stopped_elapsed_s_ >= parameters_.brake_response_delay_s) {
       output.resistive_brake_active = true;
@@ -204,12 +242,14 @@ A300DrivetrainPlantOutput A300DrivetrainPlantCore::Step(
   const std::array<double, kA300WheelCount> zero_speed{};
   const auto & measured_speed = valid ? input.measured_speed_rad_s : zero_speed;
   double mechanical_power_w = MechanicalPower(applied_torque_nm_, measured_speed);
+  bool aggregate_scaled = false;
   if (mechanical_power_w > parameters_.total_motor_output_power_w) {
     const double scale = parameters_.total_motor_output_power_w / mechanical_power_w;
     for (double & torque : applied_torque_nm_) {
       torque *= scale;
     }
     output.power_limited = true;
+    aggregate_scaled = true;
     mechanical_power_w = MechanicalPower(applied_torque_nm_, measured_speed);
   }
 
@@ -229,6 +269,20 @@ A300DrivetrainPlantOutput A300DrivetrainPlantCore::Step(
       torque *= scale;
     }
     output.current_limited = true;
+    aggregate_scaled = true;
+  }
+
+  if (output.drive_permitted && aggregate_scaled) {
+    // Per-wheel conditional integration above owns per-wheel limits.  An
+    // aggregate power/current scale is different: reject only this cycle's
+    // I increment when it pushes further into that aggregate constraint.
+    // Deliberately do not use applied-target here: its normal slew difference
+    // is not saturation and must never manufacture reverse integral torque.
+    for (std::size_t index = 0; index < kA300WheelCount; ++index) {
+      if (integral_increment_nm[index] * target_torque[index] > 0.0) {
+        integral_torque_nm_[index] = integral_before_update_nm[index];
+      }
+    }
   }
 
   output.total_mechanical_power_w = 0.0;

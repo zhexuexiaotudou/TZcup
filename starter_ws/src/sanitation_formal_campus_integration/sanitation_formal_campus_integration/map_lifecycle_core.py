@@ -16,6 +16,8 @@ from .contract import CANONICAL_PLANNING_KINEMATIC_CONSTRAINT
 
 
 REQUIRED_SAVED_MAP_SUPPORT_FILES = frozenset({
+    "coverage_free_space.pgm",
+    "coverage_geometry.yaml",
     "mission_geometry.yaml",
     "materialization_contract.yaml",
     "geofence_keepout.yaml",
@@ -25,63 +27,128 @@ REQUIRED_SAVED_MAP_SUPPORT_FILES = frozenset({
 })
 MAPPING_POSE_SOURCE = "wheel_imu_ekf_lidar_scan_matching_gnss_consistency"
 MAXIMUM_SAVED_MAP_RESOLUTION_M = 0.10
+# The declared 1.32 m envelope includes disconnected side brushes.  It remains
+# relevant to vehicle clearance only.  Coverage planning and the product-side
+# sweep estimate use the central roller's continuous band and retain 20 mm
+# overlap between adjacent lanes.
+FORMAL_DECLARED_CLEANING_ENVELOPE_WIDTH_M = 1.32
+FORMAL_CONTINUOUS_CLEANING_BAND_WIDTH_M = 0.620
+FORMAL_CLEANING_LANE_OVERLAP_M = 0.020
+FORMAL_CLEANING_LANE_SPACING_M = 0.600
+# Frozen formal cleaning geometry: max deployed footprint radius (0.620, 0.695),
+# a 0.10 m safety margin and half the declared mechanism envelope, rounded up.
+FORMAL_COVERAGE_STATIC_OBSTACLE_INFLATION_M = math.ceil((math.hypot(0.620, 0.695) + 0.10 + FORMAL_DECLARED_CLEANING_ENVELOPE_WIDTH_M / 2.0) * 100.0) / 100.0
+MAXIMUM_COVERAGE_RECTANGLES = 4096
 
 
 class MapLifecycleError(RuntimeError):
     """Raised when a formal map artifact fails closed."""
 
 
-def hard_restart_record_valid(record: dict, map_root: str | Path) -> bool:
-    """Verify a separate saved-map process start against immutable map evidence."""
+def validate_mapping_handoff_record(map_root: str | Path) -> dict:
+    """Validate the completed mapping handoff before starting another process."""
     root = Path(map_root)
     try:
-        mapping_completion = datetime.datetime.fromisoformat(
-            str(record["mapping_completion_wall_time"])
-        )
-        mapping_cleanup = datetime.datetime.fromisoformat(
-            str(record["mapping_cleanup_wall_time"])
-        )
-        cleaning_start = datetime.datetime.fromisoformat(
-            str(record["cleaning_start_wall_time"])
-        )
-        manifest_hash = hashlib.sha256(
-            (root / "map_lifecycle_manifest.json").read_bytes()
-        ).hexdigest()
-        mapping_runtime_hash = hashlib.sha256(
-            (root / "mapping_runtime.json").read_bytes()
-        ).hexdigest()
-        handoff_hash = hashlib.sha256(
-            (root / "mapping_handoff_record.json").read_bytes()
-        ).hexdigest()
-    except (KeyError, OSError, ValueError):
+        path = root / "mapping_handoff_record.json"
+        if path.is_symlink():
+            raise ValueError("symlink handoff")
+        handoff = json.loads(path.read_bytes())
+        if not isinstance(handoff, dict):
+            raise ValueError("handoff is not an object")
+        pids = [handoff.get(key) for key in (
+            "mapping_runner_pid", "mapping_launch_pid", "mapping_collector_pid",
+        )]
+        if (any(type(pid) is not int or pid <= 0 for pid in pids)
+                or len(set(pids)) != 3
+                or type(handoff.get("schema_version")) is not int
+                or handoff["schema_version"] != 2
+                or handoff.get("mapping_runner_completed") is not True
+                or handoff.get("mapping_process_groups_stopped") is not True
+                or type(handoff.get("mapping_runner_exit_code")) is not int
+                or handoff["mapping_runner_exit_code"] != 0):
+            raise ValueError("invalid mapping process completion")
+        completed, stopped = [datetime.datetime.fromisoformat(handoff[key]) for key in (
+            "mapping_completion_wall_time", "mapping_cleanup_wall_time",
+        )]
+        if completed.utcoffset() is None or stopped.utcoffset() is None or completed > stopped:
+            raise ValueError("invalid mapping completion chronology")
+        for key, name in (
+            ("map_lifecycle_manifest_sha256", "map_lifecycle_manifest.json"),
+            ("mapping_runtime_sha256", "mapping_runtime.json"),
+            ("mapping_runtime_gate_binding_sha256", "runtime_gate_binding.json"),
+            ("mapping_localization_diagnostic_sha256", "mapping_localization_diagnostic.json"),
+        ):
+            artifact = root / name
+            if artifact.is_symlink() or handoff.get(key) != sha256(artifact):
+                raise ValueError(f"mapping handoff hash mismatch: {name}")
+    except (KeyError, OSError, ValueError, TypeError, OverflowError) as exc:
+        raise MapLifecycleError(f"invalid mapping handoff: {exc}") from exc
+    return handoff
+
+
+def hard_restart_record_valid(record: dict, map_root: str | Path) -> bool:
+    """Bind a separate cleaning start to the completed mapping handoff bytes."""
+    if not isinstance(record, dict):
         return False
-    mapping_pids = {
-        record.get("mapping_runner_pid"),
-        record.get("mapping_launch_pid"),
-        record.get("mapping_collector_pid"),
-    }
-    cleaning_pids = {
-        record.get("cleaning_runner_pid"),
-        record.get("cleaning_launch_pid"),
-    }
+    root = Path(map_root)
+    try:
+        handoff = validate_mapping_handoff_record(root)
+        handoff_bytes = (root / "mapping_handoff_record.json").read_bytes()
+        if json.loads(handoff_bytes) != handoff:
+            return False
+        manifest_hash = sha256(root / "map_lifecycle_manifest.json")
+        mapping_runtime_hash = sha256(root / "mapping_runtime.json")
+        mapping_binding_hash = sha256(root / "runtime_gate_binding.json")
+        diagnostic_hash = sha256(root / "mapping_localization_diagnostic.json")
+        times = [datetime.datetime.fromisoformat(record[key]) for key in (
+            "mapping_completion_wall_time", "mapping_cleanup_wall_time",
+            "cleaning_start_wall_time",
+        )]
+        if any(value.utcoffset() is None for value in times):
+            return False
+        if not times[0] <= times[1] <= times[2]:
+            return False
+    except (MapLifecycleError, KeyError, OSError, ValueError, TypeError, OverflowError):
+        return False
+    mapping_keys = ("mapping_runner_pid", "mapping_launch_pid", "mapping_collector_pid")
+    cleaning_keys = ("cleaning_runner_pid", "cleaning_launch_pid")
+    if any(type(record.get(key)) is not int or record[key] <= 0
+           for key in (*mapping_keys, *cleaning_keys)):
+        return False
+    mapping_pids = {record[key] for key in mapping_keys}
+    cleaning_pids = {record[key] for key in cleaning_keys}
+    copied_fields = (*mapping_keys, "mapping_runner_exit_code",
+                     "mapping_completion_wall_time", "mapping_cleanup_wall_time")
     return (
-        record.get("schema_version") == 2
+        type(record.get("schema_version")) is int
+        and record["schema_version"] == 2
+        and type(handoff.get("schema_version")) is int
+        and handoff["schema_version"] == 2
+        and handoff.get("mapping_runner_completed") is True
+        and handoff.get("mapping_process_groups_stopped") is True
+        and type(handoff.get("mapping_runner_exit_code")) is int
+        and handoff["mapping_runner_exit_code"] == 0
+        and all(type(handoff.get(key)) is int for key in mapping_keys)
+        and all(record.get(key) == handoff.get(key) for key in copied_fields)
         and record.get("mapping_stopped_before_cleaning") is True
-        and record.get("mapping_process_count_before_cleaning") == 0
-        and record.get("mapping_pid_alive_count_before_cleaning") == 0
-        and record.get("mapping_runner_exit_code") == 0
+        and all(type(record.get(key)) is int and record[key] == 0 for key in (
+            "mapping_process_count_before_cleaning",
+            "mapping_pid_alive_count_before_cleaning", "mapping_runner_exit_code",
+        ))
         and record.get("restart_type") == "separate_process_hard_restart"
-        and mapping_completion <= mapping_cleanup <= cleaning_start
-        and len(mapping_pids) == 3
-        and len(cleaning_pids) == 2
-        and all(isinstance(pid, int) and pid > 0 for pid in mapping_pids)
-        and all(isinstance(pid, int) and pid > 0 for pid in cleaning_pids)
+        and len(mapping_pids) == 3 and len(cleaning_pids) == 2
         and mapping_pids.isdisjoint(cleaning_pids)
         and record.get("map_lifecycle_manifest_sha256") == manifest_hash
+        and handoff.get("map_lifecycle_manifest_sha256") == manifest_hash
         and record.get("mapping_runtime_sha256") == mapping_runtime_hash
-        and record.get("mapping_handoff_record_sha256") == handoff_hash
+        and handoff.get("mapping_runtime_sha256") == mapping_runtime_hash
+        and record.get("mapping_runtime_gate_binding_sha256") == mapping_binding_hash
+        and handoff.get("mapping_runtime_gate_binding_sha256") == mapping_binding_hash
+        and record.get("mapping_localization_diagnostic_sha256") == diagnostic_hash
+        and handoff.get("mapping_localization_diagnostic_sha256") == diagnostic_hash
+        and record.get("mapping_handoff_record_sha256")
+        == hashlib.sha256(handoff_bytes).hexdigest()
     )
-
 
 @dataclass(frozen=True)
 class CampusMapContract:
@@ -311,10 +378,47 @@ def select_frontier_goal(
     previous_goals: Sequence[tuple[float, float]] = (),
     sample_spacing_m: float = 0.50,
     previous_goal_clearance_m: float = 1.0,
+    planning_window: tuple[int, int, float, float, float, float] | None = None,
 ) -> tuple[float, float] | None:
-    """Select a known-free frontier; Nav2 remains responsible for its path."""
+    """Select a known-free frontier inside the current Nav2 planning window."""
     if width <= 2 or height <= 2 or len(data) != width * height:
         return None
+    if planning_window is not None:
+        (
+            planning_width,
+            planning_height,
+            planning_resolution,
+            planning_origin_x,
+            planning_origin_y,
+            planning_origin_yaw,
+        ) = planning_window
+        if (
+            planning_width <= 0
+            or planning_height <= 0
+            or not all(
+                math.isfinite(value)
+                for value in (
+                    planning_resolution,
+                    planning_origin_x,
+                    planning_origin_y,
+                    planning_origin_yaw,
+                )
+            )
+            or planning_resolution <= 0.0
+        ):
+            return None
+        planning_cosine = math.cos(planning_origin_yaw)
+        planning_sine = math.sin(planning_origin_yaw)
+        planning_extent_x = planning_width * planning_resolution
+        planning_extent_y = planning_height * planning_resolution
+        planning_inset_m = sample_spacing_m
+        if (
+            not math.isfinite(planning_inset_m)
+            or planning_inset_m < 0.0
+            or planning_extent_x <= 2.0 * planning_inset_m
+            or planning_extent_y <= 2.0 * planning_inset_m
+        ):
+            return None
     stride = max(1, round(sample_spacing_m / resolution))
     cosine, sine = math.cos(origin_yaw), math.sin(origin_yaw)
     best: tuple[float, float] | None = None
@@ -334,6 +438,16 @@ def select_frontier_goal(
             y = origin_y + sine * local_x + cosine * local_y
             if not _inside(x, y, geofence):
                 continue
+            if planning_window is not None:
+                offset_x = x - planning_origin_x
+                offset_y = y - planning_origin_y
+                planning_x = planning_cosine * offset_x + planning_sine * offset_y
+                planning_y = -planning_sine * offset_x + planning_cosine * offset_y
+                if not (
+                    planning_inset_m <= planning_x < planning_extent_x - planning_inset_m
+                    and planning_inset_m <= planning_y < planning_extent_y - planning_inset_m
+                ):
+                    continue
             if any(
                 math.hypot(x - old_x, y - old_y) < previous_goal_clearance_m
                 for old_x, old_y in previous_goals
@@ -345,12 +459,404 @@ def select_frontier_goal(
     return best
 
 
-def _write_pgm(path: Path, rows: list[bytearray]) -> None:
+_PGM_ASCII_WHITESPACE = frozenset(b" \t\r\n\v\f")
+
+
+def _encode_binary_pgm(rows: list[bytearray]) -> bytes:
     height, width = len(rows), len(rows[0])
-    path.write_bytes(
+    return (
         f"P5\n{width} {height}\n255\n".encode("ascii")
         + b"".join(bytes(row) for row in reversed(rows))
     )
+
+
+def _write_pgm(path: Path, rows: list[bytearray]) -> None:
+    path.write_bytes(_encode_binary_pgm(rows))
+
+
+def parse_binary_pgm(data: bytes) -> tuple[int, int, list[bytearray]]:
+    """Parse one P5 snapshot into map-order rows (lowest y first)."""
+    tokens: list[bytes] = []
+    index = 0
+    while len(tokens) < 4:
+        while index < len(data) and data[index] in _PGM_ASCII_WHITESPACE:
+            index += 1
+        if index < len(data) and data[index] == ord("#"):
+            newline = data.find(b"\n", index)
+            if newline < 0:
+                raise MapLifecycleError("saved occupancy PGM has an invalid comment")
+            index = newline + 1
+            continue
+        end = index
+        while end < len(data) and data[end] not in _PGM_ASCII_WHITESPACE:
+            end += 1
+        if end == index:
+            raise MapLifecycleError("saved occupancy PGM header is incomplete")
+        tokens.append(data[index:end])
+        index = end
+    if tokens[0] != b"P5":
+        raise MapLifecycleError("saved occupancy image must be a binary PGM")
+    if any(not token.isdigit() for token in tokens[1:]):
+        raise MapLifecycleError("saved occupancy PGM header is invalid")
+    try:
+        width, height, maximum = (int(item) for item in tokens[1:])
+    except ValueError as exc:
+        raise MapLifecycleError("saved occupancy PGM header is invalid") from exc
+    if data[index:index + 2] == b"\r\n":
+        index += 2
+    elif index < len(data) and data[index] in _PGM_ASCII_WHITESPACE:
+        index += 1
+    else:
+        raise MapLifecycleError("saved occupancy PGM has no binary-data separator")
+    pixels = data[index:]
+    if width <= 0 or height <= 0 or maximum != 255 or len(pixels) != width * height:
+        raise MapLifecycleError("saved occupancy PGM dimensions are invalid")
+    # PGM is top-to-bottom while occupancy-map coordinates start at origin_y.
+    return width, height, [
+        bytearray(pixels[row * width:(row + 1) * width])
+        for row in range(height - 1, -1, -1)
+    ]
+
+
+def read_binary_pgm(path: Path) -> tuple[int, int, list[bytearray]]:
+    """Read a binary PGM exactly once and return map-order rows."""
+    return parse_binary_pgm(path.read_bytes())
+
+
+def assess_saved_pgm_observation(
+    occupancy_metadata: Any,
+    occupancy_image: bytes,
+    *,
+    geofence: Sequence[tuple[float, float]],
+    threshold: float,
+) -> GridObservation:
+    """Recompute formal-field observation from a sealed trinary SLAM PGM."""
+    if not isinstance(occupancy_metadata, dict):
+        raise MapLifecycleError("saved occupancy metadata is invalid")
+    try:
+        resolution = float(occupancy_metadata["resolution"])
+        origin_x, origin_y, origin_yaw = (float(value) for value in occupancy_metadata["origin"])
+        occupied_threshold = float(occupancy_metadata.get("occupied_thresh", 0.65))
+        free_threshold = float(occupancy_metadata.get("free_thresh", 0.25))
+        negate = occupancy_metadata.get("negate", 0)
+    except (KeyError, TypeError, ValueError) as exc:
+        raise MapLifecycleError("saved occupancy metadata is invalid") from exc
+    if (
+        isinstance(negate, bool)
+        or negate not in {0, 1}
+        or occupancy_metadata.get("mode", "trinary") != "trinary"
+        or not 0.0 < resolution <= MAXIMUM_SAVED_MAP_RESOLUTION_M
+        or not all(math.isfinite(value) for value in (
+            origin_x, origin_y, origin_yaw, occupied_threshold, free_threshold,
+        ))
+        or abs(origin_yaw) > 1e-9
+        or not 0.0 <= free_threshold < occupied_threshold <= 1.0
+    ):
+        raise MapLifecycleError("saved occupancy metadata is outside the formal contract")
+    width, height, rows = parse_binary_pgm(occupancy_image)
+    data: list[int] = []
+    for row in rows:
+        for pixel in row:
+            probability = pixel / 255.0 if negate else (255 - pixel) / 255.0
+            if probability > occupied_threshold:
+                data.append(100)
+            elif probability < free_threshold:
+                data.append(0)
+            else:
+                # In trinary mode the interval including both thresholds is unknown.
+                data.append(-1)
+    return assess_grid_observation(
+        data,
+        width=width,
+        height=height,
+        resolution=resolution,
+        origin_x=origin_x,
+        origin_y=origin_y,
+        origin_yaw=origin_yaw,
+        geofence=geofence,
+        threshold=threshold,
+    )
+
+
+def _rectangles_from_mask(
+    mask: Sequence[Sequence[bool]], *, resolution: float, origin_x: float, origin_y: float
+) -> list[list[list[float]]]:
+    """Tile a raster exactly with rectangles; no obstacle bounding-box shortcut."""
+    active: dict[tuple[int, int], list[int]] = {}
+    rectangles: list[tuple[int, int, int, int]] = []
+    for row, values in enumerate(mask):
+        runs: list[tuple[int, int]] = []
+        column = 0
+        while column < len(values):
+            if not values[column]:
+                column += 1
+                continue
+            start = column
+            while column < len(values) and values[column]:
+                column += 1
+            runs.append((start, column))
+        next_active: dict[tuple[int, int], list[int]] = {}
+        for run in runs:
+            previous = active.pop(run, None)
+            next_active[run] = [run[0], previous[1] if previous else row, run[1], row + 1]
+        rectangles.extend(tuple(value) for value in active.values())
+        active = next_active
+    rectangles.extend(tuple(value) for value in active.values())
+    if len(rectangles) > MAXIMUM_COVERAGE_RECTANGLES:
+        raise MapLifecycleError("saved occupancy free space is too fragmented for coverage planning")
+    return [
+        [
+            [origin_x + left * resolution, origin_y + bottom * resolution],
+            [origin_x + right * resolution, origin_y + bottom * resolution],
+            [origin_x + right * resolution, origin_y + top * resolution],
+            [origin_x + left * resolution, origin_y + top * resolution],
+        ]
+        for left, bottom, right, top in rectangles
+    ]
+
+
+def _mask_loops(mask: Sequence[Sequence[bool]], *, resolution: float, origin_x: float, origin_y: float) -> list[list[list[float]]]:
+    """Trace exact union boundaries of raster cells; never emit adjacent boxes."""
+    height, width = len(mask), len(mask[0])
+    edges: dict[tuple[int, int], list[tuple[int, int]]] = {}
+    def add(start: tuple[int, int], end: tuple[int, int]) -> None:
+        edges.setdefault(start, []).append(end)
+    for row, values in enumerate(mask):
+        for column, value in enumerate(values):
+            if not value:
+                continue
+            if row == 0 or not mask[row - 1][column]: add((column, row), (column + 1, row))
+            if column == width - 1 or not mask[row][column + 1]: add((column + 1, row), (column + 1, row + 1))
+            if row == height - 1 or not mask[row + 1][column]: add((column + 1, row + 1), (column, row + 1))
+            if column == 0 or not mask[row][column - 1]: add((column, row + 1), (column, row))
+    incoming: dict[tuple[int, int], int] = {}
+    for starts in edges.values():
+        for end in starts:
+            incoming[end] = incoming.get(end, 0) + 1
+    if any(len(ends) != 1 or incoming.get(vertex) != 1 for vertex, ends in edges.items()):
+        raise MapLifecycleError("saved occupancy rings touch at a vertex or edge")
+    loops: list[list[list[float]]] = []
+    while edges:
+        start = next(iter(edges))
+        current, loop = start, [start]
+        while True:
+            choices = edges.get(current)
+            if not choices:
+                raise MapLifecycleError("saved occupancy boundary is not a closed polygon")
+            following = choices.pop()
+            if not choices:
+                del edges[current]
+            current = following
+            if current == start:
+                break
+            loop.append(current)
+        if len(loop) < 3:
+            raise MapLifecycleError("saved occupancy boundary is degenerate")
+        if len(set(loop)) != len(loop):
+            raise MapLifecycleError("saved occupancy boundary self-intersects")
+        compact = [
+            point for index, point in enumerate(loop)
+            if (point[0] - loop[index - 1][0]) * (loop[(index + 1) % len(loop)][1] - point[1])
+            != (point[1] - loop[index - 1][1]) * (loop[(index + 1) % len(loop)][0] - point[0])
+        ]
+        if len(compact) < 3:
+            raise MapLifecycleError("saved occupancy boundary is degenerate")
+        loops.append([[origin_x + x * resolution, origin_y + y * resolution] for x, y in compact])
+    if len(loops) > MAXIMUM_COVERAGE_RECTANGLES:
+        raise MapLifecycleError("saved occupancy free space is too fragmented for coverage planning")
+    vertices: set[tuple[float, float]] = set()
+    for loop in loops:
+        current = {tuple(point) for point in loop}
+        if vertices.intersection(current):
+            raise MapLifecycleError("saved occupancy rings touch at a vertex or edge")
+        vertices.update(current)
+    return loops
+
+
+def _signed_area(points: Sequence[Sequence[float]]) -> float:
+    return sum(
+        point[0] * following[1] - following[0] * point[1]
+        for point, following in zip(points, (*points[1:], points[0]))
+    ) / 2.0
+
+
+def _dilate_square(mask: Sequence[Sequence[bool]], radius: int) -> list[list[bool]]:
+    """Conservatively inflate occupied/unknown cells in O(width*height)."""
+    height, width = len(mask), len(mask[0])
+    prefix = [[0] * (width + 1) for _ in range(height + 1)]
+    for row, values in enumerate(mask, start=1):
+        running = 0
+        for column, value in enumerate(values, start=1):
+            running += int(value)
+            prefix[row][column] = prefix[row - 1][column] + running
+    result = [[False] * width for _ in range(height)]
+    for row in range(height):
+        top, bottom = max(0, row - radius), min(height, row + radius + 1)
+        for column in range(width):
+            left, right = max(0, column - radius), min(width, column + radius + 1)
+            result[row][column] = (
+                prefix[bottom][right] - prefix[top][right]
+                - prefix[bottom][left] + prefix[top][left]
+            ) > 0
+    return result
+
+
+def materialize_saved_map_coverage_geometry(
+    artifact_directory: str | Path,
+    contract: CampusMapContract,
+    *,
+    obstacle_inflation_m: float = FORMAL_COVERAGE_STATIC_OBSTACLE_INFLATION_M,
+) -> dict[str, Path]:
+    """Derive reachable coverage cells only from the saved SLAM occupancy map."""
+    root = Path(artifact_directory)
+    if not math.isfinite(obstacle_inflation_m) or obstacle_inflation_m <= 0.0:
+        raise MapLifecycleError("coverage obstacle inflation must be positive and finite")
+    occupancy_path = _local_artifact_path(root, "occupancy.yaml", label="occupancy map")
+    mission_path = _local_artifact_path(root, "mission_geometry.yaml", label="mission geometry")
+    try:
+        occupancy_bytes = _read_artifact_snapshot(root, occupancy_path.name, label="occupancy map")
+        mission_bytes = _read_artifact_snapshot(root, mission_path.name, label="mission geometry")
+        metadata = yaml.safe_load(occupancy_bytes)
+        mission = yaml.safe_load(mission_bytes)
+    except (OSError, yaml.YAMLError) as exc:
+        raise MapLifecycleError("saved occupancy or mission geometry is missing") from exc
+    if not isinstance(metadata, dict) or not isinstance(mission, dict):
+        raise MapLifecycleError("saved occupancy or mission geometry is invalid")
+    image_name = _artifact_basename(metadata.get("image"), label="occupancy image")
+    if image_name != "occupancy.pgm":
+        raise MapLifecycleError("formal saved map must use occupancy.pgm")
+    try:
+        resolution = float(metadata["resolution"])
+        origin_x, origin_y, origin_yaw = (float(value) for value in metadata["origin"])
+        occupied_threshold = float(metadata.get("occupied_thresh", 0.65))
+        free_threshold = float(metadata.get("free_thresh", 0.25))
+        negate = int(metadata.get("negate", 0))
+    except (KeyError, TypeError, ValueError) as exc:
+        raise MapLifecycleError("saved occupancy metadata is invalid") from exc
+    if (
+        not 0.0 < resolution <= MAXIMUM_SAVED_MAP_RESOLUTION_M
+        or not all(math.isfinite(value) for value in (origin_x, origin_y, origin_yaw, occupied_threshold, free_threshold))
+        or not 0.0 <= free_threshold < occupied_threshold <= 1.0
+        or negate not in {0, 1}
+        or metadata.get("mode", "trinary") != "trinary"
+        or abs(origin_yaw) > 1e-9
+    ):
+        raise MapLifecycleError("saved occupancy metadata is outside the formal contract")
+    if mission.get("outer_polygon") != [list(point) for point in contract.geofence]:
+        raise MapLifecycleError("saved-map mission geofence differs from the formal contract")
+    truth = mission.get("truth_boundary")
+    if not isinstance(truth, dict) or any(
+        truth.get(name) is not False
+        for name in ("world_geometry_used_for_product_map", "evaluator_truth_used", "dirt_truth_used")
+    ):
+        raise MapLifecycleError("saved-map coverage geometry violates truth isolation")
+    image_bytes = _read_artifact_snapshot(root, image_name, label="occupancy image")
+    width, height, pixels = parse_binary_pgm(image_bytes)
+    blocked = [[False] * width for _ in range(height)]
+    for row in range(height):
+        y = origin_y + (row + 0.5) * resolution
+        for column in range(width):
+            x = origin_x + (column + 0.5) * resolution
+            occupancy = pixels[row][column] / 255.0 if negate else (255 - pixels[row][column]) / 255.0
+            blocked[row][column] = (
+                not _inside(x, y, contract.geofence)
+                or occupancy >= free_threshold
+            )
+    inflation_cells = math.ceil(obstacle_inflation_m / resolution)
+    inflated = _dilate_square(blocked, inflation_cells)
+    # Occupancy outside the exported PGM is unknown/blocked, never free margin.
+    for row in range(height):
+        for column in range(width):
+            if row < inflation_cells or column < inflation_cells or row >= height - inflation_cells or column >= width - inflation_cells:
+                inflated[row][column] = True
+    start_column = math.floor((-origin_x) / resolution)
+    start_row = math.floor((-origin_y) / resolution)
+    if not (0 <= start_row < height and 0 <= start_column < width) or inflated[start_row][start_column]:
+        raise MapLifecycleError("fixed saved-map start is not reachable after obstacle inflation")
+    reachable = [[False] * width for _ in range(height)]
+    pending = [(start_row, start_column)]
+    reachable[start_row][start_column] = True
+    while pending:
+        row, column = pending.pop()
+        for next_row, next_column in ((row - 1, column), (row + 1, column), (row, column - 1), (row, column + 1)):
+            if (
+                0 <= next_row < height and 0 <= next_column < width
+                and not inflated[next_row][next_column] and not reachable[next_row][next_column]
+            ):
+                reachable[next_row][next_column] = True
+                pending.append((next_row, next_column))
+    reachable_cells = sum(sum(row) for row in reachable)
+    if reachable_cells == 0:
+        raise MapLifecycleError("saved occupancy has no reachable cleanable free space")
+    free_space_path = _local_artifact_path(
+        root, "coverage_free_space.pgm", label="coverage free-space map", must_exist=False
+    )
+    free_space_bytes = _encode_binary_pgm(
+        [bytearray(255 if value else 0 for value in row) for row in reachable]
+    )
+    free_space_path.write_bytes(free_space_bytes)
+    # Collision/telemetry consumers treat every keepout as solid, so use an
+    # exact disjoint raster decomposition rather than complement boundary rings.
+    keepouts = _rectangles_from_mask(
+        [[_inside(origin_x + (column + 0.5) * resolution, origin_y + (row + 0.5) * resolution, contract.geofence) and not reachable[row][column]
+          for column in range(width)] for row in range(height)],
+        resolution=resolution, origin_x=origin_x, origin_y=origin_y,
+    )
+    reachable_loops = _mask_loops(reachable, resolution=resolution, origin_x=origin_x, origin_y=origin_y)
+    planning_outer = [loop for loop in reachable_loops if _signed_area(loop) > 0.0]
+    planning_holes = [loop for loop in reachable_loops if _signed_area(loop) < 0.0]
+    if len(planning_outer) != 1 or len(planning_outer) + len(planning_holes) != len(reachable_loops):
+        raise MapLifecycleError("reachable saved occupancy is not one valid outer region with holes")
+    if any(
+        not _inside(
+            sum(point[0] for point in hole) / len(hole),
+            sum(point[1] for point in hole) / len(hole),
+            planning_outer[0],
+        )
+        for hole in planning_holes
+    ):
+        raise MapLifecycleError("reachable saved occupancy hole is outside its planning outer region")
+    geometry_path = _local_artifact_path(
+        root, "coverage_geometry.yaml", label="coverage geometry", must_exist=False
+    )
+    geometry = {
+        "schema_version": 1,
+        "source": "saved_slam_occupancy_only",
+        "occupancy_map": occupancy_path.name,
+        "occupancy_map_sha256": hashlib.sha256(occupancy_bytes).hexdigest(),
+        "occupancy_image": image_name,
+        "occupancy_image_sha256": hashlib.sha256(image_bytes).hexdigest(),
+        "free_space_map": free_space_path.name,
+        "free_space_map_sha256": hashlib.sha256(free_space_bytes).hexdigest(),
+        "resolution_m": resolution,
+        "origin": [origin_x, origin_y, origin_yaw],
+        "obstacle_inflation_m": obstacle_inflation_m,
+        "planning_clearance_m": obstacle_inflation_m,
+        "planning_clearance_preapplied": True,
+        "planning_clearance_derivation": "ceil_cm(hypot(0.620,0.695)+0.10+1.32/2)",
+        "reachable_cleanable_cells": reachable_cells,
+        "reachable_cleanable_area_m2": reachable_cells * resolution * resolution,
+        "planning_polygons": reachable_loops,
+        "planning_outer_polygon": planning_outer[0],
+        "planning_hole_polygons": planning_holes,
+        "keepout_polygons": keepouts,
+        "world_truth_used_for_product_map": False,
+    }
+    geometry_bytes = yaml.safe_dump(geometry, sort_keys=False).encode("utf-8")
+    geometry_path.write_bytes(geometry_bytes)
+    mission.update({
+        "keepout_polygons": keepouts,
+        "exclusion_polygons": keepouts,
+        "saved_occupancy_coverage": {
+            "geometry": geometry_path.name,
+            "sha256": hashlib.sha256(geometry_bytes).hexdigest(),
+            "free_space_map": free_space_path.name,
+            "source": "saved_slam_occupancy_only",
+            "planning_clearance_preapplied": True,
+        },
+    })
+    mission_path.write_bytes(yaml.safe_dump(mission, sort_keys=False).encode("utf-8"))
+    return {"coverage_geometry": geometry_path, "coverage_free_space": free_space_path, "mission_geometry": mission_path}
 
 
 def prepare_public_lifecycle_artifacts(
@@ -402,6 +908,7 @@ def prepare_public_lifecycle_artifacts(
         "physical_steering_claim": False,
         "outer_polygon": [list(point) for point in contract.geofence],
         "keepout_polygons": [],
+        "headland": {"enabled": True, "width_m": FORMAL_COVERAGE_STATIC_OBSTACLE_INFLATION_M},
         "vehicle_start_pose_map": {"x_m": 0.0, "y_m": 0.0, "yaw_rad": 0.0},
         "source_fixed_start_pose": list(contract.fixed_start_source),
         "truth_boundary": {
@@ -458,14 +965,114 @@ def _artifact_basename(value: Any, *, label: str) -> str:
     return value
 
 
+def _local_artifact_path(
+    root: Path, value: Any, *, label: str, must_exist: bool = True
+) -> Path:
+    """Resolve one fixed sibling without allowing links or path traversal."""
+    name = _artifact_basename(value, label=label)
+    candidate = root / name
+    if (
+        candidate.is_symlink()
+        or (must_exist and not candidate.is_file())
+        or candidate.resolve(strict=False).parent != root.resolve()
+    ):
+        raise MapLifecycleError(f"{label} must be a regular local artifact")
+    return candidate
+
+
+def _read_artifact_snapshot(root: Path, value: Any, *, label: str) -> bytes:
+    """Read one checked artifact exactly once for both parsing and hashing."""
+    try:
+        return _local_artifact_path(root, value, label=label).read_bytes()
+    except OSError as exc:
+        raise MapLifecycleError(f"{label} is missing or unreadable") from exc
+
+
+def _validate_timestamp_paired_gnss_odometry(manifest: dict[str, Any]) -> None:
+    """Require sealed evidence for the live first-map localization gate."""
+    try:
+        tolerance_m = float(manifest["gnss_odometry_tolerance_m"])
+        maximum_skew_sec = float(manifest["gnss_odometry_pair_max_skew_sec"])
+        recorded_skew_sec = float(manifest["gnss_odometry_stamp_delta_sec"])
+        recorded_disagreement_m = float(manifest["gnss_odometry_disagreement_m"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise MapLifecycleError("saved map lacks GNSS/odometry gate evidence") from exc
+    if (
+        manifest.get("gnss_odometry_pairing_status") != "time_aligned"
+        or not all(math.isfinite(value) for value in (
+            tolerance_m, maximum_skew_sec, recorded_skew_sec, recorded_disagreement_m,
+        ))
+        or not 0.0 < tolerance_m <= 2.0
+        or not 0.0 < maximum_skew_sec <= 0.10
+        or not 0.0 <= recorded_skew_sec <= maximum_skew_sec
+        or not 0.0 <= recorded_disagreement_m <= tolerance_m
+    ):
+        raise MapLifecycleError("saved map GNSS/odometry gate evidence is outside the formal contract")
+
+    def sample(
+        name: str, topic: str, child_frame_id: str
+    ) -> tuple[int, tuple[float, float]]:
+        value = manifest.get(name)
+        if not isinstance(value, dict):
+            raise MapLifecycleError("saved map GNSS/odometry sample is missing")
+        stamp_ns = value.get("stamp_ns")
+        stamp_sec = value.get("stamp_sec")
+        xy = value.get("xy_m")
+        covariance = value.get("pose_covariance_xy_m2")
+        if (
+            type(stamp_ns) is not int
+            or stamp_ns <= 0
+            or value.get("source_topic") != topic
+            or value.get("frame_id") != "odom"
+            or value.get("child_frame_id") != child_frame_id
+            or not isinstance(xy, list)
+            or len(xy) != 2
+            or not isinstance(covariance, list)
+            or len(covariance) != 2
+        ):
+            raise MapLifecycleError("saved map GNSS/odometry sample violates the frame contract")
+        try:
+            stamp_sec_value = float(stamp_sec)
+            x, y = (float(component) for component in xy)
+            covariance_x, covariance_y = (float(component) for component in covariance)
+        except (TypeError, ValueError) as exc:
+            raise MapLifecycleError("saved map GNSS/odometry sample is invalid") from exc
+        if (
+            not all(math.isfinite(component) for component in (
+                stamp_sec_value, x, y, covariance_x, covariance_y,
+            ))
+            or covariance_x < 0.0
+            or covariance_y < 0.0
+            or not math.isclose(stamp_sec_value, stamp_ns / 1_000_000_000.0, abs_tol=1e-3)
+        ):
+            raise MapLifecycleError("saved map GNSS/odometry sample is invalid")
+        return stamp_ns, (x, y)
+
+    odom_stamp_ns, odom_xy = sample(
+        "gnss_odometry_odom_sample", "/odom", "base_footprint"
+    )
+    gps_stamp_ns, gps_xy = sample(
+        "gnss_odometry_gps_sample", "/odometry/gps", ""
+    )
+    computed_skew_sec = abs(odom_stamp_ns - gps_stamp_ns) / 1_000_000_000.0
+    computed_disagreement_m = math.dist(odom_xy, gps_xy)
+    if (
+        computed_skew_sec > maximum_skew_sec
+        or not math.isclose(recorded_skew_sec, computed_skew_sec, abs_tol=1e-12)
+        or not math.isclose(recorded_disagreement_m, computed_disagreement_m, abs_tol=1e-12)
+    ):
+        raise MapLifecycleError("saved map GNSS/odometry evidence does not match its samples")
+
+
 def validate_saved_map_artifact(
     artifact_directory: str | Path, contract: CampusMapContract
 ) -> dict[str, Any]:
     root = Path(artifact_directory)
-    manifest_path = root / "map_lifecycle_manifest.json"
     try:
-        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+        manifest = json.loads(_read_artifact_snapshot(
+            root, "map_lifecycle_manifest.json", label="saved-map lifecycle manifest"
+        ))
+    except (MapLifecycleError, json.JSONDecodeError) as exc:
         raise MapLifecycleError("saved-map lifecycle manifest is missing or invalid") from exc
     try:
         observed_fraction = float(manifest.get("observed_fraction", 0.0))
@@ -474,7 +1081,9 @@ def validate_saved_map_artifact(
     except (TypeError, ValueError) as exc:
         raise MapLifecycleError("saved map has invalid quality metadata") from exc
     if (
-        manifest.get("schema_version") != 1
+        # Schema 1 predates timestamp-paired localization evidence and is
+        # intentionally incompatible with the formal first-map handoff.
+        manifest.get("schema_version") != 2
         or manifest.get("status") != "ready_for_localization_cleaning"
         or manifest.get("episode_id") != contract.episode_id
         or manifest.get("map_id") != contract.map_id
@@ -490,24 +1099,13 @@ def validate_saved_map_artifact(
         or manifest.get("mapping_ignored_dirt") is not True
     ):
         raise MapLifecycleError("saved map did not pass the formal lifecycle gate")
+    _validate_timestamp_paired_gnss_odometry(manifest)
     occupancy_name = _artifact_basename(
         manifest.get("occupancy_map"), label="occupancy map"
     )
     if occupancy_name != "occupancy.yaml":
         raise MapLifecycleError("formal saved map must use occupancy.yaml")
-    try:
-        occupancy_metadata = yaml.safe_load(
-            (root / occupancy_name).read_text(encoding="utf-8")
-        )
-    except (OSError, yaml.YAMLError) as exc:
-        raise MapLifecycleError("saved occupancy metadata is missing or invalid") from exc
-    if not isinstance(occupancy_metadata, dict):
-        raise MapLifecycleError("saved occupancy metadata is invalid")
-    image_name = _artifact_basename(
-        occupancy_metadata.get("image"), label="occupancy image"
-    )
-    if image_name != "occupancy.pgm":
-        raise MapLifecycleError("formal saved map must use occupancy.pgm")
+    image_name = "occupancy.pgm"
     required_files = {
         occupancy_name,
         image_name,
@@ -516,17 +1114,124 @@ def validate_saved_map_artifact(
     hashes = manifest.get("sha256")
     if not isinstance(hashes, dict) or set(hashes) != required_files:
         raise MapLifecycleError("saved map hash seal is incomplete or contains extras")
-    resolved_root = root.resolve()
+    snapshots: dict[str, bytes] = {}
     for filename, expected in hashes.items():
-        _artifact_basename(filename, label="hashed artifact")
-        candidate = root / filename
-        if (
-            not isinstance(expected, str)
-            or len(expected) != 64
-            or candidate.is_symlink()
-            or not candidate.is_file()
-            or candidate.resolve().parent != resolved_root
-            or sha256(candidate) != expected
-        ):
+        try:
+            snapshot = _read_artifact_snapshot(root, filename, label="hashed artifact")
+        except MapLifecycleError as exc:
+            raise MapLifecycleError(f"saved map integrity check failed: {filename}") from exc
+        if not isinstance(expected, str) or hashlib.sha256(snapshot).hexdigest() != expected:
             raise MapLifecycleError(f"saved map integrity check failed: {filename}")
+        snapshots[filename] = snapshot
+    try:
+        occupancy_metadata = yaml.safe_load(snapshots[occupancy_name])
+    except yaml.YAMLError as exc:
+        raise MapLifecycleError("saved occupancy metadata is missing or invalid") from exc
+    if not isinstance(occupancy_metadata, dict):
+        raise MapLifecycleError("saved occupancy metadata is invalid")
+    sealed_image_name = _artifact_basename(
+        occupancy_metadata.get("image"), label="occupancy image"
+    )
+    if sealed_image_name != image_name:
+        raise MapLifecycleError("formal saved map must use occupancy.pgm")
+    pgm_observation = assess_saved_pgm_observation(
+        occupancy_metadata,
+        snapshots[image_name],
+        geofence=contract.geofence,
+        threshold=quality_threshold,
+    )
+    if (
+        not pgm_observation.passed
+        or not math.isclose(observed_fraction, pgm_observation.observed_fraction, abs_tol=1e-12)
+        or manifest.get("saved_pgm_observed_fraction") != pgm_observation.observed_fraction
+        or manifest.get("saved_pgm_observed_cells") != pgm_observation.observed_cells
+        or manifest.get("saved_pgm_field_cells") != pgm_observation.field_cells
+    ):
+        raise MapLifecycleError("saved occupancy PGM observation does not match the lifecycle manifest")
+    try:
+        mission = yaml.safe_load(snapshots["mission_geometry.yaml"])
+        coverage = mission["saved_occupancy_coverage"]
+        geometry_name = _artifact_basename(coverage["geometry"], label="coverage geometry")
+        free_name = _artifact_basename(coverage["free_space_map"], label="coverage free-space map")
+        geometry = yaml.safe_load(snapshots[geometry_name])
+        _, _, free_rows = parse_binary_pgm(snapshots[free_name])
+    except (yaml.YAMLError, KeyError, TypeError, MapLifecycleError) as exc:
+        raise MapLifecycleError("saved occupancy coverage geometry is missing or invalid") from exc
+    free_cell_count = sum(pixel == 255 for row in free_rows for pixel in row)
+    binary_free_map = all(pixel in (0, 255) for row in free_rows for pixel in row)
+    if (
+        geometry_name != "coverage_geometry.yaml"
+        or free_name != "coverage_free_space.pgm"
+        or coverage.get("sha256") != hashes.get(geometry_name)
+        or not isinstance(geometry, dict)
+        or geometry.get("source") != "saved_slam_occupancy_only"
+        or geometry.get("occupancy_map") != occupancy_name
+        or geometry.get("occupancy_image") != image_name
+        or geometry.get("occupancy_map_sha256") != hashes.get(occupancy_name)
+        or geometry.get("occupancy_image_sha256") != hashes.get(image_name)
+        or geometry.get("free_space_map") != free_name
+        or geometry.get("free_space_map_sha256") != hashes.get(free_name)
+        or geometry.get("planning_clearance_m") != FORMAL_COVERAGE_STATIC_OBSTACLE_INFLATION_M
+        or geometry.get("obstacle_inflation_m") != FORMAL_COVERAGE_STATIC_OBSTACLE_INFLATION_M
+        or geometry.get("planning_clearance_preapplied") is not True
+        or coverage.get("planning_clearance_preapplied") is not True
+        or not isinstance(geometry.get("planning_clearance_derivation"), str)
+        or mission.get("headland") != {"enabled": True, "width_m": FORMAL_COVERAGE_STATIC_OBSTACLE_INFLATION_M}
+        or geometry.get("world_truth_used_for_product_map") is not False
+        or mission.get("keepout_polygons") != geometry.get("keepout_polygons")
+        or mission.get("exclusion_polygons") != geometry.get("keepout_polygons")
+        or not isinstance(geometry.get("planning_outer_polygon"), list)
+        or len(geometry["planning_outer_polygon"]) < 3
+        or not isinstance(geometry.get("planning_hole_polygons"), list)
+        or not isinstance(geometry.get("reachable_cleanable_cells"), int)
+        or geometry["reachable_cleanable_cells"] <= 0
+        or not binary_free_map
+        or free_cell_count != geometry["reachable_cleanable_cells"]
+    ):
+        raise MapLifecycleError("saved occupancy coverage geometry violates the formal contract")
+    return manifest
+
+
+def validate_saved_map_cleaning_consumer_bundle(
+    artifact_directory: str | Path, contract: CampusMapContract
+) -> dict[str, Any]:
+    """Bind the map-server and coverage-planner inputs to one sealed reload."""
+    root = Path(artifact_directory)
+    manifest = validate_saved_map_artifact(root, contract)
+    hashes = manifest["sha256"]
+    try:
+        snapshots = {
+            name: _read_artifact_snapshot(root, name, label="consumer reload artifact")
+            for name in ("occupancy.yaml", "occupancy.pgm", "mission_geometry.yaml", "coverage_geometry.yaml", "coverage_free_space.pgm")
+        }
+        if any(sha256_bytes != hashes[name] for name, sha256_bytes in (
+            (name, hashlib.sha256(snapshot).hexdigest()) for name, snapshot in snapshots.items()
+        )):
+            raise MapLifecycleError("consumer reload artifact changed after validation")
+        metadata = yaml.safe_load(snapshots["occupancy.yaml"])
+        mission = yaml.safe_load(snapshots["mission_geometry.yaml"])
+        geometry = yaml.safe_load(snapshots["coverage_geometry.yaml"])
+        width, height, _ = parse_binary_pgm(snapshots["occupancy.pgm"])
+        free_width, free_height, _ = parse_binary_pgm(snapshots["coverage_free_space.pgm"])
+        resolution = float(metadata["resolution"])
+        origin = tuple(float(value) for value in metadata["origin"])
+        geometry_resolution = float(geometry["resolution_m"])
+        geometry_origin = tuple(float(value) for value in geometry["origin"])
+    except (MapLifecycleError, KeyError, TypeError, ValueError, yaml.YAMLError) as exc:
+        raise MapLifecycleError("saved-map consumer reload inputs are invalid") from exc
+    if (
+        not isinstance(metadata, dict)
+        or not isinstance(mission, dict)
+        or not isinstance(geometry, dict)
+        or mission.get("outer_polygon") != [list(point) for point in contract.geofence]
+        or len(origin) != 3
+        or len(geometry_origin) != 3
+        or width != free_width
+        or height != free_height
+        or not math.isclose(resolution, geometry_resolution, abs_tol=1e-12)
+        or any(not math.isclose(left, right, abs_tol=1e-12) for left, right in zip(origin, geometry_origin))
+        or geometry.get("occupancy_map_sha256") != hashes["occupancy.yaml"]
+        or geometry.get("occupancy_image_sha256") != hashes["occupancy.pgm"]
+    ):
+        raise MapLifecycleError("saved-map consumer reload inputs disagree")
     return manifest

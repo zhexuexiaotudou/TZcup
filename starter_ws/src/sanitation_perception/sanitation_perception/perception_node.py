@@ -4,6 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 import time
+from collections import deque, Counter
 
 
 def main() -> None:
@@ -20,6 +21,7 @@ def main() -> None:
     from sanitation_perception.projection import ProjectionError, project_pixel_to_map, robust_depth
     from sanitation_perception.registry import GarbageRegistry
     from sanitation_perception.tracking import TargetTracker
+    from sanitation_perception.competition_policy import thresholds, validate_context, in_ground_roi, publishable, stamp
     from sanitation_perception_interfaces.msg import GarbageTarget, GarbageTargetArray
     from sensor_msgs.msg import CameraInfo, Image
     from std_msgs.msg import String
@@ -51,6 +53,23 @@ def main() -> None:
             self.declare_parameter("model_id", "stage5a_synthetic_color_model_v1")
             self.declare_parameter("model_scope", "synthetic_color_domain_only")
             self.declare_parameter("learned_weights", False)
+            self.declare_parameter("publish_tentative_targets", False)
+            self.declare_parameter("rgbd_max_skew_s", 0.03)
+            self.declare_parameter("ground_roi_enabled", True)
+            self.declare_parameter("ground_roi_bounds", [0.4, 3.0, -0.8, 0.8, -0.08, 0.30])
+            self.declare_parameter("class_thresholds_json", json.dumps({c: 0.8 for c in class_order[1:]}))
+            self.declare_parameter("minimum_component_pixels", 24)
+            self.thresholds = thresholds(str(self.get_parameter("class_thresholds_json").value), class_order[1:])
+            self.roi_bounds = list(self.get_parameter("ground_roi_bounds").value)
+            in_ground_roi([0., 0., 0.], self.roi_bounds)  # validate bounds before subscribing
+            self.minimum_pixels = int(self.get_parameter("minimum_component_pixels").value)
+            if self.minimum_pixels < 1:
+                raise ValueError("minimum_component_pixels must be positive")
+            self.rejection_counts = Counter()
+            self.depth_buffer = deque(maxlen=40)
+            self.pending_image = None
+            self.last_source_stamp = -1.0
+            self.track_state_counts = {}
             backend = str(self.get_parameter("backend").value)
             model_path = Path(str(self.get_parameter("model_path").value))
             self.model_id = str(self.get_parameter("model_id").value)
@@ -80,11 +99,13 @@ def main() -> None:
             self.frame_count = 0
             self.last_latency_ms = None
             self.last_detection_count = 0
+            self.last_raw_detection_count = 0
             self.last_map_target_count = 0
             self.last_projection_error = None
             self.last_inference_monotonic = 0.0
             self.segmentation_publisher = self.create_publisher(Image, "/perception/garbage/segmentation", 10)
             self.detection2d_publisher = self.create_publisher(Detection2DArray, "/perception/garbage/detections_2d", 10)
+            self.raw_detection2d_publisher = self.create_publisher(Detection2DArray, "/perception/garbage/raw_detections_2d", 10)
             self.detection3d_publisher = self.create_publisher(Detection3DArray, "/perception/garbage/detections_3d", 10)
             self.target_publisher = self.create_publisher(GarbageTargetArray, "/perception/garbage/targets", 10)
             self.diagnostics_publisher = self.create_publisher(String, "/perception/garbage/diagnostics", 10)
@@ -95,9 +116,14 @@ def main() -> None:
 
         def on_camera_info(self, message):
             self.camera_info = message
+            if self.pending_image is not None:
+                self.on_image(self.pending_image)
 
         def on_depth(self, message):
             self.depth = message
+            self.depth_buffer.append(message)
+            if self.pending_image is not None:
+                self.on_image(self.pending_image)
 
         @staticmethod
         def transform_matrix(transform):
@@ -120,15 +146,22 @@ def main() -> None:
             if self.camera_info.header.frame_id != image_message.header.frame_id:
                 raise ProjectionError("camera_info frame does not match RGB frame")
             depth = self.bridge.imgmsg_to_cv2(self.depth, desired_encoding="passthrough")
+            if self.depth.encoding == "16UC1":
+                depth = depth.astype(np.float32) * 0.001
             if depth.shape[:2] != labels.shape:
-                depth = cv2.resize(depth, (labels.shape[1], labels.shape[0]), interpolation=cv2.INTER_NEAREST)
+                raise ProjectionError("registered depth shape mismatch")
             try:
+                image_time = rclpy.time.Time.from_msg(image_message.header.stamp)
                 transform = self.tf_buffer.lookup_transform(
-                    "map", image_message.header.frame_id, rclpy.time.Time()
+                    "map", image_message.header.frame_id, image_time
+                )
+                base_transform = self.tf_buffer.lookup_transform(
+                    "base_footprint", image_message.header.frame_id, image_time
                 )
             except TransformException as exc:
                 raise ProjectionError(f"map transform unavailable: {exc}") from exc
             transform_map_camera = self.transform_matrix(transform)
+            transform_base_camera = self.transform_matrix(base_transform)
             camera = {
                 "fx": self.camera_info.k[0], "fy": self.camera_info.k[4],
                 "cx": self.camera_info.k[2], "cy": self.camera_info.k[5],
@@ -142,25 +175,34 @@ def main() -> None:
                 component_count, components, stats, centroids = cv2.connectedComponentsWithStats(mask, 8)
                 if component_count <= 1:
                     continue
-                component = max(range(1, component_count), key=lambda index: int(stats[index, cv2.CC_STAT_AREA]))
-                area = int(stats[component, cv2.CC_STAT_AREA])
-                if area < 24:
-                    continue
-                x = int(stats[component, cv2.CC_STAT_LEFT])
-                y = int(stats[component, cv2.CC_STAT_TOP])
-                width = int(stats[component, cv2.CC_STAT_WIDTH])
-                height = int(stats[component, cv2.CC_STAT_HEIGHT])
-                component_mask = components == component
-                try:
-                    depth_m = robust_depth(depth[component_mask].reshape(-1))
-                except ProjectionError:
-                    continue
-                u, v = (float(value) for value in centroids[component])
-                xyz, covariance = project_pixel_to_map(u, v, depth_m, camera, transform_map_camera)
-                model_mask = cv2.resize(component_mask.astype(np.uint8), (model_width, model_height), interpolation=cv2.INTER_NEAREST).astype(bool)
-                confidence = float(probability[class_index][model_mask].mean()) if model_mask.any() else 0.0
-                entry = self.entries_by_class[class_id]
-                detections.append({
+                for component in range(1, component_count):
+                    area = int(stats[component, cv2.CC_STAT_AREA])
+                    if area < self.minimum_pixels:
+                        self.rejection_counts["component_pixels"] += 1
+                        continue
+                    x = int(stats[component, cv2.CC_STAT_LEFT])
+                    y = int(stats[component, cv2.CC_STAT_TOP])
+                    width = int(stats[component, cv2.CC_STAT_WIDTH])
+                    height = int(stats[component, cv2.CC_STAT_HEIGHT])
+                    component_mask = components == component
+                    model_mask = cv2.resize(component_mask.astype(np.uint8), (model_width, model_height), interpolation=cv2.INTER_NEAREST).astype(bool)
+                    confidence = float(probability[class_index][model_mask].mean()) if model_mask.any() else 0.0
+                    if not np.isfinite(confidence) or confidence < self.thresholds[class_id]:
+                        self.rejection_counts["confidence:" + class_id] += 1
+                        continue
+                    try:
+                        depth_m = robust_depth(depth[component_mask].reshape(-1))
+                    except ProjectionError:
+                        self.rejection_counts["depth"] += 1
+                        continue
+                    u, v = (float(value) for value in centroids[component])
+                    xyz_base, _ = project_pixel_to_map(u, v, depth_m, camera, transform_base_camera)
+                    if self.get_parameter("ground_roi_enabled").value and not in_ground_roi(xyz_base, self.roi_bounds):
+                        self.rejection_counts["ground_roi"] += 1
+                        continue
+                    xyz, covariance = project_pixel_to_map(u, v, depth_m, camera, transform_map_camera)
+                    entry = self.entries_by_class[class_id]
+                    detections.append({
                     "class_id": class_id,
                     "target_type": entry.target_type,
                     "cleaning_policy": entry.policy,
@@ -171,13 +213,30 @@ def main() -> None:
                     "bbox": (x, y, width, height),
                     "size_m": entry.size_m,
                     "source_backend": "onnxruntime",
-                })
+                    })
             return detections
 
         def on_image(self, message):
+            if stamp(message) <= self.last_source_stamp:
+                return
+            self.pending_image = message
             now = time.monotonic()
             if now - self.last_inference_monotonic < 0.5:
                 return
+            if not self.depth_buffer or self.camera_info is None:
+                return
+            try:
+                self.depth = min(self.depth_buffer, key=lambda d: abs(stamp(d)-stamp(message)))
+                validate_context(message, self.depth, self.camera_info, float(self.get_parameter("rgbd_max_skew_s").value))
+            except ValueError as exc:
+                self.rejection_counts["rgbd_context"] += 1
+                self.last_projection_error = str(exc)
+                empty = GarbageTargetArray(); empty.header = message.header
+                empty.header.frame_id = "map"; empty.registry_sha256 = self.registry.sha256
+                self.target_publisher.publish(empty)
+                return
+            self.pending_image = None
+            self.last_source_stamp = stamp(message)
             self.last_inference_monotonic = now
             image = self.bridge.imgmsg_to_cv2(message, desired_encoding="rgb8")
             tensor = preprocess_rgb(image)
@@ -189,6 +248,25 @@ def main() -> None:
             segmentation = self.bridge.cv2_to_imgmsg(full_size, encoding="mono8")
             segmentation.header = message.header
             self.segmentation_publisher.publish(segmentation)
+            # Image-only proposals before confidence, depth, ROI and tracking gates.
+            raw = Detection2DArray(); raw.header = message.header
+            shifted = logits[0] - logits[0].max(axis=0, keepdims=True)
+            probability = np.exp(shifted) / np.exp(shifted).sum(axis=0, keepdims=True)
+            for class_index, class_id in enumerate(class_order[1:], 1):
+                count, components, stats, _ = cv2.connectedComponentsWithStats((full_size == class_index).astype(np.uint8), 8)
+                for component in range(1, count):
+                    if int(stats[component, cv2.CC_STAT_AREA]) < self.minimum_pixels:
+                        continue
+                    mask = cv2.resize((components == component).astype(np.uint8), (model_width, model_height), interpolation=cv2.INTER_NEAREST).astype(bool)
+                    confidence = float(probability[class_index][mask].mean()) if mask.any() else 0.0
+                    x, y, width, height = (int(stats[component, k]) for k in (cv2.CC_STAT_LEFT, cv2.CC_STAT_TOP, cv2.CC_STAT_WIDTH, cv2.CC_STAT_HEIGHT))
+                    detection = Detection2D(); detection.header = message.header; detection.id = f"{class_id}:{component}"
+                    detection.bbox.center.position.x = x + width / 2.; detection.bbox.center.position.y = y + height / 2.
+                    detection.bbox.size_x = float(width); detection.bbox.size_y = float(height)
+                    hypothesis = ObjectHypothesisWithPose(); hypothesis.hypothesis.class_id = class_id; hypothesis.hypothesis.score = confidence
+                    detection.results.append(hypothesis); raw.detections.append(detection)
+            self.last_raw_detection_count = len(raw.detections)
+            self.raw_detection2d_publisher.publish(raw)
             try:
                 detections = self.extract_detections(full_size, logits[0], message)
                 self.last_projection_error = None
@@ -196,7 +274,11 @@ def main() -> None:
                 detections = []
                 self.last_projection_error = str(exc)
             tracks = self.tracker.update(detections)
-            active_tracks = [track for track in tracks if track.state not in {"LOST", "REJECTED", "CLEANED"}]
+            self.track_state_counts = dict(Counter(track.state for track in tracks))
+            active_tracks = [track for track in tracks if publishable(track.state, bool(self.get_parameter("publish_tentative_targets").value))]
+            # A missing current transform/input must not republish old tracks.
+            if self.last_projection_error is not None:
+                active_tracks = []
             detections_2d = Detection2DArray(); detections_2d.header = message.header
             detections_3d = Detection3DArray(); detections_3d.header.stamp = message.header.stamp; detections_3d.header.frame_id = "map"
             for index, detection in enumerate(detections):
@@ -264,6 +346,7 @@ def main() -> None:
                 "camera_info_received": self.camera_info is not None,
                 "depth_received": self.depth is not None,
                 "last_detection_count": self.last_detection_count,
+                "last_raw_detection_count": self.last_raw_detection_count,
                 "last_map_target_count": self.last_map_target_count,
                 "map_targets_fail_closed": self.last_projection_error is not None,
                 "map_targets_fail_closed_reason": self.last_projection_error,
@@ -271,6 +354,11 @@ def main() -> None:
                 "ground_truth_control_violation_count": 0,
                 "synthetic_only_model": self.model_scope != "real_domain_validated",
                 "competition_perception_pass": False,
+                "candidate_thresholds": self.thresholds,
+                "publish_tentative_targets": bool(self.get_parameter("publish_tentative_targets").value),
+                "rejection_counts": dict(self.rejection_counts),
+                "track_state_counts": self.track_state_counts,
+                "last_source_stamp_s": self.last_source_stamp,
             }
             self.diagnostics_publisher.publish(String(data=json.dumps(payload, sort_keys=True)))
 

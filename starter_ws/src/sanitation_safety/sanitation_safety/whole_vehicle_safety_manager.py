@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import threading
 import time
 from dataclasses import replace
+from pathlib import Path
 
 import rclpy
 from rclpy._rclpy_pybind11 import RCLError
@@ -38,6 +40,7 @@ from .whole_vehicle_safety_core import (
 from .whole_vehicle_safety_core import VelocityActuatorGate
 from .whole_vehicle_safety_core import WholeVehicleSafetyCore
 from .dry_speed_qualification_core import DrySpeedQualificationState
+from .diagnostic_publish_worker import DiagnosticPublishWorker
 
 
 ARM_STOWED_POSITIONS = {
@@ -48,6 +51,34 @@ ARM_STOWED_POSITIONS = {
     "wrist_2_joint": -1.55,
     "wrist_3_joint": 0.25,
 }
+
+
+def _process_identity() -> dict[str, int | str | None]:
+    """Capture immutable producer identity once for diagnostic correlation."""
+
+    boot_id: str | None = None
+    starttime: int | None = None
+    pgid: int | None = None
+    try:
+        boot_id = Path("/proc/sys/kernel/random/boot_id").read_text().strip()
+    except OSError:
+        pass
+    try:
+        # Field 22 follows the executable name, which may contain spaces.
+        starttime = int(Path("/proc/self/stat").read_text().rsplit(")", 1)[1].split()[19])
+    except (IndexError, OSError, ValueError):
+        pass
+    try:
+        pgid = os.getpgid(0)
+    except OSError:
+        pass
+    return {
+        "pid": os.getpid(),
+        "pgid": pgid,
+        "boot_id": boot_id,
+        "process_starttime_ticks": starttime,
+        "formal_acceptance_session": os.environ.get("FORMAL_ACCEPTANCE_SESSION"),
+    }
 
 
 class WholeVehicleSafetyManager(Node):
@@ -119,6 +150,15 @@ class WholeVehicleSafetyManager(Node):
         self._unsafe_input_state: dict[str, bool] = {}
         self._unsafe_generation = 0
         self._consumed_unsafe_generation = 0
+        self._relay_callback_sequence = 0
+        self._last_relay_callback_value: bool | None = None
+        self._last_relay_callback_monotonic: float | None = None
+        self._last_relay_callback_unsafe_generation = 0
+        self._last_relay_callback_was_unsafe_edge = False
+        self._last_relay_false_callback: dict[str, float | int | bool] | None = None
+        self._last_relay_recovery_callback: dict[str, float | int | bool] | None = None
+        self._relay_diagnostic_cycle_id = 0
+        self._diagnostic_process_identity = _process_identity()
         self._latched_unsafe_reasons: set[SafetyReason] = set()
         self._callback_count = 0
         self._immediate_stop_count = 0
@@ -190,6 +230,16 @@ class WholeVehicleSafetyManager(Node):
             String,
             self._string_parameter("status_json_topic"),
             latest_reliable_qos,
+        )
+        self._relay_cycle_diagnostic_publisher = self.create_publisher(
+            String,
+            "/safety/relay_cycle_diagnostic_json",
+            latest_reliable_qos,
+        )
+        self._relay_diagnostic_worker = DiagnosticPublishWorker(
+            lambda encoded: self._relay_cycle_diagnostic_publisher.publish(
+                String(data=encoded)
+            )
         )
 
         self.create_subscription(
@@ -519,15 +569,34 @@ class WholeVehicleSafetyManager(Node):
     def _on_safety_relay(self, message: Bool) -> None:
         with self._state_lock:
             now = self._record_input_arrival("safety_relay")
+            previous_value = self._last_relay_callback_value
             self._core.set_safety_relay(message.data, now)
             unsafe_edge = self._is_new_unsafe_edge(
                 "safety_relay",
                 not bool(message.data),
                 SafetyReason.SAFETY_RELAY_DISABLED,
             )
+            self._relay_callback_sequence += 1
+            self._last_relay_callback_value = bool(message.data)
+            self._last_relay_callback_monotonic = now
+            self._last_relay_callback_unsafe_generation = self._unsafe_generation
+            self._last_relay_callback_was_unsafe_edge = unsafe_edge
+            callback_record: dict[str, float | int | bool] = {
+                "sequence": self._relay_callback_sequence,
+                "arrival_monotonic_sec": now,
+                "unsafe_generation": self._unsafe_generation,
+                "value": bool(message.data),
+            }
+            if not message.data:
+                self._last_relay_false_callback = callback_record
+            elif previous_value is False:
+                self._last_relay_recovery_callback = callback_record
             trigger_joint_positions = dict(self._joint_positions)
         if unsafe_edge:
-            self._stop_on_unsafe_edge(trigger_joint_positions)
+            self._stop_on_unsafe_edge(
+                trigger_joint_positions,
+                relay_trigger_snapshot=dict(callback_record),
+            )
 
     def _on_bms_fault(self, message: Bool) -> None:
         with self._state_lock:
@@ -590,7 +659,10 @@ class WholeVehicleSafetyManager(Node):
         return new_edge
 
     def _stop_on_unsafe_edge(
-        self, trigger_joint_positions: dict[str, float]
+        self,
+        trigger_joint_positions: dict[str, float],
+        *,
+        relay_trigger_snapshot: dict[str, float | int | bool] | None = None,
     ) -> None:
         """Start trajectory cancellation before any congested output can delay it."""
 
@@ -621,7 +693,10 @@ class WholeVehicleSafetyManager(Node):
                     )
                 )
             )
-        self._publish_immediate_stop(trigger_joint_positions)
+        self._publish_immediate_stop(
+            trigger_joint_positions,
+            relay_trigger_snapshot=relay_trigger_snapshot,
+        )
 
     def _publish_trigger_position_holds(
         self, trigger_joint_positions: dict[str, float]
@@ -687,7 +762,10 @@ class WholeVehicleSafetyManager(Node):
         )
 
     def _publish_immediate_stop(
-        self, trigger_joint_positions: dict[str, float] | None = None
+        self,
+        trigger_joint_positions: dict[str, float] | None = None,
+        *,
+        relay_trigger_snapshot: dict[str, float | int | bool] | None = None,
     ) -> None:
         """Zero motion immediately on a dangerous edge without heavy work."""
 
@@ -728,8 +806,14 @@ class WholeVehicleSafetyManager(Node):
             command.header.stamp = stamp
             command.header.frame_id = self._base_frame_id
             self._base_publisher.publish(command)
+            relay_diagnostic = self._build_immediate_relay_cycle_diagnostic(
+                event="immediate_stop",
+                stamp=stamp,
+                relay_trigger_snapshot=relay_trigger_snapshot,
+            )
             self._brush_publisher.publish(Float64MultiArray(data=[0.0, 0.0, 0.0]))
             self._pump_publisher.publish(Float64MultiArray(data=[0.0]))
+        self._emit_relay_cycle_diagnostic(relay_diagnostic)
 
     def _publish_immediate_base_stop(self) -> None:
         """Zero only the base on a manipulator-motion inhibit edge."""
@@ -742,13 +826,74 @@ class WholeVehicleSafetyManager(Node):
             command.header.stamp = stamp
             command.header.frame_id = self._base_frame_id
             self._base_publisher.publish(command)
+            relay_diagnostic = self._build_immediate_relay_cycle_diagnostic(
+                event="immediate_base_stop",
+                stamp=stamp,
+            )
+        self._emit_relay_cycle_diagnostic(relay_diagnostic)
+
+    def _build_immediate_relay_cycle_diagnostic(
+        self,
+        *,
+        event: str,
+        stamp,
+        relay_trigger_snapshot: dict[str, float | int | bool] | None = None,
+    ) -> dict[str, object]:
+        """Copy zero-base causality without changing the safety decision path."""
+
+        monotonic_now = time.monotonic()
+        ros_time_ns = int(stamp.sec) * 1_000_000_000 + int(stamp.nanosec)
+        with self._state_lock:
+            self._relay_diagnostic_cycle_id += 1
+            payload: dict[str, object] = {
+                "schema_version": 1,
+                "event": event,
+                "producer": self._diagnostic_process_identity,
+                "cycle_id": self._relay_diagnostic_cycle_id,
+                "evaluation_monotonic_sec": monotonic_now,
+                "evaluation_ros_time_ns": ros_time_ns,
+                "status_publish_count": self._status_publish_count,
+                "callback_sequence": self._relay_callback_sequence,
+                "last_callback_value": self._last_relay_callback_value,
+                "last_callback_monotonic_sec": self._last_relay_callback_monotonic,
+                "last_callback_unsafe_generation": self._last_relay_callback_unsafe_generation,
+                "last_callback_was_unsafe_edge": self._last_relay_callback_was_unsafe_edge,
+                "last_false_callback": self._last_relay_false_callback,
+                "last_recovery_callback": self._last_relay_recovery_callback,
+                "consumed_unsafe_generation": self._consumed_unsafe_generation,
+                "base_command_publish": {
+                    "header_stamp_ns": ros_time_ns,
+                    "frame_id": self._base_frame_id,
+                    "linear_x": 0.0,
+                    "angular_z": 0.0,
+                    "effective_permit": False,
+                },
+            }
+            if relay_trigger_snapshot is not None:
+                payload["relay_trigger_snapshot"] = dict(relay_trigger_snapshot)
+            return payload
+
+    def _emit_relay_cycle_diagnostic(self, payload: dict[str, object]) -> None:
+        """Best-effort diagnostic emission cannot affect safety output."""
+
+        self._relay_diagnostic_worker.enqueue(payload)
 
     def _publish(self) -> None:
-        with self._output_lock:
+        self._output_lock.acquire()
+        try:
             now = time.monotonic()
+            evaluation_ros_time_ns = self.get_clock().now().nanoseconds
             with self._state_lock:
                 effective_max_linear_velocity = self._refresh_effective_max_linear_velocity_locked(now)
                 decision, joint_positions = self._evaluate_locked(now)
+                self._relay_diagnostic_cycle_id += 1
+                relay_diagnostic = self._relay_diagnostic_locked(
+                    decision,
+                    cycle_id=self._relay_diagnostic_cycle_id,
+                    evaluation_monotonic_sec=now,
+                    evaluation_ros_time_ns=evaluation_ros_time_ns,
+                    status_publish_count=self._status_publish_count + 1,
+                )
 
             # No state lock crosses a ROS service, clock, or publisher call.
             self._reconcile_controllers(decision.actuators_enabled, now)
@@ -775,6 +920,15 @@ class WholeVehicleSafetyManager(Node):
             command.twist.linear.x = decision.command.linear_x
             command.twist.angular.z = decision.command.angular_z
             self._base_publisher.publish(command)
+            relay_diagnostic["base_command_publish"] = {
+                "header_stamp_ns": (
+                    int(stamp.sec) * 1_000_000_000 + int(stamp.nanosec)
+                ),
+                "frame_id": command.header.frame_id,
+                "linear_x": command.twist.linear.x,
+                "angular_z": command.twist.angular.z,
+                "effective_permit": effective_permit,
+            }
             self._brush_publisher.publish(Float64MultiArray(data=brush_output))
             self._pump_publisher.publish(Float64MultiArray(data=pump_output))
             self._actuator_enable_publisher.publish(Bool(data=effective_permit))
@@ -830,6 +984,12 @@ class WholeVehicleSafetyManager(Node):
             with self._state_lock:
                 self._status_publish_count += 1
                 self._rate_window_status_count += 1
+        finally:
+            self._output_lock.release()
+        # Publish only after the established critical status outputs, outside
+        # the output lock.  This rich stream is diagnostic-only and cannot
+        # turn a publisher exception into a safety-output failure.
+        self._emit_relay_cycle_diagnostic(relay_diagnostic)
 
     def _run_publish_loop(self) -> None:
         try:
@@ -843,7 +1003,7 @@ class WholeVehicleSafetyManager(Node):
                 deadline += period
                 now = time.monotonic()
                 if deadline <= now:
-                    deadline = now + period
+                    deadline = now
         except BaseException as error:  # supervised by the main executor loop
             with self._state_lock:
                 self._publish_thread_error = error
@@ -872,6 +1032,7 @@ class WholeVehicleSafetyManager(Node):
 
     def destroy_node(self):
         self._stop_publish_loop()
+        self._relay_diagnostic_worker.shutdown()
         return super().destroy_node()
 
     def _evaluate_locked(
@@ -936,6 +1097,46 @@ class WholeVehicleSafetyManager(Node):
         for name, arrival in self._input_arrival_monotonic.items():
             metrics[f"{name}_arrival_age_sec"] = max(0.0, now - arrival)
         return metrics
+
+    def _relay_diagnostic_locked(
+        self,
+        decision: SafetyDecision,
+        *,
+        cycle_id: int,
+        evaluation_monotonic_sec: float,
+        evaluation_ros_time_ns: int,
+        status_publish_count: int,
+    ) -> dict[str, object]:
+        """Copy relay causality already observed by callbacks; never alter safety state."""
+
+        return {
+            "schema_version": 1,
+            "event": "periodic_publish",
+            "producer": self._diagnostic_process_identity,
+            "cycle_id": cycle_id,
+            "evaluation_monotonic_sec": evaluation_monotonic_sec,
+            "evaluation_ros_time_ns": evaluation_ros_time_ns,
+            "status_publish_count": status_publish_count,
+            "callback_sequence": self._relay_callback_sequence,
+            "last_callback_value": self._last_relay_callback_value,
+            "last_callback_monotonic_sec": self._last_relay_callback_monotonic,
+            "last_callback_unsafe_generation": self._last_relay_callback_unsafe_generation,
+            "last_callback_was_unsafe_edge": self._last_relay_callback_was_unsafe_edge,
+            "last_false_callback": self._last_relay_false_callback,
+            "last_recovery_callback": self._last_relay_recovery_callback,
+            "consumed_unsafe_generation": self._consumed_unsafe_generation,
+            "same_cycle_decision": {
+                "state": decision.state.value,
+                "active_reasons": [
+                    reason.value for reason in decision.active_reasons
+                ],
+                "base_command_enabled": decision.base_command_enabled,
+                "base_publish_command": {
+                    "linear_x": decision.command.linear_x,
+                    "angular_z": decision.command.angular_z,
+                },
+            },
+        }
 
     def _reconcile_controllers(self, permit: bool, now: float) -> None:
         """Converge controller state, retrying only while it is unconfirmed."""

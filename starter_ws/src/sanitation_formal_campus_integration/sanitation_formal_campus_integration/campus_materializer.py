@@ -19,6 +19,12 @@ from sanitation_formal_campus_integration.contract import (
     formal_motion_values,
     load_yaml_mapping,
 )
+from sanitation_formal_campus_integration.map_lifecycle_core import (
+    FORMAL_CLEANING_LANE_OVERLAP_M,
+    FORMAL_CLEANING_LANE_SPACING_M,
+    FORMAL_CONTINUOUS_CLEANING_BAND_WIDTH_M,
+    FORMAL_DECLARED_CLEANING_ENVELOPE_WIDTH_M,
+)
 
 
 Point = tuple[float, float]
@@ -519,6 +525,10 @@ def materialize_campus_artifacts(
             f"world={len(collisions)}, manifest={expected_count}"
         )
     navigation_footprint, cleaning_width = formal_motion_values(motion_profile_path)
+    if not math.isclose(
+        cleaning_width, FORMAL_DECLARED_CLEANING_ENVELOPE_WIDTH_M, abs_tol=1e-9
+    ):
+        raise IntegrationContractError("formal cleaning declaration must retain the 1.32 m mechanism envelope")
     profile = load_yaml_mapping(motion_profile_path)
     cleaning_footprint_raw = (
         profile.get("motion_footprints", {})
@@ -613,8 +623,14 @@ def materialize_campus_artifacts(
         "kinematic_model": "four_wheel_skid_steer",
         "planning_kinematic_constraint": CANONICAL_PLANNING_KINEMATIC_CONSTRAINT,
         "physical_steering_claim": False,
-        "operation_width_m": cleaning_width,
-        "planning_swath_spacing_m": round(cleaning_width * 0.80, 6),
+        # The 1.32 m declaration spans discontinuous side brushes.  It is a
+        # clearance/envelope claim only; saved-map coverage uses the central
+        # roller's continuous 0.620 m band at a 0.600 m lane pitch.
+        "operation_width_m": FORMAL_CLEANING_LANE_SPACING_M,
+        "planning_swath_spacing_m": FORMAL_CLEANING_LANE_SPACING_M,
+        "continuous_cleaning_band_width_m": FORMAL_CONTINUOUS_CLEANING_BAND_WIDTH_M,
+        "continuous_cleaning_lane_overlap_m": FORMAL_CLEANING_LANE_OVERLAP_M,
+        "declared_effective_cleaning_width_m": cleaning_width,
         "outer_polygon": [list(point) for point in spec.geofence],
         "exclusion_polygons": [],
         "keepout_polygons": [

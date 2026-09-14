@@ -1,6 +1,7 @@
 """Fail-closed adapter for the model-scoped Gazebo ground-truth odometry."""
 
 import math
+import re
 
 import rclpy
 from nav_msgs.msg import Odometry
@@ -46,10 +47,21 @@ def identity_matches(message, expected_source_frame, expected_child_frame):
             orientation.w,
         )
     )
+    stamp = message.header.stamp
+    stamp_ns = int(stamp.sec) * 1_000_000_000 + int(stamp.nanosec)
+    normalized_quaternion = abs(
+        sum(float(value) * float(value) for value in (
+            orientation.x, orientation.y, orientation.z, orientation.w,
+        )) - 1.0
+    ) <= 1.0e-3
     return (
         message.header.frame_id == expected_source_frame
         and message.child_frame_id == expected_child_frame
         and finite_pose
+        and int(stamp.nanosec) >= 0
+        and int(stamp.nanosec) < 1_000_000_000
+        and stamp_ns > 0
+        and normalized_quaternion
     )
 
 
@@ -58,13 +70,17 @@ class GroundTruthAdapter(Node):
 
     def __init__(self):
         super().__init__("ground_truth_adapter")
+        # Legacy stage launchers retain their established transform. The formal
+        # campus launcher explicitly requires an immutable episode identity.
         self.declare_parameter("world_to_map_x", 8.0)
         self.declare_parameter("world_to_map_y", 0.0)
         self.declare_parameter("world_to_map_yaw", 0.0)
+        self.declare_parameter("require_episode_identity", False)
         self.declare_parameter("expected_source_frame", "world")
         self.declare_parameter(
             "expected_child_frame", "sanitation_vehicle/base_footprint"
         )
+        self.declare_parameter("source_episode_manifest_sha256", "")
         self._publisher = self.create_publisher(Odometry, "/ground_truth/odom", 20)
         self._identity_publisher = self.create_publisher(
             Bool, "/ground_truth/identity_valid", 1
@@ -77,7 +93,20 @@ class GroundTruthAdapter(Node):
     def _odom_callback(self, message):
         expected_source = str(self.get_parameter("expected_source_frame").value)
         expected_child = str(self.get_parameter("expected_child_frame").value)
-        valid = identity_matches(message, expected_source, expected_child)
+        values = (
+            float(self.get_parameter("world_to_map_x").value),
+            float(self.get_parameter("world_to_map_y").value),
+            float(self.get_parameter("world_to_map_yaw").value),
+        )
+        manifest_sha256 = str(
+            self.get_parameter("source_episode_manifest_sha256").value
+        )
+        valid = (
+            identity_matches(message, expected_source, expected_child)
+            and all(math.isfinite(value) for value in values)
+            and (not bool(self.get_parameter("require_episode_identity").value)
+                 or re.fullmatch(r"[0-9a-f]{64}", manifest_sha256) is not None)
+        )
         self._identity_publisher.publish(Bool(data=valid))
         if not valid:
             self._rejected += 1
@@ -91,12 +120,9 @@ class GroundTruthAdapter(Node):
 
         output = transform_planar_odometry(
             message,
-            float(self.get_parameter("world_to_map_x").value),
-            float(self.get_parameter("world_to_map_y").value),
-            float(self.get_parameter("world_to_map_yaw").value),
+            *values,
         )
         self._publisher.publish(output)
-
 
 def main(args=None):
     rclpy.init(args=args)

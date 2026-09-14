@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "profile_id": "competition_sim_only_v1",
+  "claim": "COMPETITION_SIM_ONLY_EVIDENCE_READY",
+  "claim_boundary": "Engineering evidence package readiness; not organizer recognition, HIL, or field readiness.",
+  "required_top_level_gates": ["SIM_DEMO_VERIFIED", "BOARD_ALGORITHMS_VERIFIED", "SUBMISSION_PACKAGE_COMPLETE"],
+  "simulation_core_functions": ["mapping", "saved_map_restart_localization", "route_or_coverage_following", "garbage_detection_and_localization", "grasp_or_cleaning", "post_clean_verification", "dynamic_obstacle_avoidance", "emergency_braking", "safe_recovery_and_shutdown"],
+  "board_algorithm_modules": ["perception", "mapping_localization", "planning_decision", "control"],
+  "project_adopted_thresholds_pending_official_source_check": {
+    "localization_xy_m": 0.05,
+    "mapped_effective_area_m2": 20000.0,
+    "net_cleaning_efficiency_m2_h": 3500.0,
+    "effective_cleaning_width_m": 0.6,
+    "emergency_braking_s": 1.0
+  },
+  "engineering_reproducibility_targets": {
+    "fresh_golden_mission_passes": 3,
+    "board_short_smoke_s": 60,
+    "board_sustained_run_s": 1800,
+    "validation_sites": 8,
+    "held_out_sites": 12
+  },
+  "video_required_for_current_execution": false,
+  "forbidden_claim_substitutions": ["board_connected_implies_algorithm_pass", "message_liveness_implies_semantic_correctness", "pc_computed_output_forwarded_as_board_computation", "simulation_replay_called_real_sensor_or_hil", "preview_animation_called_closed_loop_pass", "test_ground_truth_consumed_by_product_control"]
+}

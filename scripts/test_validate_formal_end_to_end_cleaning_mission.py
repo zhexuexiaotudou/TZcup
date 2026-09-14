@@ -15,7 +15,7 @@ def test_complete_single_live_episode_passes_after_raw_recomputation(tmp_path: P
     payload = aggregate(build_raw(tmp_path))
     result = validate(payload)
     assert result["passed"] is True
-    assert result["validated_closed_loop"]["same_map_full_coverage_efficiency_at_least_3500"] is True
+    assert result["validated_closed_loop"]["same_map_planning_proxy_verified"] is True
     assert result["runtime_gate_binding"] == payload["evidence"]["runtime_gate_binding"]
 
 
@@ -24,6 +24,22 @@ def test_runtime_gate_binding_must_match_the_final_sidecar(tmp_path: Path) -> No
     result = validate(payload, runtime_gate_binding={"status": "FORMAL_RUNTIME_GATE_BOUND"})
     assert result["passed"] is False
     assert "differs from the final sidecar" in "\n".join(result["errors"])
+
+
+@pytest.mark.parametrize("mutation", ["extra", "duplicate", "missing"])
+def test_truth_subscriber_roles_are_exact(tmp_path: Path, mutation: str) -> None:
+    payload = aggregate(build_raw(tmp_path))
+    audit = payload["evidence"]["truth_boundary"]["subscriber_audit"]
+    topic = end_to_end.REPLAY_METRIC_TOPICS["ground_truth_odom"]["name"]
+    if mutation == "extra":
+        audit[topic].append("/formal_active_cleaning_policy_planner")
+    elif mutation == "duplicate":
+        audit[topic].append(end_to_end.TRUSTED_GT_RECORDER_NODE)
+    else:
+        del audit[end_to_end.RAW_GROUND_TRUTH_TOPIC]
+    result = validate(payload)
+    assert not result["passed"]
+    assert "live ROS truth-subscriber audit failed" in result["errors"]
 
 
 def test_final_sidecar_is_rechecked_against_current_snapshot_and_session(
@@ -90,29 +106,27 @@ def test_boolean_mass_claim_without_increment_fails_recomputation(tmp_path: Path
     assert any("deterministic recomputation" in row or "increments missing" in row for row in result["errors"])
 
 
-def test_same_map_competition_efficiency_below_3500_fails_closed(
+def test_same_map_planning_proxy_cannot_claim_competition_pass(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     payload = aggregate(build_raw(tmp_path))
-    efficiency = payload["planning"]["same_map_full_coverage_efficiency"]
-    efficiency["actual_duration_sec"] = 20000.0 / 3499.0 * 3600.0
-    efficiency["measured_net_efficiency_m2_h"] = 3499.0
-    efficiency["recomputed_net_efficiency_m2_h"] = 3499.0
+    efficiency = payload["planning"]["same_map_planning_proxy_efficiency"]
+    efficiency["passed"] = True
     monkeypatch.setattr(end_to_end, "aggregate", lambda _: payload)
     result = end_to_end.validate(payload)
     assert not result["passed"]
-    assert "below 3500" in "\n".join(result["errors"])
+    assert "must not claim a competition efficiency pass" in "\n".join(result["errors"])
 
 
 @pytest.mark.parametrize(
     ("key", "value", "message"),
     [
-        ("covered_area_m2", True, "finite numeric"),
-        ("measured_net_efficiency_m2_h", 3601.0, "formula mismatch"),
+        ("planning_proxy_area_m2", True, "finite numeric"),
+        ("planning_proxy_efficiency_m2_h", 3601.0, "formula mismatch"),
         ("return_distance_included", True, "includes return-home"),
     ],
 )
-def test_same_map_competition_efficiency_type_formula_and_return_gates(
+def test_same_map_planning_proxy_type_formula_and_return_gates(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     key: str,
@@ -120,7 +134,7 @@ def test_same_map_competition_efficiency_type_formula_and_return_gates(
     message: str,
 ) -> None:
     payload = aggregate(build_raw(tmp_path))
-    payload["planning"]["same_map_full_coverage_efficiency"][key] = value
+    payload["planning"]["same_map_planning_proxy_efficiency"][key] = value
     monkeypatch.setattr(end_to_end, "aggregate", lambda _: payload)
     result = end_to_end.validate(payload)
     assert not result["passed"]

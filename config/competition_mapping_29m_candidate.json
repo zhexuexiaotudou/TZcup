@@ -1,0 +1,12 @@
+{
+  "scope": "offline candidate budget, not a route execution or map PASS",
+  "launch_argument": "competition_29m_candidate:=true",
+  "sensor_physical_range_m": 30.0,
+  "mapping_range_m": 29.0,
+  "target_effective_observed_area_m2": 20000.0,
+  "field_dimensions_m": [200.0, 100.0],
+  "speed_mps": 0.45,
+  "source_world_route_m": [[-98.0, 0.0], [-90.0, -25.0], [90.0, -25.0], [90.0, 25.0], [-90.0, 25.0]],
+  "expected_sim_minutes": [20.0, 35.0],
+  "route_limitations": "Geometric lower-cost suggestion only. 270-degree FOV, self masks and real obstacles require known-free Nav2 segments and frontier completion. No truth feedback. Do not run two goal writers."
+}

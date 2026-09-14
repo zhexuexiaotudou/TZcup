@@ -21,8 +21,9 @@ enum class A300DrivetrainStopReason : std::uint8_t
 
 struct A300DrivetrainPlantParameters
 {
-  // Published A300 40 Ah boundaries. See the companion contract for exact
-  // provenance and the distinction between physical and odometry radii.
+  // Published A300 40 Ah boundaries. The upstream controller radius is kept
+  // for provenance. This rigid-wheel plant uses physical_wheel_radius_m for
+  // command conversion, the speed ceiling, and odometry integration.
   double physical_wheel_radius_m{0.1651};
   double control_wheel_radius_m{0.1625};
   double maximum_vehicle_speed_mps{2.0};
@@ -38,6 +39,10 @@ struct A300DrivetrainPlantParameters
   double wheel_side_torque_constant_nm_per_a{3.5};
   double low_speed_torque_limit_nm{59.5};
   double speed_error_gain_nm_per_rad_s{12.0};
+  // Engineering PI candidate: Ki=6 Nm/rad, equivalent to Ti=2 s for
+  // the 12 Nm/(rad/s) proportional gain. It is not published A300 data.
+  double speed_integral_gain_nm_per_rad{6.0};
+  double integral_torque_limit_nm{59.5};
   double torque_slew_rate_nm_per_s{400.0};
   double service_brake_torque_limit_nm{32.0};
   double brake_response_delay_s{0.08};
@@ -85,6 +90,7 @@ public:
 private:
   A300DrivetrainPlantParameters parameters_;
   std::array<double, kA300WheelCount> applied_torque_nm_{};
+  std::array<double, kA300WheelCount> integral_torque_nm_{};
   double stopped_elapsed_s_{0.0};
 };
 

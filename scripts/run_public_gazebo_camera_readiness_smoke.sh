@@ -146,6 +146,9 @@ left="$(remaining)" || exit 124
 setsid python3 "$READINESS" --image-topic "$IMAGE_TOPIC" --camera-info-topic "$CAMERA_INFO_TOPIC" --timeout "$left" --output "$READINESS_REPORT" &
 PROBE_PID=$!; PROBE_PGID="$(formal_runtime_wait_for_setsid_pgid "$PROBE_PID")" || exit 125
 set +e; wait -n -p finished "$PROBE_PID" "$WATCHDOG_PID" "$LAUNCH_PID" "$DEADLINE_PID"; status=$?; set -e
+if [[ "$finished" == "$DEADLINE_PID" ]] || { [[ -z "${finished:-}" ]] && (( SECONDS >= DEADLINE_EPOCH )); }; then
+  exit 124
+fi
 case "$finished" in
   "$PROBE_PID") (( status == 0 )) && python3 "$READINESS" --validate-report "$READINESS_REPORT" --image-topic "$IMAGE_TOPIC" --camera-info-topic "$CAMERA_INFO_TOPIC" && [[ "$(binding_digest)" == "$ADMISSION_BINDING_SHA256" ]] || exit 125 ;;
   "$WATCHDOG_PID") formal_runtime_record_memory_watchdog_exit "$WATCHDOG_PID" "$status" || exit 125; formal_runtime_memory_watchdog_tripped && exit "$FORMAL_RUNTIME_MEMORY_BREACH_EXIT_CODE"; exit 125 ;;

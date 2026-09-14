@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import math
+import os
+from pathlib import Path
 import threading
 import time
 
@@ -19,6 +21,37 @@ from std_msgs.msg import Bool, Empty, Float64, String
 
 from .formal_auxiliary_system_core import FormalAuxiliarySystemCore
 from .formal_auxiliary_system_core import PRODUCT_BINDINGS
+from .diagnostic_publish_worker import DiagnosticPublishWorker
+
+
+def _producer_process_identity() -> dict[str, int | str | None]:
+    """Return Linux process provenance without making it a control dependency."""
+
+    starttime_ticks: int | None = None
+    boot_id: str | None = None
+    pgid: int | None = None
+    try:
+        stat = Path("/proc/self/stat").read_text(encoding="utf-8")
+        starttime_ticks = int(stat[stat.rfind(")") + 2 :].split()[19])
+    except (OSError, IndexError, ValueError):
+        pass
+    try:
+        boot_id = Path("/proc/sys/kernel/random/boot_id").read_text(
+            encoding="utf-8"
+        ).strip() or None
+    except OSError:
+        pass
+    try:
+        pgid = os.getpgid(0)
+    except OSError:
+        pass
+    return {
+        "boot_id": boot_id,
+        "pid": os.getpid(),
+        "pgid": pgid,
+        "process_starttime_ticks": starttime_ticks,
+        "formal_acceptance_session": os.environ.get("FORMAL_ACCEPTANCE_SESSION"),
+    }
 
 
 class SimulationSafetyInputs(Node):
@@ -35,6 +68,7 @@ class SimulationSafetyInputs(Node):
         self._main_contactor_closed = False
         self._estop_state_time: float | None = None
         self._main_power_command_time: float | None = None
+        self._charge_request_time: float | None = None
         self._main_isolator_state_time: float | None = None
         self._main_contactor_state_time: float | None = None
         self._charge_requested = False
@@ -46,6 +80,25 @@ class SimulationSafetyInputs(Node):
         self._battery_soc = 0.0
         self._battery_voltage_v: float | None = None
         self._battery_state_monotonic = float("-inf")
+        # These are diagnostic-only callback samples.  The effective fields
+        # above retain their original fail-closed timeout overrides.
+        self._last_received_estop_active: bool | None = None
+        self._last_received_main_power_requested: bool | None = None
+        self._last_received_charge_requested: bool | None = None
+        self._last_received_battery_state: dict[str, float | None] | None = None
+        self._last_received_charge_connected: bool | None = None
+        self._last_received_main_isolator_closed: bool | None = None
+        self._last_received_main_contactor_closed: bool | None = None
+        self._input_sequences = {
+            "emergency_stop": 0,
+            "main_power": 0,
+            "charge_requested": 0,
+            "battery": 0,
+            "charge_connected": 0,
+            "main_isolator": 0,
+            "main_contactor": 0,
+        }
+        self._producer_process_identity = _producer_process_identity()
         self._core = FormalAuxiliarySystemCore(
             battery_soc=float(self.get_parameter("initial_battery_soc").value),
             simulation_battery_capacity_kwh=float(
@@ -112,6 +165,14 @@ class SimulationSafetyInputs(Node):
             String,
             "/formal_vehicle/auxiliary/critical_safety_status_json",
             1,
+        )
+        self._relay_diagnostic_pub = self.create_publisher(
+            String,
+            "/formal_vehicle/auxiliary/critical_safety_relay_diagnostic_json",
+            1,
+        )
+        self._relay_diagnostic_worker = DiagnosticPublishWorker(
+            lambda encoded: self._relay_diagnostic_pub.publish(String(data=encoded))
         )
         self._product_publishers = {
             "charge_requested": self.create_publisher(
@@ -263,6 +324,11 @@ class SimulationSafetyInputs(Node):
             self._battery_soc = percentage
             self._battery_voltage_v = voltage if voltage > 0.0 else None
             self._battery_state_monotonic = time.monotonic()
+            self._last_received_battery_state = {
+                "soc": percentage,
+                "voltage_v": self._battery_voltage_v,
+            }
+            self._input_sequences["battery"] += 1
 
     def _on_front_raw_contact(self, message: Contacts) -> None:
         with self._state_lock:
@@ -293,30 +359,43 @@ class SimulationSafetyInputs(Node):
         with self._state_lock:
             self._estop_active = bool(message.data)
             self._estop_state_time = time.monotonic()
+            self._last_received_estop_active = bool(message.data)
+            self._input_sequences["emergency_stop"] += 1
 
     def _on_main_power(self, message: Bool) -> None:
         with self._state_lock:
             self._main_power_requested = bool(message.data)
             self._main_power_command_time = time.monotonic()
+            self._last_received_main_power_requested = bool(message.data)
+            self._input_sequences["main_power"] += 1
 
     def _on_charge(self, message: Bool) -> None:
         with self._state_lock:
             self._charge_requested = bool(message.data)
+            self._charge_request_time = time.monotonic()
+            self._last_received_charge_requested = bool(message.data)
+            self._input_sequences["charge_requested"] += 1
 
     def _on_charge_connected(self, message: Bool) -> None:
         with self._state_lock:
             self._charge_connected = bool(message.data)
             self._charge_connected_monotonic = time.monotonic()
+            self._last_received_charge_connected = bool(message.data)
+            self._input_sequences["charge_connected"] += 1
 
     def _on_main_isolator_closed(self, message: Bool) -> None:
         with self._state_lock:
             self._main_isolator_closed = bool(message.data)
             self._main_isolator_state_time = time.monotonic()
+            self._last_received_main_isolator_closed = bool(message.data)
+            self._input_sequences["main_isolator"] += 1
 
     def _on_main_contactor_closed(self, message: Bool) -> None:
         with self._state_lock:
             self._main_contactor_closed = bool(message.data)
             self._main_contactor_state_time = time.monotonic()
+            self._last_received_main_contactor_closed = bool(message.data)
+            self._input_sequences["main_contactor"] += 1
 
     def _on_work_lights(self, message: Bool) -> None:
         self._work_lights_requested = bool(message.data)
@@ -334,9 +413,38 @@ class SimulationSafetyInputs(Node):
             and 0.0 <= now - sample_time <= timeout
         )
 
+    def _relay_input_diagnostic_locked(
+        self,
+        *,
+        last_received_raw_value: object,
+        effective_value: object,
+        last_rx_monotonic: float | None,
+        monotonic_now: float,
+        effective_timeout_sec: float,
+        sequence_name: str,
+    ) -> dict[str, object]:
+        seen = bool(
+            last_rx_monotonic is not None
+            and math.isfinite(last_rx_monotonic)
+        )
+        age = monotonic_now - last_rx_monotonic if seen else None
+        return {
+            "last_received_raw_value": last_received_raw_value if seen else None,
+            "effective_value": effective_value,
+            "seen": seen,
+            "last_rx_monotonic_sec": last_rx_monotonic if seen else None,
+            "age_sec": age,
+            "effective_timeout_sec": effective_timeout_sec,
+            "fresh": self._fresh(
+                last_rx_monotonic, monotonic_now, effective_timeout_sec
+            ),
+            "sequence": self._input_sequences[sequence_name],
+            "seq": self._input_sequences[sequence_name],
+        }
+
     def _critical_safety_snapshot_locked(
-        self, monotonic_now: float
-    ) -> tuple[bool, Contacts | None, Contacts | None]:
+        self, monotonic_now: float, cycle_ros_time_ns: int, cycle_id: int
+    ) -> tuple[bool, Contacts | None, Contacts | None, dict[str, object]]:
         command_fresh = self._fresh(
             self._estop_state_time,
             monotonic_now,
@@ -411,13 +519,114 @@ class SimulationSafetyInputs(Node):
                 if monotonic_now <= self._rear_contact_until
                 else Contacts()
             )
-        return relay_enabled, front, rear
+        inputs = {
+            "emergency_stop": self._relay_input_diagnostic_locked(
+                last_received_raw_value=self._last_received_estop_active,
+                effective_value=self._estop_active,
+                last_rx_monotonic=self._estop_state_time,
+                monotonic_now=monotonic_now,
+                effective_timeout_sec=self._operator_command_timeout_sec,
+                sequence_name="emergency_stop",
+            ),
+            "main_power": self._relay_input_diagnostic_locked(
+                last_received_raw_value=(
+                    self._last_received_main_power_requested
+                ),
+                effective_value=self._main_power_requested,
+                last_rx_monotonic=self._main_power_command_time,
+                monotonic_now=monotonic_now,
+                effective_timeout_sec=self._operator_command_timeout_sec,
+                sequence_name="main_power",
+            ),
+            "battery": self._relay_input_diagnostic_locked(
+                last_received_raw_value=self._last_received_battery_state,
+                effective_value={
+                    "soc": self._battery_soc,
+                    "voltage_v": self._battery_voltage_v,
+                },
+                last_rx_monotonic=self._battery_state_monotonic,
+                monotonic_now=monotonic_now,
+                effective_timeout_sec=self._battery_state_timeout_sec,
+                sequence_name="battery",
+            ),
+            "main_isolator": self._relay_input_diagnostic_locked(
+                last_received_raw_value=(
+                    self._last_received_main_isolator_closed
+                ),
+                effective_value=self._main_isolator_closed,
+                last_rx_monotonic=self._main_isolator_state_time,
+                monotonic_now=monotonic_now,
+                effective_timeout_sec=self._physical_power_feedback_timeout_sec,
+                sequence_name="main_isolator",
+            ),
+            "main_contactor": self._relay_input_diagnostic_locked(
+                last_received_raw_value=(
+                    self._last_received_main_contactor_closed
+                ),
+                effective_value=self._main_contactor_closed,
+                last_rx_monotonic=self._main_contactor_state_time,
+                monotonic_now=monotonic_now,
+                effective_timeout_sec=self._physical_power_feedback_timeout_sec,
+                sequence_name="main_contactor",
+            ),
+            "charge": {
+                "requested": self._relay_input_diagnostic_locked(
+                    last_received_raw_value=(
+                        self._last_received_charge_requested
+                    ),
+                    effective_value=self._charge_requested,
+                    last_rx_monotonic=self._charge_request_time,
+                    monotonic_now=monotonic_now,
+                    effective_timeout_sec=self._charge_connected_timeout_sec,
+                    sequence_name="charge_requested",
+                ),
+                "connected": self._relay_input_diagnostic_locked(
+                    last_received_raw_value=(
+                        self._last_received_charge_connected
+                    ),
+                    effective_value=self._charge_connected,
+                    last_rx_monotonic=self._charge_connected_monotonic,
+                    monotonic_now=monotonic_now,
+                    effective_timeout_sec=self._charge_connected_timeout_sec,
+                    sequence_name="charge_connected",
+                ),
+            },
+        }
+        relay_conditions = {
+            "battery_fresh": battery_fresh,
+            "safety_power": safety_power,
+            "operator_command_fresh": command_fresh,
+            "main_power_requested": self._main_power_requested,
+            "main_isolator_feedback_fresh": isolator_fresh,
+            "main_isolator_closed": self._main_isolator_closed,
+            "effective_main_power": effective_main_power,
+            "emergency_stop_inactive": not self._estop_active,
+            "charge_interlock_active": charge_connected,
+            "main_contactor_feedback_fresh": contactor_fresh,
+            "main_contactor_closed": self._main_contactor_closed,
+            "relay_enabled": relay_enabled,
+        }
+        diagnostic = {
+            "schema_version": 1,
+            "cycle_id": cycle_id,
+            "cycle_monotonic_sec": monotonic_now,
+            "cycle_ros_time_ns": cycle_ros_time_ns,
+            "producer": self._producer_process_identity,
+            "inputs": inputs,
+            "relay_conditions": relay_conditions,
+        }
+        return relay_enabled, front, rear, diagnostic
 
     def _publish_critical_safety(self) -> None:
         monotonic_now = time.monotonic()
+        cycle_ros_time_ns = self.get_clock().now().nanoseconds
         with self._state_lock:
-            relay_enabled, front, rear = self._critical_safety_snapshot_locked(
-                monotonic_now
+            relay_enabled, front, rear, relay_diagnostic = (
+                self._critical_safety_snapshot_locked(
+                    monotonic_now,
+                    cycle_ros_time_ns,
+                    self._safety_publish_count + 1,
+                )
             )
             if self._last_safety_publish_monotonic is not None:
                 self._maximum_safety_publish_gap_sec = max(
@@ -452,6 +661,9 @@ class SimulationSafetyInputs(Node):
             self._critical_status_pub.publish(
                 String(data=json.dumps(metrics, sort_keys=True))
             )
+        # Encoding and publication are best-effort worker work; critical safety
+        # output never waits on this diagnostic stream.
+        self._relay_diagnostic_worker.enqueue(relay_diagnostic)
 
     def _run_safety_publish_loop(self) -> None:
         try:
@@ -465,7 +677,7 @@ class SimulationSafetyInputs(Node):
                 deadline += period
                 now = time.monotonic()
                 if deadline <= now:
-                    deadline = now + period
+                    deadline = now
         except BaseException as error:
             with self._state_lock:
                 self._safety_publish_thread_error = error
@@ -494,6 +706,7 @@ class SimulationSafetyInputs(Node):
 
     def destroy_node(self):
         self._stop_safety_publish_loop()
+        self._relay_diagnostic_worker.shutdown()
         return super().destroy_node()
 
     def _publish(self) -> None:
@@ -505,64 +718,76 @@ class SimulationSafetyInputs(Node):
         command_timeout = float(
             self.get_parameter("operator_command_timeout_sec").value
         )
-        command_fresh = (
-            self._estop_state_time is not None
-            and self._main_power_command_time is not None
-            and 0.0 <= monotonic_now - self._estop_state_time <= command_timeout
-            and 0.0
-            <= monotonic_now - self._main_power_command_time
-            <= command_timeout
+        battery_timeout = float(self.get_parameter("battery_state_timeout_sec").value)
+        charge_timeout = float(
+            self.get_parameter("charge_connected_timeout_sec").value
         )
-        if not command_fresh:
-            self._estop_active = True
-            self._main_power_requested = False
-        battery_fresh = (
-            0.0
-            <= monotonic_now - self._battery_state_monotonic
-            <= float(self.get_parameter("battery_state_timeout_sec").value)
-        )
-        charge_connected_fresh = (
-            0.0
-            <= monotonic_now - self._charge_connected_monotonic
-            <= float(self.get_parameter("charge_connected_timeout_sec").value)
-        )
-        if not charge_connected_fresh:
-            self._charge_connected = False
         physical_feedback_timeout = float(
             self.get_parameter("physical_power_feedback_timeout_sec").value
         )
-        isolator_feedback_fresh = bool(
-            self._main_isolator_state_time is not None
-            and 0.0
-            <= monotonic_now - self._main_isolator_state_time
-            <= physical_feedback_timeout
-        )
-        contactor_feedback_fresh = bool(
-            self._main_contactor_state_time is not None
-            and 0.0
-            <= monotonic_now - self._main_contactor_state_time
-            <= physical_feedback_timeout
-        )
+        with self._state_lock:
+            command_fresh = (
+                self._estop_state_time is not None
+                and self._main_power_command_time is not None
+                and 0.0 <= monotonic_now - self._estop_state_time <= command_timeout
+                and 0.0
+                <= monotonic_now - self._main_power_command_time
+                <= command_timeout
+            )
+            if not command_fresh:
+                self._estop_active = True
+                self._main_power_requested = False
+            battery_fresh = 0.0 <= monotonic_now - self._battery_state_monotonic <= battery_timeout
+            charge_connected_fresh = (
+                0.0 <= monotonic_now - self._charge_connected_monotonic <= charge_timeout
+            )
+            if not charge_connected_fresh:
+                self._charge_connected = False
+            isolator_feedback_fresh = bool(
+                self._main_isolator_state_time is not None
+                and 0.0
+                <= monotonic_now - self._main_isolator_state_time
+                <= physical_feedback_timeout
+            )
+            contactor_feedback_fresh = bool(
+                self._main_contactor_state_time is not None
+                and 0.0
+                <= monotonic_now - self._main_contactor_state_time
+                <= physical_feedback_timeout
+            )
+            safety_inputs = {
+                "battery_soc": self._battery_soc,
+                "battery_voltage_v": self._battery_voltage_v,
+                "emergency_stop_active": self._estop_active,
+                "main_power_requested": self._main_power_requested,
+                "charge_requested": self._charge_requested,
+                "charge_connected_requested": self._charge_connected,
+                "work_lights_requested": self._work_lights_requested,
+                "tail_lights_requested": self._tail_lights_requested,
+                "warning_lights_requested": self._warning_lights_requested,
+                "main_isolator_closed": self._main_isolator_closed,
+                "main_contactor_closed": self._main_contactor_closed,
+            }
         # The A300 BMS is the unique SOC integrator. Stale telemetry opens all
         # powered branches instead of continuing from an invented battery.
-        self._core.battery_soc = self._battery_soc if battery_fresh else 0.0
+        self._core.battery_soc = safety_inputs["battery_soc"] if battery_fresh else 0.0
         now_ns = self.get_clock().now().nanoseconds
         elapsed_sec = max(0.0, (now_ns - self._last_clock_ns) * 1.0e-9)
         self._last_clock_ns = now_ns
         state = self._core.step(
             # Power branching only; A300BmsNode owns energy integration.
             elapsed_sec=0.0,
-            emergency_stop_active=self._estop_active,
-            main_power_requested=self._main_power_requested,
-            charge_connected_requested=self._charge_connected,
-            work_lights_requested=self._work_lights_requested,
-            tail_lights_requested=self._tail_lights_requested,
-            warning_lights_requested=self._warning_lights_requested,
+            emergency_stop_active=safety_inputs["emergency_stop_active"],
+            main_power_requested=safety_inputs["main_power_requested"],
+            charge_connected_requested=safety_inputs["charge_connected_requested"],
+            work_lights_requested=safety_inputs["work_lights_requested"],
+            tail_lights_requested=safety_inputs["tail_lights_requested"],
+            warning_lights_requested=safety_inputs["warning_lights_requested"],
             main_isolator_closed=(
-                self._main_isolator_closed if isolator_feedback_fresh else False
+                safety_inputs["main_isolator_closed"] if isolator_feedback_fresh else False
             ),
             main_contactor_closed=(
-                self._main_contactor_closed if contactor_feedback_fresh else False
+                safety_inputs["main_contactor_closed"] if contactor_feedback_fresh else False
             ),
         )
         if first_cycle:
@@ -581,10 +806,10 @@ class SimulationSafetyInputs(Node):
         if first_cycle:
             self.get_logger().info("formal auxiliary raw bridge graph state evaluated")
         self._product_publishers["charge_requested"].publish(
-            Bool(data=self._charge_requested)
+            Bool(data=safety_inputs["charge_requested"])
         )
         self._product_publishers["main_power_requested"].publish(
-            Bool(data=self._main_power_requested)
+            Bool(data=safety_inputs["main_power_requested"])
         )
         self._product_publishers["main_contactor_command"].publish(
             Bool(data=state.relay_command_enabled)
@@ -613,7 +838,7 @@ class SimulationSafetyInputs(Node):
         status = {
             "schema": "tzcup.formal_auxiliary_product_state.v1",
             "evidence_authority": "SIMULATION_ENGINEERING_ONLY",
-            "battery_voltage_v": self._battery_voltage_v,
+            "battery_voltage_v": safety_inputs["battery_voltage_v"],
             "battery_soc": state.battery_soc,
             "battery_state_fresh": battery_fresh,
             "net_battery_power_kw": state.net_battery_power_kw,

@@ -64,6 +64,7 @@ class TargetTracker:
                 track
                 for track in self.tracks.values()
                 if track.class_id == detection["class_id"]
+                and track.uuid not in matched
                 and track.state not in {"CLEANED", "REJECTED"}
                 and math.hypot(track.x_m - detection["x_m"], track.y_m - detection["y_m"])
                 <= self.association_distance_m

@@ -62,7 +62,16 @@ def progress_deadline_after_feedback(
     timeout_sec: float,
     minimum_progress_m: float = 0.05,
 ) -> tuple[float, float | None]:
-    """Refresh the progress deadline only for a real reduction in remaining distance."""
+    """Refresh only for measured progress; initial zero feedback is a Nav2 placeholder.
+
+    ``math.inf`` denotes that this goal has not yet reported a positive
+    remaining distance.  Nav2 may publish zero-valued feedback before its
+    controller has populated the distance field.  That sample must not become
+    the best distance, because it would permanently reject the subsequent
+    positive, real distance.  Once a positive baseline exists, zero follows
+    the same ``minimum_progress_m`` rule as every other measurement; this
+    helper never treats any feedback value as goal success.
+    """
     values = (distance_remaining_m, now_monotonic, timeout_sec, minimum_progress_m)
     if (
         not all(math.isfinite(value) for value in values)
@@ -72,6 +81,10 @@ def progress_deadline_after_feedback(
         raise ValueError("frontier progress values must be finite")
     if distance_remaining_m < 0.0 or timeout_sec <= 0.0 or minimum_progress_m <= 0.0:
         raise ValueError("frontier progress distances and timeout must be positive")
+    if math.isinf(previous_best_distance_m):
+        if distance_remaining_m == 0.0:
+            return previous_best_distance_m, None
+        return distance_remaining_m, now_monotonic + timeout_sec
     if distance_remaining_m <= previous_best_distance_m - minimum_progress_m:
         return distance_remaining_m, now_monotonic + timeout_sec
     return previous_best_distance_m, None

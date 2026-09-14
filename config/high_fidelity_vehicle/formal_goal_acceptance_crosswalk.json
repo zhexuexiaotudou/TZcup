@@ -116,8 +116,10 @@
       "step_ids": ["perception", "single_episode"],
       "evidence_gates": ["random_scene_perception", "end_to_end_cleaning_mission"],
       "runtime_evidence_requirements": ["current_formal_session_and_snapshot_binding", "current_run_root_and_source_commit_tree", "model_config_dataset_container_dependency_identities", "per_execution_video_audit", "per_execution_mcap_metadata_and_replay_recalculation", "180_unique_scenario_seed_receipts", "30_independent_mission_group_receipts"],
-      "state": "BLOCKED_NO_CANONICAL_PRODUCER",
-      "blockers": ["No canonical producer is wired to atomically create current-formal-session-bound AUTO-15 video, MCAP, replay/recalculation, provenance, and independent mission-group receipts. The authoritative fixed product-acceptance specification and static cardinality contract cannot promote a product runtime state."]
+      "canonical_producer": "scripts/auto15_product_evidence.py",
+      "canonical_replay_producer": "scripts/formal_product_mcap_replay.py",
+      "state": "NOT_RUN_CURRENT_SNAPSHOT",
+      "blockers": ["The canonical producer is implemented, but the current snapshot still needs 180 fresh scenario-seed execution receipts and at least 30 independent mission-group receipts before A12 can pass."]
     },
     {
       "id": "A13",
@@ -174,10 +176,10 @@
       "id": "A19",
       "title": "长稳、故障注入与恢复",
       "source": ["COMPETITION_REQUIREMENTS.md", "config/high_fidelity_vehicle/formal_a19_reliability_fault_contract.json"],
-      "step_ids": ["single_episode", "multisite_product", "s100_live"],
+      "step_ids": ["a19_reliability"],
       "evidence_gates": ["a19_two_hour_reliability_fault"],
-      "state": "BLOCKED_MISSING_CANONICAL_A19_RUNTIME_PRODUCER",
-      "blockers": ["The A19 product-standard contract has no current-main canonical producer for a two-hour full-pipeline receipt with raw time series, command/exit/survivor evidence, all 18 faults, and current commit/session/runtime-closure bindings."]
+      "state": "READY_FOR_FRESH_TWO_HOUR_RUNTIME",
+      "blockers": ["The canonical producer, validator and formal runner are present, but no fresh current-session 7200-second product run has been executed. Fixtures, preflight and shorter runs cannot pass A19."]
     },
     {
       "id": "A20",
@@ -187,8 +189,9 @@
       "evidence_gates": [],
       "receipt_contract": "config/high_fidelity_vehicle/a20_release_replay_receipt_contract.json",
       "receipt_validator": "scripts/a20_release_replay_receipt.py",
-      "state": "BLOCKED",
-      "blockers": ["The repository has no canonical formal product MCAP replay producer that recomputes coverage, localization, session, and runtime-closure bindings. Stage-specific AUTO-02/AUTO-03 and coverage-only replay reports, embedded JSON, and historical AUTO-16 artifacts are not A20 evidence."]
+      "canonical_product_replay_producer": "scripts/formal_product_mcap_replay.py",
+      "state": "NOT_RUN_CURRENT_SNAPSHOT",
+      "blockers": ["The canonical replay producer and strict receipt validator are implemented, but at least five distinct current-session formal product MCAP replays plus current release and rollback artifacts have not yet been produced. Stage-specific AUTO-02/AUTO-03, coverage-only, embedded, and historical AUTO-16 evidence remain rejected."]
     },
     {
       "id": "A21",

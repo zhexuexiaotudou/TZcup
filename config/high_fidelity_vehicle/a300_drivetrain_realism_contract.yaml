@@ -117,11 +117,30 @@ plant_model:
     wheel_side_torque_constant_nm_per_a: 3.5
     low_speed_torque_limit_nm: 59.5
     speed_error_gain_nm_per_rad_s: 12.0
+    speed_integral_gain_nm_per_rad: 6.0
+    integral_torque_limit_nm: 59.5
     torque_slew_rate_nm_per_s: 400.0
     service_brake_torque_limit_nm: 32.0
     brake_response_delay_s: 0.08
     brake_ramp_time_s: 0.12
     drivetrain_efficiency: 0.80
+  wheel_speed_integral_calibration:
+    source_class: provisional_engineering_model_not_official
+    status: local_candidate_pending_fresh_physics_validation
+    nominal_integral_time_s: 2.0
+    reason: persistent_differential_speed_error_balanced_by_contact_under_proportional_only_control
+    constraints:
+      - Preserve all existing current, power, torque and slew limits.
+      - Apply anti-windup at per-wheel and aggregate saturation.
+      - Clear integral state on every non-permitted drive state and Reset.
+      - Validate turning, straight travel, zero command and emergency-stop recovery before adoption.
+  rigid_simulation_wheel_radius:
+    physical_rolling_radius_m: 0.1651
+    upstream_control_configuration_radius_m: 0.1625
+    command_conversion_radius_m: 0.1651
+    maximum_wheel_speed_radius_m: 0.1651
+    odometry_integration_radius_m: 0.1651
+    rationale: rigid_collision_wheel_has_no_tire_deflection_model
   integration_boundary:
     active_in_cmake: true
     loaded_by_current_vehicle: true

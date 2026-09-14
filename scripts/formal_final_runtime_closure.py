@@ -48,6 +48,7 @@ FINAL_RUNTIME_PACKAGES: tuple[str, ...] = (
     "sanitation_power_system",
     "sanitation_product_demo_integration",
     "sanitation_safety",
+    "sanitation_tasks",
     "sanitation_service_acceptance",
     "sanitation_vehicle_description",
     # sanitation_coverage launches this server and imports the interfaces below.
@@ -282,6 +283,16 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _ros2_executable_identity() -> dict[str, str]:
+    value = os.environ.get("FORMAL_ROS2_EXECUTABLE")
+    if not value:
+        raise ClosureError("FORMAL_ROS2_EXECUTABLE is required for the frozen runtime closure")
+    path = Path(value)
+    if not path.is_absolute() or path.is_symlink() or not path.is_file() or path.resolve() != path:
+        raise ClosureError("FORMAL_ROS2_EXECUTABLE must be an absolute regular non-link executable")
+    return {"path": str(path), "sha256": _sha256(path)}
+
+
 def _json_digest(value: Any) -> str:
     encoded = json.dumps(
         value, sort_keys=True, separators=(",", ":"), ensure_ascii=True
@@ -315,7 +326,9 @@ def _assert_regular(path: Path, label: str) -> None:
         raise ClosureError(f"{label} is missing or not a regular file: {path}")
 
 
-def _identity_command(arguments: Sequence[str], label: str) -> str:
+def _identity_command(
+    arguments: Sequence[str], label: str, *, allow_empty: bool = False
+) -> str:
     try:
         result = subprocess.run(
             list(arguments),
@@ -332,7 +345,7 @@ def _identity_command(arguments: Sequence[str], label: str) -> str:
             f"cannot query {label}: exit={result.returncode} detail={detail!r}"
         )
     output = result.stdout.strip()
-    if not output:
+    if not output and not allow_empty:
         raise ClosureError(f"cannot query {label}: empty output")
     return output
 
@@ -602,6 +615,7 @@ def _opennav_coverage_provenance_identity(runtime_ws: Path) -> dict[str, Any]:
     clean = _identity_command(
         ["git", "-C", str(source_root), "status", "--porcelain"],
         "frozen OpenNav Coverage working tree",
+        allow_empty=True,
     )
     if head != OPENNAV_COVERAGE_PATCHED_COMMIT or tree != OPENNAV_COVERAGE_PATCHED_TREE:
         raise ClosureError("frozen OpenNav Coverage checkout does not match patched identity")
@@ -1482,6 +1496,7 @@ def capture_closure(
     ros_gz_image_system_runtime = _ros_gz_image_system_identity()
     fields2cover_system_runtime = _fields2cover_system_runtime_binding(runtime_ws)
     nvidia_egl_runtime = _nvidia_egl_runtime_identity(runtime_ws)
+    ros2_executable = _ros2_executable_identity()
     return {
         "repository_root": str(repository_root),
         "runtime_ws": str(runtime_ws),
@@ -1534,6 +1549,7 @@ def capture_closure(
         ),
         "nvidia_egl_runtime": nvidia_egl_runtime,
         "nvidia_egl_runtime_sha256": _json_digest(nvidia_egl_runtime),
+        "ros2_executable": ros2_executable,
     }
 
 
@@ -1707,6 +1723,7 @@ def verify_manifest(
         ],
         "nvidia_egl_runtime_bound": stored["nvidia_egl_runtime"]["bound"],
         "nvidia_egl_runtime": stored["nvidia_egl_runtime"],
+        "ros2_executable": stored["ros2_executable"],
     }
 
 

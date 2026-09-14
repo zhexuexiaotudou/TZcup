@@ -166,3 +166,62 @@ def test_finalize_blocks_when_no_truth_isolated_3d_track_projection_exists():
     assert report["metric_checks"]["map_projection_rmse"] is False
     assert report["metric_checks"]["map_projection_p95"] is False
     assert "map_projection_samples_present" in report["blocked_checks"]["accuracy"]
+
+
+def _valid_episode_inputs():
+    return {
+        "episode_id": "formal-map-000-mission-000",
+        "detection": {
+            "true_positive_count": 8, "false_positive_count": 0,
+            "visible_unique_truth_count": 10, "matched_unique_truth_count": 8,
+            "evaluated_frame_count": 10,
+        },
+        "segmentation": segmentation_metrics(np.ones((2, 2)), np.ones((2, 2))),
+        "projection": projection_error_metrics([0.05, 0.10]),
+        "freshness": {
+            "rgb_topic_count": 4, "depth_topic_count": 2, "camera_info_topic_count": 4,
+            "depth_rgb_skew_max_s": 0.1, "tf_success_ratio": 1.0, "tf_age_max_s": 0.1,
+            "diagnostic_ground_truth_input_used": False, "real_camera_message_count": 10,
+            "product_detection_message_count": 1, "product_mask_message_count": 1,
+            "product_target_message_count": 1,
+        },
+    }
+
+
+def test_valid_complete_episode_still_passes():
+    assert finalize_acceptance(**_valid_episode_inputs())["status"] == "PASSED"
+
+
+def test_empty_dirt_truth_cannot_pass_with_perfect_empty_mask_scores():
+    inputs = _valid_episode_inputs()
+    inputs["segmentation"] = segmentation_metrics(np.zeros((2, 2)), np.zeros((2, 2)))
+    assert inputs["segmentation"]["iou"] == 1.0
+    report = finalize_acceptance(**inputs)
+    assert report["status"] == "BLOCKED_ACCURACY_OR_RUNTIME"
+    assert "ground_dirt_truth_present" in report["blocked_checks"]["accuracy"]
+
+
+@pytest.mark.parametrize("field,value", [("iou", float("inf")), ("recall", 1.1)])
+def test_invalid_segmentation_scores_cannot_pass(field, value):
+    inputs = _valid_episode_inputs()
+    inputs["segmentation"][field] = value
+    report = finalize_acceptance(**inputs)
+    assert report["status"] == "BLOCKED_ACCURACY_OR_RUNTIME"
+    assert not report["metric_checks"]["ground_dirt_metrics_valid"]
+
+
+@pytest.mark.parametrize("field", ["rmse_m", "p95_m"])
+def test_negative_projection_error_cannot_pass(field):
+    inputs = _valid_episode_inputs()
+    inputs["projection"][field] = -1.0
+    report = finalize_acceptance(**inputs)
+    assert report["status"] == "BLOCKED_ACCURACY_OR_RUNTIME"
+    assert not report["metric_checks"]["map_projection_metrics_valid"]
+
+
+def test_impossible_unique_detection_count_cannot_pass():
+    inputs = _valid_episode_inputs()
+    inputs["detection"]["matched_unique_truth_count"] = 11
+    report = finalize_acceptance(**inputs)
+    assert report["status"] == "BLOCKED_ACCURACY_OR_RUNTIME"
+    assert not report["metric_checks"]["detection_counts_consistent"]

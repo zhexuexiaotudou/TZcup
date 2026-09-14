@@ -38,7 +38,16 @@ def _depth_meters(depth: np.ndarray) -> np.ndarray:
     values = np.asarray(depth)
     if values.dtype == np.uint16:
         return values.astype(np.float32) * 0.001
+    if values.dtype not in (np.dtype("float32"), np.dtype("float64")):
+        raise ValueError("depth dtype must be uint16 millimeters or float32/64 meters")
     return values.astype(np.float32)
+
+
+def require_valid_depth(depth: np.ndarray) -> None:
+    """Reject a source frame with no usable range before product publication."""
+    values = _depth_meters(depth)
+    if values.ndim != 2 or not (np.isfinite(values) & (values > 0.05) & (values < 50.0)).any():
+        raise ValueError("RGB-D source has no valid depth pixels")
 
 
 def _project_pixels(
@@ -77,13 +86,34 @@ def project_rgbd_observation(
     """Return map-frame 0/1/2..255 dirt raster and projected litter targets."""
 
     depth_m = _depth_meters(depth)
-    if depth_m.ndim != 2 or not np.isfinite(map_from_camera).all():
+    transform = np.asarray(map_from_camera, dtype=np.float64)
+    if depth_m.ndim != 2 or transform.shape != (4, 4) or not np.isfinite(transform).all():
         raise ValueError("depth and transform must be finite and dimensionally valid")
+    if not np.allclose(transform[3], [0.0, 0.0, 0.0, 1.0]):
+        raise ValueError("transform must be homogeneous")
+    rotation = transform[:3, :3]
+    if not np.allclose(rotation.T @ rotation, np.eye(3), atol=1e-6) or not np.isclose(np.linalg.det(rotation), 1.0, atol=1e-6):
+        raise ValueError("transform must contain a proper rigid rotation")
+    if not np.isfinite([camera.fx, camera.fy, camera.cx, camera.cy,
+                       grid.resolution, grid.origin_x, grid.origin_y,
+                       ground_z, ground_tolerance]).all():
+        raise ValueError("projection geometry must be finite")
     if camera.fx <= 0 or camera.fy <= 0 or grid.resolution <= 0:
         raise ValueError("camera focal lengths and grid resolution must be positive")
+    if sample_stride < 1 or int(sample_stride) != sample_stride or ground_tolerance < 0:
+        raise ValueError("sample stride must be positive and ground tolerance non-negative")
+    if grid.width <= 0 or grid.height <= 0:
+        raise ValueError("grid dimensions must be positive")
     if not (len(class_ids) == len(masks) == len(confidences) == len(boxes_xyxy)):
         raise ValueError("detection projection arrays must have equal lengths")
     height, width = depth_m.shape
+    boxes = np.asarray(boxes_xyxy, dtype=np.float64).reshape(-1, 4)
+    if not np.isfinite(boxes).all():
+        raise ValueError("detection boxes must be finite")
+    if not np.isfinite(confidences).all() or any(value < 0 or value > 1 for value in confidences):
+        raise ValueError("detection confidence must be finite and in [0, 1]")
+    if any(np.asarray(mask).shape != depth_m.shape or not np.isfinite(mask).all() for mask in masks):
+        raise ValueError("masks must be finite and match the depth dimensions")
     output = np.zeros((grid.height, grid.width), dtype=np.uint8)
     per_class_rasters = {
         class_id: np.zeros_like(output)
@@ -141,12 +171,12 @@ def project_rgbd_observation(
             )
 
     projected: list[ProjectedTarget] = []
-    for index, (class_id, box, mask) in enumerate(zip(class_ids, boxes_xyxy, masks)):
+    for index, (class_id, box, mask) in enumerate(zip(class_ids, boxes, masks)):
         if class_id != "litter_cube":
             continue
         x1, y1, x2, y2 = np.asarray(box, dtype=np.float32)
-        x1i, x2i = sorted((max(0, int(x1)), min(width, int(np.ceil(x2)))))
-        y1i, y2i = sorted((max(0, int(y1)), min(height, int(np.ceil(y2)))))
+        x1i, x2i = np.clip([int(np.floor(x1)), int(np.ceil(x2))], 0, width)
+        y1i, y2i = np.clip([int(np.floor(y1)), int(np.ceil(y2))], 0, height)
         if x2i <= x1i or y2i <= y1i:
             continue
         region_mask = np.asarray(mask, dtype=bool)[y1i:y2i, x1i:x2i]

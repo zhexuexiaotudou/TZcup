@@ -104,8 +104,8 @@ python3 scripts/run_formal_final_acceptance.py --preflight \
 记录为“将在执行时重生成”，因为正式执行的第一步就是从冻结源码生成新 snapshot。
 `--run-root` 必须是此前不存在、没有任何符号链接路径段的
 `$PWD/.work/formal_final_acceptance/` 子目录；`--preflight`、`--execute` 与
-`--resume-s100` 使用同一边界。正式合同共 26 门：25 个本地门和 1 个 S100 外部硬门；这样
-25 个本地门结束后保留的 run root 一定仍可被安全恢复，
+`--resume-s100` 使用同一边界。正式合同共 27 门：26 个本地门和 1 个 S100 外部硬门；这样
+26 个本地门结束后保留的 run root 一定仍可被安全恢复，
 不接受外部临时目录或已存在目录。
 
 完整 source/install 绑定会重新读取并哈希冻结源码与 merged install。在 Windows 挂载盘的
@@ -116,8 +116,8 @@ preflight 和运行报告。该参数不是 Gazebo 步骤超时，也不能跳�
 30 个正式感知 episode 的默认 ROS domain 基准为 60，对应安全范围 60–89。
 
 S100P 已连接时，`s100_live_runtime` 的**原始采集顺序**应是 board-first：snapshot 和
-session 创建后即可直接在板端运行同版本模型/adapter 并保存证据，不等待 PC 推理或 24 个
-本地门。总报告仍只会在全部 26 门均通过后完成聚合；`--resume-s100` 仅是保持旧 session
+session 创建后即可直接在板端运行同版本模型/adapter 并保存证据，不等待 PC 推理或 25 个
+后续本地门。总报告仍只会在全部 27 门均通过后完成聚合；`--resume-s100` 仅是保持旧 session
 本地证据不重跑的恢复接口，不能被解读为“板端必须最后执行”。必须保留 Gazebo 的机械、接触、
 清扫/水回收和随机环境物理门，具体边界见
 [S100P板端优先边界](s100p-board-first-execution-boundary.md)。
@@ -128,7 +128,8 @@ session 创建后即可直接在板端运行同版本模型/adapter 并保存证
 部件台账、产品/检修十九视图、惯量与扫掠体积、传感器、底盘、安全、清扫机构和
 电机、地污、积水、检修门、充排、机械臂、物理抓投、20 块抓投与动态载荷、综合
 基础物理、新 episode、首次建图、saved-map 硬重启复用、同 episode 全覆盖基线、
-随机场景感知、动态避障、fresh RL 训练/跨图验证、单 episode 产品闭环，最后再
+随机场景感知、动态避障、fresh RL 训练/跨图验证、单 episode 产品闭环、8+12 多站产品泛化、
+A19 两小时长稳与 18 类故障恢复，最后再
 封存 session 并聚合 38 个功能位置。
 
 `start_session` 不只冻结 vehicle snapshot；它会先重新验证正式 closure manifest 与
@@ -158,13 +159,13 @@ build manifest 和 runtime-binding 的 attempt sidecar；侧车缺失、变更�
 之前，共同校验唯一 non-symlink closure、canonical snapshot 和 RUNNING fresh
 session，并把这三者的摘要绑定写入本次报告；已有报告、日志或绑定文件均拒绝覆盖。
 每个阶段结束
-后必须释放锁，并再次校验 snapshot。31 个步骤的每一步开始前和结束后都会重新
+后必须释放锁，并再次校验 snapshot。32 个步骤的每一步开始前和结束后都会重新
 计算统一运行闭包；即使 runner 返回失败，也先执行结束侧闭包检查。源码、安装树、
 插件、模型或 ONNX Runtime 任一字节漂移，或运行过程中出现符号链接，都会立即停止。
 旧证据不能在下一次运行中被复用。
 
 包括 `cleaning_actuators`、首次建图/复用、随机场景感知、动态避障和单 episode
-端到端任务在内的 21 个直接或复合物理运行门还必须携带独立
+端到端任务和 A19 在内的 22 个直接或复合物理运行门还必须携带独立
 `.runtime_binding.json`。清扫机构位置 runner 在 source 冻结 overlay 之前先执行 snapshot
 `--check`，再把当前 RUNNING session、无符号链接 closure 和 install 字节身份写入 sidecar；
 validator 会重新核对 sidecar 后才允许发布刷盘、滚刷、升降、排水阀、泵和刮水柔顺性报告。
@@ -172,10 +173,10 @@ validator 会重新核对 sidecar 后才允许发布刷盘、滚刷、升降、�
 workspace 根误当 install 根而产生无法验证的 binding。
 同一阶段的 typed 电机诊断改用显式 `FORMAL_WATER_TYPED_RUNTIME_WS` 指向其父 workspace，
 以便独立核验 `install/` 与 `INSTALL_SYMLINKS.txt`。
-最终 `validate_formal_functional_acceptance_contract.py` 也会逐一重新读取这 21 个 sidecar，
+最终 `validate_formal_functional_acceptance_contract.py` 也会逐一重新读取这 22 个 sidecar，
 要求报告内嵌 binding 与 sidecar 字节语义完全一致，并与当前 session 的 snapshot、开始时间和
 runtime closure 完全一致；仅有历史报告、`skipped` 行、摘要哈希或已通过的单个 validator 都不能
-使 aggregate/final complete。静态审计还强制合同中声明 runtime binding 的 gate 集合恰为这 21 个，
+使 aggregate/final complete。静态审计还强制合同中声明 runtime binding 的 gate 集合恰为这 22 个，
 新增、遗漏或改名都在任何长时运行之前 fail-closed。
 
 所有 Gazebo 步骤还经过同一个低内存保护层。冻结运行时构建前由 Windows 包装器
@@ -232,7 +233,7 @@ runner 清理后还必须证明同一 `GZ_PARTITION` 无存活进程、watchdog 
 `finalize_formal_sensor_transport_probe.py` 把 before/peak/after、12 stream、session、snapshot、
 closure、runtime binding、loopback 和 cleanup 统一 fail-closed 汇总。任一文件缺失、pool-tag
 不可观测、NDIS suspect、bridge 逃出 loopback、topic 不达标或清理残留都会返回非零并保留
-attempt。该 probe 只决定是否安全进入完整 31 步，不能替代最终 session 的 sensor gate。
+attempt。该 probe 只决定是否安全进入完整 32 步，不能替代最终 session 的 sensor gate。
 
 若十九视图在进入新冻结构建前需要隔离 Gazebo Transport、`ros_gz_image` 与 DDS，
 必须从 Windows 使用同样的冷启动门运行单相机诊断；不要先手工启动 WSL：
@@ -249,10 +250,10 @@ pwsh.exe -NoProfile -File .\scripts\run_formal_visual_single_topic_diagnostic_wi
 private 不超过 4 GiB，随后只启动一台 1600×1000 验收相机、一个
 `ros_gz_image/image_bridge` 和一个 ROS 订阅探针。它保存 Gazebo/ROS 发现、单帧
 元数据、bridge 可执行文件依赖和进程 `/proc` 映射；诊断通过只证明单 topic 传输链，
-不替代 r33 冻结构建、十九视图或最终 31 步验收。
+不替代 r33 冻结构建、十九视图或最终 32 步验收。
 
 仓库内旧的 AUTO-16 仿真、frozen coverage trial 和 AUTO-17 可视化 PowerShell
-入口不属于最终 31 步验收，但同样必须先经过 `formal_wsl_entry_memory_guard.ps1`：
+入口不属于最终 32 步验收，但同样必须先经过 `formal_wsl_entry_memory_guard.ps1`：
 WSL 未运行时执行 12.5 GiB 冷启动门并要求 `vmmemWSL=0`，WSL 已运行时执行
 10 GiB 运行门并要求 `vmmemWSL>0`；状态要求在探针中互斥并二次确认。路径转换、
 实际仿真、WSLg prepare、shutdown 后恢复及 retry 均使用独立预检证据，禁止在一次
@@ -361,3 +362,33 @@ non-cryptographic** 的证据链，不是 TPM、远程签名或针对恶意持�
 
 静态覆盖审计见
 `reports/engineering/formal_final_acceptance_orchestration_audit.json`。
+
+## A12/A20 产品证据侧车
+
+AUTO-15 大矩阵不会塞进 32 步单 Gazebo 正式编排中与主世界争锁。主编排的每个产品回合应在
+同一 RUNNING session 下保留 video、MCAP 和源 metrics，然后调用
+`scripts/formal_product_mcap_replay.py`；该侧车只在隔离 ROS domain 回放，不启动 Gazebo。
+随后调用 `scripts/auto15_product_evidence.py execution` 原子封存一次执行，按真实独立任务边界
+调用 `mission-group`，最终以 `ledger` 形成严格 180 execution/至少 30 group 总账。总账可直接
+交给 `validate_product_acceptance_contract.py --execution-evidence ... --evidence-root ...`，不得把
+缺失回执降级为旧 Stage/AUTO 报告。
+
+session finalize 为 COMPLETE 后，A20 receipt 引用至少五份上述 replay、当前 release archive、
+SHA256SUMS、SBOM、container、dependency lock、licenses 与真实 rollback report，再由
+`scripts/a20_release_replay_receipt.py` 校验。侧车失败只阻断 A12/A20 依赖结果，不得复用旧运行根，
+也不得修改或补写已封存证据。
+
+因此主编排在 S100、session finalize 与 functional aggregate 都通过后，只会记录
+`FORMAL_FINAL_ACCEPTANCE_PRODUCT_POSTPROCESS_REQUIRED`，而不会把 32 步车体会话误报为最终完成。
+对同一 retained run root，正式收口必须显式执行：
+
+```bash
+python3 scripts/run_formal_final_acceptance.py --postprocess-product \
+  --runtime-ws "$RUNTIME_WS" --integrated-build-manifest "$BUILD_MANIFEST" \
+  --run-root "$RUN_ROOT" --a12-ledger "$RUN_ROOT/auto15/ledger.json" \
+  --a20-receipt "$RUN_ROOT/a20/receipt.json"
+```
+
+该入口先实际调用 A12 ledger validator，再在 COMPLETE session 上调用 A20 receipt validator；
+任一失败会把主报告标为 `FORMAL_FINAL_ACCEPTANCE_PRODUCT_POSTPROCESS_BLOCKED` 并保留命令日志，
+不允许最终状态为 complete。

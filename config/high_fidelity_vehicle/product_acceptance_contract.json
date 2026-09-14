@@ -41,12 +41,13 @@
     "required_execution_evidence": ["video", "mcap"]
   },
   "auto15_runtime_receipt_contract": {
-    "receipt_ingestion_status": "BLOCKED_NO_CANONICAL_PRODUCER",
-    "blocker": "No tracked producer atomically creates fresh session-bound video, MCAP, replay/recalculation, provenance, and independent mission-group receipts. Arbitrary JSON/media intake is forbidden.",
+    "receipt_ingestion_status": "CANONICAL_PRODUCER_REQUIRED",
+    "canonical_producer": "scripts/auto15_product_evidence.py",
+    "canonical_replay_producer": "scripts/formal_product_mcap_replay.py",
     "session_report_id": "tzcup_formal_final_acceptance_session_v1",
     "runtime_binding_status": "FORMAL_RUNTIME_GATE_BOUND",
     "video_audit_stage": "AUTO-17",
-    "mcap_replay_schema": "tzcup.coverage_mcap_replay.v1",
+    "mcap_replay_schema": "tzcup.formal_product_mcap_replay.v1",
     "required_provenance_fields": ["run_root", "source_commit", "source_tree", "model_sha256", "config_sha256", "dataset_sha256", "container_digest", "dependency_lock_sha256"],
     "required_execution_fields": ["command", "exit_code", "started_epoch_ns", "finished_epoch_ns", "replay"]
   }

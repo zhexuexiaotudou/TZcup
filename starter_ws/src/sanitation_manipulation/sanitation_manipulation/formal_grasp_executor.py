@@ -159,6 +159,9 @@ def main() -> None:
                 10,
             )
             self.create_subscription(
+                String, "/formal_a19/fault_control", self._on_formal_a19_fault_control, 10
+            )
+            self.create_subscription(
                 Bool, str(self.get_parameter("safety_permit_topic").value), self._on_safety, 10
             )
             self.create_subscription(
@@ -234,6 +237,9 @@ def main() -> None:
             self._bin_samples: list[DryBinSample] = []
             self._joints: dict[str, float] = {}
             self._wrist_rechecks: dict[str, tuple[GraspRequest, float]] = {}
+            self._formal_a19_fault: str | None = None
+            self._formal_a19_fault_events = 0
+            self._formal_a19_fault_effect: dict[str, Any] = {}
             self._motion_inhibited = False
             self._state = "IDLE"
             self._reason = "awaiting_perceived_target"
@@ -283,11 +289,54 @@ def main() -> None:
                     {name: float(value) for name, value in zip(message.name, message.position)}
                 )
 
+        def _on_formal_a19_fault_control(self, message: String) -> None:
+            try:
+                value = json.loads(message.data)
+                fault = value["fault"]
+                parameters = value["parameters"]
+                active = value["active"]
+                if (
+                    not isinstance(fault, str)
+                    or fault not in {"action_verifier_failure", "reobserve_timeout"}
+                    or not isinstance(parameters, dict)
+                    or type(active) is not bool
+                ):
+                    raise ValueError("unsupported or malformed formal A19 manipulation fault")
+                required = "reject_count" if fault == "action_verifier_failure" else "timeout_s"
+                if active and (type(parameters.get(required)) not in (int, float) or float(parameters[required]) <= 0.0):
+                    raise ValueError("invalid formal A19 manipulation fault parameters")
+            except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+                self.get_logger().warning(f"rejected formal A19 fault control: {exc}")
+                return
+            with self._lock:
+                if active:
+                    self._formal_a19_fault = fault
+                    self._formal_a19_fault_events = 0
+                    self._formal_a19_fault_effect = {}
+                elif self._formal_a19_fault == fault:
+                    self._formal_a19_fault = None
+            self._publish_status()
+
+        def _consume_formal_a19_fault(self, fault: str) -> bool:
+            with self._lock:
+                if self._formal_a19_fault != fault:
+                    return False
+                self._formal_a19_fault_events += 1
+                return True
+
         def _on_wrist_recheck(self, message: String) -> None:
             try:
                 request = GraspRequest.from_json(message.data)
             except ValueError as exc:
                 self.get_logger().warning(f"rejected wrist recheck: {exc}")
+                return
+            if self._consume_formal_a19_fault("reobserve_timeout"):
+                # Drop the real wrist observation before the safety-critical
+                # wait consumes it; the existing bounded wait then produces
+                # the product's genuine timeout and safe recovery path.
+                with self._lock:
+                    self._formal_a19_fault_effect = {"fault": "reobserve_timeout", "observed": True, "expected_outcome": "wrist_reobservation_drop_observed", "target_id": request.target_id}
+                self._publish_status()
                 return
             with self._lock:
                 self._wrist_rechecks[request.target_id] = (request, time.monotonic())
@@ -1105,6 +1154,12 @@ def main() -> None:
         def _publish_result(
             self, target_id: str, verified: bool, reason: str, evidence: dict[str, Any]
         ) -> None:
+            if verified and self._consume_formal_a19_fault("action_verifier_failure"):
+                with self._lock:
+                    self._formal_a19_fault_effect = {"fault": "action_verifier_failure", "observed": True, "expected_outcome": "verified_result_rejection_observed", "target_id": target_id, "original_verified": True, "final_verified": False}
+                verified = False
+                reason = "formal_a19_action_verifier_rejected"
+                evidence = {**evidence, "formal_a19_action_verifier_rejected": True}
             payload = {
                 "schema_version": 2,
                 "target_id": target_id,
@@ -1136,6 +1191,9 @@ def main() -> None:
                 KeyValue(key="planning_backend", value="MoveGroup+GetPositionIK+GetCartesianPath"),
                 KeyValue(key="moveit_task_constructor_used", value="false"),
                 KeyValue(key="truth_used_for_control", value="false"),
+                KeyValue(key="formal_a19_fault", value=self._formal_a19_fault or ""),
+                KeyValue(key="formal_a19_fault_events", value=str(self._formal_a19_fault_events)),
+                KeyValue(key="formal_a19_fault_effect", value=json.dumps(self._formal_a19_fault_effect, sort_keys=True)),
             ]
             message = DiagnosticArray()
             message.header.stamp = self.get_clock().now().to_msg()

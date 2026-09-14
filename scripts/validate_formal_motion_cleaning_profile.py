@@ -39,6 +39,7 @@ if str(INTEGRATION_PACKAGE_ROOT) not in sys.path:
 
 from sanitation_formal_campus_integration.contract import (  # noqa: E402
     IntegrationContractError,
+    _navigation_inset_radius,
     load_formal_motion_profile,
 )
 
@@ -389,6 +390,18 @@ def validate_profile(
         raise FormalMotionCleaningProfileError(
             "Nav2 footprint padding must be nonnegative"
         )
+    nav2_inflation_radius_m = _number(
+        profile.get("nav2_inflation_radius_m"), "Nav2 inflation radius"
+    )
+    required_inflation_radius = _navigation_inset_radius(
+        profile, nav2_footprint_padding_m
+    )
+    if nav2_inflation_radius_m <= required_inflation_radius:
+        raise FormalMotionCleaningProfileError(
+            "Nav2 inflation radius must be strictly greater than the "
+            "enabled-footprint inset radius plus padding "
+            f"({required_inflation_radius})"
+        )
     _assert_polygon(
         footprints["transport_stowed"]["footprint_xy_m"],
         _rectangle(transport_min[0], transport_min[1], transport_max[0], transport_max[1]),
@@ -619,6 +632,8 @@ def validate_profile(
         ),
         "wheel_radius_m": physical_radius,
         "control_wheel_radius_m": controller_radius,
+        "nav2_footprint_padding_m": nav2_footprint_padding_m,
+        "nav2_inflation_radius_m": nav2_inflation_radius_m,
         "planning_kinematic_constraint": canonical_constraint,
         "physical_steering_claim": canonical_claim["physical_steering_claim"],
         "runtime_tracking_status": canonical_claim["runtime_tracking_status"],

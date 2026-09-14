@@ -54,6 +54,7 @@ class FormalFrontierExplorer(Node):
             str(self.get_parameter("episode_manifest").value)
         )
         self._map: OccupancyGrid | None = None
+        self._global_costmap: OccupancyGrid | None = None
         self._odom_seen = False
         self._goal_active = False
         self._map_ready = False
@@ -79,11 +80,19 @@ class FormalFrontierExplorer(Node):
         map_qos = QoSProfile(depth=1)
         map_qos.reliability = ReliabilityPolicy.RELIABLE
         map_qos.durability = DurabilityPolicy.TRANSIENT_LOCAL
+        costmap_qos = QoSProfile(depth=1)
+        costmap_qos.reliability = ReliabilityPolicy.RELIABLE
         self.create_subscription(
             OccupancyGrid,
             str(self.get_parameter("map_topic").value),
             self._on_map,
             map_qos,
+        )
+        self.create_subscription(
+            OccupancyGrid,
+            "/global_costmap/costmap",
+            self._on_global_costmap,
+            costmap_qos,
         )
         self.create_subscription(
             Odometry,
@@ -124,6 +133,9 @@ class FormalFrontierExplorer(Node):
     def _on_map(self, message: OccupancyGrid) -> None:
         self._map = message
 
+    def _on_global_costmap(self, message: OccupancyGrid) -> None:
+        self._global_costmap = message
+
     def _on_odom(self, message: Odometry) -> None:
         self._odom_seen = True
 
@@ -140,6 +152,77 @@ class FormalFrontierExplorer(Node):
             return None
         translation = transform.transform.translation
         return float(translation.x), float(translation.y)
+
+    def _planning_window(
+        self,
+    ) -> tuple[int, int, float, float, float, float] | None:
+        """Return only a fresh, map-frame global-costmap extent."""
+        message = self._global_costmap
+        if message is None:
+            self._publish("waiting_for_global_costmap")
+            return None
+        stamp = message.header.stamp
+        stamp_ns = int(stamp.sec) * 1_000_000_000 + int(stamp.nanosec)
+        now_ns = int(self.get_clock().now().nanoseconds)
+        if stamp_ns <= 0 or now_ns < stamp_ns:
+            self._publish("waiting_for_fresh_global_costmap")
+            return None
+        age_sec = (now_ns - stamp_ns) * 1.0e-9
+        if age_sec > self._positive_timeout("planning_period_sec"):
+            self._publish("waiting_for_fresh_global_costmap", age_sec=age_sec)
+            return None
+        expected_frame = str(self.get_parameter("map_frame").value)
+        if message.header.frame_id != expected_frame:
+            self._publish(
+                "waiting_for_global_costmap_map_frame",
+                costmap_frame=message.header.frame_id,
+                expected_frame=expected_frame,
+            )
+            return None
+        info = message.info
+        origin = info.origin
+        quaternion = origin.orientation
+        values = (
+            info.resolution,
+            origin.position.x,
+            origin.position.y,
+            quaternion.x,
+            quaternion.y,
+            quaternion.z,
+            quaternion.w,
+        )
+        if (
+            info.width <= 0
+            or info.height <= 0
+            or len(message.data) != info.width * info.height
+            or info.resolution <= 0.0
+            or not all(math.isfinite(value) for value in values)
+            or not math.isclose(quaternion.x, 0.0, abs_tol=1e-9)
+            or not math.isclose(quaternion.y, 0.0, abs_tol=1e-9)
+        ):
+            self._publish("waiting_for_valid_global_costmap")
+            return None
+        quaternion_norm = math.sqrt(
+            quaternion.x * quaternion.x
+            + quaternion.y * quaternion.y
+            + quaternion.z * quaternion.z
+            + quaternion.w * quaternion.w
+        )
+        if not math.isclose(quaternion_norm, 1.0, abs_tol=1e-6):
+            self._publish("waiting_for_valid_global_costmap")
+            return None
+        yaw = math.atan2(
+            2.0 * (quaternion.w * quaternion.z + quaternion.x * quaternion.y),
+            1.0 - 2.0 * (quaternion.y * quaternion.y + quaternion.z * quaternion.z),
+        )
+        return (
+            int(info.width),
+            int(info.height),
+            float(info.resolution),
+            float(origin.position.x),
+            float(origin.position.y),
+            yaw,
+        )
 
     def _on_ready(self, message: Bool) -> None:
         self._map_ready = bool(message.data)
@@ -260,6 +343,9 @@ class FormalFrontierExplorer(Node):
         map_position = self._map_position()
         if map_position is None:
             return
+        planning_window = self._planning_window()
+        if planning_window is None:
+            return
         orientation = message.info.origin.orientation
         yaw = math.atan2(
             2.0 * (orientation.w * orientation.z + orientation.x * orientation.y),
@@ -278,6 +364,7 @@ class FormalFrontierExplorer(Node):
             robot_y=map_position[1],
             previous_goals=self._previous[-100:],
             sample_spacing_m=float(self.get_parameter("sample_spacing_m").value),
+            planning_window=planning_window,
         )
         if target is None:
             self._publish("waiting_for_reachable_frontier")
