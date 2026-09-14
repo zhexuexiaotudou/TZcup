@@ -228,9 +228,24 @@ fi
 if [[ -n "${FORMAL_DYNAMIC_GOAL_Y:-}" ]]; then
   collector_args+=(--goal-y "${FORMAL_DYNAMIC_GOAL_Y}")
 fi
+task_timeout_s="${FORMAL_DYNAMIC_TIMEOUT_S:-300}"
+dynamic_timeout_s="${task_timeout_s}"
+if [[ ! "${dynamic_timeout_s}" =~ ^[0-9]+$ ]]; then
+  dynamic_timeout_s="$(python3 -c '
+import sys
+
+value = float(sys.argv[1])
+if not value.is_integer() or value < 0:
+    raise SystemExit("FORMAL_DYNAMIC_TIMEOUT_S must be a non-negative integer or integer-valued decimal")
+print(int(value))
+' "${dynamic_timeout_s}")" || {
+    echo "invalid FORMAL_DYNAMIC_TIMEOUT_S: ${task_timeout_s}" >&2
+    exit 2
+  }
+fi
 environment_collector_args=(
   "${repo_root}/scripts/collect_formal_dynamic_environment_runtime.py"
-  --timeout "$(( ${FORMAL_DYNAMIC_TIMEOUT_S:-300} + 30 ))"
+  --timeout "$(( dynamic_timeout_s + 30 ))"
   --pedestrian-schedule "${runtime_schedule}"
   --output "${environment_telemetry}"
 )

@@ -322,6 +322,17 @@ def test_runner_disables_ros2_daemon_and_proves_partition_cleanup() -> None:
     assert "run the matrix serially" in helper
 
 
+def test_runner_normalizes_decimal_timeout_before_bash_arithmetic() -> None:
+    source = (
+        Path(__file__).with_name("run_formal_dynamic_obstacle_avoidance.sh")
+        .read_text(encoding="utf-8")
+    )
+    assert 'dynamic_timeout_s="${task_timeout_s}"' in source
+    assert "if not value.is_integer() or value < 0:" in source
+    assert '--timeout "$(( dynamic_timeout_s + 30 ))"' in source
+    assert "${FORMAL_DYNAMIC_TIMEOUT_S:-300} + 30" not in source
+
+
 def test_frozen_session_binding_requires_exact_running_snapshot(tmp_path: Path) -> None:
     snapshot = tmp_path / "snapshot.json"
     session = tmp_path / "session.json"
