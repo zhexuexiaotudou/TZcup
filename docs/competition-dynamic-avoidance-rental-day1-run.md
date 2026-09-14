@@ -304,3 +304,70 @@ with SHA-256
 Post-attempt sampling recorded GPU utilization `0%`, GPU memory `1 MiB` of
 `12288 MiB`, no formal-lock holders, and no remaining runtime process.
 Official `>=95%` remains `NOT_MEASURED`.
+
+## Run 19b: static interaction materialization and live evaluator clock blocker
+
+Run 18b exposed two independent issues: the static route proof used the
+corridor midpoint rather than the exact centerline crossing, and the 6 m smoke
+used a 120 s wall budget that ended before the measured PRoot simulation rate
+could complete the route. The smoke protocol now declares corridor fraction
+`0.30..0.35`, seed `2026091715`, and a bounded 600 s task / 660 s wall budget.
+The obstacle radius, `0.12 m` minimum surface clearance, collision definition,
+safety gate, and sampling thresholds are unchanged.
+
+The frozen route manifest now requires a
+`STATIC_OBSTACLE_INTERACTION_SAMPLEABLE` proof. The selected route is:
+
+| Field | Value |
+|---|---:|
+| Seed | `2026091715` |
+| Route heading | `positive_y` |
+| Centerline crossing | `x = 1.8825 m` |
+| Centerline crossing time | `4.5866 s` |
+| Static evaluator sample | `2.4966 s` |
+| Trigger delta at sample | `2.09 s` |
+| Surface gap at sample | `1.0286 m` |
+| Status-clock alignment | `0.0034 s` |
+| Predicted envelope encounter in monitor horizon | `0.7364 m` |
+
+The offline search enumerated `64` seeds in the declared corridor: `15`
+candidates passed the static sampleability proof and `49` were retained as
+failures. The frozen search evidence is
+`artifacts/day1_dynamic_avoidance_functional_smoke_route_20260914/static_route_search_run19.json`.
+
+Run 19b used ROS domain `217`, Gazebo partition
+`tzcup_dynamic_avoidance_smoke_20260914_19b`, fresh XDG state, and fresh run
+root `.../day1-dynamic-avoidance-smoke-20260914-19b/run-19b`. The runtime did
+produce a selected obstacle interaction:
+
+| Raw metric | Value |
+|---|---:|
+| Selected interaction candidates | `1` |
+| Collision-monitor interventions | `1` |
+| Smoothed command | `0.45 m/s` |
+| Gated command | `0.225 m/s` |
+| Nearest scan range | `0.7500 m` |
+| Vehicle pose at candidate | `[0.8983, -0.0027] m` |
+| Physical collisions | `0` |
+| Walker pose frames / active walkers | `57 / 8` |
+| Physical travel | `3.1376 m` |
+| Maximum cross-track detour | `0.1110 m` |
+| Nav2 goal result | `not succeeded` |
+
+The offline evaluator still returned `SINGLE_RUN_EVIDENCE_INVALID` with
+numerator `0`, denominator `1`. The selected candidate was not matched because
+the product collector timestamp was Unix epoch
+`1789386411749680004 ns`, while the evaluator-only environment status stream
+used simulation time from `100000000 ns` to `28900000000 ns`. Their nearest
+absolute alignment was `1789386382.8496802 s`, far above the unchanged `0.5 s`
+limit; therefore `minimum_surface_gap_m`, trigger alignment, and selected
+candidate count remained unmeasured in the evaluator report despite the raw
+interaction. Empty collector logs, `collision_monitor_state` count `2 < 5`,
+physical travel below `5 m`, and non-successful Nav2 recovery also keep the
+single-run result invalid. No second Gazebo attempt was launched.
+
+The sealed evidence archive is
+`artifacts/day1_dynamic_avoidance_functional_smoke_20260914/remote/run19b-final-evidence.tar.gz`
+with SHA-256
+`21e923e70b9e49c17b667227160f28fa24612bf4fd77fb42c7568e1e5198d6af`.
+Official `>=95%` remains `NOT_MEASURED`.
