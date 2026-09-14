@@ -28,7 +28,7 @@
 | 日均故障率 <1% | 3 | 事件字典、分母和 95% 置信资格算法已定义 | `INSTRUMENTED_NOT_MEASURED` |
 | 社会效益 | 5 | 可审计的社会效益参数模型已定义 | `MODEL_ONLY_NOT_FIELD_MEASURED` |
 | 硬件/软件功能完整 | 6 | 模块-证据-缺口矩阵已建立 | `PARTIAL` |
-| 演示视频 | 4 | 300 秒模块化综合演示、中文旁白、字幕、章节和媒体校验器已交付 | `DELIVERED_MODULAR_DEMO` |
+| 演示视频 | 4 | 300 秒模块化综合演示、中文旁白、字幕、章节、操作说明和媒体校验器已交付 | `DELIVERED_MODULAR_DEMO` |
 | 文档质量 | 5 | 正式报告、证据索引和独立补充 PDF 可交叉复核 | `DELIVERED` |
 | 可落地产业化方案 | 5 | 客户、试点、成本公式、Go/No-Go 和 IP 边界已整理成评审包 | `REVIEW_READY_NOT_FIELD_VALIDATED` |
 | 已申请专利或发表论文 | 5 | 只提供发明披露和论文提纲模板 | `NOT_ELIGIBLE_NO_FILING_OR_PUBLICATION` |

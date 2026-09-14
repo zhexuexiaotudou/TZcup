@@ -69,10 +69,18 @@
     {
       "number": "08",
       "start_sec": 260,
-      "end_sec": 300,
+      "end_sec": 280,
       "title": "连续清扫",
       "subtitle": "刷盘贴地 · 连续清除带",
       "source_kind": "成果演示"
+    },
+    {
+      "number": "09",
+      "start_sec": 280,
+      "end_sec": 300,
+      "title": "操作说明",
+      "subtitle": "地图确认 · 任务下发 · 状态监控 · 急停核对",
+      "source_kind": "操作说明"
     }
   ]
 }

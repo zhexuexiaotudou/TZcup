@@ -14,8 +14,8 @@
   },
   "media_contract": {
     "path": "video/final/TZcup_5min_video.mp4",
-    "bytes": 28721707,
-    "sha256": "b109805a4e62608f2daaa5af1a3a9bd3c33e388024257fa814cf7a61ae367614",
+    "bytes": 30014611,
+    "sha256": "0fd575920130b77ce2ce480600734f0db147b5870dcd9010fb573b728abf1180",
     "duration_s": 300.0,
     "width": 1920,
     "height": 1080,
@@ -42,8 +42,9 @@
     "shallow-water cleaning",
     "offline deterministic 2D map reconstruction with 22399.99 square meters known area",
     "coverage planning with 12 swaths and 11 turns",
-    "continuous cleaning execution"
+    "continuous cleaning execution",
+    "chaptered operation instructions for map confirmation, task dispatch, status monitoring and emergency-stop closeout"
   ],
   "claim_boundary": "Modular composite demonstration only. The reel combines successful module footage and is not one continuous mission; it does not establish official full-mission PASS, live SLAM, avoidance rate, board perception or vehicle validation.",
-  "recommended_review_note": "Prepare review material at 2-3 of 4 points. The official score remains for the judges; if they accept a modular composite and chaptered operation explanation, the review ceiling is 4 of 4."
+  "recommended_review_note": "Prepare review material at 2-3 of 4 points. The official score remains for the judges; the video now includes chaptered operation instructions, so the review ceiling is 4 of 4 if they accept a modular composite."
 }

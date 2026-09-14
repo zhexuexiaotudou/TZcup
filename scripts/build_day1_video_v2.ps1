@@ -186,10 +186,10 @@ $cues = @(
     @{ Start = 250.0; End = 260.0; Text = "车辆沿规划路线执行连续清扫任务。" },
     @{ Start = 260.0; End = 270.0; Text = "双扫盘和中央滚刷贴地工作，覆盖稳定。" },
     @{ Start = 270.0; End = 280.0; Text = "清扫路径持续向前推进，形成连续清除带。" },
-    @{ Start = 280.0; End = 290.0; Text = "建图、定位、规划、抓取与清扫在同一系统中协同。" },
-    @{ Start = 290.0; End = 296.0; Text = "从基础运动到机械臂抓取，再到环境建图与连续清扫。" },
-    @{ Start = 296.0; End = 298.0; Text = "模块化设计支撑多任务扩展。" },
-    @{ Start = 298.0; End = 300.0; Text = "感知、机械臂与清扫一体化。" }
+    @{ Start = 280.0; End = 285.0; Text = "操作时先确认地图版本和作业区域，再选择清扫模式。" },
+    @{ Start = 285.0; End = 290.0; Text = "任务下发后启动自主清扫，并持续监控定位、刷盘与安全状态。" },
+    @{ Start = 290.0; End = 296.0; Text = "需要停机时触发急停，任务结束后核对覆盖与清洁结果。" },
+    @{ Start = 296.0; End = 300.0; Text = "地图、任务、控制与安全状态在同一流程中管理。" }
 )
 
 if ($cues.Count -ne 35 -or [double]$cues[-1].End -ne 300.0) {
@@ -262,7 +262,8 @@ try {
         (Join-Path $functionDir "05-water-clean.mp4"),
         (Join-Path $functionDir "06-map.mp4"),
         (Join-Path $functionDir "07-coverage.mp4"),
-        (Join-Path $functionDir "08-clean-close.mp4")
+        (Join-Path $functionDir "08-clean-close.mp4"),
+        (Join-Path $functionDir "09-operation-guide.mp4")
     )
 
     New-VideoClip `
@@ -289,8 +290,11 @@ try {
         -Label "覆盖路径规划 · 12 条作业带 · 11 处转弯" `
         -OutputPath $functionClips[6] -ZoomStep 0.00028
     New-VideoClip `
-        -InputPath $conditionSource -SourceStart 45 -SourceDuration 40 -PlaybackSpeed 1.0 `
+        -InputPath $conditionSource -SourceStart 45 -SourceDuration 20 -PlaybackSpeed 1.0 `
         -Label "连续清扫 · 刷盘贴地 · 路径覆盖推进" -OutputPath $functionClips[7]
+    New-StaticClip `
+        -ImagePath (Join-Path $buildRoot "operation-guide.png") -Duration 20 `
+        -Label "" -OutputPath $functionClips[8]
 
     $functionSegment = Join-Path $segmentsDir "02_functions_v2.mp4"
     Join-Clips -ClipPaths $functionClips -OutputPath $functionSegment
@@ -377,7 +381,8 @@ try {
             [ordered]@{ number = "05"; start_sec = 175; end_sec = 210; title = "浅积水清洁"; subtitle = "路径通过 · 地面恢复"; source_kind = "成果演示" },
             [ordered]@{ number = "06"; start_sec = 210; end_sec = 240; title = "环境建图"; subtitle = "二维重建 · 约2.24万平方米 · 0.05米"; source_kind = "成果画面" },
             [ordered]@{ number = "07"; start_sec = 240; end_sec = 260; title = "覆盖规划"; subtitle = "12条作业带 · 11处转弯"; source_kind = "成果画面" },
-            [ordered]@{ number = "08"; start_sec = 260; end_sec = 300; title = "连续清扫"; subtitle = "刷盘贴地 · 连续清除带"; source_kind = "成果演示" }
+        [ordered]@{ number = "08"; start_sec = 260; end_sec = 280; title = "连续清扫"; subtitle = "刷盘贴地 · 连续清除带"; source_kind = "成果演示" },
+        [ordered]@{ number = "09"; start_sec = 280; end_sec = 300; title = "操作说明"; subtitle = "地图确认 · 任务下发 · 状态监控 · 急停核对"; source_kind = "操作说明" }
         )
     }
     $chapterPath = Join-Path $Root "video/chapters/chapters.json"
@@ -415,7 +420,8 @@ try {
         [ordered]@{ shot_id = "05_water_clean"; start_seconds = 115; end_seconds = 150; duration_seconds = 35; source = "complex_conditions_demo_90s.mp4"; source_range = "0-35 s"; playback_speed = 1.0; label = "浅积水清洁 · 路径通过 · 地面恢复" },
         [ordered]@{ shot_id = "06_map"; start_seconds = 150; end_seconds = 180; duration_seconds = 30; source = "map-reconstruction.png"; source_range = "static"; playback_speed = 1.0; label = "二维地图重建成果 · 约 2.24 万平方米 · 0.05 米栅格" },
         [ordered]@{ shot_id = "07_coverage"; start_seconds = 180; end_seconds = 200; duration_seconds = 20; source = "coverage_plan.png"; source_range = "static"; playback_speed = 1.0; label = "覆盖路径规划 · 12 条作业带 · 11 处转弯" },
-        [ordered]@{ shot_id = "08_clean_close"; start_seconds = 200; end_seconds = 240; duration_seconds = 40; source = "complex_conditions_demo_90s.mp4"; source_range = "45-85 s"; playback_speed = 1.0; label = "连续清扫 · 刷盘贴地 · 路径覆盖推进" }
+        [ordered]@{ shot_id = "08_clean_close"; start_seconds = 200; end_seconds = 220; duration_seconds = 20; source = "complex_conditions_demo_90s.mp4"; source_range = "45-65 s"; playback_speed = 1.0; label = "连续清扫 · 刷盘贴地 · 路径覆盖推进" },
+        [ordered]@{ shot_id = "09_operation_guide"; start_seconds = 220; end_seconds = 240; duration_seconds = 20; source = "operation-guide.png"; source_range = "static"; playback_speed = 1.0; label = "操作说明 · 地图与任务确认 · 自主清扫 · 状态监控 · 急停核对" }
     )
     $functionCueSheet = [ordered]@{
         schema_version = 2

@@ -86,7 +86,7 @@ $manifest = [ordered]@{
     audio_codec = [string]$audioStream.codec_name
     subtitle_codec = [string]$subtitleStream.codec_name
     narration_voice = "Microsoft Huihui Desktop"
-    chapters = 9
+    chapters = 10
     source_segments = @(
         "video/segments/01_modeling_v2.mp4",
         "video/segments/02_functions_v2.mp4"
@@ -131,7 +131,7 @@ $videoIndex = [ordered]@{
         recommended_points_range = @(2, 3)
         review_discretion_max_points = 4
         official_points_claimed = 0.0
-        rationale = "The reel follows the requested simple-to-complex progression and includes modeling, motion, arm grasp, target approach, deposit, water cleaning, mapping, coverage planning and cleaning. It remains a modular composite rather than one continuous mission."
+        rationale = "The reel follows the requested simple-to-complex progression, includes modeling, motion, arm grasp, target approach, deposit, water cleaning, mapping, coverage planning and cleaning, and ends with explicit operation steps. It remains a modular composite rather than one continuous mission."
     }
     media_contract = [ordered]@{
         duration_s = $duration
@@ -156,7 +156,8 @@ $videoIndex = [ordered]@{
         "shallow-water cleaning",
         "offline deterministic 2D map reconstruction with 22399.99 square meters known area",
         "coverage planning with 12 swaths and 11 turns",
-        "continuous cleaning execution"
+        "continuous cleaning execution",
+        "chaptered operation instructions for map confirmation, task dispatch, status monitoring and emergency-stop closeout"
     )
     source = [ordered]@{
         branch = "codex/day1-video-report-sync"

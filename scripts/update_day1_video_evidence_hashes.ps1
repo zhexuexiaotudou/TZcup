@@ -166,7 +166,7 @@ if ($null -ne $videoEntry) {
     Set-JsonProperty $videoEntry "accepted_facts" @(
         "the final media is 300.000 seconds, 1920x1080, H.264 with AAC audio and embedded Chinese subtitles",
         "the repaired master is constant 30 fps with 9000 decoded frames",
-        "the reel follows a modeling-to-function progression including module decomposition, motion, arm motion, target approach, grasp and bin deposit, shallow-water cleaning, offline 2D map reconstruction, coverage planning and continuous cleaning"
+        "the reel follows a modeling-to-function progression including module decomposition, motion, arm motion, target approach, grasp and bin deposit, shallow-water cleaning, offline 2D map reconstruction, coverage planning, continuous cleaning and chaptered operation instructions"
     )
     Set-JsonProperty $videoEntry "limitations" @(
         "the reel is a modular composite and does not show one continuous mission",

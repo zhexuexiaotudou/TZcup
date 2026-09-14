@@ -485,17 +485,17 @@
     "file": "docs/report-baseline.json",
     "source": "frozen baseline record for git:43f7136:submission-package/docs/技术方案报告.pdf",
     "source_commit": "43f7136",
-    "sha256": "9d11dbd038e6570d9f135d4b9a33471c0dc093ba04a7046c2f51ac59efd529b0",
-    "copied_utc": "2026-09-14T18:00:18.7071748Z",
+    "sha256": "463c8029da69f1220032c87ad679243b2d7fcc544ec964612f4bb1d7e2fe204f",
+    "copied_utc": "2026-09-14T18:07:47.9395708Z",
     "bytes": 1195
   },
   {
     "file": "evidence/day1/integration-manifest.json",
     "source": "integration manifest for perception candidate, nontechnical supplement, full-mission wrapper and live-SLAM fail-closed audit",
     "source_branch": "codex/day1-evidence-integration",
-    "copied_utc": "2026-09-14T18:00:18.7071748Z",
+    "copied_utc": "2026-09-14T18:07:47.9395708Z",
     "bytes": 9279,
-    "sha256": "965b1eb5975a69e2cfab3769129681227b1decc951614180180a063b3960a7e9"
+    "sha256": "156d1dccabf46b2ce9d7c82cd8bf59a6a25cea8f3334e99cac8c7fa17cd74022"
   },
   {
     "file": "evidence/day1/perception-score95/docs/competition-perception-score95.md",
@@ -594,9 +594,9 @@
     "source_commit": "b663ca9",
     "assembly_commit": "e6caf27",
     "archive_commit": "8cda98c",
-    "bytes": 5518,
-    "sha256": "12724dcf212b0cebe3bda403e7101ec2c3665f90d7d43c11f4b6ce8434e08f64",
-    "copied_utc": "2026-09-14T18:00:18.7071748Z",
+    "bytes": 5678,
+    "sha256": "aa4b32daf845c3f7120e2f7a9bf5657ae838bb3f3e175c55c0ddbbe3eeac03f1",
+    "copied_utc": "2026-09-14T18:07:47.9395708Z",
     "source_branch": "codex/day1-video-report-sync"
   },
   {
@@ -709,9 +709,9 @@
     "source_commit": "b663ca9",
     "assembly_commit": "e6caf27",
     "archive_commit": "8cda98c",
-    "bytes": 28721707,
-    "sha256": "b109805a4e62608f2daaa5af1a3a9bd3c33e388024257fa814cf7a61ae367614",
-    "copied_utc": "2026-09-14T18:00:18.7071748Z",
+    "bytes": 30014611,
+    "sha256": "0fd575920130b77ce2ce480600734f0db147b5870dcd9010fb573b728abf1180",
+    "copied_utc": "2026-09-14T18:07:47.9395708Z",
     "source_branch": "codex/day1-video-report-sync"
   },
   {
@@ -721,8 +721,8 @@
     "assembly_commit": "e6caf27",
     "archive_commit": "8cda98c",
     "bytes": 7201196,
-    "sha256": "a586089188fdd45ea6ece40de7e5b317dc542cbb8aaca56a1d3f998189b3702e",
-    "copied_utc": "2026-09-14T18:00:18.7071748Z",
+    "sha256": "393f3102154280f6d9041eaa3d9812f34edda6f870ed9a1d8bd4d5a1bdb4a793",
+    "copied_utc": "2026-09-14T18:07:47.9395708Z",
     "source_branch": "codex/day1-video-report-sync"
   },
   {
@@ -731,9 +731,9 @@
     "source_commit": "b663ca9",
     "assembly_commit": "e6caf27",
     "archive_commit": "8cda98c",
-    "bytes": 3384,
-    "sha256": "51104630e7a04d5a4bbb2aa61489d68cb844d413dbafb04b4aade99977faf311",
-    "copied_utc": "2026-09-14T18:00:18.7071748Z",
+    "bytes": 3462,
+    "sha256": "cf2e7f04d1d87c14be2aaefb2287e759dc1ca7d5fdf6548e4ca7a2bf54e2dcfe",
+    "copied_utc": "2026-09-14T18:07:47.9395708Z",
     "source_branch": "codex/day1-video-report-sync"
   },
   {
@@ -742,9 +742,9 @@
     "source_commit": "b663ca9",
     "assembly_commit": "e6caf27",
     "archive_commit": "8cda98c",
-    "bytes": 1916,
-    "sha256": "0867829ea6256ed0c6152349eef4ea6487fe865da8fb98ad710736d6f2ef8115",
-    "copied_utc": "2026-09-14T18:00:18.7071748Z",
+    "bytes": 2146,
+    "sha256": "84fbdb7c4843b3c87934c2c0595c0aa5df7ef6857f851f05d3bc09141e189b8b",
+    "copied_utc": "2026-09-14T18:07:47.9395708Z",
     "source_branch": "codex/day1-video-report-sync"
   },
   {
@@ -753,9 +753,9 @@
     "source_commit": "b663ca9",
     "assembly_commit": "e6caf27",
     "archive_commit": "8cda98c",
-    "bytes": 2327,
-    "sha256": "27cc483f386a6dbe2b3f4f6af6a7a7b0cdbde096d4d3b758aabb81dfbe639c0b",
-    "copied_utc": "2026-09-14T18:00:18.7071748Z",
+    "bytes": 2328,
+    "sha256": "4b01e6a7122fb87338d9e1d6b7781e3814ed03707d435aabb392726d084cf013",
+    "copied_utc": "2026-09-14T18:07:47.9395708Z",
     "source_branch": "codex/day1-video-report-sync"
   },
   {
@@ -765,8 +765,8 @@
     "assembly_commit": "e6caf27",
     "archive_commit": "8cda98c",
     "bytes": 891,
-    "sha256": "7d6afbc1e53c691330cf7589d413247278ab801f456f312a66fd11a2c95c8890",
-    "copied_utc": "2026-09-14T18:00:18.7071748Z",
+    "sha256": "448c03f41c84facbfabebc326edb5a9a2ad0b046b46644c0e61cbc6574e9441a",
+    "copied_utc": "2026-09-14T18:07:47.9395708Z",
     "source_branch": "codex/day1-video-report-sync"
   },
   {
@@ -776,8 +776,8 @@
     "assembly_commit": "e6caf27",
     "archive_commit": "8cda98c",
     "bytes": 3363,
-    "sha256": "f5a8ec7cbba932df08aa1ba76ac129e03ce8bf449f3e8f72ea5517bc0164cdec",
-    "copied_utc": "2026-09-14T18:00:18.7071748Z",
+    "sha256": "ed83b37d5e9db1bc6f161a4a9e1ebf4d057b0f509cc9ae98806393af9c81c330",
+    "copied_utc": "2026-09-14T18:07:47.9395708Z",
     "source_branch": "codex/day1-video-report-sync"
   },
   {
@@ -785,9 +785,9 @@
     "source": "codex/day1-video-report-sync: video score status",
     "source_commit": "b663ca9",
     "archive_commit": "8cda98c",
-    "bytes": 2018,
-    "sha256": "a61dde72532c362eb20416641d2ea4bfbf0f0a6518e3a64d8d43312b13392258",
-    "copied_utc": "2026-09-14T18:00:18.7071748Z",
+    "bytes": 2164,
+    "sha256": "5b0d1582a71c3d06456dd2a537e47e83c53de40a68e830ca83150cf702ed7f6a",
+    "copied_utc": "2026-09-14T18:07:47.9395708Z",
     "source_branch": "codex/day1-video-report-sync"
   },
   {
@@ -827,17 +827,17 @@
     "file": "video/final/TZcup_5min_video_silent.mp4",
     "source": "codex/day1-video-report-sync: silent master",
     "source_branch": "codex/day1-video-report-sync",
-    "bytes": 25019733,
-    "sha256": "ec39dea99575da8b4a160a00e4bdbc2c28cb79e454001cb045e10d5b8cead8c6",
-    "copied_utc": "2026-09-14T18:00:18.7071748Z"
+    "bytes": 26229581,
+    "sha256": "9d8056e472d05fa84e22d0bbe38f792a4ffa9f36bad4aab48b7636a3e98ca744",
+    "copied_utc": "2026-09-14T18:07:47.9395708Z"
   },
   {
     "file": "video/audio/narration-script.md",
     "source": "codex/day1-video-report-sync: narration script",
     "source_branch": "codex/day1-video-report-sync",
-    "bytes": 3262,
-    "sha256": "f5b1e06d8eb0b885fbf0a970c889d8456bfd3be95a60dc2a3058fdaa8bb72423",
-    "copied_utc": "2026-09-14T18:00:18.7071748Z"
+    "bytes": 3340,
+    "sha256": "3529595dfd52f62d3486def45a462e0111e6c52cb1292378941361a5f41e6932",
+    "copied_utc": "2026-09-14T18:07:47.9395708Z"
   },
   {
     "file": "video/modeling/shot-list.json",
@@ -845,30 +845,30 @@
     "source_branch": "codex/day1-video-report-sync",
     "bytes": 1830,
     "sha256": "f6a66c35116c4057cf3045e7488f716baa24d6993e732cbd4105282985d6f9bb",
-    "copied_utc": "2026-09-14T18:00:18.7071748Z"
+    "copied_utc": "2026-09-14T18:07:47.9395708Z"
   },
   {
     "file": "video/functions/cue-sheet.json",
     "source": "codex/day1-video-report-sync: function cue sheet",
     "source_branch": "codex/day1-video-report-sync",
-    "bytes": 2935,
-    "sha256": "6c5858b2a3ffb5b5c5f4853e4d989e4639910a9e2c994c449494ee54dc0eeb58",
-    "copied_utc": "2026-09-14T18:00:18.7071748Z"
+    "bytes": 3274,
+    "sha256": "2171e32179a4d24a87a8b58f2b4041fc7c09427e02558e4a3b1a605d662979aa",
+    "copied_utc": "2026-09-14T18:07:47.9395708Z"
   },
   {
     "file": "video/final/ffprobe.json",
     "source": "codex/day1-video-report-sync: ffprobe",
     "source_branch": "codex/day1-video-report-sync",
     "bytes": 4892,
-    "sha256": "320124d66ad51d642f3c956bfece400e3d584c39eef91c3b15ba04429c827cda",
-    "copied_utc": "2026-09-14T18:00:18.7071748Z"
+    "sha256": "458afbde0a4286d511d35a4815d2b7d1223144d54f029d78730a9073bc2c0d77",
+    "copied_utc": "2026-09-14T18:07:47.9395708Z"
   },
   {
     "file": "docs/技术方案报告.pdf",
     "source": "codex/day1-video-report-sync: regenerated report",
     "source_branch": "codex/day1-video-report-sync",
     "copied_utc": "2026-09-14T17:58:17.573854Z",
-    "bytes": 199815,
-    "sha256": "5faa2f3abb4a59369ce2d6c502dfdeabba23375de374acab9388e225e856611a"
+    "bytes": 199920,
+    "sha256": "5ff9b291b65922c29003190207a37942f096cb732fcb6f56c0735aba2b06c9c0"
   }
 ]

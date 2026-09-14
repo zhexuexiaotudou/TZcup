@@ -8,7 +8,7 @@ import json
 import math
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 
 FONT_REGULAR = Path(r"C:\Windows\Fonts\msyh.ttc")
@@ -241,6 +241,63 @@ def render_map(source_root: Path, output_path: Path) -> None:
     canvas.save(output_path, quality=96)
 
 
+def render_operation_guide(source_root: Path, output_path: Path) -> None:
+    background = fit_image(
+        Image.open(source_root / "report" / "figures" / "formal_vehicle_product_preview.png"),
+        (1920, 1080),
+    )
+    background = background.filter(ImageFilter.GaussianBlur(radius=7))
+    canvas = Image.alpha_composite(
+        background.convert("RGBA"),
+        Image.new("RGBA", (1920, 1080), (18, 30, 25, 172)),
+    ).convert("RGB")
+    draw = ImageDraw.Draw(canvas)
+
+    draw.rounded_rectangle(
+        (64, 64, 1028, 1016),
+        radius=24,
+        fill="#f7faf7",
+        outline="#b9c8bf",
+        width=3,
+    )
+    draw.text((112, 112), "操作说明", font=font(58, bold=True), fill="#14211b")
+    draw.text(
+        (114, 188),
+        "地图与任务确认  →  自主清扫  →  状态监控  →  停机与结果核对",
+        font=font(24),
+        fill="#56675f",
+    )
+
+    steps = [
+        ("01", "确认地图与作业区域", "核对园区地图、清扫范围和作业模式。"),
+        ("02", "下发自主清扫任务", "加载规划路径并启动车辆自主清扫。"),
+        ("03", "监控运行状态", "查看定位、路径、刷盘与安全状态。"),
+        ("04", "急停与结果核对", "异常时触发急停，结束后核对覆盖与清洁结果。"),
+    ]
+    y = 274
+    for number, title, detail in steps:
+        draw.ellipse((118, y, 202, y + 84), fill="#177d5b")
+        draw.text((139, y + 19), number, font=font(31, bold=True), fill="#ffffff")
+        draw.text((228, y + 3), title, font=font(34, bold=True), fill="#1c2a23")
+        draw.text((228, y + 46), detail, font=font(22), fill="#5d6c65")
+        y += 154
+
+    draw.rounded_rectangle(
+        (1100, 742, 1856, 1016),
+        radius=24,
+        fill="#15241d",
+        outline="#5b776a",
+        width=3,
+    )
+    draw.text((1144, 786), "交付版本", font=font(24), fill="#bcd0c5")
+    draw.text((1144, 828), "v2 · 2026-09-15", font=font(37, bold=True), fill="#ffffff")
+    draw.text((1144, 900), "演示编号", font=font(24), fill="#bcd0c5")
+    draw.text((1144, 942), "DEMO-MODULAR-V2", font=font(36, bold=True), fill="#7be0b5")
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    canvas.save(output_path, quality=96)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--source-root", required=True, type=Path)
@@ -249,6 +306,7 @@ def main() -> int:
 
     render_module_mosaic(args.source_root, args.output_root / "module-mosaic.png")
     render_map(args.source_root, args.output_root / "map-reconstruction.png")
+    render_operation_guide(args.source_root, args.output_root / "operation-guide.png")
     print(args.output_root)
     return 0
 

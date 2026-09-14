@@ -82,12 +82,22 @@
     {
       "shot_id": "08_clean_close",
       "start_seconds": 200,
-      "end_seconds": 240,
-      "duration_seconds": 40,
+      "end_seconds": 220,
+      "duration_seconds": 20,
       "source": "complex_conditions_demo_90s.mp4",
-      "source_range": "45-85 s",
+      "source_range": "45-65 s",
       "playback_speed": 1.0,
       "label": "连续清扫 · 刷盘贴地 · 路径覆盖推进"
+    },
+    {
+      "shot_id": "09_operation_guide",
+      "start_seconds": 220,
+      "end_seconds": 240,
+      "duration_seconds": 20,
+      "source": "operation-guide.png",
+      "source_range": "static",
+      "playback_speed": 1.0,
+      "label": "操作说明 · 地图与任务确认 · 自主清扫 · 状态监控 · 急停核对"
     }
   ],
   "caption_policy": {

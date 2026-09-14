@@ -6,8 +6,8 @@
   "integrated_report": {
     "package_path": "docs/技术方案报告.pdf",
     "pages": 24,
-    "bytes": 199815,
-    "sha256": "5faa2f3abb4a59369ce2d6c502dfdeabba23375de374acab9388e225e856611a"
+    "bytes": 199920,
+    "sha256": "5ff9b291b65922c29003190207a37942f096cb732fcb6f56c0735aba2b06c9c0"
   },
   "claim_levels": [
     "MEASURED_REPOSITORY_EVIDENCE",
@@ -132,23 +132,23 @@
       "files": [
         {
           "package_path": "video/final/TZcup_5min_video.mp4",
-          "bytes": 28721707,
-          "sha256": "b109805a4e62608f2daaa5af1a3a9bd3c33e388024257fa814cf7a61ae367614"
+          "bytes": 30014611,
+          "sha256": "0fd575920130b77ce2ce480600734f0db147b5870dcd9010fb573b728abf1180"
         },
         {
           "package_path": "video/audio/narration.mp3",
           "bytes": 7201196,
-          "sha256": "a586089188fdd45ea6ece40de7e5b317dc542cbb8aaca56a1d3f998189b3702e"
+          "sha256": "393f3102154280f6d9041eaa3d9812f34edda6f870ed9a1d8bd4d5a1bdb4a793"
         },
         {
           "package_path": "video/subtitles/zh-CN.srt",
-          "bytes": 3384,
-          "sha256": "51104630e7a04d5a4bbb2aa61489d68cb844d413dbafb04b4aade99977faf311"
+          "bytes": 3462,
+          "sha256": "cf2e7f04d1d87c14be2aaefb2287e759dc1ca7d5fdf6548e4ca7a2bf54e2dcfe"
         },
         {
           "package_path": "video/chapters/chapters.json",
-          "bytes": 1916,
-          "sha256": "0867829ea6256ed0c6152349eef4ea6487fe865da8fb98ad710736d6f2ef8115"
+          "bytes": 2146,
+          "sha256": "84fbdb7c4843b3c87934c2c0595c0aa5df7ef6857f851f05d3bc09141e189b8b"
         },
         {
           "package_path": "video/video-index.json",
@@ -157,17 +157,17 @@
         {
           "package_path": "video/MANIFEST.sha256",
           "bytes": 3363,
-          "sha256": "f5a8ec7cbba932df08aa1ba76ac129e03ce8bf449f3e8f72ea5517bc0164cdec"
+          "sha256": "ed83b37d5e9db1bc6f161a4a9e1ebf4d057b0f509cc9ae98806393af9c81c330"
         },
         {
           "package_path": "video/validation/video-package-validation.json",
           "bytes": 891,
-          "sha256": "7d6afbc1e53c691330cf7589d413247278ab801f456f312a66fd11a2c95c8890"
+          "sha256": "448c03f41c84facbfabebc326edb5a9a2ad0b046b46644c0e61cbc6574e9441a"
         },
         {
           "package_path": "metrics/video-score-status.json",
-          "bytes": 2018,
-          "sha256": "a61dde72532c362eb20416641d2ea4bfbf0f0a6518e3a64d8d43312b13392258"
+          "bytes": 2164,
+          "sha256": "5b0d1582a71c3d06456dd2a537e47e83c53de40a68e830ca83150cf702ed7f6a"
         },
         {
           "package_path": "video/validation/final-contact.png",
