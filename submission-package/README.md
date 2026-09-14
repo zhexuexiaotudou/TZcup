@@ -8,6 +8,8 @@
 
 最终提交就绪状态见 `metrics/final-readiness.md`：技术材料已可审阅，但仍缺报名表、申报人信息和最终命名字段。
 
+统一审计命令为 `py -3 tools/verify_submission.py`，回执写入 `metrics/submission-verification.json`。
+
 - `docs/技术方案报告.pdf`：24页中文报告，第24页为补充技术证据索引；页数由最终构建读取。
 - `metrics/验收矩阵.md` / `results.json`：唯一结果矩阵，明确区分measured_simulation、internal_frozen_regression、offline_replay、offline_raycast_mapping、synthetic_replay、design_calculation与not_measured。
 - `metrics/video-score-status.json` / `演示视频评分状态.md`：视频项`DELIVERED_MODULAR_DEMO`、建议`2-3/4`、评委裁量上限`4/4`与不可升级边界。

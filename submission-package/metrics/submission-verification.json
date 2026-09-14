@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-09-14T18:21:32.940023+00:00",
+  "status": "PASS",
+  "checks": {
+    "report_pdf": {
+      "status": "PASS",
+      "pages": 24,
+      "bytes": 200119,
+      "sha256": "27615b5d3a1361d09007854fdfe326bb6fb448d5d290b4ddbfad1a17725e2190"
+    },
+    "video_package": {
+      "status": "PASS",
+      "report": "video/validation/video-package-validation.json",
+      "media": {
+        "duration_s": 300.0,
+        "width": 1920,
+        "height": 1080,
+        "r_frame_rate": "30/1",
+        "avg_frame_rate": "30/1",
+        "frame_count": 9000,
+        "video_codec": "h264",
+        "audio_codec": "aac",
+        "subtitle_codec": "mov_text"
+      }
+    },
+    "code_package": {
+      "status": "PASS",
+      "manifest_entries": 97,
+      "offline_tests": "PASS",
+      "errors": []
+    },
+    "evidence_index": {
+      "status": "PASS",
+      "checked": 142,
+      "hashed": 54,
+      "errors": []
+    },
+    "score_and_readiness": {
+      "status": "PASS",
+      "score_estimate": {
+        "conservative": {
+          "min": 49,
+          "max": 56
+        },
+        "reasonable": {
+          "min": 57,
+          "max": 65
+        },
+        "optimistic": {
+          "min": 66,
+          "max": 69
+        }
+      },
+      "external_submission_blocked": true
+    }
+  }
+}

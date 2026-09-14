@@ -34,6 +34,11 @@
       "status": "PASS",
       "checked": 142,
       "hashed": 54
+    },
+    "unified_submission_audit": {
+      "status": "PASS",
+      "command": "py -3 tools/verify_submission.py",
+      "report": "metrics/submission-verification.json"
     }
   },
   "external_blockers": [
