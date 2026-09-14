@@ -5,9 +5,9 @@
   "base_report_sha256": "cc98ca940c932dd39128499e28a53cc63b5ce6b5e079d5c7ab83ee3059ca5e3a",
   "integrated_report": {
     "package_path": "docs/技术方案报告.pdf",
-    "pages": 23,
-    "bytes": 195978,
-    "sha256": "3fcb75d0fa9536422e957b166c80e5f9ae5b62f5132cfc7cb69911d9e50a332e"
+    "pages": 24,
+    "bytes": 198642,
+    "sha256": "169e3b04f1d3bb37591431422db8a205a714f1fec5e5df1a2897686c89fceb31"
   },
   "claim_levels": [
     "MEASURED_REPOSITORY_EVIDENCE",

@@ -112,8 +112,8 @@ from reportlab.platypus import Paragraph
 from reportlab.lib.styles import ParagraphStyle
 pdfmetrics.registerFont(TTFont('CN',r'C:\Windows\Fonts\simsun.ttc',subfontIndex=0))
 sections=json.loads((P/'docs/sections.json').read_text(encoding='utf-8'))
-if len(sections)!=len(rows)+9:
-    raise ValueError(f'Expected {len(rows)+9} report sections, found {len(sections)}')
+if len(sections) not in {len(rows)+9, len(rows)+10}:
+    raise ValueError(f'Expected {len(rows)+9} or {len(rows)+10} report sections, found {len(sections)}')
 for i,r in enumerate(rows):
     sections[i+2][0]=f'{i+3:02d} {r["item"]}'
     sections[i+2][1]=['当前状态：'+r['status']+'。'+r['note'], '最短测量与判定口径：'+r['minimum_measurement'], '证据范围：'+r['basis']+'；截至 '+r['as_of_utc']+'。只依据列明运行判定，历史局部结果不替代当前全程。', '证据文件：'+'；'.join(r['evidence'])]
