@@ -10,14 +10,19 @@ from evaluate_dynamic_avoidance_single_run import (
     evaluate_run,
 )
 from prepare_dynamic_avoidance_single_run import (
+    FUNCTIONAL_SMOKE_MODE,
     _sha256,
     freeze_route_from_schedule,
+    protocol_mode,
     validate_protocol,
 )
 
 
 ROOT = Path(__file__).resolve().parents[1]
 PROTOCOL_PATH = ROOT / "config/dynamic_avoidance_single_run_protocol.json"
+SMOKE_PROTOCOL_PATH = (
+    ROOT / "config/dynamic_avoidance_functional_smoke_protocol.json"
+)
 
 
 def _write_json(path: Path, value: dict) -> None:
@@ -266,6 +271,7 @@ def _fixture(tmp_path: Path) -> dict[str, Path]:
             "run_start_epoch_ns": 1_000,
             "run_end_epoch_ns": 11_000_000_000,
             "schedule_seed": 2026091401,
+            "mode": "OFFICIAL_SINGLE_RUN",
             "runner_exit_code": 0,
             "evaluator_exit_code": None,
         },
@@ -295,6 +301,33 @@ def test_protocol_preserves_official_rate_as_not_measured() -> None:
     assert protocol["official_metric"]["status"] == "NOT_MEASURED"
     assert protocol["official_metric"]["single_run_can_prove_threshold"] is False
     assert protocol["denominator"]["single_run_denominator"] == 1
+
+
+def test_short_functional_smoke_is_separate_and_non_official() -> None:
+    protocol = json.loads(SMOKE_PROTOCOL_PATH.read_text(encoding="utf-8"))
+    validate_protocol(protocol)
+    assert protocol_mode(protocol) == FUNCTIONAL_SMOKE_MODE
+    assert protocol["schedule"]["nominal_leg_m"] == 6.0
+    assert protocol["official_metric"]["threshold"] == 0.95
+    assert protocol["official_metric"]["status"] == "NOT_MEASURED"
+    assert protocol["official_metric"]["single_run_can_prove_threshold"] is False
+
+
+def test_runtime_schedule_filename_matches_evaluator_contract() -> None:
+    runner = (
+        ROOT / "scripts/run_formal_dynamic_obstacle_avoidance.sh"
+    ).read_text(encoding="utf-8")
+    evaluator = (
+        ROOT / "scripts/evaluate_dynamic_avoidance_single_run.py"
+    ).read_text(encoding="utf-8")
+    assert (
+        'runtime_schedule="${runtime_root}/pedestrian_schedule.seed.'
+        '${dynamic_seed}.json"'
+    ) in runner
+    assert "pedestrian_schedule.seed_${dynamic_seed}.json" not in runner
+    assert "pedestrian_schedule.seed.{int(protocol['schedule']['seed'])}.json" in (
+        evaluator
+    )
 
 
 def test_valid_single_run_fixture_passes_without_a_rate_claim(

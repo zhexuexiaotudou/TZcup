@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "protocol_id": "tzcup-day1-dynamic-avoidance-functional-smoke-not-official-95-v1",
+  "mode": "FUNCTIONAL_SMOKE_NOT_OFFICIAL_95",
+  "status": "FUNCTIONAL_SMOKE_NOT_OFFICIAL_95",
+  "official_metric": {
+    "metric_id": "dynamic_avoidance_success_rate",
+    "formula": "N_noncollision_and_task_complete / N_total_trials",
+    "threshold": 0.95,
+    "status": "NOT_MEASURED",
+    "single_run_can_prove_threshold": false
+  },
+  "map_source": {
+    "default_mode": "OFFLINE_RAYCAST_MAPPING",
+    "offline_mode": "OFFLINE_RAYCAST_MAPPING",
+    "offline_result_label": "OFFLINE_MAP_SOURCE",
+    "offline_source_commit": "4ab39bb839e92fe50e22b1efe3891c5915f39bf0",
+    "offline_source_known_area_m2": 22399.990000000005,
+    "offline_source_resolution_m": 0.05,
+    "offline_source_unknown_fraction": 0.030303463203463204,
+    "offline_mode_does_not_satisfy_live_slam_gate": true
+  },
+  "schedule": {
+    "seed": 2026091401,
+    "nominal_leg_m": 6.0,
+    "route_selection": "first_acceptance_environment_mission_corridor_crossing",
+    "route_frame": "source_world",
+    "route_declaration_required_before_run_start": true
+  },
+  "obstacle": {
+    "radius_m": 0.25,
+    "trigger": {
+      "type": "first_crossing_of_mission_centerline",
+      "window_s": 3.0
+    },
+    "minimum_distance": {
+      "metric": "center_distance_minus_walker_radius_minus_fitted_vehicle_circle_radius",
+      "threshold_m": 0.12,
+      "vehicle_envelope_radius_m": 0.5385164807134504,
+      "vehicle_envelope_derivation": "hypot(0.40, 0.36) from the configured 0.80 m x 0.72 m Nav2 footprint",
+      "sample_basis": "timestamp-aligned collision-monitor interaction candidates with evaluator schedule truth"
+    },
+    "collision_definition": {
+      "primary": "any nonempty front or rear physical contact sample",
+      "secondary": "vehicle fitted-circle envelope overlap with the scheduled walker cylinder",
+      "logical_operator": "primary_or_secondary"
+    }
+  },
+  "response": {
+    "reroute_min_cross_track_detour_m": 0.5,
+    "wait_requires_collision_monitor_intervention": true,
+    "requires_goal_recovery": true
+  },
+  "task": {
+    "timeout_s": 120.0,
+    "evaluator_grace_s": 30.0,
+    "wall_time_limit_s": 150.0,
+    "required_goal_source": "public_manifest_fixed_start_transformed_to_saved_map_local_plus_nominal_leg"
+  },
+  "sampling": {
+    "minimum_product_topic_samples": {
+      "/odom": 5,
+      "/odom/unfiltered": 5,
+      "/tf:odom->base_footprint": 5,
+      "/amcl_pose": 5,
+      "/scan/navigation": 5,
+      "/sensors/lidar_3d/points": 5,
+      "/cmd_vel_nav": 5,
+      "/cmd_vel_smoothed": 5,
+      "/cmd_vel_gate": 5,
+      "/base_controller/cmd_vel": 5,
+      "/collision_monitor_state": 5,
+      "/safety/status": 5
+    },
+    "minimum_environment_status_samples": 5,
+    "minimum_walker_pose_frames": 2,
+    "maximum_walker_pose_gap_s": 1.0,
+    "maximum_trigger_alignment_s": 0.5
+  },
+  "denominator": {
+    "single_run_denominator": 1,
+    "single_run_numerator_rule": "1 only when every evidence and functional check passes; otherwise 0",
+    "eligible_run_definition": "the route manifest was frozen before the recorded run start and the wrapper recorded STARTED",
+    "post_launch_exclusions": "none",
+    "campaign_rate_rule": "sum(single_run_numerator) / count(eligible_started_runs)",
+    "minimum_runs_per_scenario": 20,
+    "recommended_total_runs": 100,
+    "current_independent_run_count": 1
+  }
+}

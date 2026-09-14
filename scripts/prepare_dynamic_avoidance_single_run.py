@@ -19,6 +19,13 @@ from validate_formal_dynamic_obstacle_avoidance import (
 
 ROUTE_MANIFEST_KIND = "tzcup_predeclared_dynamic_avoidance_obstacle_route"
 ROUTE_SELECTION = "first_acceptance_environment_mission_corridor_crossing"
+OFFICIAL_MODE = "OFFICIAL_SINGLE_RUN"
+FUNCTIONAL_SMOKE_MODE = "FUNCTIONAL_SMOKE_NOT_OFFICIAL_95"
+SUPPORTED_MODES = (OFFICIAL_MODE, FUNCTIONAL_SMOKE_MODE)
+
+
+def protocol_mode(protocol: dict[str, Any]) -> str:
+    return str(protocol.get("mode", OFFICIAL_MODE))
 
 
 def _read_object(path: Path, label: str) -> dict[str, Any]:
@@ -52,6 +59,9 @@ def validate_protocol(protocol: dict[str, Any]) -> None:
         "protocol_id"
     ]:
         raise ValueError("protocol_id is required")
+    mode = protocol_mode(protocol)
+    if mode not in SUPPORTED_MODES:
+        raise ValueError("unsupported protocol mode")
     official = protocol.get("official_metric")
     if not isinstance(official, dict):
         raise ValueError("official_metric is required")
@@ -75,6 +85,12 @@ def validate_protocol(protocol: dict[str, Any]) -> None:
         or float(nominal_leg) < 5.0
     ):
         raise ValueError("schedule.nominal_leg_m must be finite and at least 5 m")
+    if mode == FUNCTIONAL_SMOKE_MODE and not math.isclose(
+        float(nominal_leg), 6.0, rel_tol=0.0, abs_tol=1.0e-9
+    ):
+        raise ValueError(
+            "functional-smoke nominal_leg_m must equal the declared 6.0 m"
+        )
     if schedule.get("route_selection") != ROUTE_SELECTION:
         raise ValueError("unsupported obstacle route selection")
     if schedule.get("route_declaration_required_before_run_start") is not True:
@@ -234,6 +250,7 @@ def freeze_route_from_schedule(
     return {
         "schema_version": 1,
         "kind": ROUTE_MANIFEST_KIND,
+        "mode": protocol_mode(protocol),
         "protocol_id": protocol["protocol_id"],
         "protocol_sha256": protocol_sha256,
         "declared_epoch_ns": declared_ns,

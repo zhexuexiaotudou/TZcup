@@ -97,10 +97,11 @@ python3 "${repo_root}/scripts/prepare_dynamic_avoidance_single_run.py" \
 seed="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["schedule"]["seed"])' "${protocol}")"
 nominal_leg_m="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["schedule"]["nominal_leg_m"])' "${protocol}")"
 task_timeout_s="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["task"]["timeout_s"])' "${protocol}")"
+mode="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8")).get("mode", "OFFICIAL_SINGLE_RUN"))' "${protocol}")"
 repository_revision="$(git -C "${repo_root}" rev-parse HEAD)"
 run_start_epoch_ns="$(python3 -c 'import time; print(time.time_ns())')"
 python3 - "${timeline}" "${run_root}" "${run_start_epoch_ns}" "${seed}" \
-  "${repository_revision}" "${map_source_mode}" <<'PY'
+  "${repository_revision}" "${map_source_mode}" "${mode}" <<'PY'
 import json
 import pathlib
 import sys
@@ -115,6 +116,7 @@ value = {
     "schedule_seed": int(sys.argv[4]),
     "repository_revision": sys.argv[5],
     "map_source_mode": sys.argv[6],
+    "mode": sys.argv[7],
     "runner_exit_code": None,
     "evaluator_exit_code": None,
 }
@@ -132,6 +134,7 @@ export FORMAL_DYNAMIC_RUNTIME_BINDING="${runtime_binding}"
 export FORMAL_DYNAMIC_SEED="${seed}"
 export FORMAL_DYNAMIC_NOMINAL_LEG_M="${nominal_leg_m}"
 export FORMAL_DYNAMIC_TIMEOUT_S="${task_timeout_s}"
+export FORMAL_DYNAMIC_RUN_MODE="${mode}"
 
 set +e
 bash "${repo_root}/scripts/run_formal_dynamic_obstacle_avoidance.sh"

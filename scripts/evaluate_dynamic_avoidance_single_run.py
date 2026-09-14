@@ -12,9 +12,12 @@ from pathlib import Path
 from typing import Any
 
 from prepare_dynamic_avoidance_single_run import (
+    FUNCTIONAL_SMOKE_MODE,
+    OFFICIAL_MODE,
     ROUTE_MANIFEST_KIND,
     _source_to_map,
     first_centerline_crossing_time,
+    protocol_mode,
     validate_protocol,
 )
 
@@ -173,6 +176,7 @@ def evaluate_run(
     """Evaluate one started trial and never infer a campaign success rate."""
 
     validate_protocol(protocol)
+    mode = protocol_mode(protocol)
     if map_source_mode not in MAP_SOURCE_MODES:
         raise ValueError(f"unsupported map_source_mode: {map_source_mode}")
     root = run_root.resolve()
@@ -254,6 +258,12 @@ def evaluate_run(
     )
     checks["route_manifest_kind_expected"] = (
         route_manifest.get("kind") == ROUTE_MANIFEST_KIND
+    )
+    checks["route_manifest_mode_matches_protocol"] = (
+        route_manifest.get("mode", OFFICIAL_MODE) == mode
+    )
+    checks["run_timeline_mode_matches_protocol"] = (
+        timeline.get("mode", OFFICIAL_MODE) == mode
     )
     declared_ns = route_manifest.get("declared_epoch_ns")
     checks["route_predeclared_before_run_start"] = (
@@ -600,6 +610,8 @@ def evaluate_run(
         "all_required_evidence_files_present",
         "protocol_hash_matches_predeclaration",
         "route_manifest_kind_expected",
+        "route_manifest_mode_matches_protocol",
+        "run_timeline_mode_matches_protocol",
         "route_predeclared_before_run_start",
         "schedule_hash_matches_predeclaration",
         "schedule_seed_matches_protocol",
@@ -625,6 +637,7 @@ def evaluate_run(
         "report_id": "tzcup_dynamic_avoidance_single_run_evaluation_v1",
         "status": status,
         "passed": functional_pass,
+        "mode": mode,
         "run_id": timeline.get("run_id"),
         "protocol_id": protocol["protocol_id"],
         "map_source": {
@@ -682,11 +695,22 @@ def evaluate_run(
         "structural_errors": structural_errors,
         "evidence_files": all_files,
         "claim_boundary": (
-            "A PASS proves only that this one predeclared trial satisfied the "
-            "functional checks and retained the required raw evidence. It does "
-            "not measure the official >=95% dynamic-avoidance success rate, "
-            "establish statistical confidence, validate real-vehicle braking, "
-            "or justify changing the official metric from NOT_MEASURED."
+            (
+                "FUNCTIONAL_SMOKE_NOT_OFFICIAL_95 proves only that this one "
+                "6.0 m short mission completed the retained functional checks "
+                "without collision. It is not the official 30.0 m protocol, "
+                "does not measure the >=95% rate, and leaves the official "
+                "metric NOT_MEASURED."
+            )
+            if mode == FUNCTIONAL_SMOKE_MODE
+            else (
+                "A PASS proves only that this one predeclared trial satisfied "
+                "the functional checks and retained the required raw evidence. "
+                "It does not measure the official >=95% dynamic-avoidance "
+                "success rate, establish statistical confidence, validate "
+                "real-vehicle braking, or justify changing the official metric "
+                "from NOT_MEASURED."
+            )
         ),
     }
     return report

@@ -170,7 +170,8 @@ build_manifest="${runtime_root}/current_source_build_manifest.json"
 export TZCUP_REPOSITORY_ROOT="${repo_root}"
 export ROS_DOMAIN_ID="${domain}"
 export GZ_PARTITION="${GZ_PARTITION:-tzcup_formal_dynamic_${domain}_$$}"
-runtime_schedule="${runtime_root}/pedestrian_schedule.seed_${dynamic_seed}.json"
+export FORMAL_DYNAMIC_RUN_MODE="${FORMAL_DYNAMIC_RUN_MODE:-OFFICIAL_SINGLE_RUN}"
+runtime_schedule="${runtime_root}/pedestrian_schedule.seed.${dynamic_seed}.json"
 /usr/bin/python3 "${repo_root}/scripts/prepare_formal_dynamic_obstacle_schedule.py" \
   --episode-manifest "${episode_root}/public/episode_manifest.json" \
   --public-world "${episode_root}/public/world.sdf" \
