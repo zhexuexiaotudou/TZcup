@@ -150,7 +150,7 @@ setsid ros2 launch sanitation_coverage coverage.launch.py \
   >"$OUTPUT/coverage_server.log" 2>&1 &
 coverage_pid=$!
 
-ready_deadline=$((SECONDS + 180))
+ready_deadline=$((SECONDS + 360))
 while (( SECONDS < ready_deadline )); do
   if [[ -f "$OUTPUT/cleaning_bridge_ready.json" ]] && \
      ros2 action list 2>/dev/null | grep -q '^/compute_coverage_path$' && \

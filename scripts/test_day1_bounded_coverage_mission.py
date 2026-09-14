@@ -77,6 +77,30 @@ def test_bounded_config_is_fixed_and_truth_safe() -> None:
     assert config["claim_boundary"]["full_20000_m2_mapping_claim"] is False
     assert config["claim_boundary"]["official_recognition_claim"] is False
     assert config["claim_boundary"]["ground_truth_used_for_control"] is False
+    assert config["planning_swath_spacing_m"] == 0.55
+    assert config["brush_forward_offset_m"] == 0.55
+    assert config["empirical_coverage_threshold"] == 0.98
+
+
+def test_readiness_window_extension_is_only_runtime_timing_change() -> None:
+    runner = (
+        ROOT / "scripts/run_day1_bounded_coverage_runner.sh"
+    ).read_text(encoding="utf-8")
+    dispatch = (
+        ROOT / "scripts/run_day1_bounded_coverage_remote_dispatch.sh"
+    ).read_text(encoding="utf-8")
+    readiness = READINESS_PATH.read_text(encoding="utf-8")
+    summarizer = SUMMARIZER_PATH.read_text(encoding="utf-8")
+
+    assert "ready_deadline=$((SECONDS + 360))" in runner
+    assert "ready_deadline=$((SECONDS + 180))" not in runner
+    assert "wall_deadline_seconds=1200" in dispatch
+    assert "timeout --signal=TERM --kill-after=10s 900s" in runner
+    assert "PRECOVERAGE_LIFT_POSITION_M = 0.095" in readiness
+    assert "MIN_CONTACT_CLEARANCE_M = -0.004" in readiness
+    assert "MAX_CONTACT_CLEARANCE_M = 0.015" in readiness
+    assert "all_three_ready_sample_count" in summarizer
+    assert "ready_count > 0" in summarizer
 
 
 def test_bridge_has_no_motion_or_truth_interfaces() -> None:
