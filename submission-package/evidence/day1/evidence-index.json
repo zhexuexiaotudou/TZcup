@@ -442,7 +442,7 @@
     "narration": "video/audio/narration.mp3",
     "build_manifest": "video/final/manifest.json",
     "validation_report": "video/validation/video-package-validation.json",
-    "source_branch": "codex/day1-video-final",
+    "source_branch": "codex/day1-video-report-sync",
     "source_commit": "b663ca9",
     "assembly_commit": "e6caf27",
     "archive_commit": "8cda98c",
@@ -457,10 +457,11 @@
     "accepted_facts": [
       "the final media is 300.000 seconds, 1920x1080, H.264 with AAC audio and embedded Chinese subtitles",
       "the repaired master is constant 30 fps with 9000 decoded frames",
-      "the reel combines successful modeling and functional module footage with chaptered Chinese narration"
+      "the reel follows a modeling-to-function progression including module decomposition, motion, arm motion, target approach, grasp and bin deposit, shallow-water cleaning, offline 2D map reconstruction, coverage planning and continuous cleaning"
     ],
     "limitations": [
       "the reel is a modular composite and does not show one continuous mission",
+      "the mapping section is an offline deterministic reconstruction rather than live SLAM",
       "it does not establish official full-mission, live-SLAM, avoidance-rate, board-perception or vehicle acceptance",
       "official points are not self-awarded; the bounded review band is 2-3 of 4"
     ]

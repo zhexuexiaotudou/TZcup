@@ -7,15 +7,15 @@
     "pages": 23,
     "bytes": 189509,
     "sha256": "cc98ca940c932dd39128499e28a53cc63b5ce6b5e079d5c7ab83ee3059ca5e3a",
-    "frozen_utc": "2026-09-14T13:21:29.3706010+08:00"
+    "frozen_utc": "2026-09-14T13:21:29.370601+08:00"
   },
   "current_report": {
     "branch": "codex/day1-video-report-sync",
     "base_commit": "8cda98c015d11ecd7628bf3599dcb49b8c361d1a",
     "pdf_path": "docs/技术方案报告.pdf",
     "pages": 24,
-    "bytes": 200253,
-    "sha256": "08bfa8d2eb5ef60a8c8eeb1464ea3968df77f0a4aa5e3248aae2196b5e2e8592",
+    "bytes": 199815,
+    "sha256": "5faa2f3abb4a59369ce2d6c502dfdeabba23375de374acab9388e225e856611a",
     "updated_utc": "2026-09-15"
   },
   "integration_branch": "codex/day1-video-report-sync",

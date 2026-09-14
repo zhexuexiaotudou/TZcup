@@ -1,0 +1,72 @@
+{
+  "schema_version": 2,
+  "segment_id": "01_modeling_v2",
+  "title": "整车建模与模块分解",
+  "exact_duration_seconds": 60,
+  "frame_rate": 30,
+  "resolution": {
+    "width": 1920,
+    "height": 1080
+  },
+  "video_codec": "H.264",
+  "pixel_format": "yuv420p",
+  "language": "zh-CN",
+  "shots": [
+    {
+      "index": 1,
+      "start_seconds": 0,
+      "end_seconds": 8,
+      "name": "整车建模开场",
+      "label": "整车建模成果 · 国产系统无人清扫车",
+      "source": "formal_vehicle_product_preview.png"
+    },
+    {
+      "index": 2,
+      "start_seconds": 8,
+      "end_seconds": 17,
+      "name": "整车多角度",
+      "label": "整车多角度建模 · 前左视图与底盘布局",
+      "source": "formal_front_left.png"
+    },
+    {
+      "index": 3,
+      "start_seconds": 17,
+      "end_seconds": 26,
+      "name": "机械臂与收纳舱",
+      "label": "机械臂与车载收纳单元 · 后右视图",
+      "source": "formal_rear_right.png"
+    },
+    {
+      "index": 4,
+      "start_seconds": 26,
+      "end_seconds": 35,
+      "name": "清扫系统",
+      "label": "双扫盘 · 中央滚刷 · 吸口",
+      "source": "formal_top_cleaning.png"
+    },
+    {
+      "index": 5,
+      "start_seconds": 35,
+      "end_seconds": 44,
+      "name": "传感系统",
+      "label": "三维激光雷达 · 深度相机 · RTK / IMU",
+      "source": "formal_sensor_tower.png"
+    },
+    {
+      "index": 6,
+      "start_seconds": 44,
+      "end_seconds": 53,
+      "name": "模块分解",
+      "label": "模块分解示意",
+      "source": "module-mosaic.png"
+    },
+    {
+      "index": 7,
+      "start_seconds": 53,
+      "end_seconds": 60,
+      "name": "模块重组",
+      "label": "模块重组 · 整车协同",
+      "source": "formal_vehicle_product_preview.png"
+    }
+  ]
+}

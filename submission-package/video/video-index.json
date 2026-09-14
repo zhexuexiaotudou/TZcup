@@ -1,6 +1,6 @@
 {
-  "schema_version": 1,
-  "artifact_id": "tzcup-day1-modular-demo-video",
+  "schema_version": 2,
+  "artifact_id": "tzcup-day1-modular-demo-video-v2",
   "status": "DELIVERED_MODULAR_DEMO",
   "official_full_mission_pass": false,
   "modular_composite_demo": true,
@@ -14,8 +14,9 @@
       2,
       3
     ],
+    "review_discretion_max_points": 4,
     "official_points_claimed": 0.0,
-    "rationale": "The package satisfies the 5-10 minute media-format and narration/subtitle requirements, but the reel combines successful module clips rather than one continuous mission capture."
+    "rationale": "The reel follows the requested simple-to-complex progression and includes modeling, motion, arm grasp, target approach, deposit, water cleaning, mapping, coverage planning and cleaning. It remains a modular composite rather than one continuous mission."
   },
   "media_contract": {
     "duration_s": 300.0,
@@ -31,98 +32,100 @@
     "narration_language": "zh-CN",
     "subtitle_language": "zh-CN"
   },
+  "demonstrated_content": [
+    "vehicle modeling with separate chassis, cleaning, arm, sensor and storage modules",
+    "basic motion and path following",
+    "planned robotic-arm motion",
+    "target perception and vehicle approach",
+    "grasp, transfer and onboard-bin release",
+    "shallow-water cleaning",
+    "offline deterministic 2D map reconstruction with 22399.99 square meters known area",
+    "coverage planning with 12 swaths and 11 turns",
+    "continuous cleaning execution"
+  ],
   "source": {
-    "branch": "codex/day1-video-final",
-    "base_video_commit": "e6caf27",
-    "assembly_script": "../../scripts/assemble_day1_video_final.ps1",
-    "media_repair": "Explicit concat filter and constant-frame-rate encode replace mixed-timebase stream copy; the final master is 9000 frames at 30 fps."
+    "branch": "codex/day1-video-report-sync",
+    "builder": "../../scripts/build_day1_video_v2.ps1",
+    "asset_renderer": "../../scripts/render_day1_video_assets.py",
+    "synchronization": "../../scripts/sync_day1_video_v2.ps1"
   },
-  "continuous_evidence": {
-    "path": "evidence/continuous-cleaning-safety-450s/gazebo-cleaning-raw.mp4",
-    "role": "unedited_live_gazebo_motion_and_safety_supplement",
-    "duration_s": 450.0,
-    "sha256": "c6877d723c82e16d5a0b123d98a76c6fc106dc63c452cf935f6311a3fa74fa01",
-    "claim_boundary": "Same continuous capture for motion, obstacle response, recovery and in-motion emergency stop; not a complete coverage mission or official efficiency/avoidance acceptance."
-  },
-  "localization_evidence": {
-    "path": "evidence/localization-causal-filter-60s/localization_tracking_success_1080p.mp4",
-    "role": "offline_causal_filter_visualization",
-    "duration_s": 60.0,
-    "sha256": "eafe3f5f79ec6b86ad134ff34e3ea905d3d9e4551ca5dbdfd7ace3163235c29f",
-    "metrics_mm": {
-      "rmse": 29.19189697400822,
-      "p95": 40.28501437569142,
-      "max": 47.56582158794771
-    },
-    "claim_boundary": "Offline same-session causal replay only; not live or official localization PASS."
-  },
-  "complex_conditions_evidence": {
-    "path": "evidence/complex-conditions-90s/complex_conditions_demo_90s.mp4",
-    "role": "controlled_water_and_dirt_condition_supplement",
-    "duration_s": 90.0,
-    "sha256": "5be0bf66ffcba71a23425e199c17174a863fa0fd7b795a7f4ef0458356371cb4",
-    "claim_boundary": "Two controlled Gazebo condition segments only; not a single continuous task and not field validation."
+  "evidence": {
+    "map_manifest": "evidence/day1/offline-raycast-mapping/offline_raycast_manifest.json",
+    "water_and_dirt": "evidence/complex-conditions-90s/complex_conditions_demo_90s.mp4",
+    "continuous_motion_safety": "evidence/continuous-cleaning-safety-450s/gazebo-cleaning-raw.mp4"
   },
   "files": [
     {
       "path": "final/TZcup_5min_video.mp4",
       "role": "final_master_with_narration_and_embedded_subtitles",
-      "bytes": 26137698,
-      "sha256": "631c2cfbf0e459bbcf74d7c3f9ddb6c1fc5a6519dbb6794bd4a6ea148d94e097"
+      "bytes": 28721707,
+      "sha256": "b109805a4e62608f2daaa5af1a3a9bd3c33e388024257fa814cf7a61ae367614"
     },
     {
       "path": "final/TZcup_5min_video_silent.mp4",
       "role": "silent_video_master",
-      "bytes": 21731939,
-      "sha256": "8122f1f30e7f65670ac01f934d9aa8f83818f8e50972f1295ce04098a043c686"
+      "bytes": 25019733,
+      "sha256": "ec39dea99575da8b4a160a00e4bdbc2c28cb79e454001cb045e10d5b8cead8c6"
     },
     {
       "path": "audio/narration.mp3",
       "role": "chinese_narration",
       "bytes": 7201196,
-      "sha256": "6a1cadd8f497f789e87e5e671be002ccd8b4e2d9717bfff431589007ec823468"
+      "sha256": "a586089188fdd45ea6ece40de7e5b317dc542cbb8aaca56a1d3f998189b3702e"
     },
     {
       "path": "audio/narration-script.md",
       "role": "narration_and_shot_script",
-      "bytes": 9401,
-      "sha256": "3a10cc72de3cc22e9b0f4440d96142a953a876ffdbecf93b8f4c300e7255d070"
+      "bytes": 3262,
+      "sha256": "f5b1e06d8eb0b885fbf0a970c889d8456bfd3be95a60dc2a3058fdaa8bb72423"
     },
     {
       "path": "subtitles/zh-CN.srt",
       "role": "sidecar_chinese_subtitles",
-      "bytes": 3546,
-      "sha256": "0424580e1a623bd41fa00dde57a036dbb66baa9071fea5ec7f87e4094d1973a0"
+      "bytes": 3384,
+      "sha256": "51104630e7a04d5a4bbb2aa61489d68cb844d413dbafb04b4aade99977faf311"
     },
     {
       "path": "chapters/chapters.json",
       "role": "chapter_timeline",
       "bytes": 1916,
-      "sha256": "60e42bb4ea0fbf1145f41a312fca3d5dabdc4447d04201b3c74dd57d8aeb14eb"
+      "sha256": "0867829ea6256ed0c6152349eef4ea6487fe865da8fb98ad710736d6f2ef8115"
+    },
+    {
+      "path": "modeling/shot-list.json",
+      "role": "modeling_shot_list",
+      "bytes": 1830,
+      "sha256": "f6a66c35116c4057cf3045e7488f716baa24d6993e732cbd4105282985d6f9bb"
+    },
+    {
+      "path": "functions/cue-sheet.json",
+      "role": "function_timeline",
+      "bytes": 2935,
+      "sha256": "6c5858b2a3ffb5b5c5f4853e4d989e4639910a9e2c994c449494ee54dc0eeb58"
     },
     {
       "path": "final/manifest.json",
       "role": "build_manifest",
-      "bytes": 1502,
-      "sha256": "ca93023b16098c956c19ab463e2c24af10756d3d62d69eeec23e772ebbe42aae"
+      "bytes": 2327,
+      "sha256": "27cc483f386a6dbe2b3f4f6af6a7a7b0cdbde096d4d3b758aabb81dfbe639c0b"
     },
     {
       "path": "final/ffprobe.json",
       "role": "media_probe",
-      "bytes": 5833,
-      "sha256": "dd45f90158f04db300dbb48f52ddca7f7a61925036790c65e4cb0fa74d355dd5"
+      "bytes": 4892,
+      "sha256": "320124d66ad51d642f3c956bfece400e3d584c39eef91c3b15ba04429c827cda"
     },
     {
       "path": "视频索引.md",
       "role": "human_readable_index",
-      "bytes": 3521,
-      "sha256": "86698e19e500944ad7d211928d18236e4952aba0c4b9f965d9aff2eb1b646c1b"
+      "bytes": 3851,
+      "sha256": "f5bcb270653cd1aa2b285ac2b60c08808ddd688bc54761d3088d421527e7f170"
     },
     {
       "path": "一页说明.md",
       "role": "score_boundary_brief",
-      "bytes": 2013,
-      "sha256": "5c2fe42bb49ad5e2114d7f4cd573699b778a39350138ae2ea9488e7e4561e422"
+      "bytes": 2174,
+      "sha256": "f5231dc4dee736663016fea3302b63207022f75a31500e5c8957a961d5b923a1"
     },
     {
       "path": "tools/validate_video_package.py",
@@ -132,7 +135,7 @@
     }
   ],
   "verification": {
-    "command": "py -3 tools\\validate_video_package.py --write",
+    "command": "py -3 tools\\\\validate_video_package.py --write",
     "report": "validation/video-package-validation.json",
     "checks": [
       "paths_sizes_hashes",
@@ -143,11 +146,11 @@
       "presentation_forbidden_terms"
     ]
   },
-  "claim_boundary": "Modular composite demonstration only; it is not a single continuous mission and does not establish official full-mission, live-SLAM, avoidance-rate, board-perception or vehicle acceptance.",
+  "claim_boundary": "Modular composite demonstration only. It does not establish official full-mission PASS, live SLAM, avoidance rate, board perception or vehicle validation.",
   "cannot_claim": [
     "official full-mission PASS",
     "all footage belongs to one continuous run",
-    "official 20000 m2 live SLAM",
+    "official 20000 square meter live SLAM",
     "official avoidance >=95 percent",
     "physical vehicle validation"
   ]

@@ -1,51 +1,70 @@
 {
-  "schema_version": 1,
-  "artifact_kind": "tzcup_day1_five_minute_submission_video",
-  "generated_at": "2026-09-14T15:53:17.2445533+00:00",
+  "schema_version": 2,
+  "artifact_kind": "tzcup_day1_five_minute_submission_video_v2",
   "duration_s": 300.0,
   "width": 1920,
   "height": 1080,
   "frame_rate": "30/1",
+  "average_frame_rate": "30/1",
   "frame_count": 9000,
   "video_codec": "h264",
   "audio_codec": "aac",
   "subtitle_codec": "mov_text",
   "narration_voice": "Microsoft Huihui Desktop",
-  "decode_windows": {
-    "video": "PASS",
-    "audio": "PASS"
-  },
-  "forbidden_scan": "PASS",
+  "chapters": 9,
+  "source_segments": [
+    "video/segments/01_modeling_v2.mp4",
+    "video/segments/02_functions_v2.mp4"
+  ],
   "files": [
     {
-      "path": "video/segments/01_modeling.mp4",
-      "bytes": 10083095,
-      "sha256": "96422abe349b88aaef801b135d8cf9fe7bd142b83300e0337e2da57fde60070b"
+      "path": "final/TZcup_5min_video.mp4",
+      "role": "final_master_with_narration_and_embedded_subtitles",
+      "bytes": 28721707,
+      "sha256": "b109805a4e62608f2daaa5af1a3a9bd3c33e388024257fa814cf7a61ae367614"
     },
     {
-      "path": "video/segments/02_functions.mp4",
-      "bytes": 11815544,
-      "sha256": "dda3c4d23ee880ae2e3618c5038a7362860ef43a2f4cbdab7e32a4d9b8419e31"
+      "path": "final/TZcup_5min_video_silent.mp4",
+      "role": "silent_video_master",
+      "bytes": 25019733,
+      "sha256": "ec39dea99575da8b4a160a00e4bdbc2c28cb79e454001cb045e10d5b8cead8c6"
     },
     {
-      "path": "video/audio/narration.mp3",
+      "path": "audio/narration.mp3",
+      "role": "chinese_narration",
       "bytes": 7201196,
-      "sha256": "6a1cadd8f497f789e87e5e671be002ccd8b4e2d9717bfff431589007ec823468"
+      "sha256": "a586089188fdd45ea6ece40de7e5b317dc542cbb8aaca56a1d3f998189b3702e"
     },
     {
-      "path": "video/subtitles/zh-CN.srt",
-      "bytes": 3546,
-      "sha256": "0424580e1a623bd41fa00dde57a036dbb66baa9071fea5ec7f87e4094d1973a0"
+      "path": "audio/narration-script.md",
+      "role": "narration_and_shot_script",
+      "bytes": 3262,
+      "sha256": "f5b1e06d8eb0b885fbf0a970c889d8456bfd3be95a60dc2a3058fdaa8bb72423"
     },
     {
-      "path": "video/final/TZcup_5min_video_silent.mp4",
-      "bytes": 21731939,
-      "sha256": "8122f1f30e7f65670ac01f934d9aa8f83818f8e50972f1295ce04098a043c686"
+      "path": "subtitles/zh-CN.srt",
+      "role": "sidecar_chinese_subtitles",
+      "bytes": 3384,
+      "sha256": "51104630e7a04d5a4bbb2aa61489d68cb844d413dbafb04b4aade99977faf311"
     },
     {
-      "path": "video/final/TZcup_5min_video.mp4",
-      "bytes": 26137698,
-      "sha256": "631c2cfbf0e459bbcf74d7c3f9ddb6c1fc5a6519dbb6794bd4a6ea148d94e097"
+      "path": "chapters/chapters.json",
+      "role": "chapter_timeline",
+      "bytes": 1916,
+      "sha256": "0867829ea6256ed0c6152349eef4ea6487fe865da8fb98ad710736d6f2ef8115"
+    },
+    {
+      "path": "modeling/shot-list.json",
+      "role": "modeling_shot_list",
+      "bytes": 1830,
+      "sha256": "f6a66c35116c4057cf3045e7488f716baa24d6993e732cbd4105282985d6f9bb"
+    },
+    {
+      "path": "functions/cue-sheet.json",
+      "role": "function_timeline",
+      "bytes": 2935,
+      "sha256": "6c5858b2a3ffb5b5c5f4853e4d989e4639910a9e2c994c449494ee54dc0eeb58"
     }
-  ]
+  ],
+  "claim_boundary": "Modular composite demonstration. It combines successful module footage and does not establish official full-mission PASS, live SLAM, avoidance rate, board perception or vehicle validation."
 }

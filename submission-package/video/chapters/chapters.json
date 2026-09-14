@@ -5,74 +5,74 @@
     {
       "number": "00",
       "start_sec": 0,
-      "end_sec": 12,
+      "end_sec": 8,
       "title": "国产系统无人清扫车",
       "subtitle": "感知 · 机械臂 · 清扫一体化",
       "source_kind": "标题卡"
     },
     {
       "number": "01",
-      "start_sec": 12,
+      "start_sec": 8,
       "end_sec": 60,
       "title": "整车建模",
-      "subtitle": "结构集成 · 模块协同",
+      "subtitle": "模块分解 · 整车重组",
       "source_kind": "模块特写"
     },
     {
       "number": "02",
       "start_sec": 60,
-      "end_sec": 95,
+      "end_sec": 85,
       "title": "基础运动",
-      "subtitle": "四轮驱动 · 路径跟踪",
+      "subtitle": "直线 · 转弯 · 路径跟踪",
       "source_kind": "成果演示"
     },
     {
       "number": "03",
-      "start_sec": 95,
-      "end_sec": 130,
-      "title": "机械臂抓取",
-      "subtitle": "对准 · 夹持 · 入箱",
-      "source_kind": "模块特写"
+      "start_sec": 85,
+      "end_sec": 115,
+      "title": "机械臂运动",
+      "subtitle": "规划轨迹 · 对准 · 夹持",
+      "source_kind": "成果演示"
     },
     {
       "number": "04",
-      "start_sec": 130,
-      "end_sec": 180,
-      "title": "感知联动",
-      "subtitle": "识别 · 接近 · 抓取 · 收纳",
+      "start_sec": 115,
+      "end_sec": 175,
+      "title": "目标感知与抓取",
+      "subtitle": "识别 · 接近 · 抓取 · 入箱",
       "source_kind": "成果演示"
     },
     {
       "number": "05",
-      "start_sec": 180,
-      "end_sec": 220,
-      "title": "水渍清洁",
-      "subtitle": "干湿协同 · 地面恢复",
+      "start_sec": 175,
+      "end_sec": 210,
+      "title": "浅积水清洁",
+      "subtitle": "路径通过 · 地面恢复",
       "source_kind": "成果演示"
     },
     {
       "number": "06",
-      "start_sec": 220,
-      "end_sec": 260,
+      "start_sec": 210,
+      "end_sec": 240,
       "title": "环境建图",
-      "subtitle": "约2.24万平方米 · 0.05米分辨率",
+      "subtitle": "二维重建 · 约2.24万平方米 · 0.05米",
       "source_kind": "成果画面"
     },
     {
       "number": "07",
-      "start_sec": 260,
-      "end_sec": 290,
-      "title": "连续清扫",
-      "subtitle": "600毫米清除带 · 0.489秒仿真急停",
-      "source_kind": "成果演示"
+      "start_sec": 240,
+      "end_sec": 260,
+      "title": "覆盖规划",
+      "subtitle": "12条作业带 · 11处转弯",
+      "source_kind": "成果画面"
     },
     {
       "number": "08",
-      "start_sec": 290,
+      "start_sec": 260,
       "end_sec": 300,
-      "title": "全系统作业",
-      "subtitle": "建模 · 感知 · 抓取 · 清扫一体化",
-      "source_kind": "标题卡"
+      "title": "连续清扫",
+      "subtitle": "刷盘贴地 · 连续清除带",
+      "source_kind": "成果演示"
     }
   ]
 }

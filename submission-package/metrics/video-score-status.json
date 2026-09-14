@@ -14,8 +14,8 @@
   },
   "media_contract": {
     "path": "video/final/TZcup_5min_video.mp4",
-    "bytes": 26137698,
-    "sha256": "631c2cfbf0e459bbcf74d7c3f9ddb6c1fc5a6519dbb6794bd4a6ea148d94e097",
+    "bytes": 28721707,
+    "sha256": "b109805a4e62608f2daaa5af1a3a9bd3c33e388024257fa814cf7a61ae367614",
     "duration_s": 300.0,
     "width": 1920,
     "height": 1080,
@@ -28,19 +28,21 @@
     "subtitle_cues": 35
   },
   "source": {
-    "branch": "codex/day1-video-final",
-    "assembly_commit": "e6caf27",
-    "repair_and_package_commit": "b663ca9",
-    "archive_commit": "8cda98c"
+    "branch": "codex/day1-video-report-sync",
+    "builder": "scripts/build_day1_video_v2.ps1",
+    "asset_renderer": "scripts/render_day1_video_assets.py",
+    "package_sync": "scripts/sync_day1_video_v2.ps1",
+    "archived_previous_master": "video/final/archive/TZcup_5min_video_v1.mp4"
   },
   "demonstrated_content": [
-    "vehicle modeling and module breakdown",
+    "vehicle modeling with separate chassis, cleaning, arm, sensor and storage modules",
     "basic motion and path following",
-    "robotic-arm approach, grasp and lift",
-    "sensor-driven target approach, grasp and onboard-bin placement",
-    "water-stain cleaning",
-    "mapping and localization views",
-    "continuous cleaning brush and coverage"
+    "planned robotic-arm motion, grasp and lift",
+    "target approach, grasp, transfer and onboard-bin release",
+    "shallow-water cleaning",
+    "offline deterministic 2D map reconstruction with 22399.99 square meters known area",
+    "coverage planning with 12 swaths and 11 turns",
+    "continuous cleaning execution"
   ],
   "claim_boundary": "Modular composite demonstration only. The reel combines successful module footage and is not one continuous mission; it does not establish official full-mission PASS, live SLAM, avoidance rate, board perception or vehicle validation.",
   "recommended_review_note": "Prepare review material at 2-3 of 4 points. The official score remains for the judges; if they accept a modular composite and chaptered operation explanation, the review ceiling is 4 of 4."

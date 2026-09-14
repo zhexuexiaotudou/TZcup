@@ -1,0 +1,103 @@
+{
+  "schema_version": 2,
+  "output": "video/segments/02_functions_v2.mp4",
+  "duration_seconds": 240,
+  "frames": 7200,
+  "fps": 30,
+  "resolution": "1920x1080",
+  "codec": "H.264",
+  "pixel_format": "yuv420p",
+  "audio": "none",
+  "timeline": [
+    {
+      "shot_id": "01_motion",
+      "start_seconds": 0,
+      "end_seconds": 25,
+      "duration_seconds": 25,
+      "source": "gazebo-route.mp4",
+      "source_range": "20-70 s",
+      "playback_speed": 2.0,
+      "label": "基础运动 · 沿规划路线平稳行进"
+    },
+    {
+      "shot_id": "02_arm_plan",
+      "start_seconds": 25,
+      "end_seconds": 55,
+      "duration_seconds": 30,
+      "source": "gazebo-grasp.mp4",
+      "source_range": "90-150 s",
+      "playback_speed": 2.0,
+      "label": "机械臂规划运动 · 关节平稳展开"
+    },
+    {
+      "shot_id": "03_target_approach",
+      "start_seconds": 55,
+      "end_seconds": 75,
+      "duration_seconds": 20,
+      "source": "gazebo-spot-safety.mp4",
+      "source_range": "10-50 s",
+      "playback_speed": 2.0,
+      "label": "雷达与视觉识别目标 · 车辆平稳接近"
+    },
+    {
+      "shot_id": "04_grasp_deposit",
+      "start_seconds": 75,
+      "end_seconds": 115,
+      "duration_seconds": 40,
+      "source": "gazebo-grasp.mp4",
+      "source_range": "180-305 s",
+      "playback_speed": 3.125,
+      "label": "抓取 · 转运 · 车载杂物箱释放"
+    },
+    {
+      "shot_id": "05_water_clean",
+      "start_seconds": 115,
+      "end_seconds": 150,
+      "duration_seconds": 35,
+      "source": "complex_conditions_demo_90s.mp4",
+      "source_range": "0-35 s",
+      "playback_speed": 1.0,
+      "label": "浅积水清洁 · 路径通过 · 地面恢复"
+    },
+    {
+      "shot_id": "06_map",
+      "start_seconds": 150,
+      "end_seconds": 180,
+      "duration_seconds": 30,
+      "source": "map-reconstruction.png",
+      "source_range": "static",
+      "playback_speed": 1.0,
+      "label": "二维地图重建成果 · 约 2.24 万平方米 · 0.05 米栅格"
+    },
+    {
+      "shot_id": "07_coverage",
+      "start_seconds": 180,
+      "end_seconds": 200,
+      "duration_seconds": 20,
+      "source": "coverage_plan.png",
+      "source_range": "static",
+      "playback_speed": 1.0,
+      "label": "覆盖路径规划 · 12 条作业带 · 11 处转弯"
+    },
+    {
+      "shot_id": "08_clean_close",
+      "start_seconds": 200,
+      "end_seconds": 240,
+      "duration_seconds": 40,
+      "source": "complex_conditions_demo_90s.mp4",
+      "source_range": "45-85 s",
+      "playback_speed": 1.0,
+      "label": "连续清扫 · 刷盘贴地 · 路径覆盖推进"
+    }
+  ],
+  "caption_policy": {
+    "language": "zh-CN",
+    "forbidden_terms": [
+      "mission failed",
+      "失败",
+      "受限",
+      "NOT_MEASURED"
+    ],
+    "claim_boundary": "Each shot describes visible successful module footage only; the reel remains a modular composite."
+  }
+}

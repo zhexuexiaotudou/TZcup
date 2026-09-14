@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "generated_at_utc": "2026-09-14T16:04:59.952985+00:00",
+  "generated_at_utc": "2026-09-14T18:00:12.414632+00:00",
   "status": "PASS",
   "artifact_status": "DELIVERED_MODULAR_DEMO",
-  "claim_boundary": "Modular composite demonstration only; it is not a single continuous mission and does not establish official full-mission, live-SLAM, avoidance-rate, board-perception or vehicle acceptance.",
+  "claim_boundary": "Modular composite demonstration only. It does not establish official full-mission PASS, live SLAM, avoidance rate, board perception or vehicle validation.",
   "checks": {
     "paths_sizes_hashes": "PASS",
     "ffprobe_media_contract": "PASS",
