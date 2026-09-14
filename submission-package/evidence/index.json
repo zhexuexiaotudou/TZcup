@@ -485,7 +485,7 @@
     "file": "docs/report-baseline.json",
     "source": "frozen baseline record for git:43f7136:submission-package/docs/技术方案报告.pdf",
     "source_commit": "43f7136",
-    "sha256": "fb3c5dcf0c07f9c43ad9a85f977b69cc7120b22e0c0e7d0bf514d1f2eb2606bb",
+    "sha256": "dfe541a353cf3c11a3f55498d6c626e69926af9c0acc519232c0c777ced9dd20",
     "copied_utc": "2026-09-14"
   },
   {
@@ -591,8 +591,8 @@
     "source_commit": "b663ca9",
     "assembly_commit": "e6caf27",
     "archive_commit": "8cda98c",
-    "bytes": 5301,
-    "sha256": "0eb5e8b47027a38211ee1a1b59cb973df181f7240b9eb1630542c7ccf3be80f8",
+    "bytes": 5714,
+    "sha256": "1723c02cce7f93dc3ad644dc215ad0f6986f11259505e2ed9215e98f2de1c18b",
     "copied_utc": "2026-09-15"
   },
   {
@@ -649,6 +649,22 @@
     "source_commit": "a7841c9e024175901065d2c583f32a4a2d89f50f",
     "bytes": 6343,
     "sha256": "63994a2d46a9138ca39cd58cf2bc2f2e4f5167c3a46a5991da55b3a5a9ed81d8",
+    "copied_utc": "2026-09-15"
+  },
+  {
+    "file": "video/evidence/complex-conditions-90s/complex_conditions_demo_90s.mp4",
+    "source": "controlled water-cleaning and dirt-reduction video assembly",
+    "source_commit": null,
+    "bytes": 3574956,
+    "sha256": "5be0bf66ffcba71a23425e199c17174a863fa0fd7b795a7f4ef0458356371cb4",
+    "copied_utc": "2026-09-15"
+  },
+  {
+    "file": "video/evidence/complex-conditions-90s/README.md",
+    "source": "controlled condition supplement boundary",
+    "source_commit": null,
+    "bytes": 569,
+    "sha256": "c8d421fd6dbf563d0cc4e0801903a89e8457de0ddf4c95d131d7935543bc2614",
     "copied_utc": "2026-09-15"
   },
   {
@@ -717,8 +733,8 @@
     "source_commit": "b663ca9",
     "assembly_commit": "e6caf27",
     "archive_commit": "8cda98c",
-    "bytes": 2849,
-    "sha256": "99f2177c775cc4396dc87a9e7005b4f5d8319ca5b46870f5fbd4ffc57510d0d1",
+    "bytes": 3087,
+    "sha256": "1a182581bc87d08df33d02221d8cfda3b65fd7954be17910bd730b0b27a3f53c",
     "copied_utc": "2026-09-15"
   },
   {

@@ -56,6 +56,13 @@
     },
     "claim_boundary": "Offline same-session causal replay only; not live or official localization PASS."
   },
+  "complex_conditions_evidence": {
+    "path": "evidence/complex-conditions-90s/complex_conditions_demo_90s.mp4",
+    "role": "controlled_water_and_dirt_condition_supplement",
+    "duration_s": 90.0,
+    "sha256": "5be0bf66ffcba71a23425e199c17174a863fa0fd7b795a7f4ef0458356371cb4",
+    "claim_boundary": "Two controlled Gazebo condition segments only; not a single continuous task and not field validation."
+  },
   "files": [
     {
       "path": "final/TZcup_5min_video.mp4",
@@ -108,8 +115,8 @@
     {
       "path": "视频索引.md",
       "role": "human_readable_index",
-      "bytes": 3166,
-      "sha256": "be9700d276a07eb4ecf98b3e615da7bfd8bc8b197c10eb6a60512ba5aef40cdb"
+      "bytes": 3521,
+      "sha256": "86698e19e500944ad7d211928d18236e4952aba0c4b9f965d9aff2eb1b646c1b"
     },
     {
       "path": "一页说明.md",

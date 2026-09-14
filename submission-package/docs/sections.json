@@ -207,6 +207,7 @@
       "连续运行证据：video/evidence/continuous-cleaning-safety-450s/保存450s未剪辑连续Gazebo画面，覆盖运动、障碍减速停车、障碍移除恢复和行驶中急停。",
       "定位算法证据：video/evidence/localization-causal-filter-60s/保存同session因果滤波可视化，RMSE/P95/max为29.192/40.285/47.566mm，仍为offline candidate，不替代live TF链验收。",
       "避障恢复证据：evidence/day1/avoidance-recovery/保存全局EKF对GNSS反馈闭环的根因、最小topic覆盖修复、单次恢复验收器和失败回执，官方95%仍NOT_MEASURED。",
+      "复杂工况证据：video/evidence/complex-conditions-90s/提供受控浅积水清洁和落叶/颗粒物清扫各45s画面，只证明受控仿真视觉链，不外推真实路面或长期泛化。",
       "以上证据只用于提高可复核性和定位/避障问题解释力，不把离线候选、单次功能或补充视频升级为official PASS。"
     ]
   ]
