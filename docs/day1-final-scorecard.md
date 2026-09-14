@@ -79,7 +79,7 @@
 
 | 交付物 | 路径或提交 | 状态 |
 |---|---|---|
-| 合并技术报告 | `submission-package/docs/技术方案报告.pdf`；SHA-256 `169e3b04f1d3bb37591431422db8a205a714f1fec5e5df1a2897686c89fceb31` | 24 页，已冻结；第24页为补充技术证据索引 |
+| 合并技术报告 | `submission-package/docs/技术方案报告.pdf`；SHA-256 `5d6290bda28737fed08a6cb56fe59fc393fd6a0702319873a9223ec0db76cf3c` | 24 页，已冻结；第24页为补充技术证据索引 |
 | 非技术补充包 | `submission-package/supplements/nontechnical-score-closure/pdf/TZcup-nontechnical-score-closure.pdf` | 14 页，设计/计划/未测边界明确 |
 | 感知候选 | `3882dc34e756e1c361852027d49e55acac2b2a74` | 受控候选，不计官方 10 分 |
 | 定位候选 | `a7841c9e024175901065d2c583f32a4a2d89f50f` | 离线候选，不计 official PASS |

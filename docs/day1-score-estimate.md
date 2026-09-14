@@ -92,7 +92,7 @@ run-11 的本地 ops 证据位于
 ## 证据与回滚
 
 - 报告合并：`codex/day1-evidence-integration@05481fc55e6ef89b9396070381797f760c6b72c4`
-- 报告 PDF SHA-256：`169e3b04f1d3bb37591431422db8a205a714f1fec5e5df1a2897686c89fceb31`
+- 报告 PDF SHA-256：`5d6290bda28737fed08a6cb56fe59fc393fd6a0702319873a9223ec0db76cf3c`
 - 上一评分刷新：`codex/day1-score-refresh@c1c254ec27bcc9f746f8215533016d171ba1b2fa`，父提交为 `05481fc55e6ef89b9396070381797f760c6b72c4`
 - 视频归档：`codex/day1-video-final@b663ca9871d75caf26b83c8f8fd40b0d906b1539`
 - 视频成片 SHA-256：`631c2cfbf0e459bbcf74d7c3f9ddb6c1fc5a6519dbb6794bd4a6ea148d94e097`
