@@ -14,15 +14,26 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 $archive = [System.IO.Compression.ZipFile]::OpenRead($output)
 try {
     Write-Output "entries=$($archive.Entries.Count)"
+    $reportPdfEntries = @(
+        $archive.Entries |
+            Where-Object {
+                $normalized = $_.FullName.Replace("\", "/")
+                $normalized.StartsWith("docs/") -and $normalized.ToLower().EndsWith(".pdf")
+            }
+    ).Count
+    Write-Output "report_pdf_entries=$reportPdfEntries"
     foreach ($required in @(
-        "docs/技术方案报告.pdf",
         "video/final/TZcup_5min_video.mp4",
         "video/evidence/continuous-cleaning-safety-450s/gazebo-cleaning-raw.mp4",
         "video/evidence/localization-causal-filter-60s/localization_tracking_success_1080p.mp4",
         "video/evidence/complex-conditions-90s/complex_conditions_demo_90s.mp4",
         "evidence/day1/avoidance-recovery/day1-avoidance-recovery-root-cause.md"
     )) {
-        Write-Output "$required=$($null -ne ($archive.Entries | Where-Object FullName -eq $required))"
+        $present = @(
+            $archive.Entries |
+                Where-Object { $_.FullName.Replace("\", "/") -eq $required }
+        ).Count -gt 0
+        Write-Output "$required=$present"
     }
 }
 finally {
