@@ -1,6 +1,6 @@
 {
   "attempt_id": "day1-dynamic-avoidance-offline-map-retry-20260914-09",
-  "claim_boundary": "The startup deadlock was fixed and goal acceptance/command generation were observed, but Nav2 goal completion remained false. Official >=95% remains NOT_MEASURED.",
+  "claim_boundary": "The startup deadlock fix was validated by goal acceptance and command output. Run-09 still failed after partial motion; no further runtime change is justified from this evidence. Official >=95% remains NOT_MEASURED.",
   "collectors_started": true,
   "collision_monitor_intervention_count": 2,
   "command_topic_sample_counts": {
@@ -20,7 +20,10 @@
   },
   "completion_reason": "action_result",
   "contact_count": 0,
-  "dynamic_interaction_candidates": [],
+  "diagnosis": {
+    "assessment": "The remaining failure is map-frame/localization/costmap state divergence after motion, not the startup deadlock. The retained evidence is insufficient to select one minimal fix without changing or further instrumenting runtime behavior.",
+    "chain": "goal accepted -> command chain produced 765 nav samples and 6.43 m travel -> planner later failed from (4.51, 9.66) and then (-1.53, 45.07) to (30, 0) -> controller received a zero-pose plan -> BT aborted with status 6 after two recoveries"
+  },
   "environment_telemetry_present": true,
   "evidence_sha256": {
     "dynamic_obstacle_acceptance.json": "e2634c0a936eaa56a0ef2a7e1be41d2acb14661b72f066932b3b5ca7a7a8de4d",
@@ -31,14 +34,25 @@
     "single_run_evaluation.json": "f19ebe9c6ffb9777e0491d014accc0c001a82024005f73590bc4816237922965",
     "single_run_timeline.json": "6225ff872d9dc9bc758ad6607f173ad426f72d2231d234f5df2a94d826471d73"
   },
+  "feedback_sample_count": 22276,
   "formal_status": "FORMAL_DYNAMIC_OBSTACLE_AVOIDANCE_ACCEPTANCE_BLOCKED",
   "gazebo_started": true,
   "goal_accepted": true,
   "live_slam_claimed": false,
   "map_source_label": "OFFLINE_MAP_SOURCE",
   "map_source_mode": "OFFLINE_RAYCAST_MAPPING",
-  "mcap_preserved": false,
+  "map_source_valid": true,
+  "map_trajectory_last": [
+    6.022834916900113,
+    0.5339046200793504
+  ],
+  "maximum_recovery_count": 2,
+  "nav2_goal_status": 6,
   "nav2_goal_succeeded": false,
+  "odom_trajectory_last": [
+    6.039106027767157,
+    5.269943752722368e-06
+  ],
   "official_metric": {
     "formula": "N_noncollision_and_task_complete / N_total_trials",
     "independent_run_count": 1,
@@ -52,19 +66,18 @@
   },
   "physical_travel_distance_m": 6.427894489016126,
   "resource_release": {
-    "cpu_busy_percent_sample": 14.2,
+    "cpu_busy_percent_sample": 10.4,
     "formal_gazebo_lock_available": true,
     "gpu_memory_total_mib": 12288,
     "gpu_memory_used_mib": 1,
     "gpu_utilization_percent": 0,
     "measurement_window_s": 1.0,
-    "note": "run-09 accepted the Nav2 goal and drove 6.43 m, then planner/controller failed; resources were released after bounded cleanup.",
+    "note": "run-09 accepted the goal and generated motion, then Nav2 aborted after planner/controller failure; resources released after bounded cleanup.",
     "resource_released": true,
     "run_id": "run-09",
     "runtime_processes_remaining": [],
     "schema_version": 1
   },
-  "root_cause_fixed": "goal-send gate had waited for collision_monitor_state and base_command_enabled, both of which are outputs that cannot exist before a goal/command is sent",
   "run_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-offline-map-retry-20260914-09/run-09",
   "runtime_closure_sha256": "ce002855ec5bf295d12a92effa01a5e3f2b0b469fc3c011c814be2b183b8869e",
   "schema_version": 1,
@@ -77,5 +90,6 @@
     "started": true
   },
   "single_run_status": "SINGLE_RUN_EVIDENCE_INVALID",
+  "startup_deadlock_fix": "removed collision_monitor_state and base_command_enabled from goal-send readiness gate; environment collector catches ExternalShutdownException",
   "status": "SINGLE_RUN_EVIDENCE_INVALID_AFTER_GOAL_ACCEPTANCE_AND_PARTIAL_MOTION"
 }

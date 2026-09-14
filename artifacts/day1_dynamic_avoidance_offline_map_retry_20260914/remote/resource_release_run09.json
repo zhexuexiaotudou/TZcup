@@ -1,11 +1,11 @@
 {
-  "cpu_busy_percent_sample": 14.2,
+  "cpu_busy_percent_sample": 10.4,
   "formal_gazebo_lock_available": true,
   "gpu_memory_total_mib": 12288,
   "gpu_memory_used_mib": 1,
   "gpu_utilization_percent": 0,
   "measurement_window_s": 1.0,
-  "note": "run-09 accepted the Nav2 goal and drove 6.43 m, then planner/controller failed; resources were released after bounded cleanup.",
+  "note": "run-09 accepted the goal and generated motion, then Nav2 aborted after planner/controller failure; resources released after bounded cleanup.",
   "resource_released": true,
   "run_id": "run-09",
   "runtime_processes_remaining": [],
