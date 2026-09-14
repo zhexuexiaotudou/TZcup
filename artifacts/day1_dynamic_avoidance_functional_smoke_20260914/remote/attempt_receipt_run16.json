@@ -1,0 +1,109 @@
+{
+  "attempt_id": "day1-dynamic-avoidance-functional-smoke-20260914-16",
+  "claim_boundary": "This is the final authorized non-official functional-smoke attempt. Offline-map preparation passed after LF normalization, but the 6.0 m schedule materializer could not place enough obstacle-free crossings. Gazebo did not start, so no command, contact, clearance, reroute, goal-recovery, or official >=95% result exists. No retry was launched.",
+  "closure_manifest_sha256": "16ae5cde5718bdc23577f8b7e8ea140b1256b1e7cd798b14d362179d27828a2a",
+  "collectors_started": false,
+  "dispatch_exit_code": 1,
+  "evidence_sha256": {
+    "closure_verification_smoke_16.json": "9494372f44acab94d922399be0d7e81b60babdccb96b8e197f0a604554cd8a67",
+    "final_runtime_closure_manifest_smoke_16.json": "16ae5cde5718bdc23577f8b7e8ea140b1256b1e7cd798b14d362179d27828a2a",
+    "formal_acceptance_session_smoke_16.json": "66bd4cf5baa71fc3cd57ed3202c6f4e8ba840f331b38a9b801445490ae144c4e",
+    "resource_release_run16.json": "5fdf431a390bc6e0ab45ebaba02f6a8c3341ac8fa014597532026da5e6735940",
+    "run-16.dispatch.log": "4c4d77c02efe6482722e50b70c46508e049d1934d0f246e39ed96bc0baac4a90",
+    "run-16.dispatch.rc": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+    "run-16.environment.json": "16d0ab6e0cf9748403c9f3685e35b1c0b0037f32803f462bfd53f2daa833a24f",
+    "run-16/offline_map_source/SOURCE_PROVENANCE.json": "cf9da451d2b9068cea218ae4350ea1710807c679fc83875aef7ab758d04d904c",
+    "run-16/offline_map_source/map_area_verification.json": "19429d4a612c4ef5f0d9c227b6ac8ea5ce7264a0b27f28f00ce70b2affdaeb48",
+    "run-16/offline_map_source/occupancy.pgm": "8b74f3688d279007e80a198935b983c09b9ecc2202d1e9636522453344586a63",
+    "run-16/offline_map_source/occupancy.yaml": "9a275add468a3710ef4df6f101d3e339bc482374612f2d6f52995fdaed284fae",
+    "run-16/offline_map_source/offline_map_source_binding.json": "8a2550acfb63c6eb90def705dd11b0db25624ac8398d13066cb798f58a98a419",
+    "run-16/offline_map_source/offline_raycast_manifest.json": "69718c19572f1bc5f2a0713f91149a11272d572c71a425d061f4cbca26d262c0",
+    "run-16/offline_map_source/offline_raycast_seal.json": "b2669d31090feec4dd0abd6b1b5e989cfc344ddf574a9d4a1c08632e14de72b6",
+    "runtime_python_prepatch/runtime_install_offline_map_source.py": "b5c4bd6a5121263527d333afeb7ba60142f6613e87df1c14bd24b9d16654da88",
+    "runtime_python_prepatch/runtime_source_offline_map_source.py": "b5c4bd6a5121263527d333afeb7ba60142f6613e87df1c14bd24b9d16654da88",
+    "source_overlay_freeze_smoke_16.json": "68d0ebcdf57e395caea4f41a112ff62b62e419d0fc4fb9c7a2720948d2e2d245"
+  },
+  "failure": {
+    "cause": "The fixed 6.0 m nominal leg could not admit the required set of deterministic crossing routes after the same obstacle-clearance checks.",
+    "dispatch_log": "run-16.dispatch.log",
+    "exception": "ValueError: could not place enough obstacle-free mission crossings",
+    "phase": "prepare_dynamic_avoidance_single_run"
+  },
+  "gazebo_started": false,
+  "gz_partition": "tzcup_dynamic_avoidance_smoke_20260914_16",
+  "mode": "FUNCTIONAL_SMOKE_NOT_OFFICIAL_95",
+  "official_metric": {
+    "measured_value": null,
+    "metric_id": "dynamic_avoidance_success_rate",
+    "status": "NOT_MEASURED",
+    "threshold": 0.95
+  },
+  "offline_map_preparation": {
+    "label": "OFFLINE_MAP_SOURCE",
+    "map_source_mode": "OFFLINE_RAYCAST_MAPPING",
+    "normalized_text_hashes": {
+      "SOURCE_PROVENANCE.json": "cf9da451d2b9068cea218ae4350ea1710807c679fc83875aef7ab758d04d904c",
+      "map_area_verification.json": "19429d4a612c4ef5f0d9c227b6ac8ea5ce7264a0b27f28f00ce70b2affdaeb48",
+      "occupancy.yaml": "9a275add468a3710ef4df6f101d3e339bc482374612f2d6f52995fdaed284fae",
+      "offline_raycast_manifest.json": "69718c19572f1bc5f2a0713f91149a11272d572c71a425d061f4cbca26d262c0",
+      "offline_raycast_seal.json": "b2669d31090feec4dd0abd6b1b5e989cfc344ddf574a9d4a1c08632e14de72b6"
+    },
+    "passed": true,
+    "pgm_sha256": "8b74f3688d279007e80a198935b983c09b9ecc2202d1e9636522453344586a63",
+    "preserved_frozen_hashes": {
+      "map_area_verification.json": "c739ef43f4c3fabc5d01b6dca90821bdd2c6ab60c21a0fe06953ab76c1318cac",
+      "occupancy.yaml": "78f39b80c0ea79f339c0aeac94573454eb49849e47cdbf8c05f903b518e89538",
+      "offline_raycast_manifest.json": "ed4e52fe688e3ca41ab0cdc8eda51cad0b60691809085318b31d739c53f3cc49"
+    }
+  },
+  "preserved_evidence": {
+    "clearance_evidence": false,
+    "contact_evidence": false,
+    "goal_recovery_evidence": false,
+    "mcap": false,
+    "product_timing_telemetry": false,
+    "reroute_evidence": false
+  },
+  "requested_code_commit": "b6183e037ea49ea3ccb664582144826a805f6353",
+  "resource_release": {
+    "cpu_busy_percent_sample": 10.32,
+    "dispatch_exit_code": 1,
+    "formal_gazebo_lock_available": true,
+    "formal_gazebo_lock_holders": [],
+    "gpu_memory_total_mib": 12288,
+    "gpu_memory_used_mib": 1,
+    "gpu_utilization_percent": 0,
+    "mode": "FUNCTIONAL_SMOKE_NOT_OFFICIAL_95",
+    "note": "The final authorized smoke attempt stopped before Gazebo at 6 m schedule materialization; no retry was launched.",
+    "run_id": "run-16",
+    "run_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-smoke-20260914-16/run-16",
+    "runtime_processes_remaining": [],
+    "schema_version": 1
+  },
+  "ros_domain_id": 101,
+  "run_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-smoke-20260914-16/run-16",
+  "runtime_closure_sha256": "afbef326b8d2ea2be7024b96ec69e3e434494f58de7e5054322465cc5b9a18f0",
+  "runtime_python_patch": {
+    "path": "starter_ws/src/sanitation_formal_campus_integration/sanitation_formal_campus_integration/offline_map_source.py",
+    "prepatch_backup": "runtime_python_prepatch/",
+    "sha256": "1393d22e102f4759db52d15d732658af320fbee4fc4f4a82e27150c347e7444b",
+    "source_and_install_match": true
+  },
+  "schema_version": 1,
+  "session_manifest_sha256": "66bd4cf5baa71fc3cd57ed3202c6f4e8ba840f331b38a9b801445490ae144c4e",
+  "session_started_epoch_ns": 1789365946796383088,
+  "single_run": {
+    "denominator": 0,
+    "functional_success": false,
+    "numerator": 0,
+    "observed_fraction": null,
+    "started": false
+  },
+  "source_base_commit": "1a211400ca2dc4d6007e4fd838e1f2835cfd1dc8",
+  "source_base_tree": "e11be0f1032076bd949afac874c41793b4149037",
+  "source_overlay_archive_sha256": "7e9c8db133c390cbb08a28ed5f904607e0b5f4317819075c30d8e98e9307443e",
+  "source_overlay_commit": "b6183e037ea49ea3ccb664582144826a805f6353",
+  "source_overlay_freeze_sha256": "68d0ebcdf57e395caea4f41a112ff62b62e419d0fc4fb9c7a2720948d2e2d245",
+  "status": "BLOCKED_BEFORE_GAZEBO_SCHEDULE_MATERIALIZATION",
+  "xdg_runtime_dir": "/tmp/tzcup_dynamic_avoidance_smoke_20260914_16_xdg"
+}

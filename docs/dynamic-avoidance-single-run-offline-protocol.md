@@ -115,6 +115,12 @@ The runtime writes the evaluator-compatible schedule filename
 `pedestrian_schedule.seed.<seed>.json`. A smoke pass never substitutes for the
 official 30.0 m protocol or the `>=95%` campaign.
 
+Offline-map preparation normalizes `.yaml`, `.yml`, `.json`, and `.jsonl`
+working artifacts to LF before admission. The binary `occupancy.pgm` is copied
+without transformation. Provenance verification remains compatible with the
+unchanged frozen CRLF hashes by evaluating the equivalent LF projection, so map
+content and declared provenance values are preserved.
+
 ## Future command
 
 The command below is for one later Gazebo trial and is deliberately **not**

@@ -1,0 +1,14 @@
+{
+  "closure_manifest": "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-smoke-20260914-16/final_runtime_closure_manifest_smoke_16.json",
+  "gz_partition": "tzcup_dynamic_avoidance_smoke_20260914_16",
+  "map_source_mode": "OFFLINE_RAYCAST_MAPPING",
+  "mode": "FUNCTIONAL_SMOKE_NOT_OFFICIAL_95",
+  "protocol": "/workspace/tzcup-competition-sim-only-20260912/source/TZcup-day1-avoidance-run-b6183e0-dynamic/config/dynamic_avoidance_functional_smoke_protocol.json",
+  "ros_domain_id": 101,
+  "run_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-smoke-20260914-16/run-16",
+  "runtime_ws": "/workspace/tzcup-competition-sim-only-20260912/runtime/runtime-ws-1a211400-lifecycle-health-v4-r1-27cac7f7773f",
+  "schema_version": 1,
+  "session": "/workspace/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-smoke-20260914-16/formal_acceptance_session_smoke_16.json",
+  "source_guest": "/workspace/tzcup-competition-sim-only-20260912/source/TZcup-day1-avoidance-run-b6183e0-dynamic",
+  "xdg_runtime_dir": "/tmp/tzcup_dynamic_avoidance_smoke_20260914_16_xdg"
+}

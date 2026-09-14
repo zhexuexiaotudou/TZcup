@@ -179,3 +179,35 @@ resources released. Compact evidence is retained at
 `artifacts/day1_dynamic_avoidance_functional_smoke_20260914/remote/`; the
 archive SHA-256 is
 `fc056f063421ac239d2b838908a4d03baa57f89d59fbd54ae3276a10514ad844`.
+
+## Run 16: final non-official smoke retry
+
+The LF/CRLF fix was committed as
+`b6183e037ea49ea3ccb664582144826a805f6353`. Text map artifacts are normalized
+to LF before validation, the PGM remains byte-identical, and the frozen
+provenance values remain unchanged.
+
+One final smoke attempt used ROS domain `101`, partition
+`tzcup_dynamic_avoidance_smoke_20260914_16`, fresh XDG state, and run root
+`/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-smoke-20260914-16/run-16`.
+Offline-map preparation passed:
+
+| Evidence | Value |
+|---|---|
+| Mode | `OFFLINE_MAP_SOURCE` |
+| PGM SHA-256 | `8b74f368...4586a3` |
+| Runtime origin | `[-7.0, -55.0, 0.0]` |
+| Frozen manifest hash | `ed4e52fe...f3cc49` |
+| LF manifest hash | `69718c19...d262c0` |
+
+The wrapper then stopped before Gazebo in `prepare_dynamic_avoidance_single_run`
+with `ValueError: could not place enough obstacle-free mission crossings`.
+Gazebo and both collectors did not start. There is therefore no command-chain,
+contact, clearance, reroute, wait, goal-recovery, or short-mission result; the
+single-run denominator remains `0`, and official `>=95%` remains
+`NOT_MEASURED`. No retry was launched.
+
+Post-attempt sampling recorded CPU `10.32%`, GPU `0%`, GPU memory `1 MiB` of
+`12288 MiB`, no remaining runtime processes, no formal-Gazebo lock holder, and
+resources released. The evidence archive SHA-256 is
+`0a32f88cfde66384ddf2295ab8dd12b740e0ba09b8e6cc108be951911e5e1909`.

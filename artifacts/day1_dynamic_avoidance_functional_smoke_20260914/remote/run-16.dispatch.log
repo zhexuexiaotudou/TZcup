@@ -1,0 +1,14 @@
+/workspace/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-smoke-20260914-16/run-16/offline_map_source
+Traceback (most recent call last):
+  File "/workspace/tzcup-competition-sim-only-20260912/source/TZcup-day1-avoidance-run-b6183e0-dynamic/scripts/prepare_dynamic_avoidance_single_run.py", line 345, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/workspace/tzcup-competition-sim-only-20260912/source/TZcup-day1-avoidance-run-b6183e0-dynamic/scripts/prepare_dynamic_avoidance_single_run.py", line 315, in main
+    schedule = materialize_frozen_schedule(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/tzcup-competition-sim-only-20260912/source/TZcup-day1-avoidance-run-b6183e0-dynamic/scripts/prepare_dynamic_avoidance_single_run.py", line 287, in materialize_frozen_schedule
+    return materialize_schedule(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/tzcup-competition-sim-only-20260912/source/TZcup-day1-avoidance-run-b6183e0-dynamic/scripts/prepare_formal_dynamic_obstacle_schedule.py", line 253, in materialize_schedule
+    raise ValueError("could not place enough obstacle-free mission crossings")
+ValueError: could not place enough obstacle-free mission crossings
