@@ -320,6 +320,9 @@ def test_runtime_schedule_filename_matches_evaluator_contract() -> None:
     evaluator = (
         ROOT / "scripts/evaluate_dynamic_avoidance_single_run.py"
     ).read_text(encoding="utf-8")
+    public_session = (
+        ROOT / "scripts/run_r065_public_modeling_session.sh"
+    ).read_text(encoding="utf-8")
     assert (
         'runtime_schedule="${runtime_root}/pedestrian_schedule.seed.'
         '${dynamic_seed}.json"'
@@ -328,6 +331,8 @@ def test_runtime_schedule_filename_matches_evaluator_contract() -> None:
     assert "pedestrian_schedule.seed.{int(protocol['schedule']['seed'])}.json" in (
         evaluator
     )
+    assert "pedestrian_schedule.seed.*.json" in public_session
+    assert "pedestrian_schedule.seed_*.json" not in public_session
 
 
 def test_valid_single_run_fixture_passes_without_a_rate_claim(
