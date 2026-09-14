@@ -123,4 +123,7 @@ py -3.13 -m pip install --target .work\python mcap mcap-ros2-support
 稳定器，并重新跑一次有界动态验收。当前不要直接把离线 receipt 当官方
 PASS；也不要在未重跑的情况下把参数平滑逻辑标记为 Gazebo 已验证。
 
+实时接线、排他 domain/partition、六类验收门和一键 harness 见
+`docs/day1-localization-stabilizer-live.md`。
+
 回滚基线：`47e3cb3a7ecc01edd82aa23a3b54cbeaffc418bc`。

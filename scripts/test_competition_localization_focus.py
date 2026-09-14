@@ -70,6 +70,64 @@ def test_source_static_authority_contract_rejects_unmatched_parameters(tmp_path)
     with pytest.raises(ValueError,match='effective_parameters_expected'):
         focus.static_authority_contract(Path(__file__).resolve().parents[1],path)
 
+
+def test_stabilizer_static_contract_and_authority_accept_remapped_raw_tf(tmp_path):
+    effective={
+        'schema_version':1,
+        'all_expected':True,
+        'nodes':{
+            name:{'fixture':{'expected':True,'actual':True,'matched':True}}
+            for name in (
+                '/local_ekf','/global_ekf','/amcl','/navsat_transform',
+                '/map_odom_stabilizer',
+            )
+        },
+    }
+    effective['nodes']['/map_odom_stabilizer']={
+        'tau_sec':{'expected':1.5,'actual':1.5,'matched':True},
+        'max_filter_dt_sec':{'expected':0.1,'actual':0.1,'matched':True},
+        'input_tf_topic':{
+            'expected':'/localization/raw_map_odom',
+            'actual':'/localization/raw_map_odom',
+            'matched':True,
+        },
+    }
+    path=tmp_path/'effective-parameters-stabilizer.json'
+    path.write_text(json.dumps(effective),encoding='utf-8')
+    contract=focus.static_authority_contract(
+        Path(__file__).resolve().parents[1],
+        path,
+        '/map_odom_stabilizer',
+    )
+    assert contract['owner']=='/map_odom_stabilizer'
+    report={
+        'graph_nodes':['/global_ekf','/map_odom_stabilizer'],
+        'tf_edges':{'map->odom':{
+            'message_count':500,
+            'messages_by_gid':{'stabilizer':500},
+        }},
+        'endpoint_registry':{
+            'stabilizer':{'node':'/map_odom_stabilizer'},
+        },
+        'topics':{
+            '/localization/fused_odom':{
+                'message_count':500,
+                'publishers':[{'node':'/global_ekf'}],
+            },
+            '/odometry/gps':{
+                'subscriptions':[{'node':'/global_ekf'}],
+            },
+            '/localization/raw_map_odom':{
+                'message_count':500,
+                'publishers':[{'node':'/global_ekf'}],
+                'subscriptions':[{'node':'/map_odom_stabilizer'}],
+            },
+        },
+    }
+    accepted, evidence=focus.authority_check(report,contract)
+    assert accepted is True
+    assert evidence['runtime_stabilizer'] is True
+
 @pytest.mark.parametrize('field,value',[('tf_future_max_s',.5),('tf_past_max_s',1),('fused',[]),('frame_errors',['wrong_frame']),('counts',{})])
 def test_fail_closed_missing_or_stale(field,value):
     d,a,m=sample();d[field]=value;assert focus.assess(d,a,m)['status']=='FAIL'

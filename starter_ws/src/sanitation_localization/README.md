@@ -13,6 +13,12 @@ During first-task SLAM, global fusion is disabled because `slam_toolbox` owns
 `map -> odom`; the local wheel/IMU EKF remains available. This prevents the
 SLAM, AMCL and GNSS filters from competing for the same TF edge.
 
+For the bounded 50 mm recovery experiment, launch can opt into
+`map_odom_stabilizer:=true`. In that mode the global EKF's TF output is remapped
+to `/localization/raw_map_odom`; `map_odom_stabilizer` applies a causal one-pole
+filter to that raw online stream and becomes the sole `/tf` publisher of
+`map -> odom`. The mode is default-off and never subscribes to ground truth.
+
 The package is not considered integrated until the formal campus launch stops
 republishing raw wheel odometry on `/odom`, disables AMCL TF output, starts the
 correct fusion mode, and passes a live no-duplicate-writer runtime gate.

@@ -111,3 +111,32 @@ def test_capture_uses_bounded_discovery_and_timeout_options():
     assert commands[0][:3] == ["ros2", "param", "get"]
     assert commands[0][3:5] == ["--spin-time", "3.0"]
     assert commands[0][5:7] == ["--timeout", "7"]
+
+
+def test_stabilizer_owner_adds_exact_runtime_parameter_contract():
+    expected_parameters = capture_localization.expected_parameters_for_owner(
+        "/map_odom_stabilizer"
+    )
+    assert expected_parameters["/map_odom_stabilizer"] == {
+        "tau_sec": 1.5,
+        "max_filter_dt_sec": 0.1,
+        "max_gap_sec": 0.5,
+        "input_tf_topic": "/localization/raw_map_odom",
+    }
+    def stabilizer_runner(command, **kwargs):
+        expected = expected_parameters[command[-2]][command[-1]]
+        return SimpleNamespace(
+            returncode=0,
+            stdout=(
+                f"value is: {str(expected).lower() if isinstance(expected, bool) else expected}"
+            ),
+            stderr="",
+        )
+
+    report = capture_localization.capture(
+        stabilizer_runner,
+        expected_parameters=expected_parameters,
+        timeout_sec=1.0,
+    )
+    assert report["all_expected"] is True
+    assert set(report["nodes"]) == set(expected_parameters)

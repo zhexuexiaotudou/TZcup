@@ -40,13 +40,25 @@ def interpolate(rows, t, gap):
     return v
 
 
-def static_authority_contract(source_root, effective_parameters):
+def static_authority_contract(
+    source_root, effective_parameters, map_odom_owner='/global_ekf'
+):
     """Prove the configured cleaning authority without relying on DDS GIDs."""
+    if map_odom_owner not in {'/global_ekf', '/map_odom_stabilizer'}:
+        raise ValueError(f'unsupported map->odom owner: {map_odom_owner}')
     fusion_path = (
         source_root
         / 'starter_ws/src/sanitation_localization/config/formal_fusion.yaml'
     )
-    probe_path = source_root / 'scripts/run_competition_motion_cleaning_probe.sh'
+    fusion_launch_path = (
+        source_root
+        / 'starter_ws/src/sanitation_localization/launch/formal_localization_fusion.launch.py'
+    )
+    probe_path = (
+        source_root / 'scripts/run_day1_localization_stabilizer_live.sh'
+        if map_odom_owner == '/map_odom_stabilizer'
+        else source_root / 'scripts/run_competition_motion_cleaning_probe.sh'
+    )
     capture_path = (
         source_root / 'scripts/capture_competition_localization_parameters.py'
     )
@@ -58,9 +70,12 @@ def static_authority_contract(source_root, effective_parameters):
     local = fusion['local_ekf']['ros__parameters']
     global_ = fusion['global_ekf']['ros__parameters']
     navsat = fusion['navsat_transform']['ros__parameters']
+    probe_text = probe_path.read_text()
     effective = json.loads(effective_parameters.read_text())
     effective_nodes = effective.get('nodes', {})
     expected_nodes = {'/local_ekf', '/global_ekf', '/amcl', '/navsat_transform'}
+    if map_odom_owner == '/map_odom_stabilizer':
+        expected_nodes.add(map_odom_owner)
     effective_matched = all(
         isinstance(effective_nodes.get(node), dict)
         and bool(effective_nodes[node])
@@ -91,12 +106,15 @@ def static_authority_contract(source_root, effective_parameters):
         ),
         'probe_amcl_tf_default_false': (
             'export PROBE_AMCL_TF_BROADCAST="${PROBE_AMCL_TF_BROADCAST:-false}"'
-            in probe_path.read_text()
+            in probe_text
+            or 'export PROBE_AMCL_TF_BROADCAST=false' in probe_text
         ),
         'probe_amcl_tf_is_explicit': (
             "nav['amcl']['ros__parameters']['tf_broadcast']="
             "os.environ['PROBE_AMCL_TF_BROADCAST']=='true'"
-            in probe_path.read_text()
+            in probe_text
+            or "nav['amcl']['ros__parameters']['tf_broadcast']=False"
+            in probe_text
         ),
         'lifecycle_amcl_tf_false': (
             'nav2["amcl"]["ros__parameters"]["tf_broadcast"] = False'
@@ -108,15 +126,50 @@ def static_authority_contract(source_root, effective_parameters):
             and set(effective_nodes) == expected_nodes
             and effective_matched
         ),
+        'stabilizer_harness_contract': (
+            map_odom_owner != '/map_odom_stabilizer'
+            or (
+                'map_odom_stabilizer:=true' in probe_text
+                and '--map-odom-owner /map_odom_stabilizer'
+                in probe_text
+            )
+        ),
+        'stabilizer_runtime_parameters': (
+            map_odom_owner != '/map_odom_stabilizer'
+            or (
+                effective_nodes.get('/map_odom_stabilizer', {})
+                .get('tau_sec', {})
+                .get('actual')
+                == 1.5
+                and effective_nodes.get('/map_odom_stabilizer', {})
+                .get('max_filter_dt_sec', {})
+                .get('actual')
+                == 0.1
+                and effective_nodes.get('/map_odom_stabilizer', {})
+                .get('input_tf_topic', {})
+                .get('actual')
+                == '/localization/raw_map_odom'
+            )
+        ),
+        'stabilizer_launch_contract': (
+            map_odom_owner != '/map_odom_stabilizer'
+            or (
+                '("/tf", raw_map_odom_topic)'
+                in fusion_launch_path.read_text()
+                and 'executable="map_odom_stabilizer"'
+                in fusion_launch_path.read_text()
+            )
+        ),
     }
     if not all(checks.values()):
         failed = ','.join(name for name, passed in checks.items() if not passed)
         raise ValueError(f'static map->odom authority contract failed: {failed}')
     return {
-        'owner': '/global_ekf',
+        'owner': map_odom_owner,
         'checks': checks,
         'source_files': [
             str(fusion_path),
+            str(fusion_launch_path),
             str(probe_path),
             str(capture_path),
             str(lifecycle_path),
@@ -126,25 +179,49 @@ def static_authority_contract(source_root, effective_parameters):
 
 
 def authority_check(report, contract=None):
+    expected_owner = (contract or {}).get('owner', '/global_ekf')
     gids = {g for g,n in report.get('tf_edges',{}).get('map->odom',{}).get('messages_by_gid',{}).items() if n > 0}
     registry = report.get('endpoint_registry',{})
     nodes = [registry.get(g,{}).get('node') for g in gids]
     count = report.get('tf_edges',{}).get('map->odom',{}).get('message_count',0)
-    exact = len(gids) == 1 and nodes == ['/global_ekf'] and count >= 3
+    exact = len(gids) == 1 and nodes == [expected_owner] and count >= 3
     fused = report.get('topics',{}).get('/localization/fused_odom',{})
     fused_publishers = {x.get('node') for x in fused.get('publishers',[])}
     gps_subscribers = {
         x.get('node')
         for x in report.get('topics',{}).get('/odometry/gps',{}).get('subscriptions',[])
     }
-    configured = (contract or {}).get('owner') == '/global_ekf'
+    configured = expected_owner in {'/global_ekf', '/map_odom_stabilizer'}
     runtime_proves_global = (
         '/global_ekf' in set(report.get('graph_nodes',[]))
         and fused_publishers == {'/global_ekf'}
         and '/global_ekf' in gps_subscribers
         and int(fused.get('message_count',0)) >= 3
     )
-    attributed = len(gids) == 1 and count >= 3 and configured and runtime_proves_global
+    raw_topic = report.get('topics',{}).get('/localization/raw_map_odom',{})
+    raw_publishers = {x.get('node') for x in raw_topic.get('publishers',[])}
+    raw_subscribers = {
+        x.get('node') for x in raw_topic.get('subscriptions',[])
+    }
+    non_recorder_raw_subscribers = {
+        node
+        for node in raw_subscribers
+        if node and not node.rstrip('/').endswith('/rosbag2_recorder')
+        and node.rstrip('/') != '/rosbag2_recorder'
+    }
+    runtime_proves_stabilizer = (
+        expected_owner == '/map_odom_stabilizer'
+        and '/map_odom_stabilizer' in set(report.get('graph_nodes',[]))
+        and raw_publishers == {'/global_ekf'}
+        and non_recorder_raw_subscribers == {'/map_odom_stabilizer'}
+        and int(raw_topic.get('message_count',0)) >= 3
+    )
+    runtime_proves_owner = (
+        runtime_proves_stabilizer
+        if expected_owner == '/map_odom_stabilizer'
+        else runtime_proves_global
+    )
+    attributed = len(gids) == 1 and count >= 3 and configured and runtime_proves_owner
     return (exact or attributed), {
         'gids': sorted(gids),
         'nodes': nodes,
@@ -156,6 +233,7 @@ def authority_check(report, contract=None):
         ),
         'configured_owner': (contract or {}).get('owner'),
         'runtime_global_ekf': runtime_proves_global,
+        'runtime_stabilizer': runtime_proves_stabilizer,
         'fused_publishers': sorted(x for x in fused_publishers if x),
         'gps_subscribers': sorted(x for x in gps_subscribers if x),
     }
@@ -164,13 +242,13 @@ def authority_check(report, contract=None):
 def assess(data, authority, manifest, authority_contract=None):
     failures=[]
     unique, owners=authority_check(authority, authority_contract)
-    if not unique: failures.append('map_to_odom_authority_not_unique_global_ekf')
+    if not unique: failures.append('map_to_odom_authority_not_expected_unique')
     for name in ('gt','fused','odom','tf','local_tf'):
         rows=data.get(name,[])
         if not rows: failures.append('missing_'+name)
         if any(not all(math.isfinite(v) for v in row) for row in rows): failures.append('nonfinite_'+name)
         if any(b[0] <= a[0] for a,b in zip(rows,rows[1:])): failures.append('nonmonotonic_'+name)
-    if any(f != 'map_to_odom_authority_not_unique_global_ekf' for f in failures):
+    if any(f != 'map_to_odom_authority_not_expected_unique' for f in failures):
         return {'status':'FAIL','failures':failures,'authority':owners,'accuracy':metrics([])}
     gt=data['gt']; fused=data['fused']; odom=data['odom']; tf=data['tf']
     source=manifest['vehicle_start_pose_source_world']; dest=manifest['vehicle_start_pose_localization_map']
@@ -269,13 +347,20 @@ def main():
     p.add_argument('--manifest',type=Path,required=True)
     p.add_argument('--revision',required=True)
     p.add_argument('--output',type=Path,required=True)
+    p.add_argument(
+        '--map-odom-owner',
+        choices=('/global_ekf','/map_odom_stabilizer'),
+        default='/global_ekf',
+    )
     a=p.parse_args()
     if a.output.exists():raise SystemExit('fresh output required')
     paths=sorted(a.bag_dir.glob('*.mcap'))
     if not paths:raise SystemExit('no MCAP')
     try:
         source_root=Path(__file__).resolve().parents[1]
-        contract=static_authority_contract(source_root,a.effective_parameters)
+        contract=static_authority_contract(
+            source_root,a.effective_parameters,a.map_odom_owner
+        )
         result=assess(
             decode(paths),
             json.loads(a.authority.read_text()),

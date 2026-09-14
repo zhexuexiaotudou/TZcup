@@ -31,7 +31,7 @@ constexpr int kSchemaVersion = 1;
 const std::vector<std::string> kTopics = {
   "/tf", "/tf_static", "/odom", "/odom/unfiltered", "/imu/data",
   "/amcl_pose", "/gnss/fix", "/odometry/gps",
-  "/localization/fused_odom"};
+  "/localization/fused_odom", "/localization/raw_map_odom"};
 
 std::string gid_hex(const uint8_t * data)
 {
@@ -188,7 +188,12 @@ private:
           while (!child.empty() && child.front() == '/') {
             child.erase(child.begin());
           }
-          if (!parent.empty() && !child.empty()) {
+          // Only standard TF transports define ROS transform authority.  The
+          // remapped raw output is observed for provenance but is not a second
+          // map->odom edge in the runtime TF graph.
+          if ((topic == "/tf" || topic == "/tf_static") &&
+            !parent.empty() && !child.empty())
+          {
             ++tf_edges_[parent + "->" + child][gid];
           }
         }

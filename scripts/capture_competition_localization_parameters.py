@@ -43,6 +43,25 @@ EXPECTED_PARAMETERS = {
         "zero_altitude": True,
     },
 }
+STABILIZER_EXPECTED_PARAMETERS = {
+    "tau_sec": 1.5,
+    "max_filter_dt_sec": 0.1,
+    "max_gap_sec": 0.5,
+    "input_tf_topic": "/localization/raw_map_odom",
+}
+
+
+def expected_parameters_for_owner(map_odom_owner: str) -> dict[str, dict[str, object]]:
+    if map_odom_owner not in {"/global_ekf", "/map_odom_stabilizer"}:
+        raise ValueError(f"unsupported map->odom owner: {map_odom_owner}")
+    parameters = {
+        node: dict(values) for node, values in EXPECTED_PARAMETERS.items()
+    }
+    if map_odom_owner == "/map_odom_stabilizer":
+        parameters["/map_odom_stabilizer"] = dict(
+            STABILIZER_EXPECTED_PARAMETERS
+        )
+    return parameters
 
 
 def parse_parameter_value(raw: str, expected: object) -> object:
@@ -64,6 +83,7 @@ def parse_parameter_value(raw: str, expected: object) -> object:
 def capture(
     runner: Callable[..., subprocess.CompletedProcess[str]],
     *,
+    expected_parameters: dict[str, dict[str, object]] | None = None,
     timeout_sec: float,
     attempts: int = 3,
     spin_time_sec: float = 2.0,
@@ -74,9 +94,12 @@ def capture(
     """Query every required parameter and retain raw evidence for each response."""
     if attempts < 1:
         raise ValueError("attempts must be at least one")
+    parameters_by_node = (
+        EXPECTED_PARAMETERS if expected_parameters is None else expected_parameters
+    )
     nodes: dict[str, object] = {}
     all_expected = True
-    for node, parameters in EXPECTED_PARAMETERS.items():
+    for node, parameters in parameters_by_node.items():
         values: dict[str, object] = {}
         for name, expected in parameters.items():
             command = [
@@ -163,6 +186,11 @@ def main() -> int:
     parser.add_argument("--spin-time-sec", type=float, default=2.0)
     parser.add_argument("--discovery-timeout-sec", type=int, default=5)
     parser.add_argument("--retry-delay-sec", type=float, default=0.5)
+    parser.add_argument(
+        "--map-odom-owner",
+        choices=("/global_ekf", "/map_odom_stabilizer"),
+        default="/global_ekf",
+    )
     args = parser.parse_args()
     if args.output.exists():
         raise SystemExit(f"fresh output required: {args.output}")
@@ -177,6 +205,7 @@ def main() -> int:
 
     report = capture(
         subprocess.run,
+        expected_parameters=expected_parameters_for_owner(args.map_odom_owner),
         timeout_sec=args.timeout_sec,
         attempts=args.attempts,
         spin_time_sec=args.spin_time_sec,

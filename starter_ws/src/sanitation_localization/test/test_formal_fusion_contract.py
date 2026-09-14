@@ -71,6 +71,16 @@ def test_mapping_mode_can_disable_global_map_to_odom_owner():
     assert "condition=IfCondition(start_navsat_transform)" in launch
 
 
+def test_optional_stabilizer_remaps_only_global_ekf_raw_tf():
+    launch = (ROOT / "launch/formal_localization_fusion.launch.py").read_text()
+    assert '("/tf", raw_map_odom_topic)' in launch
+    assert 'default_value="/localization/raw_map_odom"' in launch
+    assert "map_odom_stabilizer requires start_global_fusion:=true" in launch
+    assert 'executable="map_odom_stabilizer"' in launch
+    assert '"max_filter_dt_sec"' in launch
+    assert '"max_gap_sec"' in launch
+
+
 def test_runtime_tools_are_installed_and_do_not_use_truth_inputs():
     setup = (ROOT / "setup.py").read_text()
     assert "validate_formal_localization_runtime" in setup

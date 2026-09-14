@@ -18,6 +18,7 @@ GIDS = {
     "wheel": "06",
     "imu": "07",
     "gnss": "08",
+    "stabilizer": "09",
 }
 
 
@@ -49,6 +50,9 @@ def _base(mode: str) -> dict:
         GIDS["wheel"]: _endpoint(GIDS["wheel"], "/wheel_driver"),
         GIDS["imu"]: _endpoint(GIDS["imu"], "/imu_driver"),
         GIDS["gnss"]: _endpoint(GIDS["gnss"], "/gnss_driver"),
+        GIDS["stabilizer"]: _endpoint(
+            GIDS["stabilizer"], "/map_odom_stabilizer"
+        ),
     }
     local_sub = [_endpoint("11", "/local_ekf")]
     report = {
@@ -133,6 +137,24 @@ def _valid_cleaning() -> dict:
     return report
 
 
+def _valid_stabilized_cleaning() -> dict:
+    report = _valid_cleaning()
+    report["graph_nodes"].append("/map_odom_stabilizer")
+    report["tf_edges"]["map->odom"] = {
+        "message_count": 10,
+        "messages_by_gid": {GIDS["stabilizer"]: 10},
+    }
+    report["topics"]["/localization/raw_map_odom"] = _topic(
+        10,
+        [_endpoint("14", "/global_ekf")],
+        [_endpoint("15", "/map_odom_stabilizer")],
+    )
+    report["collector_contract"]["subscribed_topics"].append(
+        "/localization/raw_map_odom"
+    )
+    return report
+
+
 def _failed_ids(result: dict) -> set[str]:
     return {item["id"] for item in result["checks"] if not item["passed"]}
 
@@ -171,6 +193,29 @@ def test_valid_cleaning_report_passes():
     """Accept complete AMCL and GNSS cleaning-mode fusion evidence."""
     result = validate_runtime_report(_valid_cleaning())
     assert result["status"] == "PASS"
+
+
+def test_valid_stabilized_cleaning_report_passes():
+    result = validate_runtime_report(
+        _valid_stabilized_cleaning(), map_odom_node="map_odom_stabilizer"
+    )
+    assert result["status"] == "PASS"
+    assert result["summary"] == {
+        "passed_checks": 16,
+        "total_checks": 16,
+    }
+
+
+def test_stabilized_cleaning_rejects_global_ekf_standard_tf_owner():
+    report = _valid_stabilized_cleaning()
+    report["tf_edges"]["map->odom"]["messages_by_gid"] = {
+        GIDS["global"]: 10
+    }
+    result = validate_runtime_report(
+        report, map_odom_node="map_odom_stabilizer"
+    )
+    assert result["status"] == "BLOCKED"
+    assert "map_to_odom_unique_authority" in _failed_ids(result)
 
 
 def test_cleaning_rejects_slam_and_missing_amcl_and_gnss_activity():

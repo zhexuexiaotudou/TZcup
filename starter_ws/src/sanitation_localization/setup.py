@@ -30,6 +30,7 @@ setup(
     entry_points={
         "console_scripts": [
             "validate_formal_localization_runtime = sanitation_localization.formal_runtime_validator:main",
+            "map_odom_stabilizer = sanitation_localization.map_odom_stabilizer:main",
         ],
     },
 )

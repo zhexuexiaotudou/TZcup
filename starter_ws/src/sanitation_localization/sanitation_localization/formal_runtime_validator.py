@@ -79,6 +79,7 @@ def validate_runtime_report(
     slam_node: str = "slam_toolbox",
     amcl_node: str = "amcl",
     navsat_node: str = "navsat_transform",
+    map_odom_node: str | None = None,
 ) -> dict[str, Any]:
     """Validate one collector report and return a durable acceptance record."""
     checks: list[dict[str, Any]] = []
@@ -162,7 +163,11 @@ def validate_runtime_report(
     tf_authorities, tf_unknown = _authority_nodes(
         report, map_odom.get("messages_by_gid", {})
     )
-    expected_tf_node = slam_node if mode == "mapping" else global_ekf_node
+    expected_tf_node = (
+        slam_node
+        if mode == "mapping"
+        else (map_odom_node or global_ekf_node)
+    )
     wrong_tf_owners = sorted(
         node
         for node in tf_authorities
@@ -269,6 +274,30 @@ def validate_runtime_report(
                 "publishers": sorted(amcl_publishers),
             },
         )
+        if map_odom_node == "map_odom_stabilizer":
+            raw_tf = _topic(report, "/localization/raw_map_odom")
+            raw_publishers = _nodes(raw_tf.get("publishers", []))
+            raw_subscribers = _nodes(raw_tf.get("subscriptions", []))
+            check(
+                "global_ekf_publishes_raw_map_odom",
+                int(raw_tf.get("message_count", 0)) >= minimum_messages
+                and bool(_matching_nodes(raw_publishers, global_ekf_node)),
+                {
+                    "message_count": int(raw_tf.get("message_count", 0)),
+                    "publishers": sorted(raw_publishers),
+                },
+            )
+            check(
+                "map_odom_stabilizer_consumes_raw_map_odom",
+                bool(_matching_nodes(raw_subscribers, map_odom_node))
+                and bool(_matching_nodes(graph_nodes, map_odom_node)),
+                {
+                    "subscribers": sorted(raw_subscribers),
+                    "graph_nodes": sorted(
+                        _matching_nodes(graph_nodes, map_odom_node)
+                    ),
+                },
+            )
 
     passed = all(item["passed"] for item in checks)
     return {
@@ -291,6 +320,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--minimum-messages", type=int, default=3)
     parser.add_argument("--minimum-tf-messages", type=int, default=3)
+    parser.add_argument(
+        "--map-odom-node",
+        choices=("global_ekf", "map_odom_stabilizer"),
+        default=None,
+    )
     args = parser.parse_args(argv)
 
     report = json.loads(args.input.read_text(encoding="utf-8"))
@@ -298,6 +332,7 @@ def main(argv: list[str] | None = None) -> int:
         report,
         minimum_messages=args.minimum_messages,
         minimum_tf_messages=args.minimum_tf_messages,
+        map_odom_node=args.map_odom_node,
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(

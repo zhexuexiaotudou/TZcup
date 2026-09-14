@@ -225,6 +225,24 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
     localization_backend = context.perform_substitution(
         LaunchConfiguration("localization_backend")
     ).strip()
+    map_odom_stabilizer = context.perform_substitution(
+        LaunchConfiguration("map_odom_stabilizer")
+    ).strip()
+    map_odom_stabilizer_tau_sec = context.perform_substitution(
+        LaunchConfiguration("map_odom_stabilizer_tau_sec")
+    ).strip()
+    map_odom_stabilizer_max_dt_sec = context.perform_substitution(
+        LaunchConfiguration("map_odom_stabilizer_max_dt_sec")
+    ).strip()
+    map_odom_stabilizer_max_gap_sec = context.perform_substitution(
+        LaunchConfiguration("map_odom_stabilizer_max_gap_sec")
+    ).strip()
+    if map_odom_stabilizer not in {"true", "false"}:
+        raise RuntimeError("map_odom_stabilizer must be true or false")
+    if map_odom_stabilizer == "true" and localization_backend != "amcl":
+        raise RuntimeError(
+            "map_odom_stabilizer requires localization_backend:=amcl"
+        )
     navsat_odometry_input = select_navsat_odometry_input(localization_backend)
     start_global_fusion = "false" if localization_backend == "slam" else "true"
     coverage_params = PathJoinSubstitution(
@@ -395,6 +413,10 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                 # instance. This include adds only the saved-map global EKF.
                 "start_navsat_transform": "false",
                 "start_global_fusion": start_global_fusion,
+                "map_odom_stabilizer": map_odom_stabilizer,
+                "map_odom_stabilizer_tau_sec": map_odom_stabilizer_tau_sec,
+                "map_odom_stabilizer_max_dt_sec": map_odom_stabilizer_max_dt_sec,
+                "map_odom_stabilizer_max_gap_sec": map_odom_stabilizer_max_gap_sec,
             }.items(),
         ),
         Node(
@@ -595,6 +617,16 @@ def generate_launch_description() -> LaunchDescription:
             DeclareLaunchArgument("start_navigation", default_value="true"),
             DeclareLaunchArgument("start_coverage", default_value="true"),
             DeclareLaunchArgument("localization_backend", default_value="amcl"),
+            DeclareLaunchArgument("map_odom_stabilizer", default_value="false"),
+            DeclareLaunchArgument(
+                "map_odom_stabilizer_tau_sec", default_value="1.5"
+            ),
+            DeclareLaunchArgument(
+                "map_odom_stabilizer_max_dt_sec", default_value="0.1"
+            ),
+            DeclareLaunchArgument(
+                "map_odom_stabilizer_max_gap_sec", default_value="0.5"
+            ),
             DeclareLaunchArgument("mission_mode", default_value=""),
             DeclareLaunchArgument("max_linear_velocity", default_value="0.45"),
             DeclareLaunchArgument("max_angular_velocity", default_value="0.35"),
