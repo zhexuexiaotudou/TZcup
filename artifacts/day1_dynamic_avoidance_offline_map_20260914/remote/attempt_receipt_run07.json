@@ -1,0 +1,56 @@
+{
+  "attempt_id": "day1-dynamic-avoidance-offline-map-20260914-07",
+  "blocker": "run_formal_dynamic_obstacle_avoidance.sh line 236 used integer Bash arithmetic on FORMAL_DYNAMIC_TIMEOUT_S=300.0 when constructing environment collector timeout",
+  "claim_boundary": "One started trial is retained with numerator 0 and denominator 1. No collision, clearance, reroute, wait, or goal-recovery claim is possible because collectors never started. Official >=95% remains NOT_MEASURED.",
+  "collectors_started": false,
+  "contact_clearance_reroute_wait_goal_recovery_preserved": false,
+  "evidence_sha256": {
+    "dynamic_obstacle_acceptance.json": "744e56061d008b0200bf0a5fd3b57cd661757c756711afa2dc0ba1dc27a331d3",
+    "predeclared_obstacle_route.json": "e7893055d624085b3fbfcef66414a3d201861edf3535079bf1143d644675e429",
+    "single_run_evaluation.json": "e17a5b07af5d47b675aa030d8afe07ac7467d55300cc64c58c6b1e95323da1de",
+    "single_run_timeline.json": "8052f2c4bb1c15f32d7549466ed9a15af7c0cc22ce875c7a9093c7cbb73fe421"
+  },
+  "formal_status": "FORMAL_DYNAMIC_OBSTACLE_AVOIDANCE_ACCEPTANCE_BLOCKED",
+  "gazebo_started": true,
+  "live_slam_claimed": false,
+  "map_source_label": "OFFLINE_MAP_SOURCE",
+  "map_source_mode": "OFFLINE_RAYCAST_MAPPING",
+  "mcap_preserved": false,
+  "official_metric": {
+    "formula": "N_noncollision_and_task_complete / N_total_trials",
+    "independent_run_count": 1,
+    "measured_value": null,
+    "metric_id": "dynamic_avoidance_success_rate",
+    "minimum_runs_per_scenario": 20,
+    "reason": "One started trial yields a single-run numerator and denominator only. It cannot measure or establish the >=95% campaign rate.",
+    "recommended_total_runs": 100,
+    "status": "NOT_MEASURED",
+    "threshold": 0.95
+  },
+  "resource_release": {
+    "cpu_busy_percent_sample": 9.1,
+    "formal_gazebo_lock_available": true,
+    "gpu_memory_total_mib": 12288,
+    "gpu_memory_used_mib": 1,
+    "gpu_utilization_percent": 0,
+    "measurement_window_s": 1.0,
+    "note": "run-07 stopped after Gazebo entity creation but before collectors because of a Bash arithmetic error on floating timeout 300.0.",
+    "resource_released": true,
+    "run_id": "run-07",
+    "runtime_processes_remaining": [],
+    "schema_version": 1
+  },
+  "run_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-offline-map-20260914-07/run-07",
+  "runtime_closure_sha256": "22dc947bfd14b32fe0f046cf03a5eef467e1271cc5f3021332147ea7f643b491",
+  "schema_version": 1,
+  "single_run": {
+    "denominator": 1,
+    "functional_success": false,
+    "numerator": 0,
+    "observed_fraction": 0.0,
+    "post_launch_exclusions": 0,
+    "started": true
+  },
+  "single_run_status": "SINGLE_RUN_EVIDENCE_INVALID",
+  "status": "BLOCKED_AFTER_GAZEBO_START_BEFORE_COLLECTORS"
+}

@@ -1,0 +1,13 @@
+{
+  "cpu_busy_percent_sample": 9.1,
+  "formal_gazebo_lock_available": true,
+  "gpu_memory_total_mib": 12288,
+  "gpu_memory_used_mib": 1,
+  "gpu_utilization_percent": 0,
+  "measurement_window_s": 1.0,
+  "note": "run-07 stopped after Gazebo entity creation but before collectors because of a Bash arithmetic error on floating timeout 300.0.",
+  "resource_released": true,
+  "run_id": "run-07",
+  "runtime_processes_remaining": [],
+  "schema_version": 1
+}

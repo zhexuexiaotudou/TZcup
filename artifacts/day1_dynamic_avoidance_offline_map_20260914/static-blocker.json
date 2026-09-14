@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "BLOCKED_STATIC_CI_BEFORE_REMOTE_LAUNCH",
+  "status": "RESIDUAL_REPOSITORY_CI_RISK_NOT_A_REMOTE_LAUNCH_GATE",
   "resolved_blocker": "README.md hygiene is fixed at 180 lines",
   "blocker": "scripts/ci_fast.py passes repository hygiene, then aborts in validate_formal_static_engineering_preflight_report because the stored formal vehicle static engineering report is stale; regenerating it yields STATIC_PREFLIGHT_INVALID because formal_mechanical_interface_datums expects reports/engineering/formal_competition_vehicle.urdf SHA-256 52bd3978a53073a8126a87a16f065eeb781bbbb088b127a73bba58dcc90410a8, while the current file and snapshot manifest are 75cbf47b456f138f45b7fc9d04310e11e19a4b684f8fec4f9c969fac40704c1f",
   "command": "py -3 scripts/ci_fast.py",
@@ -9,11 +9,11 @@
     "starter_ws/src/sanitation_formal_campus_integration/test/test_map_lifecycle_ros_contract.py starter_ws/src/sanitation_formal_campus_integration/test/test_map_lifecycle_core.py": "67 passed",
     "bash -n scripts/run_dynamic_avoidance_single_trial.sh scripts/run_formal_dynamic_obstacle_avoidance.sh scripts/run_formal_runtime_isolation.sh": "passed"
   },
-  "remote_trial_started": false,
-  "gazebo_started": false,
+  "remote_trial_started": true,
+  "gazebo_started": true,
   "official_metric": {
     "measured_value": null,
     "status": "NOT_MEASURED"
   },
-  "claim_boundary": "No dynamic-avoidance numerator or denominator was created. The rental card was not used for this attempt."
+  "claim_boundary": "The pre-existing URDF snapshot mismatch remains an unrelated repository-wide CI risk. It was not modified and did not alter the live-SLAM admission gate. The remote trial outcome is recorded separately after the offline-map source and frozen runtime closure passed."
 }
