@@ -738,6 +738,19 @@ def test_recorded_verifier_rejects_a_different_runtime_install(tmp_path: Path) -
         closure.verify_recorded_manifest(manifest, repository, other)
 
 
+def test_recorded_verifier_binds_the_canonical_runtime_install_root(
+    tmp_path: Path,
+) -> None:
+    repository, runtime, models, onnx, manifest = _fake_closure(tmp_path)
+    closure.record_manifest(repository, runtime, models, onnx, manifest)
+
+    verified = closure.verify_recorded_manifest(
+        manifest, repository, runtime / "install"
+    )
+
+    assert verified["runtime_install_root"] == str((runtime / "install").resolve())
+
+
 def test_verifier_rejects_wrong_runtime_contract_revision(tmp_path: Path) -> None:
     repository, runtime, models, onnx, manifest = _fake_closure(tmp_path)
     closure.record_manifest(repository, runtime, models, onnx, manifest)

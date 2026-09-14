@@ -1754,13 +1754,15 @@ def verify_recorded_manifest(
         raise ClosureError(
             "selected runtime install root does not match the frozen closure"
         )
-    return verify_manifest(
+    verified = verify_manifest(
         manifest_path,
         repository_root,
         runtime_ws,
         perception_artifacts,
         onnx_pythonpath,
     )
+    verified["runtime_install_root"] = str(expected_install_root.resolve())
+    return verified
 
 
 def build_parser() -> argparse.ArgumentParser:
