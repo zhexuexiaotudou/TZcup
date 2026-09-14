@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-14
 
-**Latest attempt revision:** `9b8dc41b3de1cc9c069d69076d4847babc37da20`
+**Latest attempt revision:** `88b121f`
 
 **Status:** `BLOCKED`
 
@@ -210,3 +210,51 @@ The structured receipt is
 `artifacts/day1_bounded_coverage_20260914/failure_receipt_run04.json`, and the
 archive SHA-256 is
 `12f540d9a39c13edb1187cebba1bdccbcc058c7def03bf5ea42280b1b68ab66c`.
+
+## Final corrected run 05
+
+Commit `88b121f` extended only the actuator readiness wall window from `180 s`
+to `360 s`; the outer runner timeout remained `1200 s`, the coverage-probe
+timeout remained `900 s`, and the mission geometry, lift target, contact bands,
+safety requirements, brush-ready evidence, and coverage criteria were
+unchanged. The focused contract test passed with `7 passed`.
+
+Run 05 used:
+
+* run root: `day1-bounded-coverage-20260914-05`
+* ROS domain: `90`
+* Gazebo partition: `tzcup_day1_bounded_coverage_20260914_05`
+* XDG runtime: `/tmp/tzcup_day1_bounded_coverage_20260914_05_xdg`
+
+The readiness extension worked. The bridge reached the work pose at simulated
+second `37.351` and wall second `268.774`, with:
+
+* permit observed: `true`;
+* lift position: `0.095103485 m`;
+* contact clearances: `0.004896517 / 0.004896509 / 0.004896512 m`.
+
+The run then encountered a distinct blocker before coverage started: the
+runner's required `/ground_truth/odom` topic was unavailable. The launch
+started `sanitation_ground_truth_adapter` and created the
+`/ground_truth/model_odom_raw` bridge, but no accepted ground-truth odometry
+sample reached the runner. The coverage probe, coverage report, coverage path,
+dirt clearance, and efficiency outputs therefore remain `NOT_MEASURED`.
+
+Bridging that truth-adapter defect would be a separate change outside the
+single permitted readiness-window edit. The run was retained and stopped
+without another Gazebo launch.
+
+```powershell
+& 'F:\Project\TZcup\.workspace\tools\Invoke-TZcupRemoteLatest.ps1' -Command @'
+TZCUP_DAY1_COVERAGE_RUN_ID=day1-bounded-coverage-20260914-05 \
+TZCUP_DAY1_COVERAGE_DOMAIN_ID=90 \
+TZCUP_DAY1_COVERAGE_PARTITION=tzcup_day1_bounded_coverage_20260914_05 \
+TZCUP_DAY1_COVERAGE_XDG_RUNTIME=/tmp/tzcup_day1_bounded_coverage_20260914_05_xdg \
+bash /root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-bounded-coverage-20260914-05/ops/run_day1_bounded_coverage_remote_dispatch.sh
+'@
+```
+
+The structured receipt is
+`artifacts/day1_bounded_coverage_20260914/failure_receipt_run05.json`, and the
+archive SHA-256 is
+`2c43b833e6a4bdec95fc291bf3787c4c2f28242c3ce0a5c8d25c5cdde2a647cd`.
