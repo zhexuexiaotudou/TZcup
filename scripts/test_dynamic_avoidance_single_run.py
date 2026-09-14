@@ -432,3 +432,24 @@ def test_campaign_rule_is_explicit_single_run_denominator_is_exact() -> None:
     assert denominator["post_launch_exclusions"] == "none"
     assert denominator["minimum_runs_per_scenario"] == 20
     assert denominator["recommended_total_runs"] == 100
+
+
+def test_wrapper_exports_resolved_ros2_executable_for_runtime_closure() -> None:
+    wrapper = (
+        ROOT / "scripts/run_dynamic_avoidance_single_trial.sh"
+    ).read_text(encoding="utf-8")
+    source_position = wrapper.index('source "${runtime_install}/setup.bash"')
+    resolve_position = wrapper.index(
+        'ros2_executable="$(realpath /opt/ros/jazzy/bin/ros2)"'
+    )
+    validate_position = wrapper.index(
+        'if ! "${ros2_executable}" --help >/dev/null 2>&1; then'
+    )
+    export_position = wrapper.index(
+        'export FORMAL_ROS2_EXECUTABLE="${ros2_executable}"'
+    )
+    assert source_position < resolve_position < validate_position < export_position
+    assert (
+        'echo "dynamic single-run wrapper ros2 executable failed validation: '
+        '${ros2_executable}" >&2'
+    ) in wrapper

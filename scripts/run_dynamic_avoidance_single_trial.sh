@@ -49,6 +49,13 @@ source /opt/ros/jazzy/setup.bash
 source "${runtime_install}/setup.bash"
 set -u
 
+ros2_executable="$(realpath /opt/ros/jazzy/bin/ros2)"
+if ! "${ros2_executable}" --help >/dev/null 2>&1; then
+  echo "dynamic single-run wrapper ros2 executable failed validation: ${ros2_executable}" >&2
+  exit 2
+fi
+export FORMAL_ROS2_EXECUTABLE="${ros2_executable}"
+
 export PYTHONPATH="${repo_root}/scripts${PYTHONPATH:+:${PYTHONPATH}}"
 python3 "${repo_root}/scripts/prepare_dynamic_avoidance_single_run.py" \
   --protocol "${protocol}" \
