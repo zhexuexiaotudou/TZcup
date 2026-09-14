@@ -684,6 +684,22 @@
     "copied_utc": "2026-09-15"
   },
   {
+    "file": "supplements/algorithm-optimization/algorithm-optimization-brief.pdf",
+    "source": "standalone two-page algorithm optimization review brief",
+    "source_commit": null,
+    "bytes": 77198,
+    "sha256": "b78707f673076cec88c58025c7b1bf12be95fa750721f82214e37a7c3ba23c65",
+    "copied_utc": "2026-09-15"
+  },
+  {
+    "file": "supplements/algorithm-optimization/build_pdf.py",
+    "source": "reproducible builder for algorithm optimization review brief",
+    "source_commit": null,
+    "bytes": 2758,
+    "sha256": "802cdd0a7b533cd476cb37e275dfdb971744fe688928b25bb70b8955cc320802",
+    "copied_utc": "2026-09-15"
+  },
+  {
     "file": "video/final/TZcup_5min_video.mp4",
     "source": "video/final/TZcup_5min_video.mp4",
     "source_commit": "b663ca9",

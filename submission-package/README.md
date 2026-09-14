@@ -2,7 +2,7 @@
 
 当前整体仍未达到完整提交条件，但已正式归档 5 分钟模块化综合展示视频；技术报告、板端证据与结果接入工具已成稿。47e3cb3单次封存路线、3882dc34受控感知候选、6b1a7dd非技术补充包，以及ff42430/c33c75a动态避障run-09部分功能证据均已入包。受控夹具30帧/76实例的raw与policy五类P/R=1.0只属`reviewable_95_candidate`，真实域、S100P板端和官方R01仍为`NOT_MEASURED_DEFINITION_UNSPECIFIED`。run-09接受目标并产生部分运动，但Nav2未成功、单次0/1，不能升级官方避障状态。5 分钟视频是不同运行的成功分项剪辑，不表示所有镜头属于同一连续任务，也不升级完整任务、MCAP或未测技术状态。
 
-- `docs/技术方案报告.pdf`：23页中文报告，页数由最终构建读取。
+- `docs/技术方案报告.pdf`：24页中文报告，第24页为补充技术证据索引；页数由最终构建读取。
 - `metrics/验收矩阵.md` / `results.json`：唯一结果矩阵，明确区分measured_simulation、internal_frozen_regression、offline_replay、offline_raycast_mapping、synthetic_replay、design_calculation与not_measured。
 - `metrics/video-score-status.json` / `演示视频评分状态.md`：视频项`DELIVERED_MODULAR_DEMO`、建议`2-3/4`、评委裁量上限`4/4`与不可升级边界。
 - `metrics/板端证明.md`：独立于仿真的板端证据。
@@ -13,6 +13,7 @@
 - `evidence/day1/competition-perception-gpu-recovery.json`、`competition-perception-gpu-parity.json`：`4ed19d2`候选与`906ea4f`回执的compact metrics；仅复制JSON，不复制ONNX。
 - `evidence/day1/perception-score95/`：`3882dc34`的受控候选文档、receipt、合成校准/独立测试以及30帧raw/policy复算JSON；`33/50/43→41/0/35`、`0/0/76→33/0/43`保留为旧运行时9帧presence mask历史诊断，不是全帧能力。
 - `supplements/nontechnical-score-closure/`：14页非技术补充PDF、状态矩阵、产业化/维护/社会效益材料和原始SHA清单；除已交付的视频包外，其余仍按设计、计划或模板阶段披露，正式主张分值为0。
+- `supplements/algorithm-optimization/`：2页算法优化审查PDF、Markdown技术简报和机器可读指标边界；只支持PARTIAL审查，不升级live指标。
 - `evidence/day1/tooling/full-mission-demo/`、`live-slam-replay-fail-closed/`：完整任务效率/Demo验收wrapper及live-SLAM输入未闭合的fail-closed回执，仅作工具和失败边界，不宣称得分。
 - `evidence/day1/competition-mapping-offline-raycast.md`、`offline-raycast-mapping/`：`4ab39bb`离线射线映射的compact方法、面积、manifest和hash seal；已知22399.99m²但明确不是Gazebo live SLAM，不复制PGM。
 - `evidence/day1/competition-mapping-day1-run-06.md`、`mapping-day1-run-06/`：`ab6252d`记录run-06在3600s超时且无最终地图，live SLAM面积与质量仍为`NOT_MEASURED`。
