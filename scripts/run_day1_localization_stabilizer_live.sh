@@ -8,6 +8,7 @@ export PROBE_PARTITION="${PROBE_PARTITION:-tzcup_localization_stabilizer_2026091
 export PROBE_AMCL_TF_BROADCAST=false
 PROBE_SECONDS="${PROBE_SECONDS:-120}"
 PROBE_PREPARE_SECONDS="${PROBE_PREPARE_SECONDS:-420}"
+PROBE_MAP_ODOM_BOOTSTRAP_SECONDS="${PROBE_MAP_ODOM_BOOTSTRAP_SECONDS:-120}"
 STABILIZER_TAU_SEC="${STABILIZER_TAU_SEC:-1.5}"
 STABILIZER_MAX_DT_SEC="${STABILIZER_MAX_DT_SEC:-0.1}"
 STABILIZER_MAX_GAP_SEC="${STABILIZER_MAX_GAP_SEC:-0.5}"
@@ -170,7 +171,9 @@ setsid ros2 bag record --storage mcap --output "$OUTPUT/bag" \
 set +e
 timeout --signal=TERM --kill-after=10s "$(( PROBE_SECONDS + PROBE_PREPARE_SECONDS + 60 ))s" \
   python3 "$DRIVER" --output "$OUTPUT" --seconds "$PROBE_SECONDS" \
-  --prepare-seconds "$PROBE_PREPARE_SECONDS" --goal-x "${PROBE_GOAL_X:-3}" \
+  --prepare-seconds "$PROBE_PREPARE_SECONDS" \
+  --map-odom-bootstrap-timeout "$PROBE_MAP_ODOM_BOOTSTRAP_SECONDS" \
+  --goal-x "${PROBE_GOAL_X:-3}" \
   --estop-distance "${PROBE_ESTOP_DISTANCE:-0}" >"$OUTPUT/driver.log" 2>&1
 driver_status=$?
 set -e

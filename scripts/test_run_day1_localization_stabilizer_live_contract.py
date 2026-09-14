@@ -16,6 +16,8 @@ def test_live_harness_is_serialized_and_fail_closed():
     assert "formal_localization_runtime_collector" in source
     assert "mkdir \"$OUTPUT\"" in source
     assert "map_odom_stabilizer:=true" in source
+    assert 'PROBE_MAP_ODOM_BOOTSTRAP_SECONDS="${PROBE_MAP_ODOM_BOOTSTRAP_SECONDS:-120}"' in source
+    assert "--map-odom-bootstrap-timeout" in source
     assert "--map-odom-owner /map_odom_stabilizer" in source
     assert "formal_runtime_cleanup_groups" in source
     assert "resource_release.json" in source

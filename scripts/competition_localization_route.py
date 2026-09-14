@@ -17,6 +17,7 @@ from rclpy.qos import qos_profile_sensor_data
 from rclpy.signals import SignalHandlerOptions
 from rosgraph_msgs.msg import Clock
 from std_msgs.msg import Bool, Empty
+from tf2_msgs.msg import TFMessage
 
 
 LIFECYCLE_NODES = ("bt_navigator", "controller_server", "planner_server")
@@ -28,14 +29,21 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--seconds", type=float, default=120)
     parser.add_argument("--prepare-seconds", type=float, default=420)
+    parser.add_argument("--map-odom-bootstrap-timeout", type=float, default=120)
     parser.add_argument("--goal-x", type=float, default=6)
     parser.add_argument("--estop-distance", type=float, default=0)
     args = parser.parse_args()
     assert args.estop_distance == 0
+    assert 0 < args.map_odom_bootstrap_timeout <= args.prepare_seconds
 
     rclpy.init(signal_handler_options=SignalHandlerOptions.NO)
     node = Node("competition_localization_route")
-    state = {"sim": None, "permit": False, "stop": False}
+    state = {
+        "sim": None,
+        "permit": False,
+        "stop": False,
+        "raw_map_odom_count": 0,
+    }
     events = []
     started = time.monotonic()
     first_sim = None
@@ -85,6 +93,14 @@ def main():
         lambda msg: state.update(permit=msg.data),
         10,
     )
+    node.create_subscription(
+        TFMessage,
+        "/localization/raw_map_odom",
+        lambda msg: state.update(
+            raw_map_odom_count=state["raw_map_odom_count"] + 1
+        ),
+        qos_profile_sensor_data,
+    )
     publishers = {
         key: node.create_publisher(topic_type, topic, 10)
         for key, topic_type, topic in (
@@ -123,6 +139,9 @@ def main():
                 "requires_action_server_ready": True,
                 "requires_actuator_permit": True,
                 "readiness_timeout_s": args.prepare_seconds,
+                "map_odom_bootstrap_timeout_s": (
+                    args.map_odom_bootstrap_timeout
+                ),
             },
             indent=2,
         )
@@ -168,6 +187,7 @@ def main():
     def readiness_snapshot():
         return {
             "permit": state["permit"],
+            "raw_map_odom_messages": state["raw_map_odom_count"],
             "action_server_ready": action.server_is_ready(),
             "lifecycle_states": {
                 name: lifecycle_states[name] for name in LIFECYCLE_NODES
@@ -192,6 +212,13 @@ def main():
                 if now - started >= args.prepare_seconds:
                     readiness_error = "nav2_lifecycle_action_or_permit_timeout"
                     log("readiness_timeout", readiness_snapshot())
+                    break
+                if (
+                    now - started >= args.map_odom_bootstrap_timeout
+                    and state["raw_map_odom_count"] == 0
+                ):
+                    readiness_error = "map_odom_bootstrap_timeout"
+                    log("map_odom_bootstrap_timeout", readiness_snapshot())
                     break
             elif now - motion_start >= args.seconds:
                 break
@@ -319,6 +346,10 @@ def main():
                 None if motion_start is None else motion_start - started
             ),
             "readiness_timeout_s": args.prepare_seconds,
+            "map_odom_bootstrap_timeout_s": (
+                args.map_odom_bootstrap_timeout
+            ),
+            "raw_map_odom_messages": state["raw_map_odom_count"],
             "readiness_error": readiness_error,
             "lifecycle_states": lifecycle_states,
             "action_server_ready": action.server_is_ready(),
