@@ -32,8 +32,8 @@
     },
     "evidence_index_validation": {
       "status": "PASS",
-      "checked": 141,
-      "hashed": 53
+      "checked": 142,
+      "hashed": 54
     }
   },
   "external_blockers": [
