@@ -22,7 +22,7 @@
     "status": "LIVE_SLAM_REPLAY_INPUT_READY",
     "replay_eligible": true,
     "receipt": "reports/mapping/day1_live_slam_run11_preflight_20260914.json",
-    "receipt_sha256": "2ec6e2c364fdb1440794bf1e95f7a4b490d1dda9a850626f7e0f90b8f58dfb86"
+    "receipt_sha256": "b46b04778f52fbe35932895e49db5a3805450a6ba73804c011674814da8959d3"
   },
   "execution": {
     "gazebo_started": false,
