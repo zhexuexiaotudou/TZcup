@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 import re
 import subprocess
+import time
 from typing import Callable
 
 
@@ -64,33 +65,76 @@ def capture(
     runner: Callable[..., subprocess.CompletedProcess[str]],
     *,
     timeout_sec: float,
+    attempts: int = 3,
+    spin_time_sec: float = 2.0,
+    discovery_timeout_sec: float = 5.0,
+    retry_delay_sec: float = 0.5,
+    sleeper: Callable[[float], None] = time.sleep,
 ) -> dict[str, object]:
     """Query every required parameter and retain raw evidence for each response."""
+    if attempts < 1:
+        raise ValueError("attempts must be at least one")
     nodes: dict[str, object] = {}
     all_expected = True
     for node, parameters in EXPECTED_PARAMETERS.items():
         values: dict[str, object] = {}
         for name, expected in parameters.items():
+            command = [
+                "ros2",
+                "param",
+                "get",
+                "--spin-time",
+                str(spin_time_sec),
+                "--timeout",
+                str(discovery_timeout_sec),
+                node,
+                name,
+            ]
+            raw = ""
+            actual = None
             error = ""
-            try:
-                completed = runner(
-                    ["ros2", "param", "get", node, name],
-                    capture_output=True,
-                    text=True,
-                    timeout=timeout_sec,
-                    check=False,
+            attempt_rows: list[dict[str, object]] = []
+            for attempt in range(1, attempts + 1):
+                attempt_raw = ""
+                attempt_actual = None
+                attempt_error = ""
+                returncode = None
+                try:
+                    completed = runner(
+                        command,
+                        capture_output=True,
+                        text=True,
+                        timeout=timeout_sec,
+                        check=False,
+                    )
+                    returncode = completed.returncode
+                    attempt_raw = completed.stdout.strip()
+                    attempt_actual = (
+                        parse_parameter_value(attempt_raw, expected)
+                        if completed.returncode == 0
+                        else None
+                    )
+                    attempt_error = (
+                        completed.stderr.strip() if completed.returncode else ""
+                    )
+                except Exception as exc:  # pragma: no cover - subprocess failure path
+                    attempt_error = f"{type(exc).__name__}: {exc}"
+                attempt_rows.append(
+                    {
+                        "attempt": attempt,
+                        "returncode": returncode,
+                        "raw": attempt_raw,
+                        "actual": attempt_actual,
+                        "error": attempt_error,
+                    }
                 )
-                raw = completed.stdout.strip()
-                actual = (
-                    parse_parameter_value(raw, expected)
-                    if completed.returncode == 0
-                    else None
-                )
-                error = completed.stderr.strip() if completed.returncode else ""
-            except Exception as exc:  # pragma: no cover - subprocess failure path
-                raw = ""
-                actual = None
-                error = f"{type(exc).__name__}: {exc}"
+                raw = attempt_raw
+                actual = attempt_actual
+                error = attempt_error
+                if returncode == 0 and actual == expected:
+                    break
+                if attempt < attempts:
+                    sleeper(retry_delay_sec)
             matched = actual == expected
             all_expected &= matched
             values[name] = {
@@ -99,7 +143,9 @@ def capture(
                 "matched": matched,
                 "raw": raw,
                 "error": error,
-                "command": ["ros2", "param", "get", node, name],
+                "command": command,
+                "attempt_count": len(attempt_rows),
+                "attempts": attempt_rows,
             }
         nodes[node] = values
     return {
@@ -112,14 +158,31 @@ def capture(
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", required=True, type=Path)
-    parser.add_argument("--timeout-sec", type=float, default=10.0)
+    parser.add_argument("--timeout-sec", type=float, default=20.0)
+    parser.add_argument("--attempts", type=int, default=3)
+    parser.add_argument("--spin-time-sec", type=float, default=2.0)
+    parser.add_argument("--discovery-timeout-sec", type=float, default=5.0)
+    parser.add_argument("--retry-delay-sec", type=float, default=0.5)
     args = parser.parse_args()
     if args.output.exists():
         raise SystemExit(f"fresh output required: {args.output}")
     if not args.timeout_sec > 0:
         raise SystemExit("--timeout-sec must be positive")
+    if args.attempts < 1:
+        raise SystemExit("--attempts must be at least one")
+    if args.spin_time_sec < 0 or args.discovery_timeout_sec <= 0:
+        raise SystemExit("discovery timing arguments are invalid")
+    if args.retry_delay_sec < 0:
+        raise SystemExit("--retry-delay-sec must be nonnegative")
 
-    report = capture(subprocess.run, timeout_sec=args.timeout_sec)
+    report = capture(
+        subprocess.run,
+        timeout_sec=args.timeout_sec,
+        attempts=args.attempts,
+        spin_time_sec=args.spin_time_sec,
+        discovery_timeout_sec=args.discovery_timeout_sec,
+        retry_delay_sec=args.retry_delay_sec,
+    )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
         json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
