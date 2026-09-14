@@ -1,0 +1,216 @@
+{
+  "schema_version": 1,
+  "run_id": "day1-mapping-run-20260914-06",
+  "branch": "codex/day1-mapping-run",
+  "revision": "6021e7b52ebf6a56aa7113b7b6d7742cbdfe0692",
+  "remote_run_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-mapping-run-20260914-06",
+  "status": "NO_GO_TIMEOUT",
+  "decision": "NO_GO_TIMEOUT_NO_FINAL_MAP",
+  "final_result": "NOT_MEASURED",
+  "timeout": {
+    "configured_timeout_s": 3600,
+    "start_epoch_s": 1789353862,
+    "start_utc": "2026-09-14T02:44:22Z",
+    "finish_epoch_s": 1789357496,
+    "finish_utc": "2026-09-14T03:44:56Z",
+    "runner_wall_seconds": 3634,
+    "runner_exit_code": 124,
+    "observed_process_release_utc": "2026-09-14T03:45:51Z",
+    "seconds_from_runner_start_to_observed_process_release": 3689,
+    "teardown_after_runner_finish_s": 55,
+    "last_observed_sim_time_s": 303.002,
+    "rtf_final_over_runner_wall": 0.083379746835443,
+    "rtf_final_over_configured_timeout": 0.0841672222222222,
+    "rtf_monitored_interval": 0.0848056537102473,
+    "mapping_checkpoint_count": 192,
+    "last_explorer_event": {
+      "state": "frontier_cancel_requested",
+      "reason": "progress_timeout",
+      "planner": "nav2_navigate_to_pose",
+      "direct_velocity_control": false
+    }
+  },
+  "map_gate": {
+    "minimum_known_area_m2": 20000.0,
+    "slam_occupancy_map_present": false,
+    "expected_map_yaml": "occupancy.yaml",
+    "expected_map_image": "occupancy.pgm",
+    "known_area_m2": null,
+    "area_gate": "NOT_MEASURED",
+    "map_quality_gate": "NOT_MEASURED",
+    "full_map_lifecycle_gate": "NOT_MEASURED",
+    "reason": "The lifecycle timed out before producing occupancy.pgm, occupancy.yaml, map_lifecycle_manifest.json, or mapping_runtime.json."
+  },
+  "verification": {
+    "committed_area_verifier": "scripts/verify_map_area.py",
+    "area_verifier_exit_code": 1,
+    "area_verifier_error": "map YAML does not exist: occupancy.yaml",
+    "map_quality_gate_exit_code": 1,
+    "map_quality_gate_error": "FileNotFoundError: occupancy.yaml",
+    "full_lifecycle_gate_exit_code": 2,
+    "full_lifecycle_gate_error": "FORMAL_MAP_LIFECYCLE_RUNTIME_BINDING_BLOCKED",
+    "raw_partial_mask_report": ".work/day1-mapping-run-20260914-06/verification/partial_mask_area.json"
+  },
+  "partial_artifacts": {
+    "kind": "pre_run_masks_only",
+    "excluded_from_slam_map_gate": true,
+    "scale_or_synthesis_used": false,
+    "maps": [
+      {
+        "map_yaml": "geofence_keepout.yaml",
+        "map_image": "geofence_keepout.pgm",
+        "resolution_m": 0.25,
+        "span_x_m": 204.0,
+        "span_y_m": 104.0,
+        "free_cells": 320000,
+        "occupied_cells": 19456,
+        "known_cells": 339456,
+        "known_area_m2": 21216.0,
+        "resolution_pass": false,
+        "span_pass": true,
+        "known_area_pass": true,
+        "slam_quality_pass": false,
+        "map_yaml_sha256": "610a3ce09859f93cff6b53d5ba01800dd93b780976c55860c77860c31776061d",
+        "map_image_sha256": "f942a1572fd00722c890448a04d5135a9a32f607ec4dd9db2a581de65a5e4ad9"
+      },
+      {
+        "map_yaml": "neutral_speed.yaml",
+        "map_image": "neutral_speed.pgm",
+        "resolution_m": 0.25,
+        "span_x_m": 204.0,
+        "span_y_m": 104.0,
+        "free_cells": 339456,
+        "occupied_cells": 0,
+        "known_cells": 339456,
+        "known_area_m2": 21216.0,
+        "resolution_pass": false,
+        "span_pass": true,
+        "known_area_pass": true,
+        "slam_quality_pass": false,
+        "map_yaml_sha256": "537c11d4a39cbeb8b5db109f3e4a8ce9f539f68441f282f7fc31e95283be8d37",
+        "map_image_sha256": "bb53baab0722b934b624cb0895734680c76d3d7e3508d719cf7108156f5d83e1"
+      }
+    ]
+  },
+  "resource_usage": {
+    "gazebo_pid": 972580,
+    "gazebo_cpu_percent_observed_range": [
+      151.0,
+      154.0
+    ],
+    "gazebo_rss_kib_first_observed": 2202880,
+    "gazebo_rss_kib_last_observed": 2203424,
+    "host_load_average_observed_range": [
+      9.57,
+      18.08
+    ],
+    "gpu_csv_samples": 1602,
+    "gpu_utilization_percent": {
+      "min": 0.0,
+      "mean": 0.670412,
+      "max": 6.0
+    },
+    "gpu_memory_used_mib": {
+      "min": 1,
+      "max": 334
+    },
+    "gpu_power_w": {
+      "min": 23.63,
+      "max": 97.09
+    },
+    "cpu_memory_csv": {
+      "samples": 25,
+      "gazebo_process_count": 0,
+      "last_sample_utc": "2026-09-14T02:44:45Z",
+      "usable_for_runtime_loading": false,
+      "reason": "The sampler stopped updating before Gazebo started."
+    }
+  },
+  "resource_release": {
+    "census_utc": "2026-09-14T03:47:21Z",
+    "gazebo_pid_absent": true,
+    "run_owned_gazebo_ros_processes_remaining": false,
+    "formal_gazebo_lock_free": true,
+    "formal_gazebo_lock_reacquired": true,
+    "gpu_utilization_percent": 0,
+    "gpu_memory_used_mib": 1,
+    "sim_resource_released": true,
+    "orphan_cleanup_performed": false,
+    "cleanup_boundary": "No task-owned residual process or lock holder remained, so no process was signaled."
+  },
+  "recording_finalization": {
+    "early_recording_closed": true,
+    "early_recording_normal_close": true,
+    "early_recording_metadata_message_count": 565089,
+    "localization_diagnostic_passed": true,
+    "localization_diagnostic_mcap_bytes": 57608905
+  },
+  "retained_remote_files": [
+    {
+      "path": "lifecycle.rc",
+      "size_bytes": 4,
+      "sha256": "ca2ebdf97d7469496b1f4b78958f9dc8447efdcb623953fee7b6996b762f6fff"
+    },
+    {
+      "path": "lifecycle.stdout",
+      "size_bytes": 13261,
+      "sha256": "ed524b7b5a1e0680c8c0feaa72df0125a79979d96b674474f66aef29a097c17d"
+    },
+    {
+      "path": "cpu_memory_utilization.csv",
+      "size_bytes": 1069,
+      "sha256": "01b67f83f2644721d4ccb17d83f660541deef728f4e10164b89fac0adafb2db9"
+    },
+    {
+      "path": "gpu_utilization.csv",
+      "size_bytes": 56070,
+      "sha256": "87f30e345bc751419fe66380db4fab9c13b47287869a34042caeadfb1a64013d"
+    },
+    {
+      "path": "saved-map/mapping.launch.log",
+      "size_bytes": 3018430,
+      "sha256": "61f6b4437dd5952bda6585a75456f0201203ce6b75644a109c8d7ea84adf1c20"
+    },
+    {
+      "path": "saved-map/mapping_runtime.collector.log",
+      "size_bytes": 1312,
+      "sha256": "5651b7d94a9eb6e0595a4bb750cc8abe691430fb7d3a49091466c89291bb71c2"
+    },
+    {
+      "path": "saved-map/formal_recording_closed.json",
+      "size_bytes": 1276,
+      "sha256": "4faadf10b81f39893273e29f947d8ed663a4340952a1eacf58017c025a51e6d1"
+    },
+    {
+      "path": "saved-map/mapping_localization_diagnostic.json",
+      "size_bytes": 1797,
+      "sha256": "22ca11a70d60d02ac3099ee0c7183d52a98bbfe1bd91a3dafd17cc53717e99ae"
+    },
+    {
+      "path": "saved-map/geofence_keepout.yaml",
+      "size_bytes": 138,
+      "sha256": "610a3ce09859f93cff6b53d5ba01800dd93b780976c55860c77860c31776061d"
+    },
+    {
+      "path": "saved-map/geofence_keepout.pgm",
+      "size_bytes": 339471,
+      "sha256": "f942a1572fd00722c890448a04d5135a9a32f607ec4dd9db2a581de65a5e4ad9"
+    },
+    {
+      "path": "saved-map/neutral_speed.yaml",
+      "size_bytes": 135,
+      "sha256": "537c11d4a39cbeb8b5db109f3e4a8ce9f539f68441f282f7fc31e95283be8d37"
+    },
+    {
+      "path": "saved-map/neutral_speed.pgm",
+      "size_bytes": 339471,
+      "sha256": "bb53baab0722b934b624cb0895734680c76d3d7e3508d719cf7108156f5d83e1"
+    }
+  ],
+  "local_retained_archive": {
+    "path": ".work/day1-mapping-run-20260914-06/retained/retained-artifacts.tar.gz",
+    "size_bytes": 161083,
+    "sha256": "a561f6917f97185fd843b9be1bde6de6de8203199f729aac09824d18134b1caa"
+  },
+  "claim_boundary": "The partial masks are not a SLAM map and do not satisfy the 20,000 m2 map or quality gates. No second run was started, no map was scaled or synthesized, and no process was killed after the final census found no task-owned residual."
+}
