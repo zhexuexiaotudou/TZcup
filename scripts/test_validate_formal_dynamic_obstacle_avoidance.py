@@ -425,6 +425,30 @@ def test_runtime_collector_uses_scan_gate_and_not_pedestrian_truth() -> None:
     assert "active_pedestrian_count" not in monitor
 
 
+def test_runtime_collector_does_not_wait_for_command_derived_outputs() -> None:
+    source = (
+        Path(__file__).with_name("collect_formal_dynamic_obstacle_avoidance_runtime.py")
+        .read_text(encoding="utf-8")
+    )
+    gate = source[
+        source.index("not self.goal_sent"):
+        source.index("goal = NavigateToPose.Goal()")
+    ]
+    assert '"/collision_monitor_state"' not in gate
+    assert "self.safety_enabled_sample_count > 0" not in gate
+    assert '"/collision_monitor_state"' in source
+    assert "self.safety_permit_sample_count > 0" in gate
+
+
+def test_environment_collector_flushes_on_external_shutdown() -> None:
+    source = (
+        Path(__file__).with_name("collect_formal_dynamic_environment_runtime.py")
+        .read_text(encoding="utf-8")
+    )
+    assert "from rclpy.executors import ExternalShutdownException" in source
+    assert "except (KeyboardInterrupt, ExternalShutdownException):" in source
+
+
 def test_runtime_builds_and_audits_the_bms_that_gates_vehicle_safety() -> None:
     runner = Path(__file__).with_name(
         "run_formal_dynamic_obstacle_avoidance.sh"

@@ -295,13 +295,11 @@ class RuntimeCollector(Node):
                     "/amcl_pose",
                     "/scan/navigation",
                     "/sensors/lidar_3d/points",
-                    "/collision_monitor_state",
                     "/safety/status",
                     "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/status",
                 )
             )
             and self.safety_permit_sample_count > 0
-            and self.safety_enabled_sample_count > 0
             and self.bms_fault_clear_sample_count > 0
             and self.traction_permitted_sample_count > 0
         ):

@@ -16,6 +16,7 @@ import subprocess
 import time
 
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.parameter import Parameter
 from rclpy.qos import qos_profile_sensor_data
@@ -584,7 +585,7 @@ def main() -> int:
     try:
         while rclpy.ok() and not node.done:
             rclpy.spin_once(node, timeout_sec=0.1)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
         node.close()
