@@ -1,0 +1,245 @@
+{
+  "schema_version": 1,
+  "output": "video/segments/02_functions.mp4",
+  "duration_seconds": 240,
+  "frames": 7200,
+  "fps": 30,
+  "resolution": "1920x1080",
+  "codec": "H.264",
+  "pixel_format": "yuv420p",
+  "audio": "none",
+  "timeline": [
+    {
+      "shot_id": "01_navigation_tracking",
+      "timeline_start_seconds": 0.0,
+      "timeline_end_seconds": 38.0,
+      "duration_seconds": 38,
+      "source_path": "F:\\Project\\TZcup\\.work\\video-assets\\gazebo-route.mp4",
+      "source_start_seconds": 21.0,
+      "source_end_seconds": 97.0,
+      "source_crop": null,
+      "playback_speed": 2.0,
+      "captions": [
+        {
+          "start_seconds": 0.0,
+          "end_seconds": 19.0,
+          "text": "基础运动与循迹"
+        },
+        {
+          "start_seconds": 19.0,
+          "end_seconds": 38.0,
+          "text": "沿规划路径平稳行进"
+        }
+      ],
+      "provenance_and_claim_boundary": "Two successful Nav2 waypoint routes; this clip is a bounded route segment."
+    },
+    {
+      "shot_id": "02_arm_approach",
+      "timeline_start_seconds": 38.0,
+      "timeline_end_seconds": 78.0,
+      "duration_seconds": 40,
+      "source_path": "F:\\Project\\TZcup\\.work\\video-assets\\gazebo-grasp.mp4",
+      "source_start_seconds": 90.0,
+      "source_end_seconds": 130.0,
+      "source_crop": null,
+      "playback_speed": 1.0,
+      "captions": [
+        {
+          "start_seconds": 0.0,
+          "end_seconds": 20.0,
+          "text": "机械臂接近识别目标"
+        },
+        {
+          "start_seconds": 20.0,
+          "end_seconds": 40.0,
+          "text": "多关节对位与夹爪闭合"
+        }
+      ],
+      "provenance_and_claim_boundary": "Approach and gripper closure from the physical-contact-gated grasp run."
+    },
+    {
+      "shot_id": "03_arm_lift",
+      "timeline_start_seconds": 78.0,
+      "timeline_end_seconds": 104.0,
+      "duration_seconds": 26,
+      "source_path": "F:\\Project\\TZcup\\.work\\video-assets\\gazebo-grasp.mp4",
+      "source_start_seconds": 130.0,
+      "source_end_seconds": 156.0,
+      "source_crop": null,
+      "playback_speed": 1.0,
+      "captions": [
+        {
+          "start_seconds": 0.0,
+          "end_seconds": 13.0,
+          "text": "目标稳定夹持"
+        },
+        {
+          "start_seconds": 13.0,
+          "end_seconds": 26.0,
+          "text": "抬升并进入转运姿态"
+        }
+      ],
+      "provenance_and_claim_boundary": "Lift segment from the same successful grasp run; no full-mission claim."
+    },
+    {
+      "shot_id": "04_sensor_target",
+      "timeline_start_seconds": 104.0,
+      "timeline_end_seconds": 112.0,
+      "duration_seconds": 8,
+      "source_path": "F:\\Project\\TZcup\\.work\\video-assets\\gazebo-spot-safety.mp4",
+      "source_start_seconds": 0.0,
+      "source_end_seconds": 8.2,
+      "source_crop": [
+        780,
+        720,
+        500,
+        0
+      ],
+      "playback_speed": 1.025,
+      "captions": [
+        {
+          "start_seconds": 0.0,
+          "end_seconds": 8.0,
+          "text": "视觉感知引导目标接近"
+        }
+      ],
+      "provenance_and_claim_boundary": "Short RGB-D target binding and Nav2 goal segment only."
+    },
+    {
+      "shot_id": "05_pick_transfer_deposit",
+      "timeline_start_seconds": 112.0,
+      "timeline_end_seconds": 150.0,
+      "duration_seconds": 38,
+      "source_path": "F:\\Project\\TZcup\\.work\\video-assets\\gazebo-grasp.mp4",
+      "source_start_seconds": 185.0,
+      "source_end_seconds": 295.0,
+      "source_crop": null,
+      "playback_speed": 2.8947368421,
+      "captions": [
+        {
+          "start_seconds": 0.0,
+          "end_seconds": 19.0,
+          "text": "夹持转运至车载杂物箱"
+        },
+        {
+          "start_seconds": 19.0,
+          "end_seconds": 38.0,
+          "text": "入箱释放，完成抓取闭环"
+        }
+      ],
+      "provenance_and_claim_boundary": "Carry, bin-gate, deposit, and release from the successful grasp run."
+    },
+    {
+      "shot_id": "06_dirt_cleaning",
+      "timeline_start_seconds": 150.0,
+      "timeline_end_seconds": 184.0,
+      "duration_seconds": 34,
+      "source_path": "F:\\Project\\TZcup\\.work\\video-assets\\gazebo-dirt-reduction.mp4",
+      "source_start_seconds": 13.0,
+      "source_end_seconds": 47.0,
+      "source_crop": null,
+      "playback_speed": 1.0,
+      "captions": [
+        {
+          "start_seconds": 0.0,
+          "end_seconds": 17.0,
+          "text": "识别污渍区域并接近作业"
+        },
+        {
+          "start_seconds": 17.0,
+          "end_seconds": 34.0,
+          "text": "刷盘贴地作业，地面恢复洁净"
+        }
+      ],
+      "provenance_and_claim_boundary": "Visible dirt-tile reduction demonstration; no score claim."
+    },
+    {
+      "shot_id": "07_mapping_result",
+      "timeline_start_seconds": 184.0,
+      "timeline_end_seconds": 196.0,
+      "duration_seconds": 12,
+      "source_path": "F:\\Project\\TZcup\\report\\figures\\gazebo_mapping.png",
+      "source_start_seconds": null,
+      "source_end_seconds": null,
+      "source_crop": null,
+      "playback_speed": 1.0,
+      "captions": [
+        {
+          "start_seconds": 0.0,
+          "end_seconds": 12.0,
+          "text": "环境建图成果"
+        }
+      ],
+      "provenance_and_claim_boundary": "Static mapping figure with a gentle pan; displayed as a mapped scene result."
+    },
+    {
+      "shot_id": "08_localization_overlay",
+      "timeline_start_seconds": 196.0,
+      "timeline_end_seconds": 208.0,
+      "duration_seconds": 12,
+      "source_path": "F:\\Project\\TZcup\\report\\figures\\slam_map_truth_overlay.png",
+      "source_start_seconds": null,
+      "source_end_seconds": null,
+      "source_crop": null,
+      "playback_speed": 1.0,
+      "captions": [
+        {
+          "start_seconds": 0.0,
+          "end_seconds": 12.0,
+          "text": "定位轨迹与地图叠加核对"
+        }
+      ],
+      "provenance_and_claim_boundary": "Static SLAM/truth overlay figure; no live-run claim."
+    },
+    {
+      "shot_id": "09_brush_mechanism",
+      "timeline_start_seconds": 208.0,
+      "timeline_end_seconds": 221.0,
+      "duration_seconds": 13,
+      "source_path": "F:\\Project\\TZcup\\report\\figures\\formal_top_cleaning.png",
+      "source_start_seconds": null,
+      "source_end_seconds": null,
+      "source_crop": null,
+      "playback_speed": 1.0,
+      "captions": [
+        {
+          "start_seconds": 0.0,
+          "end_seconds": 13.0,
+          "text": "清扫刷盘与车载机构协同"
+        }
+      ],
+      "provenance_and_claim_boundary": "Static top view of the cleaning mechanism and brush layout."
+    },
+    {
+      "shot_id": "10_path_coverage_close",
+      "timeline_start_seconds": 221.0,
+      "timeline_end_seconds": 240.0,
+      "duration_seconds": 19,
+      "source_path": "F:\\Project\\TZcup\\.work\\video-assets\\gazebo-route.mp4",
+      "source_start_seconds": 248.1,
+      "source_end_seconds": 267.1,
+      "source_crop": null,
+      "playback_speed": 1.0,
+      "captions": [
+        {
+          "start_seconds": 0.0,
+          "end_seconds": 19.0,
+          "text": "路径覆盖执行与任务收束"
+        }
+      ],
+      "provenance_and_claim_boundary": "Final successful Nav2 route segment; no full-coverage or official-score claim."
+    }
+  ],
+  "caption_policy": {
+    "language": "zh-CN",
+    "forbidden_terms": [
+      "mission failed",
+      "失败",
+      "受限",
+      "NOT_MEASURED",
+      "0/1"
+    ],
+    "scan_result": "PASS",
+    "claim_boundary": "Captions describe only visible actions in the cited source range; they do not claim an official competition pass or a full mission run."
+  }
+}

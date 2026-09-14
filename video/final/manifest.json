@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "tzcup_day1_five_minute_submission_video",
+  "generated_at": "2026-09-14T15:53:17.2445533+00:00",
+  "duration_s": 300.0,
+  "width": 1920,
+  "height": 1080,
+  "frame_rate": "30/1",
+  "video_codec": "h264",
+  "audio_codec": "aac",
+  "subtitle_codec": "mov_text",
+  "narration_voice": "Microsoft Huihui Desktop",
+  "decode_windows": {
+    "video": "PASS",
+    "audio": "PASS"
+  },
+  "forbidden_scan": "PASS",
+  "files": [
+    {
+      "path": "video/segments/01_modeling.mp4",
+      "bytes": 10083095,
+      "sha256": "96422abe349b88aaef801b135d8cf9fe7bd142b83300e0337e2da57fde60070b"
+    },
+    {
+      "path": "video/segments/02_functions.mp4",
+      "bytes": 11815544,
+      "sha256": "dda3c4d23ee880ae2e3618c5038a7362860ef43a2f4cbdab7e32a4d9b8419e31"
+    },
+    {
+      "path": "video/audio/narration.mp3",
+      "bytes": 7201196,
+      "sha256": "6a1cadd8f497f789e87e5e671be002ccd8b4e2d9717bfff431589007ec823468"
+    },
+    {
+      "path": "video/subtitles/zh-CN.srt",
+      "bytes": 3546,
+      "sha256": "0424580e1a623bd41fa00dde57a036dbb66baa9071fea5ec7f87e4094d1973a0"
+    },
+    {
+      "path": "video/final/TZcup_5min_video_silent.mp4",
+      "bytes": 21898136,
+      "sha256": "c2c950b9fdb244977650c62eaa1a8b4571cbf120adea587db6bfed9710982443"
+    },
+    {
+      "path": "video/final/TZcup_5min_video.mp4",
+      "bytes": 17415711,
+      "sha256": "4142f54b16897273bdb7c367190329815ee5546256f8fcfc73371183eec91c21"
+    }
+  ]
+}
