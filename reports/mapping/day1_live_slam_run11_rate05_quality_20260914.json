@@ -1,0 +1,19 @@
+{
+  "map_yaml": "reports/mapping/day1_live_slam_run11_rate05/occupancy.yaml",
+  "map_image": "reports/mapping/day1_live_slam_run11_rate05/occupancy.pgm",
+  "mode": "trinary",
+  "resolution_m": 0.05,
+  "width_cells": 176,
+  "height_cells": 392,
+  "span_x_m": 8.8,
+  "span_y_m": 19.6,
+  "occupied_cells": 22,
+  "free_cells": 1146,
+  "unknown_cells": 67824,
+  "known_cells": 1168,
+  "known_area_m2": 2.9200000000000004,
+  "resolution_pass": true,
+  "span_pass": false,
+  "known_area_pass": false,
+  "slam_quality_pass": false
+}

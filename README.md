@@ -4,7 +4,7 @@ TZcup 是一个面向智慧环卫无人清扫车的 ROS 2 仿真与自主任务�
 
 任务契约显式区分 `AREA_FILL / TAUGHT_ROUTE / POINT_CLEAN`：小场默认 `AREA_FILL` 使用本页的覆盖优化；狭窄固定通道可离线生成带版本和 SHA-256 的教学路线，每段仍由 Nav2 FollowPath 做碰撞检查并执行速度/刷盘状态；`POINT_CLEAN` 继续由既有 `sanitation_spot_cleaning` 链执行，若误交给 Coverage 执行器会 fail-closed。
 地图监督台会分层显示仿真参考、SLAM、感知、规划与实际轨迹；安全状态、回放、操作边界和启动方式见 [`docs/human-visualization.md`](docs/human-visualization.md)。
-29 m 建图候选默认关闭；启用方式、20000 m² 严格面积门及短探针 NO-GO 边界见 [`docs/competition-mapping-probe.md`](docs/competition-mapping-probe.md)。离线 SLAM replay 输入先经 `scripts/audit_live_slam_replay_inputs.py` fail-closed 审计；run-06 仅保留 odom/状态 MCAP，缺少 `/scan` 与 TF，结论与最短补救路径见 [`docs/live-slam-replay-recovery.md`](docs/live-slam-replay-recovery.md)。
+29 m 建图候选默认关闭；启用方式、20000 m² 严格面积门及短探针 NO-GO 边界见 [`docs/competition-mapping-probe.md`](docs/competition-mapping-probe.md)。离线 SLAM replay 输入先经 `scripts/audit_live_slam_replay_inputs.py` fail-closed 审计；run-10 缺少 TF，run-11 已完成真实离线 replay 但仅得到 `2.92 m²` 已知面积且质量门失败，结论与最短补救路径见 [`docs/live-slam-replay-recovery.md`](docs/live-slam-replay-recovery.md)。
 ## 实时可视化演示
 
 项目现在提供一条 Windows 命令启动的真实 Gazebo 导航与全覆盖演示：Gazebo GUI 跟随清扫车，RViz 以 `base_footprint` 为目标坐标系跟随显示地图、激光、规划路径与代价地图，浏览器看板按实际 `CoveragePlan` 动态显示任务阶段、融合位姿、速度、组件进度、刷盘、急停和车辆轨迹，并自动保存 MCAP、专用看板 MP4 与代表帧；代表帧从录像末尾抽取，用于直接展示完整轨迹和任务终态。演示复用正式 Stage4V 定位、Nav2 与 Coverage 链，不使用预制动画。

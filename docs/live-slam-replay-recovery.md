@@ -136,3 +136,47 @@ The audit now permits zero-message topic declarations in valid rosbag2
 metadata while still requiring at least one message on every admitted replay
 topic. Run-10 remains immutable evidence only; replay admission has moved to
 run-11, which must record both transform topics in a normally closed bag.
+
+## Run-11 offline replay
+
+**Status:** `REPLAY_EXECUTED / MAP QUALITY GATE FAILED`
+
+Run-11 closed with all five admission topics present:
+
+| Topic | Type | Messages |
+|---|---|---:|
+| `/scan` | `sensor_msgs/msg/LaserScan` | 33 |
+| `/tf` | `tf2_msgs/msg/TFMessage` | 100 |
+| `/tf_static` | `tf2_msgs/msg/TFMessage` | 1 |
+| `/clock` | `rosgraph_msgs/msg/Clock` | 820 |
+| `/odom` | `nav_msgs/msg/Odometry` | 41 |
+
+The admitted MCAP was copied to an independent offline directory. Its MCAP
+SHA-256 is
+`43144b144db0fd06eaaea637a72609541b726f20fe338de3fd5a85cc5b6c880e`
+and its metadata SHA-256 is
+`8de12b0abb715ed8abb469f0620a0bfa124bd61436c0feaa7b7b477b0c14bbf8`.
+
+The existing `slam_toolbox` online-async mapping mode was replayed without
+Gazebo on ROS domain `122` with localhost-only discovery. A `0.5x` replay
+produced a PGM/YAML map with no queue-full message drop:
+
+- `occupancy.pgm`: `c9012cd1b557e540528d081d584deb021bcca6037b05684f92b4659b0ff6db51`
+- `occupancy.yaml`: `fcfc50b930c1f1caa4ffa2343f77987782c1a4dac21ca1ef39a696d7d9a13462`
+- grid: `176 x 392` cells at `0.05 m`
+- known area: `2.92 m2`
+- occupied area: `0.055 m2`
+- free area: `2.865 m2`
+- unknown fraction: `0.9830707913966839`
+
+The map is real, but the 20,000 m2 area gate is false. The project quality gate
+also fails because the vertical span is `19.6 m` and the known area is below
+`150 m2`. A `1.0x` comparison produced `2.79 m2`, `98.3865%` unknown, and one
+queue-full drop, so the `0.5x` map is retained as the better replay result.
+
+The complete machine-readable result is
+`reports/mapping/day1_live_slam_run11_replay_20260914.json`. The replay used
+`scripts/run_day1_offline_slam_replay.sh`; the PRoot `setsid` wrapper did not
+return after map save even though all ROS children exited. The task-owned
+wrapper process group was terminated after a read-only census. Run-12 remained
+the sole Gazebo owner and was not affected.

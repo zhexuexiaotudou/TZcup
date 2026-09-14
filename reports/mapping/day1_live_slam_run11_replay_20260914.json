@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "report_id": "tzcup_day1_live_slam_run11_replay_v1",
+  "generated_utc": "2026-09-14T15:20:00Z",
+  "status": "REPLAY_EXECUTED_MAP_QUALITY_GATE_FAILED",
+  "source_run": "day1-bounded-coverage-20260914-11",
+  "source_runtime_revision": "a2ffa243040a7b6ed7bf720c53df2d73c7f978f6",
+  "source_bag": {
+    "metadata_sha256": "8de12b0abb715ed8abb469f0620a0bfa124bd61436c0feaa7b7b477b0c14bbf8",
+    "mcap_sha256": "43144b144db0fd06eaaea637a72609541b726f20fe338de3fd5a85cc5b6c880e",
+    "duration_seconds": 9.648013581,
+    "message_count": 2103,
+    "topics": {
+      "/scan": 33,
+      "/tf": 100,
+      "/tf_static": 1,
+      "/clock": 820,
+      "/odom": 41
+    }
+  },
+  "preflight": {
+    "status": "LIVE_SLAM_REPLAY_INPUT_READY",
+    "replay_eligible": true,
+    "receipt": "reports/mapping/day1_live_slam_run11_preflight_20260914.json",
+    "receipt_sha256": "2ec6e2c364fdb1440794bf1e95f7a4b490d1dda9a850626f7e0f90b8f58dfb86"
+  },
+  "execution": {
+    "gazebo_started": false,
+    "ros_domain_id": 122,
+    "ros_localhost_only": 1,
+    "playback_rate": 0.5,
+    "slam_mode": "mapping",
+    "scan_topic": "/scan",
+    "map_saved": true,
+    "map_save_rc": 0,
+    "queue_full_drop_observed": false,
+    "start_utc": "2026-09-14T15:17:54.839451Z",
+    "map_saved_utc": "2026-09-14T15:18:17.951639Z"
+  },
+  "map": {
+    "yaml": "reports/mapping/day1_live_slam_run11_rate05/occupancy.yaml",
+    "yaml_sha256": "fcfc50b930c1f1caa4ffa2343f77987782c1a4dac21ca1ef39a696d7d9a13462",
+    "pgm": "reports/mapping/day1_live_slam_run11_rate05/occupancy.pgm",
+    "pgm_sha256": "c9012cd1b557e540528d081d584deb021bcca6037b05684f92b4659b0ff6db51",
+    "preview": "reports/mapping/day1_live_slam_run11_rate05/occupancy_preview.png",
+    "preview_sha256": "71855db0eaa5a9c212f727b1d9b98bc42caf1169685bd7b0609911f45b14471b",
+    "quality_receipt": "reports/mapping/day1_live_slam_run11_rate05_quality_20260914.json",
+    "quality_receipt_sha256": "e505943d2751dd87e2a944356006c2e9b6b7b59091310a1b3d6ac186db2e8f8e",
+    "area_receipt": "reports/mapping/day1_live_slam_run11_rate05_area_20260914.json",
+    "area_receipt_sha256": "efb150468e20196f92643293dd63a28d4f9234a4d7327f0c2151fd7df27bb428",
+    "width_cells": 176,
+    "height_cells": 392,
+    "resolution_m": 0.05,
+    "unknown_cells": 67824,
+    "known_cells": 1168,
+    "occupied_cells": 22,
+    "free_cells": 1146,
+    "known_area_m2": 2.92,
+    "unknown_fraction": 0.9830707913966839,
+    "known_fraction": 0.01692920860331611,
+    "span_x_m": 8.8,
+    "span_y_m": 19.6,
+    "twenty_thousand_m2_gate": false,
+    "quality_gate": {
+      "resolution_pass": true,
+      "span_pass": false,
+      "known_area_pass": false,
+      "slam_quality_pass": false
+    }
+  },
+  "comparison_rate_1": {
+    "playback_rate": 1.0,
+    "queue_full_drop_observed": true,
+    "known_area_m2": 2.79,
+    "unknown_fraction": 0.9838646777709936,
+    "twenty_thousand_m2_gate": false,
+    "slam_quality_pass": false
+  },
+  "lifecycle": {
+    "ros_nodes_exited_cleanly": true,
+    "ros_or_slam_residuals_after_cleanup": 0,
+    "task_owned_process_group_terminated": 86295,
+    "wrapper_exit": "PRoot setsid wrapper did not return after map save despite no remaining ROS children; the task-owned wrapper group was terminated after a read-only process census",
+    "resource_release_receipt": "reports/mapping/day1_live_slam_run11_resource_release_20260914.json",
+    "resource_release_receipt_sha256": "bc1971666469b98c8334d27b59e2a09c54c452725a20a8cbd2afee3f6a6b279d",
+    "run_12_owner_affected": false
+  },
+  "score": {
+    "live_mapping_replay_evidence_added": true,
+    "twenty_thousand_m2_claim": false,
+    "mapping_points_awarded_by_this_report": 0,
+    "reason": "the replay is real and offline, but the 9.65-second source bag observes only 2.92 m2 of known occupancy and 98.3071 percent unknown cells"
+  },
+  "claim_boundary": "This report proves one real offline slam_toolbox replay and records its map metrics. It does not claim the 20,000 m2 live-SLAM area gate, map quality acceptance, or a score increase."
+}

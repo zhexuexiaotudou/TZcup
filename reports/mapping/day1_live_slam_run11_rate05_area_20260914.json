@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "scan_root": ".",
+  "minimum_known_area_m2": 20000.0,
+  "map_count": 1,
+  "pass_count": 0,
+  "pass": false,
+  "largest_known_area_map_yaml": "reports/mapping/day1_live_slam_run11_rate05/occupancy.yaml",
+  "largest_known_area_m2": 2.9200000000000004,
+  "maps": [
+    {
+      "map_yaml": "reports/mapping/day1_live_slam_run11_rate05/occupancy.yaml",
+      "map_image": "reports/mapping/day1_live_slam_run11_rate05/occupancy.pgm",
+      "map_yaml_sha256": "fcfc50b930c1f1caa4ffa2343f77987782c1a4dac21ca1ef39a696d7d9a13462",
+      "map_image_sha256": "c9012cd1b557e540528d081d584deb021bcca6037b05684f92b4659b0ff6db51",
+      "mode": "trinary",
+      "negate": 0,
+      "resolution_m": 0.05,
+      "occupied_thresh": 0.65,
+      "free_thresh": 0.196,
+      "width_cells": 176,
+      "height_cells": 392,
+      "span_x_m": 8.8,
+      "span_y_m": 19.6,
+      "occupied_cells": 22,
+      "free_cells": 1146,
+      "unknown_cells": 67824,
+      "known_cells": 1168,
+      "occupied_area_m2": 0.05500000000000001,
+      "free_area_m2": 2.8650000000000007,
+      "known_area_m2": 2.9200000000000004,
+      "unknown_area_m2": 169.56000000000003,
+      "known_fraction": 0.016929499072356215,
+      "minimum_known_area_m2": 20000.0,
+      "area_gate": false,
+      "deficit_m2": 19997.08,
+      "required_isotropic_linear_scale": 82.7605888602368
+    }
+  ],
+  "excluded_maps": [],
+  "errors": []
+}

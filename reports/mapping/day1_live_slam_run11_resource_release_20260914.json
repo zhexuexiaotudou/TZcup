@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "day1_live_slam_run11_replay_resource_release",
+  "replay_residual_count": 0,
+  "replay_residuals": [],
+  "replay_ros_resources_released": true,
+  "run12_owner_process_count": 17,
+  "run12_owner_affected": false,
+  "verification": "A read-only process census found no offline replay, slam_toolbox, or ros2 bag processes after the task-owned wrapper group was terminated. The active run-12 owner remained present."
+}
