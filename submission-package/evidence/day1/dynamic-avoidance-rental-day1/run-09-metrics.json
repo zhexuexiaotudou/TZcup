@@ -1,0 +1,26 @@
+{
+  "claim_boundary": "Partial single-run functional evidence only. Nav2 did not complete the goal, the run is not a collision-free completed trial, and the official >=95% campaign rate remains NOT_MEASURED.",
+  "code_fix_commit": "ff42430",
+  "collision_monitor_intervention_count": 2,
+  "command_topic_sample_counts": {
+    "/cmd_vel_gate": 911,
+    "/cmd_vel_nav": 765,
+    "/cmd_vel_smoothed": 4800
+  },
+  "completion_reason": "action_result",
+  "cross_track_detour_m": 0.541733,
+  "evidence_commit": "c33c75a",
+  "goal_accepted": true,
+  "map_source_mode": "OFFLINE_RAYCAST_MAPPING",
+  "nav2_goal_succeeded": false,
+  "official_dynamic_avoidance_success_rate": {
+    "status": "NOT_MEASURED",
+    "threshold": 0.95
+  },
+  "physical_travel_distance_m": 6.427894,
+  "run_id": "run-09",
+  "single_run": {
+    "denominator": 1,
+    "numerator": 0
+  }
+}

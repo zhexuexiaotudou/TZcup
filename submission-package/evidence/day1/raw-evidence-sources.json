@@ -416,6 +416,34 @@
       ]
     },
     {
+      "id": "day1-dynamic-avoidance-offline-map-retry-20260914-09",
+      "run_id": "day1-dynamic-avoidance-offline-map-retry-20260914-09",
+      "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-avoidance-run",
+      "code_fix_commit": "ff42430",
+      "evidence_commit": "c33c75a",
+      "run_root": "/root/autodl-tmp/tzcup-competition-sim-only-20260912/evidence/day1-dynamic-avoidance-offline-map-retry-20260914-09/run-09",
+      "outcome": "SINGLE_RUN_EVIDENCE_INVALID_AFTER_GOAL_ACCEPTANCE_AND_PARTIAL_MOTION",
+      "package_copy": {
+        "attempt_receipt": "evidence/day1/dynamic-avoidance-rental-day1/attempt-receipt-run09.json",
+        "metrics": "evidence/day1/dynamic-avoidance-rental-day1/run-09-metrics.json",
+        "resource_release": "evidence/day1/dynamic-avoidance-rental-day1/resource-release-run09.json"
+      },
+      "files": [
+        {
+          "file": "remote\\attempt_receipt_run09.json",
+          "role": "compact run-09 receipt with target acceptance, command counts, interventions, partial motion, and official NOT_MEASURED status"
+        },
+        {
+          "file": "remote\\resource_release_run09.json",
+          "role": "bounded resource release after planner/controller failure"
+        },
+        {
+          "file": "remote\\run09-evidence.tar.gz",
+          "role": "large raw evidence archive retained in source commit, not copied into the report package"
+        }
+      ]
+    },
+    {
       "id": "offline-raycast-mapping-4ab39bb",
       "run_id": "offline-raycast-mapping-4ab39bb",
       "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-offline-mapping",

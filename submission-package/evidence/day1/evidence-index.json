@@ -298,6 +298,27 @@
     ]
   },
   {
+    "local_evidence": "evidence/day1/dynamic-avoidance-rental-day1/attempt-receipt-run09.json",
+    "metrics_evidence": "evidence/day1/dynamic-avoidance-rental-day1/run-09-metrics.json",
+    "resource_release": "evidence/day1/dynamic-avoidance-rental-day1/resource-release-run09.json",
+    "source_worktree": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-day1-avoidance-run",
+    "source_commit": "c33c75a",
+    "code_fix_commit": "ff42430",
+    "run_id": "day1-dynamic-avoidance-offline-map-retry-20260914-09",
+    "accepted_facts": [
+      "OFFLINE_RAYCAST_MAPPING source, Gazebo started, collectors started, and goal accepted true",
+      "/cmd_vel_nav 765, /cmd_vel_smoothed 4800, and /cmd_vel_gate 911 message samples",
+      "two collision-monitor interventions, 0.541733 m cross-track detour, and 6.427894 m physical travel",
+      "nav2_goal_succeeded false with completion_reason action_result and single-run numerator/denominator 0/1",
+      "official dynamic-avoidance success rate remains NOT_MEASURED"
+    ],
+    "limitations": [
+      "the goal did not complete and the single run cannot establish the official >=95% rate",
+      "two collision-monitor interventions and no independent dynamic-interaction samples prevent a collision-free completed-trial claim",
+      "MCAP was not preserved and the large run-09 archive is not copied into the report package"
+    ]
+  },
+  {
     "local_evidence": "evidence/day1/competition-mapping-offline-raycast.md",
     "metrics_evidence": "evidence/day1/offline-raycast-mapping/offline_raycast_manifest.json",
     "area_verification": "evidence/day1/offline-raycast-mapping/map_area_verification.json",

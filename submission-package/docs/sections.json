@@ -3,7 +3,7 @@
     "01 项目背景与交付边界",
     [
       "面向智慧环卫场景的国产系统无人清扫车关键技术攻关，赛题DG-202604。本报告整理截至2026-09-14已封存的仿真运行、独立评分、失败留存、板端回放和设计计算，不把新增局部PASS包装成完整比赛通过；Demo路线已在339b549永久停止，之前复制的真实Gazebo GUI partial clip仅是局部证据，不构成5-10分钟完整任务Demo。",
-      "当前可确认的通过项包括47e3cb3单次封存路线完成Nav2[4,4]、受控直线试验中的600mm连续清扫宽度、行驶中完整急停0.489s，以及冻结转写经确定性DSL解析得到的任务分解97.2973%。4320m²/h只来自固定10s窗口，状态为PARTIAL。定位严格预声明max≤50mm为FAIL，RMSE替代口径仅为PASS_PARTIAL；4ab39bb离线射线重建达到22399.99m²但仅为PARTIAL，明确不是Gazebo live SLAM，run-06超时后实时建图仍为NOT_MEASURED；工程识别质量为FAIL；官方识别≥95%保持NOT_MEASURED。",
+      "当前可确认的通过项包括47e3cb3单次封存路线完成Nav2[4,4]、受控直线试验中的600mm连续清扫宽度、行驶中完整急停0.489s，以及冻结转写经确定性DSL解析得到的任务分解97.2973%。4320m²/h只来自固定10s窗口，状态为PARTIAL。定位严格预声明max≤50mm为FAIL，RMSE替代口径仅为PASS_PARTIAL；4ab39bb离线射线重建达到22399.99m²但仅为PARTIAL，明确不是Gazebo live SLAM，run-06超时后实时建图仍为NOT_MEASURED；工程识别质量为FAIL；官方识别≥95%保持NOT_MEASURED。c33c75a/run-09动态避障已接受目标并产生部分运动，但Nav2目标未完成，只保留为NOT_MEASURED下的部分功能证据。",
       "任务分解PASS仅限内部冻结回归，不是公开盲测或外部验证；语音识别、任务执行和S100P完整自主仍NOT_MEASURED。尘箱40L新增结论仅限设计几何，物理填充与生产验证仍NOT_MEASURED。离线射线重建也不能替代现场SLAM、地图重载定位或完整生命周期验收。",
       "题面明确把“关键技术指标未达到最低要求”列为一票否决风险。因此本报告即使形成完整20-50页PDF，也只表示材料可审阅，不表示整包已达到提交资格或可以合并不同版本的局部PASS。"
     ]
@@ -118,10 +118,10 @@
   [
     "14 避障",
     [
-      "当前状态：NOT_MEASURED。20260914单次试验：c9a27ab首次因缺少FORMAL_ROS2_EXECUTABLE阻塞；b9e1c71修正/run-04已STARTED，但Gazebo启动前因source_inventory闭包漂移判为无效，无MCAP、接触、间距或恢复样本。官方≥95%仍为NOT_MEASURED。",
+      "当前状态：NOT_MEASURED。20260914单次试验：c9a27ab首次因缺少FORMAL_ROS2_EXECUTABLE阻塞；b9e1c71/run-04在Gazebo前因source_inventory闭包漂移无效。ff42430修复启动死锁后，c33c75a/run-09使用OFFLINE_RAYCAST_MAPPING，goal accepted=true，/cmd_vel_nav 765、/cmd_vel_smoothed 4800、/cmd_vel_gate 911，collision-monitor干预2次，cross-track detour 0.541733m，physical travel 6.427894m；但nav2_goal_succeeded=false、completion_reason=action_result，单次numerator/denominator=0/1。未保留MCAP或独立动态交互样本，且干预次数非零，不能宣称collision-free完成试验。官方≥95%仍为NOT_MEASURED。",
       "最短测量与判定口径：任务中插入一次动态障碍；记录无碰撞、绕行或等待及恢复任务，并报告成功率、最小间距或失败原因。",
       "证据范围：not_measured；截至 2026-09-14。只依据列明运行判定，历史局部结果不替代当前全程。",
-      "证据文件：evidence/day1/dynamic-avoidance-rental-day1/rental-result-initial.json；evidence/day1/dynamic-avoidance-rental-day1/rental-result-retry.json；evidence/day1/dynamic-avoidance-rental-day1/attempt-receipt-run04.json；evidence/reference/contest-brief.txt"
+      "证据文件：evidence/day1/dynamic-avoidance-rental-day1/rental-result-initial.json；evidence/day1/dynamic-avoidance-rental-day1/rental-result-retry.json；evidence/day1/dynamic-avoidance-rental-day1/attempt-receipt-run04.json；evidence/day1/dynamic-avoidance-rental-day1/attempt-receipt-run09.json；evidence/day1/dynamic-avoidance-rental-day1/run-09-metrics.json；evidence/day1/dynamic-avoidance-rental-day1/resource-release-run09.json；evidence/reference/contest-brief.txt"
     ]
   ],
   [
@@ -187,9 +187,9 @@
   [
     "22 完整性、一票否决风险与失败留存",
     [
-      "完整性结论：单次路线完成、宽度、制动、受控清扫和内部冻结任务分解已有边界明确的结果；效率、尘箱、RMSE替代定位和离线射线建图仅为PARTIAL；严格定位max和工程识别质量为FAIL；实时SLAM/地图质量、动态避障和官方识别≥95%仍NOT_MEASURED。官方识别状态与工程识别FAIL是两条并行口径，不能互相替代。",
+      "完整性结论：单次路线完成、宽度、制动、受控清扫和内部冻结任务分解已有边界明确的结果；效率、尘箱、RMSE替代定位和离线射线建图仅为PARTIAL；严格定位max和工程识别质量为FAIL；实时SLAM/地图质量、动态避障和官方识别≥95%仍NOT_MEASURED。动态避障现另有一次接受目标、产生指令和部分行驶的run-09功能证据，但目标未完成且单次分母为1，不能升级官方状态。官方识别状态与工程识别FAIL是两条并行口径，不能互相替代。",
       "一票否决风险：题面第9-10页把负载能力、识别准确率等关键技术指标未达到最低要求列为否决项。当前定位FAIL、工程识别FAIL以及实时SLAM/地图质量NOT_MEASURED已经足以阻止整包宣称达标；未测项也不能删去或改名规避。",
-      "失败留存：任务分解开发集保留reject-005；感知保留受控raw/policy基线与候选以及metal_can全漏检；定位同时保留严格max=FAIL与RMSE=PASS_PARTIAL；建图保留run-06在3600s超时且无最终地图的NOT_MEASURED记录，并把4ab39bb离线射线重建单独标为PARTIAL；动态避障保留c9a27ab缺可执行文件和b9e1c71闭包漂移两次Gazebo前失败；板端保留感知BLOCKED和有限规划；Demo路线在339b549永久停止。完整关联见evidence/day1/evidence-index.json。"
+      "失败留存：任务分解开发集保留reject-005；感知保留受控raw/policy基线与候选以及metal_can全漏检；定位同时保留严格max=FAIL与RMSE=PASS_PARTIAL；建图保留run-06在3600s超时且无最终地图的NOT_MEASURED记录，并把4ab39bb离线射线重建单独标为PARTIAL；动态避障保留c9a27ab缺可执行文件、b9e1c71闭包漂移和ff42430修复后c33c75a/run-09的goal accepted但action_result失败记录；板端保留感知BLOCKED和有限规划；Demo路线在339b549永久停止。完整关联见evidence/day1/evidence-index.json。"
     ]
   ],
   [
@@ -197,7 +197,7 @@
     [
       "题面要求技术方案PDF为20-50页，并要求完整软件仿真或实物、5-10分钟含操作说明的视频、审核通过的报名表和规定命名的压缩包。本包只完成可审阅报告与证据接入；已有真实Gazebo GUI partial clip，但没有有效的5-10分钟完整任务Demo、报名表、申报人命名信息或完整任务成功分母。",
       "Demo证据保留两次预Gazebo启动失败和两次有界full-task失败，并封存56d1689 hardening后的339b549最终验证：仍在task启动前的急停探针阶段失败，Demo路线随后永久停止。包内已有的95帧/6.333333s和43帧/2.866667s真实nonblack GUI clip仍是局部证据，但都没有task、cleaning、coverage或可用MCAP证据，也没有用RViz或dashboard替代；600mm、4320m²/h、0.489s受控证据不变。",
-      "证据源以metrics/results.json为唯一状态源，refresh.py读取本地compact receipts并重建metrics/验收矩阵.md、metrics/sim-metrics.csv、技术方案报告.md和PDF。建图同时保留4ab39bb离线射线manifest/面积/封条和ab6252d run-06超时回执，不复制大PGM，也不把OFFLINE_RAYCAST_MAPPING升级为Gazebo live SLAM。释放前的20-50页检查、JSON校验、逐页渲染、哈希和diff检查只证明包内一致性，不把任何未测/FAIL或PASS_PARTIAL升级为官方PASS。"
+      "证据源以metrics/results.json为唯一状态源，refresh.py读取本地compact receipts并重建metrics/验收矩阵.md、metrics/sim-metrics.csv、技术方案报告.md和PDF。建图同时保留4ab39bb离线射线manifest/面积/封条和ab6252d run-06超时回执，不复制大PGM，也不把OFFLINE_RAYCAST_MAPPING升级为Gazebo live SLAM。动态避障保留ff42430/c33c75a run-09 compact receipt与metrics，不复制大证据包，也不把目标接受、部分行驶或零接触样本升级为collision-free完整试验。释放前的20-50页检查、JSON校验、逐页渲染、哈希和diff检查只证明包内一致性，不把任何未测/FAIL或PASS_PARTIAL升级为官方PASS。"
     ]
   ]
 ]

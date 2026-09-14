@@ -129,7 +129,8 @@ for page,(title,paras) in enumerate(sections,1):
         if y-h<100: raise ValueError(f'Page {page} overflow')
         p.drawOn(c,45,y-h); y-=h+24
     # Measurement design diagrams are explicitly labelled; no synthetic outcome plots.
-    if 3<=page<=2+len(rows):
+    # The avoidance page has the longest evidence list; keep it clear of the generic diagram.
+    if 3<=page<=2+len(rows) and page!=14:
         c.setFillColorRGB(.93,.96,.98); c.roundRect(45,122,505,205,7,fill=1,stroke=0)
         c.setFillColorRGB(.06,.18,.26); c.setFont('CN',12)
         c.drawString(62,301,'测量设计图（不是运行结果）')

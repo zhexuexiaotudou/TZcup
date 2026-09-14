@@ -213,12 +213,35 @@
       "evidence/day1/dynamic-avoidance-rental-day1/rental-result-initial.json",
       "evidence/day1/dynamic-avoidance-rental-day1/rental-result-retry.json",
       "evidence/day1/dynamic-avoidance-rental-day1/attempt-receipt-run04.json",
+      "evidence/day1/dynamic-avoidance-rental-day1/attempt-receipt-run09.json",
+      "evidence/day1/dynamic-avoidance-rental-day1/run-09-metrics.json",
+      "evidence/day1/dynamic-avoidance-rental-day1/resource-release-run09.json",
       "evidence/reference/contest-brief.txt"
     ],
-    "note": "20260914单次试验：c9a27ab首次因缺少FORMAL_ROS2_EXECUTABLE阻塞；b9e1c71修正/run-04已STARTED，但Gazebo启动前因source_inventory闭包漂移判为无效，无MCAP、接触、间距或恢复样本。官方≥95%仍为NOT_MEASURED。",
+    "note": "20260914单次试验：c9a27ab首次因缺少FORMAL_ROS2_EXECUTABLE阻塞；b9e1c71/run-04在Gazebo前因source_inventory闭包漂移无效。ff42430修复启动死锁后，c33c75a/run-09使用OFFLINE_RAYCAST_MAPPING，goal accepted=true，/cmd_vel_nav 765、/cmd_vel_smoothed 4800、/cmd_vel_gate 911，collision-monitor干预2次，cross-track detour 0.541733m，physical travel 6.427894m；但nav2_goal_succeeded=false、completion_reason=action_result，单次numerator/denominator=0/1。未保留MCAP或独立动态交互样本，且干预次数非零，不能宣称collision-free完成试验。官方≥95%仍为NOT_MEASURED。",
     "minimum_measurement": "任务中插入一次动态障碍；记录无碰撞、绕行或等待及恢复任务，并报告成功率、最小间距或失败原因。",
-    "run_id": "day1-dynamic-avoidance-single-run-20260914-04",
-    "source_commit": "b9e1c71",
+    "functional_evidence": {
+      "map_source_mode": "OFFLINE_RAYCAST_MAPPING",
+      "goal_accepted": true,
+      "command_topic_sample_counts": {
+        "/cmd_vel_nav": 765,
+        "/cmd_vel_smoothed": 4800,
+        "/cmd_vel_gate": 911
+      },
+      "collision_monitor_intervention_count": 2,
+      "cross_track_detour_m": 0.541733,
+      "physical_travel_distance_m": 6.427894,
+      "nav2_goal_succeeded": false,
+      "completion_reason": "action_result",
+      "single_run": {
+        "numerator": 0,
+        "denominator": 1
+      }
+    },
+    "run_id": "day1-dynamic-avoidance-offline-map-retry-20260914-09",
+    "source_commit": "c33c75a",
+    "code_fix_commit": "ff42430",
+    "previous_attempt_commit": "b9e1c71",
     "initial_attempt_commit": "c9a27ab",
     "rollback_commit": null,
     "as_of_utc": "2026-09-14"

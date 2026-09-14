@@ -453,5 +453,26 @@
     "source": "git:ab6252d:reports/mapping/day1_mapping_run_06_timeout.json",
     "source_commit": "ab6252d",
     "copied_utc": "2026-09-14"
+  },
+  {
+    "file": "evidence/day1/dynamic-avoidance-rental-day1/attempt-receipt-run09.json",
+    "source": "git:c33c75a:artifacts/day1_dynamic_avoidance_offline_map_retry_20260914/remote/attempt_receipt_run09.json",
+    "source_commit": "c33c75a",
+    "code_fix_commit": "ff42430",
+    "copied_utc": "2026-09-14"
+  },
+  {
+    "file": "evidence/day1/dynamic-avoidance-rental-day1/run-09-metrics.json",
+    "source": "derived compact subset of git:c33c75a run-09 receipt and retained archive metrics",
+    "source_commit": "c33c75a",
+    "code_fix_commit": "ff42430",
+    "copied_utc": "2026-09-14"
+  },
+  {
+    "file": "evidence/day1/dynamic-avoidance-rental-day1/resource-release-run09.json",
+    "source": "git:c33c75a:artifacts/day1_dynamic_avoidance_offline_map_retry_20260914/remote/resource_release_run09.json",
+    "source_commit": "c33c75a",
+    "code_fix_commit": "ff42430",
+    "copied_utc": "2026-09-14"
   }
 ]
