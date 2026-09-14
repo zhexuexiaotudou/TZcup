@@ -1,13 +1,13 @@
 {
   "kind": "tzcup_formal_vehicle_snapshot_manifest",
-  "output_inventory_sha256": "d2ce52b1ab5f6e32bccb3a5a71a3054dd3c304d30f1bec424c98921f4a9051e0",
+  "output_inventory_sha256": "ee050a15a8770cda9c2524259259c3762181b8b6d8ac332c577e8db3d4528254",
   "outputs": {
     "reports/engineering/formal_competition_vehicle.urdf": {
-      "sha256": "75cbf47b456f138f45b7fc9d04310e11e19a4b684f8fec4f9c969fac40704c1f",
+      "sha256": "ff4d11dcc1a1243d6e84a37633719710eacfa2a19ca2102557e506b3c3ebd1bb",
       "size_bytes": 280292
     },
     "reports/engineering/formal_vehicle_component_register_report.json": {
-      "sha256": "eba7d9c6a886a2445eb1f4c92af0d67dec410e86498b309002b0499d6ce051e1",
+      "sha256": "2613590127fb41b728856f85483985dbfb1cb14680706fe83b00ac98462c7bf5",
       "size_bytes": 12648
     },
     "reports/engineering/formal_vehicle_layout_report.json": {
@@ -47,8 +47,8 @@
       "size_bytes": 3807
     },
     "config/high_fidelity_vehicle/formal_motion_cleaning_profile.yaml": {
-      "sha256": "1e1a4cbcc2aa1125dd76b85c87cf8170453fca402aeaa037c0a5aadfbf24ebb2",
-      "size_bytes": 5181
+      "sha256": "00631e001433dbb1a4b4420a92bd92caad94284062280757a73701fa0eb7cbab",
+      "size_bytes": 5438
     },
     "config/high_fidelity_vehicle/formal_vehicle_component_register.yaml": {
       "sha256": "688b72f49b7bd06ba6adc3d080c190f04f613b76ed05cbb69bf7a55580cff61a",
@@ -115,8 +115,8 @@
       "size_bytes": 20051
     },
     "starter_ws/src/sanitation_gazebo_control/CMakeLists.txt": {
-      "sha256": "a7c1b2bc00fb80569816871e95492ec31e3270a15339d88d6265608b494c1d00",
-      "size_bytes": 10176
+      "sha256": "7f4749fef44c7815baf652f5358ab7a77124835069c5745f95699199e9c76c8e",
+      "size_bytes": 10401
     },
     "starter_ws/src/sanitation_gazebo_control/include/sanitation_gazebo_control/NativeBridgeSupport.hh": {
       "sha256": "b3e494e972214c9e7baac6675e52b9495a3a3707d2c5b6da48d4c1533ad89057",
@@ -167,8 +167,8 @@
       "size_bytes": 3431
     },
     "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py": {
-      "sha256": "96deee3d4c0f3a6d860057887e72debd0b707318100f6d7da18158e2f6b3da3e",
-      "size_bytes": 42902
+      "sha256": "d86af5cc8588cd50d6c620e23accad477561beaa11af0f81baa902e19097b402",
+      "size_bytes": 43381
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/MANIFEST.sha256": {
       "sha256": "0022a0157796ce6e1aba2dfb18cca9e9e2bda44f1bfdc251839d9aa8dd5f87a7",
@@ -967,7 +967,7 @@
       "size_bytes": 2949
     },
     "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro": {
-      "sha256": "2454fdbd962062eee9574654e081c467b4651db5a2c8fc03393f2aa78a2c5016",
+      "sha256": "fc21afb75dc85aba7eba2079d7d52657b1137796034c8b8db9f9a6a607e91b5d",
       "size_bytes": 18624
     },
     "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/a300_platform.xacro": {
@@ -1003,5 +1003,5 @@
       "size_bytes": 26704
     }
   },
-  "source_inventory_sha256": "4bf61eb77e9a053a646bc58d31abb5ec1c2becdf7925765e2719591cbd921e83"
+  "source_inventory_sha256": "1a4f63104d522e02fbe844f0f670c6bcffdd425009fc525b5dbc313ae9a0c4f3"
 }
